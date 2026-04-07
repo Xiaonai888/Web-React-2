@@ -5,7 +5,7 @@ export default function MustReads() {
     {
       id: 1,
       title: 'Shadow Bride',
-      image: 'https://via.placeholder.com/600x400?text=Shadow+Bride',
+      image: '/assets/Must Read pic/Must Read 1.jpg',
       genre: 'Fantasy',
       episode: 'EP 20',
       link: '/fast',
@@ -13,7 +13,7 @@ export default function MustReads() {
     {
       id: 2,
       title: 'Royal Scheme',
-      image: 'https://via.placeholder.com/600x400?text=Royal+Scheme',
+      image: '/assets/Must Read pic/Must Read 2.jpg',
       genre: 'Romance',
       episode: 'EP 12',
       link: '/fast',
@@ -21,7 +21,7 @@ export default function MustReads() {
     {
       id: 3,
       title: 'Hidden Love',
-      image: 'https://via.placeholder.com/600x400?text=Hidden+Love',
+      image: '/assets/Must Read pic/Must Read 3.jpg',
       genre: 'Drama',
       episode: 'EP 8',
       link: '/fast',
@@ -29,7 +29,7 @@ export default function MustReads() {
     {
       id: 4,
       title: 'Omega Dragon',
-      image: 'https://via.placeholder.com/600x400?text=Omega+Dragon',
+      image: '/assets/Must Read pic/Must Read 4.jpg',
       genre: 'Fantasy',
       episode: 'EP 25',
       link: '/fast',
@@ -37,7 +37,7 @@ export default function MustReads() {
     {
       id: 5,
       title: 'CEO’s Secret Baby',
-      image: 'https://via.placeholder.com/600x400?text=CEOs+Secret+Baby',
+      image: '/assets/Must Read pic/Must Read 5.jpg',
       genre: 'Romance',
       episode: 'EP 16',
       link: '/fast',
@@ -45,7 +45,7 @@ export default function MustReads() {
     {
       id: 6,
       title: 'My Princess',
-      image: 'https://via.placeholder.com/600x400?text=My+Princess',
+      image: '/assets/Must Read pic/Must Read 6.jpg',
       genre: 'Drama',
       episode: 'EP 9',
       link: '/fast',
@@ -66,23 +66,24 @@ export default function MustReads() {
         <button className="text-blue-600 text-xs font-bold uppercase">See All</button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-x-4 gap-y-8">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-8">
         {mustReadData.map((item) => (
           <Link to={item.link} key={item.id} className="group cursor-pointer">
-            <div className="aspect-[1.4/1] bg-gray-100 rounded-xl overflow-hidden shadow-sm border border-gray-50 mb-3">
+            <div className="aspect-[2/3] bg-gray-100 rounded-xl overflow-hidden shadow-sm border border-gray-50 mb-3">
               <img
                 src={item.image}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 alt={item.title}
+                onError={(e) => { e.target.src = "https://via.placeholder.com/300x450?text=No+Cover" }}
               />
             </div>
 
-            <h4 className="font-bold text-sm text-gray-900 mb-1 truncate group-hover:text-blue-600">
+            <h4 className="font-bold text-[11px] text-gray-900 mb-1 truncate group-hover:text-blue-600">
               {item.title}
             </h4>
 
             <div className="flex items-center space-x-2">
-              <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase">
+              <span className="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
                 {item.genre}
               </span>
               <span className="text-[10px] text-gray-500 font-medium">{item.episode}</span>
