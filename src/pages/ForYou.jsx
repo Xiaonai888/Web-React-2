@@ -1,10 +1,9 @@
-// src/pages/ForYou.jsx
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import AlphaSpotlight from '../components/AlphaSpotlight'
 
 export default function ForYou() {
   useEffect(() => {
-    // Init Swiper after page mounts
     if (window.Swiper) {
       new window.Swiper('.mySwiper', {
         effect: 'coverflow',
@@ -52,7 +51,6 @@ export default function ForYou() {
       `}</style>
 
       <div style={{ paddingBottom: '80px' }}>
-        {/* Header */}
         <header className="flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
           <div className="flex items-center space-x-2">
             <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">S</div>
@@ -64,7 +62,6 @@ export default function ForYou() {
           </div>
         </header>
 
-        {/* Tabs */}
         <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pb-3">
           <div id="tab-novel" className="tab-item active text-sm" onClick={() => switchTab('novel')}>Novel</div>
           <div id="tab-chat" className="tab-item text-gray-400 font-semibold text-sm" onClick={() => switchTab('chat')}>Chat Story</div>
@@ -72,7 +69,6 @@ export default function ForYou() {
         </nav>
 
         <div id="tab-content-root">
-          {/* Categories */}
           <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
             <button className="category-btn bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold">Today</button>
             <button className="category-btn border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Romance</button>
@@ -84,7 +80,6 @@ export default function ForYou() {
             <button className="category-btn border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">School Love</button>
           </div>
 
-          {/* Swiper Banner */}
           <div className="swiper-container mySwiper">
             <div className="swiper-wrapper">
               {['K26','K27','K28','K29','K30','K31','K32'].map(k => (
@@ -96,7 +91,6 @@ export default function ForYou() {
             <div className="swiper-pagination" />
           </div>
 
-          {/* Quick Icons */}
           <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
             {[
               { icon: 'fa-shopping-bag', label: 'Shop' },
@@ -113,7 +107,10 @@ export default function ForYou() {
             ))}
           </div>
 
-          {/* Must Reads */}
+          <div className="my-6">
+            <AlphaSpotlight />
+          </div>
+
           <div className="px-4 mb-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg flex items-center">
