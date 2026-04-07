@@ -45,9 +45,6 @@ export default function AlphaSpotlight() {
                   src={item.img} 
                   className="w-full h-full object-cover" 
                   alt={item.title} 
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/600x200?text=Image+Not+Found";
-                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
                   <div className="flex items-center space-x-2">
