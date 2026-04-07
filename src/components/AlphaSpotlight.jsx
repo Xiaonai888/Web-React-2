@@ -8,33 +8,36 @@ const AlphaSpotlight = () => {
   const spotlightData = [
     { id: 1, title: "CEO's Secret Baby", img: "assets/fast/your_book_1.jpg", tag: "NEW" },
     { id: 2, title: "The Revenge", img: "assets/fast/your_book_2.jpg", tag: "HOT" },
-    { id: 3, title: "Omega Dragon", img: "https://via.placeholder.com/600x300", tag: "END" },
-    { id: 4, title: "My Princess", img: "https://via.placeholder.com/600x300", tag: "TOP" },
-    { id: 5, title: "Hidden Love", img: "https://via.placeholder.com/600x300", tag: "NEW" },
-    { id: 6, title: "Royal Scheme", img: "https://via.placeholder.com/600x300", tag: "HOT" },
+    { id: 3, title: "Omega Dragon", img: "https://via.placeholder.com/600x200?text=Banner+3", tag: "TOP" },
+    { id: 4, title: "My Princess", img: "https://via.placeholder.com/600x200?text=Banner+4", tag: "NEW" },
+    { id: 5, title: "Hidden Love", img: "https://via.placeholder.com/600x200?text=Banner+5", tag: "HOT" },
+    { id: 6, title: "Royal Scheme", img: "https://via.placeholder.com/600x200?text=Banner+6", tag: "END" },
   ];
 
   return (
-    <section className="w-full">
+    <section className="px-4 w-full">
       <Swiper
         modules={[Autoplay, Pagination]}
-        spaceBetween={12}
-        slidesPerView={1.3} // បង្ហាញ ១ រូបពេញ និងចំហៀងបន្តិច ដើម្បីឱ្យដឹងថាអាចអូសបាន
-        centeredSlides={true}
+        spaceBetween={0}
+        slidesPerView={1}
         loop={true}
-        autoplay={{ delay: 3000 }}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
         pagination={{ clickable: true }}
-        className="pb-8"
+        className="rounded-xl overflow-hidden shadow-sm"
       >
         {spotlightData.map((item) => (
           <SwiperSlide key={item.id}>
-            <div className="relative aspect-[16/7] rounded-2xl overflow-hidden shadow-md border border-gray-100">
+            <div className="relative aspect-[3/1] w-full bg-gray-100">
               <img src={item.img} className="w-full h-full object-cover" alt={item.title} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent p-4 flex flex-col justify-end">
-                <span className="bg-[#ff3b5c] text-white text-[9px] font-bold px-2 py-0.5 rounded-md w-fit mb-1">
-                  {item.tag}
-                </span>
-                <h2 className="text-white font-bold text-sm truncate">{item.title}</h2>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent p-3 flex flex-col justify-end">
+                <div className="flex items-center space-x-2">
+                  <span className="bg-[#ff3b5c] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                    {item.tag}
+                  </span>
+                  <h2 className="text-white font-bold text-[11px] truncate drop-shadow-md">
+                    {item.title}
+                  </h2>
+                </div>
               </div>
             </div>
           </SwiperSlide>
