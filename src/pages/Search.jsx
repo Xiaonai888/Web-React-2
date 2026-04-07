@@ -10,15 +10,15 @@ const RANK_STYLE = {
 }
 
 const BOOKS_DATA = [
-  { rank: 1, title: "The Shadow's Legacy", author: 'Jonathan Wick', likes: '24.5K', views: '1.2M' },
-  { rank: 2, title: 'Mind Games', author: 'Sarah Drasner', likes: '18K', views: '850K' },
-  { rank: 3, title: 'Reaper of Soul', author: 'Kim Young', likes: '12K', views: '400K' },
-  { rank: 4, title: 'Shadow Bride', author: 'Author Name', likes: '10K', views: '300K' },
-  { rank: 5, title: 'Dark Kingdom', author: 'Author Name', likes: '8K', views: '250K' },
+  { rank: 1, title: "The Girl Forgot Her Name", author: 'Jonathan Wick', likes: '24.5K', views: '1.2M' },
+  { rank: 2, title: 'We Loved at the Wrong Time', author: 'Sarah Drasner', likes: '18K', views: '850K' },
+  { rank: 3, title: 'Queen of the Silent War', author: 'Kim Young', likes: '12K', views: '400K' },
+  { rank: 4, title: 'System Error: I Fell in Love', author: 'Author Name', likes: '10K', views: '300K' },
+  { rank: 5, title: 'The Smile I Show You', author: 'Author Name', likes: '8K', views: '250K' },
   { rank: 6, title: 'Omega Dragon', author: 'Author Name', likes: '7K', views: '200K' },
-  { rank: 7, title: 'Hidden Love', author: 'Author Name', likes: '5K', views: '150K' },
-  { rank: 8, title: 'Royal Scheme', author: 'Author Name', likes: '4K', views: '100K' },
-  { rank: 9, title: 'Silent Hill', author: 'Author Name', likes: '3K', views: '80K' },
+  { rank: 7, title: 'The Actress, The Husband, and The Child', author: 'Author Name', likes: '5K', views: '150K' },
+  { rank: 8, title: 'Moonlight We Promised', author: 'Author Name', likes: '4K', views: '100K' },
+  { rank: 9, title: 'The Ringtone We Shared', author: 'Author Name', likes: '3K', views: '80K' },
   { rank: 10, title: 'The Revenge', author: 'Author Name', likes: '2K', views: '50K' },
 ]
 
