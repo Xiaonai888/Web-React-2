@@ -1,33 +1,54 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
+import { Autoplay, Pagination, EffectCoverflow } from 'swiper/modules';
+
+// Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/effect-coverflow';
 
 const AlphaSpotlight = () => {
-  const data = [
-    { id: 1, title: "The Revenge", img: "assets/fast/your_book_1.jpg" },
-    { id: 2, title: "CEO's Secret", img: "assets/fast/your_book_2.jpg" }
+  const spotlightBooks = [
+    { id: 1, title: "The Revenge of Bride", img: "assets/fast/your_book_1.jpg", tag: "HOT" },
+    { id: 2, title: "CEO's Secret Baby", img: "assets/fast/your_book_2.jpg", tag: "NEW" },
+    { id: 3, title: "Omega Dragon King", img: "https://via.placeholder.com/600x400?text=Dragon+King", tag: "END" }
   ];
 
   return (
-    <section className="px-5 mt-4">
+    <section className="pt-6 pb-2 bg-white">
       <Swiper
-        modules={[Autoplay, Pagination]}
-        spaceBetween={15}
-        slidesPerView={1.1}
+        effect={'coverflow'}
+        grabCursor={true}
         centeredSlides={true}
+        slidesPerView={1.2}
         loop={true}
-        autoplay={{ delay: 3000 }}
+        autoplay={{ delay: 3500, disableOnInteraction: false }}
+        coverflowEffect={{
+          rotate: 0,
+          stretch: 0,
+          depth: 100,
+          modifier: 2.5,
+          slideShadows: false,
+        }}
         pagination={{ clickable: true }}
-        className="rounded-2xl overflow-hidden shadow-xl"
+        modules={[Autoplay, Pagination, EffectCoverflow]}
+        className="w-full"
       >
-        {data.map((item) => (
-          <SwiperSlide key={item.id}>
-            <div className="relative aspect-[16/9]">
-              <img src={item.img} className="w-full h-full object-cover rounded-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 p-4 flex flex-col justify-end">
-                <h2 className="text-white font-bold text-lg">{item.title}</h2>
+        {spotlightBooks.map((book) => (
+          <SwiperSlide key={book.id} className="px-2">
+            <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-lg border border-gray-100">
+              <img 
+                src={book.img} 
+                className="w-full h-full object-cover"
+                alt={book.title}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 flex flex-col justify-end">
+                <span className="bg-[#ff3b5c] text-white text-[10px] font-black px-2.5 py-1 rounded-lg w-fit mb-2 shadow-lg">
+                  {book.tag}
+                </span>
+                <h2 className="text-white font-black text-xl leading-tight drop-shadow-md">
+                  {book.title}
+                </h2>
               </div>
             </div>
           </SwiperSlide>
