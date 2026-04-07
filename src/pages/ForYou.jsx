@@ -108,32 +108,61 @@ export default function ForYou() {
           </div>
 
           <div className="my-6">
-            <AlphaSpotlight />
-          </div>
+            import React from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
-          <div className="px-4 mb-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg flex items-center">
-                <img src="https://img.icons8.com/emoji/48/star-emoji.png" className="w-5 h-5 mr-2" alt="" />
-                Must Reads
-              </h3>
-              <button className="text-blue-600 text-xs font-bold uppercase">See All</button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-x-4 gap-y-8">
-              <Link to="/fast" className="group cursor-pointer">
-                <div className="aspect-[1.4/1] bg-gray-100 rounded-xl overflow-hidden shadow-sm border border-gray-50 mb-3">
-                  <img src="https://via.placeholder.com/600x400?text=Shadow+Bride" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
-                </div>
-                <h4 className="font-bold text-sm text-gray-900 mb-1 truncate group-hover:text-blue-600">Shadow Bride</h4>
+const AlphaSpotlight = () => {
+  const spotlightData = [
+    { id: 1, title: "CEO's Secret Baby", img: "assets/fast/your_book_1.jpg", tag: "NEW" },
+    { id: 2, title: "The Revenge", img: "assets/fast/your_book_2.jpg", tag: "HOT" },
+    { id: 3, title: "Omega Dragon", img: "https://via.placeholder.com/600x200?text=Banner+3", tag: "TOP" },
+    { id: 4, title: "My Princess", img: "https://via.placeholder.com/600x200?text=Banner+4", tag: "NEW" },
+    { id: 5, title: "Hidden Love", img: "https://via.placeholder.com/600x200?text=Banner+5", tag: "HOT" },
+    { id: 6, title: "Royal Scheme", img: "https://via.placeholder.com/600x200?text=Banner+6", tag: "END" },
+  ];
+
+  return (
+    <section className="px-4 w-full">
+      <Swiper
+        modules={[Autoplay, Pagination]}
+        spaceBetween={0}
+        slidesPerView={1}
+        centeredSlides={false}
+        loop={true}
+        autoplay={{ 
+          delay: 5000, 
+          disableOnInteraction: false 
+        }}
+        pagination={{ clickable: true }}
+        className="rounded-xl overflow-hidden shadow-sm"
+      >
+        {spotlightData.map((item) => (
+          <SwiperSlide key={item.id}>
+            <div className="relative aspect-[3/1] w-full bg-gray-100">
+              <img 
+                src={item.img} 
+                className="w-full h-full object-cover" 
+                alt={item.title} 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent p-3 flex flex-col justify-end">
                 <div className="flex items-center space-x-2">
-                  <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Fantasy</span>
-                  <span className="text-[10px] text-gray-500 font-medium">EP 20</span>
+                   <span className="bg-[#ff3b5c] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                    {item.tag}
+                  </span>
+                  <h2 className="text-white font-bold text-[11px] truncate drop-shadow-md">
+                    {item.title}
+                  </h2>
                 </div>
-              </Link>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+};
+
+export default AlphaSpotlight;
