@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
+import MustReads from '../components/MustReads'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
@@ -173,40 +174,7 @@ export default function ForYou() {
             <AlphaSpotlight />
           </div>
 
-          <div className="px-4 mb-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg flex items-center">
-                <img
-                  src="https://img.icons8.com/emoji/48/star-emoji.png"
-                  className="w-5 h-5 mr-2"
-                  alt=""
-                />
-                Must Reads
-              </h3>
-              <button className="text-blue-600 text-xs font-bold uppercase">See All</button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-x-4 gap-y-8">
-              <Link to="/fast" className="group cursor-pointer">
-                <div className="aspect-[1.4/1] bg-gray-100 rounded-xl overflow-hidden shadow-sm border border-gray-50 mb-3">
-                  <img
-                    src="https://via.placeholder.com/600x400?text=Shadow+Bride"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    alt=""
-                  />
-                </div>
-                <h4 className="font-bold text-sm text-gray-900 mb-1 truncate group-hover:text-blue-600">
-                  Shadow Bride
-                </h4>
-                <div className="flex items-center space-x-2">
-                  <span className="bg-yellow-100 text-yellow-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase">
-                    Fantasy
-                  </span>
-                  <span className="text-[10px] text-gray-500 font-medium">EP 20</span>
-                </div>
-              </Link>
-            </div>
-          </div>
+          <MustReads />
         </div>
       </div>
     </>
