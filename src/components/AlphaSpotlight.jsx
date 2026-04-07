@@ -15,7 +15,7 @@ const AlphaSpotlight = () => {
   ];
 
   return (
-    <section className="w-full px-4">
+    <section className="w-full">
       <Swiper
         modules={[Pagination]}
         spaceBetween={12}
@@ -27,11 +27,12 @@ const AlphaSpotlight = () => {
       >
         {spotlightData.map((item) => (
           <SwiperSlide key={item.id}>
-            <div className="relative aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-gray-50">
+            <div className="relative aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-gray-50 ml-4">
               <img 
                 src={item.img} 
                 className="w-full h-full object-cover" 
                 alt={item.title} 
+                onError={(e) => { e.target.src = "https://via.placeholder.com/600x200?text=Image+Not+Found"; }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
                 <div className="flex items-center space-x-2">
