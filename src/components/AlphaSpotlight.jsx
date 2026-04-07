@@ -24,15 +24,15 @@ export default function AlphaSpotlight() {
       return () => window.removeEventListener('load', initSwiper);
     }
   }, []);
-
-  const spotlightData = [
-    { id: 1, title: "CEO's Secret Baby", img: "/assets/alpha-spotlight/pic1.jpg", tag: "NEW" },
-    { id: 2, title: "The Revenge", img: "/assets/alpha-spotlight/pic2.jpg", tag: "HOT" },
-    { id: 3, title: "Omega Dragon", img: "/assets/alpha-spotlight/pic3.jpg", tag: "TOP" },
-    { id: 4, title: "My Princess", img: "/assets/alpha-spotlight/pic4.jpg", tag: "NEW" },
-    { id: 5, title: "Hidden Love", img: "/assets/alpha-spotlight/pic5.jpg", tag: "HOT" },
-    { id: 6, title: "Royal Scheme", img: "/assets/alpha-spotlight/pic6.jpg", tag: "END" },
-  ];
+ 
+const spotlightData = [
+  { id: 1, title: "CEO's Secret Baby", img: "/assets/alpha-spotlight/AP 1.jpg", tag: "NEW" },
+  { id: 2, title: "The Revenge", img: "/assets/alpha-spotlight/AP 2.jpg", tag: "HOT" },
+  { id: 3, title: "Omega Dragon", img: "/assets/alpha-spotlight/AP 3.jpg", tag: "TOP" },
+  { id: 4, title: "My Princess", img: "/assets/alpha-spotlight/AP 4.jpg", tag: "NEW" },
+  { id: 5, title: "Hidden Love", img: "/assets/alpha-spotlight/AP 5.jpg", tag: "HOT" },
+  { id: 6, title: "Royal Scheme", img: "/assets/alpha-spotlight/AP 6.jpg", tag: "END" },
+];
 
   return (
     <div className="w-full overflow-hidden">
