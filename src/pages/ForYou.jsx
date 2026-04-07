@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
 
 export default function ForYou() {
-  const [activeTab, setActiveTab] = useState('novel');
+  const [activeTab, setActiveTab] = useState('novel')
 
   useEffect(() => {
     if (window.Swiper) {
@@ -17,16 +17,16 @@ export default function ForYou() {
           stretch: 0,
           depth: 80,
           modifier: 2,
-          slideShadows: false
+          slideShadows: false,
         },
         loop: true,
         autoplay: {
           delay: 4500,
-          disableOnInteraction: false
+          disableOnInteraction: false,
         },
         pagination: {
           el: '.swiper-pagination',
-          clickable: true
+          clickable: true,
         },
       })
     }
@@ -42,14 +42,8 @@ export default function ForYou() {
           font-family: 'Kantumruy Pro', 'Inter', sans-serif;
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .swiper-container {
           width: 100%;
@@ -78,9 +72,7 @@ export default function ForYou() {
         }
 
         @media (min-width: 768px) {
-          .swiper-slide {
-            width: 58%;
-          }
+          .swiper-slide { width: 58%; }
         }
 
         .tab-item {
@@ -107,7 +99,7 @@ export default function ForYou() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-white pb-24 md:pb-6">
+      <div style={{ paddingBottom: '80px' }}>
         <header className="flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
           <div className="flex items-center space-x-2">
             <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">
@@ -140,18 +132,10 @@ export default function ForYou() {
 
         <div id="tab-content-root">
           <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
-            <button className="bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold">
-              Today
-            </button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">
-              Romance
-            </button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">
-              Fantasy
-            </button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">
-              Action
-            </button>
+            <button className="bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold">Today</button>
+            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Romance</button>
+            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Fantasy</button>
+            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Action</button>
           </div>
 
           <div className="swiper-container mySwiper">
@@ -224,51 +208,6 @@ export default function ForYou() {
             </div>
           </div>
         </div>
-
-        {/* Mobile Bottom Footer */}
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[200] md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-          <div className="grid grid-cols-5 h-16">
-            <Link
-              to="/"
-              className="flex flex-col items-center justify-center text-blue-600 text-[11px] font-semibold"
-            >
-              <i className="fas fa-home text-lg mb-1" />
-              <span>For You</span>
-            </Link>
-
-            <Link
-              to="/fast"
-              className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold"
-            >
-              <i className="fas fa-play-circle text-lg mb-1" />
-              <span>Fast</span>
-            </Link>
-
-            <Link
-              to="/discover"
-              className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold"
-            >
-              <i className="fas fa-compass text-lg mb-1" />
-              <span>Discover</span>
-            </Link>
-
-            <Link
-              to="/library"
-              className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold"
-            >
-              <i className="fas fa-book text-lg mb-1" />
-              <span>Library</span>
-            </Link>
-
-            <Link
-              to="/me"
-              className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold"
-            >
-              <i className="fas fa-user text-lg mb-1" />
-              <span>Me</span>
-            </Link>
-          </div>
-        </footer>
       </div>
     </>
   )
