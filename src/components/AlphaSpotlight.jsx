@@ -1,54 +1,40 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectCoverflow } from 'swiper/modules';
-
-// Import Swiper styles
+import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import 'swiper/css/effect-coverflow';
 
 const AlphaSpotlight = () => {
-  const spotlightBooks = [
-    { id: 1, title: "The Revenge of Bride", img: "assets/fast/your_book_1.jpg", tag: "HOT" },
-    { id: 2, title: "CEO's Secret Baby", img: "assets/fast/your_book_2.jpg", tag: "NEW" },
-    { id: 3, title: "Omega Dragon King", img: "https://via.placeholder.com/600x400?text=Dragon+King", tag: "END" }
+  const spotlightData = [
+    { id: 1, title: "CEO's Secret Baby", img: "assets/fast/your_book_1.jpg", tag: "NEW" },
+    { id: 2, title: "The Revenge", img: "assets/fast/your_book_2.jpg", tag: "HOT" },
+    { id: 3, title: "Omega Dragon", img: "https://via.placeholder.com/600x300", tag: "END" },
+    { id: 4, title: "My Princess", img: "https://via.placeholder.com/600x300", tag: "TOP" },
+    { id: 5, title: "Hidden Love", img: "https://via.placeholder.com/600x300", tag: "NEW" },
+    { id: 6, title: "Royal Scheme", img: "https://via.placeholder.com/600x300", tag: "HOT" },
   ];
 
   return (
-    <section className="pt-6 pb-2 bg-white">
+    <section className="w-full">
       <Swiper
-        effect={'coverflow'}
-        grabCursor={true}
+        modules={[Autoplay, Pagination]}
+        spaceBetween={12}
+        slidesPerView={1.3} // បង្ហាញ ១ រូបពេញ និងចំហៀងបន្តិច ដើម្បីឱ្យដឹងថាអាចអូសបាន
         centeredSlides={true}
-        slidesPerView={1.2}
         loop={true}
-        autoplay={{ delay: 3500, disableOnInteraction: false }}
-        coverflowEffect={{
-          rotate: 0,
-          stretch: 0,
-          depth: 100,
-          modifier: 2.5,
-          slideShadows: false,
-        }}
+        autoplay={{ delay: 3000 }}
         pagination={{ clickable: true }}
-        modules={[Autoplay, Pagination, EffectCoverflow]}
-        className="w-full"
+        className="pb-8"
       >
-        {spotlightBooks.map((book) => (
-          <SwiperSlide key={book.id} className="px-2">
-            <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-lg border border-gray-100">
-              <img 
-                src={book.img} 
-                className="w-full h-full object-cover"
-                alt={book.title}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 flex flex-col justify-end">
-                <span className="bg-[#ff3b5c] text-white text-[10px] font-black px-2.5 py-1 rounded-lg w-fit mb-2 shadow-lg">
-                  {book.tag}
+        {spotlightData.map((item) => (
+          <SwiperSlide key={item.id}>
+            <div className="relative aspect-[16/7] rounded-2xl overflow-hidden shadow-md border border-gray-100">
+              <img src={item.img} className="w-full h-full object-cover" alt={item.title} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent p-4 flex flex-col justify-end">
+                <span className="bg-[#ff3b5c] text-white text-[9px] font-bold px-2 py-0.5 rounded-md w-fit mb-1">
+                  {item.tag}
                 </span>
-                <h2 className="text-white font-black text-xl leading-tight drop-shadow-md">
-                  {book.title}
-                </h2>
+                <h2 className="text-white font-bold text-sm truncate">{item.title}</h2>
               </div>
             </div>
           </SwiperSlide>
