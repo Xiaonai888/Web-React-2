@@ -208,35 +208,6 @@ export default function ForYou() {
             </div>
           </div>
         </div>
-
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[9999] md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-          <div className="grid grid-cols-5 h-16">
-            <Link to="/" className="flex flex-col items-center justify-center text-blue-600 text-[11px] font-semibold">
-              <i className="fas fa-home text-lg mb-1" />
-              <span>For You</span>
-            </Link>
-
-            <Link to="/fast" className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold">
-              <i className="fas fa-play-circle text-lg mb-1" />
-              <span>Fast</span>
-            </Link>
-
-            <Link to="/discover" className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold">
-              <i className="fas fa-compass text-lg mb-1" />
-              <span>Discover</span>
-            </Link>
-
-            <Link to="/library" className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold">
-              <i className="fas fa-book text-lg mb-1" />
-              <span>Library</span>
-            </Link>
-
-            <Link to="/me" className="flex flex-col items-center justify-center text-gray-500 text-[11px] font-semibold">
-              <i className="fas fa-user text-lg mb-1" />
-              <span>Me</span>
-            </Link>
-          </div>
-        </footer>
       </div>
     </>
   )
