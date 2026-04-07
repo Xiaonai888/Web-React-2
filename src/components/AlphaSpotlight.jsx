@@ -5,7 +5,7 @@ export default function AlphaSpotlight() {
     if (window.Swiper) {
       new window.Swiper('.alphaSwiper', {
         slidesPerView: 1.1,
-        spaceBetween: 15,
+        spaceBetween: 12,
         centeredSlides: false,
         loop: false,
         pagination: {
@@ -26,7 +26,7 @@ export default function AlphaSpotlight() {
   ];
 
   return (
-    <div className="w-full relative overflow-hidden">
+    <div className="w-full overflow-hidden">
       <div className="swiper alphaSwiper !pl-4 !pr-10">
         <div className="swiper-wrapper">
           {spotlightData.map((item) => (
@@ -37,7 +37,7 @@ export default function AlphaSpotlight() {
                   className="w-full h-full object-cover" 
                   alt={item.title} 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent p-3 flex flex-col justify-end">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
                   <div className="flex items-center space-x-2">
                     <span className="bg-[#ff3b5c] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
                       {item.tag}
@@ -51,7 +51,7 @@ export default function AlphaSpotlight() {
             </div>
           ))}
         </div>
-        <div className="alpha-pagination !bottom-2 flex justify-center mt-4"></div>
+        <div className="alpha-pagination flex justify-center mt-4"></div>
       </div>
     </div>
   );
