@@ -15,19 +15,19 @@ const AlphaSpotlight = () => {
   ];
 
   return (
-    <section className="w-full">
+    <section className="w-full px-4">
       <Swiper
         modules={[Pagination]}
         spaceBetween={12}
-        slidesPerView={1.2} // បង្ហាញរូបបន្ទាប់បន្តិច (ទាក់ទាញឱ្យអូស)
-        centeredSlides={true} // ដាក់រូបចំកណ្ដាល
-        loop={true}
+        slidesPerView={1.1}
+        centeredSlides={false}
+        loop={false}
         pagination={{ clickable: true }}
         className="pb-10"
       >
         {spotlightData.map((item) => (
           <SwiperSlide key={item.id}>
-            <div className="relative aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-gray-50 transition-transform duration-300">
+            <div className="relative aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-gray-50">
               <img 
                 src={item.img} 
                 className="w-full h-full object-cover" 
