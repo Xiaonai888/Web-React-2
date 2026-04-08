@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
-export default function MustReads() {
-  const mustReadData = [
+export default function ShadowExclusiveSection() {
+  const ShadowExclusiveSectionData = [
     {
       id: 1,
       title: 'Shadow Bride',
