@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 
-export default function Shadow Exclusive() {
+export default function MustReads() {
   const mustReadData = [
     {
       id: 1,
       title: 'Shadow Bride',
       image: '/assets/Must Read pic/Must Read 1.jpg',
       genre: 'Fantasy',
+      genreColor: 'emerald', // Added genre colors to data
       episode: 'EP 20',
       link: '/fast',
     },
@@ -15,6 +16,7 @@ export default function Shadow Exclusive() {
       title: 'Royal Scheme',
       image: '/assets/Must Read pic/Must Read 2.jpg',
       genre: 'Romance',
+      genreColor: 'rose',
       episode: 'EP 12',
       link: '/fast',
     },
@@ -23,6 +25,7 @@ export default function Shadow Exclusive() {
       title: 'Hidden Love',
       image: '/assets/Must Read pic/Must Read 3.jpg',
       genre: 'Drama',
+      genreColor: 'sky',
       episode: 'EP 8',
       link: '/fast',
     },
@@ -31,6 +34,7 @@ export default function Shadow Exclusive() {
       title: 'Omega Dragon',
       image: '/assets/Must Read pic/Must Read 4.jpg',
       genre: 'Fantasy',
+      genreColor: 'emerald',
       episode: 'EP 25',
       link: '/fast',
     },
@@ -39,6 +43,7 @@ export default function Shadow Exclusive() {
       title: 'CEO’s Secret Baby',
       image: '/assets/Must Read pic/Must Read 5.jpg',
       genre: 'Romance',
+      genreColor: 'rose',
       episode: 'EP 16',
       link: '/fast',
     },
@@ -47,6 +52,7 @@ export default function Shadow Exclusive() {
       title: 'My Princess',
       image: '/assets/Must Read pic/Must Read 6.jpg',
       genre: 'Drama',
+      genreColor: 'sky',
       episode: 'EP 9',
       link: '/fast',
     },
@@ -78,15 +84,23 @@ export default function Shadow Exclusive() {
               />
             </div>
 
-            <h4 className="font-bold text-[11px] text-gray-900 mb-1 truncate group-hover:text-blue-600">
-              {item.title}
-            </h4>
+            {/* COOLER TITLE & INFO SECTION */}
+            <div className="mt-3">
+              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1 truncate group-hover:text-blue-600">
+                {item.title}
+              </h4>
 
-            <div className="flex items-center space-x-2">
-              <span className="bg-yellow-100 text-yellow-700 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase">
-                {item.genre}
-              </span>
-              <span className="text-[10px] text-gray-500 font-medium">{item.episode}</span>
+              <div className="flex items-center space-x-2 mt-1.5">
+                {/* COOLER GENRE TAG with dynamic color and bold font */}
+                <span className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase border ${item.genreColor === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : item.genreColor === 'rose' ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-sky-50 text-sky-700 border-sky-100'}`}>
+                  {item.genre}
+                </span>
+
+                {/* COOLER EPISODE PILL with distinct styling and bold font */}
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase bg-gray-100 text-gray-600 border border-gray-100">
+                  {item.episode}
+                </span>
+              </div>
             </div>
           </Link>
         ))}
