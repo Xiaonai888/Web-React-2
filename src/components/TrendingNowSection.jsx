@@ -74,18 +74,16 @@ function CommentIcon() {
 }
 
 function BookPlaceholder() {
-  return (
-    <div className="flex h-full w-full items-center justify-center text-[54px] font-light text-white/90">
-      L
-    </div>
-  )
+  return <div className="h-full w-full bg-[#202124]" />
 }
 
 function TrendingBookCard({ book }) {
+  const hasImage = typeof book.image === 'string' && book.image.trim() !== ''
+
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
       <div className="relative aspect-[1.42/1] overflow-hidden rounded-[18px] bg-[#202124] shadow-sm">
-        {book.image ? (
+        {hasImage ? (
           <img
             src={book.image}
             alt={book.title}
