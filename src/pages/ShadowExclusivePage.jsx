@@ -3,7 +3,7 @@ import { useState } from 'react'
 const featureCards = [
   {
     title: 'Ads-Free',
-    subtitle: 'No interruptions',
+    subtitle: 'No interruptions while reading',
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="9" />
@@ -23,7 +23,7 @@ const featureCards = [
   },
   {
     title: 'Early Access',
-    subtitle: 'Read first',
+    subtitle: 'Read premium releases first',
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
@@ -39,48 +39,12 @@ const sections = [
     subtitle: 'Carefully selected stories for premium members',
     layout: 'featured',
     books: [
-      {
-        id: 1,
-        title: 'The King and Me',
-        chapter: 'Up to Ch. 126',
-        genre: 'Royal Romance',
-        image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 2,
-        title: 'Infinite Deduction',
-        chapter: 'Up to Ch. 60',
-        genre: 'Mystery',
-        image: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 3,
-        title: 'Coddled Rotten Brothers',
-        chapter: 'Up to Ch. 141',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 4,
-        title: 'The Bestselling Empress',
-        chapter: 'Up to Ch. 167',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 5,
-        title: 'All I Am to Her',
-        chapter: 'Up to Ch. 105',
-        genre: 'Historical',
-        image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 6,
-        title: 'Touch Me Again If You Dare',
-        chapter: 'Up to Ch. 55',
-        genre: 'Action',
-        image: 'https://images.unsplash.com/photo-1491841651911-c44c30c34548?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 1, title: 'The King and Me', episode: 'Up to Ep. 126', genre: 'Royal Romance', image: '' },
+      { id: 2, title: 'Infinite Deduction', episode: 'Up to Ep. 60', genre: 'Mystery', image: '' },
+      { id: 3, title: 'Coddled Rotten Brothers', episode: 'Up to Ep. 141', genre: 'Drama', image: '' },
+      { id: 4, title: 'The Bestselling Empress', episode: 'Up to Ep. 167', genre: 'Fantasy', image: '' },
+      { id: 5, title: 'All I Am to Her', episode: 'Up to Ep. 105', genre: 'Historical', image: '' },
+      { id: 6, title: 'Touch Me Again If You Dare', episode: 'Up to Ep. 55', genre: 'Action', image: '' },
     ],
   },
   {
@@ -89,98 +53,26 @@ const sections = [
     subtitle: 'Kiss, blush, and romance you cannot skip',
     layout: 'compact',
     books: [
-      {
-        id: 7,
-        title: 'My Lovely Troublemaker',
-        chapter: 'Up to Ch. 99',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 8,
-        title: 'Caught by My Baby’s Daddy',
-        chapter: 'Up to Ch. 311',
-        genre: 'CEO',
-        image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 9,
-        title: 'My Secret Crush',
-        chapter: 'Up to Ch. 86',
-        genre: 'School Love',
-        image: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 10,
-        title: 'Half My Tyrant, Half My Baby',
-        chapter: 'Up to Ch. 200',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1476275466078-4007374efbbe?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 11,
-        title: 'Comeback of the Lady',
-        chapter: 'Up to Ch. 204',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 12,
-        title: 'From Somebody to Nobody Again',
-        chapter: 'Up to Ch. 163',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 7, title: 'My Lovely Troublemaker', episode: 'Up to Ep. 99', genre: 'Romance', image: '' },
+      { id: 8, title: 'Caught by My Baby’s Daddy', episode: 'Up to Ep. 311', genre: 'CEO', image: '' },
+      { id: 9, title: 'My Secret Crush', episode: 'Up to S3 Ep. 86', genre: 'School Love', image: '' },
+      { id: 10, title: 'Half My Tyrant, Half My Baby', episode: 'Up to Ep. 200', genre: 'Fantasy', image: '' },
+      { id: 11, title: 'Comeback of the Lady', episode: 'Up to Ep. 204', genre: 'Drama', image: '' },
+      { id: 12, title: 'From Somebody to Nobody Again', episode: 'Up to Ep. 163', genre: 'Romance', image: '' },
     ],
   },
   {
     id: 'mind-blowing-plot-twists',
     title: 'Mind-Blowing Plot Twists',
-    subtitle: 'Stories that change everything in one chapter',
+    subtitle: 'Stories that change everything in one episode',
     layout: 'compact',
     books: [
-      {
-        id: 13,
-        title: 'Milking My Disciples',
-        chapter: 'Up to Ch. 130',
-        genre: 'Eastern Fantasy',
-        image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 14,
-        title: 'The Battle for Humanity',
-        chapter: 'Up to Ch. 65',
-        genre: 'Action',
-        image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 15,
-        title: 'Demon Realm',
-        chapter: 'Up to Ch. 62',
-        genre: 'Sci-Fi',
-        image: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 16,
-        title: 'Doomspawn',
-        chapter: 'Up to Ch. 46',
-        genre: 'Thriller',
-        image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 17,
-        title: 'Celestial Immortal',
-        chapter: 'Up to Ch. 250',
-        genre: 'Martial Arts',
-        image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 18,
-        title: 'Trapped for 3000 Years',
-        chapter: 'Up to Ch. 64',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 13, title: 'Milking My Disciples', episode: 'Up to Ep. 130', genre: 'Eastern Fantasy', image: '' },
+      { id: 14, title: 'The Battle for Humanity', episode: 'Up to Ep. 65', genre: 'Action', image: '' },
+      { id: 15, title: 'Demon Realm', episode: 'Up to Ep. 62', genre: 'Sci-Fi', image: '' },
+      { id: 16, title: 'Doomspawn', episode: 'Up to Ep. 46', genre: 'Thriller', image: '' },
+      { id: 17, title: 'Celestial Immortal', episode: 'Up to Ep. 250', genre: 'Martial Arts', image: '' },
+      { id: 18, title: 'Trapped for 3000 Years', episode: 'Up to Ep. 64', genre: 'Fantasy', image: '' },
     ],
   },
   {
@@ -189,48 +81,12 @@ const sections = [
     subtitle: 'Soft chemistry and unforgettable emotional tension',
     layout: 'compact',
     books: [
-      {
-        id: 19,
-        title: 'Your Majesty’s Pet',
-        chapter: 'Up to Ch. 83',
-        genre: 'BL',
-        image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 20,
-        title: 'His Highness’ Male Consort',
-        chapter: 'Up to Ch. 70',
-        genre: 'Historical',
-        image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 21,
-        title: 'Sensitive Touch',
-        chapter: 'Up to Extra 2',
-        genre: 'BL',
-        image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 22,
-        title: 'The Priest Dreaming of a Dragon',
-        chapter: 'Up to Ch. 50',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1476275466078-4007374efbbe?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 23,
-        title: 'Intoxicated Love',
-        chapter: 'Up to Extra 3',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 24,
-        title: 'My Lovely Trouble',
-        chapter: 'Up to Ch. 99',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 19, title: 'Your Majesty’s Pet', episode: 'Up to Ep. 83', genre: 'BL', image: '' },
+      { id: 20, title: 'His Highness’ Male Consort', episode: 'Up to Ep. 70', genre: 'Historical', image: '' },
+      { id: 21, title: 'Sensitive Touch', episode: 'Up to Extra 2', genre: 'BL', image: '' },
+      { id: 22, title: 'The Priest Dreaming of a Dragon', episode: 'Up to Ep. 50', genre: 'Fantasy', image: '' },
+      { id: 23, title: 'Intoxicated Love', episode: 'Up to Extra 3', genre: 'Romance', image: '' },
+      { id: 24, title: 'My Lovely Trouble', episode: 'Up to Ep. 99', genre: 'Drama', image: '' },
     ],
   },
   {
@@ -239,48 +95,12 @@ const sections = [
     subtitle: 'Early access to new internal releases',
     layout: 'compact',
     books: [
-      {
-        id: 25,
-        title: 'Tangled Romance',
-        chapter: 'Up to Ch. 73',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 26,
-        title: 'Partners in Crime',
-        chapter: 'Up to Ch. 57',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 27,
-        title: 'City of Sanctuary',
-        chapter: 'Up to Ch. 93',
-        genre: 'Mystery',
-        image: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 28,
-        title: 'Rebirth of the Ultimate Master',
-        chapter: 'Up to Ch. 71',
-        genre: 'Eastern Fantasy',
-        image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 29,
-        title: 'Where Do You Think You’re Going',
-        chapter: 'Up to Ch. 32',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 30,
-        title: 'Demon Realm Can’t Wait to Quit',
-        chapter: 'Up to Ch. 62',
-        genre: 'Action',
-        image: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 25, title: 'Tangled Romance', episode: 'Up to Ep. 73', genre: 'Romance', image: '' },
+      { id: 26, title: 'Partners in Crime', episode: 'Up to Ep. 57', genre: 'Drama', image: '' },
+      { id: 27, title: 'City of Sanctuary', episode: 'Up to Ep. 93', genre: 'Mystery', image: '' },
+      { id: 28, title: 'Rebirth of the Ultimate Master', episode: 'Up to Ep. 71', genre: 'Eastern Fantasy', image: '' },
+      { id: 29, title: 'Where Do You Think You’re Going', episode: 'Up to Ep. 32', genre: 'Romance', image: '' },
+      { id: 30, title: 'Demon Realm Can’t Wait to Quit', episode: 'Up to Ep. 62', genre: 'Action', image: '' },
     ],
   },
   {
@@ -289,48 +109,12 @@ const sections = [
     subtitle: 'Read selected premium stories for free as a member',
     layout: 'compact',
     books: [
-      {
-        id: 31,
-        title: 'How to Be a Princess',
-        chapter: 'Fantasy',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 32,
-        title: 'Eternal Club',
-        chapter: 'Drama',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 33,
-        title: 'Revenge Gone Wrong',
-        chapter: 'Romance',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1491841651911-c44c30c34548?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 34,
-        title: 'Milking My Disciples',
-        chapter: 'Eastern Fantasy',
-        genre: 'Eastern Fantasy',
-        image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 35,
-        title: 'Rebirth of the Ultimate Master',
-        chapter: 'Eastern Fantasy',
-        genre: 'Eastern Fantasy',
-        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 36,
-        title: 'Where Do You Think You’re Going',
-        chapter: 'Romance',
-        genre: 'Romance',
-        image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 31, title: 'How to Be a Princess', episode: 'Fantasy', genre: 'Fantasy', image: '' },
+      { id: 32, title: 'Eternal Club', episode: 'Drama', genre: 'Drama', image: '' },
+      { id: 33, title: 'Revenge Gone Wrong', episode: 'Romance', genre: 'Romance', image: '' },
+      { id: 34, title: 'Milking My Disciples', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
+      { id: 35, title: 'Rebirth of the Ultimate Master', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
+      { id: 36, title: 'Where Do You Think You’re Going', episode: 'Romance', genre: 'Romance', image: '' },
     ],
   },
   {
@@ -339,67 +123,17 @@ const sections = [
     subtitle: 'Read before everyone else',
     layout: 'compact',
     books: [
-      {
-        id: 37,
-        title: 'I Dominate a Magic Continent',
-        chapter: 'Up to Ch. 71',
-        genre: 'Fantasy',
-        image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 38,
-        title: 'The King and Me',
-        chapter: 'Up to Ch. 126',
-        genre: 'Royal Romance',
-        image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 39,
-        title: 'My Five Bigname Daddies',
-        chapter: 'Up to Ch. 138',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 40,
-        title: 'Infinite Deduction',
-        chapter: 'Up to Ch. 60',
-        genre: 'Mystery',
-        image: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 41,
-        title: 'Coddled Rotten Brothers',
-        chapter: 'Up to Ch. 141',
-        genre: 'Drama',
-        image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=500&auto=format&fit=crop',
-      },
-      {
-        id: 42,
-        title: 'Target 100 Million Points',
-        chapter: 'Up to Ch. 96',
-        genre: 'Action',
-        image: 'https://images.unsplash.com/photo-1614728263952-84ea256f9679?q=80&w=500&auto=format&fit=crop',
-      },
+      { id: 37, title: 'I Dominate a Magic Continent', episode: 'Up to Ep. 71', genre: 'Fantasy', image: '' },
+      { id: 38, title: 'The King and Me', episode: 'Up to Ep. 126', genre: 'Royal Romance', image: '' },
+      { id: 39, title: 'My Five Bigname Daddies', episode: 'Up to Ep. 138', genre: 'Drama', image: '' },
+      { id: 40, title: 'Infinite Deduction', episode: 'Up to Ep. 60', genre: 'Mystery', image: '' },
+      { id: 41, title: 'Coddled Rotten Brothers', episode: 'Up to Ep. 141', genre: 'Drama', image: '' },
+      { id: 42, title: 'Target 100 Million Points', episode: 'Up to Ep. 96', genre: 'Action', image: '' },
     ],
   },
 ]
 
-function SectionHeader({ title, subtitle }) {
-  return (
-    <div className="flex items-start justify-between mb-4">
-      <div className="min-w-0 pr-3">
-        <h2 className="text-white text-[15px] font-extrabold tracking-tight">{title}</h2>
-        <p className="text-[11px] text-white/55 mt-0.5">{subtitle}</p>
-      </div>
-      <button className="shrink-0 text-[10px] font-black uppercase tracking-wider text-white/50">
-        More
-      </button>
-    </div>
-  )
-}
-
-function FreeBadge() {
+function CrownBadge() {
   return (
     <div className="absolute top-2 right-2 z-10 rounded-full bg-[#23182d]/90 border border-white/10 px-1.5 py-1 shadow-md">
       <div className="flex items-center gap-1">
@@ -412,30 +146,69 @@ function FreeBadge() {
   )
 }
 
-function BookCard({ book, featured = false }) {
+function PlaceholderCover({ featured = false }) {
   return (
-    <div className="group cursor-pointer">
-      <div
-        className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-white/5 shadow-lg ${
-          featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
-        }`}
-      >
-        <img
-          src={book.image}
-          alt={book.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = 'https://placehold.co/600x800/3a2a4a/f3f4f6?text=Cover'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-        <FreeBadge />
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-white/5 shadow-lg flex items-center justify-center ${
+        featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
+      }`}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
+      <div className="text-center px-3">
+        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10">
+          <svg className="w-5 h-5 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4z" />
+            <path d="M8 4v13a3 3 0 003 3" />
+          </svg>
+        </div>
+        <div className="text-[11px] font-bold text-white/35 uppercase tracking-wider">Add Cover</div>
       </div>
+      <CrownBadge />
+    </div>
+  )
+}
 
-      <div className="mt-2 px-0.5">
+function BookCard({ book, featured = false }) {
+  const hasImage = typeof book.image === 'string' && book.image.trim() !== ''
+
+  return (
+    <div className="group cursor-pointer min-w-0">
+      {hasImage ? (
+        <div
+          className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-white/5 shadow-lg ${
+            featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
+          }`}
+        >
+          <img
+            src={book.image}
+            alt={book.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+          <CrownBadge />
+        </div>
+      ) : (
+        <PlaceholderCover featured={featured} />
+      )}
+
+      <div className="mt-2 px-0.5 min-w-0">
         <h3 className="truncate text-[12px] font-bold text-white">{book.title}</h3>
-        <p className="truncate text-[10px] text-white/55 mt-1">{book.chapter}</p>
+        <p className="truncate text-[10px] text-white/55 mt-1">{book.episode}</p>
       </div>
+    </div>
+  )
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div className="flex items-start justify-between mb-4 gap-3">
+      <div className="min-w-0">
+        <h2 className="text-white text-[15px] font-extrabold tracking-tight">{title}</h2>
+        <p className="text-[11px] text-white/55 mt-0.5">{subtitle}</p>
+      </div>
+      <button className="shrink-0 text-[10px] font-black uppercase tracking-wider text-white/50">
+        More
+      </button>
     </div>
   )
 }
@@ -445,7 +218,7 @@ export default function ShadowExclusivePage() {
   const tabs = ['Popular', 'Daily', 'Weekly', 'All Time']
 
   return (
-    <div className="min-h-screen bg-[#17091f] text-white pb-8">
+    <div className="min-h-screen bg-[#17091f] text-white pb-28 md:pb-40">
       <header className="sticky top-0 z-40 bg-[#17091f]/95 backdrop-blur-md">
         <div className="h-14 flex items-center justify-center px-4">
           <h1 className="text-[18px] font-extrabold tracking-tight">Shadow Exclusive</h1>
@@ -466,7 +239,7 @@ export default function ShadowExclusivePage() {
                 Premium Subscription
               </div>
 
-              <h2 className="mt-4 text-[30px] leading-[1.05] font-black text-white">
+              <h2 className="mt-4 text-[28px] leading-[1.05] font-black text-white">
                 Shadow
                 <br />
                 Membership
@@ -507,9 +280,7 @@ export default function ShadowExclusivePage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`min-w-fit rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-all ${
-                  activeTab === tab
-                    ? 'bg-[#ffd34d] text-[#1d1027]'
-                    : 'text-white/45'
+                  activeTab === tab ? 'bg-[#ffd34d] text-[#1d1027]' : 'text-white/45'
                 }`}
               >
                 {tab}
@@ -526,8 +297,8 @@ export default function ShadowExclusivePage() {
               <div
                 className={
                   section.layout === 'featured'
-                    ? 'grid grid-cols-2 gap-x-3 gap-y-5'
-                    : 'grid grid-cols-3 gap-x-3 gap-y-5'
+                    ? 'grid grid-cols-2 md:grid-cols-6 gap-x-3 gap-y-5'
+                    : 'grid grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-5'
                 }
               >
                 {section.books.map((book) => (
@@ -543,11 +314,13 @@ export default function ShadowExclusivePage() {
         </section>
 
         <section className="mt-8">
-          <div className="rounded-[24px] border border-white/8 bg-[#201129] px-4 py-5 shadow-lg">
+          <div className="rounded-[24px] border border-white/8 bg-[#201129] px-4 py-5 md:px-5 md:py-6 shadow-lg">
             <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
+              <div className="min-w-0 pr-2">
                 <h3 className="text-[13px] font-extrabold text-white">Got a question? Contact us</h3>
-                <p className="mt-1 text-[10px] text-white/50">Premium support for Shadow members</p>
+                <p className="mt-1 text-[10px] leading-4 text-white/50 break-words">
+                  Premium support for Shadow members
+                </p>
               </div>
 
               <button className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white">
