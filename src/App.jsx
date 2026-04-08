@@ -7,6 +7,7 @@ import Library from './pages/Library'
 import Me from './pages/Me'
 import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
+import StoryDetailPage from './pages/StoryDetailPage'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/search" element={<Search />} />
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
+        <Route path="/story/:id" element={<StoryDetailPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
