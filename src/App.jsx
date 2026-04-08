@@ -6,6 +6,7 @@ import Discover from './pages/Discover'
 import Library from './pages/Library'
 import Me from './pages/Me'
 import Search from './pages/Search'
+import ShadowExclusivePage from './pages/ShadowExclusivePage'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
