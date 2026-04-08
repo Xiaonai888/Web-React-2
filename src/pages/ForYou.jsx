@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
+import TrendingNowSection from '../components/TrendingNowSection'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
@@ -176,6 +177,10 @@ export default function ForYou() {
 
           <div className="my-6">
             <ShadowExclusiveSection />
+          </div>
+
+          <div className="my-6">
+            <TrendingNowSection />
           </div>
         </div>
       </div>
