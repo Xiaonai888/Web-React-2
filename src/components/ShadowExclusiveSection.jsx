@@ -99,26 +99,26 @@ export default function ShadowExclusiveSection() {
             </div>
 
             <div className="px-0.5">
-              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1.5 overflow-hidden whitespace-nowrap text-ellipsis group-hover:text-amber-700 transition-colors">
+              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1 overflow-hidden whitespace-nowrap text-ellipsis group-hover:text-amber-700 transition-colors">
                 {item.title}
               </h4>
 
-              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+              <div className="flex items-center gap-2 text-[9px] font-semibold">
                 <span
-                  className={`text-[8px] font-black px-2.5 py-1 rounded-full uppercase border shadow-sm ${
+                  className={
                     item.genreColor === 'emerald'
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      ? 'text-emerald-600'
                       : item.genreColor === 'rose'
-                      ? 'bg-pink-100 text-pink-800 border-pink-200'
-                      : 'bg-cyan-100 text-cyan-800 border-cyan-200'
-                  }`}
+                      ? 'text-pink-500'
+                      : 'text-sky-500'
+                  }
                 >
                   {item.genre}
                 </span>
 
-                <span className="text-[8px] font-black px-2.5 py-1 rounded-full uppercase bg-amber-50 text-amber-800 border border-amber-200 shadow-sm">
-                  {item.episode}
-                </span>
+                <span className="text-gray-400">•</span>
+
+                <span className="text-gray-500">{item.episode}</span>
               </div>
             </div>
           </Link>
