@@ -85,7 +85,7 @@ export default function ShadowExclusiveSection() {
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 alt={item.title}
                 onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/300x450?text=Cover'
+                  e.currentTarget.src = 'https://placehold.co/300x450?text=Cover'
                 }}
               />
 
@@ -95,7 +95,7 @@ export default function ShadowExclusiveSection() {
             </div>
 
             <div className="px-0.5">
-              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1.5 truncate group-hover:text-indigo-600 transition-colors">
+              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1.5 overflow-hidden whitespace-nowrap text-ellipsis group-hover:text-indigo-600 transition-colors">
                 {item.title}
               </h4>
 
