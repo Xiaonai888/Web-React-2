@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
-import MustReads from '../components/MustReads'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 
 export default function ForYou() {
@@ -178,8 +177,6 @@ export default function ForYou() {
           <div className="my-6">
             <ShadowExclusiveSection />
           </div>
-
-          <MustReads />
         </div>
       </div>
     </>
