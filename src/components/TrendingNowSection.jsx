@@ -46,7 +46,7 @@ function formatCount(value) {
 function SortIcon({ open = false }) {
   return (
     <svg
-      className={`h-5 w-5 transition-transform ${open ? 'rotate-180' : ''}`}
+      className={`h-4 w-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -59,7 +59,7 @@ function SortIcon({ open = false }) {
 
 function HeartIcon() {
   return (
-    <svg className="h-4.5 w-4.5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+    <svg className="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 21s-6.5-4.35-9.14-8.27C.62 9.47 2.15 5 6.42 5c2.15 0 3.41 1.14 4.12 2.2C11.25 6.14 12.51 5 14.66 5c4.27 0 5.8 4.47 3.56 7.73C18.5 16.65 12 21 12 21z" />
     </svg>
   )
@@ -67,7 +67,7 @@ function HeartIcon() {
 
 function CommentIcon() {
   return (
-    <svg className="h-4.5 w-4.5 text-[#222]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="h-4 w-4 text-[#222]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" />
     </svg>
   )
@@ -75,7 +75,7 @@ function CommentIcon() {
 
 function BookPlaceholder() {
   return (
-    <div className="flex h-full w-full items-center justify-center text-[56px] font-light text-white/90">
+    <div className="flex h-full w-full items-center justify-center text-[54px] font-light text-white/90">
       L
     </div>
   )
@@ -89,19 +89,19 @@ function TrendingBookCard({ book }) {
           <img
             src={book.image}
             alt={book.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
           />
         ) : (
           <BookPlaceholder />
         )}
       </div>
 
-      <div className="mt-4 min-w-0">
-        <h3 className="truncate text-[18px] font-black tracking-tight text-[#111] md:text-[20px]">
+      <div className="mt-3 min-w-0">
+        <h3 className="truncate text-[16px] font-black tracking-tight text-[#111] md:text-[17px]">
           {book.title}
         </h3>
 
-        <div className="mt-3 flex items-center gap-5 text-[12px] text-[#222] md:text-[13px]">
+        <div className="mt-2 flex items-center gap-4 text-[12px] text-[#222]">
           <span className="inline-flex items-center gap-1.5">
             <HeartIcon />
             <span>{formatCount(book.likes)}</span>
@@ -141,24 +141,24 @@ export default function TrendingNowSection() {
   return (
     <section className="px-4 pb-2 pt-8 md:pt-10">
       <div className="flex items-center gap-2">
-        <span className="text-[30px] leading-none">🔥</span>
-        <h2 className="text-[22px] font-black tracking-tight text-[#111] md:text-[28px]">
-          Trending Now
+        <span className="text-[28px] leading-none">🔥</span>
+        <h2 className="text-[20px] font-black uppercase tracking-tight text-[#111] md:text-[22px]">
+          TRENDING NOW
         </h2>
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-4">
-        <div className="flex min-w-0 gap-3 overflow-x-auto no-scrollbar">
+        <div className="flex min-w-0 gap-2.5 overflow-x-auto no-scrollbar">
           {trendTabs.map((tab) => {
             const active = tab === activeTab
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`shrink-0 rounded-full border px-10 py-3 text-[16px] font-medium transition-all md:px-8 md:py-2.5 md:text-[15px] ${
+                className={`shrink-0 rounded-full border px-6 py-2 text-[13px] font-medium transition-all md:px-5 md:py-1.5 md:text-[12px] ${
                   active
                     ? 'border-[#1840f5] bg-[#1840f5] text-white'
-                    : 'border-[#d0d0d0] bg-transparent text-[#1c1c1c]'
+                    : 'border-[#d8d8d8] bg-transparent text-[#1c1c1c]'
                 }`}
               >
                 {tab}
@@ -170,14 +170,14 @@ export default function TrendingNowSection() {
         <div className="relative shrink-0">
           <button
             onClick={() => setSortOpen((v) => !v)}
-            className="inline-flex items-center gap-2 text-[16px] font-medium text-[#1c1c1c] md:text-[15px]"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#1c1c1c] md:text-[12px]"
           >
             <span>Sort by</span>
             <SortIcon open={sortOpen} />
           </button>
 
           {sortOpen ? (
-            <div className="absolute right-0 top-11 z-20 w-[150px] overflow-hidden rounded-2xl border border-black/5 bg-white shadow-xl">
+            <div className="absolute right-0 top-10 z-20 w-[140px] overflow-hidden rounded-2xl border border-black/5 bg-white shadow-xl">
               {sortOptions.map((option) => (
                 <button
                   key={option}
@@ -185,7 +185,7 @@ export default function TrendingNowSection() {
                     setSortBy(option)
                     setSortOpen(false)
                   }}
-                  className={`block w-full px-4 py-3 text-left text-[14px] transition-colors ${
+                  className={`block w-full px-4 py-3 text-left text-[13px] transition-colors ${
                     sortBy === option
                       ? 'bg-[#f4f6ff] font-bold text-[#1840f5]'
                       : 'text-[#222] hover:bg-[#f7f7f7]'
@@ -199,7 +199,7 @@ export default function TrendingNowSection() {
         </div>
       </div>
 
-      <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-6 md:gap-x-6 md:gap-y-0">
+      <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 md:grid-cols-6 md:gap-x-5 md:gap-y-0">
         {books.map((book) => (
           <TrendingBookCard key={book.id} book={book} />
         ))}
