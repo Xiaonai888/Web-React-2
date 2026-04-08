@@ -57,16 +57,16 @@ export default function ShadowExclusiveSection() {
       <div className="flex justify-between items-center mb-6">
         <h3 className="font-black text-gray-900 text-lg flex items-center uppercase tracking-tight">
           <img
-            src="https://img.icons8.com/emoji/48/star-emoji.png"
+            src="https://img.icons8.com/emoji/48/crown-emoji.png"
             className="w-5 h-5 mr-2"
-            alt="icon"
+            alt="crown"
           />
           Shadow Exclusive
         </h3>
 
         <Link
           to="/shadow-exclusive"
-          className="text-indigo-600 text-[11px] font-black uppercase tracking-widest hover:underline transition-all"
+          className="text-amber-700 text-[11px] font-black uppercase tracking-widest hover:text-amber-800 hover:underline transition-all"
         >
           See All
         </Link>
@@ -79,7 +79,9 @@ export default function ShadowExclusiveSection() {
             key={item.id}
             className="group flex flex-col cursor-pointer"
           >
-            <div className="relative aspect-[2/3] bg-gray-100 rounded-2xl overflow-hidden shadow-md border border-gray-50 mb-3">
+            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-3 bg-white border border-amber-200/70 shadow-[0_8px_24px_rgba(212,175,55,0.18)] group-hover:shadow-[0_12px_30px_rgba(212,175,55,0.28)] transition-all duration-500">
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-amber-300/80 pointer-events-none z-10" />
+
               <img
                 src={item.image}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -89,30 +91,32 @@ export default function ShadowExclusiveSection() {
                 }}
               />
 
-              <div className="absolute top-2 right-2 bg-indigo-600/90 backdrop-blur-sm text-white text-[7px] px-2 py-1 rounded-full font-black shadow-lg border border-white/20">
-                PREMIUM
+              <div className="absolute top-2 right-2 z-20 px-2.5 py-1 rounded-full text-[7px] font-black tracking-[0.16em] uppercase text-amber-950 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 border border-amber-100 shadow-[0_6px_18px_rgba(212,175,55,0.35)]">
+                Premium
               </div>
+
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent pointer-events-none" />
             </div>
 
             <div className="px-0.5">
-              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1.5 overflow-hidden whitespace-nowrap text-ellipsis group-hover:text-indigo-600 transition-colors">
+              <h4 className="font-extrabold text-[12px] text-gray-900 leading-tight mb-1.5 overflow-hidden whitespace-nowrap text-ellipsis group-hover:text-amber-700 transition-colors">
                 {item.title}
               </h4>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                 <span
-                  className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase border ${
+                  className={`text-[8px] font-black px-2.5 py-1 rounded-full uppercase border shadow-sm ${
                     item.genreColor === 'emerald'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                       : item.genreColor === 'rose'
-                      ? 'bg-rose-50 text-rose-700 border-rose-100'
-                      : 'bg-sky-50 text-sky-700 border-sky-100'
+                      ? 'bg-pink-100 text-pink-800 border-pink-200'
+                      : 'bg-cyan-100 text-cyan-800 border-cyan-200'
                   }`}
                 >
                   {item.genre}
                 </span>
 
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase bg-gray-50 text-gray-500 border border-gray-100 tracking-tighter">
+                <span className="text-[8px] font-black px-2.5 py-1 rounded-full uppercase bg-amber-50 text-amber-800 border border-amber-200 shadow-sm">
                   {item.episode}
                 </span>
               </div>
