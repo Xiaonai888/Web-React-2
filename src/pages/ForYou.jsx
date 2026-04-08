@@ -175,6 +175,10 @@ export default function ForYou() {
             <AlphaSpotlight />
           </div>
 
+          <div className="my-6">
+            <ShadowExclusiveSection />
+          </div>
+
           <MustReads />
         </div>
       </div>
