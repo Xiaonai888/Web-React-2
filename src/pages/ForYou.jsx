@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
 import MustReads from '../components/MustReads'
+import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
