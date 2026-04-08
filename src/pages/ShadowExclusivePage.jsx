@@ -137,8 +137,8 @@ function CrownBadge() {
   return (
     <div className="absolute top-2 right-2 z-10 rounded-full bg-[#23182d]/90 border border-white/10 px-1.5 py-1 shadow-md">
       <div className="flex items-center gap-1">
-        <svg className="w-2.5 h-2.5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        <svg className="w-2.5 h-2.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 18h18l-1.6-9-4.9 3.4L12 6 9.5 12.4 4.6 9 3 18z" />
         </svg>
         <span className="text-[8px] font-black text-yellow-300 uppercase leading-none">Free</span>
       </div>
@@ -218,7 +218,7 @@ export default function ShadowExclusivePage() {
   const tabs = ['Popular', 'Daily', 'Weekly', 'All Time']
 
   return (
-    <div className="min-h-screen bg-[#17091f] text-white pb-28 md:pb-40">
+    <div className="min-h-screen bg-[#17091f] text-white pb-32 md:pb-24">
       <header className="sticky top-0 z-40 bg-[#17091f]/95 backdrop-blur-md">
         <div className="h-14 flex items-center justify-center px-4">
           <h1 className="text-[18px] font-extrabold tracking-tight">Shadow Exclusive</h1>
@@ -233,8 +233,8 @@ export default function ShadowExclusivePage() {
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
-                <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 18h18l-1.6-9-4.9 3.4L12 6 9.5 12.4 4.6 9 3 18z" />
                 </svg>
                 Premium Subscription
               </div>
