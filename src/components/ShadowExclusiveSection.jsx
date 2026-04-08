@@ -9,7 +9,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Fantasy',
       genreColor: 'emerald',
       episode: 'EP 20',
-      link: '/book/1',
     },
     {
       id: 2,
@@ -18,7 +17,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Romance',
       genreColor: 'rose',
       episode: 'EP 12',
-      link: '/book/2',
     },
     {
       id: 3,
@@ -27,7 +25,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Drama',
       genreColor: 'sky',
       episode: 'EP 8',
-      link: '/book/3',
     },
     {
       id: 4,
@@ -36,7 +33,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Fantasy',
       genreColor: 'emerald',
       episode: 'EP 25',
-      link: '/book/4',
     },
     {
       id: 5,
@@ -45,7 +41,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Romance',
       genreColor: 'rose',
       episode: 'EP 16',
-      link: '/book/5',
     },
     {
       id: 6,
@@ -54,7 +49,6 @@ export default function ShadowExclusiveSection() {
       genre: 'Drama',
       genreColor: 'sky',
       episode: 'EP 9',
-      link: '/book/6',
     },
   ]
 
@@ -81,7 +75,7 @@ export default function ShadowExclusiveSection() {
       <div className="grid grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-10">
         {sectionData.map((item) => (
           <Link
-            to={item.link}
+            to="/shadow-exclusive"
             key={item.id}
             className="group flex flex-col cursor-pointer"
           >
