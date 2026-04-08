@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export default function MustReads() {
+export default function Shadow Exclusive() {
   const mustReadData = [
     {
       id: 1,
