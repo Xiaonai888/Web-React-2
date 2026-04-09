@@ -8,6 +8,7 @@ import Me from './pages/Me'
 import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
+import UpdateTodayPage from './pages/UpdateTodayPage'
 
 export default function App() {
   return (
