@@ -5,93 +5,85 @@ const allBooks = [
     id: 201,
     title: 'Name book',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update Today Featured.jpg',
+    cover: '/assets/Update Today/Update Today 1.jpg',
     badge: 'red',
     views: '100k',
     likes: '1000',
     episodes: 'Ep 17',
     genres: ['Romance', 'Comedy', 'Fantasy', 'Action'],
-    description:
-      'Ika is the only survivor of a genocide of humans by demons summoned to wipe out life on his planet through a portal. During the destruction, he witnesses the genocide of humans by demons summoned from another universe.',
   },
   {
     id: 202,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 1.jpg',
+    cover: '/assets/Update Today/Update Today 2.jpg',
     badge: 'red',
     views: '100k',
     likes: '2.5k',
     episodes: 'Ep 17',
     genres: ['Romance', 'Fantasy'],
-    description: 'An exciting story full of adventure and romance in a fantasy world.',
   },
   {
     id: 203,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 2.jpg',
+    cover: '/assets/Update Today/Update Today 3.jpg',
     badge: 'yellow',
     views: '80k',
     likes: '1.8k',
     episodes: 'Ep 17',
     genres: ['Action', 'Drama'],
-    description: 'A gripping tale of action and drama that will keep you on the edge of your seat.',
   },
   {
     id: 204,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 3.jpg',
+    cover: '/assets/Update Today/Update Today 4.jpg',
     badge: 'green',
     views: '120k',
     likes: '3k',
     episodes: 'Ep 17',
     genres: ['Comedy', 'Romance'],
-    description: 'A heartwarming comedy romance that will make you laugh and cry.',
   },
   {
     id: 205,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 4.jpg',
+    cover: '/assets/Update Today/Update Today 5.jpg',
     badge: 'red',
     views: '90k',
     likes: '2.2k',
     episodes: 'Ep 17',
     genres: ['Fantasy', 'Action'],
-    description: 'Epic fantasy battles and heroic deeds in a world of magic.',
   },
   {
     id: 206,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 5.jpg',
+    cover: '/assets/Update Today/Update Today 6.jpg',
     badge: 'yellow',
     views: '75k',
     likes: '1.5k',
     episodes: 'Ep 17',
     genres: ['Drama', 'Mystery'],
-    description: 'A mysterious drama that unravels secrets hidden for generations.',
   },
   {
     id: 207,
     title: 'Name Novel',
     author: 'Author Name',
-    cover: '/assets/Update Today/Update 6.jpg',
+    cover: '/assets/Update Today/Update Today 7.jpg',
     badge: 'green',
     views: '60k',
     likes: '1.2k',
     episodes: 'Ep 17',
     genres: ['Romance', 'Drama'],
-    description: 'A beautiful romance drama filled with emotion and unexpected twists.',
   },
 ]
 
 const badgeStyles = {
-  red: 'bg-red-500 text-white',
+  red:    'bg-red-500 text-white',
   yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
+  green:  'bg-lime-400 text-black',
 }
 
 function BookCard({ book }) {
@@ -103,14 +95,9 @@ function BookCard({ book }) {
             src={book.cover}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            onError={(e) => {
-              e.target.style.display = 'none'
-              e.target.parentNode.classList.add('flex', 'items-center', 'justify-center')
-            }}
+            onError={(e) => { e.target.style.display = 'none' }}
           />
-          <div
-            className={`absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold ${badgeStyles[book.badge]}`}
-          >
+          <div className={`absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold ${badgeStyles[book.badge]}`}>
             New
           </div>
         </div>
@@ -123,10 +110,7 @@ function BookCard({ book }) {
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {book.genres.slice(0, 2).map((genre) => (
-              <span
-                key={genre}
-                className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500"
-              >
+              <span key={genre} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
                 {genre}
               </span>
             ))}
@@ -137,8 +121,8 @@ function BookCard({ book }) {
               <i className="fas fa-eye text-[13px]" />
               <span>{book.views}</span>
             </div>
-            <div className="flex items-center gap-1 text-red-500">
-              <i className="fas fa-heart text-[13px]" />
+            <div className="flex items-center gap-1">
+              <i className="fas fa-heart text-red-500 text-[13px]" />
               <span className="text-gray-600">{book.likes}</span>
             </div>
             <div className="flex items-center gap-1 text-gray-600">
@@ -155,8 +139,7 @@ function BookCard({ book }) {
 export default function UpdateTodayPage() {
   return (
     <div className="min-h-screen bg-white pb-32">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="h-14 flex items-center px-4 gap-3">
           <Link
             to="/"
@@ -174,12 +157,11 @@ export default function UpdateTodayPage() {
         </div>
       </header>
 
-      {/* Book List */}
       <main className="px-2 pt-3">
         <p className="px-4 pb-2 text-[13px] text-gray-400 font-medium">
           {allBooks.length} stories updated today
         </p>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-100">
           {allBooks.map((book) => (
             <BookCard key={book.id} book={book} />
           ))}
