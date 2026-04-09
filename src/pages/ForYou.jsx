@@ -183,6 +183,11 @@ export default function ForYou() {
           <div className="my-6">
             <TrendingNowSection />
           </div>
+          
+          <div className="my-6">
+            <UpdateTodaySection />
+          </div>
+        
         </div>
       </div>
     </>
