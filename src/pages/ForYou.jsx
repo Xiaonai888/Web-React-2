@@ -103,29 +103,31 @@ export default function ForYou() {
       `}</style>
 
       <div style={{ paddingBottom: '80px' }}>
-        <header className="flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
+        <header className="sticky top-0 z-[100] flex items-center justify-between bg-white px-4 py-4 shadow-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white shadow-lg shadow-blue-200">
               S
             </div>
-            <h1 className="text-blue-600 font-bold text-2xl tracking-tight">Shadow</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-blue-600">Shadow</h1>
           </div>
 
-          <div className="flex space-x-5 text-gray-400 text-xl">
-            <Link to="/search" className="hover:text-blue-600 transition-colors">
+          <div className="flex space-x-5 text-xl text-gray-400">
+            <Link to="/search" className="transition-colors hover:text-blue-600">
               <i className="fas fa-search" />
             </Link>
-            <button className="hover:text-blue-600 transition-colors">
+            <button className="transition-colors hover:text-blue-600">
               <i className="fas fa-bell" />
             </button>
           </div>
         </header>
 
-        <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2">
+        <nav className="sticky top-[68px] z-[90] flex space-x-8 border-b border-gray-100 bg-white px-4 pt-2">
           {['novel', 'chat', 'manga'].map((tab) => (
             <div
               key={tab}
-              className={`tab-item text-sm capitalize ${activeTab === tab ? 'active' : 'text-gray-400 font-semibold'}`}
+              className={`tab-item text-sm capitalize ${
+                activeTab === tab ? 'active' : 'font-semibold text-gray-400'
+              }`}
               onClick={() => setActiveTab(tab)}
             >
               {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
@@ -134,11 +136,19 @@ export default function ForYou() {
         </nav>
 
         <div id="tab-content-root">
-          <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
-            <button className="bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold">Today</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Romance</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Fantasy</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Action</button>
+          <div className="no-scrollbar flex space-x-3 overflow-x-auto bg-white px-4 py-5">
+            <button className="shrink-0 rounded-full bg-blue-600 px-6 py-1.5 text-xs font-bold text-white">
+              Today
+            </button>
+            <button className="shrink-0 rounded-full border border-gray-200 px-5 py-1.5 text-xs font-semibold text-gray-600">
+              Romance
+            </button>
+            <button className="shrink-0 rounded-full border border-gray-200 px-5 py-1.5 text-xs font-semibold text-gray-600">
+              Fantasy
+            </button>
+            <button className="shrink-0 rounded-full border border-gray-200 px-5 py-1.5 text-xs font-semibold text-gray-600">
+              Action
+            </button>
           </div>
 
           <div className="swiper-container mySwiper">
@@ -147,7 +157,7 @@ export default function ForYou() {
                 <div key={k} className="swiper-slide aspect-[16/9]">
                   <img
                     src={`/assets/banners/${k}.jpg`}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     alt={k}
                   />
                 </div>
@@ -156,7 +166,7 @@ export default function ForYou() {
             <div className="swiper-pagination" />
           </div>
 
-          <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
+          <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
             {[
               { icon: 'fa-shopping-bag', label: 'Shop' },
               { icon: 'fa-tasks', label: 'Tasks' },
@@ -164,10 +174,10 @@ export default function ForYou() {
               { icon: 'fa-calendar', label: 'Event' },
             ].map((item) => (
               <div key={item.label} className="group cursor-pointer">
-                <div className="w-12 h-12 bg-gray-50 rounded-full mb-1 mx-auto flex items-center justify-center group-hover:bg-blue-50 transition-all">
+                <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-blue-50">
                   <i className={`fas ${item.icon} text-gray-500 group-hover:text-blue-600`} />
                 </div>
-                <span className="text-[10px] text-gray-500 font-semibold">{item.label}</span>
+                <span className="text-[10px] font-semibold text-gray-500">{item.label}</span>
               </div>
             ))}
           </div>
@@ -182,6 +192,10 @@ export default function ForYou() {
 
           <div className="my-6">
             <TrendingNowSection />
+          </div>
+
+          <div className="my-6">
+            <UpdateTodaySection />
           </div>
         </div>
       </div>
