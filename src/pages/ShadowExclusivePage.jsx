@@ -54,7 +54,7 @@ const sections = [
     layout: 'compact',
     books: [
       { id: 7, title: 'My Lovely Troublemaker', episode: 'Up to Ep. 99', genre: 'Romance', image: '' },
-      { id: 8, title: 'Caught by My Baby’s Daddy', episode: 'Up to Ep. 311', genre: 'CEO', image: '' },
+      { id: 8, title: "Caught by My Baby's Daddy", episode: 'Up to Ep. 311', genre: 'CEO', image: '' },
       { id: 9, title: 'My Secret Crush', episode: 'Up to S3 Ep. 86', genre: 'School Love', image: '' },
       { id: 10, title: 'Half My Tyrant, Half My Baby', episode: 'Up to Ep. 200', genre: 'Fantasy', image: '' },
       { id: 11, title: 'Comeback of the Lady', episode: 'Up to Ep. 204', genre: 'Drama', image: '' },
@@ -81,8 +81,8 @@ const sections = [
     subtitle: 'Soft chemistry and unforgettable emotional tension',
     layout: 'compact',
     books: [
-      { id: 19, title: 'Your Majesty’s Pet', episode: 'Up to Ep. 83', genre: 'BL', image: '' },
-      { id: 20, title: 'His Highness’ Male Consort', episode: 'Up to Ep. 70', genre: 'Historical', image: '' },
+      { id: 19, title: "Your Majesty's Pet", episode: 'Up to Ep. 83', genre: 'BL', image: '' },
+      { id: 20, title: "His Highness' Male Consort", episode: 'Up to Ep. 70', genre: 'Historical', image: '' },
       { id: 21, title: 'Sensitive Touch', episode: 'Up to Extra 2', genre: 'BL', image: '' },
       { id: 22, title: 'The Priest Dreaming of a Dragon', episode: 'Up to Ep. 50', genre: 'Fantasy', image: '' },
       { id: 23, title: 'Intoxicated Love', episode: 'Up to Extra 3', genre: 'Romance', image: '' },
@@ -99,8 +99,8 @@ const sections = [
       { id: 26, title: 'Partners in Crime', episode: 'Up to Ep. 57', genre: 'Drama', image: '' },
       { id: 27, title: 'City of Sanctuary', episode: 'Up to Ep. 93', genre: 'Mystery', image: '' },
       { id: 28, title: 'Rebirth of the Ultimate Master', episode: 'Up to Ep. 71', genre: 'Eastern Fantasy', image: '' },
-      { id: 29, title: 'Where Do You Think You’re Going', episode: 'Up to Ep. 32', genre: 'Romance', image: '' },
-      { id: 30, title: 'Demon Realm Can’t Wait to Quit', episode: 'Up to Ep. 62', genre: 'Action', image: '' },
+      { id: 29, title: "Where Do You Think You're Going", episode: 'Up to Ep. 32', genre: 'Romance', image: '' },
+      { id: 30, title: "Demon Realm Can't Wait to Quit", episode: 'Up to Ep. 62', genre: 'Action', image: '' },
     ],
   },
   {
@@ -114,7 +114,7 @@ const sections = [
       { id: 33, title: 'Revenge Gone Wrong', episode: 'Romance', genre: 'Romance', image: '' },
       { id: 34, title: 'Milking My Disciples', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
       { id: 35, title: 'Rebirth of the Ultimate Master', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
-      { id: 36, title: 'Where Do You Think You’re Going', episode: 'Romance', genre: 'Romance', image: '' },
+      { id: 36, title: "Where Do You Think You're Going", episode: 'Romance', genre: 'Romance', image: '' },
     ],
   },
   {
