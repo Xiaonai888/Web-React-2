@@ -149,7 +149,7 @@ function CrownBadge() {
 function PlaceholderCover({ featured = false }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-white/5 shadow-lg flex items-center justify-center ${
+      className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-yellow-400/70 shadow-[0_0_10px_rgba(250,204,21,0.22)] flex items-center justify-center ${
         featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
       }`}
     >
@@ -175,7 +175,7 @@ function BookCard({ book, featured = false }) {
     <div className="group cursor-pointer min-w-0">
       {hasImage ? (
         <div
-          className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-white/5 shadow-lg ${
+          className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-yellow-400/70 shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
             featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
           }`}
         >
