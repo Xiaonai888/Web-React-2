@@ -36,7 +36,7 @@ export default function ShadowExclusiveSection() {
     },
     {
       id: 5,
-      title: 'CEO’s Secret Baby',
+      title: 'CEO's Secret Baby',
       image: '/assets/Must Read pic/Must Read 5.jpg',
       genre: 'Romance',
       genreColor: 'rose',
