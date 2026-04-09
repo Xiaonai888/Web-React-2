@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AlphaSpotlight from '../components/AlphaSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import TrendingNowSection from '../components/TrendingNowSection'
+import UpdateTodaySection from '../components/UpdateTodaySection'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
