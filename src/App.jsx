@@ -20,6 +20,7 @@ export default function App() {
         <Route path="/me" element={<Me />} />
         <Route path="/search" element={<Search />} />
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
+        <Route path="/update-today" element={<UpdateTodayPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
       </Routes>
       <Footer />
