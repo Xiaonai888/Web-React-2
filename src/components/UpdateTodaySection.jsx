@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { Eye, Heart, List, ChevronRight } from 'lucide-react'
 
 const featuredBook = {
   id: 201,
@@ -97,12 +96,12 @@ function SmallBookCard({ book }) {
 
         <div className="mt-2 flex items-center gap-4 text-[15px]">
           <div className="flex items-center gap-1.5 text-red-500">
-            <Eye size={18} className="text-black" strokeWidth={2.2} />
+            <i className="fas fa-eye text-black text-[16px]" />
             <span>{book.views}</span>
           </div>
 
           <div className="flex items-center gap-1.5 text-blue-600">
-            <List size={18} className="text-black" strokeWidth={2.4} />
+            <i className="fas fa-list text-black text-[16px]" />
             <span>{book.episodes}</span>
           </div>
         </div>
@@ -115,7 +114,6 @@ export default function UpdateTodaySection() {
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[24px]">🎉</span>
@@ -129,11 +127,10 @@ export default function UpdateTodaySection() {
             className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-950 transition hover:bg-black/5"
             aria-label="View all update today"
           >
-            <ChevronRight size={30} strokeWidth={2.4} />
+            <i className="fas fa-chevron-right text-[22px]" />
           </Link>
         </div>
 
-        {/* Featured */}
         <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
           <Link to={`/story/${featuredBook.id}`} className="group block w-full">
             <div className="overflow-hidden rounded-2xl bg-amber-500 shadow-sm">
@@ -160,17 +157,17 @@ export default function UpdateTodaySection() {
 
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[18px] font-semibold">
               <div className="flex items-center gap-2 text-blue-700">
-                <Eye size={22} className="text-black" strokeWidth={2.2} />
+                <i className="fas fa-eye text-black text-[18px]" />
                 <span>{featuredBook.views}</span>
               </div>
 
               <div className="flex items-center gap-2 text-red-500">
-                <Heart size={22} fill="currentColor" strokeWidth={1.6} />
+                <i className="fas fa-heart text-[18px]" />
                 <span className="text-black">{featuredBook.likes}</span>
               </div>
 
               <div className="flex items-center gap-2 text-blue-700">
-                <List size={22} className="text-black" strokeWidth={2.4} />
+                <i className="fas fa-list text-black text-[18px]" />
                 <span>{featuredBook.episodes}</span>
               </div>
             </div>
@@ -192,7 +189,6 @@ export default function UpdateTodaySection() {
           </div>
         </div>
 
-        {/* Grid */}
         <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
           {updateBooks.map((book) => (
             <SmallBookCard key={book.id} book={book} />
@@ -202,4 +198,3 @@ export default function UpdateTodaySection() {
     </section>
   )
 }
-
