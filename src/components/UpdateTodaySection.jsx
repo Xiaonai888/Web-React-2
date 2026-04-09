@@ -4,7 +4,7 @@ const featuredBook = {
   id: 201,
   title: 'Name book',
   author: 'Author Name',
-  cover: '/assets/Update Today/Update Today Featured.jpg',
+  cover: '/assets/Update Today/Update Today 1.jpg',
   views: '100k',
   likes: '1000',
   episodes: 'Ep 17',
@@ -14,60 +14,18 @@ const featuredBook = {
 }
 
 const updateBooks = [
-  {
-    id: 202,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 1.jpg',
-    badge: 'red',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
-  {
-    id: 203,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 2.jpg',
-    badge: 'yellow',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
-  {
-    id: 204,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 3.jpg',
-    badge: 'green',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
-  {
-    id: 205,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 4.jpg',
-    badge: 'red',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
-  {
-    id: 206,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 5.jpg',
-    badge: 'yellow',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
-  {
-    id: 207,
-    title: 'Name Novel',
-    cover: '/assets/Update Today/Update 6.jpg',
-    badge: 'green',
-    views: '100k',
-    episodes: 'Ep 17',
-  },
+  { id: 202, title: 'Name Novel', cover: '/assets/Update Today/Update Today 2.jpg', badge: 'red',    views: '100k', episodes: 'Ep 17' },
+  { id: 203, title: 'Name Novel', cover: '/assets/Update Today/Update Today 3.jpg', badge: 'yellow', views: '100k', episodes: 'Ep 17' },
+  { id: 204, title: 'Name Novel', cover: '/assets/Update Today/Update Today 4.jpg', badge: 'green',  views: '100k', episodes: 'Ep 17' },
+  { id: 205, title: 'Name Novel', cover: '/assets/Update Today/Update Today 5.jpg', badge: 'red',    views: '100k', episodes: 'Ep 17' },
+  { id: 206, title: 'Name Novel', cover: '/assets/Update Today/Update Today 6.jpg', badge: 'yellow', views: '100k', episodes: 'Ep 17' },
+  { id: 207, title: 'Name Novel', cover: '/assets/Update Today/Update Today 7.jpg', badge: 'green',  views: '100k', episodes: 'Ep 17' },
 ]
 
 const badgeStyles = {
-  red: 'bg-red-500 text-white',
+  red:    'bg-red-500 text-white',
   yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
+  green:  'bg-lime-400 text-black',
 }
 
 function SmallBookCard({ book }) {
@@ -79,11 +37,9 @@ function SmallBookCard({ book }) {
             src={book.cover}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            onError={(e) => { e.target.style.display = 'none' }}
           />
-
-          <div
-            className={`absolute right-3 top-3 rounded-full px-4 py-1.5 text-[14px] font-bold ${badgeStyles[book.badge]}`}
-          >
+          <div className={`absolute right-3 top-3 rounded-full px-4 py-1.5 text-[14px] font-bold ${badgeStyles[book.badge]}`}>
             New
           </div>
         </div>
@@ -93,14 +49,12 @@ function SmallBookCard({ book }) {
         <h3 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-950">
           {book.title}
         </h3>
-
         <div className="mt-2 flex items-center gap-4 text-[15px]">
-          <div className="flex items-center gap-1.5 text-red-500">
+          <div className="flex items-center gap-1.5">
             <i className="fas fa-eye text-black text-[16px]" />
             <span>{book.views}</span>
           </div>
-
-          <div className="flex items-center gap-1.5 text-blue-600">
+          <div className="flex items-center gap-1.5">
             <i className="fas fa-list text-black text-[16px]" />
             <span>{book.episodes}</span>
           </div>
@@ -121,7 +75,6 @@ export default function UpdateTodaySection() {
               Update today
             </h2>
           </div>
-
           <Link
             to="/update-today"
             className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-950 transition hover:bg-black/5"
@@ -139,6 +92,7 @@ export default function UpdateTodaySection() {
                   src={featuredBook.cover}
                   alt={featuredBook.title}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                  onError={(e) => { e.target.style.display = 'none' }}
                 />
               </div>
             </div>
@@ -150,39 +104,30 @@ export default function UpdateTodaySection() {
                 {featuredBook.title}
               </h3>
             </Link>
-
             <p className="mt-1 text-[20px] font-bold text-neutral-950 sm:text-[22px]">
               {featuredBook.author}
             </p>
-
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[18px] font-semibold">
               <div className="flex items-center gap-2 text-blue-700">
                 <i className="fas fa-eye text-black text-[18px]" />
                 <span>{featuredBook.views}</span>
               </div>
-
               <div className="flex items-center gap-2 text-red-500">
                 <i className="fas fa-heart text-[18px]" />
                 <span className="text-black">{featuredBook.likes}</span>
               </div>
-
               <div className="flex items-center gap-2 text-blue-700">
                 <i className="fas fa-list text-black text-[18px]" />
                 <span>{featuredBook.episodes}</span>
               </div>
             </div>
-
             <div className="mt-4 flex flex-wrap gap-2">
               {featuredBook.genres.map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-full bg-[#efefef] px-3 py-1.5 text-[14px] font-medium text-neutral-500"
-                >
+                <span key={genre} className="rounded-full bg-[#efefef] px-3 py-1.5 text-[14px] font-medium text-neutral-500">
                   {genre}
                 </span>
               ))}
             </div>
-
             <p className="mt-5 line-clamp-3 max-w-4xl text-[16px] leading-8 text-neutral-800 sm:text-[17px]">
               {featuredBook.description}
             </p>
