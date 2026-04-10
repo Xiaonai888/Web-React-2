@@ -84,8 +84,9 @@ export default function UpdateTodaySection() {
           </Link>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-          <Link to={`/story/${featuredBook.id}`} className="group block w-full">
+        {/* Featured book — always side by side on ALL screen sizes */}
+        <div className="flex gap-4 items-start">
+          <Link to={`/story/${featuredBook.id}`} className="group shrink-0 w-[110px] sm:w-[140px] lg:w-[220px]">
             <div className="overflow-hidden rounded-2xl bg-amber-500 shadow-sm">
               <div className="aspect-[2/3] overflow-hidden">
                 <img
@@ -98,43 +99,43 @@ export default function UpdateTodaySection() {
             </div>
           </Link>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <Link to={`/story/${featuredBook.id}`} className="block">
-              <h3 className="line-clamp-2 text-[30px] font-extrabold leading-tight tracking-tight text-[#7b1028] sm:text-[36px]">
+              <h3 className="line-clamp-2 text-[18px] font-extrabold leading-tight tracking-tight text-[#7b1028] sm:text-[24px] lg:text-[30px]">
                 {featuredBook.title}
               </h3>
             </Link>
-            <p className="mt-1 text-[20px] font-bold text-neutral-950 sm:text-[22px]">
+            <p className="mt-1 text-[13px] font-bold text-neutral-950 sm:text-[16px] lg:text-[20px]">
               {featuredBook.author}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[18px] font-semibold">
-              <div className="flex items-center gap-2 text-blue-700">
-                <i className="fas fa-eye text-black text-[18px]" />
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] font-semibold sm:text-[14px] lg:text-[18px]">
+              <div className="flex items-center gap-1 text-blue-700">
+                <i className="fas fa-eye text-black text-[12px] lg:text-[18px]" />
                 <span>{featuredBook.views}</span>
               </div>
-              <div className="flex items-center gap-2 text-red-500">
-                <i className="fas fa-heart text-[18px]" />
+              <div className="flex items-center gap-1 text-red-500">
+                <i className="fas fa-heart text-[12px] lg:text-[18px]" />
                 <span className="text-black">{featuredBook.likes}</span>
               </div>
-              <div className="flex items-center gap-2 text-blue-700">
-                <i className="fas fa-list text-black text-[18px]" />
+              <div className="flex items-center gap-1 text-blue-700">
+                <i className="fas fa-list text-black text-[12px] lg:text-[18px]" />
                 <span>{featuredBook.episodes}</span>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {featuredBook.genres.map((genre) => (
-                <span key={genre} className="rounded-full bg-[#efefef] px-3 py-1.5 text-[14px] font-medium text-neutral-500">
+                <span key={genre} className="rounded-full bg-[#efefef] px-2 py-1 text-[10px] font-medium text-neutral-500 sm:px-3 sm:text-[12px] lg:text-[14px]">
                   {genre}
                 </span>
               ))}
             </div>
-            <p className="mt-5 line-clamp-3 max-w-4xl text-[16px] leading-8 text-neutral-800 sm:text-[17px]">
+            <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-neutral-800 sm:text-[13px] lg:line-clamp-3 lg:text-[16px] lg:leading-8">
               {featuredBook.description}
             </p>
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
+        <div className="mt-8 grid grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8">
           {updateBooks.map((book) => (
             <SmallBookCard key={book.id} book={book} />
           ))}
