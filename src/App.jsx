@@ -4,14 +4,14 @@ import ForYou from './pages/ForYou'
 import Fast from './pages/Fast'
 import Discover from './pages/Discover'
 import Library from './pages/Library'
-import Me from './pages/Me'
+import Me from './pages/Me/Me'
 import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
-import PremiumPage from './pages/PremiumPage'
-import SettingsPage from './pages/SettingsPage'
+import PremiumPage from './pages/Me/PremiumPage'
+import SettingsPage from './pages/Me/SettingsPage'
 
 export default function App() {
   return (
