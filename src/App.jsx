@@ -10,6 +10,8 @@ import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
+import PremiumPage from './pages/PremiumPage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
         <Route path="/update-today" element={<UpdateTodayPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
+        <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
