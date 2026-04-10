@@ -1,99 +1,392 @@
 // src/pages/Library.jsx
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+
+const topTabs = ['Recents', 'Subscribed', 'Downloads']
+const typeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
+
+const libraryData = {
+  Recents: {
+    context: {
+      label: 'Continue Reading',
+      title: 'The Revenge of the Betrayed Bride',
+      subtitle: 'Maya Brook was excited for her wedding, but on the day everything changed.',
+      meta: 'Last read • Ep. 27',
+      image: '/assets/Shadow Exclusive/Shadow Exclusive 1.jpg',
+      to: '/story/401',
+    },
+    books: [
+      { id: 401, title: 'The Revenge of the Betrayed Bride', type: 'Novel', info: 'Last read Ep. 27', image: '/assets/Update Today/Update Today 1.jpg' },
+      { id: 402, title: 'Soft Autumn Promise', type: 'Novel', info: 'Last read Ep. 12', image: '/assets/Update Today/Update Today 2.jpg' },
+      { id: 403, title: 'Hidden in the Reply Box', type: 'Chat Story', info: 'Last read Chat 31', image: '/assets/Update Today/Update Today 3.jpg' },
+      { id: 404, title: 'Moonlight Homeroom', type: 'Manga', info: 'Last read Ep. 8', image: '/assets/Update Today/Update Today 4.jpg' },
+      { id: 405, title: 'Stay a Little Longer', type: 'Novel', info: 'Last read Ep. 19', image: '/assets/Update Today/Update Today 5.jpg' },
+      { id: 406, title: 'Our Fingers Almost Touched', type: 'Manga', info: 'Last read Ep. 6', image: '/assets/Update Today/Update Today 6.jpg' },
+    ],
+  },
+  Subscribed: {
+    context: {
+      label: 'Latest Update',
+      title: 'Shadow Bride',
+      subtitle: 'A new chapter just dropped from one of the stories you follow.',
+      meta: 'Updated 2h ago • Ep. 26 released',
+      image: '/assets/Shadow Exclusive/Shadow Exclusive 2.jpg',
+      to: '/story/501',
+    },
+    feed: [
+      { id: 501, title: 'Shadow Bride', author: 'Luna Hale', update: 'Updated 2h ago', episode: 'Ep. 26 released', to: '/story/501' },
+      { id: 502, title: 'Royal Scheme', author: 'Mira Voss', update: 'Updated today', episode: 'Ep. 13 released', to: '/story/502' },
+      { id: 503, title: 'Typing My Heart', author: 'Yuna K', update: 'Updated yesterday', episode: 'Chat 44 released', to: '/story/503' },
+    ],
+    books: [
+      { id: 501, title: 'Shadow Bride', type: 'Novel', info: 'New Ep. 26', image: '/assets/Shadow Exclusive/Shadow Exclusive 1.jpg' },
+      { id: 502, title: 'Royal Scheme', type: 'Novel', info: 'New Ep. 13', image: '/assets/Shadow Exclusive/Shadow Exclusive 2.jpg' },
+      { id: 503, title: 'Typing My Heart', type: 'Chat Story', info: 'New Chat 44', image: '/assets/Shadow Exclusive/Shadow Exclusive 3.jpg' },
+      { id: 504, title: 'My Princess Roommate', type: 'Manga', info: 'New Ep. 9', image: '/assets/Shadow Exclusive/Shadow Exclusive 4.jpg' },
+      { id: 505, title: 'CEO in the Rain', type: 'Novel', info: 'New Ep. 17', image: '/assets/Shadow Exclusive/Shadow Exclusive 5.jpg' },
+      { id: 506, title: 'Under the Same Rain', type: 'Manga', info: 'New Ep. 21', image: '/assets/Shadow Exclusive/Shadow Exclusive 6.jpg' },
+    ],
+  },
+  Downloads: {
+    context: {
+      label: 'Recently Downloaded',
+      title: 'The Omega of the Dragon',
+      subtitle: 'Saved offline and ready to read anytime.',
+      meta: 'Downloaded • Up to Ep. 47',
+      image: '/assets/Update Today/Update Today 7.jpg',
+      to: '/story/601',
+    },
+    books: [
+      { id: 601, title: 'The Omega of the Dragon', type: 'Novel', info: 'Downloaded', image: '/assets/Update Today/Update Today 7.jpg', badge: 'END' },
+      { id: 602, title: 'My Chubby Princess', type: 'Manga', info: 'Downloaded', image: '/assets/Trending%20Now/Trending%201.jpg' },
+      { id: 603, title: 'Marrying the Uncle of EX', type: 'Novel', info: 'Downloaded', image: '/assets/Trending%20Now/Trending%202.jpg' },
+      { id: 604, title: 'Late Night Messages', type: 'Chat Story', info: 'Downloaded', image: '/assets/Trending%20Now/Trending%203.jpg' },
+      { id: 605, title: 'Promise in Spring', type: 'Novel', info: 'Downloaded', image: '/assets/Trending%20Now/Trending%204.jpg' },
+      { id: 606, title: 'Her Soft Reply', type: 'Chat Story', info: 'Downloaded', image: '/assets/Trending%20Now/Trending%205.jpg' },
+    ],
+  },
+}
+
+const recommendedBooks = [
+  { id: 701, title: "Ladyship's Scheme", type: 'Novel', image: '/assets/Trending%20Now/Trending%2013.jpg' },
+  { id: 702, title: 'One-Night Affair', type: 'Novel', image: '/assets/Trending%20Now/Trending%2014.jpg' },
+  { id: 703, title: 'Infertile CEO', type: 'Novel', image: '/assets/Trending%20Now/Trending%2015.jpg' },
+  { id: 704, title: 'Chat Me at Midnight', type: 'Chat Story', image: '/assets/Trending%20Now/Trending%2016.jpg' },
+  { id: 705, title: 'Moon Campus', type: 'Manga', image: '/assets/Trending%20Now/Trending%2017.jpg' },
+  { id: 706, title: 'Your Winter Letter', type: 'Novel', image: '/assets/Trending%20Now/Trending%2018.jpg' },
+]
+
+function getActionText(tab) {
+  if (tab === 'Recents') return 'Clear'
+  if (tab === 'Subscribed') return 'Manage'
+  return 'Edit'
+}
+
+function getSubtitle(tab) {
+  if (tab === 'Recents') return 'Pick up where you left off.'
+  if (tab === 'Subscribed') return 'Follow the latest updates from stories you love.'
+  return 'Available offline anytime.'
+}
+
+function EmptyState({ title, text }) {
+  return (
+    <div className="rounded-3xl border border-[#ececec] bg-[#fafafa] px-5 py-10 text-center">
+      <h3 className="text-[16px] font-extrabold text-[#111]">{title}</h3>
+      <p className="mt-2 text-[13px] text-[#7a7a7a]">{text}</p>
+    </div>
+  )
+}
+
+function EndBadge() {
+  return (
+    <div className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-[#ff9a44] to-[#fc6076] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
+      END
+    </div>
+  )
+}
+
+function LibraryBookCard({ book }) {
+  return (
+    <Link to={`/story/${book.id}`} className="group block min-w-0">
+      <div className="relative overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+        <div className="aspect-[2/3] overflow-hidden">
+          <img
+            src={book.image}
+            alt={book.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            onError={(e) => {
+              e.target.style.display = 'none'
+            }}
+          />
+        </div>
+
+        {book.badge === 'END' ? <EndBadge /> : null}
+      </div>
+
+      <div className="pt-2.5">
+        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+          {book.title}
+        </h4>
+        <p className="mt-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+          {book.info}
+        </p>
+      </div>
+    </Link>
+  )
+}
+
+function RecommendationCard({ book }) {
+  return (
+    <Link to={`/story/${book.id}`} className="group block min-w-0">
+      <div className="overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+        <div className="aspect-[2/3] overflow-hidden">
+          <img
+            src={book.image}
+            alt={book.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            onError={(e) => {
+              e.target.style.display = 'none'
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="pt-2.5">
+        <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+          {book.title}
+        </h4>
+      </div>
+    </Link>
+  )
+}
 
 export default function Library() {
   const [activeTab, setActiveTab] = useState('Subscribed')
+  const [activeType, setActiveType] = useState('All')
+
+  const currentSection = libraryData[activeTab]
+
+  const filteredBooks = useMemo(() => {
+    if (!currentSection?.books) return []
+    if (activeType === 'All') return currentSection.books
+    return currentSection.books.filter((book) => book.type === activeType)
+  }, [currentSection, activeType])
+
+  const filteredRecommendations = useMemo(() => {
+    if (activeType === 'All') return recommendedBooks
+    return recommendedBooks.filter((book) => book.type === activeType)
+  }, [activeType])
+
+  const actionText = getActionText(activeTab)
+  const subtitle = getSubtitle(activeTab)
 
   return (
     <>
       <style>{`
-        body { background:#fff; font-family:'Inter','Kantumruy Pro',sans-serif; }
-        .no-scrollbar::-webkit-scrollbar { display:none; }
-        .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
-        .tab-active-lib { color:#1a1a1a; font-weight:800; font-size:1.1rem; }
-        .tab-active-lib::after { content:""; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:20px; height:4px; background:#ff3b5c; border-radius:10px; }
-        .tag-end { background: linear-gradient(45deg, #ff9a44, #fc6076); }
+        body {
+          background: #ffffff;
+          font-family: 'Inter', 'Kantumruy Pro', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-active-lib::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: -10px;
+          width: 22px;
+          height: 4px;
+          border-radius: 9999px;
+          background: #ff3b5c;
+        }
       `}</style>
 
-      <div style={{ paddingBottom:'80px' }}>
-        {/* Header */}
-        <header className="sticky top-0 z-[100] bg-white pt-6 pb-4 border-b border-gray-50">
-          <div className="flex justify-between items-center px-5 mb-6">
-            <div className="flex space-x-6 items-end">
-              {['Recents','Subscribed','Downloads'].map(t => (
-                <button key={t} onClick={() => setActiveTab(t)}
-                  className={`relative text-sm font-bold transition-all ${activeTab===t ? 'tab-active-lib' : 'text-gray-400'}`}>
-                  {t}
-                </button>
-              ))}
+      <div className="pb-[88px]">
+        <header className="sticky top-0 z-[60] border-b border-[#f3f3f3] bg-white/95 backdrop-blur-sm">
+          <div className="px-4 pt-5 sm:px-5">
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex min-w-0 items-end gap-5 overflow-x-auto no-scrollbar">
+                {topTabs.map((tab) => {
+                  const active = tab === activeTab
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`relative shrink-0 pb-3 text-[13px] font-bold transition-colors sm:text-[14px] ${
+                        active ? 'tab-active-lib text-[#111]' : 'text-[#a1a1aa]'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button className="shrink-0 pb-3 text-[13px] font-semibold text-[#5f5f68] transition hover:text-[#111]">
+                {actionText}
+              </button>
             </div>
-            <button className="text-gray-600 font-semibold text-sm">Edit</button>
-          </div>
-          <div className="flex space-x-3 px-5 overflow-x-auto no-scrollbar">
-            <button className="bg-[#ff3b5c] text-white px-5 py-1.5 rounded-full text-xs font-bold shrink-0 shadow-lg shadow-red-100">All</button>
-            <button className="bg-gray-100 text-gray-500 px-5 py-1.5 rounded-full text-xs font-bold shrink-0">Comic</button>
-            <button className="bg-gray-100 text-gray-500 px-5 py-1.5 rounded-full text-xs font-bold shrink-0">Novel</button>
+
+            <p className="pb-4 pt-2 text-[12px] text-[#8b8b95] sm:text-[13px]">
+              {subtitle}
+            </p>
+
+            <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+              {typeTabs.map((type) => {
+                const active = type === activeType
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setActiveType(type)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+                      active
+                        ? 'bg-[#ff3b5c] text-white shadow-[0_8px_18px_rgba(255,59,92,0.18)]'
+                        : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </header>
 
-        {/* Featured book */}
-        <section className="px-5 mt-6">
-          <div className="bg-gray-50 rounded-2xl p-4 flex items-center space-x-4 border border-gray-100 relative cursor-pointer">
-            <div className="w-20 h-28 rounded-lg overflow-hidden shrink-0 shadow-md">
-              <img src="https://via.placeholder.com/200x300?text=CEO" className="w-full h-full object-cover" alt="" />
-            </div>
-            <div className="flex-1 pr-6">
-              <h4 className="font-extrabold text-[14px] text-gray-900 leading-tight line-clamp-1">The Revenge of the Betrayed Bride</h4>
-              <p className="text-[11px] text-gray-400 mt-2 line-clamp-2">Maya Brook was excited for her wedding, but on the day...</p>
-            </div>
-            <i className="fas fa-chevron-right text-gray-300 absolute right-4" />
-          </div>
-        </section>
+        <main className="px-4 sm:px-5">
+          {currentSection?.context ? (
+            <section className="pt-5">
+              <Link
+                to={currentSection.context.to}
+                className="group block rounded-[24px] border border-[#efefef] bg-[#fafafa] p-4 transition hover:bg-[#f7f7f7]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-[82px] shrink-0 overflow-hidden rounded-2xl bg-[#ececec] shadow-sm sm:w-[90px]">
+                    <div className="aspect-[2/3] overflow-hidden">
+                      <img
+                        src={currentSection.context.image}
+                        alt={currentSection.context.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
 
-        {/* Books grid */}
-        <section className="px-5 mt-8">
-          <div className="grid grid-cols-3 gap-x-4 gap-y-8">
-            {[
-              { title:'My Chubby Princess',       ep:'Up to Ep.262', img:'https://via.placeholder.com/200x300?text=Princess', tag:null },
-              { title:'Marrying the Uncle of EX', ep:'Up to Ep.94',  img:'https://via.placeholder.com/200x300?text=Uncle',    tag:null },
-              { title:'The Omega of the Dragon',  ep:'Up to Ep.47',  img:'https://via.placeholder.com/200x300?text=Dragon',   tag:'END' },
-            ].map(book => (
-              <div key={book.title} className="flex flex-col">
-                <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-2 shadow-sm">
-                  <img src={book.img} className="w-full h-full object-cover" alt="" />
-                  {book.tag && <div className="tag-end absolute top-2 left-2 text-[8px] text-white font-bold px-1.5 py-0.5 rounded">{book.tag}</div>}
-                  <div className="absolute bottom-2 left-2 bg-black/40 p-1 rounded backdrop-blur-sm">
-                    <i className="fas fa-book-open text-white text-[8px]" />
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="mb-1 inline-flex rounded-full bg-[#fff1f4] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#ff3b5c]">
+                      {currentSection.context.label}
+                    </div>
+
+                    <h2 className="line-clamp-1 text-[15px] font-extrabold tracking-tight text-[#111] sm:text-[16px]">
+                      {currentSection.context.title}
+                    </h2>
+
+                    <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#7a7a82]">
+                      {currentSection.context.subtitle}
+                    </p>
+
+                    <p className="mt-2 text-[11px] font-semibold text-[#5f78ff]">
+                      {currentSection.context.meta}
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 text-[#c2c2c8]">
+                    <i className="fas fa-chevron-right text-[14px]" />
                   </div>
                 </div>
-                <h5 className="font-bold text-[12px] text-gray-800 line-clamp-1">{book.title}</h5>
-                <p className="text-[10px] text-gray-400 mt-0.5 font-medium">{book.ep}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+              </Link>
+            </section>
+          ) : null}
 
-        {/* Recommendations */}
-        <section className="mt-12 bg-gray-50/50 pt-8 pb-10">
-          <div className="px-5 mb-6 flex justify-between items-center">
-            <h3 className="font-extrabold text-lg text-gray-900">Recommend For You</h3>
-          </div>
-          <div className="flex space-x-4 px-5 overflow-x-auto no-scrollbar">
-            {[
-              { title:"Ladyship's Scheme", img:'https://via.placeholder.com/200x300?text=New+1' },
-              { title:'One-Night Affair',  img:'https://via.placeholder.com/200x300?text=New+2' },
-              { title:'Infertile CEO',     img:'https://via.placeholder.com/200x300?text=New+3' },
-            ].map(b => (
-              <div key={b.title} className="min-w-[110px] group">
-                <div className="aspect-[3/4.2] rounded-xl overflow-hidden mb-2 relative">
-                  <img src={b.img} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="" />
-                  <div className="tag-end absolute top-2 left-2 text-[8px] text-white font-bold px-1.5 py-0.5 rounded uppercase">End</div>
-                </div>
-                <h6 className="font-bold text-[11px] text-gray-800 line-clamp-1">{b.title}</h6>
+          {activeTab === 'Subscribed' && currentSection?.feed?.length ? (
+            <section className="pt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-[16px] font-extrabold tracking-tight text-[#111]">
+                  Latest from Authors You Follow
+                </h3>
               </div>
-            ))}
-          </div>
-        </section>
+
+              <div className="space-y-3">
+                {currentSection.feed.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.to}
+                    className="flex items-start justify-between gap-4 rounded-2xl border border-[#f1f1f1] bg-white px-4 py-3 transition hover:bg-[#fafafa]"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="line-clamp-1 text-[13px] font-extrabold text-[#111]">
+                        {item.title}
+                      </h4>
+                      <p className="mt-0.5 text-[11px] text-[#8d8d95]">
+                        {item.author}
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold text-[#5f78ff]">
+                        {item.episode}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-[11px] font-medium text-[#a0a0a8]">
+                      {item.update}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="pt-7">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+                {activeTab === 'Recents'
+                  ? 'Your Recent Stories'
+                  : activeTab === 'Subscribed'
+                  ? 'Your Subscriptions'
+                  : 'Your Downloads'}
+              </h3>
+            </div>
+
+            {filteredBooks.length ? (
+              <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-4 md:gap-y-0">
+                {filteredBooks.map((book) => (
+                  <LibraryBookCard key={book.id} book={book} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title={
+                  activeTab === 'Recents'
+                    ? 'No recent stories yet'
+                    : activeTab === 'Subscribed'
+                    ? 'No subscriptions yet'
+                    : 'No downloads yet'
+                }
+                text={
+                  activeTab === 'Recents'
+                    ? 'Your recently opened stories will appear here.'
+                    : activeTab === 'Subscribed'
+                    ? 'Follow stories to get updates here.'
+                    : 'Download stories to read offline anytime.'
+                }
+              />
+            )}
+          </section>
+
+          <section className="pt-12">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+                You Might Like
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-4 md:gap-y-0">
+              {filteredRecommendations.map((book) => (
+                <RecommendationCard key={book.id} book={book} />
+              ))}
+            </div>
+          </section>
+        </main>
       </div>
     </>
   )
