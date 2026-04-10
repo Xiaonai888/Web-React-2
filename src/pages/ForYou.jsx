@@ -43,6 +43,7 @@ export default function ForYou() {
           padding: 0;
           background: #fff;
           font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+          overflow-x: hidden;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -102,7 +103,7 @@ export default function ForYou() {
         }
       `}</style>
 
-      <div style={{ paddingBottom: '80px' }}>
+      <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
         <header className="flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
           <div className="flex items-center space-x-2">
             <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">
