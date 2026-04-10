@@ -18,7 +18,7 @@ const trendingData = {
     { id: 202, title: 'My Cold-Hearted Prince', likes: 171000, views: 1390000, fans: 72100, comments: 32800, image: '/assets/Trending%20Now/Trending%208.jpg' },
     { id: 203, title: 'The Last Summer Promise', likes: 165000, views: 1320000, fans: 70300, comments: 31500, image: '/assets/Trending%20Now/Trending%209.jpg' },
     { id: 204, title: 'Her Dangerous Roommate', likes: 154000, views: 1265000, fans: 68200, comments: 29400, image: '/assets/Trending%20Now/Trending%2010.jpg' },
-    { id: 205, title: 'Softly, Don't Leave', likes: 149000, views: 1210000, fans: 65400, comments: 28100, image: '/assets/Trending%20Now/Trending%2011.jpg' },
+    { id: 205, title: "Softly, Don't Leave", likes: 149000, views: 1210000, fans: 65400, comments: 28100, image: '/assets/Trending%20Now/Trending%2011.jpg' },
     { id: 206, title: 'Second Chance Bride', likes: 141000, views: 1185000, fans: 63100, comments: 27600, image: '/assets/Trending%20Now/Trending%2012.jpg' },
   ],
   Monthly: [
