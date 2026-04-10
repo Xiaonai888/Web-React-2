@@ -9,6 +9,7 @@ import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
+import SubscriptionsPage from './pages/SubscriptionsPage'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
         <Route path="/update-today" element={<UpdateTodayPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
+        <Route path="/subscriptions" element={<SubscriptionsPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
