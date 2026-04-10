@@ -1,6 +1,6 @@
-// src/pages/Library.jsx
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import SubscriptionsSection from '../components/library/SubscriptionsSection'
 
 const topTabs = ['Recents', 'Subscribed', 'Downloads']
 const typeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
@@ -33,11 +33,6 @@ const libraryData = {
       image: '/assets/Shadow Exclusive/Shadow Exclusive 2.jpg',
       to: '/story/501',
     },
-    feed: [
-      { id: 501, title: 'Shadow Bride', author: 'Luna Hale', update: 'Updated 2h ago', episode: 'Ep. 26 released', to: '/story/501' },
-      { id: 502, title: 'Royal Scheme', author: 'Mira Voss', update: 'Updated today', episode: 'Ep. 13 released', to: '/story/502' },
-      { id: 503, title: 'Typing My Heart', author: 'Yuna K', update: 'Updated yesterday', episode: 'Chat 44 released', to: '/story/503' },
-    ],
     books: [
       { id: 501, title: 'Shadow Bride', type: 'Novel', info: 'New Ep. 26', image: '/assets/Shadow Exclusive/Shadow Exclusive 1.jpg' },
       { id: 502, title: 'Royal Scheme', type: 'Novel', info: 'New Ep. 13', image: '/assets/Shadow Exclusive/Shadow Exclusive 2.jpg' },
@@ -300,78 +295,34 @@ export default function Library() {
             </section>
           ) : null}
 
-          {activeTab === 'Subscribed' && currentSection?.feed?.length ? (
-            <section className="pt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-[16px] font-extrabold tracking-tight text-[#111]">
-                  Latest from Authors You Follow
+          {activeTab === 'Subscribed' ? (
+            <SubscriptionsSection books={filteredBooks} seeAllTo="/subscriptions" />
+          ) : (
+            <section className="pt-7">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+                  {activeTab === 'Recents' ? 'Your Recent Stories' : 'Your Downloads'}
                 </h3>
               </div>
 
-              <div className="space-y-3">
-                {currentSection.feed.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.to}
-                    className="flex items-start justify-between gap-4 rounded-2xl border border-[#f1f1f1] bg-white px-4 py-3 transition hover:bg-[#fafafa]"
-                  >
-                    <div className="min-w-0">
-                      <h4 className="line-clamp-1 text-[13px] font-extrabold text-[#111]">
-                        {item.title}
-                      </h4>
-                      <p className="mt-0.5 text-[11px] text-[#8d8d95]">
-                        {item.author}
-                      </p>
-                      <p className="mt-1 text-[11px] font-semibold text-[#5f78ff]">
-                        {item.episode}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 text-[11px] font-medium text-[#a0a0a8]">
-                      {item.update}
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              {filteredBooks.length ? (
+                <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-4 md:gap-y-0">
+                  {filteredBooks.map((book) => (
+                    <LibraryBookCard key={book.id} book={book} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={activeTab === 'Recents' ? 'No recent stories yet' : 'No downloads yet'}
+                  text={
+                    activeTab === 'Recents'
+                      ? 'Your recently opened stories will appear here.'
+                      : 'Download stories to read offline anytime.'
+                  }
+                />
+              )}
             </section>
-          ) : null}
-
-          <section className="pt-7">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[18px] font-extrabold tracking-tight text-[#111]">
-                {activeTab === 'Recents'
-                  ? 'Your Recent Stories'
-                  : activeTab === 'Subscribed'
-                  ? 'Your Subscriptions'
-                  : 'Your Downloads'}
-              </h3>
-            </div>
-
-            {filteredBooks.length ? (
-              <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-4 md:gap-y-0">
-                {filteredBooks.map((book) => (
-                  <LibraryBookCard key={book.id} book={book} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title={
-                  activeTab === 'Recents'
-                    ? 'No recent stories yet'
-                    : activeTab === 'Subscribed'
-                    ? 'No subscriptions yet'
-                    : 'No downloads yet'
-                }
-                text={
-                  activeTab === 'Recents'
-                    ? 'Your recently opened stories will appear here.'
-                    : activeTab === 'Subscribed'
-                    ? 'Follow stories to get updates here.'
-                    : 'Download stories to read offline anytime.'
-                }
-              />
-            )}
-          </section>
+          )}
 
           <section className="pt-12">
             <div className="mb-4 flex items-center justify-between">
