@@ -57,22 +57,6 @@ function SortIcon({ open = false }) {
   )
 }
 
-function HeartIcon() {
-  return (
-    <svg className="h-[14px] w-[14px] text-red-500" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 21s-6.5-4.35-9.14-8.27C.62 9.47 2.15 5 6.42 5c2.15 0 3.41 1.14 4.12 2.2C11.25 6.14 12.51 5 14.66 5c4.27 0 5.8 4.47 3.56 7.73C18.5 16.65 12 21 12 21z" />
-    </svg>
-  )
-}
-
-function CommentIcon() {
-  return (
-    <svg className="h-[14px] w-[14px] text-[#222]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" />
-    </svg>
-  )
-}
-
 function BlankCover() {
   return <div className="h-full w-full bg-[#202124]" />
 }
@@ -101,12 +85,12 @@ function TrendingBookCard({ book }) {
 
         <div className="mt-2.5 flex items-center gap-4 text-[12px] text-[#222]">
           <span className="inline-flex items-center gap-1.5 leading-none">
-            <HeartIcon />
+            <i className="fas fa-heart text-[12px] text-[#ef4444]" />
             <span>{formatCount(book.likes)}</span>
           </span>
 
           <span className="inline-flex items-center gap-1.5 leading-none">
-            <CommentIcon />
+            <i className="far fa-comment text-[12px] text-[#222]" />
             <span>{formatCount(book.comments)}</span>
           </span>
         </div>
