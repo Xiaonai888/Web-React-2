@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import PremiumBannerSection from '../components/me/PremiumBannerSection'
-import SettingsSection from '../components/me/SettingsSection'
+import PremiumBannerSection from '../../components/me/PremiumBannerSection'
+import SettingsSection from '../../components/me/SettingsSection'
 
 function CurrencyCard({ icon, label, value, colorClass = 'text-[#111]' }) {
   return (
