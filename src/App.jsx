@@ -12,7 +12,7 @@ import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
 import SettingsPage from './pages/Me/SettingsPage'
-import TopNovelPage from './pages/TopNovelPage';
+import TopNovelPage from './pages/TopNovelPage'
 
 export default function App() {
   return (
