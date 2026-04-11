@@ -12,6 +12,7 @@ import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
 import SettingsPage from './pages/Me/SettingsPage'
+import TopNovelPage from './pages/TopNovelPage';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/top-novel" element={<TopNovelPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>
