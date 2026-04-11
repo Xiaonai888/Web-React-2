@@ -33,6 +33,11 @@ export default function EditorWeeklyPicksSection() {
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const dragMovedRef = useRef(false);
+
   const handleScroll = () => {
     const container = scrollRef.current;
     if (!container) return;
@@ -55,6 +60,48 @@ export default function EditorWeeklyPicksSection() {
     setActiveIndex(index);
   };
 
+  const handleMouseDown = (e) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    isDraggingRef.current = true;
+    dragMovedRef.current = false;
+    startXRef.current = e.pageX - container.offsetLeft;
+    scrollLeftRef.current = container.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    const container = scrollRef.current;
+    if (!container || !isDraggingRef.current) return;
+
+    e.preventDefault();
+    const x = e.pageX - container.offsetLeft;
+    const walk = x - startXRef.current;
+
+    if (Math.abs(walk) > 4) {
+      dragMovedRef.current = true;
+    }
+
+    container.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleMouseLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleCardClick = (e, link) => {
+    if (dragMovedRef.current) {
+      e.preventDefault();
+      return;
+    }
+
+    navigate(link);
+  };
+
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
@@ -66,7 +113,11 @@ export default function EditorWeeklyPicksSection() {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 scrollbar-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 scrollbar-none cursor-grab active:cursor-grabbing select-none"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {weeklyPicks.map((item) => (
@@ -76,18 +127,19 @@ export default function EditorWeeklyPicksSection() {
           >
             <button
               type="button"
-              onClick={() => navigate(item.link)}
+              onClick={(e) => handleCardClick(e, item.link)}
               className="group block w-full text-left"
             >
               <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  className="pointer-events-none h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                   loading="lazy"
+                  draggable="false"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end pointer-events-none">
                   <div className="flex items-center space-x-2">
                     <span className="rounded bg-[#ff3b5c] px-1.5 py-0.5 text-[8px] font-black text-white shadow-sm">
                       {item.tag}
