@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import AlphaSpotlight from '../components/AlphaSpotlight'
+import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
@@ -175,7 +175,7 @@ export default function ForYou() {
           </div>
 
           <div className="my-6">
-            <AlphaSpotlight />
+            <ShadowSpotlight />
           </div>
 
           <div className="my-6">
