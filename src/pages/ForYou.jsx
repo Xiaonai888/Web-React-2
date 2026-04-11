@@ -4,6 +4,7 @@ import AlphaSpotlight from '../components/AlphaSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
+import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection';
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
@@ -187,6 +188,10 @@ export default function ForYou() {
           
           <div className="my-6">
             <UpdateTodaySection />
+          </div>
+
+          <div className="my-6">
+           <EditorWeeklyPicksSection />
           </div>
         
         </div>
