@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export default function AlphaSpotlight() {
+export default function ShadowSpotlight() {
   useEffect(() => {
     const initSwiper = () => {
       if (window.Swiper) {
