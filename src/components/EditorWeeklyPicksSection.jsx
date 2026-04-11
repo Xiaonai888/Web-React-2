@@ -8,6 +8,7 @@ const weeklyPicks = [
     subtitle: 'A featured story selected by Shadow editors this week.',
     image: '/assets/Editors Weekly Picks/Editor Weekly Picks 1.jpg',
     link: '/story/1',
+    tag: 'NEW',
   },
   {
     id: 2,
@@ -15,6 +16,7 @@ const weeklyPicks = [
     subtitle: 'Fresh and exciting content worth checking out this week.',
     image: '/assets/Editors Weekly Picks/Editor Weekly Picks 2.jpg',
     link: '/story/2',
+    tag: 'HOT',
   },
   {
     id: 3,
@@ -22,6 +24,7 @@ const weeklyPicks = [
     subtitle: 'A special recommendation chosen for For You readers.',
     image: '/assets/Editors Weekly Picks/Editor Weekly Picks 3.jpg',
     link: '/story/3',
+    tag: 'TOP',
   },
 ];
 
@@ -34,7 +37,7 @@ export default function EditorWeeklyPicksSection() {
     const container = scrollRef.current;
     if (!container) return;
 
-    const slideWidth = container.offsetWidth;
+    const slideWidth = container.offsetWidth * 0.88 + 12;
     const currentIndex = Math.round(container.scrollLeft / slideWidth);
     setActiveIndex(currentIndex);
   };
@@ -43,7 +46,7 @@ export default function EditorWeeklyPicksSection() {
     const container = scrollRef.current;
     if (!container) return;
 
-    const slideWidth = container.offsetWidth;
+    const slideWidth = container.offsetWidth * 0.88 + 12;
     container.scrollTo({
       left: slideWidth * index,
       behavior: 'smooth',
@@ -53,51 +56,46 @@ export default function EditorWeeklyPicksSection() {
   };
 
   return (
-    <section className="mt-8 px-4 sm:px-5 lg:px-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-extrabold tracking-tight text-neutral-900 sm:text-[22px]">
-          💥 Editor’s Weekly Picks
+    <div className="w-full overflow-hidden">
+      <div className="mb-3 px-4">
+        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
+          Editor’s Weekly Picks
         </h2>
       </div>
 
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth scrollbar-none"
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 scrollbar-none"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {weeklyPicks.map((item) => (
-          <div key={item.id} className="w-full shrink-0 snap-center">
+          <div
+            key={item.id}
+            className="mr-3 w-[88%] shrink-0 snap-start"
+          >
             <button
               type="button"
               onClick={() => navigate(item.link)}
               className="group block w-full text-left"
             >
-              <div className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition duration-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.12)]">
-                <div className="relative aspect-[2.2/1] w-full overflow-hidden bg-neutral-100 sm:aspect-[2.4/1]">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                    loading="lazy"
-                  />
+              <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  loading="lazy"
+                />
 
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
+                  <div className="flex items-center space-x-2">
+                    <span className="rounded bg-[#ff3b5c] px-1.5 py-0.5 text-[8px] font-black text-white shadow-sm">
+                      {item.tag}
+                    </span>
 
-                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                    <div className="max-w-[78%]">
-                      <div className="mb-2 inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/90 backdrop-blur-sm">
-                        Editor’s Choice
-                      </div>
-
-                      <h3 className="line-clamp-2 text-xl font-extrabold leading-tight text-white sm:text-2xl">
-                        {item.title}
-                      </h3>
-
-                      <p className="mt-1 line-clamp-2 text-sm text-white/85 sm:text-[15px]">
-                        {item.subtitle}
-                      </p>
-                    </div>
+                    <h3 className="truncate text-[11px] font-bold text-white">
+                      {item.title}
+                    </h3>
                   </div>
                 </div>
               </div>
@@ -125,6 +123,6 @@ export default function EditorWeeklyPicksSection() {
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
