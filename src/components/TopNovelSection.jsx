@@ -1,6 +1,55 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { topNovelCategories, topNovelData } from '../data/topNovelData';
+
+const topNovelCategories = [
+  'Romance',
+  'Fantasy',
+  'Investigation',
+  'Completed',
+  'Recently Completed',
+];
+
+const topNovelData = [
+  {
+    id: 1,
+    rank: 1,
+    title: 'Name book',
+    author: 'Author Name',
+    views: '100k',
+    likes: '1000',
+    description:
+      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
+    image: '/assets/top-novel/top-1.jpg',
+    category: 'Romance',
+    link: '/story/1',
+  },
+  {
+    id: 2,
+    rank: 2,
+    title: 'Name book',
+    author: 'Author Name',
+    views: '100k',
+    likes: '1000',
+    description:
+      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
+    image: '/assets/top-novel/top-2.jpg',
+    category: 'Romance',
+    link: '/story/2',
+  },
+  {
+    id: 3,
+    rank: 3,
+    title: 'Name book',
+    author: 'Author Name',
+    views: '100k',
+    likes: '1000',
+    description:
+      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
+    image: '/assets/top-novel/top-3.jpg',
+    category: 'Romance',
+    link: '/story/3',
+  },
+];
 
 function RankBadge({ rank }) {
   const styles = {
@@ -23,7 +72,9 @@ export default function TopNovelSection() {
   const [activeCategory, setActiveCategory] = useState('Romance');
 
   const filteredData = useMemo(() => {
-    return topNovelData.filter((item) => item.category === activeCategory).slice(0, 3);
+    return topNovelData
+      .filter((item) => item.category === activeCategory)
+      .slice(0, 3);
   }, [activeCategory]);
 
   return (
