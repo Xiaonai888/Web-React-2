@@ -5,7 +5,7 @@ import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
 import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection';
-import TopNovelSection from '../components/TopNovelSection';
+import TopNovelSection from '../components/TopNovelSection'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
