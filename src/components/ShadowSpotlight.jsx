@@ -38,7 +38,7 @@ export default function ShadowSpotlight() {
     <div className="w-full overflow-hidden">
       <div className="mb-3 flex items-center px-4">
         <h2 className="text-[20px] font-extrabold tracking-tight text-neutral-900">
-          Shadow Spotlight
+          SHADOW SPOTLIGHT
         </h2>
       </div>
 
