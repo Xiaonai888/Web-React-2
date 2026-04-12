@@ -1,34 +1,34 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const weeklyPicks = [
+const eventPerksData = [
   {
     id: 1,
-    title: 'Editor Weekly Pick 1',
-    subtitle: 'A featured story selected by Shadow editors this week.',
-    image: '/assets/EditorWeeklyPicksSection/EditorWeeklyPicksSection 1.jpg',
+    title: 'Event Banner 1',
+    subtitle: 'Special event rewards and limited-time perks.',
+    image: '/assets/EventPerksHubPage/EventPerksHubPage 1.jpg',
     link: '/story/1',
     tag: 'NEW',
   },
   {
     id: 2,
-    title: 'Editor Weekly Pick 2',
-    subtitle: 'Fresh and exciting content worth checking out this week.',
-    image: '/assets/EditorWeeklyPicksSection/EditorWeeklyPicksSection 2.jpg',
+    title: 'Event Banner 2',
+    subtitle: 'Join events and unlock exclusive bonuses.',
+    image: '/assets/EventPerksHubPage/EventPerksHubPage 2.jpg',
     link: '/story/2',
     tag: 'HOT',
   },
   {
     id: 3,
-    title: 'Editor Weekly Pick 3',
-    subtitle: 'A special recommendation chosen for For You readers.',
-    image: '/assets/EditorWeeklyPicksSection/EditorWeeklyPicksSection 3.jpg',
+    title: 'Event Banner 3',
+    subtitle: 'Check the newest perks available this week.',
+    image: '/assets/EventPerksHubPage/EventPerksHubPage 3.jpg',
     link: '/story/3',
     tag: 'TOP',
   },
 ];
 
-export default function EditorWeeklyPicksSection() {
+export default function EventPerksHubSection() {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -105,8 +105,8 @@ export default function EditorWeeklyPicksSection() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
-        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
-           💥 EDITOR’S WEEKLY PICKS
+        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900 uppercase">
+          🎉 EVENT & PERKS HUB
         </h2>
       </div>
 
@@ -120,7 +120,7 @@ export default function EditorWeeklyPicksSection() {
         className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 scrollbar-none cursor-grab active:cursor-grabbing select-none"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {weeklyPicks.map((item) => (
+        {eventPerksData.map((item) => (
           <div
             key={item.id}
             className="mr-3 w-[88%] shrink-0 snap-start"
@@ -157,7 +157,7 @@ export default function EditorWeeklyPicksSection() {
       </div>
 
       <div className="mt-4 flex items-center justify-center gap-2">
-        {weeklyPicks.map((_, index) => {
+        {eventPerksData.map((_, index) => {
           const isActive = activeIndex === index;
 
           return (
