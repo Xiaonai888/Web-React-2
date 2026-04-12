@@ -213,7 +213,6 @@ export default function ForYou() {
           <div className="my-6">
            <NewArrivalsSection />
           </div>
-
         
         </div>
       </div>
