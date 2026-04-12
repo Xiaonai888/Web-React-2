@@ -6,7 +6,7 @@ function BookCard({ book }) {
   return (
     <div className="group block">
       <div className="flex flex-col items-start">
-        <div className="w-[80px] h-[112px] overflow-hidden rounded-xl bg-gray-100 shadow-sm">
+        <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
@@ -15,19 +15,20 @@ function BookCard({ book }) {
           />
         </div>
 
-        <div className="mt-2 w-[80px]">
-          <h3 className="line-clamp-2 text-[13px] font-extrabold tracking-tight text-neutral-900">
+        <div className="mt-2 w-full">
+          <h3 className="line-clamp-2 text-[15px] font-extrabold leading-snug tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-600">
+          <div className="mt-2 flex items-center justify-between gap-2 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-red-500 text-[11px]" />
-              <span>{book.likes}</span>
+              <i className="fas fa-heart text-red-500 text-[12px]" />
+              <span className="font-medium">{book.likes}</span>
             </div>
+
             <div className="flex items-center gap-1">
-              <i className="fas fa-list text-[11px]" />
-              <span>{book.episodes}</span>
+              <i className="fas fa-list text-[12px]" />
+              <span className="font-medium">{book.episodes}</span>
             </div>
           </div>
         </div>
@@ -60,7 +61,7 @@ export default function YouMightLikeSection() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-x-3 gap-y-5 lg:grid-cols-6">
+      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
         {books.map((book) => (
           <button
             key={book.id}
