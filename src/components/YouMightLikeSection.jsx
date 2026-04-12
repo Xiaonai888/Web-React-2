@@ -6,7 +6,7 @@ function BookCard({ book }) {
   return (
     <div className="group block">
       <div className="flex flex-col items-start">
-        <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-gray-100 shadow-sm">
+        <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
@@ -15,12 +15,12 @@ function BookCard({ book }) {
           />
         </div>
 
-        <div className="mt-2 w-full">
+        <div className="mt-3 w-full">
           <h3 className="line-clamp-2 text-[15px] font-extrabold leading-snug tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
-          <div className="mt-2 flex items-center justify-between gap-2 text-[13px] text-gray-600">
+          <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
               <i className="fas fa-heart text-red-500 text-[12px]" />
               <span className="font-medium">{book.likes}</span>
