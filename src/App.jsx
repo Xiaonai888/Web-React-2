@@ -13,6 +13,8 @@ import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
 import SettingsPage from './pages/Me/SettingsPage'
 import TopNovelPage from './pages/TopNovelPage'
+import YouMightLikePage from './pages/YouMightLikePage'
+import YouMightLikeDemoPage from '../Demo/YouMightLikeDemoPage'
 
 export default function App() {
   return (
@@ -31,6 +33,9 @@ export default function App() {
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/top-novel" element={<TopNovelPage />} />
+        <Route path="/you-might-like" element={<YouMightLikePage />} />
+        <Route path="/you-might-like-demo" element={<YouMightLikeDemoPage />} />
+
       </Routes>
       <Footer />
     </BrowserRouter>
