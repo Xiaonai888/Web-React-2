@@ -7,6 +7,7 @@ import UpdateTodaySection from '../components/UpdateTodaySection'
 import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection';
 import TopNovelSection from '../components/TopNovelSection'
 import YouMightLikeSection from '../components/YouMightLikeSection'
+import EventPerksHubSection from '../components/EventPerksHubSection'
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
@@ -202,6 +203,10 @@ export default function ForYou() {
 
           <div className="my-6">
            <YouMightLikeSection />
+          </div>
+
+          <div className="my-6">
+            <EventPerksHubSection />
           </div>
         
         </div>
