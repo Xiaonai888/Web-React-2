@@ -106,7 +106,7 @@ export default function EditorWeeklyPicksSection() {
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
         <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
-          Editor’s Weekly Picks
+           💥 EDITOR’S WEEKLY PICKS
         </h2>
       </div>
 
