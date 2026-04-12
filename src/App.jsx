@@ -15,6 +15,7 @@ import SettingsPage from './pages/Me/SettingsPage'
 import TopNovelPage from './pages/TopNovelPage'
 import YouMightLikePage from './pages/YouMightLikePage'
 import YouMightLikeDemoPage from '../Demo/YouMightLikeDemoPage'
+import EventPerksHubPage from './pages/EventPerksHubPage'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/top-novel" element={<TopNovelPage />} />
         <Route path="/you-might-like" element={<YouMightLikePage />} />
         <Route path="/you-might-like-demo" element={<YouMightLikeDemoPage />} />
+        <Route path="/event-perks-hub" element={<EventPerksHubPage />} />
 
       </Routes>
       <Footer />
