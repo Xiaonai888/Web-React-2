@@ -4,7 +4,7 @@ import { youMightLikeBooks } from '../../Demo/YouMightLikeDemoPage'
 
 function BookCard({ book }) {
   return (
-    <div className="group block">
+    <div className="group block w-full">
       <div className="flex flex-col items-start">
         <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
@@ -12,6 +12,9 @@ function BookCard({ book }) {
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = '/assets/fallback-book.jpg'
+            }}
           />
         </div>
 
@@ -22,7 +25,7 @@ function BookCard({ book }) {
 
           <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-red-500 text-[12px]" />
+              <i className="fas fa-heart text-[12px] text-red-500" />
               <span className="font-medium">{book.likes}</span>
             </div>
 
@@ -54,7 +57,7 @@ export default function YouMightLikeSection() {
         <button
           type="button"
           onClick={() => navigate('/you-might-like')}
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
           aria-label="Go to You Might Like page"
         >
           <i className="fas fa-chevron-right text-[15px] text-gray-700" />
@@ -67,7 +70,7 @@ export default function YouMightLikeSection() {
             key={book.id}
             type="button"
             onClick={() => navigate(book.link)}
-            className="text-left"
+            className="w-full text-left"
           >
             <BookCard book={book} />
           </button>
