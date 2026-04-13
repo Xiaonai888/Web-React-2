@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Footer from './components/Footer'
+
 import ForYou from './pages/ForYou'
 import Fast from './pages/Fast'
 import Discover from './pages/Discover'
@@ -14,7 +15,6 @@ import PremiumPage from './pages/Me/PremiumPage'
 import SettingsPage from './pages/Me/SettingsPage'
 import TopNovelPage from './pages/TopNovelPage'
 import YouMightLikePage from './pages/YouMightLikePage'
-import YouMightLikeDemoPage from '../Demo/YouMightLikeDemoPage'
 import NewArrivalsPage from './pages/NewArrivalsPage'
 import NewArrivalsDemoPage from '../Demo/NewArrivalsDemoPage'
 import CompletedPage from './pages/CompletedPage'
@@ -39,13 +39,13 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/top-novel" element={<TopNovelPage />} />
         <Route path="/you-might-like" element={<YouMightLikePage />} />
-        <Route path="/you-might-like-demo" element={<YouMightLikeDemoPage />} />
         <Route path="/new-arrivals" element={<NewArrivalsPage />} />
         <Route path="/new-arrivals-demo" element={<NewArrivalsDemoPage />} />
         <Route path="/completed" element={<CompletedPage />} />
         <Route path="/completed-demo" element={<CompletedDemoPage />} />
         <Route path="/shop" element={<ShopPage />} />
       </Routes>
+
       <Footer />
     </BrowserRouter>
   )
