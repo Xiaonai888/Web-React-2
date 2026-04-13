@@ -5,7 +5,7 @@ const fanPicksData = [
   {
     id: 601,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 1.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 1.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/601',
@@ -13,7 +13,7 @@ const fanPicksData = [
   {
     id: 602,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 2.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 2.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/602',
@@ -21,7 +21,7 @@ const fanPicksData = [
   {
     id: 603,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 3.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 3.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/603',
@@ -29,7 +29,7 @@ const fanPicksData = [
   {
     id: 604,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 4.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 4.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/604',
@@ -37,7 +37,7 @@ const fanPicksData = [
   {
     id: 605,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 5.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 5.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/605',
@@ -45,7 +45,7 @@ const fanPicksData = [
   {
     id: 606,
     title: 'Name Book',
-    cover: '/assets/FanPicksSection/FanPicksSection 6.jpg',
+    cover: '/assets/YouMightLike/YouMightLike 6.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/606',
@@ -54,7 +54,7 @@ const fanPicksData = [
 
 function BookCard({ book }) {
   return (
-    <div className="group block">
+    <div className="group block w-full">
       <div className="flex flex-col items-start">
         <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
@@ -72,7 +72,7 @@ function BookCard({ book }) {
 
           <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-red-500 text-[12px]" />
+              <i className="fas fa-heart text-[12px] text-red-500" />
               <span className="font-medium">{book.likes}</span>
             </div>
 
@@ -105,7 +105,7 @@ export default function FanPicksSection() {
             key={book.id}
             type="button"
             onClick={() => navigate(book.link)}
-            className="text-left"
+            className="w-full text-left"
           >
             <BookCard book={book} />
           </button>
