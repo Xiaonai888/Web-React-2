@@ -181,6 +181,10 @@ export default function ForYou() {
               </div>
             ))}
           </div>
+          
+          <div className="my-6">
+            <ShopSection />
+          </div>
 
           <div className="my-6">
             <ShadowSpotlight />
@@ -224,10 +228,6 @@ export default function ForYou() {
 
           <div className="my-6">
             <FanPicksSection />
-          </div>
-
-          <div className="my-6">
-            <ShopSection />
           </div>
           
         </div>
