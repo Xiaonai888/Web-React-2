@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { youMightLikeBooks } from '../../Demo/YouMightLikeDemoPage'
+
 
 function BookCard({ book }) {
   return (
