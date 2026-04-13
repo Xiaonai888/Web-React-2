@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-
+import { youMightLikeBooks } from '../../Demo/YouMightLikeDemoPage'
 
 function BookCard({ book }) {
   return (
@@ -54,7 +54,7 @@ export default function YouMightLikeSection() {
         <button
           type="button"
           onClick={() => navigate('/you-might-like')}
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
           aria-label="Go to You Might Like page"
         >
           <i className="fas fa-chevron-right text-[15px] text-gray-700" />
