@@ -18,7 +18,9 @@ import YouMightLikeDemoPage from '../Demo/YouMightLikeDemoPage'
 import NewArrivalsPage from './pages/NewArrivalsPage'
 import NewArrivalsDemoPage from '../Demo/NewArrivalsDemoPage'
 import CompletedPage from './pages/CompletedPage'
-import CompletedDemoPage from '../Demo/CompletedDemoPage'
+import CompletedDemoPage from '../Demo/CompletedDemoPage'.
+
+import ShopPage from './pages/ShopPage'
 
 
 export default function App() {
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="/new-arrivals-demo" element={<NewArrivalsDemoPage />} />
         <Route path="/completed" element={<CompletedPage />} />
         <Route path="/completed-demo" element={<CompletedDemoPage />} />
+
+        <Route path="/shop" element={<ShopPage />} />
 
       </Routes>
       <Footer />
