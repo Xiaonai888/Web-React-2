@@ -5,7 +5,7 @@ const fanPicksData = [
   {
     id: 601,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 1.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 1.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/601',
@@ -13,7 +13,7 @@ const fanPicksData = [
   {
     id: 602,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 2.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 2.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/602',
@@ -21,7 +21,7 @@ const fanPicksData = [
   {
     id: 603,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 3.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 3.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/603',
@@ -29,7 +29,7 @@ const fanPicksData = [
   {
     id: 604,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 4.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 4.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/604',
@@ -37,7 +37,7 @@ const fanPicksData = [
   {
     id: 605,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 5.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 5.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/605',
@@ -45,7 +45,7 @@ const fanPicksData = [
   {
     id: 606,
     title: 'Name Book',
-    cover: '/assets/YouMightLike/YouMightLike 6.jpg',
+    cover: '/assets/FanPicksSection/FanPicksSection 6.jpg',
     likes: '100k',
     episodes: 'Ep 17',
     link: '/story/606',
