@@ -11,8 +11,7 @@ import EventPerksHubSection from '../components/EventPerksHubSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
-
-import ShopPage from './pages/ShopPage'
+import ShopSection from '../components/ShopSection'
 
 
 export default function ForYou() {
