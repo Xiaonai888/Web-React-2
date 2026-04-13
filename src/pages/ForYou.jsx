@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
-import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection';
+import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
 import TopNovelSection from '../components/TopNovelSection'
 import YouMightLikeSection from '../components/YouMightLikeSection'
 import EventPerksHubSection from '../components/EventPerksHubSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
-import ShopSection from '../components/ShopSection'
-
 
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (window.Swiper) {
@@ -168,22 +167,22 @@ export default function ForYou() {
 
           <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
             {[
-              { icon: 'fa-shopping-bag', label: 'Shop' },
+              { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
               { icon: 'fa-tasks', label: 'Tasks' },
               { icon: 'fa-trophy', label: 'Ranking' },
               { icon: 'fa-calendar', label: 'Event' },
             ].map((item) => (
-              <div key={item.label} className="group cursor-pointer">
+              <div
+                key={item.label}
+                className="group cursor-pointer"
+                onClick={() => item.path && navigate(item.path)}
+              >
                 <div className="w-12 h-12 bg-gray-50 rounded-full mb-1 mx-auto flex items-center justify-center group-hover:bg-blue-50 transition-all">
                   <i className={`fas ${item.icon} text-gray-500 group-hover:text-blue-600`} />
                 </div>
                 <span className="text-[10px] text-gray-500 font-semibold">{item.label}</span>
               </div>
             ))}
-          </div>
-          
-          <div className="my-6">
-            <ShopSection />
           </div>
 
           <div className="my-6">
@@ -197,21 +196,21 @@ export default function ForYou() {
           <div className="my-6">
             <TrendingNowSection />
           </div>
-          
+
           <div className="my-6">
             <UpdateTodaySection />
           </div>
 
           <div className="my-6">
-           <EditorWeeklyPicksSection />
+            <EditorWeeklyPicksSection />
           </div>
 
           <div className="my-6">
-           <TopNovelSection />
+            <TopNovelSection />
           </div>
 
           <div className="my-6">
-           <YouMightLikeSection />
+            <YouMightLikeSection />
           </div>
 
           <div className="my-6">
@@ -219,7 +218,7 @@ export default function ForYou() {
           </div>
 
           <div className="my-6">
-           <NewArrivalsSection />
+            <NewArrivalsSection />
           </div>
 
           <div className="my-6">
@@ -229,7 +228,6 @@ export default function ForYou() {
           <div className="my-6">
             <FanPicksSection />
           </div>
-          
         </div>
       </div>
     </>
