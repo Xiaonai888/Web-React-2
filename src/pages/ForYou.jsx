@@ -12,6 +12,9 @@ import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
 
+import ShopPage from './pages/ShopPage'
+
+
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
 
@@ -222,6 +225,10 @@ export default function ForYou() {
 
           <div className="my-6">
             <FanPicksSection />
+          </div>
+
+          <div className="my-6">
+            <ShopSection />
           </div>
           
         </div>
