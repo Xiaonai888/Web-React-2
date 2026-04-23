@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { newArrivalsTabs, newArrivalsData } from '../../Demo/NewArrivalsDemoPage'
 
 const badgeStyles = {
-  red: 'bg-red-500 text-white',
-  yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
+  NEW: 'bg-red-500 text-white',
+  UP: 'bg-yellow-400 text-black',
+  END: 'bg-lime-400 text-black',
 }
 
-function BookCard({ book }) {
+function BookCard({ book, onClick }) {
   return (
-    <div className="group block w-full">
+    <button type="button" onClick={onClick} className="group block w-full text-left">
       <div className="flex flex-col items-start">
         <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
@@ -18,15 +18,12 @@ function BookCard({ book }) {
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.src = '/assets/fallback-book.jpg'
-            }}
           />
 
           {book.badge && (
             <div
               className={`absolute right-2 top-2 rounded-full px-3 py-1 text-[11px] font-extrabold ${
-                badgeStyles[book.badgeColor] || 'bg-black text-white'
+                badgeStyles[book.badge] || 'bg-black text-white'
               }`}
             >
               {book.badge}
@@ -35,7 +32,7 @@ function BookCard({ book }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="text-[16px] font-extrabold leading-snug tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 text-[16px] font-extrabold leading-snug tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
@@ -56,7 +53,7 @@ function BookCard({ book }) {
           </div>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -65,7 +62,7 @@ export default function NewArrivalsSection() {
   const [activeTab, setActiveTab] = useState('Fresh')
 
   const books = useMemo(() => {
-    return (newArrivalsData[activeTab] || []).slice(0, 6)
+    return newArrivalsData[activeTab] || []
   }, [activeTab])
 
   return (
@@ -111,14 +108,11 @@ export default function NewArrivalsSection() {
 
       <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
         {books.map((book) => (
-          <button
+          <BookCard
             key={book.id}
-            type="button"
+            book={book}
             onClick={() => navigate(book.link)}
-            className="w-full text-left"
-          >
-            <BookCard book={book} />
-          </button>
+          />
         ))}
       </div>
     </section>
@@ -126,55 +120,46 @@ export default function NewArrivalsSection() {
 }
 
 
-// FILE 2: src/Demo/NewArrivalsDemoPage.js
-// IMPORTANT:
-// Your images 1–16 are in:
-// public/assets/New Arrival/
-// Use EXACT file names like:
-// /assets/New Arrival/New Arrival 1.jpg
-// /assets/New Arrival/New Arrival 2.jpg
-// ...
-// /assets/New Arrival/New Arrival 16.jpg
+// src/Demo/NewArrivalsDemoPage.js
 
-export const newArrivalsTabs = ['Fresh', 'Hot', 'Completed']
+export const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
 
-const makeBook = (id, imageNumber, title, author, badge, badgeColor, likes, views, link = `/story/${id}`) => ({
+const createBook = (id, imageNumber, title, author, badge, likes, views) => ({
   id,
   title,
   author,
   badge,
-  badgeColor,
   likes,
   views,
-  link,
+  link: `/story/${id}`,
   cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
 })
 
 export const newArrivalsData = {
   Fresh: [
-    makeBook(1, 1, 'Midnight Promise', 'Skye Hart', 'NEW', 'red', '12.4K', '88.1K'),
-    makeBook(2, 2, 'Broken Summer', 'Becki Alexander', 'HOT', 'yellow', '10.2K', '70.3K'),
-    makeBook(3, 3, 'Still Here', 'Skye Hart', 'UP', 'green', '9.8K', '65.0K'),
-    makeBook(4, 4, 'The Last Window', 'Backlight', 'NEW', 'red', '14.6K', '92.4K'),
-    makeBook(5, 5, 'After The Rain', 'Echoes', 'HOT', 'yellow', '8.7K', '59.7K'),
-    makeBook(6, 6, 'Falling Quietly', 'Becki Alexander', 'NEW', 'red', '11.1K', '76.9K'),
+    createBook(1, 1, 'Midnight Promise', 'Skye Hart', 'NEW', '1000', '100k'),
+    createBook(2, 2, 'Broken Summer', 'Becki Alexander', 'UP', '920', '88k'),
+    createBook(3, 3, 'Quiet Endings', 'Backlight', 'END', '860', '74k'),
+    createBook(4, 4, 'Still Here', 'Skye Hart', 'NEW', '1.4k', '120k'),
+    createBook(5, 5, 'After The Rain', 'Echoes', 'UP', '980', '93k'),
+    createBook(6, 6, 'No More Words', 'Baby Demon', 'END', '710', '68k'),
   ],
 
-  Hot: [
-    makeBook(7, 7, 'Where You Left Me', 'Skye Hart', 'HOT', 'yellow', '18.2K', '120.8K'),
-    makeBook(8, 8, 'Hollow Lights', 'Becki Alexander', 'UP', 'green', '16.4K', '111.5K'),
-    makeBook(9, 9, 'Without A Sound', 'Backlight', 'NEW', 'red', '13.0K', '87.3K'),
-    makeBook(10, 10, 'Cold Morning', 'Echoes', 'HOT', 'yellow', '15.1K', '94.0K'),
-    makeBook(11, 11, 'The Quiet Exit', 'Baby Demon', 'UP', 'green', '9.9K', '61.5K'),
-    makeBook(12, 12, 'Last Call For Love', 'Becki Alexander', 'HOT', 'yellow', '17.6K', '118.2K'),
+  Popular: [
+    createBook(7, 7, 'Faded Halo', 'Becki Alexander', 'NEW', '2.4k', '210k'),
+    createBook(8, 8, 'The Last Window', 'Backlight', 'UP', '2.1k', '196k'),
+    createBook(9, 9, 'Cold Morning', 'Echoes', 'END', '1.8k', '172k'),
+    createBook(10, 10, 'Without A Sound', 'Skye Hart', 'NEW', '2.0k', '184k'),
+    createBook(11, 11, 'Hollow Lights', 'Becki Alexander', 'UP', '1.7k', '160k'),
+    createBook(12, 12, 'Where You Left Me', 'Skye Hart', 'END', '1.5k', '145k'),
   ],
 
-  Completed: [
-    makeBook(13, 13, 'Strangers Again', 'Skye Hart', 'END', 'red', '20.4K', '140.0K'),
-    makeBook(14, 14, 'Faded Halo', 'Becki Alexander', 'END', 'red', '22.7K', '151.6K'),
-    makeBook(15, 15, 'The Door Closed', 'Backlight', 'END', 'red', '19.8K', '132.9K'),
-    makeBook(16, 16, 'No More Echoes', 'Echoes', 'END', 'red', '18.9K', '125.4K'),
-    makeBook(17, 1, 'Goodbye Slowly', 'Baby Demon', 'END', 'red', '17.0K', '112.0K'),
-    makeBook(18, 2, 'The Final Note', 'Skye Hart', 'END', 'red', '16.2K', '105.3K'),
+  'Recent Complete': [
+    createBook(13, 13, 'Strangers Again', 'Skye Hart', 'END', '1.3k', '110k'),
+    createBook(14, 14, 'The Door Closed', 'Backlight', 'END', '1.1k', '102k'),
+    createBook(15, 15, 'No More Echoes', 'Echoes', 'END', '980', '95k'),
+    createBook(16, 16, 'Final Goodbye', 'Baby Demon', 'END', '920', '89k'),
+    createBook(17, 1, 'Goodbye Slowly', 'Becki Alexander', 'END', '870', '84k'),
+    createBook(18, 2, 'The Final Note', 'Skye Hart', 'END', '810', '79k'),
   ],
 }
