@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { newArrivalsTabs, newArrivalsData } from '../../Demo/NewArrivalsDemoPage'
+
 
 const badgeStyles = {
   red: 'bg-red-500 text-white',
