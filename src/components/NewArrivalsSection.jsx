@@ -30,7 +30,7 @@ const createBook = (
   likes,
   views,
   link,
-  cover: `/assets/New%20Arrival/New%20Arrival%20${imageNumber}.jpg`,
+  cover: `/assets/NewArrival/NewArrival${imageNumber}.jpg`,
 })
 
 const newArrivalsData = {
