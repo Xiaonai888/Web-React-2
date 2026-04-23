@@ -1,5 +1,3 @@
-# File: src/components/NewArrivalsSection.jsx
-
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -30,7 +28,7 @@ const createBook = (
   likes,
   views,
   link,
-  cover: `/assets/NewArrival/NewArrival${imageNumber}.jpg`,
+  cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
 })
 
 const newArrivalsData = {
