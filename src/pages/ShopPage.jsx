@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PlanSection from '../components/PlanSection'
+import PurchaseSection from '../components/PurchaseSection'
+import ShadowMallSection from '../components/ShadowMallSection'
+
+const tabs = ['Plans', 'Purchase', 'Shadow Mall']
 
 export default function ShopPage() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Shop')
+  const [activeTab, setActiveTab] = useState('Plans')
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -18,18 +23,15 @@ export default function ShopPage() {
             <i className="fas fa-chevron-left text-[18px] text-gray-700" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[20px]">🛍️</span>
-            <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-              Shop
-            </h1>
-          </div>
+          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+            Shop
+          </h1>
         </div>
       </header>
 
       <main className="px-4 pt-4">
         <div className="mb-6 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {['Shop', 'Shadow Mall'].map((tab) => {
+          {tabs.map((tab) => {
             const isActive = activeTab === tab
 
             return (
@@ -49,21 +51,9 @@ export default function ShopPage() {
           })}
         </div>
 
-        {activeTab === 'Shop' ? (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-            <p className="text-[15px] font-semibold text-neutral-900">Shop</p>
-            <p className="mt-2 text-[13px] text-gray-500">
-              Content coming soon
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-            <p className="text-[15px] font-semibold text-neutral-900">Shadow Mall</p>
-            <p className="mt-2 text-[13px] text-gray-500">
-              Content coming soon
-            </p>
-          </div>
-        )}
+        {activeTab === 'Plans' && <PlanSection />}
+        {activeTab === 'Purchase' && <PurchaseSection />}
+        {activeTab === 'Shadow Mall' && <ShadowMallSection />}
       </main>
     </div>
   )
