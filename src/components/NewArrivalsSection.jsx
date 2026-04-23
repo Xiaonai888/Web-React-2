@@ -1,6 +1,15 @@
-# File 1: Demo/NewArrivalsDemoPage.jsx
+# File: src/components/NewArrivalsSection.jsx
 
-export const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
+import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const badgeStyles = {
+  red: 'bg-red-500 text-white',
+  yellow: 'bg-yellow-400 text-black',
+  green: 'bg-lime-400 text-black',
+}
+
+const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
 
 const createBook = (
   id,
@@ -24,7 +33,7 @@ const createBook = (
   cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
 })
 
-export const newArrivalsData = {
+const newArrivalsData = {
   Fresh: [
     createBook(401, 1, 'Name Book', 'Author Name', 'NEW', 'red', '1000', '100k'),
     createBook(402, 2, 'Name Book', 'Author Name', 'UP', 'yellow', '920', '88k'),
@@ -51,19 +60,6 @@ export const newArrivalsData = {
     createBook(417, 17, 'Name Book', 'Author Name', 'END', 'green', '870', '84k'),
     createBook(418, 18, 'Name Book', 'Author Name', 'END', 'green', '810', '79k'),
   ],
-}
-
-
-# File 2: src/components/NewArrivalsSection.jsx
-
-import React, { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { newArrivalsTabs, newArrivalsData } from '../../Demo/NewArrivalsDemoPage'
-
-const badgeStyles = {
-  red: 'bg-red-500 text-white',
-  yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
 }
 
 function BookCard({ book, onClick }) {
