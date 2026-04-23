@@ -17,7 +17,6 @@ import TopNovelPage from './pages/TopNovelPage'
 import YouMightLikePage from './pages/YouMightLikePage'
 import NewArrivalsPage from './pages/NewArrivalsPage'
 import CompletedPage from './pages/CompletedPage'
-import CompletedDemoPage from '../Demo/CompletedDemoPage'
 import ShopPage from './pages/ShopPage'
 
 export default function App() {
@@ -39,9 +38,7 @@ export default function App() {
         <Route path="/top-novel" element={<TopNovelPage />} />
         <Route path="/you-might-like" element={<YouMightLikePage />} />
         <Route path="/new-arrivals" element={<NewArrivalsPage />} />
-        <Route path="/new-arrivals-demo" element={<NewArrivalsDemoPage />} />
         <Route path="/completed" element={<CompletedPage />} />
-        <Route path="/completed-demo" element={<CompletedDemoPage />} />
         <Route path="/shop" element={<ShopPage />} />
       </Routes>
 
