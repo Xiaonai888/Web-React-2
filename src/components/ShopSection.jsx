@@ -6,7 +6,7 @@ export default function ShopSection() {
 
   return (
     <div
-      className="group cursor-pointer"
+      className="group cursor-pointer text-center"
       onClick={() => navigate('/shop')}
     >
       <div className="w-12 h-12 bg-gray-50 rounded-full mb-1 mx-auto flex items-center justify-center group-hover:bg-blue-50 transition-all">
