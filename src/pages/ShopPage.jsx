@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import PlanSection from '../components/PlanSection'
-import PurchaseSection from '../components/PurchaseSection'
-import ShadowMallSection from '../components/ShadowMallSection'
+import PlanSection from '../components/Shop/PlanSection'
+import PurchaseSection from '../components/Shop/PurchaseSection'
+import ShadowMallSection from '../components/Shop/ShadowMallSection'
 
 const tabs = ['Plans', 'Purchase', 'Shadow Mall']
 
