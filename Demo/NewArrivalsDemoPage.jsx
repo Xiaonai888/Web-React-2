@@ -1,6 +1,16 @@
 export const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
 
-const createBook = (id, imageNumber, title, author, badge, badgeColor, likes, views) => ({
+const createBook = (
+  id,
+  imageNumber,
+  title,
+  author,
+  badge,
+  badgeColor,
+  likes,
+  views,
+  link = `/story/${id}`
+) => ({
   id,
   title,
   author,
@@ -8,7 +18,7 @@ const createBook = (id, imageNumber, title, author, badge, badgeColor, likes, vi
   badgeColor,
   likes,
   views,
-  link: `/story/${id}`,
+  link,
   cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
 })
 
