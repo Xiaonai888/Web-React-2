@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { newArrivalsTabs, newArrivalsData } from '../../public/assets/New Arrival/'
+import { newArrivalsTabs, newArrivalsData } from '../../Demo/NewArrivalsDemoPage'
 
 const badgeStyles = {
   red: 'bg-red-500 text-white',
@@ -10,7 +10,11 @@ const badgeStyles = {
 
 function BookCard({ book, onClick }) {
   return (
-    <button type="button" onClick={onClick} className="group block w-full text-left">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group block w-full text-left"
+    >
       <div className="flex flex-col items-start">
         <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
@@ -36,7 +40,9 @@ function BookCard({ book, onClick }) {
             {book.title}
           </h3>
 
-          <p className="mt-1 text-[13px] font-medium text-gray-500">{book.author}</p>
+          <p className="mt-1 text-[13px] font-medium text-gray-500">
+            {book.author}
+          </p>
 
           <div className="mt-2 flex items-center gap-4 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
