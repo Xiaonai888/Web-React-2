@@ -1,0 +1,49 @@
+export const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
+
+const createBook = (
+  id,
+  imageNumber,
+  title,
+  author,
+  badge,
+  badgeColor,
+  likes,
+  views
+) => ({
+  id,
+  title,
+  author,
+  badge,
+  badgeColor,
+  likes,
+  views,
+  cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
+  link: `/story/${id}`,
+})
+
+export const newArrivalsData = {
+  Fresh: [
+    createBook(401, 1,  'Name Book', 'Author Name', 'NEW', 'red',    '1000', '100k'),
+    createBook(402, 2,  'Name Book', 'Author Name', 'UP',  'yellow', '920',  '88k'),
+    createBook(403, 3,  'Name Book', 'Author Name', 'END', 'green',  '860',  '74k'),
+    createBook(404, 4,  'Name Book', 'Author Name', 'NEW', 'red',    '1.4k', '120k'),
+    createBook(405, 5,  'Name Book', 'Author Name', 'UP',  'yellow', '980',  '93k'),
+    createBook(406, 6,  'Name Book', 'Author Name', 'END', 'green',  '710',  '68k'),
+  ],
+  Popular: [
+    createBook(407, 7,  'Name Book', 'Author Name', 'NEW', 'red',    '2.4k', '210k'),
+    createBook(408, 8,  'Name Book', 'Author Name', 'UP',  'yellow', '2.1k', '196k'),
+    createBook(409, 9,  'Name Book', 'Author Name', 'END', 'green',  '1.8k', '172k'),
+    createBook(410, 10, 'Name Book', 'Author Name', 'NEW', 'red',    '2.0k', '184k'),
+    createBook(411, 11, 'Name Book', 'Author Name', 'UP',  'yellow', '1.7k', '160k'),
+    createBook(412, 12, 'Name Book', 'Author Name', 'END', 'green',  '1.5k', '145k'),
+  ],
+  'Recent Complete': [
+    createBook(413, 13, 'Name Book', 'Author Name', 'END', 'green',  '1.3k', '110k'),
+    createBook(414, 14, 'Name Book', 'Author Name', 'END', 'green',  '1.1k', '102k'),
+    createBook(415, 15, 'Name Book', 'Author Name', 'END', 'green',  '980',  '95k'),
+    createBook(416, 16, 'Name Book', 'Author Name', 'END', 'green',  '920',  '89k'),
+    createBook(417, 17, 'Name Book', 'Author Name', 'END', 'green',  '870',  '84k'),
+    createBook(418, 18, 'Name Book', 'Author Name', 'END', 'green',  '810',  '79k'),
+  ],
+}
