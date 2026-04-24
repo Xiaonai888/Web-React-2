@@ -86,12 +86,6 @@ function SlideCards({ books, onBookClick }) {
                   }}
                 />
               </div>
-
-              {book.freePreview && (
-                <div className="absolute left-1 top-1 rounded-full bg-white/90 px-1.5 py-0.5 text-[8px] font-extrabold tracking-wide text-neutral-900 shadow-sm">
-                  FREE
-                </div>
-              )}
             </div>
 
             <div className="min-w-0 flex-1 pt-0.5">
@@ -130,7 +124,6 @@ function SlideCards({ books, onBookClick }) {
 export default function CompletedSection() {
   const navigate = useNavigate()
 
-  // Important: this makes books show immediately without clicking any tab.
   const [activeTab, setActiveTab] = useState(completedTabs[0])
   const [activeSlide, setActiveSlide] = useState(0)
   const scrollRef = useRef(null)
