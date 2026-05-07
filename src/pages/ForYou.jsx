@@ -194,19 +194,37 @@ useEffect(() => {
           </div>
 
           <div className="swiper-container mySwiper">
-            <div className="swiper-wrapper">
-              {['K26', 'K27', 'K28', 'K29', 'K30', 'K31', 'K32'].map((k) => (
-                <div key={k} className="swiper-slide aspect-[16/9]">
-                  <img
-                    src={`/assets/banners/${k}.jpg`}
-                    className="w-full h-full object-cover"
-                    alt={k}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="swiper-pagination" />
-          </div>
+  <div className="swiper-wrapper">
+    {slidesLoading && (
+      <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+        <span className="text-sm font-semibold text-gray-400">Loading slides...</span>
+      </div>
+    )}
+
+    {!slidesLoading && slides.length === 0 && (
+      <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+        <span className="text-sm font-semibold text-gray-400">No slides yet</span>
+      </div>
+    )}
+
+    {!slidesLoading && slides.map((slide) => (
+      <div
+        key={slide.id}
+        className="swiper-slide aspect-[16/9] cursor-pointer"
+        onClick={() => {
+          if (slide.link_url) navigate(slide.link_url)
+        }}
+      >
+        <img
+          src={slide.image_url}
+          className="w-full h-full object-cover"
+          alt={slide.title || `Slide ${slide.order_index}`}
+        />
+      </div>
+    ))}
+  </div>
+  <div className="swiper-pagination" />
+</div>
 
           <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
             {[
