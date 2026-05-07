@@ -22,31 +22,69 @@ const [slidesLoading, setSlidesLoading] = useState(true)
 const swiperRef = useRef(null)
 
   useEffect(() => {
-    if (window.Swiper) {
-      new window.Swiper('.mySwiper', {
-        effect: 'coverflow',
-        grabCursor: true,
-        centeredSlides: true,
-        slidesPerView: 'auto',
-        coverflowEffect: {
-          rotate: 0,
-          stretch: 0,
-          depth: 80,
-          modifier: 2,
-          slideShadows: false,
-        },
-        loop: true,
-        autoplay: {
-          delay: 4500,
-          disableOnInteraction: false,
-        },
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-        },
-      })
+  async function fetchSlides() {
+    try {
+      const res = await fetch(`${API_URL}/api/slides?section_key=home_top_slider`)
+      const data = await res.json()
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to fetch slides')
+      }
+
+      setSlides(data.slides || [])
+    } catch (error) {
+      console.error('Fetch home slides error:', error)
+      setSlides([])
+    } finally {
+      setSlidesLoading(false)
     }
-  }, [])
+  }
+
+  fetchSlides()
+
+  const interval = setInterval(fetchSlides, 5000)
+
+  return () => clearInterval(interval)
+}, [API_URL])
+
+useEffect(() => {
+  if (!window.Swiper || slides.length === 0) return
+
+  if (swiperRef.current) {
+    swiperRef.current.destroy(true, true)
+    swiperRef.current = null
+  }
+
+  swiperRef.current = new window.Swiper('.mySwiper', {
+    effect: 'coverflow',
+    grabCursor: true,
+    centeredSlides: true,
+    slidesPerView: 'auto',
+    coverflowEffect: {
+      rotate: 0,
+      stretch: 0,
+      depth: 80,
+      modifier: 2,
+      slideShadows: false,
+    },
+    loop: slides.length > 1,
+    autoplay: {
+      delay: 4500,
+      disableOnInteraction: false,
+    },
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+    },
+  })
+
+  return () => {
+    if (swiperRef.current) {
+      swiperRef.current.destroy(true, true)
+      swiperRef.current = null
+    }
+  }
+}, [slides])
 
   return (
     <>
