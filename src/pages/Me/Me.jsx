@@ -1,193 +1,271 @@
-import { Link } from 'react-router-dom'
-import PremiumBannerSection from '../../components/me/PremiumBannerSection'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-function PlainStat({ icon, value, label, valueClass = 'text-[#111]' }) {
+function IconButton({ to, icon, label, onClick }) {
+  const content = (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#202124] shadow-sm transition active:scale-95"
+    >
+      <i className={`${icon} text-[17px]`} />
+    </button>
+  )
+
+  if (!to) return content
+
   return (
-    <div className="flex flex-col items-center justify-center text-center">
-      <div className="mb-2 text-[20px]">{icon}</div>
-      <p className={`text-[24px] font-semibold tracking-tight ${valueClass}`}>{value}</p>
-      <p className="mt-1 text-[12px] font-medium text-[#8e8e98]">{label}</p>
+    <Link to={to} aria-label={label}>
+      {content}
+    </Link>
+  )
+}
+
+function BalanceItem({ value, label }) {
+  return (
+    <div className="text-center">
+      <div className="text-[20px] font-bold tracking-tight text-[#111827]">{value}</div>
+      <div className="mt-1 text-[11px] font-medium text-[#8a8f98]">{label}</div>
     </div>
   )
 }
 
-function MiniTopAction({ to, icon, title }) {
+function SmallCard({ to, title, subtitle, icon, tone = 'light' }) {
+  const toneClass =
+    tone === 'premium'
+      ? 'bg-gradient-to-br from-[#fff7db] to-[#ffffff] border-[#f1d98a]'
+      : 'bg-white border-[#eceef2]'
+
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-2 rounded-full bg-[#f4f4f6] px-3 py-2 text-[12px] font-medium text-[#222] transition hover:bg-[#ececef]"
+      className={`rounded-[22px] border ${toneClass} p-4 shadow-sm transition active:scale-[0.99]`}
     >
-      <span className="text-[13px]">{icon}</span>
-      <span>{title}</span>
-    </Link>
-  )
-}
-
-function ActionCard({ to, icon, title, subtitle }) {
-  return (
-    <Link
-      to={to}
-      className="group rounded-[24px] border border-[#ededf0] bg-white px-4 py-4 shadow-sm transition hover:bg-[#fafafa]"
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f6f6f8]">
-            <span className="text-[18px]">{icon}</span>
-          </div>
-
-          <div className="min-w-0">
-            <h3 className="line-clamp-1 text-[15px] font-semibold tracking-tight text-[#111]">
-              {title}
-            </h3>
-            <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#8b8b95]">
-              {subtitle}
-            </p>
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-function SupportRow({ to, icon, title, subtitle }) {
-  return (
-    <Link
-      to={to}
-      className="flex items-center justify-between gap-4 rounded-[24px] border border-[#ededf0] bg-white px-4 py-4 shadow-sm transition hover:bg-[#fafafa]"
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f6f6f8]">
-          <span className="text-[18px]">{icon}</span>
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f6f7fb] text-[18px]">
+          {icon}
         </div>
 
         <div className="min-w-0">
-          <h3 className="line-clamp-1 text-[15px] font-semibold tracking-tight text-[#111]">
-            {title}
-          </h3>
-          <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#8b8b95]">
-            {subtitle}
-          </p>
+          <div className="text-[15px] font-bold tracking-tight text-[#111827]">{title}</div>
+          <div className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#8a8f98]">{subtitle}</div>
         </div>
       </div>
     </Link>
+  )
+}
+
+function MenuRow({ to, icon, title, subtitle, danger = false }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center justify-between rounded-[20px] bg-white px-4 py-4 shadow-sm transition active:scale-[0.99]"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f7f8fb] text-[17px]">
+          {icon}
+        </div>
+
+        <div className="min-w-0">
+          <div className={`text-[14px] font-bold ${danger ? 'text-[#e5484d]' : 'text-[#111827]'}`}>
+            {title}
+          </div>
+          {subtitle ? (
+            <div className="mt-1 line-clamp-1 text-[12px] text-[#8a8f98]">{subtitle}</div>
+          ) : null}
+        </div>
+      </div>
+
+      <i className="fas fa-chevron-right text-[12px] text-[#c1c5cc]" />
+    </Link>
+  )
+}
+
+function SettingsSheet({ open, onClose }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[120]">
+      <button
+        type="button"
+        aria-label="Close settings"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[24px] md:pb-4">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden" />
+
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="text-[18px] font-bold text-[#111827]">Settings</div>
+            <div className="mt-1 text-[12px] text-[#8a8f98]">Account and app options</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]"
+          >
+            <i className="fas fa-times text-[14px] text-[#555]" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <MenuRow to="/profile" icon="👤" title="Edit Profile" subtitle="Name, avatar, bio" />
+          <MenuRow to="/settings" icon="⚙️" title="Account Settings" subtitle="Password, privacy, language" />
+          <MenuRow to="/settings" icon="🌙" title="Appearance" subtitle="Theme and reading display" />
+          <MenuRow to="/settings" icon="🚪" title="Logout" subtitle="Sign out from this device" danger />
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function Me() {
-  return (
-    <div className="min-h-screen bg-[#fcfcfd] pb-[96px]">
-      <header className="sticky top-0 z-[60] border-b border-[#f2f2f4] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-5 sm:px-5 lg:px-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[22px] font-semibold tracking-tight text-[#111]">Me</h1>
+  const navigate = useNavigate()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-            <Link
-              to="/settings"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-[#111] transition hover:bg-black/5"
-              aria-label="Open settings"
-            >
-              <i className="fas fa-cog text-[18px]" />
-            </Link>
-          </div>
+  const isLoggedIn = false
+  const isAuthor = false
+
+  const handleAuthorDashboard = () => {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    if (!isAuthor) {
+      navigate('/author/create-page')
+      return
+    }
+
+    navigate('/author/dashboard')
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f6f7fb] pb-[104px]">
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      <header className="sticky top-0 z-[60] bg-[#f6f7fb]/95 px-4 pb-3 pt-4 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-end gap-3">
+          <IconButton to="/inbox" icon="far fa-envelope" label="Inbox" />
+          <IconButton icon="fas fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pt-6 sm:px-5 lg:px-6">
-        {/* Profile area - no big card shape */}
-        <section>
-          <div className="flex items-start gap-4">
+      <main className="mx-auto max-w-5xl px-4">
+        <section className="rounded-[28px] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-4">
             <Link
-              to="/profile"
-              className="flex h-[78px] w-[78px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#151826] to-[#2f3447] text-[30px] font-semibold text-white shadow-sm"
+              to={isLoggedIn ? '/profile' : '/login'}
+              className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#171923] to-[#3b4157] text-[30px] font-bold text-white"
             >
-              S
+              {isLoggedIn ? 'S' : <i className="far fa-user text-[28px]" />}
             </Link>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link to="/profile" className="block">
-                    <h2 className="line-clamp-1 text-[28px] font-semibold tracking-tight text-[#111]">
-                      Shadow Reader
-                    </h2>
-                  </Link>
+              <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
+                <h1 className="line-clamp-1 text-[23px] font-bold tracking-tight text-[#111827]">
+                  {isLoggedIn ? 'Shadow Reader' : 'Click to Login'}
+                </h1>
+              </Link>
 
-                  <p className="mt-1 line-clamp-1 text-[13px] text-[#8b8b95]">
-                    Reader ID 000021
-                  </p>
-                </div>
-
-                <Link
-                  to="/settings"
-                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#f4f4f6] px-3 py-2 text-[12px] font-medium text-[#4a4a54] transition hover:bg-[#ececef]"
-                >
-                  <i className="far fa-calendar-check text-[13px]" />
-                  <span>Check In</span>
-                </Link>
-              </div>
+              <p className="mt-1 line-clamp-1 text-[13px] text-[#8a8f98]">
+                {isLoggedIn ? 'Reader' : 'Login to save reading, comments, and author tools'}
+              </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <MiniTopAction to="/page" icon="🪪" title="My Page" />
-                <MiniTopAction to="/settings" icon="🔄" title="Switch Page" />
+                <Link
+                  to={isLoggedIn ? '/profile' : '/login'}
+                  className="rounded-full bg-[#f4f5f8] px-4 py-2 text-[12px] font-bold text-[#202124]"
+                >
+                  View Profile
+                </Link>
+
+                <button
+                  type="button"
+                  className="rounded-full bg-[#fff3c4] px-4 py-2 text-[12px] font-bold text-[#7a5200]"
+                >
+                  Check-in
+                </button>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Plain currency row - no shape cards */}
-        <section className="mt-7 border-t border-b border-[#f0f0f2] py-5">
-          <div className="grid grid-cols-3 gap-3">
-            <PlainStat icon="💎" value="120" label="Diamond" valueClass="text-[#2f5bff]" />
-            <PlainStat icon="🟣" value="480" label="Gem" valueClass="text-[#8b5cf6]" />
-            <PlainStat icon="🎟️" value="3" label="Voucher" valueClass="text-[#f59e0b]" />
+        <section className="mt-4 rounded-[24px] bg-white px-4 py-5 shadow-sm">
+          <div className="grid grid-cols-3 divide-x divide-[#eef0f4]">
+            <BalanceItem value="120" label="Diamond" />
+            <BalanceItem value="480" label="Gem" />
+            <BalanceItem value="3" label="Voucher" />
           </div>
         </section>
 
-        {/* Premium */}
-        <section className="mt-6">
-          <PremiumBannerSection />
+        <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SmallCard
+            to="/premium"
+            icon="👑"
+            title="Premium"
+            subtitle="Cleaner reading and exclusive perks"
+            tone="premium"
+          />
+
+          <SmallCard
+            to="/wallet"
+            icon="💎"
+            title="Wallet"
+            subtitle="Diamonds, gems, vouchers, and purchases"
+          />
         </section>
 
-        {/* Wallet + Dashboard together */}
-        <section className="mt-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <ActionCard
-              to="/settings"
-              icon="👛"
-              title="My Wallet"
-              subtitle="Check balance, purchases, and voucher details."
-            />
-            <ActionCard
-              to="/settings"
-              icon="📝"
-              title="Author Dashboard"
-              subtitle="Manage content, publishing, and creator tools."
-            />
-          </div>
+        <section className="mt-4">
+          <button
+            type="button"
+            onClick={handleAuthorDashboard}
+            className="flex w-full items-center justify-between rounded-[24px] bg-[#111827] px-4 py-4 text-left shadow-sm transition active:scale-[0.99]"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[18px] text-white">
+                ✍️
+              </div>
+
+              <div className="min-w-0">
+                <div className="text-[15px] font-bold text-white">Author Dashboard</div>
+                <div className="mt-1 line-clamp-1 text-[12px] text-white/60">
+                  Manage stories, episodes, and your author page
+                </div>
+              </div>
+            </div>
+
+            <i className="fas fa-chevron-right text-[12px] text-white/45" />
+          </button>
         </section>
 
-        {/* Support */}
-        <section className="mt-10 pb-4">
-          <div className="mb-4">
-            <h2 className="text-[18px] font-semibold tracking-tight text-[#111]">Support</h2>
-          </div>
-
-          <div className="space-y-3">
-            <SupportRow
-              to="/settings"
-              icon="💬"
-              title="Help & Feedback"
-              subtitle="Report a problem or contact support when you need help."
-            />
-            <SupportRow
-              to="/settings"
-              icon="ℹ️"
-              title="About Us"
-              subtitle="Learn more about Shadow, policies, and app information."
-            />
-          </div>
+        <section className="mt-5 space-y-3">
+          <MenuRow to="/inbox" icon="✉️" title="Inbox" subtitle="Messages and notifications" />
+          <MenuRow to="/comments" icon="💬" title="My Comments" subtitle="Replies and comment activity" />
+          <MenuRow to="/feedback" icon="📝" title="Feedback" subtitle="Report issues or suggest improvements" />
+          <MenuRow to="/help" icon="🛟" title="Help Center" subtitle="Support and common questions" />
+          <MenuRow to="/about" icon="ℹ️" title="About Us" subtitle="About Shadowera and policies" />
         </section>
+
+        {isLoggedIn ? (
+          <section className="mt-5">
+            <MenuRow to="/logout" icon="🚪" title="Logout" subtitle="Sign out from this device" danger />
+          </section>
+        ) : null}
       </main>
+
+      <button
+        type="button"
+        onClick={handleAuthorDashboard}
+        aria-label="Author Dashboard shortcut"
+        className="fixed bottom-[92px] right-5 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-[#ffbe00] text-[22px] text-[#111827] shadow-[0_12px_30px_rgba(255,190,0,.35)] transition active:scale-95"
+      >
+        <i className="fas fa-pen-nib" />
+      </button>
     </div>
   )
 }
