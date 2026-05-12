@@ -9,6 +9,7 @@ import Me from './pages/Me/Me'
 import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
+import ReaderPage from './pages/ReaderPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/search" element={<Search />} />
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
         <Route path="/update-today" element={<UpdateTodayPage />} />
+        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/premium" element={<PremiumPage />} />
