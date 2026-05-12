@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const story = {
   id: 'story-001',
@@ -233,9 +234,9 @@ function StoryCard({ item }) {
   )
 }
 
-function EpisodeRow({ item }) {
+function EpisodeRow({ item, onRead }) {
   return (
-    <button className="flex w-full items-center gap-4 rounded-2xl py-1 text-left">
+    <button onClick={() => onRead(item)} className="flex w-full items-center gap-4 rounded-2xl py-1 text-left">
       <div className="relative h-[56px] w-[96px] shrink-0 overflow-hidden rounded-xl bg-[#d9d9d9]">
         {item.image ? (
           <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
@@ -293,6 +294,7 @@ function ComingSoonModal({ open, title, onClose }) {
 }
 
 export default function StoryDetailPage() {
+  const navigate = useNavigate()
   const [showCompactHeader, setShowCompactHeader] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
@@ -321,6 +323,13 @@ export default function StoryDetailPage() {
       overflow: 'hidden',
     }
   }, [descriptionExpanded])
+
+  const goReadEpisode = item => {
+    if (!item || item.isLocked) return
+    navigate(`/story/${story.id}/episode/${item.id}`)
+  }
+
+  const continueEpisode = story.episodes.find(item => item.id === story.continueEpisode) || story.episodes[0]
 
   return (
     <div className="min-h-screen bg-[#f6f6f6] pb-[168px] md:pb-[150px]">
@@ -449,7 +458,7 @@ export default function StoryDetailPage() {
           <div className="mt-8">
             <h2 className="text-[16px] font-bold text-[#1f1f1f]">Ongoing</h2>
             <div className="mt-5 space-y-5">
-              {story.episodes.map(item => <EpisodeRow key={item.id} item={item} />)}
+              {story.episodes.map(item => <EpisodeRow key={item.id} item={item} onRead={goReadEpisode} />)}
             </div>
           </div>
         </section>
@@ -515,7 +524,7 @@ export default function StoryDetailPage() {
             {subscribed ? <IconSubHeartFilled className="h-6 w-6 text-[#ffbe00]" /> : <IconSubHeart className="h-6 w-6" />}
           </button>
 
-          <button className="flex-1 rounded-full bg-[#ffbe00] px-5 py-4 text-[16px] font-normal text-[#1f1f1f] shadow-sm">
+          <button onClick={() => goReadEpisode(continueEpisode)} className="flex-1 rounded-full bg-[#ffbe00] px-5 py-4 text-[16px] font-normal text-[#1f1f1f] shadow-sm">
             Continue Ep. {story.continueEpisode}
           </button>
         </div>
