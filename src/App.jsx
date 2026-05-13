@@ -21,6 +21,8 @@ import CompletedPage from './pages/CompletedPage'
 import ShopPage from './pages/ShopPage'
 import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
+import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
+
 
 export default function App() {
   return (
@@ -46,6 +48,7 @@ export default function App() {
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/terms" element={<TermsPoliciesPage />} />
       </Routes>
 
       <Footer />
