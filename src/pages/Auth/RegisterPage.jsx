@@ -78,42 +78,92 @@ export default function RegisterPage() {
             />
 
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
-              Date of Birth
-            </label>
-            <div className="mb-4 grid grid-cols-[0.85fr_1.25fr_1fr] gap-2">
-              <select
-                defaultValue="17"
-                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
-              >
-                {days.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
+  Date of Birth
+</label>
 
-              <select
-                defaultValue="November"
-                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
-              >
-                {months.map((month) => (
-                  <option key={month} value={month}>
-                    {month}
-                  </option>
-                ))}
-              </select>
+<div className="mb-4 grid grid-cols-3 gap-2">
+  <div className="relative">
+    <select
+      value={birthDay}
+      onChange={(event) => setBirthDay(event.target.value)}
+      className="peer h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+    >
+      <option value="" disabled>
+        Day
+      </option>
+      {days.map((day) => (
+        <option key={day} value={day}>
+          {day}
+        </option>
+      ))}
+    </select>
 
-              <select
-                defaultValue="1999"
-                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
+    <span
+      className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
+        birthDay ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
+      }`}
+    >
+      Day
+    </span>
+
+    <i className="fas fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#111827]" />
+  </div>
+
+  <div className="relative">
+    <select
+      value={birthMonth}
+      onChange={(event) => setBirthMonth(event.target.value)}
+      className="peer h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+    >
+      <option value="" disabled>
+        Month
+      </option>
+      {months.map((month) => (
+        <option key={month} value={month}>
+          {month}
+        </option>
+      ))}
+    </select>
+
+    <span
+      className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
+        birthMonth ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
+      }`}
+    >
+      Month
+    </span>
+
+    <i className="fas fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#111827]" />
+  </div>
+
+  <div className="relative">
+    <select
+      value={birthYear}
+      onChange={(event) => setBirthYear(event.target.value)}
+      className="peer h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+    >
+      <option value="" disabled>
+        Year
+      </option>
+      {years.map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))}
+    </select>
+
+    <span
+      className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
+        birthYear ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
+      }`}
+    >
+      Year
+    </span>
+
+    <i className="fas fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#111827]" />
+  </div>
+</div>
+
 
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Gender
