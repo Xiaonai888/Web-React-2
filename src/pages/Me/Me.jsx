@@ -128,20 +128,6 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
               <MenuRow to="/settings" icon="far fa-moon" title="Appearance" subtitle="Theme and reading display" />
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onClose()
-              window.location.href = isLoggedIn ? '/logout' : '/login'
-            }}
-            className={`mt-3 flex w-full items-center justify-center gap-2 rounded-[18px] px-4 py-3.5 text-[13px] font-extrabold shadow-sm ${
-              isLoggedIn ? 'bg-[#fff1f1] text-[#e5484d]' : 'bg-[#171923] text-white'
-            }`}
-          >
-            <i className={`fa-solid ${isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-[13px]`} />
-            {isLoggedIn ? 'Logout' : 'Login'}
-          </button>
         </div>
       </div>
     </div>
