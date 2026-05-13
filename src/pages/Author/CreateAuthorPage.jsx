@@ -39,7 +39,7 @@ export default function AuthorDashboardPage() {
         }
 
         if (!data.has_author_page) {
-          navigate('/author-event')
+          navigate('/event')
           return
         }
 
