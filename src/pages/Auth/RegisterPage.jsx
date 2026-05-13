@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+
 const days = Array.from({ length: 31 }, (_, index) => index + 1)
 const months = [
   'January',
@@ -21,17 +23,78 @@ const years = Array.from({ length: 100 }, (_, index) => currentYear - index)
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [gender, setGender] = useState('')
-  const [customGender, setCustomGender] = useState('')
+
+  const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [birthDay, setBirthDay] = useState('')
   const [birthMonth, setBirthMonth] = useState('')
   const [birthYear, setBirthYear] = useState('')
+  const [gender, setGender] = useState('')
+  const [customGender, setCustomGender] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
-  const handleSubmit = (event) => {
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const getDateOfBirth = () => {
+    if (!birthDay || !birthMonth || !birthYear) return ''
+
+    const monthIndex = months.indexOf(birthMonth) + 1
+    const month = String(monthIndex).padStart(2, '0')
+    const day = String(birthDay).padStart(2, '0')
+
+    return `${birthYear}-${month}-${day}`
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    alert('Register backend will be connected in the next step.')
+    setMessage('')
+
+    if (!acceptedTerms) {
+      setMessage('Please agree to the Terms & Policies.')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          username,
+          email,
+          password,
+          confirmPassword,
+          date_of_birth: getDateOfBirth(),
+          gender,
+          custom_gender: gender === 'custom' ? customGender : null,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to create account')
+      }
+
+      localStorage.setItem('shadow_reader_token', data.token)
+      localStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+
+      navigate('/me')
+    } catch (error) {
+      setMessage(error.message || 'Failed to create account')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -61,6 +124,12 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          {message ? (
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+              {message}
+            </div>
+          ) : null}
+
           <form onSubmit={handleSubmit}>
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Name
@@ -68,6 +137,8 @@ export default function RegisterPage() {
             <input
               type="text"
               placeholder="Your name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
 
@@ -77,6 +148,8 @@ export default function RegisterPage() {
             <input
               type="text"
               placeholder="@username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
 
@@ -88,20 +161,24 @@ export default function RegisterPage() {
                 <select
                   value={birthDay}
                   onChange={(event) => setBirthDay(event.target.value)}
-                  className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+                  className={
+                    'h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold outline-none transition focus:border-[#111827] focus:bg-white ' +
+                    (birthDay ? 'text-[#111827]' : 'text-transparent')
+                  }
                 >
                   <option value="" disabled></option>
                   {days.map((day) => (
-                    <option key={day} value={day}>
+                    <option key={day} value={day} className="text-[#111827]">
                       {day}
                     </option>
                   ))}
                 </select>
 
                 <span
-                  className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
-                    birthDay ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
-                  }`}
+                  className={
+                    'pointer-events-none absolute left-3 text-[#8d94a1] transition-all ' +
+                    (birthDay ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]')
+                  }
                 >
                   Day
                 </span>
@@ -113,20 +190,24 @@ export default function RegisterPage() {
                 <select
                   value={birthMonth}
                   onChange={(event) => setBirthMonth(event.target.value)}
-                  className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+                  className={
+                    'h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold outline-none transition focus:border-[#111827] focus:bg-white ' +
+                    (birthMonth ? 'text-[#111827]' : 'text-transparent')
+                  }
                 >
                   <option value="" disabled></option>
                   {months.map((month) => (
-                    <option key={month} value={month}>
+                    <option key={month} value={month} className="text-[#111827]">
                       {month}
                     </option>
                   ))}
                 </select>
 
                 <span
-                  className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
-                    birthMonth ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
-                  }`}
+                  className={
+                    'pointer-events-none absolute left-3 text-[#8d94a1] transition-all ' +
+                    (birthMonth ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]')
+                  }
                 >
                   Month
                 </span>
@@ -138,20 +219,24 @@ export default function RegisterPage() {
                 <select
                   value={birthYear}
                   onChange={(event) => setBirthYear(event.target.value)}
-                  className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+                  className={
+                    'h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold outline-none transition focus:border-[#111827] focus:bg-white ' +
+                    (birthYear ? 'text-[#111827]' : 'text-transparent')
+                  }
                 >
                   <option value="" disabled></option>
                   {years.map((year) => (
-                    <option key={year} value={year}>
+                    <option key={year} value={year} className="text-[#111827]">
                       {year}
                     </option>
                   ))}
                 </select>
 
                 <span
-                  className={`pointer-events-none absolute left-3 text-[#8d94a1] transition-all ${
-                    birthYear ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]'
-                  }`}
+                  className={
+                    'pointer-events-none absolute left-3 text-[#8d94a1] transition-all ' +
+                    (birthYear ? 'top-2 text-[10px]' : 'top-[18px] text-[13px]')
+                  }
                 >
                   Year
                 </span>
@@ -217,6 +302,8 @@ export default function RegisterPage() {
             <input
               type="email"
               placeholder="Email address"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
 
@@ -227,6 +314,8 @@ export default function RegisterPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
               />
 
@@ -247,6 +336,8 @@ export default function RegisterPage() {
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
               />
 
@@ -263,6 +354,8 @@ export default function RegisterPage() {
             <label className="mb-5 flex items-start gap-2 text-[12px] leading-5 text-[#8d94a1]">
               <input
                 type="checkbox"
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-[#d1d5db] accent-[#111827]"
               />
               <span>
@@ -275,9 +368,10 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99]"
+              disabled={loading}
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign Up
+              {loading ? 'Creating...' : 'Sign Up'}
             </button>
           </form>
 
