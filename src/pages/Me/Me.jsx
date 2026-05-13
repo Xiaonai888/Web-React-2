@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+
+function getReaderToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
 const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]'
 
 function HeaderIcon({ icon, label, to, onClick }) {
@@ -77,7 +87,7 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
           ) : null}
         </div>
       </div>
-      <i className={`fas fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1]'}`} />
+      <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1]'}`} />
     </>
   )
 
@@ -104,7 +114,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
             <div className="mt-0.5 text-[12px] text-[#8d94a1]">Account and app options</div>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]">
-            <i className="fas fa-times text-[13px] text-[#555]" />
+            <i className="fa-solid fa-times text-[13px] text-[#555]" />
           </button>
         </div>
 
@@ -112,7 +122,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
           <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white">
             <div className="divide-y divide-[#f0eef6]">
               <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title="Edit Profile" subtitle="Name, avatar, bio" />
-              <MenuRow to="/settings" icon="fas fa-shield-alt" title="Account Settings" subtitle="Password, privacy, security" />
+              <MenuRow to="/settings" icon="fa-solid fa-shield-alt" title="Account Settings" subtitle="Password, privacy, security" />
               <MenuRow to="/settings" icon="far fa-moon" title="Appearance" subtitle="Theme and reading display" />
             </div>
           </div>
@@ -127,7 +137,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
               isLoggedIn ? 'bg-[#fff1f1] text-[#e5484d]' : 'bg-[#171923] text-white'
             }`}
           >
-            <i className={`fas ${isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-[13px]`} />
+            <i className={`fa-solid ${isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'} text-[13px]`} />
             {isLoggedIn ? 'Logout' : 'Login'}
           </button>
         </div>
@@ -139,28 +149,48 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
 export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [authorLoading, setAuthorLoading] = useState(false)
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
 
-const isLoggedIn = Boolean(storedUser)
-const isAuthor = Boolean(storedUser?.is_author)
-const isPremium = false
+  const isLoggedIn = Boolean(storedUser)
+  const isPremium = false
 
-const displayName = storedUser?.name || 'Click to Login'
-const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const displayName = storedUser?.name || 'Click to Login'
+  const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
-  const handleAuthorDashboard = () => {
-    if (!isLoggedIn) {
+  const handleAuthorDashboard = async () => {
+    if (authorLoading) return
+
+    const token = getReaderToken()
+
+    if (!token) {
       navigate('/login')
       return
     }
 
-   if (!isAuthor) {
-  navigate('/author/create')
-  return
-}
+    try {
+      setAuthorLoading(true)
 
-    navigate('/author/dashboard')
+      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok && data.has_author_page) {
+        navigate('/author/dashboard')
+        return
+      }
+
+      navigate('/event')
+    } catch {
+      navigate('/event')
+    } finally {
+      setAuthorLoading(false)
+    }
   }
 
   return (
@@ -168,68 +198,68 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-    <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-  <div className="flex justify-end gap-2">
-    <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
-    <HeaderIcon icon="fas fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
-  </div>
+        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="flex justify-end gap-2">
+            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
+            <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
+          </div>
 
-  <div className="mt-3 flex items-start gap-4">
-    <Link
-      to={isLoggedIn ? '/profile' : '/login'}
-      className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
-    >
-      {isLoggedIn ? (
-        <span className="text-[26px] font-extrabold">{avatarLetter}</span>
-      ) : (
-        <i className="far fa-user text-[26px]" />
-      )}
-    </Link>
+          <div className="mt-3 flex items-start gap-4">
+            <Link
+              to={isLoggedIn ? '/profile' : '/login'}
+              className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
+            >
+              {isLoggedIn ? (
+                <span className="text-[26px] font-extrabold">{avatarLetter}</span>
+              ) : (
+                <i className="far fa-user text-[26px]" />
+              )}
+            </Link>
 
-    <div className="min-w-0 flex-1 pt-1.5">
-      <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
-        <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
-          {isLoggedIn ? (
-            <>
-              {displayName}
-              {isPremium ? (
-                <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
-                  <i className="fas fa-crown text-[15px]" />
-                </span>
-              ) : null}
-            </>
-          ) : (
-            'Click to Login'
-          )}
-        </h1>
-      </Link>
+            <div className="min-w-0 flex-1 pt-1.5">
+              <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
+                <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
+                  {isLoggedIn ? (
+                    <>
+                      {displayName}
+                      {isPremium ? (
+                        <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
+                          <i className="fa-solid fa-crown text-[15px]" />
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    'Click to Login'
+                  )}
+                </h1>
+              </Link>
 
-      {!isLoggedIn ? (
-        <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1]">
-          Login to save reading and author tools
-        </p>
-      ) : (
-        <Link
-          to="/profile"
-          className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1]"
-        >
-          <span>View Profile</span>
-          <i className="fas fa-chevron-right text-[9px]" />
-        </Link>
-      )}
-    </div>
-  </div>
+              {!isLoggedIn ? (
+                <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1]">
+                  Login to save reading and author tools
+                </p>
+              ) : (
+                <Link
+                  to="/profile"
+                  className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1]"
+                >
+                  <span>View Profile</span>
+                  <i className="fa-solid fa-chevron-right text-[9px]" />
+                </Link>
+              )}
+            </div>
+          </div>
 
-  <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3">
-    <BalanceItem value="120" label="Diamond" />
-    <BalanceItem value="480" label="Gem" />
-    <BalanceItem value="3" label="Voucher" />
-  </div>
-</section>
+          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3">
+            <BalanceItem value="120" label="Diamond" />
+            <BalanceItem value="480" label="Gem" />
+            <BalanceItem value="3" label="Voucher" />
+          </div>
+        </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
           <div className="grid grid-cols-2 divide-x divide-[#f0eef6]">
-            <QuickAction to="/wallet" icon="fas fa-wallet" title="Wallet" subtitle="Balance & purchases" />
+            <QuickAction to="/wallet" icon="fa-solid fa-wallet" title="Wallet" subtitle="Balance & purchases" />
             <QuickAction to="/check-in" icon="far fa-calendar-check" title="Check-in" subtitle="Daily rewards" />
           </div>
         </section>
@@ -245,24 +275,24 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
                 <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1]">Manage stories, episodes, and your author page</div>
               </div>
             </div>
-            <i className="fas fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
+            <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
           </button>
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
           <div className="divide-y divide-[#f0eef6]">
-            <MenuRow to="/premium" icon="fas fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
+            <MenuRow to="/premium" icon="fa-solid fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
             <MenuRow to="/inbox" icon="far fa-envelope" title="Inbox" subtitle="Messages and notifications" />
             <MenuRow to="/comments" icon="far fa-comment-dots" title="My Comments" subtitle="Replies and comment activity" />
             <MenuRow to="/feedback" icon="far fa-pen-to-square" title="Feedback" subtitle="Report issues or suggestions" />
             <MenuRow to="/help" icon="far fa-circle-question" title="Help Center" subtitle="Support and common questions" />
-            <MenuRow to="/about" icon="fas fa-circle-info" title="About Us" subtitle="About Shadowera and policies" />
+            <MenuRow to="/about" icon="fa-solid fa-circle-info" title="About Us" subtitle="About Shadowera and policies" />
           </div>
         </section>
 
         {isLoggedIn ? (
           <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-            <MenuRow to="/logout" icon="fas fa-sign-out-alt" title="Logout" subtitle="Sign out from this device" danger />
+            <MenuRow to="/logout" icon="fa-solid fa-sign-out-alt" title="Logout" subtitle="Sign out from this device" danger />
           </section>
         ) : null}
       </main>
