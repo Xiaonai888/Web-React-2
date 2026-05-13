@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [gender, setGender] = useState('')
+  const [customGender, setCustomGender] = useState('')
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -117,17 +118,19 @@ export default function RegisterPage() {
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Gender
             </label>
-            <div className="mb-4 grid grid-cols-2 gap-2">
+            <div className="mb-3 grid grid-cols-3 gap-2">
               {[
                 { value: 'female', label: 'Female' },
                 { value: 'male', label: 'Male' },
                 { value: 'custom', label: 'Custom' },
-                { value: 'prefer_not', label: 'Prefer not' },
               ].map((item) => (
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => setGender(item.value)}
+                  onClick={() => {
+                    setGender(item.value)
+                    if (item.value !== 'custom') setCustomGender('')
+                  }}
                   className={`flex h-11 items-center justify-between rounded-[14px] border px-3 text-left text-[13px] font-semibold transition active:scale-[0.99] ${
                     gender === item.value
                       ? 'border-[#111827] bg-[#111827] text-white'
@@ -147,6 +150,21 @@ export default function RegisterPage() {
                 </button>
               ))}
             </div>
+
+            {gender === 'custom' ? (
+              <select
+                value={customGender}
+                onChange={(event) => setCustomGender(event.target.value)}
+                className="mb-4 h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+              >
+                <option value="">Select custom gender</option>
+                <option value="non_binary">Non-binary</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+                <option value="other">Other</option>
+              </select>
+            ) : null}
+
+            {gender !== 'custom' ? <div className="mb-4" /> : null}
 
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Email
@@ -205,7 +223,7 @@ export default function RegisterPage() {
               <span>
                 I agree to the{' '}
                 <Link to="/terms" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
-                  Terms & Policies
+                  [Terms & Policies].
                 </Link>.
               </span>
             </label>
