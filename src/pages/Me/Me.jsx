@@ -238,7 +238,7 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
           <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827]">
-                <i className="fas fa-pen-nib text-[14px]" />
+                <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">Author Dashboard</div>
