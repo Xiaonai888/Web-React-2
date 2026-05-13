@@ -64,11 +64,13 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
     <>
       <div className="flex min-w-0 items-center gap-3">
         <div
-          className={
-            dark
-              ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
-              : iconBox
-          }
+         className={
+  dark
+    ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
+    : danger
+      ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d]'
+      : iconBox
+}
         >
           <i className={`${icon} text-[14px]`} />
         </div>
