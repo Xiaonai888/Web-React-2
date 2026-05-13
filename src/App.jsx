@@ -23,6 +23,7 @@ import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import ProfilePage from './pages/ProfilePage'
+import EventPage from './pages/EventPage'
 
 
 export default function App() {
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/terms" element={<TermsPoliciesPage />} />
       </Routes>
 
       <Footer />
