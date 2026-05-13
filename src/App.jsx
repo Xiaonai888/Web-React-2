@@ -53,6 +53,7 @@ export default function App() {
         <Route path="/terms" element={<TermsPoliciesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
+        <Route path="/event" element={<EventPage />} />
       </Routes>
 
       <Footer />
