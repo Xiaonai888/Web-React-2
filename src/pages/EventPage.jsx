@@ -33,6 +33,8 @@ export default function EventPage() {
   const [message, setMessage] = useState('')
 
   const handleStartYourWork = async () => {
+    if (loading) return
+
     const token = getReaderToken()
 
     if (!token) {
@@ -151,10 +153,10 @@ export default function EventPage() {
               <button
                 type="button"
                 onClick={handleStartYourWork}
-                disabled={loading}
-                className="mx-auto mt-10 flex h-14 w-full max-w-[440px] items-center justify-center rounded-full bg-black text-[22px] font-bold text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                aria-busy={loading}
+                className="mx-auto mt-10 flex h-14 w-full max-w-[440px] items-center justify-center rounded-full bg-black text-[22px] font-bold text-white shadow-[0_16px_34px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99]"
               >
-                {loading ? 'Checking...' : 'Start your work'}
+                Start your work
               </button>
 
               <div className="mt-5 text-[17px] text-[#111827]">
