@@ -50,7 +50,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
-        <Route path="/terms" element={<TermsPoliciesPage />} />
+        <Route path="/ProfilePage" element={<ProfilePage />} />
       </Routes>
 
       <Footer />
