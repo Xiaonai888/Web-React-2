@@ -90,9 +90,7 @@ export default function RegisterPage() {
                   onChange={(event) => setBirthDay(event.target.value)}
                   className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
                 >
-                  <option value="" disabled>
-                    Day
-                  </option>
+                  <option value="" disabled></option>
                   {days.map((day) => (
                     <option key={day} value={day}>
                       {day}
@@ -117,9 +115,7 @@ export default function RegisterPage() {
                   onChange={(event) => setBirthMonth(event.target.value)}
                   className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
                 >
-                  <option value="" disabled>
-                    Month
-                  </option>
+                  <option value="" disabled></option>
                   {months.map((month) => (
                     <option key={month} value={month}>
                       {month}
@@ -144,9 +140,7 @@ export default function RegisterPage() {
                   onChange={(event) => setBirthYear(event.target.value)}
                   className="h-14 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-3 pb-2 pt-5 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
                 >
-                  <option value="" disabled>
-                    Year
-                  </option>
+                  <option value="" disabled></option>
                   {years.map((year) => (
                     <option key={year} value={year}>
                       {year}
