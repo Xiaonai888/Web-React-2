@@ -163,45 +163,64 @@ export default function Me() {
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex justify-end gap-2">
-            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
-            <HeaderIcon icon="fas fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
-          </div>
+    <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+  <div className="flex justify-end gap-2">
+    <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
+    <HeaderIcon icon="fas fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
+  </div>
 
-          <div className="mt-2 flex items-center gap-3.5">
-            <Link
-              to={isLoggedIn ? '/profile' : '/login'}
-              className="flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
-            >
-              {isLoggedIn ? <span className="text-[24px] font-extrabold">S</span> : <i className="far fa-user text-[24px]" />}
-            </Link>
+  <div className="mt-3 flex items-start gap-4">
+    <Link
+      to={isLoggedIn ? '/profile' : '/login'}
+      className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
+    >
+      {isLoggedIn ? (
+        <span className="text-[26px] font-extrabold">S</span>
+      ) : (
+        <i className="far fa-user text-[26px]" />
+      )}
+    </Link>
 
-            <div className="min-w-0 flex-1">
-              <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
-                <h1 className="line-clamp-1 text-[20px] font-extrabold tracking-tight text-[#111827]">
-                  {isLoggedIn ? 'Shadow Reader' : 'Click to Login'}
-                </h1>
-              </Link>
+    <div className="min-w-0 flex-1 pt-1.5">
+      <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
+        <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
+          {isLoggedIn ? (
+            <>
+              Shadow Reader
+              {isPremium ? (
+                <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
+                  <i className="fas fa-crown text-[15px]" />
+                </span>
+              ) : null}
+            </>
+          ) : (
+            'Click to Login'
+          )}
+        </h1>
+      </Link>
 
-              <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1]">
-                {isLoggedIn ? (isPremium ? 'Premium Reader' : isAuthor ? 'Author' : 'Reader') : 'Login to save reading and author tools'}
-              </p>
+      {!isLoggedIn ? (
+        <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1]">
+          Login to save reading and author tools
+        </p>
+      ) : (
+        <Link
+          to="/profile"
+          className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1]"
+        >
+          <span>View Profile</span>
+          <i className="fas fa-chevron-right text-[9px]" />
+        </Link>
+      )}
+    </div>
+  </div>
 
-              <div className="mt-3">
-                <Link to={isLoggedIn ? '/profile' : '/login'} className="inline-flex rounded-full bg-[#f2f3f6] px-3.5 py-2 text-[11.5px] font-extrabold text-[#111827]">
-                  View Profile
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3">
-            <BalanceItem value="120" label="Diamond" />
-            <BalanceItem value="480" label="Gem" />
-            <BalanceItem value="3" label="Voucher" />
-          </div>
-        </section>
+  <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3">
+    <BalanceItem value="120" label="Diamond" />
+    <BalanceItem value="480" label="Gem" />
+    <BalanceItem value="3" label="Voucher" />
+  </div>
+</section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
           <div className="grid grid-cols-2 divide-x divide-[#f0eef6]">
