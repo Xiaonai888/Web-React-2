@@ -292,7 +292,7 @@ export default function Me() {
 
         {isLoggedIn ? (
           <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-            <MenuRow to="/logout" icon="fa-solid fa-sign-out-alt" title="Logout" subtitle="Sign out from this device" danger />
+            <MenuRow to="/logout" icon="fa-solid fa-sign-out-alt" title="Logout" danger />
           </section>
         ) : null}
       </main>
