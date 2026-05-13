@@ -24,6 +24,9 @@ import RegisterPage from './pages/Auth/RegisterPage'
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import ProfilePage from './pages/ProfilePage'
 import EventPage from './pages/EventPage'
+import CreateAuthorPage from './pages/Author/CreateAuthorPage'
+import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+
 
 
 export default function App() {
@@ -54,6 +57,8 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
         <Route path="/event" element={<EventPage />} />
+        <Route path="/author/create" element={<CreateAuthorPage />} />
+        <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
       </Routes>
 
       <Footer />
