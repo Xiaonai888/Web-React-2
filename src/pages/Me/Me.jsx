@@ -155,10 +155,10 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
       return
     }
 
-    if (!isAuthor) {
-      navigate('/author/create')
-      return
-    }
+   if (!isAuthor) {
+  navigate('/author/create')
+  return
+}
 
     navigate('/author/dashboard')
   }
