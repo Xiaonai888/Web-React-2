@@ -140,9 +140,14 @@ export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const isLoggedIn = false
-  const isAuthor = false
-  const isPremium = false
+  const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
+
+const isLoggedIn = Boolean(storedUser)
+const isAuthor = Boolean(storedUser?.is_author)
+const isPremium = false
+
+const displayName = storedUser?.name || 'Click to Login'
+const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
   const handleAuthorDashboard = () => {
     if (!isLoggedIn) {
@@ -175,7 +180,7 @@ export default function Me() {
       className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
     >
       {isLoggedIn ? (
-        <span className="text-[26px] font-extrabold">S</span>
+        <span className="text-[26px] font-extrabold">{avatarLetter}</span>
       ) : (
         <i className="far fa-user text-[26px]" />
       )}
@@ -186,7 +191,7 @@ export default function Me() {
         <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
           {isLoggedIn ? (
             <>
-              Shadow Reader
+              {displayName}
               {isPremium ? (
                 <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
                   <i className="fas fa-crown text-[15px]" />
