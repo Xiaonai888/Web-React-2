@@ -91,7 +91,7 @@ export default function CreateAuthorPage() {
               type="text"
               value={pageName}
               onChange={(event) => setPageName(event.target.value)}
-              placeholder="Username"
+              placeholder="Your author name"
               className="mb-4 h-12 w-full rounded-[10px] border border-[#e5e7eb] bg-[#f1f1f1] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
             />
 
