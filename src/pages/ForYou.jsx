@@ -93,7 +93,7 @@ useEffect(() => {
           margin: 0;
           padding: 0;
           background: #fff;
-          font-family: 'Kantumruy Pro', 'Inter', sans-serif;
+          font-family: 'Roboto', Arial, sans-serif;
           overflow-x: hidden;
         }
 
@@ -231,7 +231,7 @@ useEffect(() => {
               { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
               { icon: 'fa-tasks', label: 'Tasks' },
               { icon: 'fa-trophy', label: 'Ranking' },
-              { icon: 'fa-calendar', label: 'Event' },
+              { icon: 'fa-calendar', label: 'Event', path: '/event' },
             ].map((item) => (
               <div
                 key={item.label}
