@@ -40,6 +40,24 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit}>
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              Name
+            </label>
+            <input
+              type="text"
+              placeholder="Your name"
+              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+            />
+
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              Username
+            </label>
+            <input
+              type="text"
+              placeholder="@username"
+              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+            />
+
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Email
             </label>
             <input
@@ -95,13 +113,13 @@ export default function RegisterPage() {
               />
               <span>
                 I agree to the{' '}
-                <button type="button" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
+                <Link to="/terms" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
                   Terms
-                </button>{' '}
+                </Link>{' '}
                 and{' '}
-                <button type="button" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
+                <Link to="/terms" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
                   Privacy Policy
-                </button>.
+                </Link>.
               </span>
             </label>
 
