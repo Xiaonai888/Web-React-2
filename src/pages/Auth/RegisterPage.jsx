@@ -1,10 +1,29 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+const days = Array.from({ length: 31 }, (_, index) => index + 1)
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+const currentYear = new Date().getFullYear()
+const years = Array.from({ length: 100 }, (_, index) => currentYear - index)
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [gender, setGender] = useState('')
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -56,6 +75,78 @@ export default function RegisterPage() {
               placeholder="@username"
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
+
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              Date of Birth
+            </label>
+            <div className="mb-4 grid grid-cols-[0.85fr_1.25fr_1fr] gap-2">
+              <select
+                defaultValue="17"
+                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+              >
+                {days.map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                defaultValue="November"
+                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+              >
+                {months.map((month) => (
+                  <option key={month} value={month}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                defaultValue="1999"
+                className="h-11 rounded-[14px] border border-[#e5e7eb] bg-[#fafafe] px-3 text-[13px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+              Gender
+            </label>
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              {[
+                { value: 'female', label: 'Female' },
+                { value: 'male', label: 'Male' },
+                { value: 'custom', label: 'Custom' },
+                { value: 'prefer_not', label: 'Prefer not' },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setGender(item.value)}
+                  className={`flex h-11 items-center justify-between rounded-[14px] border px-3 text-left text-[13px] font-semibold transition active:scale-[0.99] ${
+                    gender === item.value
+                      ? 'border-[#111827] bg-[#111827] text-white'
+                      : 'border-[#e5e7eb] bg-[#fafafe] text-[#111827]'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                      gender === item.value ? 'border-white' : 'border-[#b9bec8]'
+                    }`}
+                  >
+                    {gender === item.value ? (
+                      <span className="h-2 w-2 rounded-full bg-white" />
+                    ) : null}
+                  </span>
+                </button>
+              ))}
+            </div>
 
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Email
@@ -114,11 +205,7 @@ export default function RegisterPage() {
               <span>
                 I agree to the{' '}
                 <Link to="/terms" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
-                  Terms
-                </Link>{' '}
-                and{' '}
-                <Link to="/terms" className="font-extrabold text-[#111827] transition hover:text-[#f6b800]">
-                  Privacy Policy
+                  Terms & Policies
                 </Link>.
               </span>
             </label>
