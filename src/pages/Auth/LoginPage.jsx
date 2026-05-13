@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -14,15 +16,15 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5"
+          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 transition hover:-translate-x-0.5 hover:bg-[#f7f7fb] active:scale-95"
           aria-label="Go back"
         >
           <i className="fas fa-chevron-left text-[14px]" />
         </button>
 
-        <section className="rounded-[26px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <section className="rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
           <div className="mb-7 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-white">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-white shadow-[0_14px_28px_rgba(17,24,39,0.18)]">
               <i className="far fa-user text-[26px]" />
             </div>
 
@@ -42,30 +44,38 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="Email address"
-              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] outline-none transition focus:border-[#111827] focus:bg-white"
+              className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
 
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Password
             </label>
-            <div className="mb-3 flex h-12 items-center rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 focus-within:border-[#111827] focus-within:bg-white">
+            <div className="mb-3 flex h-12 items-center rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 transition focus-within:border-[#111827] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+                className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
               />
-              <i className="far fa-eye text-[15px] text-[#8d94a1]" />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1] transition hover:bg-[#f0f1f5] hover:text-[#111827] active:scale-95"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <i className={`${showPassword ? 'far fa-eye-slash' : 'far fa-eye'} text-[15px]`} />
+              </button>
             </div>
 
             <div className="mb-5 flex items-center justify-between">
               <label className="flex items-center gap-2 text-[12px] font-semibold text-[#8d94a1]">
-                <input type="checkbox" className="h-4 w-4 rounded border-[#d1d5db]" />
+                <input type="checkbox" className="h-4 w-4 rounded border-[#d1d5db] accent-[#111827]" />
                 Remember me
               </label>
 
               <button
                 type="button"
-                className="text-[12px] font-bold text-[#7c3aed]"
+                className="text-[12px] font-extrabold text-[#111827] transition hover:text-[#f6b800]"
               >
                 Forgot password?
               </button>
@@ -73,7 +83,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)] active:scale-[0.99]"
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99]"
             >
               Login
             </button>
@@ -81,7 +91,10 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-[13px] text-[#8d94a1]">
             Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-extrabold text-[#7c3aed]">
+            <Link
+              to="/register"
+              className="font-extrabold text-[#111827] transition hover:text-[#f6b800]"
+            >
               Sign Up
             </Link>
           </div>
