@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
@@ -11,113 +11,139 @@ function getReaderToken() {
   )
 }
 
-export default function CreateAuthorPage() {
+export default function AuthorDashboardPage() {
   const navigate = useNavigate()
-  const [pageName, setPageName] = useState('')
-  const [bio, setBio] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [authorPage, setAuthorPage] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setMessage('')
+  useEffect(() => {
+    async function fetchAuthorPage() {
+      const token = getReaderToken()
 
-    const token = getReaderToken()
-
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    try {
-      setLoading(true)
-
-      const response = await fetch(`${API_BASE_URL}/api/authors/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          page_name: pageName,
-          bio,
-        }),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to create author page')
+      if (!token) {
+        navigate('/login')
+        return
       }
 
-      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
-      navigate('/author/dashboard')
-    } catch (error) {
-      setMessage(error.message || 'Failed to create author page')
-    } finally {
-      setLoading(false)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to fetch author page')
+        }
+
+        if (!data.has_author_page) {
+          navigate('/event')
+          return
+        }
+
+        setAuthorPage(data.author_page)
+        localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      } catch (error) {
+        console.error('Fetch author page error:', error)
+        navigate('/event')
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchAuthorPage()
+  }, [navigate])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f3fa] text-[14px] font-bold text-[#8d94a1]">
+        Loading author dashboard...
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3] px-4 py-6">
-      <div className="mx-auto max-w-[520px]">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
-          aria-label="Go back"
-        >
-          <i className="fas fa-chevron-left text-[14px]" />
-        </button>
+    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6">
+      <div className="mx-auto max-w-[760px]">
+        <header className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/me')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+            aria-label="Back to me"
+          >
+            <i className="fas fa-chevron-left text-[14px]" />
+          </button>
 
-        <section className="rounded-[18px] bg-white px-5 py-7 shadow-sm">
-          <h1 className="text-center text-[24px] font-extrabold text-[#111827]">
-            Author Page
-          </h1>
+          <h1 className="text-[20px] font-extrabold text-[#111827]">Author Dashboard</h1>
 
-          {message ? (
-            <div className="mt-5 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
-              {message}
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5"
+          >
+            <i className="fas fa-cog text-[14px]" />
+          </button>
+        </header>
+
+        <section className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-[24px] font-extrabold text-white">
+              {authorPage?.page_name?.charAt(0)?.toUpperCase() || 'A'}
             </div>
-          ) : null}
 
-          <form onSubmit={handleSubmit} className="mt-6">
-            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
-              Author Name
-            </label>
-            <input
-              type="text"
-              value={pageName}
-              onChange={(event) => setPageName(event.target.value)}
-              placeholder="Username"
-              className="mb-4 h-12 w-full rounded-[10px] border border-[#e5e7eb] bg-[#f1f1f1] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
-            />
+            <div className="min-w-0">
+              <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">
+                {authorPage?.page_name || 'Author Page'}
+              </h2>
+              <p className="mt-1 line-clamp-2 text-[13px] text-[#8d94a1]">
+                {authorPage?.bio || 'No bio yet'}
+              </p>
+            </div>
+          </div>
 
-            <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
-              Bio(Optional)
-            </label>
-            <textarea
-              value={bio}
-              onChange={(event) => setBio(event.target.value)}
-              placeholder="A space for your thoughts"
-              rows={3}
-              className="mb-5 w-full resize-none rounded-[10px] border border-[#e5e7eb] bg-[#f1f1f1] px-4 py-3 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
-            />
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-[18px] bg-[#fafafe] px-4 py-4 text-center">
+              <div className="text-[18px] font-extrabold text-[#111827]">
+                {authorPage?.total_stories || 0}
+              </div>
+              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Stories</div>
+            </div>
 
-            <p className="mb-5 text-center text-[12px] font-medium text-[#555]">
-              Step into greatness—Unleash your potential
-            </p>
+            <div className="rounded-[18px] bg-[#fafafe] px-4 py-4 text-center">
+              <div className="text-[18px] font-extrabold text-[#111827]">
+                {authorPage?.total_followers || 0}
+              </div>
+              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Followers</div>
+            </div>
+          </div>
+        </section>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="mx-auto flex h-11 min-w-[130px] items-center justify-center rounded-[8px] bg-black px-6 text-[13px] font-bold text-white transition hover:bg-[#1b1b1b] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? 'Creating...' : 'Start Now'}
-            </button>
-          </form>
+        <section className="mt-4 grid gap-3">
+          <button className="flex items-center justify-between rounded-[22px] bg-[#111827] px-5 py-4 text-left text-white shadow-sm">
+            <div>
+              <div className="text-[15px] font-extrabold">Create Story</div>
+              <div className="mt-1 text-[12px] text-white/60">Start publishing your novel</div>
+            </div>
+            <i className="fas fa-pen-nib text-[#f6b800]" />
+          </button>
+
+          <button className="flex items-center justify-between rounded-[22px] bg-white px-5 py-4 text-left shadow-sm ring-1 ring-black/5">
+            <div>
+              <div className="text-[15px] font-extrabold text-[#111827]">My Stories</div>
+              <div className="mt-1 text-[12px] text-[#8d94a1]">Manage stories and episodes</div>
+            </div>
+            <i className="fas fa-chevron-right text-[12px] text-[#c6c9d1]" />
+          </button>
+
+          <button className="flex items-center justify-between rounded-[22px] bg-white px-5 py-4 text-left shadow-sm ring-1 ring-black/5">
+            <div>
+              <div className="text-[15px] font-extrabold text-[#111827]">Author Profile</div>
+              <div className="mt-1 text-[12px] text-[#8d94a1]">Edit page name, bio, and cover later</div>
+            </div>
+            <i className="fas fa-chevron-right text-[12px] text-[#c6c9d1]" />
+          </button>
         </section>
       </div>
     </div>
