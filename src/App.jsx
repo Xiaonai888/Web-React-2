@@ -27,8 +27,6 @@ import EventPage from './pages/EventPage'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 
-
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -38,6 +36,10 @@ export default function App() {
         <Route path="/discover" element={<Discover />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/event" element={<EventPage />} />
+        <Route path="/author/create" element={<CreateAuthorPage />} />
+        <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
         <Route path="/update-today" element={<UpdateTodayPage />} />
@@ -54,11 +56,6 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/terms" element={<TermsPoliciesPage />} />
-        <Route path="/event" element={<EventPage />} />
-        <Route path="/author/create" element={<CreateAuthorPage />} />
-        <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
       </Routes>
 
       <Footer />
