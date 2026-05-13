@@ -19,6 +19,7 @@ import YouMightLikePage from './pages/YouMightLikePage'
 import NewArrivalsPage from './pages/NewArrivalsPage'
 import CompletedPage from './pages/CompletedPage'
 import ShopPage from './pages/ShopPage'
+import LoginPage from './pages/Auth/LoginPage'
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/new-arrivals" element={<NewArrivalsPage />} />
         <Route path="/completed" element={<CompletedPage />} />
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
 
       <Footer />
