@@ -61,10 +61,64 @@ function HighlightCircle({ title, isAdd = false }) {
   )
 }
 
+function PostCard({ profile, text, imageTone = '#e5e5e8', time = 'Yesterday at 10:22 AM', menuItems }) {
+  const [postMenuOpen, setPostMenuOpen] = useState(false)
+
+  return (
+    <article className="bg-white md:overflow-hidden md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
+      <div className="flex items-start justify-between px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[18px] font-bold text-white">
+            {profile.avatarLetter}
+          </div>
+
+          <div className="min-w-0">
+            <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">
+              {profile.name}
+            </div>
+            <div className="mt-1 text-[11px] text-[#8d94a1]">{time}</div>
+          </div>
+        </div>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setPostMenuOpen((value) => !value)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] hover:bg-[#f5f3fa]"
+          >
+            <i className="fas fa-ellipsis-v text-[14px]" />
+          </button>
+
+          {postMenuOpen ? <DropdownMenu items={menuItems} /> : null}
+        </div>
+      </div>
+
+      <p className="px-4 pt-4 text-[13px] leading-5 text-[#111827]">{text}</p>
+
+      <div className="mt-4 aspect-square w-full" style={{ backgroundColor: imageTone }} />
+
+      <div className="flex items-center gap-5 px-4 py-3 text-[11px] text-[#111827]">
+        <span>
+          <i className="far fa-heart mr-1" />
+          198
+        </span>
+        <span>
+          <i className="far fa-comment mr-1" />
+          32
+        </span>
+        <span>
+          <i className="fas fa-retweet mr-1" />
+          25
+        </span>
+        <span className="ml-auto">😍 🙂 😊</span>
+      </div>
+    </article>
+  )
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [postMenuOpen, setPostMenuOpen] = useState(false)
 
   const user = getStoredUser()
   const isOwnProfile = true
@@ -85,6 +139,27 @@ export default function ProfilePage() {
 
   const profileMenuItems = ['Copy link', 'Report', 'Block']
   const postMenuItems = isOwnProfile ? ['Edit', 'Delete', 'Hide'] : ['Report', 'Block', 'Hide']
+
+  const demoPosts = [
+    {
+      id: 1,
+      text: 'Hello everyone!',
+      time: 'Yesterday at 10:22 AM',
+      imageTone: '#e5e5e8',
+    },
+    {
+      id: 2,
+      text: 'Today I started planning something new for my reader profile.',
+      time: 'Yesterday at 8:10 PM',
+      imageTone: '#eeeeef',
+    },
+    {
+      id: 3,
+      text: 'Small steps, but still moving forward.',
+      time: '2 days ago',
+      imageTone: '#e2e2e6',
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[92px]">
@@ -128,60 +203,60 @@ export default function ProfilePage() {
                 {profile.avatarLetter}
               </div>
 
-              <div className="grid min-w-0 flex-1 grid-cols-3 gap-1">
-                <StatItem value={profile.posts} label="Posts" />
-                <StatItem value={profile.followers} label="Followers" />
-                <StatItem value={profile.following} label="Following" />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
-                  {profile.name}
-                </h1>
-                <i className="fas fa-crown text-[14px] text-[#f6b800]" />
-              </div>
-
-              <div className="mt-2 text-[12px] leading-5 text-[#111827]">
-                <div className="font-bold">{profile.bioTitle}</div>
-                <div>{profile.bio}</div>
-                <div>{profile.location}</div>
-              </div>
-
-              <div className="mt-3 flex items-center gap-2 text-[#111827]">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                  <i className="fas fa-globe" />
-                </span>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                  <i className="fab fa-facebook-f" />
-                </span>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                  <i className="fab fa-instagram" />
-                </span>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                  <i className="fas fa-link" />
-                </span>
-              </div>
-
-              {isOwnProfile ? (
-                <button
-                  type="button"
-                  className="mt-4 h-10 w-full rounded-[14px] border border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] transition hover:bg-[#f7f7fb] active:scale-[0.99]"
-                >
-                  Edit Profile
-                </button>
-              ) : (
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <button className="h-10 rounded-[14px] bg-[#0b5cff] text-[13px] font-extrabold text-white">
-                    Follow
-                  </button>
-                  <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
-                    Message
-                  </button>
+              <div className="min-w-0 flex-1">
+                <div className="mb-4 flex items-center gap-2">
+                  <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
+                    {profile.name}
+                  </h1>
+                  <i className="fas fa-crown text-[14px] text-[#f6b800]" />
                 </div>
-              )}
+
+                <div className="grid grid-cols-3 gap-1">
+                  <StatItem value={profile.posts} label="Posts" />
+                  <StatItem value={profile.followers} label="Followers" />
+                  <StatItem value={profile.following} label="Following" />
+                </div>
+              </div>
             </div>
+
+            <div className="mt-4 text-[12px] leading-5 text-[#111827]">
+              <div className="font-bold">{profile.bioTitle}</div>
+              <div>{profile.bio}</div>
+              <div>{profile.location}</div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2 text-[#111827]">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
+                <i className="fas fa-globe" />
+              </span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
+                <i className="fab fa-facebook-f" />
+              </span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
+                <i className="fab fa-instagram" />
+              </span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
+                <i className="fas fa-link" />
+              </span>
+            </div>
+
+            {isOwnProfile ? (
+              <button
+                type="button"
+                className="mt-4 h-10 w-full rounded-[14px] border border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] transition hover:bg-[#f7f7fb] active:scale-[0.99]"
+              >
+                Edit Profile
+              </button>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button className="h-10 rounded-[14px] bg-[#0b5cff] text-[13px] font-extrabold text-white">
+                  Follow
+                </button>
+                <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
+                  Message
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="border-t border-[#f0eef6] px-4 py-4">
@@ -206,55 +281,17 @@ export default function ProfilePage() {
           </section>
         </div>
 
-        <section className="mt-2 bg-white md:mt-3 md:overflow-hidden md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
-          <article className="bg-white">
-            <div className="flex items-start justify-between px-4 pt-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[18px] font-bold text-white">
-                  {profile.avatarLetter}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">
-                    {profile.name}
-                  </div>
-                  <div className="mt-1 text-[11px] text-[#8d94a1]">Yesterday at 10:22 AM</div>
-                </div>
-              </div>
-
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setPostMenuOpen((value) => !value)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] hover:bg-[#f5f3fa]"
-                >
-                  <i className="fas fa-ellipsis-v text-[14px]" />
-                </button>
-
-                {postMenuOpen ? <DropdownMenu items={postMenuItems} /> : null}
-              </div>
-            </div>
-
-            <p className="px-4 pt-4 text-[13px] text-[#111827]">Hello everyone!</p>
-
-            <div className="mt-4 aspect-square w-full bg-[#e5e5e8]" />
-
-            <div className="flex items-center gap-5 px-4 py-3 text-[11px] text-[#111827]">
-              <span>
-                <i className="far fa-heart mr-1" />
-                198
-              </span>
-              <span>
-                <i className="far fa-comment mr-1" />
-                32
-              </span>
-              <span>
-                <i className="fas fa-retweet mr-1" />
-                25
-              </span>
-              <span className="ml-auto">😍 🙂 😊</span>
-            </div>
-          </article>
+        <section className="mt-2 space-y-2 md:mt-3 md:space-y-3">
+          {demoPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              profile={profile}
+              text={post.text}
+              time={post.time}
+              imageTone={post.imageTone}
+              menuItems={postMenuItems}
+            />
+          ))}
         </section>
       </main>
     </div>
