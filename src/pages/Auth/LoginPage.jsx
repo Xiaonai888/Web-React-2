@@ -1,13 +1,59 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
 
-  const handleSubmit = (event) => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    alert('Login backend will be connected in the next step.')
+    setMessage('')
+
+    try {
+      setLoading(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Login failed')
+      }
+
+      const storage = rememberMe ? localStorage : sessionStorage
+
+      storage.setItem('shadow_reader_token', data.token)
+      storage.setItem('shadow_reader_user', JSON.stringify(data.user))
+
+      if (!rememberMe) {
+        localStorage.removeItem('shadow_reader_token')
+        localStorage.removeItem('shadow_reader_user')
+      }
+
+      navigate('/me')
+    } catch (error) {
+      setMessage(error.message || 'Login failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -37,6 +83,12 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {message ? (
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+              {message}
+            </div>
+          ) : null}
+
           <form onSubmit={handleSubmit}>
             <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
               Email
@@ -44,6 +96,8 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="Email address"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               className="mb-4 h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
             />
 
@@ -54,6 +108,8 @@ export default function LoginPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
               />
 
@@ -69,7 +125,12 @@ export default function LoginPage() {
 
             <div className="mb-5 flex items-center justify-between">
               <label className="flex items-center gap-2 text-[12px] font-semibold text-[#8d94a1]">
-                <input type="checkbox" className="h-4 w-4 rounded border-[#d1d5db] accent-[#111827]" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                  className="h-4 w-4 rounded border-[#d1d5db] accent-[#111827]"
+                />
                 Remember me
               </label>
 
@@ -83,9 +144,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99]"
+              disabled={loading}
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
