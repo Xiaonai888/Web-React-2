@@ -156,7 +156,7 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
     }
 
     if (!isAuthor) {
-      navigate('/author/create-page')
+      navigate('/author/create')
       return
     }
 
