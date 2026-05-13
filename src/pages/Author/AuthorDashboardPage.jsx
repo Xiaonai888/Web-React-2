@@ -65,7 +65,7 @@ export default function AuthorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6">
+    <div className="min-h-screen bg-[#f5f3fa] px-4 py-6 pb-[110px]">
       <div className="mx-auto max-w-[760px]">
         <header className="mb-5 flex items-center justify-between">
           <button
@@ -97,6 +97,9 @@ export default function AuthorDashboardPage() {
               <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">
                 {authorPage?.page_name || 'Author Page'}
               </h2>
+              <p className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#8d94a1]">
+                @{authorPage?.page_username || authorPage?.page_slug || 'author_username'}
+              </p>
               <p className="mt-1 line-clamp-2 text-[13px] text-[#8d94a1]">
                 {authorPage?.bio || 'No bio yet'}
               </p>
