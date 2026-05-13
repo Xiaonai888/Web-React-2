@@ -204,17 +204,6 @@ export default function Me() {
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-          <div className="divide-y divide-[#f0eef6]">
-            <MenuRow to="/premium" icon="fas fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
-            <MenuRow to="/inbox" icon="far fa-envelope" title="Inbox" subtitle="Messages and notifications" />
-            <MenuRow to="/comments" icon="far fa-comment-dots" title="My Comments" subtitle="Replies and comment activity" />
-            <MenuRow to="/feedback" icon="far fa-pen-to-square" title="Feedback" subtitle="Report issues or suggestions" />
-            <MenuRow to="/help" icon="far fa-circle-question" title="Help Center" subtitle="Support and common questions" />
-            <MenuRow to="/about" icon="fas fa-circle-info" title="About Us" subtitle="About Shadowera and policies" />
-          </div>
-        </section>
-
-        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
           <div className="grid grid-cols-2 divide-x divide-[#f0eef6]">
             <QuickAction to="/wallet" icon="fas fa-wallet" title="Wallet" subtitle="Balance & purchases" />
             <QuickAction to="/check-in" icon="far fa-calendar-check" title="Check-in" subtitle="Daily rewards" />
@@ -234,6 +223,17 @@ export default function Me() {
             </div>
             <i className="fas fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
           </button>
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
+          <div className="divide-y divide-[#f0eef6]">
+            <MenuRow to="/premium" icon="fas fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
+            <MenuRow to="/inbox" icon="far fa-envelope" title="Inbox" subtitle="Messages and notifications" />
+            <MenuRow to="/comments" icon="far fa-comment-dots" title="My Comments" subtitle="Replies and comment activity" />
+            <MenuRow to="/feedback" icon="far fa-pen-to-square" title="Feedback" subtitle="Report issues or suggestions" />
+            <MenuRow to="/help" icon="far fa-circle-question" title="Help Center" subtitle="Support and common questions" />
+            <MenuRow to="/about" icon="fas fa-circle-info" title="About Us" subtitle="About Shadowera and policies" />
+          </div>
         </section>
 
         {isLoggedIn ? (
