@@ -292,6 +292,20 @@ export default function CreateStoryPage() {
   const [tagOpen, setTagOpen] = useState(false)
   const [message, setMessage] = useState('')
 
+  useEffect(() => {
+  const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+  if (!saved) return
+
+  setTitle(saved.title || '')
+  setLanguage(saved.language || 'Khmer')
+  setGenre(saved.genre || 'Romance')
+  setTags(saved.tags || [])
+  setDescription(saved.description || '')
+  setIsAdult(!!saved.isAdult)
+  setOriginalAccepted(!!saved.originalAccepted)
+  setAgreementAccepted(!!saved.agreementAccepted)
+}, [])
+
   const descriptionCount = description.length
   const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000
 
@@ -550,15 +564,4 @@ export default function CreateStoryPage() {
   )
 }
 
-useEffect(() => {
-  const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
-  if (!saved) return
-  setTitle(saved.title || '')
-  setLanguage(saved.language || 'Khmer')
-  setGenre(saved.genre || 'Romance')
-  setTags(saved.tags || [])
-  setDescription(saved.description || '')
-  setIsAdult(!!saved.isAdult)
-  setOriginalAccepted(!!saved.originalAccepted)
-  setAgreementAccepted(!!saved.agreementAccepted)
-}, [])
+
