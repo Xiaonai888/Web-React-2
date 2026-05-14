@@ -50,7 +50,11 @@ export default function LoginPage() {
 
       navigate('/me')
     } catch (error) {
-      setMessage(error.message || 'Login failed')
+      setMessage(
+  error.message === 'Failed to fetch'
+    ? 'The server is starting up. This may take 30–60 seconds. Please try again shortly.'
+    : error.message || 'Login failed'
+)
     } finally {
       setLoading(false)
     }
