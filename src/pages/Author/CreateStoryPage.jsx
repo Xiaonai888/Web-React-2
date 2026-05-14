@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Cropper from 'react-easy-crop'
 
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 
@@ -32,6 +33,41 @@ const tagOptions = [
   'Second Chance',
   'Cold Male Lead',
 ]
+
+function createImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.setAttribute('crossOrigin', 'anonymous')
+    image.src = url
+  })
+}
+
+async function getCroppedImage(imageSrc, pixelCrop) {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) return imageSrc
+
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
 
 function Step({ number, title, active }) {
   return (
@@ -93,9 +129,177 @@ function Toggle({ checked, onClick, label }) {
   )
 }
 
+function Toast({ message, onClose }) {
+  if (!message) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      className="fixed inset-0 z-[180] flex items-center justify-center bg-black/10 px-6"
+    >
+      <div className="max-w-[360px] rounded-[18px] bg-white px-5 py-4 text-center text-[14px] font-bold leading-6 text-[#111827] shadow-2xl">
+        {message}
+      </div>
+    </button>
+  )
+}
+
+function CropImageModal({
+  open,
+  title,
+  helper,
+  image,
+  crop,
+  zoom,
+  aspect,
+  onCropChange,
+  onZoomChange,
+  onCropComplete,
+  onClose,
+  onSave,
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black/50 px-4"
+      onWheel={(event) => event.stopPropagation()}
+      onTouchMove={(event) => event.stopPropagation()}
+    >
+      <style>
+        {`
+          .shadow-cropper-shell,
+          .shadow-cropper-shell * {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+          }
+
+          .shadow-cropper-shell .reactEasyCrop_Container {
+            touch-action: none !important;
+            cursor: grab !important;
+          }
+
+          .shadow-cropper-shell .reactEasyCrop_Container:active {
+            cursor: grabbing !important;
+          }
+
+          .shadow-cropper-shell .reactEasyCrop_Image,
+          .shadow-cropper-shell .reactEasyCrop_Video {
+            pointer-events: none !important;
+            -webkit-user-drag: none !important;
+            user-select: none !important;
+          }
+
+          .shadow-cropper-shell .reactEasyCrop_CropArea {
+            border: 2px solid rgba(255,255,255,0.95) !important;
+            box-shadow: 0 0 0 9999em rgba(0,0,0,0.35) !important;
+          }
+        `}
+      </style>
+
+      <div className="shadow-cropper-shell w-full max-w-[560px] rounded-[26px] bg-white p-4 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[17px] font-extrabold text-[#111827]">{title}</h2>
+            <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">{helper}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            aria-label="Close crop editor"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div
+          className="relative h-[280px] touch-none overflow-hidden rounded-[20px] bg-[#111827] sm:h-[360px]"
+          onDragStart={(event) => event.preventDefault()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+        >
+          <Cropper
+            image={image}
+            crop={crop}
+            zoom={zoom}
+            aspect={aspect}
+            onCropChange={onCropChange}
+            onZoomChange={onZoomChange}
+            onCropComplete={onCropComplete}
+            showGrid={false}
+            restrictPosition={false}
+            objectFit="contain"
+            style={{
+              containerStyle: {
+                touchAction: 'none',
+                cursor: 'grab',
+              },
+              mediaStyle: {
+                userSelect: 'none',
+                WebkitUserDrag: 'none',
+                pointerEvents: 'none',
+              },
+              cropAreaStyle: {
+                border: '2px solid rgba(255,255,255,0.95)',
+              },
+            }}
+          />
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+            <span>Zoom</span>
+            <span>{zoom.toFixed(1)}x</span>
+          </div>
+
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.1"
+            value={zoom}
+            onChange={(event) => onZoomChange(Number(event.target.value))}
+            className="w-full accent-[#111827]"
+          />
+        </div>
+
+        <div className="mt-3 rounded-[16px] bg-[#f5f3fa] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085]">
+          Tip: Drag inside the frame to move. On phone, drag with one finger and pinch to zoom.
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSave}
+            className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+          >
+            Save Crop
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GenreSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || 'Romance')
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (open) setSelected(value || 'Romance')
+  }, [open, value])
 
   if (!open) return null
 
@@ -160,6 +364,10 @@ function GenreSheet({ open, value, onClose, onSave }) {
 function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (open) setSelected(value || [])
+  }, [open, value])
 
   if (!open) return null
 
@@ -252,16 +460,26 @@ function TagSheet({ open, value, onClose, onSave }) {
   )
 }
 
-function SlideRow({ slide, index, onDelete, onToggle }) {
+function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
   return (
     <div className="flex items-center gap-3 rounded-[18px] border border-[#eceaf2] bg-white p-3 shadow-sm">
-      <div className="flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#111827]">
-        <img src={slide.preview} alt={`Slide ${index + 1}`} className="h-full w-full object-cover" />
-      </div>
+      <button
+        type="button"
+        onClick={() => onEdit(index)}
+        className="flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#111827]"
+      >
+        <img
+          src={slide.cropped}
+          alt={`Slide ${index + 1}`}
+          className="h-full w-full object-cover"
+          draggable="false"
+          onDragStart={(event) => event.preventDefault()}
+        />
+      </button>
 
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-extrabold text-[#111827]">Slide {index + 1}</div>
-        <div className="mt-1 text-[11px] text-[#8d94a1]">Story slide preview</div>
+        <div className="mt-1 text-[11px] text-[#8d94a1]">Tap image to edit crop</div>
       </div>
 
       <button type="button" onClick={() => onToggle(index)} className={`rounded-full px-3 py-1.5 text-[10.5px] font-extrabold ${slide.active ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
@@ -286,44 +504,151 @@ export default function CreateStoryPage() {
   const [isAdult, setIsAdult] = useState(false)
   const [originalAccepted, setOriginalAccepted] = useState(false)
   const [agreementAccepted, setAgreementAccepted] = useState(false)
+
+  const [coverOriginal, setCoverOriginal] = useState('')
   const [coverPreview, setCoverPreview] = useState('')
   const [slides, setSlides] = useState([])
+
   const [genreOpen, setGenreOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [message, setMessage] = useState('')
+  const [toast, setToast] = useState('')
+
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropMode, setCropMode] = useState('cover')
+  const [editingSlideIndex, setEditingSlideIndex] = useState(null)
+  const [tempImage, setTempImage] = useState('')
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   useEffect(() => {
-  const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
-  if (!saved) return
+    const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+    if (!saved) return
 
-  setTitle(saved.title || '')
-  setLanguage(saved.language || 'Khmer')
-  setGenre(saved.genre || 'Romance')
-  setTags(saved.tags || [])
-  setDescription(saved.description || '')
-  setIsAdult(!!saved.isAdult)
-  setOriginalAccepted(!!saved.originalAccepted)
-  setAgreementAccepted(!!saved.agreementAccepted)
-}, [])
+    setTitle(saved.title || '')
+    setLanguage(saved.language || 'Khmer')
+    setGenre(saved.genre || 'Romance')
+    setTags(saved.tags || [])
+    setDescription(saved.description || '')
+    setIsAdult(!!saved.isAdult)
+    setOriginalAccepted(!!saved.originalAccepted)
+    setAgreementAccepted(!!saved.agreementAccepted)
+  }, [])
 
   const descriptionCount = description.length
   const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000
 
-  const handleCoverChange = (file) => {
-    if (!file) return
-    setCoverPreview(URL.createObjectURL(file))
+  const showToast = (text) => {
+    setToast(text)
+    window.setTimeout(() => setToast(''), 2400)
   }
 
-  const handleAddSlides = (event) => {
-    const files = Array.from(event.target.files || [])
-    const remaining = Math.max(0, 5 - slides.length)
-    const nextSlides = files.slice(0, remaining).map((file) => ({
-      preview: URL.createObjectURL(file),
-      active: true,
-    }))
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels)
+  }, [])
 
-    setSlides((current) => [...current, ...nextSlides])
-    event.target.value = ''
+  const openCropper = ({ mode, image, slideIndex = null }) => {
+    setCropMode(mode)
+    setEditingSlideIndex(slideIndex)
+    setTempImage(image)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    setCropOpen(true)
+  }
+
+  const handleCoverChange = (file) => {
+    if (!file) return
+
+    const imageUrl = URL.createObjectURL(file)
+    setCoverOriginal(imageUrl)
+    openCropper({
+      mode: 'cover',
+      image: imageUrl,
+    })
+  }
+
+  const handleEditCoverCrop = () => {
+    if (!coverOriginal) return
+
+    openCropper({
+      mode: 'cover',
+      image: coverOriginal,
+    })
+  }
+
+  const handleAddSlide = (file) => {
+    if (!file) return
+
+    if (slides.length >= 5) {
+      showToast('Maximum 5 slides allowed.')
+      return
+    }
+
+    const imageUrl = URL.createObjectURL(file)
+    openCropper({
+      mode: 'slide',
+      image: imageUrl,
+      slideIndex: null,
+    })
+  }
+
+  const handleEditSlideCrop = (index) => {
+    const slide = slides[index]
+    if (!slide?.original) return
+
+    openCropper({
+      mode: 'slide',
+      image: slide.original,
+      slideIndex: index,
+    })
+  }
+
+  const handleSaveCrop = async () => {
+    if (!tempImage || !croppedAreaPixels) {
+      showToast('Please adjust the image first.')
+      return
+    }
+
+    try {
+      const croppedImage = await getCroppedImage(tempImage, croppedAreaPixels)
+
+      if (cropMode === 'cover') {
+        setCoverPreview(croppedImage)
+        setCropOpen(false)
+        return
+      }
+
+      if (cropMode === 'slide') {
+        if (editingSlideIndex === null) {
+          setSlides((current) => [
+            ...current,
+            {
+              id: Date.now(),
+              original: tempImage,
+              cropped: croppedImage,
+              active: true,
+            },
+          ])
+        } else {
+          setSlides((current) =>
+            current.map((slide, index) =>
+              index === editingSlideIndex
+                ? {
+                    ...slide,
+                    cropped: croppedImage,
+                  }
+                : slide
+            )
+          )
+        }
+
+        setCropOpen(false)
+      }
+    } catch {
+      showToast('Could not save crop. Please try another image.')
+    }
   }
 
   const handleDeleteSlide = (index) => {
@@ -352,12 +677,38 @@ export default function CreateStoryPage() {
       return
     }
 
+    localStorage.removeItem('create_story_draft')
+
     const demoStoryId = Date.now()
     navigate(`/author/story/${demoStoryId}/episode/create`)
   }
 
+  const cropAspect = cropMode === 'cover' ? 2 / 3 : 16 / 9
+  const cropTitle = cropMode === 'cover' ? 'Crop Book Cover' : 'Crop Story Slide'
+  const cropHelper =
+    cropMode === 'cover'
+      ? 'Drag the image to fit the vertical 2:3 book cover.'
+      : 'Drag the image to fit the 16:9 story slide.'
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+      <Toast message={toast} onClose={() => setToast('')} />
+
+      <CropImageModal
+        open={cropOpen}
+        title={cropTitle}
+        helper={cropHelper}
+        image={tempImage}
+        crop={crop}
+        zoom={zoom}
+        aspect={cropAspect}
+        onCropChange={setCrop}
+        onZoomChange={setZoom}
+        onCropComplete={onCropComplete}
+        onClose={() => setCropOpen(false)}
+        onSave={handleSaveCrop}
+      />
+
       <GenreSheet
         open={genreOpen}
         value={genre}
@@ -407,41 +758,70 @@ export default function CreateStoryPage() {
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <FieldLabel required>Book Cover</FieldLabel>
+
           <div className="grid grid-cols-[112px_1fr] gap-3">
-            <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-              {coverPreview ? (
-                <img src={coverPreview} alt="Book Cover" className="h-full w-full object-cover" />
-              ) : (
+            {coverPreview ? (
+              <button
+                type="button"
+                onClick={handleEditCoverCrop}
+                className="block aspect-[2/3] overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]"
+              >
+                <img
+                  src={coverPreview}
+                  alt="Book Cover"
+                  className="h-full w-full object-cover"
+                  draggable="false"
+                  onDragStart={(event) => event.preventDefault()}
+                />
+              </button>
+            ) : (
+              <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
                 <div className="px-3">
                   <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                     <i className="fa-solid fa-upload text-[14px]" />
                   </div>
-                  <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Upload Cover</div>
-                  <div className="mt-1 text-[10.5px] text-[#8d94a1]">Vertical cover</div>
+                  <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
+                  <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
                 </div>
-              )}
-              <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCoverChange(event.target.files?.[0] || null)} />
-            </label>
+                <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCoverChange(event.target.files?.[0] || null)} />
+              </label>
+            )}
 
             <div className="min-w-0">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[13px] font-extrabold text-[#111827]">Story Slides ({slides.length}/5)</div>
-                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, shown on story page</div>
+                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
                 </div>
 
                 <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold ${
                   slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
                 }`}>
                   + Add
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddSlides} disabled={slides.length >= 5} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={slides.length >= 5}
+                    onChange={(event) => {
+                      handleAddSlide(event.target.files?.[0] || null)
+                      event.target.value = ''
+                    }}
+                  />
                 </label>
               </div>
 
               {slides.length ? (
                 <div className="space-y-2">
                   {slides.map((slide, index) => (
-                    <SlideRow key={slide.preview} slide={slide} index={index} onDelete={handleDeleteSlide} onToggle={handleToggleSlide} />
+                    <SlideRow
+                      key={slide.id}
+                      slide={slide}
+                      index={index}
+                      onEdit={handleEditSlideCrop}
+                      onDelete={handleDeleteSlide}
+                      onToggle={handleToggleSlide}
+                    />
                   ))}
                 </div>
               ) : (
@@ -449,12 +829,24 @@ export default function CreateStoryPage() {
                   <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                     <i className="fa-solid fa-images text-[15px]" />
                   </div>
-                  <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add Story Slides</div>
-                  <div className="mt-1 text-[11px] text-[#8d94a1]">Max 5 images</div>
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddSlides} />
+                  <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add Story Slide</div>
+                  <div className="mt-1 text-[11px] text-[#8d94a1]">Drag / pinch / zoom crop</div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      handleAddSlide(event.target.files?.[0] || null)
+                      event.target.value = ''
+                    }}
+                  />
                 </label>
               )}
             </div>
+          </div>
+
+          <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
+            Cover uses 2:3 vertical crop. Slides use 16:9 crop. Tap an image again to adjust crop.
           </div>
         </section>
 
@@ -470,8 +862,8 @@ export default function CreateStoryPage() {
               ))}
             </SelectInput>
             <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
-  Choose the language used inside your story.
-</p>
+              Choose the language used inside your story.
+            </p>
           </div>
 
           <div className="mt-5">
