@@ -267,12 +267,8 @@ export default function StoryManagerPage() {
                 Last update <span className="font-bold text-[#555b66]">{story.updated}</span>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4">
                 <ActionButton onClick={handleEditStory}>Edit Story</ActionButton>
-                <ActionButton primary onClick={handleAddEpisode}>
-                  <i className="fa-solid fa-plus mr-1.5 text-[11px]" />
-                  Add Episode
-                </ActionButton>
               </div>
             </div>
           </div>
@@ -322,6 +318,17 @@ export default function StoryManagerPage() {
               />
             )
           )}
+        </section>
+
+        <section className="mt-4 rounded-[22px] border border-dashed border-[#cfd4df] bg-white p-3 shadow-sm">
+          <button
+            type="button"
+            onClick={handleAddEpisode}
+            className="flex h-13 min-h-[52px] w-full items-center justify-center rounded-[18px] bg-[#111827] text-[14px] font-extrabold text-white active:scale-[0.99]"
+          >
+            <i className="fa-solid fa-plus mr-2 text-[12px]" />
+            Add Episode
+          </button>
         </section>
       </main>
     </div>
