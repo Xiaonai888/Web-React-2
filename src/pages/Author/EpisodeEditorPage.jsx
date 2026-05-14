@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Cropper from 'react-easy-crop'
 
 const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 12000
@@ -41,7 +42,7 @@ function Toast({ message, onClose }) {
     <button
       type="button"
       onClick={onClose}
-      className="fixed inset-0 z-[140] flex items-center justify-center bg-black/10 px-6"
+      className="fixed inset-0 z-[180] flex items-center justify-center bg-black/10 px-6"
     >
       <div className="max-w-[360px] rounded-[18px] bg-white px-5 py-4 text-center text-[14px] font-bold leading-6 text-[#111827] shadow-2xl">
         {message}
@@ -91,24 +92,98 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
   )
 }
 
+function createImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.setAttribute('crossOrigin', 'anonymous')
+    image.src = url
+  })
+}
+
+async function getCroppedImage(imageSrc, pixelCrop) {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) return imageSrc
+
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
+
 function CropCoverModal({
   open,
   image,
+  crop,
   zoom,
+  onCropChange,
   onZoomChange,
+  onCropComplete,
   onClose,
   onSave,
 }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-[520px] rounded-[26px] bg-white p-4 shadow-2xl">
+    <div
+      className="fixed inset-0 z-[160] flex items-center justify-center overflow-hidden bg-black/50 px-4"
+      onWheel={(event) => event.stopPropagation()}
+      onTouchMove={(event) => event.stopPropagation()}
+    >
+      <style>
+        {`
+          .episode-cropper-shell,
+          .episode-cropper-shell * {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+          }
+
+          .episode-cropper-shell .reactEasyCrop_Container {
+            touch-action: none !important;
+            cursor: grab !important;
+          }
+
+          .episode-cropper-shell .reactEasyCrop_Container:active {
+            cursor: grabbing !important;
+          }
+
+          .episode-cropper-shell .reactEasyCrop_Image,
+          .episode-cropper-shell .reactEasyCrop_Video {
+            pointer-events: none !important;
+            -webkit-user-drag: none !important;
+            user-select: none !important;
+          }
+
+          .episode-cropper-shell .reactEasyCrop_CropArea {
+            border: 2px solid rgba(255,255,255,0.95) !important;
+            box-shadow: 0 0 0 9999em rgba(0,0,0,0.35) !important;
+          }
+        `}
+      </style>
+
+      <div className="episode-cropper-shell w-full max-w-[560px] rounded-[26px] bg-white p-4 shadow-2xl">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Episode Cover</h2>
             <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">
-              Adjust the image to fit the 16:9 preview.
+              Drag the image inside the frame. Pinch or use zoom to adjust.
             </p>
           </div>
 
@@ -122,15 +197,38 @@ function CropCoverModal({
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[20px] bg-[#111827]">
-          <div className="aspect-[16/9] w-full overflow-hidden">
-            <img
-              src={image}
-              alt="Crop preview"
-              className="h-full w-full object-cover"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
-            />
-          </div>
+        <div
+          className="relative h-[240px] touch-none overflow-hidden rounded-[20px] bg-[#111827] sm:h-[310px]"
+          onDragStart={(event) => event.preventDefault()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+        >
+          <Cropper
+            image={image}
+            crop={crop}
+            zoom={zoom}
+            aspect={16 / 9}
+            onCropChange={onCropChange}
+            onZoomChange={onZoomChange}
+            onCropComplete={onCropComplete}
+            showGrid={false}
+            restrictPosition={false}
+            objectFit="horizontal-cover"
+            style={{
+              containerStyle: {
+                touchAction: 'none',
+                cursor: 'grab',
+              },
+              mediaStyle: {
+                userSelect: 'none',
+                WebkitUserDrag: 'none',
+                pointerEvents: 'none',
+              },
+              cropAreaStyle: {
+                border: '2px solid rgba(255,255,255,0.95)',
+              },
+            }}
+          />
         </div>
 
         <div className="mt-4">
@@ -142,12 +240,16 @@ function CropCoverModal({
           <input
             type="range"
             min="1"
-            max="2"
+            max="3"
             step="0.1"
             value={zoom}
             onChange={(event) => onZoomChange(Number(event.target.value))}
             className="w-full accent-[#111827]"
           />
+        </div>
+
+        <div className="mt-3 rounded-[16px] bg-[#f5f3fa] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085]">
+          Tip: On computer, drag inside the crop box. On phone, drag with one finger and pinch to zoom.
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -180,7 +282,9 @@ export default function EpisodeEditorPage() {
   const [episodeCover, setEpisodeCover] = useState('')
   const [tempCover, setTempCover] = useState('')
   const [cropOpen, setCropOpen] = useState(false)
-  const [coverZoom, setCoverZoom] = useState(1)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   const [content, setContent] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
@@ -228,23 +332,43 @@ export default function EpisodeEditorPage() {
     markUnsaved()
   }
 
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels)
+  }, [])
+
   const handleCoverChange = (file) => {
     if (!file) return
+
     setTempCover(URL.createObjectURL(file))
-    setCoverZoom(1)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
     setCropOpen(true)
   }
 
-  const handleSaveCoverCrop = () => {
-    if (!tempCover) return
-    setEpisodeCover(tempCover)
-    setCropOpen(false)
-    markUnsaved()
+  const handleSaveCoverCrop = async () => {
+    if (!tempCover || !croppedAreaPixels) {
+      showToast('Please adjust the cover first.')
+      return
+    }
+
+    try {
+      const croppedImage = await getCroppedImage(tempCover, croppedAreaPixels)
+      setEpisodeCover(croppedImage)
+      setCropOpen(false)
+      markUnsaved()
+    } catch {
+      showToast('Could not save crop. Please try another image.')
+    }
   }
 
   const handleEditCoverCrop = () => {
     if (!episodeCover) return
+
     setTempCover(episodeCover)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
     setCropOpen(true)
   }
 
@@ -303,8 +427,11 @@ export default function EpisodeEditorPage() {
       <CropCoverModal
         open={cropOpen}
         image={tempCover}
-        zoom={coverZoom}
-        onZoomChange={setCoverZoom}
+        crop={crop}
+        zoom={zoom}
+        onCropChange={setCrop}
+        onZoomChange={setZoom}
+        onCropComplete={onCropComplete}
         onClose={() => setCropOpen(false)}
         onSave={handleSaveCoverCrop}
       />
@@ -384,14 +511,17 @@ export default function EpisodeEditorPage() {
                     src={episodeCover}
                     alt="Episode Cover"
                     className="h-full w-full object-cover"
-                    style={{ transform: `scale(${coverZoom})`, transformOrigin: 'center center' }}
+                    draggable="false"
+                    onDragStart={(event) => event.preventDefault()}
                   />
                 </div>
+
                 <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
                   <div>
                     <div className="text-[12px] font-extrabold text-[#111827]">Cover saved</div>
                     <div className="mt-0.5 text-[11px] text-[#8d94a1]">Tap to adjust crop again</div>
                   </div>
+
                   <span className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
                     Edit Crop
                   </span>
@@ -411,7 +541,7 @@ export default function EpisodeEditorPage() {
                       </div>
 
                       <div className="mt-1 text-[11px] text-[#8d94a1]">
-                        16:9 crop preview
+                        Drag to move, pinch or zoom to crop
                       </div>
                     </div>
                   </div>
