@@ -535,10 +535,15 @@ export default function CreateStoryPage() {
             <span>
               I agree to the <button
   type="button"
- onClick={() => {
-  window.open('/author/agreement', '_blank', 'noopener,noreferrer')
-}}
-}}
+<button
+  type="button"
+  onClick={() => {
+    window.open('/author/agreement', '_blank', 'noopener,noreferrer')
+  }}
+  className="font-extrabold text-[#0b5cff]"
+>
+  Shadow Author Agreement.
+</button>
   className="font-extrabold text-[#0b5cff]"
 >
   Shadow Author Agreement.
