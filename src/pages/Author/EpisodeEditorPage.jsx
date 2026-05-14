@@ -97,6 +97,9 @@ export default function EpisodeEditorPage() {
 
   const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeCover, setEpisodeCover] = useState('')
+  const [tempCover, setTempCover] = useState('')
+  const [cropOpen, setCropOpen] = useState(false)
+  const [coverZoom, setCoverZoom] = useState(1)
   const [content, setContent] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
