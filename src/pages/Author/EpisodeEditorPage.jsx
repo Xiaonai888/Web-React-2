@@ -252,7 +252,12 @@ export default function EpisodeEditorPage() {
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
                 <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
-                <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional. If empty, story cover will be used.</div>
+                <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                  Optional. If empty, story cover will be used.
+                </div>
+                <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                  Recommended 16:9. Best 1280×720 or higher.
+                </div>
               </div>
 
               <label className="shrink-0 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white">
@@ -267,7 +272,7 @@ export default function EpisodeEditorPage() {
             </div>
 
             <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-              <div className="aspect-[1.42/1] w-full">
+              <div className="aspect-[16/9] w-full">
                 {episodeCover ? (
                   <img src={episodeCover} alt="Episode Cover" className="h-full w-full object-cover" />
                 ) : (
@@ -276,8 +281,8 @@ export default function EpisodeEditorPage() {
                       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                         <i className="fa-regular fa-image text-[15px]" />
                       </div>
-                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
-                      <div className="mt-1 text-[11px] text-[#8d94a1]">Horizontal thumbnail</div>
+                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Upload Episode Cover</div>
+                      <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop preview</div>
                     </div>
                   </div>
                 )}
