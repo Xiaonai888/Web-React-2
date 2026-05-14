@@ -229,7 +229,7 @@ export default function AuthorDashboardPage() {
   }
 
   const handleEditStory = (story) => {
-    navigate(`/author/story/${story.id}/edit`)
+    navigate(`/author/story/${story.id}/manage`)
   }
 
   return (
