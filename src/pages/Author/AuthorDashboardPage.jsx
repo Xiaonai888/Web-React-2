@@ -282,7 +282,7 @@ export default function AuthorDashboardPage() {
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[20px] bg-[#fafafe] px-2 py-3.5">
             <StatItem value={author.published} label="Published" />
-            <StatItem value={author.drafts} label="Drafts" />
+            <StatItem value={author.drafts} label="Unpublished" />
             <StatItem value={author.views} label="Views" />
           </div>
         </section>
