@@ -280,6 +280,7 @@ export default function EpisodeEditorPage() {
 
   const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeCover, setEpisodeCover] = useState('')
+  const [originalCover, setOriginalCover] = useState('')
   const [tempCover, setTempCover] = useState('')
   const [cropOpen, setCropOpen] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -337,14 +338,17 @@ export default function EpisodeEditorPage() {
   }, [])
 
   const handleCoverChange = (file) => {
-    if (!file) return
+  if (!file) return
 
-    setTempCover(URL.createObjectURL(file))
-    setCrop({ x: 0, y: 0 })
-    setZoom(1)
-    setCroppedAreaPixels(null)
-    setCropOpen(true)
-  }
+  const imageUrl = URL.createObjectURL(file)
+
+  setOriginalCover(imageUrl)
+  setTempCover(imageUrl)
+  setCrop({ x: 0, y: 0 })
+  setZoom(1)
+  setCroppedAreaPixels(null)
+  setCropOpen(true)
+}
 
   const handleSaveCoverCrop = async () => {
     if (!tempCover || !croppedAreaPixels) {
@@ -362,15 +366,15 @@ export default function EpisodeEditorPage() {
     }
   }
 
-  const handleEditCoverCrop = () => {
-    if (!episodeCover) return
+ const handleEditCoverCrop = () => {
+  if (!originalCover) return
 
-    setTempCover(episodeCover)
-    setCrop({ x: 0, y: 0 })
-    setZoom(1)
-    setCroppedAreaPixels(null)
-    setCropOpen(true)
-  }
+  setTempCover(originalCover)
+  setCrop({ x: 0, y: 0 })
+  setZoom(1)
+  setCroppedAreaPixels(null)
+  setCropOpen(true)
+}
 
   const handleSaveDraft = () => {
     setSaveStatus('Saved')
