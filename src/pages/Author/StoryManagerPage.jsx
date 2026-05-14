@@ -1,229 +1,196 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-function SummaryStat({ value, label }) {
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+function getAuthToken() {
   return (
-    <div className="text-center">
-      <div className="text-[15px] font-extrabold text-[#111827]">{value}</div>
-      <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9aa1ad]">{label}</div>
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function StatusBadge({ status }) {
+  const normalized = String(status || 'draft').toLowerCase()
+
+  const classes = {
+    published: 'bg-[#ecfdf3] text-[#16803c]',
+    scheduled: 'bg-[#eff6ff] text-[#0b5cff]',
+    draft: 'bg-[#f2f4f7] text-[#667085]',
+    ready: 'bg-[#fff7df] text-[#a56a00]',
+  }
+
+  const labels = {
+    published: 'Published',
+    scheduled: 'Scheduled',
+    draft: 'Draft',
+    ready: 'Ready',
+  }
+
+  return (
+    <span className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${classes[normalized] || classes.draft}`}>
+      {labels[normalized] || 'Draft'}
+    </span>
+  )
+}
+
+function StatCard({ icon, label, value }) {
+  return (
+    <div className="rounded-[20px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#f5f3fa] text-[#111827]">
+          <i className={`${icon} text-[15px]`} />
+        </div>
+
+        <div>
+          <div className="text-[18px] font-extrabold text-[#111827]">{value}</div>
+          <div className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">{label}</div>
+        </div>
+      </div>
     </div>
   )
 }
 
-function StatusPill({ children, tone = 'dark' }) {
-  const styles = {
-    dark: 'bg-[#111827] text-white',
-    green: 'bg-[#ecfdf3] text-[#16803c]',
-    gray: 'bg-[#f2f4f7] text-[#667085]',
-    red: 'bg-[#fff1f1] text-[#e5484d]',
-  }
+function EpisodeRow({ episode, onOpen }) {
+  const dateText = episode.published_at || episode.scheduled_at || episode.updated_at || episode.created_at
 
-  return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold ${styles[tone] || styles.dark}`}>
-      {children}
-    </span>
-  )
-}
-
-function EpisodeMetric({ icon, value, color = 'text-[#555b66]' }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#555b66]">
-      <i className={`${icon} ${color} text-[11px]`} />
-      {value}
-    </span>
-  )
-}
-
-function ActionButton({ children, onClick, primary = false }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${
-        primary
-          ? 'bg-[#111827] text-white shadow-sm'
-          : 'border border-[#e4e7ec] bg-white text-[#111827]'
-      }`}
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.995]"
     >
-      {children}
+      <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#111827] text-white">
+        {episode.cover_url ? (
+          <img src={episode.cover_url} alt={episode.title} className="h-full w-full object-cover" />
+        ) : (
+          <i className="fa-regular fa-image text-[18px] opacity-70" />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <div className="shrink-0 rounded-full bg-[#f5f3fa] px-2 py-1 text-[10px] font-extrabold text-[#667085]">
+            EP {episode.episode_number || 1}
+          </div>
+          <StatusBadge status={episode.status} />
+        </div>
+
+        <div className="mt-2 line-clamp-1 text-[14px] font-extrabold text-[#111827]">
+          {episode.title || 'Untitled Episode'}
+        </div>
+
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#8d94a1]">
+          <span>{Number(episode.character_count || 0).toLocaleString()} characters</span>
+          {dateText ? <span>{new Date(dateText).toLocaleDateString()}</span> : null}
+        </div>
+      </div>
+
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
     </button>
-  )
-}
-
-function MoreButton({ onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f3fa] text-[#555b66] active:scale-95"
-      aria-label="More options"
-    >
-      <i className="fa-solid fa-ellipsis text-[13px]" />
-    </button>
-  )
-}
-
-function PublishedEpisodeCard({ episode, onEdit, onMore }) {
-  return (
-    <article className="rounded-[22px] border border-[#eceaf2] bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="line-clamp-1 text-[15px] font-extrabold text-[#111827]">{episode.title}</div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-[#8d94a1]">
-            <span>Published {episode.publishedAt}</span>
-            <span className="h-1 w-1 rounded-full bg-[#d0d5dd]" />
-            <span>{episode.words} words</span>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          {episode.adult ? <StatusPill tone="red">18+</StatusPill> : null}
-          <MoreButton onClick={() => onMore(episode)} />
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <EpisodeMetric icon="fa-regular fa-eye" value={episode.views} />
-        <EpisodeMetric icon="fa-solid fa-heart" value={episode.likes} color="text-[#e5484d]" />
-        <EpisodeMetric icon="fa-regular fa-comment" value={episode.comments} />
-      </div>
-
-      <div className="mt-4 flex justify-end">
-        <ActionButton onClick={() => onEdit(episode)}>Edit</ActionButton>
-      </div>
-    </article>
-  )
-}
-
-function DraftEpisodeCard({ episode, onEdit, onPreview, onPublish, onMore }) {
-  return (
-    <article className="rounded-[22px] border border-[#eceaf2] bg-white p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          className="mt-1 flex h-9 w-8 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#98a2b3] active:scale-95"
-          aria-label="Reorder draft episode"
-        >
-          <i className="fa-solid fa-grip-vertical text-[15px]" />
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="line-clamp-1 text-[15px] font-extrabold text-[#111827]">{episode.title}</div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-[#8d94a1]">
-                <span>{episode.schedule || 'Not scheduled'}</span>
-                <span className="h-1 w-1 rounded-full bg-[#d0d5dd]" />
-                <span>{episode.words} words</span>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              {episode.adult ? <StatusPill tone="red">18+</StatusPill> : null}
-              <MoreButton onClick={() => onMore(episode)} />
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <ActionButton onClick={() => onEdit(episode)}>Edit</ActionButton>
-            <ActionButton onClick={() => onPreview(episode)}>Preview</ActionButton>
-            <ActionButton primary onClick={() => onPublish(episode)}>Publish</ActionButton>
-          </div>
-        </div>
-      </div>
-    </article>
   )
 }
 
 export default function StoryManagerPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
-  const [activeTab, setActiveTab] = useState('Published')
 
-  const story = {
-    id: storyId || '1',
-    title: 'Name Novel',
-    status: 'Published',
-    words: '20,000',
-    updated: '14/06/2026',
-    cover: '',
-    episodes: '04',
-    drafts: '02',
-    adult: '01',
-    libraryAdds: '100',
-  }
+  const [story, setStory] = useState(null)
+  const [episodes, setEpisodes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
-  const episodes = [
-    {
-      id: 1,
-      title: 'Name Episode',
-      status: 'Published',
-      publishedAt: '15 Mar 2022 at 4:46 PM',
-      words: '670',
-      views: '2,000',
-      likes: '1,000',
-      comments: '1,000',
-      adult: true,
-    },
-    {
-      id: 2,
-      title: 'Name Episode',
-      status: 'Published',
-      publishedAt: '15 Mar 2022 at 4:46 PM',
-      words: '670',
-      views: '2,000',
-      likes: '1,000',
-      comments: '1,000',
-      adult: false,
-    },
-    {
-      id: 3,
-      title: 'Name Episode',
-      status: 'Draft',
-      schedule: 'Release date: 15 Mar 2022 at 4:46 PM',
-      words: '670',
-      adult: false,
-    },
-    {
-      id: 4,
-      title: 'Name Episode',
-      status: 'Draft',
-      schedule: '',
-      words: '670',
-      adult: true,
-    },
-  ]
+  const publishedCount = useMemo(
+    () => episodes.filter((episode) => episode.status === 'published').length,
+    [episodes]
+  )
 
-  const filteredEpisodes = useMemo(() => {
-    return episodes.filter((episode) => episode.status === activeTab)
-  }, [activeTab])
+  const draftCount = useMemo(
+    () => episodes.filter((episode) => episode.status === 'draft' || episode.status === 'ready').length,
+    [episodes]
+  )
 
-  const handleEditStory = () => {
-    navigate(`/author/story/${story.id}/edit-info`)
-  }
+  const scheduledCount = useMemo(
+    () => episodes.filter((episode) => episode.status === 'scheduled').length,
+    [episodes]
+  )
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadStoryManager() {
+      setLoading(true)
+      setMessage('')
+
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      try {
+        const [storyResponse, episodesResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ])
+
+        const storyData = await storyResponse.json().catch(() => ({}))
+        const episodesData = await episodesResponse.json().catch(() => ({}))
+
+        if (!storyResponse.ok || storyData.ok === false) {
+          throw new Error(storyData.message || 'Failed to load story')
+        }
+
+        if (!episodesResponse.ok || episodesData.ok === false) {
+          throw new Error(episodesData.message || 'Failed to load episodes')
+        }
+
+        if (ignore) return
+
+        setStory(storyData.story || null)
+        setEpisodes(episodesData.episodes || [])
+      } catch (error) {
+        if (ignore) return
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? 'Cannot connect to backend. Please check deployment.'
+            : error.message || 'Failed to load story manager'
+        )
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadStoryManager()
+
+    return () => {
+      ignore = true
+    }
+  }, [navigate, storyId])
 
   const handleAddEpisode = () => {
-    navigate(`/author/story/${story.id}/episode/create`)
+    navigate(`/author/story/${storyId}/episode/create?first=0`)
   }
 
-  const handleEditEpisode = (episode) => {
-    navigate(`/author/story/${story.id}/episode/${episode.id}/edit`)
-  }
-
-  const handlePreviewEpisode = (episode) => {
-    navigate(`/author/story/${story.id}/episode/${episode.id}/preview`)
-  }
-
-  const handlePublishEpisode = (episode) => {
-    navigate(`/author/story/${story.id}/episode/${episode.id}/publish`)
-  }
-
-  const handleMoreEpisode = (episode) => {
-    navigate(`/author/story/${story.id}/episode/${episode.id}/options`)
+  const handleOpenEpisode = (episode) => {
+    navigate(`/author/story/${storyId}/episode/publish?episodeId=${episode.id}&first=${episode.episode_number === 1 ? '1' : '0'}`)
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -237,101 +204,161 @@ export default function StoryManagerPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Story Manager</h1>
 
-          <div className="h-9 w-9" />
+          <button
+            type="button"
+            onClick={handleAddEpisode}
+            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+          >
+            Add
+          </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex gap-3.5">
-            <button
-              type="button"
-              onClick={handleEditStory}
-              className="h-[124px] w-[88px] shrink-0 overflow-hidden rounded-[16px] bg-[#111827] active:scale-[0.98]"
-              aria-label="Edit story info"
-            >
-              {story.cover ? <img src={story.cover} alt={story.title} className="h-full w-full object-cover" /> : null}
-            </button>
+        {loading ? (
+          <section className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+            <div className="text-[13px] font-bold text-[#667085]">Loading story manager...</div>
+          </section>
+        ) : null}
 
-            <div className="flex min-w-0 flex-1 justify-between gap-3 py-1">
-              <div className="min-w-0">
-                <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{story.title}</h2>
+        {message ? (
+          <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+            {message}
+          </section>
+        ) : null}
 
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <StatusPill tone="green">{story.status}</StatusPill>
-                  <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">
-                    {story.words} words
-                  </span>
-                </div>
+        {!loading && story ? (
+          <>
+            <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
+              <div className="relative min-h-[180px] bg-[#111827]">
+                {story.slides?.length ? (
+                  <img
+                    src={story.slides[0].image_url}
+                    alt={story.title}
+                    className="h-[180px] w-full object-cover opacity-80"
+                  />
+                ) : (
+                  <div className="flex h-[180px] items-center justify-center text-white/50">
+                    <i className="fa-regular fa-image text-[32px]" />
+                  </div>
+                )}
 
-                <div className="mt-3 text-[12px] text-[#8d94a1]">
-                  Last update <span className="font-bold text-[#555b66]">{story.updated}</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+
+                <div className="absolute bottom-4 left-4 right-4 flex items-end gap-4">
+                  <div className="aspect-[2/3] w-[96px] overflow-hidden rounded-[18px] bg-white/10 shadow-xl ring-2 ring-white/30">
+                    {story.cover_url ? (
+                      <img src={story.cover_url} alt={story.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-white/50">
+                        <i className="fa-regular fa-image text-[20px]" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1 pb-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <StatusBadge status={story.status} />
+                      {story.is_adult ? (
+                        <span className="rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
+                          18+
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <h2 className="line-clamp-2 text-[22px] font-extrabold leading-7 text-white">
+                      {story.title || 'Untitled Story'}
+                    </h2>
+
+                    <div className="mt-1 text-[12px] font-bold text-white/75">
+                      {story.story_language} • {story.main_genre}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="shrink-0">
-                <ActionButton onClick={handleEditStory}>Edit Story</ActionButton>
+              <div className="p-4">
+                {story.description ? (
+                  <p className="line-clamp-4 text-[13px] leading-6 text-[#555b66]">
+                    {story.description}
+                  </p>
+                ) : (
+                  <p className="text-[13px] font-semibold text-[#98a2b3]">
+                    No description yet.
+                  </p>
+                )}
+
+                {story.tags?.length ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {story.tags.map((tag) => (
+                      <span key={tag} className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-bold text-[#555b66]">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="mt-4 grid grid-cols-4 divide-x divide-[#eef0f4] rounded-[20px] bg-[#fafafe] px-2 py-3.5">
-            <SummaryStat value={story.episodes} label="Episodes" />
-            <SummaryStat value={story.drafts} label="Drafts" />
-            <SummaryStat value={story.adult} label="18+" />
-            <SummaryStat value={story.libraryAdds} label="Library Adds" />
-          </div>
-        </section>
+            <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatCard icon="fa-solid fa-book-open" label="Episodes" value={episodes.length} />
+              <StatCard icon="fa-solid fa-circle-check" label="Published" value={publishedCount} />
+              <StatCard icon="fa-regular fa-file-lines" label="Draft/Ready" value={draftCount} />
+              <StatCard icon="fa-regular fa-calendar" label="Scheduled" value={scheduledCount} />
+            </section>
 
-        <section className="mt-4 rounded-[22px] bg-white p-2 shadow-sm ring-1 ring-black/5">
-          <div className="grid grid-cols-2 gap-2">
-            {['Published', 'Draft'].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-[18px] py-3 text-[14px] font-extrabold active:scale-[0.99] ${
-                  activeTab === tab ? 'bg-[#111827] text-white' : 'bg-transparent text-[#667085]'
-                }`}
-              >
-                {tab === 'Draft' ? 'Drafts' : 'Published'}
-              </button>
-            ))}
-          </div>
-        </section>
+            <section className="mt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-[17px] font-extrabold text-[#111827]">Episodes</h2>
+                  <p className="mt-0.5 text-[12px] font-semibold text-[#8d94a1]">
+                    Manage all episodes for this story.
+                  </p>
+                </div>
 
-        <section className="mt-4 space-y-3">
-          {filteredEpisodes.map((episode) =>
-            activeTab === 'Published' ? (
-              <PublishedEpisodeCard
-                key={episode.id}
-                episode={episode}
-                onEdit={handleEditEpisode}
-                onMore={handleMoreEpisode}
-              />
-            ) : (
-              <DraftEpisodeCard
-                key={episode.id}
-                episode={episode}
-                onEdit={handleEditEpisode}
-                onPreview={handlePreviewEpisode}
-                onPublish={handlePublishEpisode}
-                onMore={handleMoreEpisode}
-              />
-            )
-          )}
-        </section>
+                <button
+                  type="button"
+                  onClick={handleAddEpisode}
+                  className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+                >
+                  Add Episode
+                </button>
+              </div>
 
-        <section className="mt-4 rounded-[22px] border border-dashed border-[#cfd4df] bg-white p-3 shadow-sm">
-          <button
-            type="button"
-            onClick={handleAddEpisode}
-            className="flex h-13 min-h-[52px] w-full items-center justify-center rounded-[18px] bg-[#111827] text-[14px] font-extrabold text-white active:scale-[0.99]"
-          >
-            <i className="fa-solid fa-plus mr-2 text-[12px]" />
-            Add Episode
-          </button>
-        </section>
+              {episodes.length ? (
+                <div className="space-y-3">
+                  {episodes.map((episode) => (
+                    <EpisodeRow
+                      key={episode.id}
+                      episode={episode}
+                      onOpen={() => handleOpenEpisode(episode)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[24px] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                    <i className="fa-regular fa-file-lines text-[22px]" />
+                  </div>
+
+                  <h3 className="mt-4 text-[16px] font-extrabold text-[#111827]">No episodes yet</h3>
+                  <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">
+                    Start writing your first episode to make this story ready for readers.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleAddEpisode}
+                    className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+                  >
+                    Create Episode
+                  </button>
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
       </main>
     </div>
   )
