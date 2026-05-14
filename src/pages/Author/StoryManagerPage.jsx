@@ -5,17 +5,8 @@ function SummaryStat({ value, label }) {
   return (
     <div className="text-center">
       <div className="text-[15px] font-extrabold text-[#111827]">{value}</div>
-      <div className="mt-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-[#9aa1ad]">{label}</div>
+      <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.04em] text-[#9aa1ad]">{label}</div>
     </div>
-  )
-}
-
-function EpisodeMetric({ icon, value, color = 'text-[#555b66]' }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#555b66]">
-      <i className={`${icon} ${color} text-[11px]`} />
-      {value}
-    </span>
   )
 }
 
@@ -34,6 +25,31 @@ function StatusPill({ children, tone = 'dark' }) {
   )
 }
 
+function EpisodeMetric({ icon, value, color = 'text-[#555b66]' }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#555b66]">
+      <i className={`${icon} ${color} text-[11px]`} />
+      {value}
+    </span>
+  )
+}
+
+function ActionButton({ children, onClick, primary = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${
+        primary
+          ? 'bg-[#111827] text-white shadow-sm'
+          : 'border border-[#e4e7ec] bg-white text-[#111827]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 function MoreButton({ onClick }) {
   return (
     <button
@@ -43,24 +59,6 @@ function MoreButton({ onClick }) {
       aria-label="More options"
     >
       <i className="fa-solid fa-ellipsis text-[13px]" />
-    </button>
-  )
-}
-
-function ActionButton({ children, onClick, primary = false, danger = false }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${
-        primary
-          ? 'bg-[#111827] text-white'
-          : danger
-            ? 'border border-[#f0b8b8] bg-white text-[#c04444]'
-            : 'border border-[#e4e7ec] bg-white text-[#111827]'
-      }`}
-    >
-      {children}
     </button>
   )
 }
@@ -204,6 +202,10 @@ export default function StoryManagerPage() {
     navigate(`/author/story/${story.id}/edit-info`)
   }
 
+  const handleAddEpisode = () => {
+    navigate(`/author/story/${story.id}/episode/create`)
+  }
+
   const handleEditEpisode = (episode) => {
     navigate(`/author/story/${story.id}/episode/${episode.id}/edit`)
   }
@@ -220,12 +222,8 @@ export default function StoryManagerPage() {
     navigate(`/author/story/${story.id}/episode/${episode.id}/options`)
   }
 
-  const handleAddEpisode = () => {
-    navigate(`/author/story/${story.id}/episode/create`)
-  }
-
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -239,7 +237,7 @@ export default function StoryManagerPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Story Manager</h1>
 
-        <div className="h-9 w-9" />
+          <div className="h-9 w-9" />
         </div>
       </header>
 
@@ -256,27 +254,25 @@ export default function StoryManagerPage() {
             </button>
 
             <div className="min-w-0 flex-1 py-1">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{story.title}</h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <StatusPill tone="green">{story.status}</StatusPill>
-                    <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">
-                      {story.words} words
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-  type="button"
-  onClick={handleEditStory}
-  className="mt-3 rounded-full bg-[#111827] px-3.5 py-2 text-[11.5px] font-extrabold text-white active:scale-95"
->
-  Edit Story
-</button>
+              <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{story.title}</h2>
 
-              <div className="mt-4 text-[12px] text-[#8d94a1]">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <StatusPill tone="green">{story.status}</StatusPill>
+                <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">
+                  {story.words} words
+                </span>
+              </div>
+
+              <div className="mt-3 text-[12px] text-[#8d94a1]">
                 Last update <span className="font-bold text-[#555b66]">{story.updated}</span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <ActionButton onClick={handleEditStory}>Edit Story</ActionButton>
+                <ActionButton primary onClick={handleAddEpisode}>
+                  <i className="fa-solid fa-plus mr-1.5 text-[11px]" />
+                  Add Episode
+                </ActionButton>
               </div>
             </div>
           </div>
@@ -328,19 +324,6 @@ export default function StoryManagerPage() {
           )}
         </section>
       </main>
-
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa] to-transparent px-4 pb-5 pt-8">
-        <div className="mx-auto max-w-5xl">
-          <button
-            type="button"
-            onClick={handleAddEpisode}
-            className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99]"
-          >
-            <i className="fa-solid fa-plus mr-2 text-[13px]" />
-            Add Episode
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
