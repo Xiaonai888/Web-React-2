@@ -239,13 +239,7 @@ export default function StoryManagerPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Story Manager</h1>
 
-          <button
-            type="button"
-            onClick={handleEditStory}
-            className="rounded-full bg-[#111827] px-3.5 py-2 text-[11.5px] font-extrabold text-white active:scale-95"
-          >
-            Edit Story
-          </button>
+        <div className="h-9 w-9" />
         </div>
       </header>
 
@@ -273,6 +267,13 @@ export default function StoryManagerPage() {
                   </div>
                 </div>
               </div>
+              <button
+  type="button"
+  onClick={handleEditStory}
+  className="mt-3 rounded-full bg-[#111827] px-3.5 py-2 text-[11.5px] font-extrabold text-white active:scale-95"
+>
+  Edit Story
+</button>
 
               <div className="mt-4 text-[12px] text-[#8d94a1]">
                 Last update <span className="font-bold text-[#555b66]">{story.updated}</span>
