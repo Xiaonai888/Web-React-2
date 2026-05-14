@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
@@ -290,6 +290,11 @@ function CropCoverModal({
 export default function EpisodeEditorPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const [searchParams] = useSearchParams()
+
+  const isFirstEpisode = searchParams.get('first') !== '0'
+  const pageTitle = isFirstEpisode ? 'First Episode' : 'Episode'
+  const stepTitle = isFirstEpisode ? 'First Episode' : 'Episode'
 
   const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeCover, setEpisodeCover] = useState('')
@@ -456,7 +461,10 @@ export default function EpisodeEditorPage() {
       throw new Error('Episode created but episode id was missing')
     }
 
-    return episodeId
+    return {
+      episodeId,
+      episodeNumber: data.episode?.episode_number || 1,
+    }
   }
 
   const handleNext = async () => {
@@ -480,12 +488,13 @@ export default function EpisodeEditorPage() {
     try {
       setLoading(true)
 
-      const episodeId = await createRealEpisode()
+      const { episodeId, episodeNumber } = await createRealEpisode()
 
       setSaveStatus('Saved')
       setHasUnsavedChanges(false)
 
-      navigate(`/author/story/${storyId}/episode/publish?episodeId=${episodeId}`)
+      const firstParam = isFirstEpisode && episodeNumber === 1 ? '1' : '0'
+      navigate(`/author/story/${storyId}/episode/publish?episodeId=${episodeId}&first=${firstParam}`)
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
@@ -531,7 +540,7 @@ export default function EpisodeEditorPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">First Episode</h1>
+          <h1 className="text-[17px] font-extrabold text-[#111827]">{pageTitle}</h1>
 
           <button
             type="button"
@@ -548,10 +557,16 @@ export default function EpisodeEditorPage() {
         <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
           <div className="grid grid-cols-3 gap-2">
             <Step number="1" title="Story Info" />
-            <Step number="2" title="First Episode" active />
+            <Step number="2" title={stepTitle} active />
             <Step number="3" title="Publish" />
           </div>
         </section>
+
+        {!isFirstEpisode ? (
+          <section className="mt-4 rounded-[18px] bg-[#eff6ff] px-4 py-3 text-[12px] font-bold leading-5 text-[#0b5cff]">
+            You are adding a new episode to this story. This episode can be published, scheduled, or saved as draft.
+          </section>
+        ) : null}
 
         {message ? (
           <button
@@ -592,7 +607,7 @@ export default function EpisodeEditorPage() {
               <button
                 type="button"
                 onClick={handleEditCoverCrop}
-                className="block w-full cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-left active:scale-[0.999]"
+                className="block w-full cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left active:scale-[0.999]"
               >
                 <div className="aspect-[16/9] w-full overflow-hidden">
                   <img
