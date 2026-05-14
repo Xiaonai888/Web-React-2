@@ -455,6 +455,9 @@ export default function CreateStoryPage() {
                 <option key={item} value={item}>{item}</option>
               ))}
             </SelectInput>
+            <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
+  Choose the language used inside your story.
+</p>
           </div>
 
           <div className="mt-5">
