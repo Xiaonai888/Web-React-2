@@ -91,6 +91,87 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
   )
 }
 
+function CropCoverModal({
+  open,
+  image,
+  zoom,
+  onZoomChange,
+  onClose,
+  onSave,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-[520px] rounded-[26px] bg-white p-4 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Episode Cover</h2>
+            <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">
+              Adjust the image to fit the 16:9 preview.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            aria-label="Close crop editor"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-[20px] bg-[#111827]">
+          <div className="aspect-[16/9] w-full overflow-hidden">
+            <img
+              src={image}
+              alt="Crop preview"
+              className="h-full w-full object-cover"
+              style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+            <span>Zoom</span>
+            <span>{zoom.toFixed(1)}x</span>
+          </div>
+
+          <input
+            type="range"
+            min="1"
+            max="2"
+            step="0.1"
+            value={zoom}
+            onChange={(event) => onZoomChange(Number(event.target.value))}
+            className="w-full accent-[#111827]"
+          />
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSave}
+            className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+          >
+            Save Cover
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function EpisodeEditorPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
@@ -100,6 +181,7 @@ export default function EpisodeEditorPage() {
   const [tempCover, setTempCover] = useState('')
   const [cropOpen, setCropOpen] = useState(false)
   const [coverZoom, setCoverZoom] = useState(1)
+
   const [content, setContent] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -126,37 +208,50 @@ export default function EpisodeEditorPage() {
 
   const isValidForNext = characterCount >= MIN_CHARACTERS && characterCount <= MAX_CHARACTERS && episodeTitle.trim()
 
-  const handleContentChange = (event) => {
-    setContent(event.target.value)
+  const showToast = (message, duration = 2600) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), duration)
+  }
+
+  const markUnsaved = () => {
     setSaveStatus('Unsaved')
     setHasUnsavedChanges(true)
+  }
+
+  const handleContentChange = (event) => {
+    setContent(event.target.value)
+    markUnsaved()
   }
 
   const handleTitleChange = (event) => {
     setEpisodeTitle(event.target.value)
-    setSaveStatus('Unsaved')
-    setHasUnsavedChanges(true)
+    markUnsaved()
   }
 
- const handleCoverChange = (file) => {
-  if (!file) return
-  setTempCover(URL.createObjectURL(file))
-  setCoverZoom(1)
-  setCropOpen(true)
-}
+  const handleCoverChange = (file) => {
+    if (!file) return
+    setTempCover(URL.createObjectURL(file))
+    setCoverZoom(1)
+    setCropOpen(true)
+  }
 
-const handleSaveCoverCrop = () => {
-  setEpisodeCover(tempCover)
-  setCropOpen(false)
-  setSaveStatus('Unsaved')
-  setHasUnsavedChanges(true)
-}
+  const handleSaveCoverCrop = () => {
+    if (!tempCover) return
+    setEpisodeCover(tempCover)
+    setCropOpen(false)
+    markUnsaved()
+  }
+
+  const handleEditCoverCrop = () => {
+    if (!episodeCover) return
+    setTempCover(episodeCover)
+    setCropOpen(true)
+  }
 
   const handleSaveDraft = () => {
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
-    setToast('Draft saved.')
-    window.setTimeout(() => setToast(''), 2200)
+    showToast('Draft saved.', 2200)
   }
 
   const handleBack = () => {
@@ -182,20 +277,17 @@ const handleSaveCoverCrop = () => {
 
   const handleNext = () => {
     if (!episodeTitle.trim()) {
-      setToast('Please enter an episode title.')
-      window.setTimeout(() => setToast(''), 2600)
+      showToast('Please enter an episode title.')
       return
     }
 
     if (characterCount < MIN_CHARACTERS) {
-      setToast('Almost there! Episodes need at least 1,500 characters to publish.')
-      window.setTimeout(() => setToast(''), 3000)
+      showToast('Almost there! Episodes need at least 1,500 characters to publish.', 3000)
       return
     }
 
     if (characterCount > MAX_CHARACTERS) {
-      setToast('This episode is too long. Maximum is 12,000 characters.')
-      window.setTimeout(() => setToast(''), 3000)
+      showToast('This episode is too long. Maximum is 12,000 characters.', 3000)
       return
     }
 
@@ -207,72 +299,15 @@ const handleSaveCoverCrop = () => {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <Toast message={toast} onClose={() => setToast('')} />
-      {cropOpen ? (
-  <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/40 px-4">
-    <div className="w-full max-w-[520px] rounded-[26px] bg-white p-4 shadow-2xl">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Episode Cover</h2>
-          <p className="mt-1 text-[11px] text-[#8d94a1]">Adjust the image to fit 16:9 preview.</p>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setCropOpen(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-        >
-          <i className="fa-solid fa-xmark text-[14px]" />
-        </button>
-      </div>
-
-      <div className="overflow-hidden rounded-[20px] bg-[#111827]">
-        <div className="aspect-[16/9] w-full overflow-hidden">
-          <img
-            src={tempCover}
-            alt="Crop preview"
-            className="h-full w-full object-cover"
-            style={{ transform: `scale(${coverZoom})` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
-          <span>Zoom</span>
-          <span>{coverZoom.toFixed(1)}x</span>
-        </div>
-
-        <input
-          type="range"
-          min="1"
-          max="2"
-          step="0.1"
-          value={coverZoom}
-          onChange={(event) => setCoverZoom(Number(event.target.value))}
-          className="w-full"
-        />
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setCropOpen(false)}
-          className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSaveCoverCrop}
-          className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white"
-        >
-          Save Cover
-        </button>
-      </div>
-    </div>
-  </div>
-) : null}
+      <CropCoverModal
+        open={cropOpen}
+        image={tempCover}
+        zoom={coverZoom}
+        onZoomChange={setCoverZoom}
+        onClose={() => setCropOpen(false)}
+        onSave={handleSaveCoverCrop}
+      />
 
       <UnsavedChangesModal
         open={showExitModal}
@@ -317,6 +352,7 @@ const handleSaveCoverCrop = () => {
           <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
             Episode Title <span className="text-[#e5484d]">*</span>
           </label>
+
           <input
             value={episodeTitle}
             onChange={handleTitleChange}
@@ -325,59 +361,62 @@ const handleSaveCoverCrop = () => {
           />
 
           <div className="mt-5">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <div className="mt-5">
-  <div className="mb-2">
-    <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
-    <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-      Optional. If empty, story cover will be used.
-    </div>
-    <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-      Recommended 16:9. Tap the image area to upload or adjust crop.
-    </div>
-  </div>
+            <div className="mb-2">
+              <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
 
-  <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-    <div className="aspect-[16/9] w-full">
-      {episodeCover ? (
-        <img
-          src={episodeCover}
-          alt="Episode Cover"
-          className="h-full w-full object-cover"
-          style={{ transform: `scale(${coverZoom})` }}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-center">
-          <div>
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-              <i className="fa-regular fa-image text-[15px]" />
-            </div>
-            <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Tap to Upload Cover</div>
-            <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop preview</div>
-          </div>
-        </div>
-      )}
-    </div>
-
-    <input
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
-    />
-  </label>
-</div>
-                <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                  Optional. If empty, story cover will be used.
-                </div>
-                <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                  Recommended 16:9. Best 1280×720 or higher.
-                </div>
+              <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                Optional. If empty, story cover will be used.
               </div>
 
-              <label className="shrink-0 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white">
-                Upload
+              <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                Recommended 16:9. Tap the image area to upload or adjust crop.
+              </div>
+            </div>
+
+            {episodeCover ? (
+              <button
+                type="button"
+                onClick={handleEditCoverCrop}
+                className="block w-full cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-left active:scale-[0.999]"
+              >
+                <div className="aspect-[16/9] w-full overflow-hidden">
+                  <img
+                    src={episodeCover}
+                    alt="Episode Cover"
+                    className="h-full w-full object-cover"
+                    style={{ transform: `scale(${coverZoom})`, transformOrigin: 'center center' }}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
+                  <div>
+                    <div className="text-[12px] font-extrabold text-[#111827]">Cover saved</div>
+                    <div className="mt-0.5 text-[11px] text-[#8d94a1]">Tap to adjust crop again</div>
+                  </div>
+                  <span className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
+                    Edit Crop
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                <div className="aspect-[16/9] w-full">
+                  <div className="flex h-full w-full items-center justify-center text-center">
+                    <div>
+                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                        <i className="fa-regular fa-image text-[15px]" />
+                      </div>
+
+                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
+                        Tap to Upload Cover
+                      </div>
+
+                      <div className="mt-1 text-[11px] text-[#8d94a1]">
+                        16:9 crop preview
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <input
                   type="file"
                   accept="image/*"
@@ -385,25 +424,7 @@ const handleSaveCoverCrop = () => {
                   onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
                 />
               </label>
-            </div>
-
-            <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-              <div className="aspect-[16/9] w-full">
-                {episodeCover ? (
-                  <img src={episodeCover} alt="Episode Cover" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-center">
-                    <div>
-                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                        <i className="fa-regular fa-image text-[15px]" />
-                      </div>
-                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Upload Episode Cover</div>
-                      <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop preview</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
