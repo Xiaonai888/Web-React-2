@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 function Step({ number, title, active }) {
   return (
@@ -80,8 +80,10 @@ function ConfettiPiece({ className }) {
   return <span className={`absolute block h-2 w-2 rounded-full ${className}`} />
 }
 
-function SuccessModal({ open, onStoryManager, onAddEpisode }) {
+function SuccessModal({ open, isFirstEpisode, onStoryManager, onAddEpisode }) {
   if (!open) return null
+
+  const title = isFirstEpisode ? 'Published Successfully' : 'Episode Published'
 
   return (
     <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/35 px-4">
@@ -125,19 +127,33 @@ function SuccessModal({ open, onStoryManager, onAddEpisode }) {
           <i className="fa-solid fa-check text-[38px]" />
         </div>
 
-        <h2 className="mt-5 text-[22px] font-extrabold text-[#111827]">Published Successfully</h2>
+        <h2 className="mt-5 text-[22px] font-extrabold text-[#111827]">{title}</h2>
 
-        <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
-          Your first episode is now live on Shadow.
-        </p>
+        {isFirstEpisode ? (
+          <>
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
+              Your first episode is now live on Shadow.
+            </p>
 
-        <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-          Readers can now discover your story and start reading. You can add more episodes or manage this story anytime.
-        </p>
+            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
+              Readers can now discover your story and start reading. You can add more episodes or manage this story anytime.
+            </p>
 
-        <div className="mt-5 rounded-[18px] bg-[#f5f8ff] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#0b5cff]">
-          Note: The first episode is free for readers. Income usually starts from Episode 2.
-        </div>
+            <div className="mt-5 rounded-[18px] bg-[#f5f8ff] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#0b5cff]">
+              Note: The first episode is free for readers. Income usually starts from Episode 2.
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
+              Your new episode is now live on Shadow.
+            </p>
+
+            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
+              Readers can continue the story right away. Keep going — every new episode helps your story grow.
+            </p>
+          </>
+        )}
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button
@@ -164,6 +180,9 @@ function SuccessModal({ open, onStoryManager, onAddEpisode }) {
 export default function PublishEpisodePage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const [searchParams] = useSearchParams()
+
+  const isFirstEpisode = searchParams.get('first') !== '0'
 
   const [isAdultEpisode, setIsAdultEpisode] = useState(false)
   const [releaseOption, setReleaseOption] = useState('publish')
@@ -220,8 +239,9 @@ export default function PublishEpisodePage() {
 
       <SuccessModal
         open={successOpen}
+        isFirstEpisode={isFirstEpisode}
         onStoryManager={() => navigate(`/author/story/${storyId}/manage`)}
-        onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create`)}
+        onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create?first=0`)}
       />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
@@ -251,7 +271,7 @@ export default function PublishEpisodePage() {
         <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
           <div className="grid grid-cols-3 gap-2">
             <Step number="1" title="Story Info" />
-            <Step number="2" title="First Episode" />
+            <Step number="2" title={isFirstEpisode ? 'First Episode' : 'Episode'} />
             <Step number="3" title="Publish" active />
           </div>
         </section>
@@ -342,10 +362,12 @@ export default function PublishEpisodePage() {
           <h2 className="text-[16px] font-extrabold text-[#111827]">Before publishing</h2>
 
           <div className="mt-4 space-y-3 text-[12.5px] font-semibold leading-5 text-[#555b66]">
-            <div className="flex gap-3">
-              <i className="fa-solid fa-check mt-1 text-[12px] text-[#16803c]" />
-              <span>The first episode is free for readers and does not generate income.</span>
-            </div>
+            {isFirstEpisode ? (
+              <div className="flex gap-3">
+                <i className="fa-solid fa-check mt-1 text-[12px] text-[#16803c]" />
+                <span>The first episode is free for readers and does not generate income.</span>
+              </div>
+            ) : null}
 
             <div className="flex gap-3">
               <i className="fa-solid fa-check mt-1 text-[12px] text-[#16803c]" />
