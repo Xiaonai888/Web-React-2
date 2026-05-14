@@ -521,7 +521,12 @@ export default function CreateStoryPage() {
             <span>
               I agree to the <button
   type="button"
-  onClick={() => navigate('/author/agreement')}
+  onClick={() => {
+  localStorage.setItem('create_story_draft', JSON.stringify({
+    title, language, genre, tags, description, isAdult, originalAccepted, agreementAccepted
+  }))
+  navigate('/author/agreement')
+}}
   className="font-extrabold text-[#0b5cff]"
 >
   Shadow Author Agreement.
