@@ -340,7 +340,7 @@ export default function CreateStoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <GenreSheet
         open={genreOpen}
         value={genre}
@@ -390,8 +390,8 @@ export default function CreateStoryPage() {
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <FieldLabel required>Book Cover</FieldLabel>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[128px_1fr]">
-            <label className="mx-auto flex w-[120px] aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center md:mx-0">
+          <div className="grid grid-cols-[112px_1fr] gap-3">
+            <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
               {coverPreview ? (
                 <img src={coverPreview} alt="Book Cover" className="h-full w-full object-cover" />
               ) : (
@@ -517,20 +517,18 @@ export default function CreateStoryPage() {
             </span>
           </label>
         </section>
-      </main>
 
-      <div className="fixed bottom-[72px] left-0 right-0 z-50 bg-white/95 px-4 pb-4 pt-3 shadow-[0_-10px_30px_rgba(17,24,39,0.08)] backdrop-blur">
-        <div className="mx-auto max-w-5xl">
+        <section className="mt-5 pb-8">
           <button
             type="button"
             onClick={handleCreateStory}
             disabled={!canCreate}
-            className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
           >
             Create Story
           </button>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   )
 }
