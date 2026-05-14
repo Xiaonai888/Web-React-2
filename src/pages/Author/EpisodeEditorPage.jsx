@@ -327,7 +327,47 @@ const handleSaveCoverCrop = () => {
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
-                <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
+                <div className="mt-5">
+  <div className="mb-2">
+    <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
+    <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+      Optional. If empty, story cover will be used.
+    </div>
+    <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+      Recommended 16:9. Tap the image area to upload or adjust crop.
+    </div>
+  </div>
+
+  <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+    <div className="aspect-[16/9] w-full">
+      {episodeCover ? (
+        <img
+          src={episodeCover}
+          alt="Episode Cover"
+          className="h-full w-full object-cover"
+          style={{ transform: `scale(${coverZoom})` }}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-center">
+          <div>
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+              <i className="fa-regular fa-image text-[15px]" />
+            </div>
+            <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Tap to Upload Cover</div>
+            <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop preview</div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
+    />
+  </label>
+</div>
                 <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
                   Optional. If empty, story cover will be used.
                 </div>
