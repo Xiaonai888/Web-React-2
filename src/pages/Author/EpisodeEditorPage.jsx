@@ -207,6 +207,72 @@ const handleSaveCoverCrop = () => {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <Toast message={toast} onClose={() => setToast('')} />
+      {cropOpen ? (
+  <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/40 px-4">
+    <div className="w-full max-w-[520px] rounded-[26px] bg-white p-4 shadow-2xl">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Episode Cover</h2>
+          <p className="mt-1 text-[11px] text-[#8d94a1]">Adjust the image to fit 16:9 preview.</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setCropOpen(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+        >
+          <i className="fa-solid fa-xmark text-[14px]" />
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-[20px] bg-[#111827]">
+        <div className="aspect-[16/9] w-full overflow-hidden">
+          <img
+            src={tempCover}
+            alt="Crop preview"
+            className="h-full w-full object-cover"
+            style={{ transform: `scale(${coverZoom})` }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+          <span>Zoom</span>
+          <span>{coverZoom.toFixed(1)}x</span>
+        </div>
+
+        <input
+          type="range"
+          min="1"
+          max="2"
+          step="0.1"
+          value={coverZoom}
+          onChange={(event) => setCoverZoom(Number(event.target.value))}
+          className="w-full"
+        />
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setCropOpen(false)}
+          className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827]"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSaveCoverCrop}
+          className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white"
+        >
+          Save Cover
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
 
       <UnsavedChangesModal
         open={showExitModal}
