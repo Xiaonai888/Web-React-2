@@ -519,7 +519,7 @@ export default function CreateStoryPage() {
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-10px_30px_rgba(17,24,39,0.08)] backdrop-blur">
+      <div className="fixed bottom-[72px] left-0 right-0 z-50 bg-white/95 px-4 pb-4 pt-3 shadow-[0_-10px_30px_rgba(17,24,39,0.08)] backdrop-blur">
         <div className="mx-auto max-w-5xl">
           <button
             type="button"
