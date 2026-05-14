@@ -26,6 +26,7 @@ import ProfilePage from './pages/ProfilePage'
 import EventPage from './pages/EventPage'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+import StoryManagerPage from './pages/Author/StoryManagerPage'
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
+        <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
       </Routes>
 
       <Footer />
