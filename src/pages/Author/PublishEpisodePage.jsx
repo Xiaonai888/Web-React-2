@@ -76,6 +76,91 @@ function Toast({ message, onClose }) {
   )
 }
 
+function ConfettiPiece({ className }) {
+  return <span className={`absolute block h-2 w-2 rounded-full ${className}`} />
+}
+
+function SuccessModal({ open, onStoryManager, onAddEpisode }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/35 px-4">
+      <div className="relative w-full max-w-[480px] overflow-hidden rounded-[28px] bg-white p-6 text-center shadow-2xl animate-[successPop_0.28s_ease-out]">
+        <style>
+          {`
+            @keyframes successPop {
+              0% { transform: scale(0.92); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+
+            @keyframes checkBounce {
+              0% { transform: scale(0.4); opacity: 0; }
+              60% { transform: scale(1.14); opacity: 1; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+
+            @keyframes confettiDrop {
+              0% { transform: translateY(-28px) rotate(0deg); opacity: 0; }
+              25% { opacity: 1; }
+              100% { transform: translateY(120px) rotate(220deg); opacity: 0; }
+            }
+
+            @keyframes softPulse {
+              0%, 100% { transform: scale(1); box-shadow: 0 14px 30px rgba(11, 92, 255, 0.22); }
+              50% { transform: scale(1.025); box-shadow: 0 18px 38px rgba(11, 92, 255, 0.34); }
+            }
+          `}
+        </style>
+
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <ConfettiPiece className="left-[12%] top-2 bg-[#0b5cff] animate-[confettiDrop_1.2s_ease-out_0.05s_both]" />
+          <ConfettiPiece className="left-[24%] top-1 bg-[#00c853] animate-[confettiDrop_1.35s_ease-out_0.15s_both]" />
+          <ConfettiPiece className="left-[38%] top-3 bg-[#ffb300] animate-[confettiDrop_1.15s_ease-out_0.08s_both]" />
+          <ConfettiPiece className="left-[51%] top-1 bg-[#e5484d] animate-[confettiDrop_1.3s_ease-out_0.18s_both]" />
+          <ConfettiPiece className="left-[67%] top-3 bg-[#8b5cf6] animate-[confettiDrop_1.18s_ease-out_0.02s_both]" />
+          <ConfettiPiece className="left-[80%] top-2 bg-[#00c2ff] animate-[confettiDrop_1.28s_ease-out_0.12s_both]" />
+        </div>
+
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#00c853] text-white animate-[checkBounce_0.42s_ease-out]">
+          <i className="fa-solid fa-check text-[38px]" />
+        </div>
+
+        <h2 className="mt-5 text-[22px] font-extrabold text-[#111827]">Published Successfully</h2>
+
+        <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
+          Your first episode is now live on Shadow.
+        </p>
+
+        <p className="mt-3 text-[13px] leading-6 text-[#667085]">
+          Readers can now discover your story and start reading. You can add more episodes or manage this story anytime.
+        </p>
+
+        <div className="mt-5 rounded-[18px] bg-[#f5f8ff] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#0b5cff]">
+          Note: The first episode is free for readers. Income usually starts from Episode 2.
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onStoryManager}
+            className="h-12 rounded-full bg-[#111827] px-4 text-[13px] font-extrabold text-white transition hover:scale-[1.02] active:scale-[0.97]"
+          >
+            Story Manager
+          </button>
+
+          <button
+            type="button"
+            onClick={onAddEpisode}
+            className="h-12 rounded-full bg-[#0b5cff] px-4 text-[13px] font-extrabold text-white transition hover:scale-[1.02] active:scale-[0.97] animate-[softPulse_1.8s_ease-in-out_infinite]"
+          >
+            Add Episode
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PublishEpisodePage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
@@ -85,6 +170,7 @@ export default function PublishEpisodePage() {
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
   const [toast, setToast] = useState('')
+  const [successOpen, setSuccessOpen] = useState(false)
 
   const actionText = useMemo(() => {
     if (releaseOption === 'schedule') return 'Schedule Episode'
@@ -125,13 +211,18 @@ export default function PublishEpisodePage() {
       return
     }
 
-    showToast('Episode published.')
-    window.setTimeout(() => navigate(`/author/story/${storyId}/manage`), 700)
+    setSuccessOpen(true)
   }
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <Toast message={toast} onClose={() => setToast('')} />
+
+      <SuccessModal
+        open={successOpen}
+        onStoryManager={() => navigate(`/author/story/${storyId}/manage`)}
+        onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create`)}
+      />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
