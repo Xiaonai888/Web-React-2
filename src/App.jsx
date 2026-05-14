@@ -30,6 +30,7 @@ import StoryManagerPage from './pages/Author/StoryManagerPage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
 import ShadowAuthorAgreementPage from './pages/Author/ShadowAuthorAgreementPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
+import PublishEpisodePage from './pages/Author/PublishEpisodePage'
 
 export default function App() {
   return (
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/author/create-story" element={<CreateStoryPage />} />
         <Route path="/author/agreement" element={<ShadowAuthorAgreementPage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
+        <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
       </Routes>
 
       <Footer />
