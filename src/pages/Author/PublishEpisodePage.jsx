@@ -1,6 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -80,10 +93,19 @@ function ConfettiPiece({ className }) {
   return <span className={`absolute block h-2 w-2 rounded-full ${className}`} />
 }
 
-function SuccessModal({ open, isFirstEpisode, onStoryManager, onAddEpisode }) {
+function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onAddEpisode }) {
   if (!open) return null
 
-  const title = isFirstEpisode ? 'Published Successfully' : 'Episode Published'
+  const isScheduled = releaseOption === 'schedule'
+  const isDraft = releaseOption === 'draft'
+
+  const title = isScheduled
+    ? 'Episode Scheduled'
+    : isDraft
+      ? 'Draft Saved'
+      : isFirstEpisode
+        ? 'Published Successfully'
+        : 'Episode Published'
 
   return (
     <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/35 px-4">
@@ -114,22 +136,46 @@ function SuccessModal({ open, isFirstEpisode, onStoryManager, onAddEpisode }) {
           `}
         </style>
 
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <ConfettiPiece className="left-[12%] top-2 bg-[#0b5cff] animate-[confettiDrop_1.2s_ease-out_0.05s_both]" />
-          <ConfettiPiece className="left-[24%] top-1 bg-[#00c853] animate-[confettiDrop_1.35s_ease-out_0.15s_both]" />
-          <ConfettiPiece className="left-[38%] top-3 bg-[#ffb300] animate-[confettiDrop_1.15s_ease-out_0.08s_both]" />
-          <ConfettiPiece className="left-[51%] top-1 bg-[#e5484d] animate-[confettiDrop_1.3s_ease-out_0.18s_both]" />
-          <ConfettiPiece className="left-[67%] top-3 bg-[#8b5cf6] animate-[confettiDrop_1.18s_ease-out_0.02s_both]" />
-          <ConfettiPiece className="left-[80%] top-2 bg-[#00c2ff] animate-[confettiDrop_1.28s_ease-out_0.12s_both]" />
-        </div>
+        {!isDraft ? (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <ConfettiPiece className="left-[12%] top-2 bg-[#0b5cff] animate-[confettiDrop_1.2s_ease-out_0.05s_both]" />
+            <ConfettiPiece className="left-[24%] top-1 bg-[#00c853] animate-[confettiDrop_1.35s_ease-out_0.15s_both]" />
+            <ConfettiPiece className="left-[38%] top-3 bg-[#ffb300] animate-[confettiDrop_1.15s_ease-out_0.08s_both]" />
+            <ConfettiPiece className="left-[51%] top-1 bg-[#e5484d] animate-[confettiDrop_1.3s_ease-out_0.18s_both]" />
+            <ConfettiPiece className="left-[67%] top-3 bg-[#8b5cf6] animate-[confettiDrop_1.18s_ease-out_0.02s_both]" />
+            <ConfettiPiece className="left-[80%] top-2 bg-[#00c2ff] animate-[confettiDrop_1.28s_ease-out_0.12s_both]" />
+          </div>
+        ) : null}
 
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#00c853] text-white animate-[checkBounce_0.42s_ease-out]">
-          <i className="fa-solid fa-check text-[38px]" />
+        <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-white animate-[checkBounce_0.42s_ease-out] ${
+          isDraft ? 'bg-[#667085]' : isScheduled ? 'bg-[#0b5cff]' : 'bg-[#00c853]'
+        }`}>
+          <i className={`${isScheduled ? 'fa-regular fa-calendar-check' : isDraft ? 'fa-regular fa-file-lines' : 'fa-solid fa-check'} text-[36px]`} />
         </div>
 
         <h2 className="mt-5 text-[22px] font-extrabold text-[#111827]">{title}</h2>
 
-        {isFirstEpisode ? (
+        {isScheduled ? (
+          <>
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
+              Your episode has been scheduled on Shadow.
+            </p>
+
+            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
+              It will publish automatically at the selected date and time. You can manage or edit it anytime from Story Manager.
+            </p>
+          </>
+        ) : isDraft ? (
+          <>
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
+              Your episode has been saved as a draft.
+            </p>
+
+            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
+              Readers cannot see it yet. You can continue editing or publish it later from Story Manager.
+            </p>
+          </>
+        ) : isFirstEpisode ? (
           <>
             <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
               Your first episode is now live on Shadow.
@@ -182,6 +228,7 @@ export default function PublishEpisodePage() {
   const { storyId } = useParams()
   const [searchParams] = useSearchParams()
 
+  const episodeId = searchParams.get('episodeId') || searchParams.get('episode_id')
   const isFirstEpisode = searchParams.get('first') !== '0'
 
   const [isAdultEpisode, setIsAdultEpisode] = useState(false)
@@ -190,12 +237,14 @@ export default function PublishEpisodePage() {
   const [scheduleTime, setScheduleTime] = useState('')
   const [toast, setToast] = useState('')
   const [successOpen, setSuccessOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const actionText = useMemo(() => {
+    if (loading) return 'Saving...'
     if (releaseOption === 'schedule') return 'Schedule Episode'
     if (releaseOption === 'draft') return 'Save as Draft'
     return 'Publish Episode'
-  }, [releaseOption])
+  }, [releaseOption, loading])
 
   const actionIcon = useMemo(() => {
     if (releaseOption === 'schedule') return 'fa-regular fa-calendar'
@@ -209,28 +258,82 @@ export default function PublishEpisodePage() {
   }
 
   const handlePreview = () => {
-    navigate(`/author/story/${storyId}/episode/preview`)
+    navigate(`/author/story/${storyId}/episode/preview?episodeId=${episodeId || ''}`)
   }
 
-  const handleSubmit = () => {
-    if (releaseOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
-      showToast('Please choose schedule date and time.')
-      return
+  const getApiStatus = () => {
+    if (releaseOption === 'schedule') return 'scheduled'
+    if (releaseOption === 'draft') return 'draft'
+    return 'published'
+  }
+
+  const getScheduledAt = () => {
+    if (releaseOption !== 'schedule') return null
+    if (!scheduleDate || !scheduleTime) return null
+    return new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
+  }
+
+  const updateEpisodeStatus = async () => {
+    const token =
+      localStorage.getItem('shadow_reader_token') ||
+      sessionStorage.getItem('shadow_reader_token') ||
+      ''
+
+    if (!token) {
+      navigate('/login')
+      throw new Error('Please login first.')
     }
 
-    if (releaseOption === 'schedule') {
-      showToast('Episode scheduled.')
-      window.setTimeout(() => navigate(`/author/story/${storyId}/manage`), 700)
-      return
+    if (!episodeId) {
+      throw new Error('Missing episode id. Please go back and save the episode again.')
     }
 
-    if (releaseOption === 'draft') {
-      showToast('Episode saved as draft.')
-      window.setTimeout(() => navigate(`/author/story/${storyId}/manage`), 700)
-      return
+    const status = getApiStatus()
+    const scheduledAt = getScheduledAt()
+
+    if (status === 'scheduled' && !scheduledAt) {
+      throw new Error('Please choose schedule date and time.')
     }
 
-    setSuccessOpen(true)
+    const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        status,
+        scheduled_at: scheduledAt,
+        is_adult: isAdultEpisode,
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to update episode status')
+    }
+
+    return data
+  }
+
+  const handleSubmit = async () => {
+    if (loading) return
+
+    try {
+      setLoading(true)
+
+      await updateEpisodeStatus()
+      setSuccessOpen(true)
+    } catch (error) {
+      showToast(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Please check deployment.'
+          : error.message || 'Failed to save episode status.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -240,6 +343,7 @@ export default function PublishEpisodePage() {
       <SuccessModal
         open={successOpen}
         isFirstEpisode={isFirstEpisode}
+        releaseOption={releaseOption}
         onStoryManager={() => navigate(`/author/story/${storyId}/manage`)}
         onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create?first=0`)}
       />
@@ -275,6 +379,12 @@ export default function PublishEpisodePage() {
             <Step number="3" title="Publish" active />
           </div>
         </section>
+
+        {!episodeId ? (
+          <section className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+            Missing episode id. Please go back to the episode editor and click Next again.
+          </section>
+        ) : null}
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
@@ -385,7 +495,8 @@ export default function PublishEpisodePage() {
           <button
             type="button"
             onClick={handlePreview}
-            className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99]"
+            disabled={loading}
+            className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
           >
             Preview
           </button>
@@ -393,7 +504,8 @@ export default function PublishEpisodePage() {
           <button
             type="button"
             onClick={handleSubmit}
-            className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99]"
+            disabled={loading || !episodeId}
+            className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
           >
             <i className={`${actionIcon} mr-2 text-[12px]`} />
             {actionText}
