@@ -519,7 +519,13 @@ export default function CreateStoryPage() {
           <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
             <input type="checkbox" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
             <span>
-              I agree to the <button type="button" className="font-extrabold text-[#0b5cff]">Shadow Author Agreement.</button>
+              I agree to the <button
+  type="button"
+  onClick={() => navigate('/author/agreement')}
+  className="font-extrabold text-[#0b5cff]"
+>
+  Shadow Author Agreement.
+</button>
             </span>
           </label>
         </section>
