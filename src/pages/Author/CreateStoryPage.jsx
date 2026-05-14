@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 
 const genres = [
@@ -33,6 +38,14 @@ const tagOptions = [
   'Second Chance',
   'Cold Male Lead',
 ]
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
 
 function createImage(url) {
   return new Promise((resolve, reject) => {
@@ -66,7 +79,7 @@ async function getCroppedImage(imageSrc, pixelCrop) {
     pixelCrop.height
   )
 
-  return canvas.toDataURL('image/jpeg', 0.92)
+  return canvas.toDataURL('image/jpeg', 0.9)
 }
 
 function Step({ number, title, active }) {
@@ -513,6 +526,7 @@ export default function CreateStoryPage() {
   const [tagOpen, setTagOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const [cropOpen, setCropOpen] = useState(false)
   const [cropMode, setCropMode] = useState('cover')
@@ -537,7 +551,7 @@ export default function CreateStoryPage() {
   }, [])
 
   const descriptionCount = description.length
-  const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000
+  const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000 && !loading
 
   const showToast = (text) => {
     setToast(text)
@@ -661,7 +675,9 @@ export default function CreateStoryPage() {
     )
   }
 
-  const handleCreateStory = () => {
+  const handleCreateStory = async () => {
+    setMessage('')
+
     if (!title.trim()) {
       setMessage('Please enter your story title.')
       return
@@ -677,10 +693,63 @@ export default function CreateStoryPage() {
       return
     }
 
-    localStorage.removeItem('create_story_draft')
+    const token = getAuthToken()
 
-    const demoStoryId = Date.now()
-    navigate(`/author/story/${demoStoryId}/episode/create`)
+    if (!token) {
+      setMessage('Please login first.')
+      navigate('/login')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          story_language: language,
+          main_genre: genre,
+          tags,
+          description: description.trim() || null,
+          is_adult: isAdult,
+          cover_url: coverPreview || null,
+          slides: slides.map((slide, index) => ({
+            image_url: slide.cropped,
+            sort_order: index,
+            is_active: slide.active,
+          })),
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to create story')
+      }
+
+      const storyId = data.story?.id
+
+      if (!storyId) {
+        throw new Error('Story created but story id was missing')
+      }
+
+      localStorage.removeItem('create_story_draft')
+
+      navigate(`/author/story/${storyId}/episode/create`)
+    } catch (error) {
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Make sure backend is running on port 5000.'
+          : error.message || 'Failed to create story'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const cropAspect = cropMode === 'cover' ? 2 / 3 : 16 / 9
@@ -946,7 +1015,7 @@ export default function CreateStoryPage() {
             disabled={!canCreate}
             className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
           >
-            Create Story
+            {loading ? 'Creating Story...' : 'Create Story'}
           </button>
         </section>
       </main>
