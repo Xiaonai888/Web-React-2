@@ -535,11 +535,9 @@ export default function CreateStoryPage() {
             <span>
               I agree to the <button
   type="button"
-  onClick={() => {
-  localStorage.setItem('create_story_draft', JSON.stringify({
-    title, language, genre, tags, description, isAdult, originalAccepted, agreementAccepted
-  }))
-  navigate('/author/agreement')
+ onClick={() => {
+  window.open('/author/agreement', '_blank', 'noopener,noreferrer')
+}}
 }}
   className="font-extrabold text-[#0b5cff]"
 >
