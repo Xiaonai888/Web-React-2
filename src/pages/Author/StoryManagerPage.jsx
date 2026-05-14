@@ -243,7 +243,7 @@ export default function StoryManagerPage() {
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex gap-3.5">
+         <div className="flex gap-3.5">
             <button
               type="button"
               onClick={handleEditStory}
@@ -253,7 +253,8 @@ export default function StoryManagerPage() {
               {story.cover ? <img src={story.cover} alt={story.title} className="h-full w-full object-cover" /> : null}
             </button>
 
-            <div className="min-w-0 flex-1 py-1">
+            <div className="flex min-w-0 flex-1 justify-between gap-3 py-1">
+  <div className="min-w-0">
               <h2 className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{story.title}</h2>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -265,10 +266,6 @@ export default function StoryManagerPage() {
 
               <div className="mt-3 text-[12px] text-[#8d94a1]">
                 Last update <span className="font-bold text-[#555b66]">{story.updated}</span>
-              </div>
-
-              <div className="mt-4">
-                <ActionButton onClick={handleEditStory}>Edit Story</ActionButton>
               </div>
             </div>
           </div>
