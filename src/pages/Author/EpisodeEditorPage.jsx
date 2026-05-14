@@ -18,6 +18,46 @@ function getAuthToken() {
   )
 }
 
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = dataUrl.split(',')
+  const mimeMatch = header.match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const binary = atob(base64)
+  const array = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    array[index] = binary.charCodeAt(index)
+  }
+
+  return new File([array], fileName, { type: mime })
+}
+
+async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
+  if (!imageDataUrl) return null
+
+  const file = dataUrlToFile(imageDataUrl, fileName)
+  const formData = new FormData()
+
+  formData.append('image', file)
+  formData.append('folder', folder)
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload image')
+  }
+
+  return data.image_url || data.imageUrl
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -434,6 +474,15 @@ export default function EpisodeEditorPage() {
       throw new Error('Please login first.')
     }
 
+    const episodeCoverUrl = episodeCover
+      ? await uploadImageToStorage({
+          token,
+          imageDataUrl: episodeCover,
+          folder: 'episode_cover',
+          fileName: `episode-cover-${storyId}-${Date.now()}.jpg`,
+        })
+      : null
+
     const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/create`, {
       method: 'POST',
       headers: {
@@ -442,7 +491,7 @@ export default function EpisodeEditorPage() {
       },
       body: JSON.stringify({
         title: episodeTitle.trim(),
-        cover_url: episodeCover || null,
+        cover_url: episodeCoverUrl,
         content,
         is_adult: false,
         status: 'ready',
@@ -548,7 +597,7 @@ export default function EpisodeEditorPage() {
             disabled={loading}
             className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
           >
-            {loading ? 'Saving...' : 'Next'}
+            {loading ? 'Uploading...' : 'Next'}
           </button>
         </div>
       </header>
@@ -727,7 +776,7 @@ export default function EpisodeEditorPage() {
             disabled={!isValidForNext}
             className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
           >
-            {loading ? 'Saving...' : 'Next'}
+            {loading ? 'Uploading...' : 'Next'}
           </button>
         </section>
       </main>
