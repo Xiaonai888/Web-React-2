@@ -47,6 +47,46 @@ function getAuthToken() {
   )
 }
 
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = dataUrl.split(',')
+  const mimeMatch = header.match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const binary = atob(base64)
+  const array = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    array[index] = binary.charCodeAt(index)
+  }
+
+  return new File([array], fileName, { type: mime })
+}
+
+async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
+  if (!imageDataUrl) return null
+
+  const file = dataUrlToFile(imageDataUrl, fileName)
+  const formData = new FormData()
+
+  formData.append('image', file)
+  formData.append('folder', folder)
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload image')
+  }
+
+  return data.image_url || data.imageUrl
+}
+
 function createImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image()
@@ -675,6 +715,41 @@ export default function CreateStoryPage() {
     )
   }
 
+  const uploadStoryImages = async (token) => {
+    const coverUrl = coverPreview
+      ? await uploadImageToStorage({
+          token,
+          imageDataUrl: coverPreview,
+          folder: 'story_cover',
+          fileName: `story-cover-${Date.now()}.jpg`,
+        })
+      : null
+
+    const uploadedSlides = []
+
+    for (let index = 0; index < slides.length; index += 1) {
+      const slide = slides[index]
+
+      const imageUrl = await uploadImageToStorage({
+        token,
+        imageDataUrl: slide.cropped,
+        folder: 'story_slide',
+        fileName: `story-slide-${index + 1}-${Date.now()}.jpg`,
+      })
+
+      uploadedSlides.push({
+        image_url: imageUrl,
+        sort_order: index,
+        is_active: slide.active,
+      })
+    }
+
+    return {
+      coverUrl,
+      uploadedSlides,
+    }
+  }
+
   const handleCreateStory = async () => {
     setMessage('')
 
@@ -704,6 +779,8 @@ export default function CreateStoryPage() {
     try {
       setLoading(true)
 
+      const { coverUrl, uploadedSlides } = await uploadStoryImages(token)
+
       const response = await fetch(`${API_BASE_URL}/api/stories/create`, {
         method: 'POST',
         headers: {
@@ -717,12 +794,8 @@ export default function CreateStoryPage() {
           tags,
           description: description.trim() || null,
           is_adult: isAdult,
-          cover_url: coverPreview || null,
-          slides: slides.map((slide, index) => ({
-            image_url: slide.cropped,
-            sort_order: index,
-            is_active: slide.active,
-          })),
+          cover_url: coverUrl,
+          slides: uploadedSlides,
         }),
       })
 
@@ -744,7 +817,7 @@ export default function CreateStoryPage() {
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
-          ? 'Cannot connect to backend. Make sure backend is running on port 5000.'
+          ? 'Cannot connect to backend. Make sure backend is deployed.'
           : error.message || 'Failed to create story'
       )
     } finally {
@@ -1015,7 +1088,7 @@ export default function CreateStoryPage() {
             disabled={!canCreate}
             className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
           >
-            {loading ? 'Creating Story...' : 'Create Story'}
+            {loading ? 'Uploading & Creating...' : 'Create Story'}
           </button>
         </section>
       </main>
