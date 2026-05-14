@@ -28,6 +28,7 @@ import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 import StoryManagerPage from './pages/Author/StoryManagerPage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
+import ShadowAuthorAgreementPage from './pages/Author/ShadowAuthorAgreementPage'
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/terms" element={<TermsPoliciesPage />} />
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
+        <Route path="/author/agreement" element={<ShadowAuthorAgreementPage />} />
       </Routes>
 
       <Footer />
