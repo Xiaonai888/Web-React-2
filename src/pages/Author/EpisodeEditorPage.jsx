@@ -2,8 +2,21 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
 const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 12000
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
 
 function Step({ number, title, active }) {
   return (
@@ -124,7 +137,7 @@ async function getCroppedImage(imageSrc, pixelCrop) {
     pixelCrop.height
   )
 
-  return canvas.toDataURL('image/jpeg', 0.92)
+  return canvas.toDataURL('image/jpeg', 0.9)
 }
 
 function CropCoverModal({
@@ -292,6 +305,8 @@ export default function EpisodeEditorPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [toast, setToast] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const characterCount = content.length
 
@@ -311,10 +326,14 @@ export default function EpisodeEditorPage() {
     return ''
   }, [characterCount])
 
-  const isValidForNext = characterCount >= MIN_CHARACTERS && characterCount <= MAX_CHARACTERS && episodeTitle.trim()
+  const isValidForNext =
+    characterCount >= MIN_CHARACTERS &&
+    characterCount <= MAX_CHARACTERS &&
+    episodeTitle.trim() &&
+    !loading
 
-  const showToast = (message, duration = 2600) => {
-    setToast(message)
+  const showToast = (text, duration = 2600) => {
+    setToast(text)
     window.setTimeout(() => setToast(''), duration)
   }
 
@@ -338,17 +357,16 @@ export default function EpisodeEditorPage() {
   }, [])
 
   const handleCoverChange = (file) => {
-  if (!file) return
+    if (!file) return
 
-  const imageUrl = URL.createObjectURL(file)
-
-  setOriginalCover(imageUrl)
-  setTempCover(imageUrl)
-  setCrop({ x: 0, y: 0 })
-  setZoom(1)
-  setCroppedAreaPixels(null)
-  setCropOpen(true)
-}
+    const imageUrl = URL.createObjectURL(file)
+    setOriginalCover(imageUrl)
+    setTempCover(imageUrl)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    setCropOpen(true)
+  }
 
   const handleSaveCoverCrop = async () => {
     if (!tempCover || !croppedAreaPixels) {
@@ -366,15 +384,15 @@ export default function EpisodeEditorPage() {
     }
   }
 
- const handleEditCoverCrop = () => {
-  if (!originalCover) return
+  const handleEditCoverCrop = () => {
+    if (!originalCover) return
 
-  setTempCover(originalCover)
-  setCrop({ x: 0, y: 0 })
-  setZoom(1)
-  setCroppedAreaPixels(null)
-  setCropOpen(true)
-}
+    setTempCover(originalCover)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    setCropOpen(true)
+  }
 
   const handleSaveDraft = () => {
     setSaveStatus('Saved')
@@ -403,25 +421,80 @@ export default function EpisodeEditorPage() {
     navigate(-1)
   }
 
-  const handleNext = () => {
+  const createRealEpisode = async () => {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      throw new Error('Please login first.')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: episodeTitle.trim(),
+        cover_url: episodeCover || null,
+        content,
+        is_adult: false,
+        status: 'ready',
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to create episode')
+    }
+
+    const episodeId = data.episode?.id
+
+    if (!episodeId) {
+      throw new Error('Episode created but episode id was missing')
+    }
+
+    return episodeId
+  }
+
+  const handleNext = async () => {
+    setMessage('')
+
     if (!episodeTitle.trim()) {
-      showToast('Please enter an episode title.')
+      setMessage('Please enter an episode title.')
       return
     }
 
     if (characterCount < MIN_CHARACTERS) {
-      showToast('Almost there! Episodes need at least 1,500 characters to publish.', 3000)
+      setMessage('Almost there! Episodes need at least 1,500 characters to publish.')
       return
     }
 
     if (characterCount > MAX_CHARACTERS) {
-      showToast('This episode is too long. Maximum is 12,000 characters.', 3000)
+      setMessage('This episode is too long. Maximum is 12,000 characters.')
       return
     }
 
-    setSaveStatus('Saved')
-    setHasUnsavedChanges(false)
-    navigate(`/author/story/${storyId}/episode/publish`)
+    try {
+      setLoading(true)
+
+      const episodeId = await createRealEpisode()
+
+      setSaveStatus('Saved')
+      setHasUnsavedChanges(false)
+
+      navigate(`/author/story/${storyId}/episode/publish?episodeId=${episodeId}`)
+    } catch (error) {
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Make sure backend is deployed or running.'
+          : error.message || 'Failed to create episode'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -463,9 +536,10 @@ export default function EpisodeEditorPage() {
           <button
             type="button"
             onClick={handleNext}
-            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+            disabled={loading}
+            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
           >
-            Next
+            {loading ? 'Saving...' : 'Next'}
           </button>
         </div>
       </header>
@@ -478,6 +552,16 @@ export default function EpisodeEditorPage() {
             <Step number="3" title="Publish" />
           </div>
         </section>
+
+        {message ? (
+          <button
+            type="button"
+            onClick={() => setMessage('')}
+            className="mt-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+          >
+            {message}
+          </button>
+        ) : null}
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
@@ -616,7 +700,8 @@ export default function EpisodeEditorPage() {
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99]"
+            disabled={loading}
+            className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
           >
             Save Draft
           </button>
@@ -627,7 +712,7 @@ export default function EpisodeEditorPage() {
             disabled={!isValidForNext}
             className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
           >
-            Next
+            {loading ? 'Saving...' : 'Next'}
           </button>
         </section>
       </main>
