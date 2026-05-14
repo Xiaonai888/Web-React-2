@@ -138,12 +138,19 @@ export default function EpisodeEditorPage() {
     setHasUnsavedChanges(true)
   }
 
-  const handleCoverChange = (file) => {
-    if (!file) return
-    setEpisodeCover(URL.createObjectURL(file))
-    setSaveStatus('Unsaved')
-    setHasUnsavedChanges(true)
-  }
+ const handleCoverChange = (file) => {
+  if (!file) return
+  setTempCover(URL.createObjectURL(file))
+  setCoverZoom(1)
+  setCropOpen(true)
+}
+
+const handleSaveCoverCrop = () => {
+  setEpisodeCover(tempCover)
+  setCropOpen(false)
+  setSaveStatus('Unsaved')
+  setHasUnsavedChanges(true)
+}
 
   const handleSaveDraft = () => {
     setSaveStatus('Saved')
