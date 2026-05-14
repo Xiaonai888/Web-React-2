@@ -549,3 +549,16 @@ export default function CreateStoryPage() {
     </div>
   )
 }
+
+useEffect(() => {
+  const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
+  if (!saved) return
+  setTitle(saved.title || '')
+  setLanguage(saved.language || 'Khmer')
+  setGenre(saved.genre || 'Romance')
+  setTags(saved.tags || [])
+  setDescription(saved.description || '')
+  setIsAdult(!!saved.isAdult)
+  setOriginalAccepted(!!saved.originalAccepted)
+  setAgreementAccepted(!!saved.agreementAccepted)
+}, [])
