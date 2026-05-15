@@ -1,5 +1,67 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function formatDate(value) {
+  if (!value) return 'Recently'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return 'Recently'
+
+  return date.toLocaleDateString('en-GB')
+}
+
+function normalizeStory(story) {
+  const status = story.status === 'published'
+    ? 'Published'
+    : story.status === 'reviewing'
+      ? 'Reviewing'
+      : 'Draft'
+
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    type: story.story_type || 'Novel',
+    status,
+    rawStatus: story.status || 'draft',
+    updated: formatDate(story.updated_at || story.created_at),
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    comments: formatCompactNumber(story.total_comments),
+    episodes: Number(story.total_episodes || 0),
+    cover: story.cover_url || '',
+    genre: story.main_genre || 'Novel',
+    language: story.story_language || 'Khmer',
+    lastEdited: Number(story.total_episodes || 0) > 0
+      ? `Episode ${Number(story.total_episodes || 0)}`
+      : 'Story Info',
+    createdAt: story.created_at,
+    updatedAt: story.updated_at || story.created_at,
+  }
+}
 
 function StatItem({ value, label }) {
   return (
@@ -20,6 +82,7 @@ function StoryTypeButton({ icon, title, subtitle, onClick }) {
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] bg-[#f5f3fa] text-[#111827] transition group-hover:bg-[#111827] group-hover:text-white">
         <i className={`${icon} text-[16px]`} />
       </div>
+
       <div className="min-w-0 flex-1">
         <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">{title}</div>
         <div className="mt-0.5 line-clamp-1 text-[11.5px] font-medium text-[#8d94a1]">{subtitle}</div>
@@ -39,11 +102,13 @@ function ToolRow({ icon, title, subtitle, onClick }) {
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]">
           <i className={`${icon} text-[14px]`} />
         </div>
+
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827]">{title}</div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1]">{subtitle}</div>
         </div>
       </div>
+
       <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
     </button>
   )
@@ -64,6 +129,7 @@ function PageMenu({ open, onClose, onSelect }) {
             <div className="text-[17px] font-extrabold text-[#111827]">Author Tools</div>
             <div className="mt-0.5 text-[12px] text-[#8d94a1]">Page, income, and settings</div>
           </div>
+
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]">
             <i className="fa-solid fa-times text-[13px] text-[#555]" />
           </button>
@@ -89,30 +155,71 @@ function TipBubble({ open }) {
 
   return (
     <div className="absolute right-0 top-9 z-20 w-[230px] rounded-[16px] bg-[#111827] px-3.5 py-3 text-[12px] font-semibold leading-5 text-white shadow-xl">
-      Tap any cover to edit your story.
+      Tap any cover to manage your story and add episodes.
     </div>
   )
 }
 
-function StoryCard({ story, onEdit }) {
+function LoadingCard() {
+  return (
+    <div className="flex gap-3 rounded-[20px] border border-[#eceaf2] bg-white p-3 shadow-sm">
+      <div className="h-[112px] w-[78px] shrink-0 animate-pulse rounded-[14px] bg-[#eef0f4]" />
+      <div className="min-w-0 flex-1 py-1">
+        <div className="h-4 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
+        <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-[#eef0f4]" />
+        <div className="mt-5 h-3 w-3/4 animate-pulse rounded-full bg-[#eef0f4]" />
+        <div className="mt-4 h-3 w-1/2 animate-pulse rounded-full bg-[#eef0f4]" />
+      </div>
+    </div>
+  )
+}
+
+function EmptyCover({ title }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#111827] to-[#374151] px-2 text-center">
+      <span className="line-clamp-3 text-[10px] font-extrabold leading-4 text-white/80">{title}</span>
+    </div>
+  )
+}
+
+function StoryCard({ story, onEdit, onAddEpisode }) {
+  const statusClass =
+    story.status === 'Published'
+      ? 'bg-[#ecfdf3] text-[#16803c]'
+      : story.status === 'Reviewing'
+        ? 'bg-[#fff7df] text-[#a56a00]'
+        : 'bg-[#f2f4f7] text-[#667085]'
+
   return (
     <div className="flex gap-3 rounded-[20px] border border-[#eceaf2] bg-white p-3 shadow-sm">
       <button
         type="button"
         onClick={() => onEdit(story)}
         className="h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827] shadow-sm active:scale-[0.98]"
-        aria-label={`Edit ${story.title}`}
+        aria-label={`Manage ${story.title}`}
       >
-        {story.cover ? <img src={story.cover} alt={story.title} className="h-full w-full object-cover" /> : null}
+        {story.cover ? (
+          <img src={story.cover} alt={story.title} className="h-full w-full object-cover" />
+        ) : (
+          <EmptyCover title={story.title} />
+        )}
       </button>
 
       <div className="min-w-0 flex-1 py-0.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{story.title}</div>
+            <button
+              type="button"
+              onClick={() => onEdit(story)}
+              className="block max-w-full text-left"
+            >
+              <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{story.title}</div>
+            </button>
+
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">{story.type}</span>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${story.status === 'Published' ? 'bg-[#ecfdf3] text-[#16803c]' : story.status === 'Reviewing' ? 'bg-[#fff7df] text-[#a56a00]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
+              <span className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-bold text-[#0b5cff]">{story.genre}</span>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${statusClass}`}>
                 {story.status}
               </span>
             </div>
@@ -127,19 +234,44 @@ function StoryCard({ story, onEdit }) {
           Last updated <span className="font-bold text-[#555b66]">{story.updated}</span>
         </div>
 
-        <div className="mt-3 flex items-center gap-4 text-[11px] font-semibold text-[#555b66]">
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] font-semibold text-[#555b66]">
           <span className="inline-flex items-center gap-1">
             <i className="fa-regular fa-eye text-[11px]" />
             {story.views}
           </span>
+
           <span className="inline-flex items-center gap-1">
             <i className="fa-solid fa-heart text-[10px] text-[#e5484d]" />
             {story.likes}
           </span>
+
           <span className="inline-flex items-center gap-1">
             <i className="fa-regular fa-comment text-[11px]" />
             {story.comments}
           </span>
+
+          <span className="inline-flex items-center gap-1">
+            <i className="fa-solid fa-list text-[10px]" />
+            {story.episodes} EP
+          </span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(story)}
+            className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white active:scale-95"
+          >
+            Manage
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onAddEpisode(story)}
+            className="rounded-full bg-[#0b5cff] px-3 py-1.5 text-[11px] font-extrabold text-white active:scale-95"
+          >
+            Add Episode
+          </button>
         </div>
       </div>
     </div>
@@ -151,73 +283,78 @@ export default function AuthorDashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Novel')
+  const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
 
   const author = {
-    name: storedUser?.name || 'Author Page Name',
-    avatarLetter: (storedUser?.name || 'A').charAt(0).toUpperCase(),
-    published: '03',
-    drafts: '04',
-    views: '2.2k',
+    name: storedUser?.name || storedUser?.username || 'Author Page Name',
+    avatarLetter: (storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
   }
 
-  const stories = [
-    {
-      id: 1,
-      title: 'Name Novel',
-      type: 'Novel',
-      status: 'Published',
-      updated: '14/06/2026',
-      views: '1.1M',
-      likes: '5.1k',
-      comments: '3.1k',
-      cover: '',
-      lastEdited: 'Episode 4',
-    },
-    {
-      id: 2,
-      title: 'Midnight Crown',
-      type: 'Novel',
-      status: 'Draft',
-      updated: '13/06/2026',
-      views: '120k',
-      likes: '900',
-      comments: '120',
-      cover: '',
-      lastEdited: 'Episode 2',
-    },
-    {
-      id: 3,
-      title: 'Moonlight Blade',
-      type: 'Manga',
-      status: 'Reviewing',
-      updated: '12/06/2026',
-      views: '60k',
-      likes: '510',
-      comments: '80',
-      cover: '',
-      lastEdited: 'Chapter 1',
-    },
-    {
-      id: 4,
-      title: 'Chat Before Dawn',
-      type: 'Chat Story',
-      status: 'Draft',
-      updated: '10/06/2026',
-      views: '22k',
-      likes: '430',
-      comments: '61',
-      cover: '',
-      lastEdited: 'Scene 3',
-    },
-  ]
+  async function fetchMyStories() {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setMessage('')
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/my`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load stories')
+      }
+
+      setStories((data.stories || []).map(normalizeStory))
+    } catch (error) {
+      setStories([])
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Please check backend deployment.'
+          : error.message || 'Failed to load stories'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMyStories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const stats = useMemo(() => {
+    const published = stories.filter((story) => story.rawStatus === 'published').length
+    const drafts = stories.filter((story) => story.rawStatus !== 'published').length
+    const views = stories.reduce((sum, story) => sum + Number(String(story.views).replace(/[^\d.]/g, '') || 0), 0)
+
+    return {
+      published: String(published).padStart(2, '0'),
+      drafts: String(drafts).padStart(2, '0'),
+      views: formatCompactNumber(views),
+    }
+  }, [stories])
 
   const filteredStories = useMemo(() => {
     return stories.filter((story) => story.type === activeTab)
-  }, [activeTab])
+  }, [stories, activeTab])
 
-  const latestStory = stories[0]
+  const latestStory = useMemo(() => {
+    return [...stories].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))[0] || null
+  }, [stories])
 
   const handleMenuSelect = (path) => {
     setMenuOpen(false)
@@ -230,6 +367,10 @@ export default function AuthorDashboardPage() {
 
   const handleEditStory = (story) => {
     navigate(`/author/story/${story.id}/manage`)
+  }
+
+  const handleAddEpisode = (story) => {
+    navigate(`/author/story/${story.id}/episode/create?first=0`)
   }
 
   return (
@@ -261,6 +402,16 @@ export default function AuthorDashboardPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
+        {message ? (
+          <button
+            type="button"
+            onClick={() => setMessage('')}
+            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+          >
+            {message}
+          </button>
+        ) : null}
+
         <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-center gap-3.5">
             <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full bg-[#111827] text-[24px] font-extrabold text-white shadow-sm">
@@ -269,62 +420,81 @@ export default function AuthorDashboardPage() {
 
             <div className="min-w-0 flex-1">
               <div className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{author.name}</div>
-              <button
-                type="button"
-                onClick={() => navigate('/author/page')}
-                className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
-              >
-                View Page
-                <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />
-              </button>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/author/page')}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
+                >
+                  View Page
+                  <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={fetchMyStories}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#111827] px-3 py-1.5 text-[11.5px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
+                >
+                  <i className="fa-solid fa-rotate text-[10px]" />
+                  Refresh
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[20px] bg-[#fafafe] px-2 py-3.5">
-            <StatItem value={author.published} label="Published" />
-            <StatItem value={author.drafts} label="Unpublished" />
-            <StatItem value={author.views} label="Views" />
+            <StatItem value={stats.published} label="Published" />
+            <StatItem value={stats.drafts} label="Unpublished" />
+            <StatItem value={stats.views} label="Views" />
           </div>
         </section>
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[16px] font-extrabold text-[#111827]">Continue Writing</h2>
-              <p className="mt-0.5 text-[11.5px] font-medium text-[#8d94a1]">Continue your latest story draft</p>
+        {latestStory ? (
+          <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-[16px] font-extrabold text-[#111827]">Continue Writing</h2>
+                <p className="mt-0.5 text-[11.5px] font-medium text-[#8d94a1]">Continue your latest story</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleEditStory(latestStory)}
+                className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+              >
+                Continue
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => handleEditStory(latestStory)}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
-            >
-              Continue
-            </button>
-          </div>
+            <div className="mt-4 flex gap-3 rounded-[20px] bg-[#fafafe] p-3">
+              <button
+                type="button"
+                onClick={() => handleEditStory(latestStory)}
+                className="h-[98px] w-[70px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827] active:scale-[0.98]"
+                aria-label="Continue latest story"
+              >
+                {latestStory.cover ? (
+                  <img src={latestStory.cover} alt={latestStory.title} className="h-full w-full object-cover" />
+                ) : (
+                  <EmptyCover title={latestStory.title} />
+                )}
+              </button>
 
-          <div className="mt-4 flex gap-3 rounded-[20px] bg-[#fafafe] p-3">
-            <button
-              type="button"
-              onClick={() => handleEditStory(latestStory)}
-              className="h-[98px] w-[70px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827] active:scale-[0.98]"
-              aria-label="Continue latest story"
-            >
-              {latestStory.cover ? <img src={latestStory.cover} alt={latestStory.title} className="h-full w-full object-cover" /> : null}
-            </button>
-
-            <div className="min-w-0 flex-1 py-1">
-              <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{latestStory.title}</div>
-              <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#555b66] ring-1 ring-[#eceaf2]">
-                {latestStory.type}
+              <div className="min-w-0 flex-1 py-1">
+                <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{latestStory.title}</div>
+                <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#555b66] ring-1 ring-[#eceaf2]">
+                  {latestStory.type}
+                </div>
+                <div className="mt-3 text-[12px] text-[#8d94a1]">
+                  Last edited <span className="ml-1 font-extrabold text-[#111827]">{latestStory.lastEdited}</span>
+                </div>
+                <div className="mt-1 text-[11.5px] text-[#8d94a1]">Updated {latestStory.updated}</div>
               </div>
-              <div className="mt-3 text-[12px] text-[#8d94a1]">
-                Last edited <span className="ml-1 font-extrabold text-[#111827]">{latestStory.lastEdited}</span>
-              </div>
-              <div className="mt-1 text-[11.5px] text-[#8d94a1]">Updated {latestStory.updated}</div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div>
@@ -356,7 +526,9 @@ export default function AuthorDashboardPage() {
               <TipBubble open={tipOpen} />
             </div>
 
-            <div className="text-[12px] font-bold text-[#8d94a1]">{filteredStories.length} stories</div>
+            <div className="text-[12px] font-bold text-[#8d94a1]">
+              {loading ? 'Loading...' : `${filteredStories.length} stories`}
+            </div>
           </div>
 
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3">
@@ -375,17 +547,41 @@ export default function AuthorDashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {filteredStories.length > 0 ? (
+            {loading ? (
+              <>
+                <LoadingCard />
+                <LoadingCard />
+              </>
+            ) : filteredStories.length > 0 ? (
               filteredStories.map((story) => (
-                <StoryCard key={story.id} story={story} onEdit={handleEditStory} />
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  onEdit={handleEditStory}
+                  onAddEpisode={handleAddEpisode}
+                />
               ))
             ) : (
               <div className="rounded-[22px] border border-dashed border-[#d8dbe3] bg-white px-5 py-10 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
                   <i className="fa-solid fa-pen-nib text-[17px]" />
                 </div>
-                <div className="mt-3 text-[14px] font-extrabold text-[#111827]">No stories yet</div>
-                <div className="mt-1 text-[12px] text-[#8d94a1]">Create your first {activeTab} story.</div>
+
+                <div className="mt-3 text-[14px] font-extrabold text-[#111827]">
+                  No {activeTab} stories yet
+                </div>
+
+                <div className="mt-1 text-[12px] text-[#8d94a1]">
+                  Create your first {activeTab} story or refresh after uploading.
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleCreateStory(activeTab)}
+                  className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
+                >
+                  Create {activeTab}
+                </button>
               </div>
             )}
           </div>
