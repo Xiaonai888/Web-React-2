@@ -32,6 +32,7 @@ import ShadowAuthorAgreementPage from './pages/Author/ShadowAuthorAgreementPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
 import PublishEpisodePage from './pages/Author/PublishEpisodePage'
 import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
+import ShadowExclusiveAdmin from './pages/ShadowExclusiveAdmin';
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
+        <Route path="/shadow-exclusive" element={<ProtectedPage><ShadowExclusiveAdmin /></ProtectedPage>} />
       </Routes>
 
       <Footer />
