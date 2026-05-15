@@ -79,6 +79,29 @@ function LoadingCard() {
   )
 }
 
+function normalizeSlides(story) {
+  const slides = Array.isArray(story?.slides)
+    ? story.slides
+        .filter((slide) => slide?.image_url)
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .slice(0, 5)
+    : []
+
+  if (slides.length) return slides
+
+  if (story?.cover_url) {
+    return [
+      {
+        id: 'story-cover-fallback',
+        image_url: story.cover_url,
+        sort_order: 0,
+      },
+    ]
+  }
+
+  return []
+}
+
 export default function StoryDetailPage() {
   const navigate = useNavigate()
   const { id, storyId } = useParams()
@@ -88,6 +111,7 @@ export default function StoryDetailPage() {
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [activeSlide, setActiveSlide] = useState(0)
 
   useEffect(() => {
     let ignore = false
@@ -117,6 +141,7 @@ export default function StoryDetailPage() {
 
         setStory(storyData.story || null)
         setEpisodes(episodesData.episodes || [])
+        setActiveSlide(0)
       } catch (error) {
         if (ignore) return
         setMessage(
@@ -136,8 +161,21 @@ export default function StoryDetailPage() {
     }
   }, [realStoryId])
 
+  const slides = useMemo(() => normalizeSlides(story), [story])
+  const currentSlide = slides[activeSlide] || slides[0] || null
+  const heroImage = currentSlide?.image_url || story?.cover_url || ''
+
+  useEffect(() => {
+    if (slides.length <= 1) return undefined
+
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length)
+    }, 5000)
+
+    return () => window.clearInterval(timer)
+  }, [slides.length])
+
   const firstEpisode = episodes[0]
-  const heroImage = story?.slides?.[0]?.image_url || story?.cover_url || ''
 
   const totalCharacters = useMemo(() => {
     return episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0)
@@ -192,12 +230,35 @@ export default function StoryDetailPage() {
               <div className="relative min-h-[260px] bg-[#111827]">
                 <div className="absolute inset-0">
                   {heroImage ? (
-                    <img src={heroImage} alt={story.title} className="h-full w-full object-cover opacity-70 blur-[1px]" />
+                    <img
+                      key={heroImage}
+                      src={heroImage}
+                      alt={story.title}
+                      className="h-full w-full object-cover opacity-70 blur-[1px] transition-opacity duration-700"
+                    />
                   ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
                 </div>
 
-                <div className="relative px-4 pb-5 pt-8">
+                {slides.length > 1 ? (
+                  <div className="absolute bottom-3 left-0 right-0 z-10 flex items-center justify-center gap-2">
+                    {slides.map((slide, index) => (
+                      <button
+                        key={slide.id || slide.image_url || index}
+                        type="button"
+                        onClick={() => setActiveSlide(index)}
+                        aria-label={`Show story slide ${index + 1}`}
+                        className={`h-2.5 rounded-full transition-all ${
+                          activeSlide === index
+                            ? 'w-6 bg-white'
+                            : 'w-2.5 bg-white/45 hover:bg-white/70'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="relative px-4 pb-8 pt-8">
                   <div className="mx-auto flex max-w-[820px] flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
                     <div className="aspect-[2/3] w-[132px] shrink-0 overflow-hidden rounded-[22px] bg-white/10 shadow-2xl ring-2 ring-white/25">
                       {story.cover_url ? (
