@@ -1,5 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
 const topNovelCategories = [
   'Romance',
@@ -7,9 +12,17 @@ const topNovelCategories = [
   'Investigation',
   'Completed',
   'Recently Completed',
-];
+]
 
-const topNovelDataByCategory = {
+const queryByCategory = {
+  Romance: '/api/public/stories?limit=3&sort=likes&genre=Romance',
+  Fantasy: '/api/public/stories?limit=3&sort=likes&genre=Fantasy',
+  Investigation: '/api/public/stories?limit=3&sort=popular&genre=Mystery',
+  Completed: '/api/public/stories?limit=3&sort=popular',
+  'Recently Completed': '/api/public/stories?limit=3&sort=updated',
+}
+
+const fallbackDataByCategory = {
   Romance: [
     {
       id: 1,
@@ -219,14 +232,41 @@ const topNovelDataByCategory = {
       rankIcon: '',
     },
   ],
-};
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    rank: index + 1,
+    title: story.title || 'Untitled Story',
+    author: story.author_name || 'Shadow Author',
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    description: story.description || 'No description yet.',
+    image: story.cover_url || `/assets/top-novel/top-${Math.min(index + 1, 3)}.jpg`,
+    link: `/story/${story.id}`,
+    rankIcon: '',
+    isAdult: Boolean(story.is_adult),
+    genre: story.main_genre || '',
+  }
+}
 
 function RankBadge({ rank, rankIcon }) {
   const fallbackStyles = {
     1: 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 text-white shadow-[0_6px_16px_rgba(217,119,6,0.35)]',
     2: 'bg-gradient-to-br from-slate-200 via-slate-400 to-slate-500 text-white shadow-[0_6px_16px_rgba(100,116,139,0.30)]',
     3: 'bg-gradient-to-br from-amber-200 via-orange-400 to-amber-700 text-white shadow-[0_6px_16px_rgba(180,83,9,0.30)]',
-  };
+  }
 
   if (rankIcon) {
     return (
@@ -238,7 +278,7 @@ function RankBadge({ rank, rankIcon }) {
           loading="lazy"
         />
       </div>
-    );
+    )
   }
 
   return (
@@ -247,16 +287,97 @@ function RankBadge({ rank, rankIcon }) {
     >
       {rank}
     </div>
-  );
+  )
+}
+
+function LoadingTopNovel() {
+  return (
+    <section className="px-4 sm:px-5 lg:px-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="h-7 w-40 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
+      </div>
+
+      <div className="mb-5 flex gap-3 overflow-hidden">
+        <div className="h-10 w-24 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-10 w-24 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-10 w-32 animate-pulse rounded-full bg-gray-100" />
+      </div>
+
+      <div className="space-y-5">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="flex w-full items-start gap-4">
+            <div className="mt-5 h-14 w-14 shrink-0 animate-pulse rounded-full bg-gray-100" />
+            <div className="h-[128px] w-[88px] shrink-0 animate-pulse rounded-xl bg-gray-100" />
+            <div className="min-w-0 flex-1 pt-1">
+              <div className="h-6 w-3/4 animate-pulse rounded-full bg-gray-100" />
+              <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
+              <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
+              <div className="mt-3 h-12 w-full animate-pulse rounded-xl bg-gray-100" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 export default function TopNovelSection() {
-  const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('Romance');
+  const navigate = useNavigate()
+  const [activeCategory, setActiveCategory] = useState('Romance')
+  const [realDataByCategory, setRealDataByCategory] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchTopNovels() {
+      try {
+        setLoading(true)
+
+        const results = await Promise.all(
+          topNovelCategories.map(async (category) => {
+            const endpoint = queryByCategory[category] || '/api/public/stories?limit=3&sort=popular'
+            const response = await fetch(`${API_BASE_URL}${endpoint}`)
+            const data = await response.json().catch(() => ({}))
+
+            if (!response.ok || data.ok === false) {
+              throw new Error(data.message || `Failed to load ${category}`)
+            }
+
+            return [category, (data.stories || []).map(normalizeStory)]
+          })
+        )
+
+        if (ignore) return
+
+        setRealDataByCategory(Object.fromEntries(results))
+      } catch (error) {
+        console.error('TopNovelSection fetch error:', error)
+
+        if (!ignore) {
+          setRealDataByCategory({})
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchTopNovels()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const filteredData = useMemo(() => {
-    return topNovelDataByCategory[activeCategory] || [];
-  }, [activeCategory]);
+    const realList = realDataByCategory[activeCategory]
+    return realList?.length ? realList : fallbackDataByCategory[activeCategory] || []
+  }, [activeCategory, realDataByCategory])
+
+  if (loading) {
+    return <LoadingTopNovel />
+  }
 
   return (
     <section className="px-4 sm:px-5 lg:px-6">
@@ -293,7 +414,7 @@ export default function TopNovelSection() {
         className="mb-5 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {topNovelCategories.map((category) => {
-          const isActive = activeCategory === category;
+          const isActive = activeCategory === category
 
           return (
             <button
@@ -308,7 +429,7 @@ export default function TopNovelSection() {
             >
               {category}
             </button>
-          );
+          )
         })}
       </div>
 
@@ -324,13 +445,22 @@ export default function TopNovelSection() {
               <RankBadge rank={item.rank} rankIcon={item.rankIcon} />
             </div>
 
-            <div className="h-[128px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm">
+            <div className="relative h-[128px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm">
               <img
                 src={item.image}
                 alt={item.title}
                 className="h-full w-full object-cover"
                 loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.src = '/assets/top-novel/top-1.jpg'
+                }}
               />
+
+              {item.isAdult ? (
+                <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d]">
+                  18+
+                </div>
+              ) : null}
             </div>
 
             <div className="min-w-0 flex-1 pt-1">
@@ -352,6 +482,12 @@ export default function TopNovelSection() {
                   <span>❤️</span>
                   <span className="font-semibold">{item.likes}</span>
                 </div>
+
+                {item.genre ? (
+                  <div className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500">
+                    {item.genre}
+                  </div>
+                ) : null}
               </div>
 
               <p className="mt-2 line-clamp-3 text-[14px] leading-7 text-neutral-800">
@@ -362,5 +498,5 @@ export default function TopNovelSection() {
         ))}
       </div>
     </section>
-  );
+  )
 }
