@@ -1,242 +1,320 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
-function formatNumber(value) {
-  const number = Number(value || 0)
+function StatusBadge({ children, className = '' }) {
+  return (
+    <span className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${className}`}>
+      {children}
+    </span>
+  )
+}
 
-  if (number >= 1000000) return `${(number / 1000000).toFixed(1)}M`
-  if (number >= 1000) return `${Math.round(number / 1000)}k`
+function StatItem({ icon, value, label }) {
+  return (
+    <div className="rounded-[18px] bg-white/90 px-3 py-3 text-center shadow-sm ring-1 ring-black/5">
+      <i className={`${icon} mb-1 text-[15px] text-[#111827]`} />
+      <div className="text-[15px] font-extrabold text-[#111827]">{value}</div>
+      <div className="mt-0.5 text-[10.5px] font-bold text-[#98a2b3]">{label}</div>
+    </div>
+  )
+}
 
-  return String(number)
+function EpisodeCard({ episode, story, onOpen }) {
+  const cover = episode.cover_url || story?.cover_url || ''
+  const publishDate = episode.published_at ? new Date(episode.published_at).toLocaleDateString() : ''
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.995]"
+    >
+      <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-[#111827] text-white">
+        {cover ? (
+          <img src={cover} alt={episode.title} className="h-full w-full object-cover" />
+        ) : (
+          <i className="fa-regular fa-image text-[20px] opacity-70" />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10.5px] font-extrabold text-[#667085]">
+            EP {episode.episode_number || 1}
+          </span>
+
+          {episode.is_adult ? (
+            <span className="rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10.5px] font-extrabold text-[#e5484d]">
+              18+
+            </span>
+          ) : null}
+        </div>
+
+        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#111827]">
+          {episode.title || 'Untitled Episode'}
+        </h3>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#8d94a1]">
+          <span>{Number(episode.character_count || 0).toLocaleString()} chars</span>
+          {publishDate ? <span>{publishDate}</span> : null}
+        </div>
+      </div>
+
+      <i className="fa-solid fa-chevron-right mt-8 text-[12px] text-[#98a2b3]" />
+    </button>
+  )
+}
+
+function LoadingCard() {
+  return (
+    <section className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+      <div className="text-[13px] font-bold text-[#667085]">Loading story...</div>
+    </section>
+  )
 }
 
 export default function StoryDetailPage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id, storyId } = useParams()
+  const realStoryId = storyId || id
 
-  const [book, setBook] = useState(null)
+  const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [descriptionOpen, setDescriptionOpen] = useState(false)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
-    let cancelled = false
+    let ignore = false
 
-    async function loadStoryDetail() {
+    async function loadStory() {
+      setLoading(true)
+      setMessage('')
+
       try {
-        setLoading(true)
-        setError('')
-
-        const [bookRes, episodesRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/books/${id}`),
-          fetch(`${API_BASE_URL}/api/books/${id}/episodes`),
+        const [storyResponse, episodesResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`),
+          fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`),
         ])
 
-        const bookData = await bookRes.json()
-        const episodesData = await episodesRes.json()
+        const storyData = await storyResponse.json().catch(() => ({}))
+        const episodesData = await episodesResponse.json().catch(() => ({}))
 
-        if (!bookRes.ok || !bookData.ok) {
-          throw new Error(bookData.message || 'Failed to load book')
-        }
-
-        if (!episodesRes.ok || !episodesData.ok) {
-          throw new Error(episodesData.message || 'Failed to load episodes')
+        if (!storyResponse.ok || storyData.ok === false) {
+          throw new Error(storyData.message || 'Story not found')
         }
 
-        if (!cancelled) {
-          setBook(bookData.book)
-          setEpisodes(episodesData.episodes || [])
+        if (!episodesResponse.ok || episodesData.ok === false) {
+          throw new Error(episodesData.message || 'Episodes not found')
         }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message || 'Something went wrong')
-        }
+
+        if (ignore) return
+
+        setStory(storyData.story || null)
+        setEpisodes(episodesData.episodes || [])
+      } catch (error) {
+        if (ignore) return
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? 'Cannot connect to server. Please try again later.'
+            : error.message || 'Failed to load story'
+        )
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!ignore) setLoading(false)
       }
     }
 
-    loadStoryDetail()
+    loadStory()
 
     return () => {
-      cancelled = true
+      ignore = true
     }
-  }, [id])
+  }, [realStoryId])
 
-  const continueEpisode = useMemo(() => {
-    return episodes[1] || episodes[0] || null
+  const firstEpisode = episodes[0]
+  const heroImage = story?.slides?.[0]?.image_url || story?.cover_url || ''
+
+  const totalCharacters = useMemo(() => {
+    return episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0)
   }, [episodes])
 
-  const goReadEpisode = (episode) => {
-    if (!episode) return
-    navigate(`/story/${id}/episode/${episode.id}`)
+  const handleStartReading = () => {
+    if (!firstEpisode) return
+    navigate(`/story/${realStoryId}/episode/${firstEpisode.id}`)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f6f6f6] px-5 py-10">
-        <div className="mx-auto max-w-3xl text-[16px] font-semibold text-[#222]">
-          Loading story...
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !book) {
-    return (
-      <div className="min-h-screen bg-[#f6f6f6] px-5 py-10">
-        <div className="mx-auto max-w-3xl">
-          <button
-            onClick={() => navigate('/')}
-            className="mb-6 rounded-full bg-white px-4 py-2 text-[14px] shadow-sm"
-          >
-            Back
-          </button>
-          <h1 className="text-[22px] font-bold text-[#222]">Story not found</h1>
-          <p className="mt-3 text-[15px] text-[#666]">{error || 'This story does not exist.'}</p>
-        </div>
-      </div>
-    )
+  const handleOpenEpisode = (episode) => {
+    navigate(`/story/${realStoryId}/episode/${episode.id}`)
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6] pb-[150px]">
-      <section className="relative h-[300px] overflow-hidden bg-[#222]">
-        {book.cover_url ? (
-          <img src={book.cover_url} alt={book.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#6f655a,#c9b099)] text-[48px] font-bold text-white">
-            {book.title?.charAt(0) || 'S'}
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/20" />
-
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-[24px] text-white backdrop-blur"
-        >
-          ‹
-        </button>
-
-        <div className="absolute bottom-7 left-4 right-4 text-white">
-          <h1 className="text-[26px] font-bold leading-tight">{book.title}</h1>
-          <div className="mt-2 text-[14px] text-white/85">
-            {book.genres?.length ? book.genres.join(' / ') : 'Story'}
-          </div>
-        </div>
-      </section>
-
-      <main className="relative z-10 -mt-4">
-        <section className="rounded-t-[22px] bg-white px-4 pb-5 pt-5">
-          <div className="grid grid-cols-3 text-center">
-            <div>
-              <div className="text-[17px] font-bold text-[#222]">{formatNumber(book.likes_count)}</div>
-              <div className="mt-1 text-[12px] text-[#999]">Likes</div>
-            </div>
-            <div>
-              <div className="text-[17px] font-bold text-[#222]">{formatNumber(book.views_count)}</div>
-              <div className="mt-1 text-[12px] text-[#999]">Views</div>
-            </div>
-            <div>
-              <div className="text-[17px] font-bold text-[#ff9747]">{book.rating || '0'}</div>
-              <div className="mt-1 text-[12px] text-[#999]">Rating</div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-2 bg-white px-4 py-6">
-          <div className="text-[14px] font-bold text-[#222]">
-            Author: {book.author_name || 'Unknown'}
-          </div>
-
-          <p
-            className="mt-4 text-[15px] leading-7 text-[#444]"
-            style={
-              descriptionOpen
-                ? {}
-                : {
-                    display: '-webkit-box',
-                    WebkitLineClamp: 5,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }
-            }
-          >
-            {book.description || 'No description yet.'}
-          </p>
-
+    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
-            onClick={() => setDescriptionOpen((value) => !value)}
-            className="mt-3 text-[13px] font-semibold text-[#ffb300]"
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Go back"
           >
-            {descriptionOpen ? 'Show less' : 'Read more'}
+            <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {(book.genres || []).map((genre) => (
-              <span key={genre} className="rounded-md bg-[#f7f7f7] px-3 py-1.5 text-[12px] text-[#888]">
-                {genre}
-              </span>
-            ))}
-          </div>
-        </section>
+          <h1 className="text-[17px] font-extrabold text-[#111827]">Story Detail</h1>
 
-        <section className="mt-2 bg-white px-4 py-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[17px] font-bold text-[#222]">Episodes</h2>
-            <span className="text-[13px] text-[#888]">{episodes.length} episodes</span>
-          </div>
+          <button
+            type="button"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Share"
+          >
+            <i className="fa-solid fa-share-nodes text-[14px]" />
+          </button>
+        </div>
+      </header>
 
-          {episodes.length === 0 ? (
-            <div className="rounded-2xl bg-[#fafafa] px-4 py-5 text-[14px] text-[#777]">
-              No episodes yet.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {episodes.map((episode) => (
-                <button
-                  key={episode.id}
-                  onClick={() => goReadEpisode(episode)}
-                  className="flex w-full items-center justify-between rounded-2xl bg-[#fafafa] px-4 py-4 text-left active:scale-[0.99]"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-[15px] font-semibold text-[#222]">
-                      {episode.episode_number}. {episode.title}
+      <main className="mx-auto max-w-5xl px-4 pt-4">
+        {loading ? <LoadingCard /> : null}
+
+        {message ? (
+          <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+            {message}
+          </section>
+        ) : null}
+
+        {!loading && story ? (
+          <>
+            <section className="overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
+              <div className="relative min-h-[260px] bg-[#111827]">
+                <div className="absolute inset-0">
+                  {heroImage ? (
+                    <img src={heroImage} alt={story.title} className="h-full w-full object-cover opacity-70 blur-[1px]" />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
+                </div>
+
+                <div className="relative px-4 pb-5 pt-8">
+                  <div className="mx-auto flex max-w-[820px] flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                    <div className="aspect-[2/3] w-[132px] shrink-0 overflow-hidden rounded-[22px] bg-white/10 shadow-2xl ring-2 ring-white/25">
+                      {story.cover_url ? (
+                        <img src={story.cover_url} alt={story.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-white/50">
+                          <i className="fa-regular fa-image text-[24px]" />
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-1 text-[12px] text-[#999]">
-                      {episode.is_free ? 'Free' : 'Premium'}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                        <StatusBadge className="bg-white/15 text-white backdrop-blur">
+                          {story.story_language || 'Khmer'}
+                        </StatusBadge>
+
+                        <StatusBadge className="bg-white/15 text-white backdrop-blur">
+                          {story.main_genre || 'Novel'}
+                        </StatusBadge>
+
+                        {story.is_adult ? (
+                          <StatusBadge className="bg-[#fff1f1] text-[#e5484d]">18+</StatusBadge>
+                        ) : null}
+                      </div>
+
+                      <h2 className="text-[28px] font-black leading-9 text-white sm:text-[34px] sm:leading-[42px]">
+                        {story.title || 'Untitled Story'}
+                      </h2>
+
+                      <p className="mt-3 line-clamp-3 text-[13px] font-medium leading-6 text-white/75">
+                        {story.description || 'No description yet.'}
+                      </p>
+
+                      {story.tags?.length ? (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                          {story.tags.map((tag) => (
+                            <span key={tag} className="rounded-full bg-white/12 px-3 py-1.5 text-[11px] font-bold text-white/85 backdrop-blur">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <span className="ml-3 text-[22px] text-[#bbb]">›</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
+              <div className="grid grid-cols-2 gap-3 bg-[#fafafe] p-4 sm:grid-cols-4">
+                <StatItem icon="fa-solid fa-book-open" value={episodes.length} label="Episodes" />
+                <StatItem icon="fa-solid fa-align-left" value={totalCharacters.toLocaleString()} label="Characters" />
+                <StatItem icon="fa-regular fa-heart" value={Number(story.total_likes || 0).toLocaleString()} label="Likes" />
+                <StatItem icon="fa-regular fa-eye" value={Number(story.total_views || 0).toLocaleString()} label="Views" />
+              </div>
+            </section>
+
+            <section className="mt-4 grid grid-cols-[1fr_auto] gap-3">
+              <button
+                type="button"
+                onClick={handleStartReading}
+                disabled={!firstEpisode}
+                className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+              >
+                <i className="fa-solid fa-play mr-2 text-[12px]" />
+                Start Reading
+              </button>
+
+              <button
+                type="button"
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+                aria-label="Subscribe"
+              >
+                <i className="fa-regular fa-bookmark text-[18px]" />
+              </button>
+            </section>
+
+            <section className="mt-5">
+              <div className="mb-3 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-[18px] font-extrabold text-[#111827]">Episodes</h2>
+                  <p className="mt-0.5 text-[12px] font-semibold text-[#8d94a1]">
+                    Published episodes available for readers.
+                  </p>
+                </div>
+
+                <div className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
+                  {episodes.length} total
+                </div>
+              </div>
+
+              {episodes.length ? (
+                <div className="space-y-3">
+                  {episodes.map((episode) => (
+                    <EpisodeCard
+                      key={episode.id}
+                      episode={episode}
+                      story={story}
+                      onOpen={() => handleOpenEpisode(episode)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[24px] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                    <i className="fa-regular fa-file-lines text-[22px]" />
+                  </div>
+
+                  <h3 className="mt-4 text-[16px] font-extrabold text-[#111827]">No episodes yet</h3>
+                  <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">
+                    This story is published, but no episode is available for readers yet.
+                  </p>
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
       </main>
-
-      <div className="fixed bottom-[68px] left-0 right-0 z-50 bg-white/95 px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] backdrop-blur">
-        <div className="mx-auto flex max-w-md gap-3">
-          <button className="flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white text-[22px]">
-            ♡
-          </button>
-
-          <button
-            onClick={() => goReadEpisode(continueEpisode)}
-            disabled={!continueEpisode}
-            className="flex-1 rounded-full bg-[#ffbe00] px-5 py-4 text-[15px] font-semibold text-[#1f1f1f] disabled:opacity-40"
-          >
-            {continueEpisode ? `Continue Ep. ${continueEpisode.episode_number}` : 'No Episode'}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
