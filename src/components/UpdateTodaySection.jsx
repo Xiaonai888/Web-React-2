@@ -1,9 +1,15 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const featuredBook = {
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+const fallbackFeaturedBook = {
   id: 201,
   title: 'Name book',
-  author: 'Author Name',
+  author: 'Shadow Author',
   cover: '/assets/Update Today/Update Today 1.jpg',
   views: '100k',
   likes: '1000',
@@ -13,7 +19,7 @@ const featuredBook = {
     'Ika is the only survivor of a genocide of humans by demons summoned to wipe out life on his planet through a portal. During the destruction, he witnesses the genocide of humans by demons summoned from another universe.',
 }
 
-const updateBooks = [
+const fallbackUpdateBooks = [
   { id: 202, title: 'Name Novel', cover: '/assets/Update Today/Update Today 2.jpg', badge: 'red', views: '100k', episodes: 'Ep 17' },
   { id: 203, title: 'Name Novel', cover: '/assets/Update Today/Update Today 3.jpg', badge: 'yellow', views: '100k', episodes: 'Ep 17' },
   { id: 204, title: 'Name Novel', cover: '/assets/Update Today/Update Today 4.jpg', badge: 'green', views: '100k', episodes: 'Ep 17' },
@@ -40,6 +46,32 @@ const badgeConfig = {
   },
 }
 
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    author: story.author_name || 'Shadow Author',
+    cover: story.cover_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    episodes: `Ep ${Number(story.total_episodes || 0)}`,
+    genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
+    description: story.description || 'No description yet.',
+    badge: index === 0 ? 'green' : index % 3 === 0 ? 'red' : index % 3 === 1 ? 'yellow' : 'green',
+    isReal: true,
+  }
+}
+
 function StatusBadge({ type }) {
   const badge = badgeConfig[type] || badgeConfig.green
 
@@ -61,8 +93,8 @@ function SmallBookCard({ book }) {
             src={book.cover}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            onError={(e) => {
-              e.target.style.display = 'none'
+            onError={(event) => {
+              event.currentTarget.src = '/assets/Update Today/Update Today 2.jpg'
             }}
           />
           <StatusBadge type={book.badge} />
@@ -90,7 +122,97 @@ function SmallBookCard({ book }) {
   )
 }
 
+function LoadingSkeleton() {
+  return (
+    <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="h-7 w-48 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="aspect-[2/3] w-[96px] shrink-0 animate-pulse rounded-2xl bg-gray-100 sm:w-[130px] lg:w-[220px]" />
+
+          <div className="min-w-0 flex-1">
+            <div className="h-7 w-3/4 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-3 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-4 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-4 h-16 w-full animate-pulse rounded-2xl bg-gray-100" />
+          </div>
+        </div>
+
+        <div className="mt-8 grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index}>
+              <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
+              <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
+              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function UpdateTodaySection() {
+  const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchPublishedStories() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/public/stories?limit=7&sort=updated`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load published stories')
+        }
+
+        if (ignore) return
+
+        setStories((data.stories || []).map(normalizeStory))
+      } catch (error) {
+        console.error('UpdateTodaySection fetch error:', error)
+
+        if (!ignore) {
+          setStories([])
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchPublishedStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const featuredBook = useMemo(() => {
+    return stories[0] || fallbackFeaturedBook
+  }, [stories])
+
+  const updateBooks = useMemo(() => {
+    if (stories.length > 1) {
+      return stories.slice(1, 7)
+    }
+
+    return fallbackUpdateBooks
+  }, [stories])
+
+  if (loading) {
+    return <LoadingSkeleton />
+  }
+
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
@@ -111,7 +233,6 @@ export default function UpdateTodaySection() {
           </Link>
         </div>
 
-        {/* Featured book */}
         <div className="flex items-start gap-4">
           <Link
             to={`/story/${featuredBook.id}`}
@@ -123,8 +244,8 @@ export default function UpdateTodaySection() {
                   src={featuredBook.cover}
                   alt={featuredBook.title}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
+                  onError={(event) => {
+                    event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
                   }}
                 />
               </div>
