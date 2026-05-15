@@ -39,6 +39,16 @@ const tagOptions = [
   'Cold Male Lead',
 ]
 
+const updateDayOptions = [
+  { value: 'Mon', label: 'Mon' },
+  { value: 'Tue', label: 'Tue' },
+  { value: 'Wed', label: 'Wed' },
+  { value: 'Thu', label: 'Thu' },
+  { value: 'Fri', label: 'Fri' },
+  { value: 'Sat', label: 'Sat' },
+  { value: 'Sun', label: 'Sun' },
+]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -518,6 +528,22 @@ function TagSheet({ open, value, onClose, onSave }) {
   )
 }
 
+function getUpdateHintLabel(days) {
+  if (!Array.isArray(days) || days.length === 0) return 'Irregular'
+  if (days.length === 7) return 'Everyday'
+  if (days.length === 1) return `Every ${days[0]}`
+  if (days.length === 2) return days.join(', ')
+  return `${days.length} days/week`
+}
+
+function toggleUpdateDay(currentDays, day) {
+  if (currentDays.includes(day)) {
+    return currentDays.filter((item) => item !== day)
+  }
+
+  return [...currentDays, day]
+}
+
 function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
   return (
     <div className="flex items-center gap-3 rounded-[18px] border border-[#eceaf2] bg-white p-3 shadow-sm">
@@ -558,6 +584,7 @@ export default function CreateStoryPage() {
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
   const [tags, setTags] = useState([])
+  const [updateDays, setUpdateDays] = useState([])
   const [description, setDescription] = useState('')
   const [isAdult, setIsAdult] = useState(false)
   const [originalAccepted, setOriginalAccepted] = useState(false)
@@ -797,6 +824,7 @@ export default function CreateStoryPage() {
           story_language: language,
           main_genre: genre,
           tags,
+          update_days: updateDays,
           description: description.trim() || null,
           is_adult: isAdult,
           cover_url: coverUrl,
@@ -1037,6 +1065,51 @@ export default function CreateStoryPage() {
                 <span className="font-semibold text-[#98a2b3]">Select up to 6 tags</span>
               )}
             </button>
+          </div>
+
+          <div className="mt-5">
+            <FieldLabel>Update Hint</FieldLabel>
+            <div className="rounded-[18px] bg-[#fafafe] px-4 py-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[13px] font-extrabold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
+                  <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                    Display only. This does not schedule posts.
+                  </div>
+                </div>
+
+                {updateDays.length ? (
+                  <button
+                    type="button"
+                    onClick={() => setUpdateDays([])}
+                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] ring-1 ring-[#eceaf2]"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {updateDayOptions.map((day) => {
+                  const active = updateDays.includes(day.value)
+
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
+                      className={`h-10 rounded-full text-[12px] font-extrabold transition active:scale-95 ${
+                        active
+                          ? 'bg-[#111827] text-white'
+                          : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
