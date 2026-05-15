@@ -16,7 +16,11 @@ export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const navigate = useNavigate()
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 const [slides, setSlides] = useState([])
 const [slidesLoading, setSlidesLoading] = useState(true)
 const swiperRef = useRef(null)
