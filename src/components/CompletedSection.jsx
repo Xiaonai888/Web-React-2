@@ -1,12 +1,70 @@
-import React, { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { completedTabs, completedQuotes, completedData } from '../../Demo/CompletedDemoPage'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+const completedTabs = ['All Completed', 'Romance', 'Fantasy']
+
+const completedQuotes = {
+  'All Completed': 'Finished stories ready for binge reading.',
+  Romance: 'Complete romance stories for readers who want the full ending.',
+  Fantasy: 'Complete fantasy worlds you can read from beginning to end.',
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    author: story.author_name || 'Shadow Author',
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    episodes: `Ep ${Number(story.total_episodes || 0)}`,
+    rating: '5.0',
+    ratingCount: formatCompactNumber(Number(story.total_likes || 0) + Number(story.total_comments || 0)),
+    genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
+    description: story.description || 'No description yet.',
+    cover: story.cover_url || `/assets/Completed/Completed ${Math.min(index + 1, 27)}.jpg`,
+    link: `/story/${story.id}`,
+    isAdult: Boolean(story.is_adult),
+    isReal: true,
+  }
+}
+
+const fallbackBooks = Array.from({ length: 9 }).map((_, index) => ({
+  id: 500 + index,
+  title: 'Name Book',
+  author: 'Author Name',
+  views: '100k',
+  likes: '1000',
+  episodes: 'Ep 17',
+  rating: '5.0',
+  ratingCount: '1k',
+  genres: index % 2 === 0 ? ['Romance', 'Drama', 'Comedy'] : ['Fantasy', 'Action', 'Adventure'],
+  description: 'A completed Shadow story. Real published completed stories will appear here after admin/author data is connected.',
+  cover: `/assets/Completed/Completed ${index + 1}.jpg`,
+  link: `/story/${500 + index}`,
+  isAdult: false,
+  isReal: false,
+}))
 
 function QuoteLine({ activeTab }) {
   return (
     <div className="mb-4 px-1">
       <p className="text-[12px] font-medium text-gray-500 sm:text-[13px]">
-        {completedQuotes[activeTab]}
+        {completedQuotes[activeTab] || completedQuotes['All Completed']}
       </p>
     </div>
   )
@@ -81,11 +139,17 @@ function SlideCards({ books, onBookClick }) {
                   alt={book.title}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                   loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
+                  onError={(event) => {
+                    event.currentTarget.src = '/assets/Completed/Completed 1.jpg'
                   }}
                 />
               </div>
+
+              {book.isAdult ? (
+                <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d]">
+                  18+
+                </div>
+              ) : null}
             </div>
 
             <div className="min-w-0 flex-1 pt-0.5">
@@ -121,30 +185,128 @@ function SlideCards({ books, onBookClick }) {
   )
 }
 
+function LoadingCompleted() {
+  return (
+    <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="h-7 w-40 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
+        </div>
+
+        <div className="mb-4 flex gap-2">
+          <div className="h-10 w-28 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-10 w-24 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-10 w-24 animate-pulse rounded-full bg-gray-100" />
+        </div>
+
+        <div className="space-y-5">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="flex gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+              <div className="h-[123px] w-[82px] shrink-0 animate-pulse rounded-xl bg-gray-100" />
+              <div className="min-w-0 flex-1">
+                <div className="h-5 w-3/4 animate-pulse rounded-full bg-gray-100" />
+                <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
+                <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
+                <div className="mt-3 h-10 w-full animate-pulse rounded-xl bg-gray-100" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function CompletedSection() {
   const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState(completedTabs[0])
   const [activeSlide, setActiveSlide] = useState(0)
+  const [realBooks, setRealBooks] = useState({
+    'All Completed': [],
+    Romance: [],
+    Fantasy: [],
+  })
+  const [loading, setLoading] = useState(true)
+
   const scrollRef = useRef(null)
+  const isDraggingRef = useRef(false)
+  const startXRef = useRef(0)
+  const scrollLeftRef = useRef(0)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchCompletedStories() {
+      try {
+        setLoading(true)
+
+        const [allResponse, romanceResponse, fantasyResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated`),
+          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Romance`),
+          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Fantasy`),
+        ])
+
+        const allData = await allResponse.json().catch(() => ({}))
+        const romanceData = await romanceResponse.json().catch(() => ({}))
+        const fantasyData = await fantasyResponse.json().catch(() => ({}))
+
+        if (!allResponse.ok || allData.ok === false) {
+          throw new Error(allData.message || 'Failed to load completed stories')
+        }
+
+        if (!romanceResponse.ok || romanceData.ok === false) {
+          throw new Error(romanceData.message || 'Failed to load romance stories')
+        }
+
+        if (!fantasyResponse.ok || fantasyData.ok === false) {
+          throw new Error(fantasyData.message || 'Failed to load fantasy stories')
+        }
+
+        if (ignore) return
+
+        setRealBooks({
+          'All Completed': (allData.stories || []).map(normalizeStory),
+          Romance: (romanceData.stories || []).map(normalizeStory),
+          Fantasy: (fantasyData.stories || []).map(normalizeStory),
+        })
+      } catch (error) {
+        console.error('CompletedSection fetch error:', error)
+
+        if (!ignore) {
+          setRealBooks({
+            'All Completed': [],
+            Romance: [],
+            Fantasy: [],
+          })
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchCompletedStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const books = useMemo(() => {
-    return completedData[activeTab] || []
-  }, [activeTab])
+    const realList = realBooks[activeTab]
+    return realList?.length ? realList : fallbackBooks
+  }, [activeTab, realBooks])
 
   const slides = useMemo(() => {
     const chunks = []
 
-    for (let i = 0; i < books.length; i += 3) {
-      chunks.push(books.slice(i, i + 3))
+    for (let index = 0; index < books.length; index += 3) {
+      chunks.push(books.slice(index, index + 3))
     }
 
     return chunks
   }, [books])
-
-  const isDraggingRef = useRef(false)
-  const startXRef = useRef(0)
-  const scrollLeftRef = useRef(0)
 
   const handleScroll = () => {
     const container = scrollRef.current
@@ -169,22 +331,22 @@ export default function CompletedSection() {
     setActiveSlide(index)
   }
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (event) => {
     const container = scrollRef.current
     if (!container) return
 
     isDraggingRef.current = true
-    startXRef.current = e.pageX - container.offsetLeft
+    startXRef.current = event.pageX - container.offsetLeft
     scrollLeftRef.current = container.scrollLeft
   }
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (event) => {
     const container = scrollRef.current
     if (!container || !isDraggingRef.current) return
 
-    e.preventDefault()
+    event.preventDefault()
 
-    const x = e.pageX - container.offsetLeft
+    const x = event.pageX - container.offsetLeft
     const walk = x - startXRef.current
     container.scrollLeft = scrollLeftRef.current - walk
   }
@@ -193,7 +355,7 @@ export default function CompletedSection() {
     isDraggingRef.current = false
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     setActiveSlide(0)
 
     const container = scrollRef.current
@@ -201,6 +363,10 @@ export default function CompletedSection() {
       container.scrollTo({ left: 0, behavior: 'auto' })
     }
   }, [activeTab])
+
+  if (loading) {
+    return <LoadingCompleted />
+  }
 
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
