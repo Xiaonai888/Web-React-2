@@ -206,6 +206,7 @@ function CropImageModal({
   crop,
   zoom,
   aspect,
+  cropMode,
   onCropChange,
   onZoomChange,
   onCropComplete,
@@ -848,6 +849,7 @@ export default function CreateStoryPage() {
         crop={crop}
         zoom={zoom}
         aspect={cropAspect}
+        cropMode={cropMode}
         onCropChange={setCrop}
         onZoomChange={setZoom}
         onCropComplete={onCropComplete}
