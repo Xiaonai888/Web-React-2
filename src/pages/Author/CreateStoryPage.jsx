@@ -270,11 +270,15 @@ function CropImageModal({
         </div>
 
         <div
-          className="relative h-[280px] touch-none overflow-hidden rounded-[20px] bg-[#111827] sm:h-[360px]"
-          onDragStart={(event) => event.preventDefault()}
-          onMouseDown={(event) => event.stopPropagation()}
-          onTouchStart={(event) => event.stopPropagation()}
-        >
+  className={`relative mx-auto touch-none overflow-hidden rounded-[20px] bg-[#111827] ${
+    cropMode === 'cover'
+      ? 'h-[420px] w-[280px] max-w-full sm:h-[480px] sm:w-[320px]'
+      : 'h-[280px] w-full sm:h-[360px]'
+  }`}
+  onDragStart={(event) => event.preventDefault()}
+  onMouseDown={(event) => event.stopPropagation()}
+  onTouchStart={(event) => event.stopPropagation()}
+>
           <Cropper
             image={image}
             crop={crop}
