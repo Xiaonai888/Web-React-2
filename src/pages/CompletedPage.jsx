@@ -1,18 +1,81 @@
-import React, { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { completedTabs, completedQuotes, completedData } from '../../Demo/CompletedDemoPage'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+const completedTabs = ['Hot', 'Romance', 'Fantasy', 'Latest']
+
+const completedQuotes = {
+  Hot: 'Finished stories readers are opening now.',
+  Romance: 'Complete romance stories with full endings.',
+  Fantasy: 'Complete fantasy stories ready for a long reading session.',
+  Latest: 'Recently updated published stories from Shadow authors.',
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    author: story.author_name || 'Shadow Author',
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    episodes: `Ep ${Number(story.total_episodes || 0)}`,
+    rating: '5.0',
+    ratingCount: formatCompactNumber(Number(story.total_likes || 0) + Number(story.total_comments || 0)),
+    genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
+    description: story.description || 'No description yet.',
+    cover: story.cover_url || `/assets/Completed/Completed ${Math.min(index + 1, 27)}.jpg`,
+    link: `/story/${story.id}`,
+    freePreview: Number(story.total_episodes || 0) > 0,
+    isAdult: Boolean(story.is_adult),
+    isReal: true,
+  }
+}
+
+const fallbackBooks = Array.from({ length: 9 }).map((_, index) => ({
+  id: 700 + index,
+  title: 'Name Book',
+  author: 'Author Name',
+  views: '100k',
+  likes: '1000',
+  episodes: 'Ep 17',
+  rating: '5.0',
+  ratingCount: '1k',
+  genres: index % 2 === 0 ? ['Romance', 'Drama', 'Comedy'] : ['Fantasy', 'Action', 'Adventure'],
+  description: 'A completed Shadow story. Real published stories will appear here after author publishing data is available.',
+  cover: `/assets/Completed/Completed ${index + 1}.jpg`,
+  link: `/story/${700 + index}`,
+  freePreview: true,
+  isAdult: false,
+  isReal: false,
+}))
 
 function QuoteLine({ activeTab }) {
   return (
     <div className="mb-4 px-1">
       <p className="text-[13px] font-medium text-gray-500">
-        {completedQuotes[activeTab]}
+        {completedQuotes[activeTab] || completedQuotes.Hot}
       </p>
     </div>
   )
 }
 
 function Dots({ count, activeIndex, onDotClick }) {
+  if (count <= 1) return null
+
   return (
     <div className="mt-4 flex items-center justify-center gap-2">
       {Array.from({ length: count }).map((_, index) => {
@@ -41,19 +104,28 @@ function SlideCards({ books }) {
       {books.map((book) => (
         <Link key={book.id} to={book.link}>
           <div className="group flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:bg-gray-50">
-            <div className="relative shrink-0 w-[80px] h-[112px] overflow-hidden rounded-xl shadow-sm bg-gray-100">
+            <div className="relative h-[112px] w-[80px] shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm">
               <img
                 src={book.cover}
                 alt={book.title}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                 loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.src = '/assets/Completed/Completed 1.jpg'
+                }}
               />
 
-              {book.freePreview && (
+              {book.freePreview ? (
                 <div className="absolute left-1.5 top-1.5 rounded-full bg-white/92 px-2 py-0.5 text-[9px] font-extrabold tracking-wide text-neutral-900 shadow-sm">
                   FREE PREVIEW
                 </div>
-              )}
+              ) : null}
+
+              {book.isAdult ? (
+                <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d]">
+                  18+
+                </div>
+              ) : null}
             </div>
 
             <div className="min-w-0 flex-1 py-1">
@@ -72,7 +144,7 @@ function SlideCards({ books }) {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <i className="fas fa-heart text-red-500 text-[13px]" />
+                  <i className="fas fa-heart text-[13px] text-red-500" />
                   <span className="text-gray-600">{book.likes}</span>
                 </div>
 
@@ -83,7 +155,7 @@ function SlideCards({ books }) {
               </div>
 
               <div className="mt-2 flex items-center gap-1 text-[13px] text-gray-600">
-                <i className="fas fa-star text-yellow-400 text-[13px]" />
+                <i className="fas fa-star text-[13px] text-yellow-400" />
                 <span>{book.rating}</span>
                 <span>({book.ratingCount})</span>
               </div>
@@ -110,27 +182,145 @@ function SlideCards({ books }) {
   )
 }
 
+function LoadingCompletedPage() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="h-[112px] w-[80px] shrink-0 animate-pulse rounded-xl bg-gray-100" />
+          <div className="min-w-0 flex-1 py-1">
+            <div className="h-5 w-3/4 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-3 h-12 w-full animate-pulse rounded-xl bg-gray-100" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EmptyState({ onRefresh }) {
+  return (
+    <div className="rounded-2xl bg-white px-5 py-10 text-center shadow-sm ring-1 ring-gray-100">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+        <i className="fa-regular fa-file-lines text-[22px]" />
+      </div>
+
+      <h2 className="mt-4 text-[17px] font-extrabold text-neutral-900">
+        No completed stories yet
+      </h2>
+
+      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-gray-500">
+        Published stories will appear here after author data is available.
+      </p>
+
+      <button
+        type="button"
+        onClick={onRefresh}
+        className="mt-5 rounded-full bg-neutral-950 px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+      >
+        Refresh
+      </button>
+    </div>
+  )
+}
+
 export default function CompletedPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Hot')
   const [activeSlide, setActiveSlide] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
+  const [realBooks, setRealBooks] = useState({
+    Hot: [],
+    Romance: [],
+    Fantasy: [],
+    Latest: [],
+  })
+
   const scrollRef = useRef(null)
-
-  const books = useMemo(() => {
-    return completedData[activeTab] || []
-  }, [activeTab])
-
-  const slides = useMemo(() => {
-    const chunks = []
-    for (let i = 0; i < books.length; i += 3) {
-      chunks.push(books.slice(i, i + 3))
-    }
-    return chunks
-  }, [books])
-
   const isDraggingRef = useRef(false)
   const startXRef = useRef(0)
   const scrollLeftRef = useRef(0)
+
+  async function fetchCompletedPageData() {
+    try {
+      setLoading(true)
+      setMessage('')
+
+      const [hotResponse, romanceResponse, fantasyResponse, latestResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=popular`),
+        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=updated&genre=Romance`),
+        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=updated&genre=Fantasy`),
+        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=latest`),
+      ])
+
+      const hotData = await hotResponse.json().catch(() => ({}))
+      const romanceData = await romanceResponse.json().catch(() => ({}))
+      const fantasyData = await fantasyResponse.json().catch(() => ({}))
+      const latestData = await latestResponse.json().catch(() => ({}))
+
+      if (!hotResponse.ok || hotData.ok === false) {
+        throw new Error(hotData.message || 'Failed to load hot stories')
+      }
+
+      if (!romanceResponse.ok || romanceData.ok === false) {
+        throw new Error(romanceData.message || 'Failed to load romance stories')
+      }
+
+      if (!fantasyResponse.ok || fantasyData.ok === false) {
+        throw new Error(fantasyData.message || 'Failed to load fantasy stories')
+      }
+
+      if (!latestResponse.ok || latestData.ok === false) {
+        throw new Error(latestData.message || 'Failed to load latest stories')
+      }
+
+      setRealBooks({
+        Hot: (hotData.stories || []).map(normalizeStory),
+        Romance: (romanceData.stories || []).map(normalizeStory),
+        Fantasy: (fantasyData.stories || []).map(normalizeStory),
+        Latest: (latestData.stories || []).map(normalizeStory),
+      })
+    } catch (error) {
+      console.error('CompletedPage fetch error:', error)
+
+      setRealBooks({
+        Hot: [],
+        Romance: [],
+        Fantasy: [],
+        Latest: [],
+      })
+
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to server. Please try again later.'
+          : error.message || 'Failed to load completed stories'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCompletedPageData()
+  }, [])
+
+  const books = useMemo(() => {
+    const realList = realBooks[activeTab]
+    return realList?.length ? realList : message ? [] : fallbackBooks
+  }, [activeTab, realBooks, message])
+
+  const slides = useMemo(() => {
+    const chunks = []
+
+    for (let index = 0; index < books.length; index += 3) {
+      chunks.push(books.slice(index, index + 3))
+    }
+
+    return chunks
+  }, [books])
 
   const handleScroll = () => {
     const container = scrollRef.current
@@ -154,36 +344,33 @@ export default function CompletedPage() {
     setActiveSlide(index)
   }
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (event) => {
     const container = scrollRef.current
     if (!container) return
 
     isDraggingRef.current = true
-    startXRef.current = e.pageX - container.offsetLeft
+    startXRef.current = event.pageX - container.offsetLeft
     scrollLeftRef.current = container.scrollLeft
   }
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (event) => {
     const container = scrollRef.current
     if (!container || !isDraggingRef.current) return
 
-    e.preventDefault()
-    const x = e.pageX - container.offsetLeft
+    event.preventDefault()
+    const x = event.pageX - container.offsetLeft
     const walk = x - startXRef.current
     container.scrollLeft = scrollLeftRef.current - walk
   }
 
-  const handleMouseUp = () => {
+  const stopDragging = () => {
     isDraggingRef.current = false
   }
 
-  const handleMouseLeave = () => {
-    isDraggingRef.current = false
-  }
-
-  React.useEffect(() => {
+  useEffect(() => {
     setActiveSlide(0)
     const container = scrollRef.current
+
     if (container) {
       container.scrollTo({ left: 0, behavior: 'auto' })
     }
@@ -191,23 +378,32 @@ export default function CompletedPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32">
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-        <div className="h-14 flex items-center px-4 gap-3">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
+        <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
             <i className="fas fa-chevron-left text-[18px] text-gray-700" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="text-[20px]">😁</span>
-            <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+            <h1 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-900">
               Completed
             </h1>
           </div>
+
+          <button
+            type="button"
+            onClick={fetchCompletedPageData}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
+            aria-label="Refresh"
+          >
+            <i className="fa-solid fa-rotate-right text-[15px]" />
+          </button>
         </div>
       </header>
 
@@ -235,24 +431,41 @@ export default function CompletedPage() {
 
         <QuoteLine activeTab={activeTab} />
 
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth scrollbar-none cursor-grab active:cursor-grabbing select-none"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {slides.map((group, index) => (
-            <div key={index} className="w-full shrink-0 snap-start">
-              <SlideCards books={group} />
-            </div>
-          ))}
-        </div>
+        {message ? (
+          <button
+            type="button"
+            onClick={() => setMessage('')}
+            className="mb-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+          >
+            {message}
+          </button>
+        ) : null}
 
-        <Dots count={slides.length} activeIndex={activeSlide} onDotClick={scrollToIndex} />
+        {loading ? (
+          <LoadingCompletedPage />
+        ) : slides.length ? (
+          <>
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={stopDragging}
+              onMouseLeave={stopDragging}
+              className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth cursor-grab select-none active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {slides.map((group, index) => (
+                <div key={index} className="w-full shrink-0 snap-start">
+                  <SlideCards books={group} />
+                </div>
+              ))}
+            </div>
+
+            <Dots count={slides.length} activeIndex={activeSlide} onDotClick={scrollToIndex} />
+          </>
+        ) : (
+          <EmptyState onRefresh={fetchCompletedPageData} />
+        )}
       </main>
     </div>
   )
