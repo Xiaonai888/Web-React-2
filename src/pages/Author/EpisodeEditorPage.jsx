@@ -501,7 +501,7 @@ export default function EpisodeEditorPage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to create episode')
+      throw new Error(data.error || data.message || 'Failed to create episode')
     }
 
     const episodeId = data.episode?.id
@@ -594,8 +594,8 @@ export default function EpisodeEditorPage() {
           <button
             type="button"
             onClick={handleNext}
-            disabled={loading}
-            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
+            disabled={!isValidForNext}
+            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af] disabled:cursor-not-allowed"
           >
             {loading ? 'Uploading...' : 'Next'}
           </button>
