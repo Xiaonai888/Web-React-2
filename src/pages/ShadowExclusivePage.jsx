@@ -1,146 +1,77 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
 const featureCards = [
-  {
-    title: 'Ads-Free',
-    subtitle: 'No interruptions while reading',
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M8 8l8 8M16 8l-8 8" />
-      </svg>
-    ),
-  },
-  {
-    title: '1 Free Book',
-    subtitle: 'Every 7 days',
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17.5A2.5 2.5 0 0 0 17.5 17H5z" />
-        <path d="M5 4.5v15A2.5 2.5 0 0 0 7.5 22H20" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Early Access',
-    subtitle: 'Read premium releases first',
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
-      </svg>
-    ),
-  },
+  { title: 'Ads-Free', subtitle: 'No interruptions while reading', iconText: '🚫' },
+  { title: 'Premium Stories', subtitle: 'Approved by Shadow', iconText: '👑' },
+  { title: 'Early Access', subtitle: 'Read selected releases first', iconText: '⚡' },
 ]
 
-const sections = [
+const sectionConfigs = [
   {
     id: 'featured',
     title: 'Shadow Picks',
     subtitle: 'Carefully selected stories for premium members',
     layout: 'featured',
-    books: [
-      { id: 1, title: 'The King and Me', episode: 'Up to Ep. 126', genre: 'Royal Romance', image: '' },
-      { id: 2, title: 'Infinite Deduction', episode: 'Up to Ep. 60', genre: 'Mystery', image: '' },
-      { id: 3, title: 'Coddled Rotten Brothers', episode: 'Up to Ep. 141', genre: 'Drama', image: '' },
-      { id: 4, title: 'The Bestselling Empress', episode: 'Up to Ep. 167', genre: 'Fantasy', image: '' },
-      { id: 5, title: 'All I Am to Her', episode: 'Up to Ep. 105', genre: 'Historical', image: '' },
-      { id: 6, title: 'Touch Me Again If You Dare', episode: 'Up to Ep. 55', genre: 'Action', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=featured&sort=updated',
   },
   {
-    id: 'heart-beating-zone',
-    title: 'Heart Beating Zone',
-    subtitle: 'Kiss, blush, and romance you cannot skip',
+    id: 'new_exclusive',
+    title: 'New Exclusive',
+    subtitle: 'Fresh premium stories recently approved',
     layout: 'compact',
-    books: [
-      { id: 7, title: 'My Lovely Troublemaker', episode: 'Up to Ep. 99', genre: 'Romance', image: '' },
-      { id: 8, title: "Caught by My Baby's Daddy", episode: 'Up to Ep. 311', genre: 'CEO', image: '' },
-      { id: 9, title: 'My Secret Crush', episode: 'Up to S3 Ep. 86', genre: 'School Love', image: '' },
-      { id: 10, title: 'Half My Tyrant, Half My Baby', episode: 'Up to Ep. 200', genre: 'Fantasy', image: '' },
-      { id: 11, title: 'Comeback of the Lady', episode: 'Up to Ep. 204', genre: 'Drama', image: '' },
-      { id: 12, title: 'From Somebody to Nobody Again', episode: 'Up to Ep. 163', genre: 'Romance', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=new_exclusive&sort=latest',
   },
   {
-    id: 'mind-blowing-plot-twists',
-    title: 'Mind-Blowing Plot Twists',
-    subtitle: 'Stories that change everything in one episode',
+    id: 'popular_exclusive',
+    title: 'Popular Exclusive',
+    subtitle: 'Premium stories readers open the most',
     layout: 'compact',
-    books: [
-      { id: 13, title: 'Milking My Disciples', episode: 'Up to Ep. 130', genre: 'Eastern Fantasy', image: '' },
-      { id: 14, title: 'The Battle for Humanity', episode: 'Up to Ep. 65', genre: 'Action', image: '' },
-      { id: 15, title: 'Demon Realm', episode: 'Up to Ep. 62', genre: 'Sci-Fi', image: '' },
-      { id: 16, title: 'Doomspawn', episode: 'Up to Ep. 46', genre: 'Thriller', image: '' },
-      { id: 17, title: 'Celestial Immortal', episode: 'Up to Ep. 250', genre: 'Martial Arts', image: '' },
-      { id: 18, title: 'Trapped for 3000 Years', episode: 'Up to Ep. 64', genre: 'Fantasy', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=popular_exclusive&sort=popular',
   },
   {
-    id: 'heartstopper',
-    title: 'Heartstopper',
-    subtitle: 'Soft chemistry and unforgettable emotional tension',
+    id: 'editor_pick',
+    title: 'Editor Pick',
+    subtitle: 'Admin-curated premium recommendations',
     layout: 'compact',
-    books: [
-      { id: 19, title: "Your Majesty's Pet", episode: 'Up to Ep. 83', genre: 'BL', image: '' },
-      { id: 20, title: "His Highness' Male Consort", episode: 'Up to Ep. 70', genre: 'Historical', image: '' },
-      { id: 21, title: 'Sensitive Touch', episode: 'Up to Extra 2', genre: 'BL', image: '' },
-      { id: 22, title: 'The Priest Dreaming of a Dragon', episode: 'Up to Ep. 50', genre: 'Fantasy', image: '' },
-      { id: 23, title: 'Intoxicated Love', episode: 'Up to Extra 3', genre: 'Romance', image: '' },
-      { id: 24, title: 'My Lovely Trouble', episode: 'Up to Ep. 99', genre: 'Drama', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=editor_pick&sort=updated',
   },
   {
-    id: 'new-arrivals',
-    title: 'New Arrivals for Premium',
-    subtitle: 'Early access to new internal releases',
+    id: 'premium_romance',
+    title: 'Premium Romance',
+    subtitle: 'Exclusive romance stories for members',
     layout: 'compact',
-    books: [
-      { id: 25, title: 'Tangled Romance', episode: 'Up to Ep. 73', genre: 'Romance', image: '' },
-      { id: 26, title: 'Partners in Crime', episode: 'Up to Ep. 57', genre: 'Drama', image: '' },
-      { id: 27, title: 'City of Sanctuary', episode: 'Up to Ep. 93', genre: 'Mystery', image: '' },
-      { id: 28, title: 'Rebirth of the Ultimate Master', episode: 'Up to Ep. 71', genre: 'Eastern Fantasy', image: '' },
-      { id: 29, title: "Where Do You Think You're Going", episode: 'Up to Ep. 32', genre: 'Romance', image: '' },
-      { id: 30, title: "Demon Realm Can't Wait to Quit", episode: 'Up to Ep. 62', genre: 'Action', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=premium_romance&sort=updated',
   },
   {
-    id: 'premium-free-access',
-    title: 'Premium Free Access',
-    subtitle: 'Read selected premium stories for free as a member',
+    id: 'premium_fantasy',
+    title: 'Premium Fantasy',
+    subtitle: 'Exclusive fantasy stories for members',
     layout: 'compact',
-    books: [
-      { id: 31, title: 'How to Be a Princess', episode: 'Fantasy', genre: 'Fantasy', image: '' },
-      { id: 32, title: 'Eternal Club', episode: 'Drama', genre: 'Drama', image: '' },
-      { id: 33, title: 'Revenge Gone Wrong', episode: 'Romance', genre: 'Romance', image: '' },
-      { id: 34, title: 'Milking My Disciples', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
-      { id: 35, title: 'Rebirth of the Ultimate Master', episode: 'Eastern Fantasy', genre: 'Eastern Fantasy', image: '' },
-      { id: 36, title: "Where Do You Think You're Going", episode: 'Romance', genre: 'Romance', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=premium_fantasy&sort=updated',
   },
   {
-    id: 'premium-early-access',
-    title: 'Premium Early Access',
-    subtitle: 'Read before everyone else',
+    id: 'completed_exclusive',
+    title: 'Completed Exclusive',
+    subtitle: 'Premium stories ready for binge reading',
     layout: 'compact',
-    books: [
-      { id: 37, title: 'I Dominate a Magic Continent', episode: 'Up to Ep. 71', genre: 'Fantasy', image: '' },
-      { id: 38, title: 'The King and Me', episode: 'Up to Ep. 126', genre: 'Royal Romance', image: '' },
-      { id: 39, title: 'My Five Bigname Daddies', episode: 'Up to Ep. 138', genre: 'Drama', image: '' },
-      { id: 40, title: 'Infinite Deduction', episode: 'Up to Ep. 60', genre: 'Mystery', image: '' },
-      { id: 41, title: 'Coddled Rotten Brothers', episode: 'Up to Ep. 141', genre: 'Drama', image: '' },
-      { id: 42, title: 'Target 100 Million Points', episode: 'Up to Ep. 96', genre: 'Action', image: '' },
-    ],
+    url: '/api/public/shadow-exclusive/stories?limit=6&section=completed_exclusive&sort=updated',
   },
 ]
 
 function CrownBadge() {
   return (
-    <div className="absolute top-2 right-2 z-10 rounded-full bg-[#23182d]/90 border border-white/10 px-1.5 py-1 shadow-md">
+    <div className="absolute right-2 top-2 z-10 rounded-full border border-white/10 bg-[#23182d]/90 px-1.5 py-1 shadow-md">
       <div className="flex items-center gap-1">
-        <svg className="w-2.5 h-2.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+        <svg className="h-2.5 w-2.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 18h18l-1.6-9-4.9 3.4L12 6 9.5 12.4 4.6 9 3 18z" />
         </svg>
-        <span className="text-[8px] font-black text-yellow-300 uppercase leading-none">Free</span>
+        <span className="text-[8px] font-black uppercase leading-none text-yellow-300">Free</span>
       </div>
     </div>
   )
@@ -149,33 +80,47 @@ function CrownBadge() {
 function PlaceholderCover({ featured = false }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-yellow-400/70 shadow-[0_0_10px_rgba(250,204,21,0.22)] flex items-center justify-center ${
+      className={`relative flex items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#2a2036] shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
         featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
       }`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
-      <div className="text-center px-3">
-        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10">
-          <svg className="w-5 h-5 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <div className="px-3 text-center">
+        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5">
+          <svg className="h-5 w-5 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3V4z" />
             <path d="M8 4v13a3 3 0 003 3" />
           </svg>
         </div>
-        <div className="text-[11px] font-bold text-white/35 uppercase tracking-wider">Add Cover</div>
+        <div className="text-[11px] font-bold uppercase tracking-wider text-white/35">No Cover</div>
       </div>
       <CrownBadge />
     </div>
   )
 }
 
+function normalizeBook(story) {
+  const totalEpisodes = Number(story.total_episodes || 0)
+
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    episode: totalEpisodes > 0 ? `Up to Ep. ${totalEpisodes}` : 'Premium story',
+    genre: story.main_genre || 'Premium',
+    image: story.cover_url || '',
+    link: `/story/${story.id}`,
+  }
+}
+
 function BookCard({ book, featured = false }) {
+  const navigate = useNavigate()
   const hasImage = typeof book.image === 'string' && book.image.trim() !== ''
 
   return (
-    <div className="group cursor-pointer min-w-0">
+    <button type="button" onClick={() => navigate(book.link)} className="group min-w-0 cursor-pointer text-left">
       {hasImage ? (
         <div
-          className={`relative overflow-hidden rounded-2xl bg-[#2a2036] border border-yellow-400/70 shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
+          className={`relative overflow-hidden rounded-2xl border border-yellow-400/70 bg-[#2a2036] shadow-[0_0_10px_rgba(250,204,21,0.22)] ${
             featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'
           }`}
         >
@@ -183,6 +128,9 @@ function BookCard({ book, featured = false }) {
             src={book.image}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
           <CrownBadge />
@@ -191,24 +139,110 @@ function BookCard({ book, featured = false }) {
         <PlaceholderCover featured={featured} />
       )}
 
-      <div className="mt-2 px-0.5 min-w-0">
+      <div className="mt-2 min-w-0 px-0.5">
         <h3 className="truncate text-[12px] font-bold text-white">{book.title}</h3>
-        <p className="truncate text-[10px] text-white/55 mt-1">{book.episode}</p>
+        <p className="mt-1 truncate text-[10px] text-white/55">{book.episode}</p>
       </div>
-    </div>
+    </button>
   )
 }
 
 function SectionHeader({ title, subtitle }) {
   return (
-    <div className="flex items-start justify-between mb-4 gap-3">
+    <div className="mb-4 flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-white text-[15px] font-extrabold tracking-tight">{title}</h2>
-        <p className="text-[11px] text-white/55 mt-0.5">{subtitle}</p>
+        <h2 className="text-[15px] font-extrabold tracking-tight text-white">{title}</h2>
+        <p className="mt-0.5 text-[11px] text-white/55">{subtitle}</p>
       </div>
-      <button className="shrink-0 text-[10px] font-black uppercase tracking-wider text-white/50">
-        More
-      </button>
+      <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-white/50">
+        Premium
+      </span>
+    </div>
+  )
+}
+
+function LoadingBooks({ featured }) {
+  return (
+    <div className={featured ? 'grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-6' : 'grid grid-cols-3 gap-x-3 gap-y-5 md:grid-cols-6'}>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index}>
+          <div className={`${featured ? 'aspect-[1.28/1]' : 'aspect-[2/3]'} animate-pulse rounded-2xl bg-white/10`} />
+          <div className="mt-2 h-3 animate-pulse rounded-full bg-white/10" />
+          <div className="mt-2 h-2 w-2/3 animate-pulse rounded-full bg-white/10" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EmptySection({ featured }) {
+  return (
+    <div
+      className={`rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center text-[11px] font-semibold text-white/50 ${
+        featured ? '' : ''
+      }`}
+    >
+      No approved stories in this section yet.
+    </div>
+  )
+}
+
+function ExclusiveSection({ section }) {
+  const [books, setBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchBooks() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}${section.url}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Shadow Exclusive stories')
+        }
+
+        if (!ignore) {
+          setBooks((data.stories || []).map(normalizeBook))
+        }
+      } catch (error) {
+        console.error(`ShadowExclusivePage ${section.id} error:`, error)
+
+        if (!ignore) {
+          setBooks([])
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchBooks()
+
+    return () => {
+      ignore = true
+    }
+  }, [section])
+
+  const isFeatured = section.layout === 'featured'
+
+  return (
+    <div className="mb-9">
+      <SectionHeader title={section.title} subtitle={section.subtitle} />
+
+      {loading ? (
+        <LoadingBooks featured={isFeatured} />
+      ) : books.length ? (
+        <div className={isFeatured ? 'grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-6' : 'grid grid-cols-3 gap-x-3 gap-y-5 md:grid-cols-6'}>
+          {books.map((book) => (
+            <BookCard key={book.id} book={book} featured={isFeatured} />
+          ))}
+        </div>
+      ) : (
+        <EmptySection featured={isFeatured} />
+      )}
     </div>
   )
 }
@@ -217,10 +251,12 @@ export default function ShadowExclusivePage() {
   const [activeTab, setActiveTab] = useState('Popular')
   const tabs = ['Popular', 'Daily', 'Weekly', 'All Time']
 
+  const displaySections = useMemo(() => sectionConfigs, [])
+
   return (
-    <div className="min-h-screen bg-[#17091f] text-white pb-32 md:pb-24">
+    <div className="min-h-screen bg-[#17091f] pb-32 text-white md:pb-24">
       <header className="sticky top-0 z-40 bg-[#17091f]/95 backdrop-blur-md">
-        <div className="h-14 flex items-center justify-center px-4">
+        <div className="flex h-14 items-center justify-center px-4">
           <h1 className="text-[18px] font-extrabold tracking-tight">Shadow Exclusive</h1>
         </div>
       </header>
@@ -228,18 +264,18 @@ export default function ShadowExclusivePage() {
       <main className="px-4">
         <section className="mt-4">
           <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#5b2ca1] via-[#3a1570] to-[#1c0b2b] p-5 shadow-2xl">
-            <div className="absolute -top-12 -right-10 h-28 w-28 rounded-full bg-yellow-300/15 blur-2xl" />
+            <div className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-yellow-300/15 blur-2xl" />
             <div className="absolute -bottom-10 -left-10 h-24 w-24 rounded-full bg-fuchsia-400/10 blur-2xl" />
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 18h18l-1.6-9-4.9 3.4L12 6 9.5 12.4 4.6 9 3 18z" />
                 </svg>
                 Premium Subscription
               </div>
 
-              <h2 className="mt-4 text-[28px] leading-[1.05] font-black text-white">
+              <h2 className="mt-4 text-[28px] font-black leading-[1.05] text-white">
                 Shadow
                 <br />
                 Membership
@@ -257,24 +293,21 @@ export default function ShadowExclusivePage() {
 
           <div className="mt-4 grid grid-cols-3 gap-3">
             {featureCards.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-[22px] border border-white/8 bg-[#2a1536] px-3 py-4 text-center shadow-md"
-              >
-                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#3d2250] text-yellow-300">
-                  {item.icon}
+              <div key={item.title} className="rounded-[22px] border border-white/8 bg-[#2a1536] px-3 py-4 text-center shadow-md">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#3d2250] text-[18px] text-yellow-300">
+                  {item.iconText}
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-tight text-white leading-tight">
+                <div className="text-[10px] font-black uppercase leading-tight tracking-tight text-white">
                   {item.title}
                 </div>
-                <div className="mt-1 text-[9px] text-white/55 font-semibold">{item.subtitle}</div>
+                <div className="mt-1 text-[9px] font-semibold text-white/55">{item.subtitle}</div>
               </div>
             ))}
           </div>
         </section>
 
         <section className="mt-6">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full bg-[#25142f] p-1.5">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto rounded-full bg-[#25142f] p-1.5">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -290,35 +323,17 @@ export default function ShadowExclusivePage() {
         </section>
 
         <section className="mt-7">
-          {sections.map((section, index) => (
-            <div key={section.id} className={index === sections.length - 1 ? 'mb-0' : 'mb-9'}>
-              <SectionHeader title={section.title} subtitle={section.subtitle} />
-
-              <div
-                className={
-                  section.layout === 'featured'
-                    ? 'grid grid-cols-2 md:grid-cols-6 gap-x-3 gap-y-5'
-                    : 'grid grid-cols-3 md:grid-cols-6 gap-x-3 gap-y-5'
-                }
-              >
-                {section.books.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    featured={section.layout === 'featured'}
-                  />
-                ))}
-              </div>
-            </div>
+          {displaySections.map((section) => (
+            <ExclusiveSection key={section.id} section={section} />
           ))}
         </section>
 
         <section className="mt-8">
-          <div className="rounded-[24px] border border-white/8 bg-[#201129] px-4 py-5 md:px-5 md:py-6 shadow-lg">
+          <div className="rounded-[24px] border border-white/8 bg-[#201129] px-4 py-5 shadow-lg md:px-5 md:py-6">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 pr-2">
                 <h3 className="text-[13px] font-extrabold text-white">Got a question? Contact us</h3>
-                <p className="mt-1 text-[10px] leading-4 text-white/50 break-words">
+                <p className="mt-1 break-words text-[10px] leading-4 text-white/50">
                   Premium support for Shadow members
                 </p>
               </div>
