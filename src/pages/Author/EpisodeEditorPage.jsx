@@ -490,12 +490,13 @@ export default function EpisodeEditorPage() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-  title: episodeTitle.trim(),
-  cover_url: episodeCoverUrl,
-  content,
-  is_adult: false,
-  status: 'draft',
-}),
+        title: episodeTitle.trim(),
+        cover_url: episodeCoverUrl,
+        content,
+        is_adult: false,
+        status: 'draft',
+      }),
+    })
 
     const data = await response.json().catch(() => ({}))
 
