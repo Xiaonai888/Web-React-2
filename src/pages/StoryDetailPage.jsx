@@ -1,105 +1,74 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import StoryHeroSection from '../components/story-detail/StoryHeroSection'
+import StoryStatsSection from '../components/story-detail/StoryStatsSection'
+import StoryInfoSection from '../components/story-detail/StoryInfoSection'
+import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSection'
+import EpisodeListModal from '../components/story-detail/EpisodeListModal'
+import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
+import LatestCommentSection from '../components/story-detail/LatestCommentSection'
+import CommentsModal from '../components/story-detail/CommentsModal'
+import RatingModal from '../components/story-detail/RatingModal'
+import RecommendationSection from '../components/story-detail/RecommendationSection'
+import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
-function StatusBadge({ children, className = '' }) {
+function LoadingBlock() {
   return (
-    <span className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${className}`}>
-      {children}
-    </span>
-  )
-}
-
-function StatItem({ icon, value, label }) {
-  return (
-    <div className="rounded-[18px] bg-white/90 px-3 py-3 text-center shadow-sm ring-1 ring-black/5">
-      <i className={`${icon} mb-1 text-[15px] text-[#111827]`} />
-      <div className="text-[15px] font-extrabold text-[#111827]">{value}</div>
-      <div className="mt-0.5 text-[10.5px] font-bold text-[#98a2b3]">{label}</div>
+    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto mb-4 h-9 w-9 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+      <div className="text-[14px] font-extrabold text-[#667085]">Loading story...</div>
     </div>
   )
 }
 
-function EpisodeCard({ episode, story, onOpen }) {
-  const cover = episode.cover_url || story?.cover_url || ''
-  const publishDate = episode.published_at ? new Date(episode.published_at).toLocaleDateString() : ''
-
+function ErrorBlock({ message, onBack }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.995]"
-    >
-      <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-[#111827] text-white">
-        {cover ? (
-          <img src={cover} alt={episode.title} className="h-full w-full object-cover" />
-        ) : (
-          <i className="fa-regular fa-image text-[20px] opacity-70" />
-        )}
+    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+        <i className="fa-solid fa-triangle-exclamation text-[22px]" />
       </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10.5px] font-extrabold text-[#667085]">
-            EP {episode.episode_number || 1}
-          </span>
-
-          {episode.is_adult ? (
-            <span className="rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10.5px] font-extrabold text-[#e5484d]">
-              18+
-            </span>
-          ) : null}
-        </div>
-
-        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#111827]">
-          {episode.title || 'Untitled Episode'}
-        </h3>
-
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#8d94a1]">
-          <span>{Number(episode.character_count || 0).toLocaleString()} chars</span>
-          {publishDate ? <span>{publishDate}</span> : null}
-        </div>
-      </div>
-
-      <i className="fa-solid fa-chevron-right mt-8 text-[12px] text-[#98a2b3]" />
-    </button>
+      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Cannot load story</h2>
+      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085]">
+        {message || 'Please try again later.'}
+      </p>
+      <button
+        type="button"
+        onClick={onBack}
+        className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95"
+      >
+        Go Back
+      </button>
+    </div>
   )
 }
 
-function LoadingCard() {
-  return (
-    <section className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-      <div className="text-[13px] font-bold text-[#667085]">Loading story...</div>
-    </section>
-  )
-}
-
-function normalizeSlides(story) {
-  const slides = Array.isArray(story?.slides)
-    ? story.slides
-        .filter((slide) => slide?.image_url)
-        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-        .slice(0, 5)
-    : []
-
-  if (slides.length) return slides
-
-  if (story?.cover_url) {
-    return [
-      {
-        id: 'story-cover-fallback',
-        image_url: story.cover_url,
-        sort_order: 0,
-      },
-    ]
+function getStoredProgress(storyId, episodes) {
+  try {
+    const raw = localStorage.getItem(`shadow_story_progress_${storyId}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed?.episodeId) return null
+    const found = episodes.find((episode) => episode.id === parsed.episodeId)
+    return found || null
+  } catch {
+    return null
   }
+}
 
-  return []
+function getFinishedEpisodeCount(storyId) {
+  try {
+    const raw = localStorage.getItem(`shadow_story_finished_${storyId}`)
+    const number = Number(raw || 0)
+    return Number.isFinite(number) ? number : 0
+  } catch {
+    return 0
+  }
 }
 
 export default function StoryDetailPage() {
@@ -111,7 +80,12 @@ export default function StoryDetailPage() {
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [activeSlide, setActiveSlide] = useState(0)
+  const [episodeListOpen, setEpisodeListOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [ratingOpen, setRatingOpen] = useState(false)
+  const [lockedEpisode, setLockedEpisode] = useState(null)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -141,12 +115,11 @@ export default function StoryDetailPage() {
 
         setStory(storyData.story || null)
         setEpisodes(episodesData.episodes || [])
-        setActiveSlide(0)
       } catch (error) {
         if (ignore) return
         setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to server. Please try again later.'
+            ? 'Cannot connect to server. Please check API settings.'
             : error.message || 'Failed to load story'
         )
       } finally {
@@ -161,221 +134,141 @@ export default function StoryDetailPage() {
     }
   }, [realStoryId])
 
-  const slides = useMemo(() => normalizeSlides(story), [story])
-  const currentSlide = slides[activeSlide] || slides[0] || null
-  const heroImage = currentSlide?.image_url || story?.cover_url || ''
-
   useEffect(() => {
-    if (slides.length <= 1) return undefined
+    try {
+      setBookmarked(localStorage.getItem(`shadow_library_${realStoryId}`) === 'true')
+      setSubscribed(localStorage.getItem(`shadow_subscribe_${realStoryId}`) === 'true')
+    } catch {
+      setBookmarked(false)
+      setSubscribed(false)
+    }
+  }, [realStoryId])
 
-    const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % slides.length)
-    }, 5000)
-
-    return () => window.clearInterval(timer)
-  }, [slides.length])
-
-  const firstEpisode = episodes[0]
-
-  const totalCharacters = useMemo(() => {
-    return episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0)
+  const newestEpisodes = useMemo(() => {
+    return [...episodes]
+      .sort((a, b) => Number(b.episode_number || 0) - Number(a.episode_number || 0))
+      .slice(0, 3)
   }, [episodes])
 
-  const handleStartReading = () => {
-    if (!firstEpisode) return
-    navigate(`/story/${realStoryId}/episode/${firstEpisode.id}`)
-  }
+  const firstEpisode = useMemo(() => {
+    return [...episodes].sort((a, b) => Number(a.episode_number || 0) - Number(b.episode_number || 0))[0] || null
+  }, [episodes])
+
+  const continueEpisode = useMemo(() => {
+    return getStoredProgress(realStoryId, episodes) || firstEpisode
+  }, [episodes, firstEpisode, realStoryId])
+
+  const finishedEpisodeCount = useMemo(() => getFinishedEpisodeCount(realStoryId), [realStoryId])
 
   const handleOpenEpisode = (episode) => {
+    if (!episode) return
+
+    if (episode.is_locked && Number(episode.episode_number || 0) > 1) {
+      setLockedEpisode(episode)
+      return
+    }
+
     navigate(`/story/${realStoryId}/episode/${episode.id}`)
   }
 
+  const handleToggleBookmark = () => {
+    setBookmarked((current) => {
+      const next = !current
+      localStorage.setItem(`shadow_library_${realStoryId}`, String(next))
+      return next
+    })
+  }
+
+  const handleToggleSubscribe = () => {
+    setSubscribed((current) => {
+      const next = !current
+      localStorage.setItem(`shadow_subscribe_${realStoryId}`, String(next))
+      return next
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
+        <LoadingBlock />
+      </div>
+    )
+  }
+
+  if (message || !story) {
+    return (
+      <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
+        <ErrorBlock message={message} onBack={() => navigate(-1)} />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+      <StoryHeroSection
+        story={story}
+        onBack={() => navigate(-1)}
+        bookmarked={bookmarked}
+        onToggleBookmark={handleToggleBookmark}
+      />
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Story Detail</h1>
+      <main className="mx-auto max-w-5xl px-4">
+        <StoryStatsSection
+          story={story}
+          episodes={episodes}
+          onOpenRating={() => setRatingOpen(true)}
+        />
 
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Share"
-          >
-            <i className="fa-solid fa-share-nodes text-[14px]" />
-          </button>
-        </div>
-      </header>
+        <StoryInfoSection story={story} />
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
-        {loading ? <LoadingCard /> : null}
+        <EpisodePreviewSection
+          story={story}
+          episodes={newestEpisodes}
+          totalEpisodes={episodes.length}
+          onOpenEpisode={handleOpenEpisode}
+          onOpenAll={() => setEpisodeListOpen(true)}
+        />
 
-        {message ? (
-          <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
-            {message}
-          </section>
-        ) : null}
+        <LatestCommentSection
+          story={story}
+          onOpenComments={() => setCommentsOpen(true)}
+        />
 
-        {!loading && story ? (
-          <>
-            <section className="overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
-              <div className="relative min-h-[260px] bg-[#111827]">
-                <div className="absolute inset-0">
-                  {heroImage ? (
-                    <img
-                      key={heroImage}
-                      src={heroImage}
-                      alt={story.title}
-                      className="h-full w-full object-cover opacity-70 blur-[1px] transition-opacity duration-700"
-                    />
-                  ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
-                </div>
-
-                {slides.length > 1 ? (
-                  <div className="absolute bottom-3 left-0 right-0 z-10 flex items-center justify-center gap-2">
-                    {slides.map((slide, index) => (
-                      <button
-                        key={slide.id || slide.image_url || index}
-                        type="button"
-                        onClick={() => setActiveSlide(index)}
-                        aria-label={`Show story slide ${index + 1}`}
-                        className={`h-2.5 rounded-full transition-all ${
-                          activeSlide === index
-                            ? 'w-6 bg-white'
-                            : 'w-2.5 bg-white/45 hover:bg-white/70'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="relative px-4 pb-8 pt-8">
-                  <div className="mx-auto flex max-w-[820px] flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-                    <div className="aspect-[2/3] w-[132px] shrink-0 overflow-hidden rounded-[22px] bg-white/10 shadow-2xl ring-2 ring-white/25">
-                      {story.cover_url ? (
-                        <img src={story.cover_url} alt={story.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-white/50">
-                          <i className="fa-regular fa-image text-[24px]" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                        <StatusBadge className="bg-white/15 text-white backdrop-blur">
-                          {story.story_language || 'Khmer'}
-                        </StatusBadge>
-
-                        <StatusBadge className="bg-white/15 text-white backdrop-blur">
-                          {story.main_genre || 'Novel'}
-                        </StatusBadge>
-
-                        {story.is_adult ? (
-                          <StatusBadge className="bg-[#fff1f1] text-[#e5484d]">18+</StatusBadge>
-                        ) : null}
-                      </div>
-
-                      <h2 className="text-[28px] font-black leading-9 text-white sm:text-[34px] sm:leading-[42px]">
-                        {story.title || 'Untitled Story'}
-                      </h2>
-
-                      <p className="mt-3 line-clamp-3 text-[13px] font-medium leading-6 text-white/75">
-                        {story.description || 'No description yet.'}
-                      </p>
-
-                      {story.tags?.length ? (
-                        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
-                          {story.tags.map((tag) => (
-                            <span key={tag} className="rounded-full bg-white/12 px-3 py-1.5 text-[11px] font-bold text-white/85 backdrop-blur">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 bg-[#fafafe] p-4 sm:grid-cols-4">
-                <StatItem icon="fa-solid fa-book-open" value={episodes.length} label="Episodes" />
-                <StatItem icon="fa-solid fa-align-left" value={totalCharacters.toLocaleString()} label="Characters" />
-                <StatItem icon="fa-regular fa-heart" value={Number(story.total_likes || 0).toLocaleString()} label="Likes" />
-                <StatItem icon="fa-regular fa-eye" value={Number(story.total_views || 0).toLocaleString()} label="Views" />
-              </div>
-            </section>
-
-            <section className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-              <button
-                type="button"
-                onClick={handleStartReading}
-                disabled={!firstEpisode}
-                className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
-              >
-                <i className="fa-solid fa-play mr-2 text-[12px]" />
-                Start Reading
-              </button>
-
-              <button
-                type="button"
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
-                aria-label="Subscribe"
-              >
-                <i className="fa-regular fa-bookmark text-[18px]" />
-              </button>
-            </section>
-
-            <section className="mt-5">
-              <div className="mb-3 flex items-end justify-between gap-3">
-                <div>
-                  <h2 className="text-[18px] font-extrabold text-[#111827]">Episodes</h2>
-                  <p className="mt-0.5 text-[12px] font-semibold text-[#8d94a1]">
-                    Published episodes available for readers.
-                  </p>
-                </div>
-
-                <div className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
-                  {episodes.length} total
-                </div>
-              </div>
-
-              {episodes.length ? (
-                <div className="space-y-3">
-                  {episodes.map((episode) => (
-                    <EpisodeCard
-                      key={episode.id}
-                      episode={episode}
-                      story={story}
-                      onOpen={() => handleOpenEpisode(episode)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[24px] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-                    <i className="fa-regular fa-file-lines text-[22px]" />
-                  </div>
-
-                  <h3 className="mt-4 text-[16px] font-extrabold text-[#111827]">No episodes yet</h3>
-                  <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">
-                    This story is published, but no episode is available for readers yet.
-                  </p>
-                </div>
-              )}
-            </section>
-          </>
-        ) : null}
+        <RecommendationSection story={story} />
       </main>
+
+      <StoryBottomBar
+        subscribed={subscribed}
+        onToggleSubscribe={handleToggleSubscribe}
+        episode={continueEpisode}
+        onRead={() => handleOpenEpisode(continueEpisode)}
+      />
+
+      <EpisodeListModal
+        open={episodeListOpen}
+        story={story}
+        episodes={episodes}
+        onClose={() => setEpisodeListOpen(false)}
+        onOpenEpisode={handleOpenEpisode}
+      />
+
+      <LockedEpisodeModal
+        episode={lockedEpisode}
+        onClose={() => setLockedEpisode(null)}
+      />
+
+      <CommentsModal
+        open={commentsOpen}
+        story={story}
+        onClose={() => setCommentsOpen(false)}
+      />
+
+      <RatingModal
+        open={ratingOpen}
+        story={story}
+        finishedEpisodeCount={finishedEpisodeCount}
+        onClose={() => setRatingOpen(false)}
+      />
     </div>
   )
 }
