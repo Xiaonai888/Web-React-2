@@ -1,22 +1,71 @@
-import React from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { youMightLikeBooks } from '../../Demo/YouMightLikeDemoPage'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+const fallbackBooks = Array.from({ length: 6 }).map((_, index) => ({
+  id: 900 + index,
+  title: 'Name Book',
+  cover: `/assets/YouMightLike/YouMightLike ${index + 1}.jpg`,
+  likes: '1000',
+  episodes: 'Ep 17',
+  link: `/story/${900 + index}`,
+  isAdult: false,
+  genre: '',
+}))
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    cover: story.cover_url || `/assets/YouMightLike/YouMightLike ${Math.min(index + 1, 6)}.jpg`,
+    likes: formatCompactNumber(story.total_likes),
+    episodes: `Ep ${Number(story.total_episodes || 0)}`,
+    link: `/story/${story.id}`,
+    isAdult: Boolean(story.is_adult),
+    genre: story.main_genre || '',
+  }
+}
 
 function BookCard({ book }) {
   return (
     <div className="group block w-full">
       <div className="flex flex-col items-start">
-        <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
-            onError={(e) => {
-              console.error('Image failed to load:', book.cover)
-              e.currentTarget.style.display = 'none'
+            onError={(event) => {
+              event.currentTarget.src = '/assets/YouMightLike/YouMightLike 1.jpg'
             }}
           />
+
+          {book.isAdult ? (
+            <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+              18+
+            </div>
+          ) : null}
+
+          {book.genre ? (
+            <div className="absolute left-2 top-2 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+              {book.genre}
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-3 w-full">
@@ -41,9 +90,74 @@ function BookCard({ book }) {
   )
 }
 
+function LoadingGrid() {
+  return (
+    <section className="px-4 sm:px-5 lg:px-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="h-6 w-44 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index}>
+            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
+            <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function YouMightLikeSection() {
   const navigate = useNavigate()
-  const books = youMightLikeBooks.slice(0, 6)
+  const [realBooks, setRealBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchYouMightLike() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load You Might Like')
+        }
+
+        if (ignore) return
+
+        setRealBooks((data.stories || []).map(normalizeStory))
+      } catch (error) {
+        console.error('YouMightLikeSection fetch error:', error)
+
+        if (!ignore) {
+          setRealBooks([])
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchYouMightLike()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const books = useMemo(() => {
+    return realBooks.length ? realBooks : fallbackBooks
+  }, [realBooks])
+
+  if (loading) {
+    return <LoadingGrid />
+  }
 
   return (
     <section className="px-4 sm:px-5 lg:px-6">
