@@ -392,14 +392,8 @@ export default function AuthorDashboardPage() {
   }
 
   const handleCreateStory = (type) => {
-    if (type !== 'Novel') {
-      handleComingSoon(type)
-      return
-    }
-
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
   }
-
   const handleComingSoon = (type) => {
     setMessage(`${type} is coming soon. Novel publishing is available now.`)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -470,7 +464,7 @@ export default function AuthorDashboardPage() {
                   View Page
                   <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />
                 </button>
-
+              </div>
             </div>
           </div>
 
@@ -629,10 +623,16 @@ export default function AuthorDashboardPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleCreateStory(activeTab)}
+                  onClick={() => {
+                    if (activeTab === 'Novel') {
+                      handleCreateStory(activeTab)
+                    } else {
+                      handleComingSoon(activeTab)
+                    }
+                  }}
                   className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
                 >
-                  Create {activeTab}
+                  {activeTab === 'Novel' ? `Create ${activeTab}` : `${activeTab} Coming Soon`}
                 </button>
               </div>
             )}
