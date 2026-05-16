@@ -628,6 +628,8 @@ export default function CreateStoryPage() {
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
+  const [genreOptions, setGenreOptions] = useState(fallbackGenres)
+  const [genresLoading, setGenresLoading] = useState(false)
   const [genreOptions, setGenreOptions] = useState([])
   const [tags, setTags] = useState([])
   const [updateDays, setUpdateDays] = useState([])
