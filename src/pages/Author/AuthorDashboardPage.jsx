@@ -411,6 +411,10 @@ export default function AuthorDashboardPage() {
   const handleCreateStory = (type) => {
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
   }
+  const handleComingSoon = (type) => {
+  setMessage(`${type} is coming soon. Novel publishing is available now.`)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
   const handleEditStory = (story) => {
     navigate(`/author/story/${story.id}/manage`)
@@ -550,9 +554,31 @@ export default function AuthorDashboardPage() {
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <StoryTypeButton icon="fa-solid fa-book-open" title="Novel" subtitle="Text episodes" onClick={() => handleCreateStory('Novel')} />
-            <StoryTypeButton icon="fa-solid fa-image" title="Manga" subtitle="Image chapters" onClick={() => handleCreateStory('Manga')} />
-            <StoryTypeButton icon="fa-solid fa-comments" title="Chat Story" subtitle="Message style" onClick={() => handleCreateStory('Chat Story')} />
+            <StoryTypeButton
+  icon="fa-solid fa-book-open"
+  title="Novel"
+  subtitle="Text episodes"
+  badge="Available"
+  onClick={() => handleCreateStory('Novel')}
+/>
+
+<StoryTypeButton
+  icon="fa-solid fa-image"
+  title="Manga"
+  subtitle="Image chapters"
+  badge="Soon"
+  disabled
+  onClick={() => handleComingSoon('Manga')}
+/>
+
+<StoryTypeButton
+  icon="fa-solid fa-comments"
+  title="Chat Story"
+  subtitle="Message style"
+  badge="Soon"
+  disabled
+  onClick={() => handleComingSoon('Chat Story')}
+/>
           </div>
         </section>
 
