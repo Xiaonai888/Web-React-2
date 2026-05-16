@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
@@ -579,6 +579,9 @@ function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
 
 export default function CreateStoryPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const editStoryId = searchParams.get('editStoryId')
+  const isEditMode = Boolean(editStoryId)
 
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
@@ -911,20 +914,24 @@ export default function CreateStoryPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Create Story</h1>
+          <h1 className="text-[17px] font-extrabold text-[#111827]">
+  {isEditMode ? 'Edit Story' : 'Create Story'}
+</h1>
 
           <div className="h-9 w-9" />
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-          <div className="grid grid-cols-3 gap-2">
-            <Step number="1" title="Story Info" active />
-            <Step number="2" title="First Episode" />
-            <Step number="3" title="Publish" />
-          </div>
-        </section>
+        {!isEditMode ? (
+  <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+    <div className="grid grid-cols-3 gap-2">
+      <Step number="1" title="Story Info" active />
+      <Step number="2" title="First Episode" />
+      <Step number="3" title="Publish" />
+    </div>
+  </section>
+) : null}
 
         {message ? (
           <button type="button" onClick={() => setMessage('')} className="mt-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold text-[#e5484d]">
