@@ -937,13 +937,13 @@ export default function CreateStoryPage() {
   open={genreOpen}
   value={genre}
   options={genreOptions}
+  loading={genresLoading}
   onClose={() => setGenreOpen(false)}
   onSave={(value) => {
     setGenre(value)
     setGenreOpen(false)
   }}
 />
-
       <TagSheet
         open={tagOpen}
         value={tags}
