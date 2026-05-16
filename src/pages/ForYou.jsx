@@ -12,83 +12,129 @@ import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
 
+const DEFAULT_GENRE_TABS = [
+  { label: 'Today', slug: 'today', is_locked: true },
+  { label: 'Romance', slug: 'romance' },
+  { label: 'Fantasy', slug: 'fantasy' },
+  { label: 'Action', slug: 'action' },
+  { label: 'Comedy', slug: 'comedy' },
+  { label: 'Drama', slug: 'drama' },
+]
+
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
+  const [genreTabs, setGenreTabs] = useState(DEFAULT_GENRE_TABS)
+  const [activeGenre, setActiveGenre] = useState('today')
   const navigate = useNavigate()
 
   const API_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
-const [slides, setSlides] = useState([])
-const [slidesLoading, setSlidesLoading] = useState(true)
-const swiperRef = useRef(null)
+    import.meta.env.VITE_API_URL ||
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000'
+      : 'https://shadow-backend-kucw.onrender.com')
+
+  const [slides, setSlides] = useState([])
+  const [slidesLoading, setSlidesLoading] = useState(true)
+  const swiperRef = useRef(null)
 
   useEffect(() => {
-  async function fetchSlides() {
-    try {
-      const res = await fetch(`${API_URL}/api/slides?section_key=home_top_slider`)
-      const data = await res.json()
+    async function fetchGenreTabs() {
+      try {
+        const res = await fetch(`${API_URL}/api/genres/featured-tabs`)
+        const data = await res.json()
 
-      if (!res.ok || !data.ok) {
-        throw new Error(data.message || 'Failed to fetch slides')
+        if (!res.ok || !data.ok) {
+          throw new Error(data.message || 'Failed to fetch genre tabs')
+        }
+
+        const tabs = (data.tabs || [])
+          .filter((tab) => tab.is_active !== false)
+          .slice(0, 12)
+          .map((tab) => ({
+            label: tab.label || tab.genre?.name || 'Genre',
+            slug: tab.slug || tab.genre?.slug || String(tab.label || '').toLowerCase(),
+            is_locked: Boolean(tab.is_locked),
+          }))
+
+        const hasToday = tabs.some((tab) => tab.slug === 'today')
+        const finalTabs = hasToday
+          ? tabs.sort((a, b) => (a.slug === 'today' ? -1 : b.slug === 'today' ? 1 : 0))
+          : DEFAULT_GENRE_TABS
+
+        setGenreTabs(finalTabs.length ? finalTabs : DEFAULT_GENRE_TABS)
+      } catch (error) {
+        console.error('Fetch genre tabs error:', error)
+        setGenreTabs(DEFAULT_GENRE_TABS)
       }
-
-      setSlides(data.slides || [])
-    } catch (error) {
-      console.error('Fetch home slides error:', error)
-      setSlides([])
-    } finally {
-      setSlidesLoading(false)
     }
-  }
 
-  fetchSlides()
+    fetchGenreTabs()
+  }, [API_URL])
 
-  const interval = setInterval(fetchSlides, 5000)
+  useEffect(() => {
+    async function fetchSlides() {
+      try {
+        const res = await fetch(`${API_URL}/api/slides?section_key=home_top_slider`)
+        const data = await res.json()
 
-  return () => clearInterval(interval)
-}, [API_URL])
+        if (!res.ok || !data.ok) {
+          throw new Error(data.message || 'Failed to fetch slides')
+        }
 
-useEffect(() => {
-  if (!window.Swiper || slides.length === 0) return
+        setSlides(data.slides || [])
+      } catch (error) {
+        console.error('Fetch home slides error:', error)
+        setSlides([])
+      } finally {
+        setSlidesLoading(false)
+      }
+    }
 
-  if (swiperRef.current) {
-    swiperRef.current.destroy(true, true)
-    swiperRef.current = null
-  }
+    fetchSlides()
 
-  swiperRef.current = new window.Swiper('.mySwiper', {
-    effect: 'coverflow',
-    grabCursor: true,
-    centeredSlides: true,
-    slidesPerView: 'auto',
-    coverflowEffect: {
-      rotate: 0,
-      stretch: 0,
-      depth: 80,
-      modifier: 2,
-      slideShadows: false,
-    },
-    loop: slides.length > 1,
-    autoplay: {
-      delay: 4500,
-      disableOnInteraction: false,
-    },
-    pagination: {
-      el: '.swiper-pagination',
-      clickable: true,
-    },
-  })
+    const interval = setInterval(fetchSlides, 5000)
 
-  return () => {
+    return () => clearInterval(interval)
+  }, [API_URL])
+
+  useEffect(() => {
+    if (!window.Swiper || slides.length === 0) return
+
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
       swiperRef.current = null
     }
-  }
-}, [slides])
+
+    swiperRef.current = new window.Swiper('.mySwiper', {
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 'auto',
+      coverflowEffect: {
+        rotate: 0,
+        stretch: 0,
+        depth: 80,
+        modifier: 2,
+        slideShadows: false,
+      },
+      loop: slides.length > 1,
+      autoplay: {
+        delay: 4500,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+    })
+
+    return () => {
+      if (swiperRef.current) {
+        swiperRef.current.destroy(true, true)
+        swiperRef.current = null
+      }
+    }
+  }, [slides])
 
   return (
     <>
@@ -190,45 +236,72 @@ useEffect(() => {
         </nav>
 
         <div id="tab-content-root">
-          <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
-            <button className="bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold">Today</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Romance</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Fantasy</button>
-            <button className="border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold">Action</button>
-          </div>
+          {activeTab === 'novel' ? (
+            <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
+              {genreTabs.map((tab) => {
+                const active = activeGenre === tab.slug
+
+                return (
+                  <button
+                    key={tab.slug}
+                    type="button"
+                    onClick={() => setActiveGenre(tab.slug)}
+                    className={`px-5 py-1.5 rounded-full text-xs shrink-0 font-bold transition ${
+                      active
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'border border-gray-200 text-gray-600 bg-white font-semibold'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="px-4 py-5 bg-white">
+              <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-4 text-center">
+                <div className="text-sm font-bold text-gray-800">
+                  {activeTab === 'chat' ? 'Chat Story' : 'Manga'} is coming soon
+                </div>
+                <div className="mt-1 text-xs font-medium text-gray-400">
+                  Novel publishing and reading are available now.
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="swiper-container mySwiper">
-  <div className="swiper-wrapper">
-    {slidesLoading && (
-      <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-        <span className="text-sm font-semibold text-gray-400">Loading slides...</span>
-      </div>
-    )}
+            <div className="swiper-wrapper">
+              {slidesLoading && (
+                <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-400">Loading slides...</span>
+                </div>
+              )}
 
-    {!slidesLoading && slides.length === 0 && (
-      <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
-        <span className="text-sm font-semibold text-gray-400">No slides yet</span>
-      </div>
-    )}
+              {!slidesLoading && slides.length === 0 && (
+                <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-400">No slides yet</span>
+                </div>
+              )}
 
-    {!slidesLoading && slides.map((slide) => (
-      <div
-        key={slide.id}
-        className="swiper-slide aspect-[16/9] cursor-pointer"
-        onClick={() => {
-          if (slide.link_url) navigate(slide.link_url)
-        }}
-      >
-        <img
-          src={slide.image_url}
-          className="w-full h-full object-cover"
-          alt={slide.title || `Slide ${slide.order_index}`}
-        />
-      </div>
-    ))}
-  </div>
-  <div className="swiper-pagination" />
-</div>
+              {!slidesLoading && slides.map((slide) => (
+                <div
+                  key={slide.id}
+                  className="swiper-slide aspect-[16/9] cursor-pointer"
+                  onClick={() => {
+                    if (slide.link_url) navigate(slide.link_url)
+                  }}
+                >
+                  <img
+                    src={slide.image_url}
+                    className="w-full h-full object-cover"
+                    alt={slide.title || `Slide ${slide.order_index}`}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="swiper-pagination" />
+          </div>
 
           <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
             {[
