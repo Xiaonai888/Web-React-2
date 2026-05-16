@@ -531,7 +531,6 @@ export default function AuthorDashboardPage() {
   icon="fa-solid fa-book-open"
   title="Novel"
   subtitle="Text episodes"
-  badge="Available"
   onClick={() => handleCreateStory('Novel')}
 />
 
