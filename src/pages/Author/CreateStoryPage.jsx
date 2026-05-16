@@ -9,19 +9,13 @@ const API_BASE_URL =
 
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 
-const genres = [
+const fallbackGenres = [
   'Romance',
   'Fantasy',
   'Action',
   'Adventure',
-  'School Life',
   'Comedy',
-  'Horror/Thriller',
-  'Sci-Fi',
-  'Mystery',
-  'System/Isekai',
-  'Historical',
-  'LGBTQ+',
+  'Drama',
 ]
 
 const tagOptions = [
@@ -361,7 +355,7 @@ function CropImageModal({
   )
 }
 
-function GenreSheet({ open, value, onClose, onSave }) {
+function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
   const [selected, setSelected] = useState(value || 'Romance')
   const [search, setSearch] = useState('')
 
@@ -371,8 +365,9 @@ function GenreSheet({ open, value, onClose, onSave }) {
 
   if (!open) return null
 
-  const visibleGenres = genres.filter((genre) => genre.toLowerCase().includes(search.trim().toLowerCase()))
-
+  const visibleGenres = options.filter((genre) =>
+  genre.toLowerCase().includes(search.trim().toLowerCase())
+)
   return (
     <div className="fixed inset-0 z-[130] bg-white">
       <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
