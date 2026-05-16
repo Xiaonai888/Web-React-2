@@ -120,23 +120,6 @@ function StoryTypeButton({ icon, title, subtitle, onClick, disabled = false, bad
     </button>
   )
 }
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex min-w-0 items-center gap-3 rounded-[20px] border border-[#eceaf2] bg-white p-3.5 text-left shadow-sm transition active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:shadow-md"
-    >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] bg-[#f5f3fa] text-[#111827] transition group-hover:bg-[#111827] group-hover:text-white">
-        <i className={`${icon} text-[16px]`} />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">{title}</div>
-        <div className="mt-0.5 line-clamp-1 text-[11.5px] font-medium text-[#8d94a1]">{subtitle}</div>
-      </div>
-    </button>
-  )
-}
 
 function ToolRow({ icon, title, subtitle, onClick }) {
   return (
@@ -409,12 +392,18 @@ export default function AuthorDashboardPage() {
   }
 
   const handleCreateStory = (type) => {
+    if (type !== 'Novel') {
+      handleComingSoon(type)
+      return
+    }
+
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
   }
+
   const handleComingSoon = (type) => {
-  setMessage(`${type} is coming soon. Novel publishing is available now.`)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
+    setMessage(`${type} is coming soon. Novel publishing is available now.`)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleEditStory = (story) => {
     navigate(`/author/story/${story.id}/manage`)
