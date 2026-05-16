@@ -471,16 +471,6 @@ export default function AuthorDashboardPage() {
                   <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={fetchMyStories}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#111827] px-3 py-1.5 text-[11.5px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
-                >
-                  <i className="fa-solid fa-rotate text-[10px]" />
-                  Refresh
-                </button>
-              </div>
             </div>
           </div>
 
