@@ -399,7 +399,20 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleGenres.map((genre) => (
+  {loading ? (
+    <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+      Loading genres...
+    </div>
+  ) : null}
+
+  {!loading && visibleGenres.length === 0 ? (
+    <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+      No genres found.
+    </div>
+  ) : null}
+
+  {!loading && visibleGenres.map((genre) => (
+
             <button
               key={genre}
               type="button"
@@ -423,6 +436,40 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
     </div>
   )
 }
+
+useEffect(() => {
+  async function fetchGenres() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/genres`)
+      const data = await response.json()
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load genres')
+      }
+
+      const names = (data.genres || []).map((item) => item.name).filter(Boolean)
+
+      setGenreOptions(names)
+
+      if (names.length && !names.includes(genre)) {
+        setGenre(names[0])
+      }
+    } catch (error) {
+      console.error('Fetch genres error:', error)
+      setGenreOptions([
+        'Romance',
+        'Fantasy',
+        'Action',
+        'Adventure',
+        'Comedy',
+        'Drama',
+      ])
+    }
+  }
+
+  fetchGenres()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
 
 function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
@@ -581,6 +628,7 @@ export default function CreateStoryPage() {
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
+  const [genreOptions, setGenreOptions] = useState([])
   const [tags, setTags] = useState([])
   const [updateDays, setUpdateDays] = useState([])
   const [description, setDescription] = useState('')
@@ -884,14 +932,15 @@ export default function CreateStoryPage() {
       />
 
       <GenreSheet
-        open={genreOpen}
-        value={genre}
-        onClose={() => setGenreOpen(false)}
-        onSave={(value) => {
-          setGenre(value)
-          setGenreOpen(false)
-        }}
-      />
+  open={genreOpen}
+  value={genre}
+  options={genreOptions}
+  onClose={() => setGenreOpen(false)}
+  onSave={(value) => {
+    setGenre(value)
+    setGenreOpen(false)
+  }}
+/>
 
       <TagSheet
         open={tagOpen}
