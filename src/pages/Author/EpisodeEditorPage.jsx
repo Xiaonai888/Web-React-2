@@ -439,11 +439,38 @@ export default function EpisodeEditorPage() {
     setCropOpen(true)
   }
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
+  setMessage('')
+
+  if (!episodeTitle.trim()) {
+    setMessage('Please enter an episode title before saving draft.')
+    return
+  }
+
+  if (!content.trim()) {
+    setMessage('Please write some episode content before saving draft.')
+    return
+  }
+
+  try {
+    setLoading(true)
+
+    await createRealEpisode()
+
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
-    showToast('Draft saved.', 2200)
+
+    navigate(`/author/story/${storyId}/manage`)
+  } catch (error) {
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend. Make sure backend is deployed or running.'
+        : error.message || 'Failed to save draft'
+    )
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -459,12 +486,10 @@ export default function EpisodeEditorPage() {
     navigate(-1)
   }
 
-  const handleSaveDraftAndLeave = () => {
-    setSaveStatus('Saved')
-    setHasUnsavedChanges(false)
-    setShowExitModal(false)
-    navigate(-1)
-  }
+  const handleSaveDraftAndLeave = async () => {
+  setShowExitModal(false)
+  await handleSaveDraft()
+}
 
   const createRealEpisode = async () => {
     const token = getAuthToken()
