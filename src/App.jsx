@@ -32,7 +32,7 @@ import ShadowAuthorAgreementPage from './pages/Author/ShadowAuthorAgreementPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
 import PublishEpisodePage from './pages/Author/PublishEpisodePage'
 import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
-import GenreManagementPage from './pages/GenreManagementPage';
+
 
 
 export default function App() {
@@ -70,7 +70,7 @@ export default function App() {
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
-        <Route path="/genres" element={<ProtectedPage><GenreManagementPage /></ProtectedPage>} />
+        
         
       </Routes>
 
