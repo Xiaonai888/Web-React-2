@@ -437,36 +437,6 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
   )
 }
 
-useEffect(() => {
-  async function fetchGenres() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/genres`)
-      const data = await response.json()
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load genres')
-      }
-
-      const names = (data.genres || []).map((item) => item.name).filter(Boolean)
-
-      setGenreOptions(names)
-
-      if (names.length && !names.includes(genre)) {
-        setGenre(names[0])
-      }
-    } catch (error) {
-      console.error('Fetch genres error:', error)
-      setGenreOptions([
-        'Romance',
-        'Fantasy',
-        'Action',
-        'Adventure',
-        'Comedy',
-        'Drama',
-      ])
-    }
-  }
-
   fetchGenres()
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [])
@@ -669,6 +639,39 @@ export default function CreateStoryPage() {
     setOriginalAccepted(!!saved.originalAccepted)
     setAgreementAccepted(!!saved.agreementAccepted)
   }, [])
+
+  useEffect(() => {
+  async function fetchGenres() {
+    try {
+      setGenresLoading(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/genres`)
+      const data = await response.json()
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load genres')
+      }
+
+      const names = (data.genres || []).map((item) => item.name).filter(Boolean)
+
+      if (names.length) {
+        setGenreOptions(names)
+
+        setGenre((current) => {
+          if (current && names.includes(current)) return current
+          return names[0]
+        })
+      }
+    } catch (error) {
+      console.error('Fetch genres error:', error)
+      setGenreOptions(fallbackGenres)
+    } finally {
+      setGenresLoading(false)
+    }
+  }
+
+  fetchGenres()
+}, [])
 
   const descriptionCount = description.length
   const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000 && !loading
