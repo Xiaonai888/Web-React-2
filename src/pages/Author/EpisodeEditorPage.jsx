@@ -628,13 +628,15 @@ export default function EpisodeEditorPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-          <div className="grid grid-cols-3 gap-2">
-            <Step number="1" title="Story Info" />
-            <Step number="2" title={stepTitle} active />
-            <Step number="3" title="Publish" />
-          </div>
-        </section>
+        {isFirstEpisode ? (
+  <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+    <div className="grid grid-cols-3 gap-2">
+      <Step number="1" title="Story Info" />
+      <Step number="2" title={stepTitle} active />
+      <Step number="3" title="Publish" />
+    </div>
+  </section>
+) : null}
 
         {!isFirstEpisode ? (
           <section className="mt-4 rounded-[18px] bg-[#eff6ff] px-4 py-3 text-[12px] font-bold leading-5 text-[#0b5cff]">
