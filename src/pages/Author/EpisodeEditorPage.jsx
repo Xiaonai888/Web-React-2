@@ -638,12 +638,6 @@ export default function EpisodeEditorPage() {
   </section>
 ) : null}
 
-        {!isFirstEpisode ? (
-          <section className="mt-4 rounded-[18px] bg-[#eff6ff] px-4 py-3 text-[12px] font-bold leading-5 text-[#0b5cff]">
-            You are adding a new episode to this story. This episode can be published, scheduled, or saved as draft.
-          </section>
-        ) : null}
-
         {message ? (
           <button
             type="button"
