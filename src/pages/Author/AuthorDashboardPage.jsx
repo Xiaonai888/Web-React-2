@@ -72,7 +72,54 @@ function StatItem({ value, label }) {
   )
 }
 
-function StoryTypeButton({ icon, title, subtitle, onClick }) {
+function StoryTypeButton({ icon, title, subtitle, onClick, disabled = false, badge = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group relative flex min-w-0 items-center gap-3 rounded-[20px] border p-3.5 text-left shadow-sm transition active:scale-[0.99] ${
+        disabled
+          ? 'border-[#eceaf2] bg-[#fafafe] opacity-80'
+          : 'border-[#eceaf2] bg-white md:hover:-translate-y-0.5 md:hover:shadow-md'
+      }`}
+    >
+      {badge ? (
+        <span
+          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[9.5px] font-black uppercase tracking-[0.04em] ${
+            disabled ? 'bg-[#fff7ed] text-[#f97316]' : 'bg-[#ecfdf3] text-[#16803c]'
+          }`}
+        >
+          {badge}
+        </span>
+      ) : null}
+
+      <div
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] transition ${
+          disabled
+            ? 'bg-white text-[#98a2b3] ring-1 ring-[#eceaf2]'
+            : 'bg-[#f5f3fa] text-[#111827] group-hover:bg-[#111827] group-hover:text-white'
+        }`}
+      >
+        <i className={`${icon} text-[16px]`} />
+      </div>
+
+      <div className="min-w-0 flex-1 pr-14">
+        <div className={`line-clamp-1 text-[14px] font-extrabold ${disabled ? 'text-[#667085]' : 'text-[#111827]'}`}>
+          {title}
+        </div>
+        <div className="mt-0.5 line-clamp-1 text-[11.5px] font-medium text-[#8d94a1]">
+          {subtitle}
+        </div>
+      </div>
+
+      {disabled ? (
+        <i className="fa-solid fa-lock shrink-0 text-[12px] text-[#c0c4cc]" />
+      ) : (
+        <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
+      )}
+    </button>
+  )
+}
   return (
     <button
       type="button"
