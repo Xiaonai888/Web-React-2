@@ -96,7 +96,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
             className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
   showTitleBar
     ? 'bg-transparent text-[#111827]'
-    : 'bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md'
+    : 'bg-transparent text-white'
 }`}
             aria-label="Go back"
           >
