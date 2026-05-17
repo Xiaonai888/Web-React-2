@@ -104,7 +104,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
           </button>
 
           <h1
-  className={`min-w-0 flex-1 truncate text-center text-[14px] font-black transition-opacity duration-300 ${
+  className={`min-w-0 flex-1 truncate text-left text-[18px] font-extrabold transition-opacity duration-300 ${
     showTitleBar ? 'text-[#111827] opacity-100' : 'text-white opacity-0'
   }`}
 >
@@ -115,7 +115,11 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
             <button
               type="button"
               onClick={onToggleBookmark}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md active:scale-95"
+              className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
+  showTitleBar
+    ? 'bg-transparent text-[#111827]'
+    : 'bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md'
+}`}
               aria-label="Add to library"
             >
               <i className={`${bookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark text-[15px]`} />
