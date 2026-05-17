@@ -212,7 +212,7 @@ function CropImageModal({
 
   return (
     <div
-      className="fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black/50 px-4"
+      className="fixed inset-0 z-[170] flex touch-none items-center justify-center overflow-hidden overscroll-none bg-black/50 px-4"
       onWheel={(event) => event.stopPropagation()}
       onTouchMove={(event) => event.stopPropagation()}
     >
@@ -266,7 +266,7 @@ function CropImageModal({
         </div>
 
         <div
-          className={`relative mx-auto touch-none overflow-hidden rounded-[20px] bg-[#111827] ${
+          className={`relative mx-auto touch-none select-none overflow-hidden rounded-[20px] bg-[#111827] ${
             cropMode === 'cover'
               ? 'h-[420px] w-[280px] max-w-full sm:h-[480px] sm:w-[320px]'
               : 'h-[280px] w-full sm:h-[360px]'
