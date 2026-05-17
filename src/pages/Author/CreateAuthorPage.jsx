@@ -2,7 +2,11 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
-const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
@@ -46,7 +50,17 @@ async function getCroppedImage(imageSrc, pixelCrop) {
   canvas.width = pixelCrop.width
   canvas.height = pixelCrop.height
 
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height)
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
 
   return canvas.toDataURL('image/jpeg', 0.92)
 }
@@ -73,88 +87,94 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   return data.image_url || data.imageUrl
 }
 
-function CropImageModal({ open, image, crop, zoom, croppedAreaPixels, onCropChange, onZoomChange, onCropComplete, onClose, onSave }) {
+function CropImageModal({
+  open,
+  image,
+  crop,
+  zoom,
+  croppedAreaPixels,
+  onCropChange,
+  onZoomChange,
+  onCropComplete,
+  onClose,
+  onSave,
+}) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-center justify-center bg-black/50 px-4">
-      <style>
-        {`
-          .author-cropper-shell,
-          .author-cropper-shell * {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-user-drag: none;
-          }
+    <div className="fixed inset-0 z-[180] overflow-y-auto bg-black/50 px-4 pb-[150px] pt-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[520px] items-start justify-center">
+        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Profile Photo</h2>
+              <p className="mt-1 text-[11.5px] leading-4 text-[#8d94a1]">
+                Drag and zoom to fit your author avatar.
+              </p>
+            </div>
 
-          .author-cropper-shell .reactEasyCrop_Container {
-            touch-action: none !important;
-            cursor: grab !important;
-          }
-
-          .author-cropper-shell .reactEasyCrop_Container:active {
-            cursor: grabbing !important;
-          }
-
-          .author-cropper-shell .reactEasyCrop_Image,
-          .author-cropper-shell .reactEasyCrop_Video {
-            pointer-events: none !important;
-            -webkit-user-drag: none !important;
-            user-select: none !important;
-          }
-
-          .author-cropper-shell .reactEasyCrop_CropArea {
-            border: 2px solid rgba(255,255,255,0.95) !important;
-            box-shadow: 0 0 0 9999em rgba(0,0,0,0.35) !important;
-          }
-        `}
-      </style>
-
-      <div className="author-cropper-shell w-full max-w-[520px] rounded-[26px] bg-white p-4 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[17px] font-extrabold text-[#111827]">Crop Profile Photo</h2>
-            <p className="mt-1 text-[11.5px] leading-4 text-[#8d94a1]">Drag and zoom to fit your author avatar.</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close crop editor"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
           </div>
 
-          <button type="button" onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
-
-        <div className="relative mx-auto h-[300px] w-[300px] max-w-full overflow-hidden rounded-full bg-[#111827]">
-          <Cropper
-            image={image}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
-            onCropChange={onCropChange}
-            onZoomChange={onZoomChange}
-            onCropComplete={onCropComplete}
-            style={{
-              containerStyle: { touchAction: 'none', cursor: 'grab' },
-              mediaStyle: { userSelect: 'none', WebkitUserDrag: 'none', pointerEvents: 'none' },
-            }}
-          />
-        </div>
-
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
-            <span>Zoom</span>
-            <span>{zoom.toFixed(1)}x</span>
+          <div className="relative mx-auto h-[min(78vw,360px)] max-h-[360px] min-h-[260px] w-full overflow-hidden rounded-[22px] bg-[#111827]">
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              restrictPosition={false}
+              objectFit="contain"
+              onCropChange={onCropChange}
+              onZoomChange={onZoomChange}
+              onCropComplete={onCropComplete}
+            />
           </div>
-          <input type="range" min="1" max="3" step="0.1" value={zoom} onChange={(event) => onZoomChange(Number(event.target.value))} className="w-full accent-[#111827]" />
-        </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <button type="button" onClick={onClose} className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]">
-            Cancel
-          </button>
-          <button type="button" onClick={() => onSave(croppedAreaPixels)} className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]">
-            Save Crop
-          </button>
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+              <span>Zoom</span>
+              <span>{zoom.toFixed(1)}x</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={zoom}
+              onChange={(event) => onZoomChange(Number(event.target.value))}
+              className="w-full accent-[#111827]"
+            />
+          </div>
+
+          <div className="mt-3 rounded-[16px] bg-[#f5f3fa] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085]">
+            Tip: Drag inside the image to move. Use the Zoom slider if pinch does not work well on your phone browser.
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(croppedAreaPixels)}
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+            >
+              Save Crop
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -234,20 +254,29 @@ export default function CreateAuthorPage() {
     reader.onload = () => {
       const result = String(reader.result || '')
       setRawImage(result)
+      setAvatarPreview('')
+      setAvatarCropped('')
       setCrop({ x: 0, y: 0 })
       setZoom(1)
+      setCroppedAreaPixels(null)
       setCropModalOpen(true)
+      setMessage('')
     }
     reader.readAsDataURL(file)
   }
 
   const handleSaveCrop = async (pixels) => {
+    if (!rawImage || !pixels) {
+      setMessage('Please adjust the photo first')
+      return
+    }
+
     try {
       const cropped = await getCroppedImage(rawImage, pixels)
       setAvatarCropped(cropped)
       setAvatarPreview(cropped)
       setCropModalOpen(false)
-    } catch (error) {
+    } catch {
       setMessage('Failed to crop image')
     }
   }
@@ -316,7 +345,12 @@ export default function CreateAuthorPage() {
       />
 
       <div className="mx-auto max-w-[520px]">
-        <button type="button" onClick={() => (step === 2 ? setStep(1) : navigate('/event'))} className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95" aria-label="Go back">
+        <button
+          type="button"
+          onClick={() => (step === 2 ? setStep(1) : navigate('/event'))}
+          className="mb-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+          aria-label="Go back"
+        >
           <i className="fas fa-chevron-left text-[14px]" />
         </button>
 
@@ -333,29 +367,61 @@ export default function CreateAuthorPage() {
                   <i className="fas fa-pen-nib text-[24px]" />
                 </div>
                 <h1 className="text-[24px] font-extrabold text-[#111827]">Create Author Page</h1>
-                <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">Build your public writing page. Your display name can use any language.</p>
+                <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">
+                  Build your public writing page. Your display name can use any language.
+                </p>
               </div>
 
-              {message ? <div className="mt-5 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">{message}</div> : null}
+              {message ? (
+                <div className="mt-5 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+                  {message}
+                </div>
+              ) : null}
 
               <form onSubmit={handleSubmit} className="mt-6">
                 <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Page Name</label>
-                <input type="text" value={pageName} onChange={(event) => setPageName(event.target.value)} placeholder="Enter your public author name" className="mb-4 h-12 w-full rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white" />
+                <input
+                  type="text"
+                  value={pageName}
+                  onChange={(event) => setPageName(event.target.value)}
+                  placeholder="Enter your public author name"
+                  className="mb-4 h-12 w-full rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+                />
 
                 <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Page Username</label>
                 <div className="mb-2 flex h-12 w-full items-center rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] px-4 transition focus-within:border-[#111827] focus-within:bg-white">
                   <span className="mr-1 text-[14px] font-bold text-[#8d94a1]">@</span>
-                  <input type="text" value={pageUsername} onChange={(event) => setPageUsername(cleanUsername(event.target.value))} placeholder="your_author_username" className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none" />
+                  <input
+                    type="text"
+                    value={pageUsername}
+                    onChange={(event) => setPageUsername(cleanUsername(event.target.value))}
+                    placeholder="your_author_username"
+                    className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none"
+                  />
                 </div>
 
-                <p className="mb-4 text-[11px] leading-5 text-[#8d94a1]">English only. Use letters, numbers, and underscore. Same page name is allowed, but page username must be unique.</p>
+                <p className="mb-4 text-[11px] leading-5 text-[#8d94a1]">
+                  English only. Use letters, numbers, and underscore. Same page name is allowed, but page username must be unique.
+                </p>
 
                 <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Bio (Optional)</label>
-                <textarea value={bio} onChange={(event) => setBio(event.target.value)} placeholder="Tell readers about your writing" rows={3} className="mb-5 w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] px-4 py-3 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white" />
+                <textarea
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  placeholder="Tell readers about your writing"
+                  rows={3}
+                  className="mb-5 w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] px-4 py-3 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white"
+                />
 
-                <p className="mb-5 text-center text-[12px] font-medium text-[#555]">Step into greatness — unleash your potential</p>
+                <p className="mb-5 text-center text-[12px] font-medium text-[#555]">
+                  Step into greatness — unleash your potential
+                </p>
 
-                <button type="submit" disabled={loading} className="mx-auto flex h-12 w-full items-center justify-center rounded-[14px] bg-black px-6 text-[14px] font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition hover:bg-[#1b1b1b] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mx-auto flex h-12 w-full items-center justify-center rounded-[14px] bg-black px-6 text-[14px] font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition hover:bg-[#1b1b1b] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   {loading ? 'Creating...' : 'Create Page'}
                 </button>
               </form>
@@ -364,27 +430,57 @@ export default function CreateAuthorPage() {
             <>
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-[#eceaf2]">
-                  {avatarPreview ? <img src={avatarPreview} alt="Author profile preview" className="h-full w-full object-cover" /> : <i className="fa-solid fa-user-pen text-[26px]" />}
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Author profile preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <i className="fa-solid fa-user-pen text-[26px]" />
+                  )}
                 </div>
                 <h1 className="text-[24px] font-extrabold text-[#111827]">Add Profile Photo</h1>
-                <p className="mx-auto mt-2 max-w-[330px] text-[12px] leading-5 text-[#8d94a1]">Make your author page look more trustworthy. You can skip this and add it later.</p>
-                {authorPage?.page_username ? <div className="mt-3 text-[12px] font-bold text-[#555b66]">@{authorPage.page_username}</div> : null}
+                <p className="mx-auto mt-2 max-w-[330px] text-[12px] leading-5 text-[#8d94a1]">
+                  Make your author page look more trustworthy. You can skip this and add it later.
+                </p>
+                {authorPage?.page_username ? (
+                  <div className="mt-3 text-[12px] font-bold text-[#555b66]">@{authorPage.page_username}</div>
+                ) : null}
               </div>
 
-              {message ? <div className="mt-5 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">{message}</div> : null}
+              {message ? (
+                <div className="mt-5 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+                  {message}
+                </div>
+              ) : null}
 
               <div className="mt-6">
                 <label className="flex h-12 w-full cursor-pointer items-center justify-center rounded-[14px] border border-[#e5e7eb] bg-[#f7f7f8] text-[13px] font-extrabold text-[#111827] active:scale-[0.99]">
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      handleFileChange(event)
+                      event.target.value = ''
+                    }}
+                    className="hidden"
+                  />
                   <i className="fa-solid fa-image mr-2 text-[14px]" />
                   Upload Photo
                 </label>
 
-                <button type="button" onClick={handleSaveAvatar} disabled={loading || !avatarCropped} className="mt-4 flex h-12 w-full items-center justify-center rounded-[14px] bg-black px-6 text-[14px] font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={handleSaveAvatar}
+                  disabled={loading || !avatarCropped}
+                  className="mt-4 flex h-12 w-full items-center justify-center rounded-[14px] bg-black px-6 text-[14px] font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   {loading ? 'Saving...' : 'Save Photo'}
                 </button>
 
-                <button type="button" onClick={() => navigate('/author/dashboard')} disabled={loading} className="mt-3 flex h-12 w-full items-center justify-center rounded-[14px] bg-white px-6 text-[14px] font-extrabold text-[#111827] ring-1 ring-[#e5e7eb] transition active:scale-[0.99] disabled:opacity-60">
+                <button
+                  type="button"
+                  onClick={() => navigate('/author/dashboard')}
+                  disabled={loading}
+                  className="mt-3 flex h-12 w-full items-center justify-center rounded-[14px] bg-white px-6 text-[14px] font-extrabold text-[#111827] ring-1 ring-[#e5e7eb] transition active:scale-[0.99] disabled:opacity-60"
+                >
                   Skip for now
                 </button>
               </div>
