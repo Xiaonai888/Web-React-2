@@ -1071,19 +1071,37 @@ export default function CreateStoryPage() {
 
               <div className="grid grid-cols-[112px_1fr] gap-3">
                 {coverPreview ? (
-                  <button
-                    type="button"
-                    onClick={handleEditCoverCrop}
-                    className="block aspect-[2/3] overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]"
-                  >
-                    <img
-                      src={coverPreview}
-                      alt="Book Cover"
-                      className="h-full w-full object-cover"
-                      draggable="false"
-                      onDragStart={(event) => event.preventDefault()}
-                    />
-                  </button>
+  <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+    <button
+      type="button"
+      onClick={handleEditCoverCrop}
+      className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
+    >
+      <img
+        src={coverPreview}
+        alt="Book Cover"
+        className="h-full w-full object-cover"
+        draggable="false"
+        onDragStart={(event) => event.preventDefault()}
+      />
+    </button>
+
+    <div className="border-t border-[#eceaf2] bg-white p-2">
+      <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+        Replace Cover
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            handleCoverChange(event.target.files?.[0] || null)
+            event.target.value = ''
+          }}
+        />
+      </label>
+    </div>
+  </div>
+) : (
                 ) : (
                   <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
                     <div className="px-3">
