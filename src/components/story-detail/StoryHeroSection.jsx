@@ -167,7 +167,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                     <img
   src="/assets/Icons/echo.svg"
   alt="Echo"
-  className="h-5 w-5 opacity-55"
+    className="h-4 w-4 opacity-55"
 />
                     Echo
                   </button>
