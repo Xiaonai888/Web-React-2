@@ -1069,7 +1069,7 @@ export default function CreateStoryPage() {
             <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
               <FieldLabel required>Book Cover</FieldLabel>
 
-              <div className="grid grid-cols-[112px_1fr] gap-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[112px_1fr] sm:gap-3">
                 {coverPreview ? (
   <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
     <button
