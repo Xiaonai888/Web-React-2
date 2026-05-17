@@ -45,7 +45,7 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
 
 export default function EpisodePreviewSection({ story, episodes, totalEpisodes, onOpenEpisode, onOpenAll }) {
   return (
-    <section className="mt-4 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5 sm:p-5">
+    <section className="mt-4 rounded-[28px] bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-black text-[#111827]">Episodes</h2>
