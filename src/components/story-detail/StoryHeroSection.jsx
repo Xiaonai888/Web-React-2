@@ -93,9 +93,9 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
           <button
             type="button"
             onClick={onBack}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+            className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
   showTitleBar
-    ? 'bg-white text-[#111827]'
+    ? 'bg-transparent text-[#111827]'
     : 'bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md'
 }`}
             aria-label="Go back"
@@ -125,7 +125,11 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
               <button
                 type="button"
                 onClick={() => setMenuOpen((current) => !current)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md active:scale-95"
+               className={`flex h-10 w-10 items-center justify-center rounded-full active:scale-95 ${
+  showTitleBar
+    ? 'bg-transparent text-[#111827]'
+    : 'bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md'
+}`}
                 aria-label="More"
               >
                 <i className="fa-solid fa-ellipsis text-[16px]" />
