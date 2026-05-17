@@ -212,7 +212,7 @@ export default function StoryDetailPage() {
         onToggleBookmark={handleToggleBookmark}
       />
 
-      <main className="mx-auto max-w-5xl px-4">
+      <main className="mx-auto max-w-5xl px-0 sm:px-4">
         <StoryStatsSection
           story={story}
           episodes={episodes}
