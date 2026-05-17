@@ -1102,7 +1102,6 @@ export default function CreateStoryPage() {
     </div>
   </div>
 ) : (
-                ) : (
                   <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
                     <div className="px-3">
                       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
