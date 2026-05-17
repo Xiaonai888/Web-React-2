@@ -85,25 +85,29 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   return (
     <section className="relative bg-[#f5f3fa]">
       <div
-        className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-all duration-300 ${
-          showTitleBar ? 'bg-[#111827] shadow-sm' : 'bg-transparent'
-        }`}
-      >
+  className={`fixed left-0 right-0 top-0 z-50 px-4 py-3 transition-all duration-300 ${
+    showTitleBar ? 'bg-white shadow-sm' : 'bg-transparent'
+  }`}
+>
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md active:scale-95"
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+  showTitleBar
+    ? 'bg-white text-[#111827]'
+    : 'bg-black/22 text-white ring-1 ring-white/18 backdrop-blur-md'
+}`}
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1
-            className={`min-w-0 flex-1 truncate text-center text-[14px] font-black text-white transition-opacity duration-300 ${
-              showTitleBar ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
+  className={`min-w-0 flex-1 truncate text-center text-[14px] font-black transition-opacity duration-300 ${
+    showTitleBar ? 'text-[#111827] opacity-100' : 'text-white opacity-0'
+  }`}
+>
             {story?.title || 'Story'}
           </h1>
 
