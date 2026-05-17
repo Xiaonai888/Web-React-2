@@ -1,11 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 12000
@@ -34,6 +35,7 @@ function dataUrlToFile(dataUrl, fileName) {
 
 async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   if (!imageDataUrl) return null
+  if (String(imageDataUrl).startsWith('http')) return imageDataUrl
 
   const file = dataUrlToFile(imageDataUrl, fileName)
   const formData = new FormData()
@@ -332,13 +334,16 @@ export default function EpisodeEditorPage() {
   const { storyId } = useParams()
   const [searchParams] = useSearchParams()
 
-  const isFirstEpisode = searchParams.get('first') !== '0'
-  const pageTitle = isFirstEpisode ? 'First Episode' : 'Episode'
+  const editEpisodeId = searchParams.get('editEpisodeId')
+  const isEditMode = Boolean(editEpisodeId)
+  const isFirstEpisode = searchParams.get('first') !== '0' && !isEditMode
+  const pageTitle = isEditMode ? 'Edit Episode' : isFirstEpisode ? 'First Episode' : 'Episode'
   const stepTitle = isFirstEpisode ? 'First Episode' : 'Episode'
 
   const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeCover, setEpisodeCover] = useState('')
   const [originalCover, setOriginalCover] = useState('')
+  const [coverChanged, setCoverChanged] = useState(false)
   const [tempCover, setTempCover] = useState('')
   const [cropOpen, setCropOpen] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -352,6 +357,8 @@ export default function EpisodeEditorPage() {
   const [toast, setToast] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(false)
+  const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
 
   const characterCount = content.length
 
@@ -375,7 +382,8 @@ export default function EpisodeEditorPage() {
     characterCount >= MIN_CHARACTERS &&
     characterCount <= MAX_CHARACTERS &&
     episodeTitle.trim() &&
-    !loading
+    !loading &&
+    !pageLoading
 
   const showToast = (text, duration = 2600) => {
     setToast(text)
@@ -401,6 +409,53 @@ export default function EpisodeEditorPage() {
     setCroppedAreaPixels(croppedPixels)
   }, [])
 
+  useEffect(() => {
+    async function loadEpisodeForEdit() {
+      if (!isEditMode) return
+
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      try {
+        setPageLoading(true)
+        setMessage('')
+
+        const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/${editEpisodeId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load episode')
+        }
+
+        const episode = data.episode || {}
+
+        setEpisodeTitle(episode.title || '')
+        setEpisodeCover(episode.cover_url || '')
+        setOriginalCover(episode.cover_url || '')
+        setContent(episode.content || '')
+        setOldEpisodeStatus(episode.status || 'draft')
+        setCoverChanged(false)
+        setSaveStatus('Saved')
+        setHasUnsavedChanges(false)
+      } catch (error) {
+        setMessage(error.message || 'Failed to load episode')
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    loadEpisodeForEdit()
+  }, [editEpisodeId, isEditMode, navigate, storyId])
+
   const handleCoverChange = (file) => {
     if (!file) return
 
@@ -410,6 +465,7 @@ export default function EpisodeEditorPage() {
     setCrop({ x: 0, y: 0 })
     setZoom(1)
     setCroppedAreaPixels(null)
+    setCoverChanged(true)
     setCropOpen(true)
   }
 
@@ -422,6 +478,7 @@ export default function EpisodeEditorPage() {
     try {
       const croppedImage = await getCroppedImage(tempCover, croppedAreaPixels)
       setEpisodeCover(croppedImage)
+      setCoverChanged(true)
       setCropOpen(false)
       markUnsaved()
     } catch {
@@ -432,6 +489,11 @@ export default function EpisodeEditorPage() {
   const handleEditCoverCrop = () => {
     if (!originalCover) return
 
+    if (String(originalCover).startsWith('http')) {
+      showToast('To change old cover, upload a new cover image first.')
+      return
+    }
+
     setTempCover(originalCover)
     setCrop({ x: 0, y: 0 })
     setZoom(1)
@@ -439,38 +501,110 @@ export default function EpisodeEditorPage() {
     setCropOpen(true)
   }
 
-  const handleSaveDraft = async () => {
-  setMessage('')
+  const handleSaveEpisode = async ({ goToPublish = false } = {}) => {
+    setMessage('')
 
-  if (!episodeTitle.trim()) {
-    setMessage('Please enter an episode title before saving draft.')
-    return
-  }
+    if (!episodeTitle.trim()) {
+      setMessage('Please enter an episode title.')
+      return null
+    }
 
-  if (!content.trim()) {
-    setMessage('Please write some episode content before saving draft.')
-    return
-  }
+    if (!content.trim()) {
+      setMessage('Please write some episode content.')
+      return null
+    }
 
-  try {
-    setLoading(true)
+    if (characterCount < MIN_CHARACTERS) {
+      setMessage('Almost there! Episodes need at least 1,500 characters.')
+      return null
+    }
 
-    await createRealEpisode()
+    if (characterCount > MAX_CHARACTERS) {
+      setMessage('This episode is too long. Maximum is 12,000 characters.')
+      return null
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      throw new Error('Please login first.')
+    }
+
+    const episodeCoverUrl = episodeCover
+      ? await uploadImageToStorage({
+          token,
+          imageDataUrl: coverChanged ? episodeCover : episodeCover,
+          folder: 'episode_cover',
+          fileName: `episode-cover-${storyId}-${Date.now()}.jpg`,
+        })
+      : null
+
+    const response = await fetch(
+      isEditMode
+        ? `${API_BASE_URL}/api/stories/${storyId}/episodes/${editEpisodeId}`
+        : `${API_BASE_URL}/api/stories/${storyId}/episodes/create`,
+      {
+        method: isEditMode ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: episodeTitle.trim(),
+          cover_url: episodeCoverUrl,
+          content,
+          is_adult: false,
+          status: isEditMode ? oldEpisodeStatus : 'draft',
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || data.message || (isEditMode ? 'Failed to update episode' : 'Failed to create episode'))
+    }
+
+    const episodeId = data.episode?.id || editEpisodeId
+
+    if (!episodeId) {
+      throw new Error(isEditMode ? 'Episode updated but episode id was missing' : 'Episode created but episode id was missing')
+    }
 
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
 
-    navigate(`/author/story/${storyId}/manage`)
-  } catch (error) {
-    setMessage(
-      error.message === 'Failed to fetch'
-        ? 'Cannot connect to backend. Make sure backend is deployed or running.'
-        : error.message || 'Failed to save draft'
-    )
-  } finally {
-    setLoading(false)
+    if (isEditMode && !goToPublish) {
+      navigate(`/author/story/${storyId}/manage`)
+      return { episodeId, episodeNumber: data.episode?.episode_number || 1 }
+    }
+
+    if (!isEditMode && !goToPublish) {
+      navigate(`/author/story/${storyId}/manage`)
+      return { episodeId, episodeNumber: data.episode?.episode_number || 1 }
+    }
+
+    return {
+      episodeId,
+      episodeNumber: data.episode?.episode_number || 1,
+    }
   }
-}
+
+  const handleSaveDraft = async () => {
+    try {
+      setLoading(true)
+      await handleSaveEpisode()
+    } catch (error) {
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Make sure backend is deployed or running.'
+          : error.message || (isEditMode ? 'Failed to update episode' : 'Failed to save draft')
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleBack = () => {
     if (hasUnsavedChanges) {
@@ -487,93 +621,24 @@ export default function EpisodeEditorPage() {
   }
 
   const handleSaveDraftAndLeave = async () => {
-  setShowExitModal(false)
-  await handleSaveDraft()
-}
-
-  const createRealEpisode = async () => {
-    const token = getAuthToken()
-
-    if (!token) {
-      navigate('/login')
-      throw new Error('Please login first.')
-    }
-
-    const episodeCoverUrl = episodeCover
-      ? await uploadImageToStorage({
-          token,
-          imageDataUrl: episodeCover,
-          folder: 'episode_cover',
-          fileName: `episode-cover-${storyId}-${Date.now()}.jpg`,
-        })
-      : null
-
-    const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: episodeTitle.trim(),
-        cover_url: episodeCoverUrl,
-        content,
-        is_adult: false,
-        status: 'draft',
-      }),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.error || data.message || 'Failed to create episode')
-    }
-
-    const episodeId = data.episode?.id
-
-    if (!episodeId) {
-      throw new Error('Episode created but episode id was missing')
-    }
-
-    return {
-      episodeId,
-      episodeNumber: data.episode?.episode_number || 1,
-    }
+    setShowExitModal(false)
+    await handleSaveDraft()
   }
 
   const handleNext = async () => {
-    setMessage('')
-
-    if (!episodeTitle.trim()) {
-      setMessage('Please enter an episode title.')
-      return
-    }
-
-    if (characterCount < MIN_CHARACTERS) {
-      setMessage('Almost there! Episodes need at least 1,500 characters to publish.')
-      return
-    }
-
-    if (characterCount > MAX_CHARACTERS) {
-      setMessage('This episode is too long. Maximum is 12,000 characters.')
-      return
-    }
-
     try {
       setLoading(true)
 
-      const { episodeId, episodeNumber } = await createRealEpisode()
+      const saved = await handleSaveEpisode({ goToPublish: true })
+      if (!saved) return
 
-      setSaveStatus('Saved')
-      setHasUnsavedChanges(false)
-
-      const firstParam = isFirstEpisode && episodeNumber === 1 ? '1' : '0'
-      navigate(`/author/story/${storyId}/episode/publish?episodeId=${episodeId}&first=${firstParam}`)
+      const firstParam = isFirstEpisode && saved.episodeNumber === 1 ? '1' : '0'
+      navigate(`/author/story/${storyId}/episode/publish?episodeId=${saved.episodeId}&first=${firstParam}`)
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
           ? 'Cannot connect to backend. Make sure backend is deployed or running.'
-          : error.message || 'Failed to create episode'
+          : error.message || (isEditMode ? 'Failed to update episode' : 'Failed to create episode')
       )
     } finally {
       setLoading(false)
@@ -622,21 +687,28 @@ export default function EpisodeEditorPage() {
             disabled={!isValidForNext}
             className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af] disabled:cursor-not-allowed"
           >
-            {loading ? 'Uploading...' : 'Next'}
+            {loading ? 'Saving...' : isEditMode ? 'Next' : 'Next'}
           </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {isFirstEpisode ? (
-  <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-    <div className="grid grid-cols-3 gap-2">
-      <Step number="1" title="Story Info" />
-      <Step number="2" title={stepTitle} active />
-      <Step number="3" title="Publish" />
-    </div>
-  </section>
-) : null}
+          <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+            <div className="grid grid-cols-3 gap-2">
+              <Step number="1" title="Story Info" />
+              <Step number="2" title={stepTitle} active />
+              <Step number="3" title="Publish" />
+            </div>
+          </section>
+        ) : null}
+
+        {pageLoading ? (
+          <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+            <div className="text-[13px] font-bold text-[#667085]">Loading old episode data...</div>
+          </section>
+        ) : null}
 
         {message ? (
           <button
@@ -648,158 +720,164 @@ export default function EpisodeEditorPage() {
           </button>
         ) : null}
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
-            Episode Title <span className="text-[#e5484d]">*</span>
-          </label>
+        {!pageLoading ? (
+          <>
+            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+                Episode Title <span className="text-[#e5484d]">*</span>
+              </label>
 
-          <input
-            value={episodeTitle}
-            onChange={handleTitleChange}
-            placeholder="Enter episode title"
-            className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-          />
+              <input
+                value={episodeTitle}
+                onChange={handleTitleChange}
+                placeholder="Enter episode title"
+                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              />
 
-          <div className="mt-5">
-            <div className="mb-2">
-              <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
+              <div className="mt-5">
+                <div className="mb-2">
+                  <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
 
-              <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                Optional. If empty, story cover will be used.
-              </div>
-
-              <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                Recommended 16:9. Tap the image area to upload or adjust crop.
-              </div>
-            </div>
-
-            {episodeCover ? (
-              <button
-                type="button"
-                onClick={handleEditCoverCrop}
-                className="block w-full cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left active:scale-[0.999]"
-              >
-                <div className="aspect-[16/9] w-full overflow-hidden">
-                  <img
-                    src={episodeCover}
-                    alt="Episode Cover"
-                    className="h-full w-full object-cover"
-                    draggable="false"
-                    onDragStart={(event) => event.preventDefault()}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
-                  <div>
-                    <div className="text-[12px] font-extrabold text-[#111827]">Cover saved</div>
-                    <div className="mt-0.5 text-[11px] text-[#8d94a1]">Tap to adjust crop again</div>
+                  <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                    Optional. If empty, story cover will be used.
                   </div>
 
-                  <span className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
-                    Edit Crop
-                  </span>
+                  <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                    Recommended 16:9. Tap upload to change cover.
+                  </div>
                 </div>
-              </button>
-            ) : (
-              <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                <div className="aspect-[16/9] w-full">
-                  <div className="flex h-full w-full items-center justify-center text-center">
-                    <div>
-                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                        <i className="fa-regular fa-image text-[15px]" />
+
+                {episodeCover ? (
+                  <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left">
+                    <div className="aspect-[16/9] w-full overflow-hidden">
+                      <img
+                        src={episodeCover}
+                        alt="Episode Cover"
+                        className="h-full w-full object-cover"
+                        draggable="false"
+                        onDragStart={(event) => event.preventDefault()}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
+                      <div>
+                        <div className="text-[12px] font-extrabold text-[#111827]">Cover loaded</div>
+                        <div className="mt-0.5 text-[11px] text-[#8d94a1]">Upload new image to replace it</div>
                       </div>
 
-                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
-                        Tap to Upload Cover
-                      </div>
-
-                      <div className="mt-1 text-[11px] text-[#8d94a1]">
-                        Drag to move, pinch or zoom to crop
-                      </div>
+                      <label className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
+                        Replace
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
+                        />
+                      </label>
                     </div>
                   </div>
+                ) : (
+                  <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                    <div className="aspect-[16/9] w-full">
+                      <div className="flex h-full w-full items-center justify-center text-center">
+                        <div>
+                          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                            <i className="fa-regular fa-image text-[15px]" />
+                          </div>
+
+                          <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
+                            Tap to Upload Cover
+                          </div>
+
+                          <div className="mt-1 text-[11px] text-[#8d94a1]">
+                            Drag to move, pinch or zoom to crop
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
+                    />
+                  </label>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
+                  <p className="mt-0.5 text-[11px] text-[#8d94a1]">
+                    Edit text and save changes.
+                  </p>
                 </div>
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => handleCoverChange(event.target.files?.[0] || null)}
+                <div className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-extrabold text-[#555b66]">
+                  {saveStatus}
+                </div>
+              </div>
+
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[18px] bg-[#fafafe] p-2">
+                <ToolButton icon="fa-solid fa-bold" label="Bold" />
+                <ToolButton icon="fa-solid fa-italic" label="Italic" />
+                <ToolButton icon="fa-solid fa-minus" label="Divider" />
+                <ToolButton icon="fa-regular fa-image" label="Insert image" />
+                <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
+                <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
+                <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
+              </div>
+
+              <div className="rounded-[20px] border border-[#d9dde6] bg-white p-3">
+                <textarea
+                  value={content}
+                  onChange={handleContentChange}
+                  placeholder="Start writing your episode..."
+                  className="min-h-[520px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-white px-4 py-4 text-[15px] leading-8 text-[#111827] outline-none"
                 />
-              </label>
-            )}
-          </div>
-        </section>
+              </div>
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
-              <p className="mt-0.5 text-[11px] text-[#8d94a1]">
-                Auto save every 1 minute
-              </p>
-            </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-[12px] font-bold text-[#555b66]">
+                  {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
+                </div>
 
-            <div className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-extrabold text-[#555b66]">
-              {saveStatus}
-            </div>
-          </div>
+                <div className="text-[12px] font-bold text-[#8d94a1]">
+                  {estimatedReadTime}
+                </div>
+              </div>
 
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[18px] bg-[#fafafe] p-2">
-            <ToolButton icon="fa-solid fa-bold" label="Bold" />
-            <ToolButton icon="fa-solid fa-italic" label="Italic" />
-            <ToolButton icon="fa-solid fa-minus" label="Divider" />
-            <ToolButton icon="fa-regular fa-image" label="Insert image" />
-            <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
-            <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
-            <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
-          </div>
+              {warningText ? (
+                <div className="mt-3 rounded-[16px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
+                  {warningText}
+                </div>
+              ) : null}
+            </section>
 
-          <div className="rounded-[20px] border border-[#d9dde6] bg-white p-3">
-            <textarea
-              value={content}
-              onChange={handleContentChange}
-              placeholder="Start writing your episode..."
-              className="min-h-[520px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-white px-4 py-4 text-[15px] leading-8 text-[#111827] outline-none"
-            />
-          </div>
+            <section className="mt-5 grid grid-cols-2 gap-3 pb-8">
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={loading}
+                className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
+              >
+                {isEditMode ? 'Save Changes' : 'Save Draft'}
+              </button>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-[12px] font-bold text-[#555b66]">
-              {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
-            </div>
-
-            <div className="text-[12px] font-bold text-[#8d94a1]">
-              {estimatedReadTime}
-            </div>
-          </div>
-
-          {warningText ? (
-            <div className="mt-3 rounded-[16px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
-              {warningText}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="mt-5 grid grid-cols-2 gap-3 pb-8">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={loading}
-            className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
-          >
-            Save Draft
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!isValidForNext}
-            className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
-          >
-            {loading ? 'Uploading...' : 'Next'}
-          </button>
-        </section>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!isValidForNext}
+                className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+              >
+                {loading ? 'Saving...' : 'Next'}
+              </button>
+            </section>
+          </>
+        ) : null}
       </main>
     </div>
   )
