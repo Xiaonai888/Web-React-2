@@ -1,13 +1,3 @@
-function AppFooter() {
-  const location = useLocation()
-
-  const shouldHideFooter = /^\/story\/[^/]+$/.test(location.pathname)
-
-  if (shouldHideFooter) return null
-
-  return <Footer />
-}
-
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Footer from './components/Footer'
 
@@ -20,6 +10,8 @@ import Search from './pages/Search'
 import ShadowExclusivePage from './pages/ShadowExclusivePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import ReaderPage from './pages/ReaderPage'
+import RatingPage from './pages/RatingPage'
+import LeaveReviewPage from './pages/LeaveReviewPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
@@ -43,7 +35,14 @@ import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
 import PublishEpisodePage from './pages/Author/PublishEpisodePage'
 import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 
+function AppFooter() {
+  const location = useLocation()
+  const shouldHideFooter = /^\/story\/[^/]+$/.test(location.pathname)
 
+  if (shouldHideFooter) return null
+
+  return <Footer />
+}
 
 export default function App() {
   return (
@@ -62,6 +61,8 @@ export default function App() {
         <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
         <Route path="/update-today" element={<UpdateTodayPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+        <Route path="/story/:id/rating" element={<RatingPage />} />
+        <Route path="/story/:id/review" element={<LeaveReviewPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/premium" element={<PremiumPage />} />
@@ -80,8 +81,6 @@ export default function App() {
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
-        
-        
       </Routes>
 
       <AppFooter />
