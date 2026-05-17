@@ -172,7 +172,7 @@ function AvatarImage({ profile, sizeClass = 'h-[92px] w-[92px] md:h-[96px] md:w-
   )
 }
 
-function AvatarEditorModal({
+function AvatarCropModal({
   open,
   profile,
   image,
@@ -263,12 +263,12 @@ function AvatarEditorModal({
             </>
           ) : (
             <div className="rounded-[22px] bg-[#fafafe] p-5 text-center ring-1 ring-[#eceaf2]">
-              <div className="mx-auto mb-4">
+              <div className="mx-auto mb-4 flex justify-center">
                 <AvatarImage profile={{ ...profile, avatarUrl: preview || profile.avatarUrl }} sizeClass="h-[116px] w-[116px] text-[40px]" />
               </div>
 
               <p className="mx-auto max-w-[280px] text-[12px] leading-5 text-[#8d94a1]">
-                Tap upload to choose a photo. Your old photo will stay until you press Save Profile.
+                Tap upload to choose a photo. Your old photo will stay until you press Save.
               </p>
             </div>
           )}
@@ -312,7 +312,128 @@ function AvatarEditorModal({
               disabled={loading || !preview}
               className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
             >
-              {loading ? 'Saving...' : 'Save Profile'}
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EditProfileModal({
+  open,
+  profile,
+  form,
+  loading,
+  message,
+  onChange,
+  onClose,
+  onOpenAvatar,
+  onSave,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 pb-[150px] pt-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[520px] items-start justify-center">
+        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[18px] font-extrabold text-[#111827]">Edit Profile</h2>
+              <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Update your reader profile information.</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close profile editor"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+
+          {message ? (
+            <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+              {message}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onOpenAvatar}
+            className="mb-5 flex w-full items-center gap-4 rounded-[22px] bg-[#fafafe] p-4 text-left ring-1 ring-[#eceaf2] active:scale-[0.99]"
+          >
+            <AvatarImage profile={profile} sizeClass="h-[70px] w-[70px] text-[28px]" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-extrabold text-[#111827]">Change Profile Photo</div>
+              <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">Upload and crop a new photo.</div>
+            </div>
+            <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
+          </button>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Display Name</label>
+              <input
+                value={form.name}
+                onChange={(event) => onChange('name', event.target.value)}
+                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                placeholder="Your display name"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Work / Job</label>
+              <input
+                value={form.work}
+                onChange={(event) => onChange('work', event.target.value)}
+                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                placeholder="Author and accountant"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Bio</label>
+              <textarea
+                value={form.bio}
+                onChange={(event) => onChange('bio', event.target.value)}
+                className="min-h-[96px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                placeholder="Turn the impossible into reality."
+                maxLength={180}
+              />
+              <div className="mt-1 text-right text-[11px] font-bold text-[#98a2b3]">{form.bio.length}/180</div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Location</label>
+              <input
+                value={form.location}
+                onChange={(event) => onChange('location', event.target.value)}
+                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+                placeholder="Based in KPS"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={loading}
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -379,13 +500,22 @@ export default function ProfilePage() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [user, setUser] = useState(getStoredUser())
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
   const [avatarPreview, setAvatarPreview] = useState('')
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [savingAvatar, setSavingAvatar] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
+  const [editForm, setEditForm] = useState({
+    name: user?.name || '',
+    bio: user?.bio || '',
+    work: user?.work || '',
+    location: user?.location || '',
+  })
 
   const isOwnProfile = true
 
@@ -398,9 +528,9 @@ export default function ProfilePage() {
       posts: '03',
       followers: '500',
       following: '100',
-      bioTitle: 'Author and accountant',
-      bio: 'Turn the impossible into reality.',
-      location: 'Based in KPS',
+      bioTitle: user?.work || 'Add your work / job',
+      bio: user?.bio || 'Add your bio',
+      location: user?.location || 'Add your location',
     }
   }, [avatarPreview, user])
 
@@ -440,6 +570,17 @@ export default function ProfilePage() {
     setZoom(1)
     setCroppedAreaPixels(null)
     setAvatarModalOpen(true)
+  }
+
+  const openEditProfile = () => {
+    setProfileMessage('')
+    setEditForm({
+      name: user?.name || '',
+      bio: user?.bio || '',
+      work: user?.work || '',
+      location: user?.location || '',
+    })
+    setEditProfileOpen(true)
   }
 
   const handleAvatarFileChange = (file) => {
@@ -533,6 +674,53 @@ export default function ProfilePage() {
     }
   }
 
+  const handleSaveProfileInfo = async () => {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!editForm.name.trim()) {
+      setProfileMessage('Display name is required')
+      return
+    }
+
+    try {
+      setSavingProfile(true)
+      setProfileMessage('')
+
+      const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editForm.name,
+          bio: editForm.bio,
+          work: editForm.work,
+          location: editForm.location,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update profile')
+      }
+
+      saveStoredUser(data.user)
+      setUser(data.user)
+      setEditProfileOpen(false)
+    } catch (error) {
+      setProfileMessage(error.message || 'Failed to update profile')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
   const handleCancelAvatarEdit = () => {
     setAvatarModalOpen(false)
     setRawAvatarImage('')
@@ -545,7 +733,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[92px]">
-      <AvatarEditorModal
+      <AvatarCropModal
         open={avatarModalOpen}
         profile={profile}
         image={rawAvatarImage}
@@ -562,6 +750,21 @@ export default function ProfilePage() {
         onCancel={handleCancelAvatarEdit}
         onSaveCrop={handleSaveAvatarCrop}
         onSaveProfile={handleSaveProfileAvatar}
+      />
+
+      <EditProfileModal
+        open={editProfileOpen}
+        profile={profile}
+        form={editForm}
+        loading={savingProfile}
+        message={profileMessage}
+        onChange={(field, value) => setEditForm((current) => ({ ...current, [field]: value }))}
+        onClose={() => setEditProfileOpen(false)}
+        onOpenAvatar={() => {
+          setEditProfileOpen(false)
+          openAvatarEditor()
+        }}
+        onSave={handleSaveProfileInfo}
       />
 
       <main className="mx-auto min-h-screen w-full bg-[#f5f3fa] md:max-w-[560px] md:py-4">
@@ -644,7 +847,7 @@ export default function ProfilePage() {
             {isOwnProfile ? (
               <button
                 type="button"
-                onClick={openAvatarEditor}
+                onClick={openEditProfile}
                 className="mt-4 h-10 w-full rounded-[14px] border border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] transition hover:bg-[#f7f7fb] active:scale-[0.99]"
               >
                 Edit Profile
