@@ -287,19 +287,10 @@ function CropImageModal({
             restrictPosition={false}
             objectFit="contain"
             style={{
-              containerStyle: {
-                touchAction: 'none',
-                cursor: 'grab',
-              },
-              mediaStyle: {
-                userSelect: 'none',
-                WebkitUserDrag: 'none',
-                pointerEvents: 'none',
-              },
-              cropAreaStyle: {
-                border: '2px solid rgba(255,255,255,0.95)',
-              },
-            }}
+  containerStyle: {
+    touchAction: 'none',
+  },
+}}
           />
         </div>
 
