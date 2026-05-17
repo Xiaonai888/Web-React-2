@@ -174,7 +174,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
         </div>
       </div>
 
-      <div className="relative h-[360px] overflow-hidden sm:h-[460px] lg:h-[520px]">
+      <div className="relative aspect-[16/9] min-h-[200px] overflow-hidden sm:h-[420px] lg:h-[480px]">
         <div className="absolute inset-0">
           {activeSlide?.image_url ? (
             <img
