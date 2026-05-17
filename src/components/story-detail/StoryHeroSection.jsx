@@ -166,7 +166,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                   >
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f2f4f7]">
   <img
-    src="/assets/icons/echo.svg"
+    src="/assets/Icons/echo.svg"
     alt="Echo"
     className="h-[15px] w-[15px]"
   />
