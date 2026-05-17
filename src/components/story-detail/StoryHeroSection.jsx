@@ -165,7 +165,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
                   >
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f2f4f7] text-[#667085]">
-  <i className="fa-solid fa-retweet scale-x-125 text-[13px]" />
+  <i className="fa-solid fa-rocket text-[13px]" />
 </span>
                     Echo
                   </button>
