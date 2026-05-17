@@ -211,8 +211,8 @@ function CropImageModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 py-4">
-      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-center justify-center">
+    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 pb-[140px] pt-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-start justify-center">
         <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
