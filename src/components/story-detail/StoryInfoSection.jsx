@@ -12,7 +12,7 @@ export default function StoryInfoSection({ story }) {
   const description = story?.description || 'No description yet.'
 
   return (
-    <section className="mt-2 bg-white px-4 py-4 shadow-sm sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5">
+    <section className="mt-2 bg-white px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
