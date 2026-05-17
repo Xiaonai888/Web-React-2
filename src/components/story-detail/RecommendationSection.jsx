@@ -13,7 +13,7 @@ function EmptyCard({ title, text, icon }) {
 export default function RecommendationSection() {
   return (
     <section className="mt-2 space-y-0 sm:mt-4 sm:space-y-4">
-      <div className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5 sm:p-5">
+      <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[18px] font-black text-[#111827]">Other work by same author</h2>
           <span className="text-[11px] font-extrabold text-[#98a2b3]">Soon</span>
