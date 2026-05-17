@@ -164,8 +164,12 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
                     onClick={handleEcho}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f2f4f7] text-[#667085]">
-  <i className="fa-solid fa-repeat text-[15px]" />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f2f4f7]">
+  <img
+    src="/assets/icons/echo.svg"
+    alt="Echo"
+    className="h-[15px] w-[15px]"
+  />
 </span>
                     Echo
                   </button>
