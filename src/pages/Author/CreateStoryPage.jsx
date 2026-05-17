@@ -33,6 +33,7 @@ const updateDayOptions = [
   { value: 'Sat', label: 'Sat' },
   { value: 'Sun', label: 'Sun' },
 ]
+const storyStatusOptions = ['New', 'Ongoing', 'Complete']
 
 function getAuthToken() {
   return (
@@ -211,8 +212,8 @@ function CropImageModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 pb-[140px] pt-4">
-      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-start justify-center">
+    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 py-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-center justify-center">
         <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
@@ -537,6 +538,7 @@ export default function CreateStoryPage() {
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
+  const [storyStatus, setStoryStatus] = useState('New')
   const [genreOptions, setGenreOptions] = useState(fallbackGenres)
   const [genresLoading, setGenresLoading] = useState(false)
   const [tags, setTags] = useState([])
@@ -575,6 +577,7 @@ export default function CreateStoryPage() {
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
+    setStoryStatus(saved.storyStatus || 'New')
     setTags(saved.tags || [])
     setDescription(saved.description || '')
     setIsAdult(!!saved.isAdult)
@@ -647,6 +650,7 @@ export default function CreateStoryPage() {
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
+        setStoryStatus(story.story_status || 'New')
         setTags(Array.isArray(story.tags) ? story.tags : [])
         setUpdateDays(Array.isArray(story.update_days) ? story.update_days : [])
         setDescription(story.description || '')
@@ -887,6 +891,7 @@ export default function CreateStoryPage() {
             title: title.trim(),
             story_language: language,
             main_genre: genre,
+            story_status: storyStatus,
             tags,
             update_days: updateDays,
             description: description.trim() || null,
@@ -1149,6 +1154,29 @@ export default function CreateStoryPage() {
                   {genre || 'Choose genre'}
                   <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
                 </button>
+              </div>
+
+              <div className="mt-5">
+                <FieldLabel required>Story Status</FieldLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  {storyStatusOptions.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setStoryStatus(item)}
+                      className={`h-11 rounded-[14px] text-[12px] font-extrabold transition active:scale-[0.99] ${
+                        storyStatus === item
+                          ? 'bg-[#111827] text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)]'
+                          : 'bg-[#fafafe] text-[#555b66] ring-1 ring-[#e5e7eb]'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
+                  This will appear on story detail as {genre || 'Genre'} / {storyStatus}.
+                </p>
               </div>
 
               <div className="mt-5">
