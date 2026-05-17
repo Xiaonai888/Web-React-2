@@ -211,110 +211,90 @@ function CropImageModal({
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black/50 px-4"
-      onWheel={(event) => event.stopPropagation()}
-      onTouchMove={(event) => event.stopPropagation()}
-    >
-      <Cropper
-  image={image}
-  crop={crop}
-  zoom={zoom}
-  aspect={aspect}
-  onCropChange={onCropChange}
-  onZoomChange={onZoomChange}
-  onCropComplete={onCropComplete}
-  showGrid={false}
-  objectFit="contain"
-/>
+    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/50 px-4 py-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-center justify-center">
+        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-extrabold text-[#111827]">{title}</h2>
+              <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">{helper}</p>
+            </div>
 
-      <div className="shadow-cropper-shell w-full max-w-[560px] rounded-[26px] bg-white p-4 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[17px] font-extrabold text-[#111827]">{title}</h2>
-            <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">{helper}</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close crop editor"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-            aria-label="Close crop editor"
+          <div
+            className={`relative mx-auto overflow-hidden rounded-[20px] bg-[#111827] ${
+              cropMode === 'cover'
+                ? 'h-[72vh] max-h-[480px] min-h-[360px] w-[min(78vw,320px)]'
+                : 'h-[52vw] max-h-[360px] min-h-[210px] w-full'
+            }`}
           >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
-
-        <div
-          className={`relative mx-auto touch-none overflow-hidden rounded-[20px] bg-[#111827] ${
-            cropMode === 'cover'
-              ? 'h-[420px] w-[280px] max-w-full sm:h-[480px] sm:w-[320px]'
-              : 'h-[280px] w-full sm:h-[360px]'
-          }`}
-          onDragStart={(event) => event.preventDefault()}
-          onMouseDown={(event) => event.stopPropagation()}
-        >
-          <Cropper
-            image={image}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspect}
-            onCropChange={onCropChange}
-            onZoomChange={onZoomChange}
-            onCropComplete={onCropComplete}
-            showGrid={false}
-            restrictPosition={false}
-            objectFit="contain"
-            style={{
-  containerStyle: {
-    touchAction: 'none',
-  },
-}}
-          />
-        </div>
-
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
-            <span>Zoom</span>
-            <span>{zoom.toFixed(1)}x</span>
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              onCropChange={onCropChange}
+              onZoomChange={onZoomChange}
+              onCropComplete={onCropComplete}
+              showGrid={false}
+              restrictPosition={false}
+              objectFit="contain"
+            />
           </div>
 
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="0.1"
-            value={zoom}
-            onChange={(event) => onZoomChange(Number(event.target.value))}
-            className="w-full accent-[#111827]"
-          />
-        </div>
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+              <span>Zoom</span>
+              <span>{zoom.toFixed(1)}x</span>
+            </div>
 
-        <div className="mt-3 rounded-[16px] bg-[#f5f3fa] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085]">
-          Tip: Drag inside the frame to move. On phone, drag with one finger and pinch to zoom.
-        </div>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={zoom}
+              onChange={(event) => onZoomChange(Number(event.target.value))}
+              className="w-full accent-[#111827]"
+            />
+          </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
-          >
-            Cancel
-          </button>
+          <div className="mt-3 rounded-[16px] bg-[#f5f3fa] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085]">
+            Tip: Drag inside the image to move. Use the Zoom slider if pinch does not work well on your phone browser.
+          </div>
 
-          <button
-            type="button"
-            onClick={onSave}
-            className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
-          >
-            Save Crop
-          </button>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={onSave}
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+            >
+              Save Crop
+            </button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
 
 function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
   const [selected, setSelected] = useState(value || 'Romance')
