@@ -3,21 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const languages = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
-
-const fallbackGenres = [
-  'Romance',
-  'Fantasy',
-  'Action',
-  'Adventure',
-  'Comedy',
-  'Drama',
-]
-
+const fallbackGenres = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
 const tagOptions = [
   'CEO',
   'Slow Burn',
@@ -32,7 +24,6 @@ const tagOptions = [
   'Second Chance',
   'Cold Male Lead',
 ]
-
 const updateDayOptions = [
   { value: 'Mon', label: 'Mon' },
   { value: 'Tue', label: 'Tue' },
@@ -66,7 +57,7 @@ function dataUrlToFile(dataUrl, fileName) {
 }
 
 async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
-  if (!imageDataUrl) return null
+  if (!imageDataUrl || String(imageDataUrl).startsWith('http')) return imageDataUrl || null
 
   const file = dataUrlToFile(imageDataUrl, fileName)
   const formData = new FormData()
@@ -275,15 +266,15 @@ function CropImageModal({
         </div>
 
         <div
-  className={`relative mx-auto touch-none overflow-hidden rounded-[20px] bg-[#111827] ${
-    cropMode === 'cover'
-      ? 'h-[420px] w-[280px] max-w-full sm:h-[480px] sm:w-[320px]'
-      : 'h-[280px] w-full sm:h-[360px]'
-  }`}
-  onDragStart={(event) => event.preventDefault()}
-  onMouseDown={(event) => event.stopPropagation()}
-  onTouchStart={(event) => event.stopPropagation()}
->
+          className={`relative mx-auto touch-none overflow-hidden rounded-[20px] bg-[#111827] ${
+            cropMode === 'cover'
+              ? 'h-[420px] w-[280px] max-w-full sm:h-[480px] sm:w-[320px]'
+              : 'h-[280px] w-full sm:h-[360px]'
+          }`}
+          onDragStart={(event) => event.preventDefault()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+        >
           <Cropper
             image={image}
             crop={crop}
@@ -366,8 +357,9 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
   if (!open) return null
 
   const visibleGenres = options.filter((genre) =>
-  genre.toLowerCase().includes(search.trim().toLowerCase())
-)
+    genre.toLowerCase().includes(search.trim().toLowerCase())
+  )
+
   return (
     <div className="fixed inset-0 z-[130] bg-white">
       <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
@@ -399,20 +391,19 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-  {loading ? (
-    <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-      Loading genres...
-    </div>
-  ) : null}
+          {loading ? (
+            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+              Loading genres...
+            </div>
+          ) : null}
 
-  {!loading && visibleGenres.length === 0 ? (
-    <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-      No genres found.
-    </div>
-  ) : null}
+          {!loading && visibleGenres.length === 0 ? (
+            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+              No genres found.
+            </div>
+          ) : null}
 
-  {!loading && visibleGenres.map((genre) => (
-
+          {!loading && visibleGenres.map((genre) => (
             <button
               key={genre}
               type="button"
@@ -571,7 +562,9 @@ function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
 
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-extrabold text-[#111827]">Slide {index + 1}</div>
-        <div className="mt-1 text-[11px] text-[#8d94a1]">Tap image to edit crop</div>
+        <div className="mt-1 text-[11px] text-[#8d94a1]">
+          {slide.existing ? 'Old slide loaded' : 'Tap image to edit crop'}
+        </div>
       </div>
 
       <button type="button" onClick={() => onToggle(index)} className={`rounded-full px-3 py-1.5 text-[10.5px] font-extrabold ${slide.active ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
@@ -605,6 +598,7 @@ export default function CreateStoryPage() {
 
   const [coverOriginal, setCoverOriginal] = useState('')
   const [coverPreview, setCoverPreview] = useState('')
+  const [coverChanged, setCoverChanged] = useState(false)
   const [slides, setSlides] = useState([])
 
   const [genreOpen, setGenreOpen] = useState(false)
@@ -612,6 +606,7 @@ export default function CreateStoryPage() {
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(false)
 
   const [cropOpen, setCropOpen] = useState(false)
   const [cropMode, setCropMode] = useState('cover')
@@ -622,6 +617,8 @@ export default function CreateStoryPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   useEffect(() => {
+    if (isEditMode) return
+
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
     if (!saved) return
 
@@ -633,43 +630,105 @@ export default function CreateStoryPage() {
     setIsAdult(!!saved.isAdult)
     setOriginalAccepted(!!saved.originalAccepted)
     setAgreementAccepted(!!saved.agreementAccepted)
+  }, [isEditMode])
+
+  useEffect(() => {
+    async function fetchGenres() {
+      try {
+        setGenresLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/genres`)
+        const data = await response.json()
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load genres')
+        }
+
+        const names = (data.genres || []).map((item) => item.name).filter(Boolean)
+
+        if (names.length) {
+          setGenreOptions(names)
+
+          setGenre((current) => {
+            if (current && names.includes(current)) return current
+            return names[0]
+          })
+        }
+      } catch (error) {
+        console.error('Fetch genres error:', error)
+        setGenreOptions(fallbackGenres)
+      } finally {
+        setGenresLoading(false)
+      }
+    }
+
+    fetchGenres()
   }, [])
 
   useEffect(() => {
-  async function fetchGenres() {
-    try {
-      setGenresLoading(true)
+    async function loadEditStory() {
+      if (!editStoryId) return
 
-      const response = await fetch(`${API_BASE_URL}/api/genres`)
-      const data = await response.json()
+      const token = getAuthToken()
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load genres')
+      if (!token) {
+        navigate('/login')
+        return
       }
 
-      const names = (data.genres || []).map((item) => item.name).filter(Boolean)
+      try {
+        setPageLoading(true)
+        setMessage('')
 
-      if (names.length) {
-        setGenreOptions(names)
-
-        setGenre((current) => {
-          if (current && names.includes(current)) return current
-          return names[0]
+        const response = await fetch(`${API_BASE_URL}/api/stories/${editStoryId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         })
-      }
-    } catch (error) {
-      console.error('Fetch genres error:', error)
-      setGenreOptions(fallbackGenres)
-    } finally {
-      setGenresLoading(false)
-    }
-  }
 
-  fetchGenres()
-}, [])
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load story')
+        }
+
+        const story = data.story || {}
+
+        setTitle(story.title || '')
+        setLanguage(story.story_language || 'Khmer')
+        setGenre(story.main_genre || 'Romance')
+        setTags(Array.isArray(story.tags) ? story.tags : [])
+        setUpdateDays(Array.isArray(story.update_days) ? story.update_days : [])
+        setDescription(story.description || '')
+        setIsAdult(Boolean(story.is_adult))
+        setOriginalAccepted(true)
+        setAgreementAccepted(true)
+        setCoverOriginal(story.cover_url || '')
+        setCoverPreview(story.cover_url || '')
+        setCoverChanged(false)
+
+        setSlides(
+          (story.slides || []).map((slide, index) => ({
+            id: slide.id || `${slide.image_url}-${index}`,
+            original: slide.image_url,
+            cropped: slide.image_url,
+            active: slide.is_active !== false,
+            existing: true,
+            changed: false,
+          }))
+        )
+      } catch (error) {
+        setMessage(error.message || 'Failed to load story')
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    loadEditStory()
+  }, [editStoryId, navigate])
 
   const descriptionCount = description.length
-  const canCreate = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000 && !loading
+  const canSave = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000 && !loading && !pageLoading
 
   const showToast = (text) => {
     setToast(text)
@@ -695,6 +754,7 @@ export default function CreateStoryPage() {
 
     const imageUrl = URL.createObjectURL(file)
     setCoverOriginal(imageUrl)
+    setCoverChanged(true)
     openCropper({
       mode: 'cover',
       image: imageUrl,
@@ -748,6 +808,7 @@ export default function CreateStoryPage() {
 
       if (cropMode === 'cover') {
         setCoverPreview(croppedImage)
+        setCoverChanged(true)
         setCropOpen(false)
         return
       }
@@ -761,6 +822,8 @@ export default function CreateStoryPage() {
               original: tempImage,
               cropped: croppedImage,
               active: true,
+              existing: false,
+              changed: true,
             },
           ])
         } else {
@@ -770,6 +833,7 @@ export default function CreateStoryPage() {
                 ? {
                     ...slide,
                     cropped: croppedImage,
+                    changed: true,
                   }
                 : slide
             )
@@ -797,7 +861,7 @@ export default function CreateStoryPage() {
     const coverUrl = coverPreview
       ? await uploadImageToStorage({
           token,
-          imageDataUrl: coverPreview,
+          imageDataUrl: coverChanged ? coverPreview : coverPreview,
           folder: 'story_cover',
           fileName: `story-cover-${Date.now()}.jpg`,
         })
@@ -808,12 +872,14 @@ export default function CreateStoryPage() {
     for (let index = 0; index < slides.length; index += 1) {
       const slide = slides[index]
 
-      const imageUrl = await uploadImageToStorage({
-        token,
-        imageDataUrl: slide.cropped,
-        folder: 'story_slide',
-        fileName: `story-slide-${index + 1}-${Date.now()}.jpg`,
-      })
+      const imageUrl = slide.changed
+        ? await uploadImageToStorage({
+            token,
+            imageDataUrl: slide.cropped,
+            folder: 'story_slide',
+            fileName: `story-slide-${index + 1}-${Date.now()}.jpg`,
+          })
+        : slide.cropped
 
       uploadedSlides.push({
         image_url: imageUrl,
@@ -828,7 +894,7 @@ export default function CreateStoryPage() {
     }
   }
 
-  const handleCreateStory = async () => {
+  const handleSaveStory = async () => {
     setMessage('')
 
     if (!title.trim()) {
@@ -859,45 +925,52 @@ export default function CreateStoryPage() {
 
       const { coverUrl, uploadedSlides } = await uploadStoryImages(token)
 
-      const response = await fetch(`${API_BASE_URL}/api/stories/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          story_language: language,
-          main_genre: genre,
-          tags,
-          update_days: updateDays,
-          description: description.trim() || null,
-          is_adult: isAdult,
-          cover_url: coverUrl,
-          slides: uploadedSlides,
-        }),
-      })
+      const response = await fetch(
+        isEditMode ? `${API_BASE_URL}/api/stories/${editStoryId}` : `${API_BASE_URL}/api/stories/create`,
+        {
+          method: isEditMode ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            story_language: language,
+            main_genre: genre,
+            tags,
+            update_days: updateDays,
+            description: description.trim() || null,
+            is_adult: isAdult,
+            cover_url: coverUrl,
+            slides: uploadedSlides,
+          }),
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to create story')
+        throw new Error(data.message || (isEditMode ? 'Failed to update story' : 'Failed to create story'))
       }
 
-      const storyId = data.story?.id
+      const storyId = data.story?.id || editStoryId
 
       if (!storyId) {
-        throw new Error('Story created but story id was missing')
+        throw new Error(isEditMode ? 'Story updated but story id was missing' : 'Story created but story id was missing')
       }
 
-      localStorage.removeItem('create_story_draft')
+      if (!isEditMode) {
+        localStorage.removeItem('create_story_draft')
+        navigate(`/author/story/${storyId}/episode/create`)
+        return
+      }
 
-      navigate(`/author/story/${storyId}/episode/create`)
+      navigate(`/author/story/${storyId}/manage`)
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
           ? 'Cannot connect to backend. Make sure backend is deployed.'
-          : error.message || 'Failed to create story'
+          : error.message || (isEditMode ? 'Failed to update story' : 'Failed to create story')
       )
     } finally {
       setLoading(false)
@@ -932,16 +1005,17 @@ export default function CreateStoryPage() {
       />
 
       <GenreSheet
-  open={genreOpen}
-  value={genre}
-  options={genreOptions}
-  loading={genresLoading}
-  onClose={() => setGenreOpen(false)}
-  onSave={(value) => {
-    setGenre(value)
-    setGenreOpen(false)
-  }}
-/>
+        open={genreOpen}
+        value={genre}
+        options={genreOptions}
+        loading={genresLoading}
+        onClose={() => setGenreOpen(false)}
+        onSave={(value) => {
+          setGenre(value)
+          setGenreOpen(false)
+        }}
+      />
+
       <TagSheet
         open={tagOpen}
         value={tags}
@@ -959,8 +1033,8 @@ export default function CreateStoryPage() {
           </button>
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">
-  {isEditMode ? 'Edit Story' : 'Create Story'}
-</h1>
+            {isEditMode ? 'Edit Story' : 'Create Story'}
+          </h1>
 
           <div className="h-9 w-9" />
         </div>
@@ -968,14 +1042,21 @@ export default function CreateStoryPage() {
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {!isEditMode ? (
-  <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-    <div className="grid grid-cols-3 gap-2">
-      <Step number="1" title="Story Info" active />
-      <Step number="2" title="First Episode" />
-      <Step number="3" title="Publish" />
-    </div>
-  </section>
-) : null}
+          <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+            <div className="grid grid-cols-3 gap-2">
+              <Step number="1" title="Story Info" active />
+              <Step number="2" title="First Episode" />
+              <Step number="3" title="Publish" />
+            </div>
+          </section>
+        ) : null}
+
+        {pageLoading ? (
+          <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+            <div className="text-[13px] font-bold text-[#667085]">Loading old story data...</div>
+          </section>
+        ) : null}
 
         {message ? (
           <button type="button" onClick={() => setMessage('')} className="mt-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold text-[#e5484d]">
@@ -983,244 +1064,248 @@ export default function CreateStoryPage() {
           </button>
         ) : null}
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <FieldLabel required>Book Cover</FieldLabel>
+        {!pageLoading ? (
+          <>
+            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <FieldLabel required>Book Cover</FieldLabel>
 
-          <div className="grid grid-cols-[112px_1fr] gap-3">
-            {coverPreview ? (
-              <button
-                type="button"
-                onClick={handleEditCoverCrop}
-                className="block aspect-[2/3] overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]"
-              >
-                <img
-                  src={coverPreview}
-                  alt="Book Cover"
-                  className="h-full w-full object-cover"
-                  draggable="false"
-                  onDragStart={(event) => event.preventDefault()}
-                />
-              </button>
-            ) : (
-              <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                <div className="px-3">
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                    <i className="fa-solid fa-upload text-[14px]" />
-                  </div>
-                  <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
-                  <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCoverChange(event.target.files?.[0] || null)} />
-              </label>
-            )}
-
-            <div className="min-w-0">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[13px] font-extrabold text-[#111827]">Story Slides ({slides.length}/5)</div>
-                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
-                </div>
-
-                <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold ${
-                  slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
-                }`}>
-                  + Add
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={slides.length >= 5}
-                    onChange={(event) => {
-                      handleAddSlide(event.target.files?.[0] || null)
-                      event.target.value = ''
-                    }}
-                  />
-                </label>
-              </div>
-
-              {slides.length ? (
-                <div className="space-y-2">
-                  {slides.map((slide, index) => (
-                    <SlideRow
-                      key={slide.id}
-                      slide={slide}
-                      index={index}
-                      onEdit={handleEditSlideCrop}
-                      onDelete={handleDeleteSlide}
-                      onToggle={handleToggleSlide}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                    <i className="fa-solid fa-images text-[15px]" />
-                  </div>
-                  <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add Story Slide</div>
-                  <div className="mt-1 text-[11px] text-[#8d94a1]">Drag / pinch / zoom crop</div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) => {
-                      handleAddSlide(event.target.files?.[0] || null)
-                      event.target.value = ''
-                    }}
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
-            Cover uses 2:3 vertical crop. Slides use 16:9 crop. Tap an image again to adjust crop.
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <FieldLabel required>Story Title</FieldLabel>
-          <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter story title" />
-
-          <div className="mt-5">
-            <FieldLabel required>Story Language</FieldLabel>
-            <SelectInput value={language} onChange={(event) => setLanguage(event.target.value)}>
-              {languages.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </SelectInput>
-            <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
-              Choose the language used inside your story.
-            </p>
-          </div>
-
-          <div className="mt-5">
-            <FieldLabel required>Main Genre</FieldLabel>
-            <button type="button" onClick={() => setGenreOpen(true)} className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-left text-[14px] font-semibold text-[#111827]">
-              {genre || 'Choose genre'}
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
-            </button>
-          </div>
-
-          <div className="mt-5">
-            <FieldLabel>Tags</FieldLabel>
-            <button type="button" onClick={() => setTagOpen(true)} className="min-h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-left text-[14px] text-[#111827]">
-              {tags.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <span key={tag} className="rounded-full bg-[#111827] px-2.5 py-1 text-[11px] font-bold text-white">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="font-semibold text-[#98a2b3]">Select up to 6 tags</span>
-              )}
-            </button>
-          </div>
-
-          <div className="mt-5">
-            <FieldLabel>Update Hint</FieldLabel>
-            <div className="rounded-[18px] bg-[#fafafe] px-4 py-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[13px] font-extrabold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
-                  <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                    Display only. This does not schedule posts.
-                  </div>
-                </div>
-
-                {updateDays.length ? (
+              <div className="grid grid-cols-[112px_1fr] gap-3">
+                {coverPreview ? (
                   <button
                     type="button"
-                    onClick={() => setUpdateDays([])}
-                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] ring-1 ring-[#eceaf2]"
+                    onClick={handleEditCoverCrop}
+                    className="block aspect-[2/3] overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]"
                   >
-                    Clear
+                    <img
+                      src={coverPreview}
+                      alt="Book Cover"
+                      className="h-full w-full object-cover"
+                      draggable="false"
+                      onDragStart={(event) => event.preventDefault()}
+                    />
                   </button>
-                ) : null}
+                ) : (
+                  <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                    <div className="px-3">
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                        <i className="fa-solid fa-upload text-[14px]" />
+                      </div>
+                      <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
+                      <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCoverChange(event.target.files?.[0] || null)} />
+                  </label>
+                )}
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-extrabold text-[#111827]">Story Slides ({slides.length}/5)</div>
+                      <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
+                    </div>
+
+                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold ${
+                      slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
+                    }`}>
+                      + Add
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={slides.length >= 5}
+                        onChange={(event) => {
+                          handleAddSlide(event.target.files?.[0] || null)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {slides.length ? (
+                    <div className="space-y-2">
+                      {slides.map((slide, index) => (
+                        <SlideRow
+                          key={slide.id}
+                          slide={slide}
+                          index={index}
+                          onEdit={handleEditSlideCrop}
+                          onDelete={handleDeleteSlide}
+                          onToggle={handleToggleSlide}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                        <i className="fa-solid fa-images text-[15px]" />
+                      </div>
+                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add Story Slide</div>
+                      <div className="mt-1 text-[11px] text-[#8d94a1]">Drag / pinch / zoom crop</div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          handleAddSlide(event.target.files?.[0] || null)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                {updateDayOptions.map((day) => {
-                  const active = updateDays.includes(day.value)
-
-                  return (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
-                      className={`h-10 rounded-full text-[12px] font-extrabold transition active:scale-95 ${
-                        active
-                          ? 'bg-[#111827] text-white'
-                          : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  )
-                })}
+              <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
+                Cover uses 2:3 vertical crop. Slides use 16:9 crop. Tap an image again to adjust crop.
               </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
-            <div>
-              <div className="text-[13px] font-extrabold text-[#111827]">18+ Story</div>
-              <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole story is adult-only</div>
-            </div>
-            <Toggle checked={isAdult} onClick={() => setIsAdult((value) => !value)} label="Toggle 18+ story" />
-          </div>
-        </section>
+            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <FieldLabel required>Story Title</FieldLabel>
+              <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter story title" />
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="mb-2 flex items-end justify-between gap-3">
-            <FieldLabel>Description</FieldLabel>
-            <div className={`text-[11px] font-bold ${descriptionCount > 5000 ? 'text-[#e5484d]' : 'text-[#8d94a1]'}`}>
-              {descriptionCount}/5000
-            </div>
-          </div>
+              <div className="mt-5">
+                <FieldLabel required>Story Language</FieldLabel>
+                <SelectInput value={language} onChange={(event) => setLanguage(event.target.value)}>
+                  {languages.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </SelectInput>
+                <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
+                  Choose the language used inside your story.
+                </p>
+              </div>
 
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Write a strong story summary. Recommended 400–1200 characters."
-            className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-          />
-        </section>
+              <div className="mt-5">
+                <FieldLabel required>Main Genre</FieldLabel>
+                <button type="button" onClick={() => setGenreOpen(true)} className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-left text-[14px] font-semibold text-[#111827]">
+                  {genre || 'Choose genre'}
+                  <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
+                </button>
+              </div>
 
-        <section className="mt-4 space-y-3">
-          <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
-            <input type="checkbox" checked={originalAccepted} onChange={(event) => setOriginalAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
-            <span>I confirm this story is my original work and I have the right to publish it.</span>
-          </label>
+              <div className="mt-5">
+                <FieldLabel>Tags</FieldLabel>
+                <button type="button" onClick={() => setTagOpen(true)} className="min-h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-left text-[14px] text-[#111827]">
+                  {tags.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <span key={tag} className="rounded-full bg-[#111827] px-2.5 py-1 text-[11px] font-bold text-white">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="font-semibold text-[#98a2b3]">Select up to 6 tags</span>
+                  )}
+                </button>
+              </div>
 
-          <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
-            <input type="checkbox" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
-            <span>
-              I agree to the{' '}
+              <div className="mt-5">
+                <FieldLabel>Update Hint</FieldLabel>
+                <div className="rounded-[18px] bg-[#fafafe] px-4 py-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-extrabold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
+                      <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
+                        Display only. This does not schedule posts.
+                      </div>
+                    </div>
+
+                    {updateDays.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setUpdateDays([])}
+                        className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] ring-1 ring-[#eceaf2]"
+                      >
+                        Clear
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                    {updateDayOptions.map((day) => {
+                      const active = updateDays.includes(day.value)
+
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
+                          className={`h-10 rounded-full text-[12px] font-extrabold transition active:scale-95 ${
+                            active
+                              ? 'bg-[#111827] text-white'
+                              : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
+                <div>
+                  <div className="text-[13px] font-extrabold text-[#111827]">18+ Story</div>
+                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole story is adult-only</div>
+                </div>
+                <Toggle checked={isAdult} onClick={() => setIsAdult((value) => !value)} label="Toggle 18+ story" />
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div className="mb-2 flex items-end justify-between gap-3">
+                <FieldLabel>Description</FieldLabel>
+                <div className={`text-[11px] font-bold ${descriptionCount > 5000 ? 'text-[#e5484d]' : 'text-[#8d94a1]'}`}>
+                  {descriptionCount}/5000
+                </div>
+              </div>
+
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Write a strong story summary. Recommended 400–1200 characters."
+                className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              />
+            </section>
+
+            <section className="mt-4 space-y-3">
+              <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
+                <input type="checkbox" checked={originalAccepted} onChange={(event) => setOriginalAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
+                <span>I confirm this story is my original work and I have the right to publish it.</span>
+              </label>
+
+              <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
+                <input type="checkbox" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
+                <span>
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.open('/author/agreement', '_blank', 'noopener,noreferrer')
+                    }}
+                    className="font-extrabold text-[#0b5cff]"
+                  >
+                    Shadow Author Agreement.
+                  </button>
+                </span>
+              </label>
+            </section>
+
+            <section className="mt-5 pb-8">
               <button
                 type="button"
-                onClick={() => {
-                  window.open('/author/agreement', '_blank', 'noopener,noreferrer')
-                }}
-                className="font-extrabold text-[#0b5cff]"
+                onClick={handleSaveStory}
+                disabled={!canSave}
+                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
               >
-                Shadow Author Agreement.
+                {loading ? (isEditMode ? 'Saving Changes...' : 'Uploading & Creating...') : isEditMode ? 'Save Changes' : 'Create Story'}
               </button>
-            </span>
-          </label>
-        </section>
-
-        <section className="mt-5 pb-8">
-          <button
-            type="button"
-            onClick={handleCreateStory}
-            disabled={!canCreate}
-            className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
-          >
-            {loading ? 'Uploading & Creating...' : 'Create Story'}
-          </button>
-        </section>
+            </section>
+          </>
+        ) : null}
       </main>
     </div>
   )
