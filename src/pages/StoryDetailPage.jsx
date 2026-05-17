@@ -8,7 +8,7 @@ import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
 import LatestCommentSection from '../components/story-detail/LatestCommentSection'
 import CommentsModal from '../components/story-detail/CommentsModal'
-import RatingModal from '../components/story-detail/RatingModal'
+
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 
@@ -82,7 +82,6 @@ export default function StoryDetailPage() {
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
-  const [ratingOpen, setRatingOpen] = useState(false)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -216,7 +215,7 @@ export default function StoryDetailPage() {
         <StoryStatsSection
           story={story}
           episodes={episodes}
-          onOpenRating={() => setRatingOpen(true)}
+          onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
         />
 
         <StoryInfoSection story={story} />
@@ -263,12 +262,6 @@ export default function StoryDetailPage() {
         onClose={() => setCommentsOpen(false)}
       />
 
-      <RatingModal
-        open={ratingOpen}
-        story={story}
-        finishedEpisodeCount={finishedEpisodeCount}
-        onClose={() => setRatingOpen(false)}
-      />
     </div>
   )
 }
