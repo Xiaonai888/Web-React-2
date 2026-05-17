@@ -234,13 +234,6 @@ function CropImageModal({
             cursor: grabbing !important;
           }
 
-          .shadow-cropper-shell .reactEasyCrop_Image,
-          .shadow-cropper-shell .reactEasyCrop_Video {
-            pointer-events: none !important;
-            -webkit-user-drag: none !important;
-            user-select: none !important;
-          }
-
           .shadow-cropper-shell .reactEasyCrop_CropArea {
             border: 2px solid rgba(255,255,255,0.95) !important;
             box-shadow: 0 0 0 9999em rgba(0,0,0,0.35) !important;
