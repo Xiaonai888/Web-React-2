@@ -33,7 +33,7 @@ const updateDayOptions = [
   { value: 'Sat', label: 'Sat' },
   { value: 'Sun', label: 'Sun' },
 ]
-const storyStatusOptions = ['New', 'Ongoing', 'Complete']
+const storyStatusOptions = ['New', 'Ongoing', 'Completed']
 
 function getAuthToken() {
   return (
