@@ -1,4 +1,14 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+function AppFooter() {
+  const location = useLocation()
+
+  const shouldHideFooter = /^\/story\/[^/]+$/.test(location.pathname)
+
+  if (shouldHideFooter) return null
+
+  return <Footer />
+}
+
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Footer from './components/Footer'
 
 import ForYou from './pages/ForYou'
