@@ -216,29 +216,17 @@ function CropImageModal({
       onWheel={(event) => event.stopPropagation()}
       onTouchMove={(event) => event.stopPropagation()}
     >
-      <style>
-        {`
-          .shadow-cropper-shell,
-          .shadow-cropper-shell * {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-user-drag: none;
-          }
-
-          .shadow-cropper-shell .reactEasyCrop_Container {
-            touch-action: none !important;
-            cursor: grab !important;
-          }
-
-          .shadow-cropper-shell .reactEasyCrop_Container:active {
-            cursor: grabbing !important;
-          }
-          .shadow-cropper-shell .reactEasyCrop_CropArea {
-            border: 2px solid rgba(255,255,255,0.95) !important;
-            box-shadow: 0 0 0 9999em rgba(0,0,0,0.35) !important;
-          }
-        `}
-      </style>
+      <Cropper
+  image={image}
+  crop={crop}
+  zoom={zoom}
+  aspect={aspect}
+  onCropChange={onCropChange}
+  onZoomChange={onZoomChange}
+  onCropComplete={onCropComplete}
+  showGrid={false}
+  objectFit="contain"
+/>
 
       <div className="shadow-cropper-shell w-full max-w-[560px] rounded-[26px] bg-white p-4 shadow-2xl">
         <div className="mb-4 flex items-center justify-between gap-3">
