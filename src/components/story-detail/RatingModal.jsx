@@ -4,8 +4,8 @@ export default function RatingModal({ open, story, finishedEpisodeCount, onClose
   const [rating, setRating] = useState(0)
   if (!open) return null
 
-  const allowed = finishedEpisodeCount >= 3
-
+  const allowRatingWithoutEpisodeLimit = true
+const allowed = allowRatingWithoutEpisodeLimit || finishedEpisodeCount >= 3
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
       <button
