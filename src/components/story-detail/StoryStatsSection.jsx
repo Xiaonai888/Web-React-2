@@ -43,7 +43,7 @@ export default function StoryStatsSection({ story, episodes, onOpenRating }) {
 
   return (
     <section className="relative z-20 -mt-10 w-full">
-      <div className="w-full overflow-hidden rounded-t-[26px] bg-white shadow-[0_-10px_28px_rgba(17,24,39,0.08)] ring-1 ring-black/5">
+      <div className="w-full overflow-hidden rounded-t-[26px] bg-white shadow-[0_-10px_28px_rgba(17,24,39,0.08)]">
         <div className="px-4 pt-4">
           <div className="flex h-12 items-center justify-between rounded-full bg-[#fff7df] px-5 text-[#111827]">
             <div className="flex items-center gap-3">
