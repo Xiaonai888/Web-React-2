@@ -488,10 +488,6 @@ export default function CommentSection({
     showToast('Sticker picker is ready for Admin stickers later.')
   }
 
-  const handleEmoji = () => {
-    showToast('Emoji picker coming soon.')
-  }
-
   return (
     <section className={`${isModal ? 'relative flex h-full flex-col bg-white' : 'min-h-screen bg-white pb-[84px]'}`}>
       <div className="shrink-0 border-b border-[#eef1f5] bg-white px-4 py-3">
