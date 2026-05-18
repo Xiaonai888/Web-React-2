@@ -48,9 +48,17 @@ function BookCard({ story, onClick }) {
         )}
       </div>
 
-      <h3 className="mt-2 line-clamp-2 text-[13px] font-black leading-4 text-[#111827]">
-        {story.title || 'Untitled Story'}
-      </h3>
+      <h3
+  className="mt-2 h-8 max-w-full overflow-hidden text-[13px] font-black leading-4 text-[#111827]"
+  style={{
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflowWrap: 'anywhere',
+  }}
+>
+  {story.title || 'Untitled Story'}
+</h3>
 
       <p className="mt-0.5 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
         {story.main_genre || 'Story'}
