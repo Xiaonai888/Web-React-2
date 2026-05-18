@@ -12,6 +12,7 @@ import StoryDetailPage from './pages/StoryDetailPage'
 import ReaderPage from './pages/ReaderPage'
 import RatingPage from './pages/RatingPage'
 import LeaveReviewPage from './pages/LeaveReviewPage'
+import StoryCommentsPage from './pages/StoryCommentsPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
 import PremiumPage from './pages/Me/PremiumPage'
@@ -40,7 +41,8 @@ function AppFooter() {
 
   const shouldHideFooter =
     /^\/story\/[^/]+$/.test(location.pathname) ||
-    /^\/story\/[^/]+\/rating$/.test(location.pathname)
+    /^\/story\/[^/]+\/rating$/.test(location.pathname) ||
+    /^\/story\/[^/]+\/comments$/.test(location.pathname)
 
   if (shouldHideFooter) return null
 
@@ -66,6 +68,7 @@ export default function App() {
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/story/:id/rating" element={<RatingPage />} />
         <Route path="/story/:id/review" element={<LeaveReviewPage />} />
+        <Route path="/story/:id/comments" element={<StoryCommentsPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/premium" element={<PremiumPage />} />
