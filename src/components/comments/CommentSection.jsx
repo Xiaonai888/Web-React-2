@@ -8,6 +8,41 @@ function createId() {
   return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())
 }
 
+function getStoredUser() {
+  try {
+    const raw =
+      localStorage.getItem('shadow_reader_user') ||
+      sessionStorage.getItem('shadow_reader_user') ||
+      ''
+
+    if (!raw) return null
+
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function getCurrentUser() {
+  const user = getStoredUser()
+
+  if (!user) {
+    return {
+      id: null,
+      name: 'Reader',
+      avatar_url: '',
+    }
+  }
+
+  const emailName = user.email ? String(user.email).split('@')[0] : ''
+
+  return {
+    id: user.id || user.user_id || null,
+    name: user.name || user.username || user.display_name || emailName || 'Reader',
+    avatar_url: user.avatar_url || user.profile_image || user.photo_url || '',
+  }
+}
+
 function formatTime(value) {
   if (!value) return 'Just now'
 
@@ -41,6 +76,27 @@ function loadComments(targetType, targetId) {
 function saveComments(targetType, targetId, comments) {
   if (!targetId) return
   localStorage.setItem(getStorageKey(targetType, targetId), JSON.stringify(comments))
+}
+
+function Avatar({ user, size = 'h-10 w-10', textSize = 'text-[13px]' }) {
+  const avatar = user?.avatar_url || ''
+  const name = user?.name || 'Reader'
+
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        className={`${size} shrink-0 rounded-full object-cover`}
+      />
+    )
+  }
+
+  return (
+    <div className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[#111827] ${textSize} font-black text-white`}>
+      {name.slice(0, 1).toUpperCase()}
+    </div>
+  )
 }
 
 function EmptyComments({ onFocus }) {
@@ -100,11 +156,11 @@ function CommentMenu({ isOpen, onReport, onCopy, onClose }) {
 }
 
 function ReplyComposer({ value, onChange, onCancel, onSend }) {
+  const currentUser = getCurrentUser()
+
   return (
     <div className="mt-3 flex gap-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[12px] font-black text-white">
-        R
-      </div>
+      <Avatar user={currentUser} size="h-8 w-8" textSize="text-[12px]" />
 
       <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[20px] bg-[#f3f4f6] px-3 py-2">
         <input
@@ -156,9 +212,12 @@ function CommentItem({
   return (
     <article className="px-4 py-4">
       <div className="flex gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white">
-          {(comment.name || 'R').slice(0, 1).toUpperCase()}
-        </div>
+        <Avatar
+          user={{
+            name: comment.name || 'Reader',
+            avatar_url: comment.avatar_url || '',
+          }}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="relative">
@@ -228,9 +287,14 @@ function CommentItem({
             <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
               {replies.map((reply) => (
                 <div key={reply.id} className="flex gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[11px] font-black text-white">
-                    {(reply.name || 'R').slice(0, 1).toUpperCase()}
-                  </div>
+                  <Avatar
+                    user={{
+                      name: reply.name || 'Reader',
+                      avatar_url: reply.avatar_url || '',
+                    }}
+                    size="h-8 w-8"
+                    textSize="text-[11px]"
+                  />
 
                   <div className="min-w-0">
                     <div className="inline-block rounded-[16px] bg-[#f3f4f6] px-3 py-2">
@@ -259,12 +323,12 @@ function CommentComposer({
   onEmoji,
   isModal,
 }) {
+  const currentUser = getCurrentUser()
+
   return (
     <div className={`${isModal ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}>
       <div className="mx-auto flex max-w-3xl items-end gap-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white">
-          R
-        </div>
+        <Avatar user={currentUser} />
 
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[22px] bg-[#f3f4f6] px-3 py-2">
           <button type="button" onClick={onEmoji} className="text-[#98a2b3]" aria-label="Emoji">
@@ -298,7 +362,12 @@ function CommentComposer({
   )
 }
 
-export default function CommentSection({ targetType = 'story', targetId, variant = 'page' }) {
+export default function CommentSection({
+  targetType = 'story',
+  targetId,
+  variant = 'page',
+  onCommentsChange,
+}) {
   const [comments, setComments] = useState([])
   const [sort, setSort] = useState('newest')
   const [text, setText] = useState('')
@@ -326,6 +395,7 @@ export default function CommentSection({ targetType = 'story', targetId, variant
   const updateComments = (nextComments) => {
     setComments(nextComments)
     saveComments(targetType, targetId, nextComments)
+    onCommentsChange?.(nextComments)
   }
 
   const showToast = (message) => {
@@ -336,9 +406,13 @@ export default function CommentSection({ targetType = 'story', targetId, variant
   const handleSend = () => {
     if (!text.trim()) return
 
+    const currentUser = getCurrentUser()
+
     const nextComment = {
       id: createId(),
-      name: 'Reader',
+      user_id: currentUser.id,
+      name: currentUser.name,
+      avatar_url: currentUser.avatar_url,
       text: text.trim(),
       type: 'text',
       likes: 0,
@@ -369,6 +443,8 @@ export default function CommentSection({ targetType = 'story', targetId, variant
   }
 
   const handleReply = (commentId, replyText) => {
+    const currentUser = getCurrentUser()
+
     const nextComments = comments.map((comment) => {
       if (comment.id !== commentId) return comment
 
@@ -380,7 +456,9 @@ export default function CommentSection({ targetType = 'story', targetId, variant
           ...replies,
           {
             id: createId(),
-            name: 'Reader',
+            user_id: currentUser.id,
+            name: currentUser.name,
+            avatar_url: currentUser.avatar_url,
             text: replyText,
             created_at: new Date().toISOString(),
           },
