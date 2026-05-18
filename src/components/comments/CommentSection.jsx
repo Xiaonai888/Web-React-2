@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 
-function getStorageKey(targetType, targetId) {
-  return `shadow_comments_${targetType}_${targetId}`
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
-function getBanKey(targetType, targetId) {
-  return `shadow_comment_bans_${targetType}_${targetId}`
-}
-
-function createId() {
-  return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())
+function getReaderToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
 }
 
 function getStoredUser() {
@@ -36,7 +38,6 @@ function getCurrentUser() {
       name: 'Reader',
       avatar_url: '',
       role: 'reader',
-      is_author: false,
       is_admin: false,
     }
   }
@@ -49,7 +50,6 @@ function getCurrentUser() {
     name: user.name || user.username || user.display_name || emailName || 'Reader',
     avatar_url: user.avatar_url || user.profile_image || user.photo_url || '',
     role,
-    is_author: Boolean(user.is_author),
     is_admin: role === 'admin' || role === 'super_admin',
   }
 }
@@ -93,38 +93,27 @@ function formatTime(value) {
   return date.toLocaleDateString('en-GB')
 }
 
-function loadComments(targetType, targetId) {
-  if (!targetId) return []
+function normalizeApiComment(comment) {
+  const user = comment.user || {}
 
-  try {
-    const raw = localStorage.getItem(getStorageKey(targetType, targetId))
-    const parsed = JSON.parse(raw || '[]')
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
+  return {
+    id: comment.id,
+    story_id: comment.story_id,
+    user_id: comment.user_id || user.id,
+    parent_id: comment.parent_id,
+    text: comment.text || '',
+    type: comment.type || 'text',
+    likes: Number(comment.likes || 0),
+    liked: Boolean(comment.liked),
+    is_pinned: Boolean(comment.is_pinned),
+    is_hidden: Boolean(comment.is_hidden),
+    is_spoiler: Boolean(comment.is_spoiler),
+    created_at: comment.created_at,
+    updated_at: comment.updated_at,
+    name: user.name || comment.name || 'Reader',
+    avatar_url: user.avatar_url || comment.avatar_url || '',
+    replies: [],
   }
-}
-
-function saveComments(targetType, targetId, comments) {
-  if (!targetId) return
-  localStorage.setItem(getStorageKey(targetType, targetId), JSON.stringify(comments))
-}
-
-function loadBannedUsers(targetType, targetId) {
-  if (!targetId) return []
-
-  try {
-    const raw = localStorage.getItem(getBanKey(targetType, targetId))
-    const parsed = JSON.parse(raw || '[]')
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function saveBannedUsers(targetType, targetId, bannedUsers) {
-  if (!targetId) return
-  localStorage.setItem(getBanKey(targetType, targetId), JSON.stringify(bannedUsers))
 }
 
 function Avatar({ user, size = 'h-10 w-10', textSize = 'text-[13px]' }) {
@@ -357,8 +346,9 @@ function CommentItem({
   const currentUser = getCurrentUser()
 
   const isOwner =
-    (comment.user_id && currentUser.id && String(comment.user_id) === String(currentUser.id)) ||
-    (!comment.user_id && comment.name === currentUser.name)
+    comment.user_id &&
+    currentUser.id &&
+    String(comment.user_id) === String(currentUser.id)
 
   const author = isStoryAuthor(currentUser, story)
   const admin = currentUser.is_admin
@@ -520,6 +510,7 @@ function CommentComposer({
   onSticker,
   isModal,
   isBanned,
+  sending,
 }) {
   const currentUser = getCurrentUser()
 
@@ -533,7 +524,7 @@ function CommentComposer({
             id="shadow-comment-input"
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            disabled={isBanned}
+            disabled={isBanned || sending}
             placeholder={isBanned ? 'You cannot comment on this story.' : 'Write a comment...'}
             className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
           />
@@ -551,11 +542,11 @@ function CommentComposer({
           <button
             type="button"
             onClick={onSend}
-            disabled={!value.trim() || isBanned}
+            disabled={!value.trim() || isBanned || sending}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
             aria-label="Send comment"
           >
-            <i className="fa-solid fa-paper-plane text-[13px]" />
+            <i className={`fa-solid ${sending ? 'fa-spinner animate-spin' : 'fa-paper-plane'} text-[13px]`} />
           </button>
         </div>
       </div>
@@ -563,7 +554,7 @@ function CommentComposer({
   )
 }
 
-function EditCommentSheet({ comment, value, onChange, onCancel, onSave }) {
+function EditCommentSheet({ comment, value, onChange, onCancel, onSave, saving }) {
   if (!comment) return null
 
   return (
@@ -592,10 +583,10 @@ function EditCommentSheet({ comment, value, onChange, onCancel, onSave }) {
         <button
           type="button"
           onClick={onSave}
-          disabled={!value.trim()}
+          disabled={!value.trim() || saving}
           className="mt-4 h-11 w-full rounded-full bg-[#111827] text-[13px] font-black text-white disabled:bg-[#d0d5dd]"
         >
-          Save comment
+          {saving ? 'Saving...' : 'Save comment'}
         </button>
       </section>
     </div>
@@ -615,17 +606,51 @@ export default function CommentSection({
   const [toast, setToast] = useState('')
   const [editComment, setEditComment] = useState(null)
   const [editText, setEditText] = useState('')
-  const [bannedUsers, setBannedUsers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [saving, setSaving] = useState(false)
   const isModal = variant === 'modal'
   const currentUser = getCurrentUser()
-  const currentUserId = currentUser.id ? String(currentUser.id) : ''
+  const token = getReaderToken()
 
   useEffect(() => {
-    setComments(loadComments(targetType, targetId))
-    setBannedUsers(loadBannedUsers(targetType, targetId))
-  }, [targetType, targetId])
+    let ignore = false
 
-  const isBanned = currentUserId ? bannedUsers.some((userId) => String(userId) === currentUserId) : false
+    async function loadComments() {
+      if (!targetId) return
+
+      try {
+        setLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load comments')
+        }
+
+        if (ignore) return
+
+        const normalized = (data.comments || []).map(normalizeApiComment)
+        setComments(normalized)
+        onCommentsChange?.(normalized)
+      } catch (error) {
+        if (!ignore) {
+          showToast(error.message || 'Failed to load comments.')
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadComments()
+
+    return () => {
+      ignore = true
+    }
+  }, [targetId])
+
+  const isBanned = false
 
   const visibleComments = useMemo(() => {
     const author = isStoryAuthor(currentUser, story)
@@ -635,8 +660,9 @@ export default function CommentSection({
       if (!comment.is_hidden) return true
 
       const owner =
-        (comment.user_id && currentUser.id && String(comment.user_id) === String(currentUser.id)) ||
-        (!comment.user_id && comment.name === currentUser.name)
+        comment.user_id &&
+        currentUser.id &&
+        String(comment.user_id) === String(currentUser.id)
 
       return owner || author || admin
     })
@@ -665,13 +691,7 @@ export default function CommentSection({
 
   const updateComments = (nextComments) => {
     setComments(nextComments)
-    saveComments(targetType, targetId, nextComments)
     onCommentsChange?.(nextComments)
-  }
-
-  const updateBannedUsers = (nextBannedUsers) => {
-    setBannedUsers(nextBannedUsers)
-    saveBannedUsers(targetType, targetId, nextBannedUsers)
   }
 
   const showToast = (message) => {
@@ -679,27 +699,42 @@ export default function CommentSection({
     window.setTimeout(() => setToast(''), 1600)
   }
 
-  const handleSend = () => {
-    if (!text.trim() || isBanned) return
+  const handleSend = async () => {
+    if (!text.trim() || sending) return
 
-    const nextComment = {
-      id: createId(),
-      user_id: currentUser.id,
-      name: currentUser.name,
-      avatar_url: currentUser.avatar_url,
-      text: text.trim(),
-      type: 'text',
-      likes: 0,
-      liked: false,
-      is_pinned: false,
-      is_hidden: false,
-      is_spoiler: false,
-      created_at: new Date().toISOString(),
-      replies: [],
+    if (!token) {
+      showToast('Please login to comment.')
+      return
     }
 
-    updateComments([nextComment, ...comments])
-    setText('')
+    try {
+      setSending(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: text.trim(),
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to create comment')
+      }
+
+      const newComment = normalizeApiComment(data.comment)
+      updateComments([newComment, ...comments])
+      setText('')
+    } catch (error) {
+      showToast(error.message || 'Failed to create comment.')
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleLike = (commentId) => {
@@ -719,31 +754,48 @@ export default function CommentSection({
     updateComments(nextComments)
   }
 
-  const handleReply = (commentId, replyText) => {
-    if (isBanned) return
+  const handleReply = async (commentId, replyText) => {
+    if (!token) {
+      showToast('Please login to reply.')
+      return
+    }
 
-    const nextComments = comments.map((comment) => {
-      if (comment.id !== commentId) return comment
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: replyText,
+          parent_id: commentId,
+        }),
+      })
 
-      const replies = Array.isArray(comment.replies) ? comment.replies : []
+      const data = await response.json().catch(() => ({}))
 
-      return {
-        ...comment,
-        replies: [
-          ...replies,
-          {
-            id: createId(),
-            user_id: currentUser.id,
-            name: currentUser.name,
-            avatar_url: currentUser.avatar_url,
-            text: replyText,
-            created_at: new Date().toISOString(),
-          },
-        ],
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to create reply')
       }
-    })
 
-    updateComments(nextComments)
+      const newReply = normalizeApiComment(data.comment)
+
+      const nextComments = comments.map((comment) => {
+        if (comment.id !== commentId) return comment
+
+        const replies = Array.isArray(comment.replies) ? comment.replies : []
+
+        return {
+          ...comment,
+          replies: [...replies, newReply],
+        }
+      })
+
+      updateComments(nextComments)
+    } catch (error) {
+      showToast(error.message || 'Failed to create reply.')
+    }
   }
 
   const handleEdit = (comment) => {
@@ -751,96 +803,100 @@ export default function CommentSection({
     setEditText(comment.text || '')
   }
 
-  const handleSaveEdit = () => {
-    if (!editComment || !editText.trim()) return
+  const handleSaveEdit = async () => {
+    if (!editComment || !editText.trim() || saving) return
 
-    const nextComments = comments.map((comment) =>
-      comment.id === editComment.id
-        ? { ...comment, text: editText.trim(), updated_at: new Date().toISOString() }
-        : comment
-    )
-
-    updateComments(nextComments)
-    setEditComment(null)
-    setEditText('')
-    showToast('Comment updated.')
-  }
-
-  const handleDelete = (comment) => {
-    if (!currentUser.is_admin) {
-      showToast('Only admin can delete comments.')
+    if (!token) {
+      showToast('Please login again.')
       return
     }
 
-    const nextComments = comments.filter((item) => item.id !== comment.id)
+    try {
+      setSaving(true)
 
-    updateComments(nextComments)
-    showToast('Comment deleted.')
+      const response = await fetch(`${API_BASE_URL}/api/comments/${editComment.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: editText.trim(),
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update comment')
+      }
+
+      const updatedComment = normalizeApiComment(data.comment)
+
+      const nextComments = comments.map((comment) =>
+        comment.id === editComment.id ? { ...comment, ...updatedComment } : comment
+      )
+
+      updateComments(nextComments)
+      setEditComment(null)
+      setEditText('')
+      showToast('Comment updated.')
+    } catch (error) {
+      showToast(error.message || 'Failed to update comment.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleHide = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_hidden: true } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Comment hidden.')
-  }
-
-  const handleUnhide = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_hidden: false } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Comment visible again.')
-  }
-
-  const handlePin = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_pinned: true } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Comment pinned.')
-  }
-
-  const handleUnpin = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_pinned: false } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Comment unpinned.')
-  }
-
-  const handleSpoiler = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_spoiler: true } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Spoiler mark added.')
-  }
-
-  const handleUnspoiler = (comment) => {
-    const nextComments = comments.map((item) =>
-      item.id === comment.id ? { ...item, is_spoiler: false } : item
-    )
-
-    updateComments(nextComments)
-    showToast('Spoiler mark removed.')
-  }
-
-  const handleBan = (comment) => {
-    if (!comment.user_id) {
-      showToast('This old demo comment has no user id.')
+  const handleModerate = async (comment, action) => {
+    if (!token) {
+      showToast('Please login again.')
       return
     }
 
-    const nextBannedUsers = Array.from(new Set([...bannedUsers, String(comment.user_id)]))
-    updateBannedUsers(nextBannedUsers)
-    showToast('User banned from commenting.')
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${comment.id}/moderate`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Action failed')
+      }
+
+      if (action === 'delete') {
+        updateComments(comments.filter((item) => item.id !== comment.id))
+        showToast('Comment deleted.')
+        return
+      }
+
+      if (action === 'ban') {
+        showToast('User banned from commenting.')
+        return
+      }
+
+      const updatedComment = normalizeApiComment(data.comment)
+
+      const nextComments = comments.map((item) =>
+        item.id === comment.id ? { ...item, ...updatedComment } : item
+      )
+
+      updateComments(nextComments)
+      showToast('Updated.')
+    } catch (error) {
+      showToast(error.message || 'Action failed.')
+    }
+  }
+
+  const handleHideForReader = (comment) => {
+    updateComments(comments.filter((item) => item.id !== comment.id))
+    showToast('Comment hidden on your device.')
   }
 
   const handleSticker = () => {
@@ -854,7 +910,7 @@ export default function CommentSection({
           <div>
             <h2 className="text-[17px] font-black text-[#111827]">All Comments</h2>
             <p className="mt-0.5 text-[12px] font-semibold text-[#98a2b3]">
-              {visibleComments.length ? `${visibleComments.length} comments` : 'No comments yet'}
+              {loading ? 'Loading comments...' : visibleComments.length ? `${visibleComments.length} comments` : 'No comments yet'}
             </p>
           </div>
 
@@ -901,14 +957,24 @@ export default function CommentSection({
                 onLike={handleLike}
                 onReply={handleReply}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onHide={handleHide}
-                onUnhide={handleUnhide}
-                onPin={handlePin}
-                onUnpin={handleUnpin}
-                onSpoiler={handleSpoiler}
-                onUnspoiler={handleUnspoiler}
-                onBan={handleBan}
+                onDelete={(selectedComment) => handleModerate(selectedComment, 'delete')}
+                onHide={(selectedComment) => {
+                  const currentUserIsAuthor = isStoryAuthor(currentUser, story)
+                  const currentUserIsAdmin = currentUser.is_admin
+
+                  if (currentUserIsAuthor || currentUserIsAdmin) {
+                    handleModerate(selectedComment, 'hide')
+                    return
+                  }
+
+                  handleHideForReader(selectedComment)
+                }}
+                onUnhide={(selectedComment) => handleModerate(selectedComment, 'unhide')}
+                onPin={(selectedComment) => handleModerate(selectedComment, 'pin')}
+                onUnpin={(selectedComment) => handleModerate(selectedComment, 'unpin')}
+                onSpoiler={(selectedComment) => handleModerate(selectedComment, 'spoiler')}
+                onUnspoiler={(selectedComment) => handleModerate(selectedComment, 'unspoiler')}
+                onBan={(selectedComment) => handleModerate(selectedComment, 'ban')}
               />
             ))
           ) : (
@@ -930,6 +996,7 @@ export default function CommentSection({
         onSticker={handleSticker}
         isModal={isModal}
         isBanned={isBanned}
+        sending={sending}
       />
 
       <EditCommentSheet
@@ -941,6 +1008,7 @@ export default function CommentSection({
           setEditText('')
         }}
         onSave={handleSaveEdit}
+        saving={saving}
       />
     </section>
   )
