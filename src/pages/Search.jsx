@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const TABS = ['Trending Now', 'Popular', 'New Releases']
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const TABS = [
+  { label: 'Trending Now', sort: 'weekly_top' },
+  { label: 'Popular', sort: 'popular' },
+  { label: 'New Releases', sort: 'new' },
+]
+
 const SEARCH_HISTORY_KEY = 'shadow_search_history'
 
 const RANK_STYLE = {
@@ -10,56 +21,108 @@ const RANK_STYLE = {
   3: 'linear-gradient(135deg,#d97706,#b45309)',
 }
 
-const BOOKS_DATA = [
-  { rank: 1, id: '1', title: 'The Girl Forgot Her Name', author: 'Jonathan Wick', likes: '24.5K', views: '1.2M' },
-  { rank: 2, id: '2', title: 'We Loved at the Wrong Time', author: 'Sarah Drasner', likes: '18K', views: '850K' },
-  { rank: 3, id: '3', title: 'Queen of the Silent War', author: 'Kim Young', likes: '12K', views: '400K' },
-  { rank: 4, id: '4', title: 'System Error: I Fell in Love', author: 'Author Name', likes: '10K', views: '300K' },
-  { rank: 5, id: '5', title: 'The Smile I Show You', author: 'Author Name', likes: '8K', views: '250K' },
-  { rank: 6, id: '6', title: 'Omega Dragon', author: 'Author Name', likes: '7K', views: '200K' },
-  { rank: 7, id: '7', title: 'The Actress, The Husband, and The Child', author: 'Author Name', likes: '5K', views: '150K' },
-  { rank: 8, id: '8', title: 'Moonlight We Promised', author: 'Author Name', likes: '4K', views: '100K' },
-  { rank: 9, id: '9', title: 'The Ringtone We Shared', author: 'Author Name', likes: '3K', views: '80K' },
-  { rank: 10, id: '10', title: 'The Revenge', author: 'Author Name', likes: '2K', views: '50K' },
-]
-
 function loadSearchHistory() {
   try {
     const raw = localStorage.getItem(SEARCH_HISTORY_KEY)
     const parsed = JSON.parse(raw || '[]')
-    return Array.isArray(parsed) ? parsed.slice(0, 3) : []
+    return Array.isArray(parsed) ? parsed.slice(0, 10) : []
   } catch {
     return []
   }
 }
 
 function saveSearchHistory(items) {
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(items.slice(0, 3)))
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(items.slice(0, 10)))
+}
+
+function formatCount(value) {
+  const number = Number(value || 0)
+
+  if (number >= 1000000) {
+    const formatted = (number / 1000000).toFixed(number >= 10000000 ? 0 : 1)
+    return `${formatted.replace(/\.0$/, '')}M`
+  }
+
+  if (number >= 1000) {
+    const formatted = (number / 1000).toFixed(number >= 10000 ? 0 : 1)
+    return `${formatted.replace(/\.0$/, '')}K`
+  }
+
+  return String(number)
+}
+
+function getAuthorName(story) {
+  return (
+    story?.author_page?.page_name ||
+    story?.authorPage?.page_name ||
+    story?.author?.page_name ||
+    story?.author_name ||
+    'Author Name'
+  )
 }
 
 export default function Search() {
-  const [activeTab, setActiveTab] = useState('Trending Now')
+  const [activeTab, setActiveTab] = useState(TABS[0].label)
   const [searchText, setSearchText] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
   const [isSearchMode, setIsSearchMode] = useState(false)
   const [searchHistory, setSearchHistory] = useState([])
+  const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
   const navigate = useNavigate()
+
+  const activeTabConfig = useMemo(() => {
+    return TABS.find((tab) => tab.label === activeTab) || TABS[0]
+  }, [activeTab])
 
   useEffect(() => {
     setSearchHistory(loadSearchHistory())
   }, [])
 
-  const filteredBooks = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase()
+  useEffect(() => {
+    let ignore = false
 
-    if (!keyword) return BOOKS_DATA
+    async function loadStories() {
+      setLoading(true)
+      setMessage('')
 
-    return BOOKS_DATA.filter((book) => {
-      return (
-        book.title.toLowerCase().includes(keyword) ||
-        book.author.toLowerCase().includes(keyword)
-      )
-    })
-  }, [searchText])
+      try {
+        const params = new URLSearchParams({
+          limit: '10',
+          sort: activeTabConfig.sort,
+        })
+
+        if (activeSearch.trim()) {
+          params.set('search', activeSearch.trim())
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/public/stories?${params.toString()}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load stories')
+        }
+
+        if (ignore) return
+
+        setStories(Array.isArray(data.stories) ? data.stories.slice(0, 10) : [])
+      } catch (error) {
+        if (ignore) return
+
+        setStories([])
+        setMessage(error.message || 'Failed to load stories')
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [activeTabConfig.sort, activeSearch])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
@@ -71,15 +134,17 @@ export default function Search() {
     const nextHistory = [
       keyword,
       ...searchHistory.filter((item) => item.toLowerCase() !== keyword.toLowerCase()),
-    ].slice(0, 3)
+    ].slice(0, 10)
 
     setSearchHistory(nextHistory)
     saveSearchHistory(nextHistory)
+    setActiveSearch(keyword)
     setIsSearchMode(false)
   }
 
   const handleUseHistory = (keyword) => {
     setSearchText(keyword)
+    setActiveSearch(keyword)
     setIsSearchMode(false)
   }
 
@@ -96,7 +161,12 @@ export default function Search() {
 
   const handleCancelSearch = () => {
     setIsSearchMode(false)
+    setSearchText(activeSearch)
+  }
+
+  const handleClearActiveSearch = () => {
     setSearchText('')
+    setActiveSearch('')
   }
 
   return (
@@ -130,8 +200,17 @@ export default function Search() {
                 onFocus={() => setIsSearchMode(true)}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search Shadow..."
-                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 shadow-sm outline-none focus:border-[#111827]"
+                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-10 shadow-sm outline-none focus:border-[#111827]"
               />
+              {searchText ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchText('')}
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827]"
+                >
+                  <i className="fa-solid fa-xmark text-[13px]" />
+                </button>
+              ) : null}
             </div>
 
             {isSearchMode ? (
@@ -201,80 +280,117 @@ export default function Search() {
             <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100">
               {TABS.map((tab) => (
                 <button
-                  key={tab}
+                  key={tab.label}
                   type="button"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    setActiveTab(tab.label)
+                    setActiveSearch('')
+                    setSearchText('')
+                  }}
                   className={`whitespace-nowrap pb-3 text-sm font-semibold text-gray-400 transition-all ${
-                    activeTab === tab ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
+                    activeTab === tab.label ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               ))}
             </nav>
 
             <div>
-              <div className="mb-6 flex items-center space-x-3">
-                <div className="h-6 w-1.5 rounded-full bg-[#111827]" />
-                <h2 className="text-xl font-extrabold">{activeTab}</h2>
+              <div className="mb-6 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center space-x-3">
+                  <div className="h-6 w-1.5 shrink-0 rounded-full bg-[#111827]" />
+                  <h2 className="truncate text-xl font-extrabold">
+                    {activeSearch ? `Search: ${activeSearch}` : activeTab}
+                  </h2>
+                </div>
+
+                {activeSearch ? (
+                  <button
+                    type="button"
+                    onClick={handleClearActiveSearch}
+                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#111827] shadow-sm ring-1 ring-gray-100"
+                  >
+                    Clear
+                  </button>
+                ) : null}
               </div>
 
               <div className="space-y-4">
-                {filteredBooks.map((book) => (
-                  <button
-                    key={book.rank}
-                    type="button"
-                    onClick={() => navigate(`/story/${book.id}`)}
-                    className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left"
-                  >
-                    {book.rank <= 3 ? (
-                      <div
-                        className="absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center font-black italic text-white shadow-sm"
-                        style={{ background: RANK_STYLE[book.rank] }}
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                      <div className="flex items-center gap-4">
+                        <div className="h-28 w-20 rounded-xl bg-gray-100" />
+                        <div className="flex-1">
+                          <div className="h-4 w-2/3 rounded-full bg-gray-100" />
+                          <div className="mt-3 h-3 w-1/3 rounded-full bg-gray-100" />
+                          <div className="mt-6 h-3 w-1/2 rounded-full bg-gray-100" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : stories.length ? (
+                  stories.map((story, index) => {
+                    const rank = index + 1
+
+                    return (
+                      <button
+                        key={story.id}
+                        type="button"
+                        onClick={() => navigate(`/story/${story.id}`)}
+                        className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left"
                       >
-                        {book.rank}
-                      </div>
-                    ) : (
-                      <div className="w-10 text-center text-xl font-black italic text-gray-300">
-                        {book.rank}
-                      </div>
-                    )}
+                        {rank <= 3 ? (
+                          <div
+                            className="absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center font-black italic text-white shadow-sm"
+                            style={{ background: RANK_STYLE[rank] }}
+                          >
+                            {rank}
+                          </div>
+                        ) : (
+                          <div className="w-10 text-center text-xl font-black italic text-gray-300">
+                            {rank}
+                          </div>
+                        )}
 
-                    <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner ${book.rank <= 3 ? 'ml-4' : ''}`}>
-                      <img
-                        src={`/assets/Search Pic/Book ${book.rank}.jpg`}
-                        className="h-full w-full object-cover"
-                        alt={book.title}
-                        onError={(event) => {
-                          event.currentTarget.src = 'https://via.placeholder.com/200x300?text=No+Cover'
-                        }}
-                      />
-                    </div>
+                        <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner ${rank <= 3 ? 'ml-4' : ''}`}>
+                          {story.cover_url ? (
+                            <img
+                              src={story.cover_url}
+                              className="h-full w-full object-cover"
+                              alt={story.title || 'Story cover'}
+                              onError={(event) => {
+                                event.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          ) : null}
+                        </div>
 
-                    <div className="min-w-0 flex-1">
-                      <h3 className={`${book.rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
-                        {book.title}
-                      </h3>
-                      <p className="text-sm text-gray-400">by {book.author}</p>
-                      <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
-                        <span className="inline-flex items-center text-[#111827]">
-                          <i className="fa-solid fa-heart mr-1 text-[#ef4444]" />
-                          {book.likes}
-                        </span>
-                        <span className="inline-flex items-center text-[#111827]">
-                          <i className="fa-solid fa-eye mr-1 text-[#111827]" />
-                          {book.views}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-
-                {!filteredBooks.length ? (
+                        <div className="min-w-0 flex-1">
+                          <h3 className={`${rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
+                            {story.title || 'Untitled Story'}
+                          </h3>
+                          <p className="text-sm text-gray-400">by {getAuthorName(story)}</p>
+                          <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
+                            <span className="inline-flex items-center text-[#111827]">
+                              <i className="fa-solid fa-heart mr-1 text-[#ef4444]" />
+                              {formatCount(story.total_likes)}
+                            </span>
+                            <span className="inline-flex items-center text-[#111827]">
+                              <i className="fa-solid fa-eye mr-1 text-[#111827]" />
+                              {formatCount(story.total_views)}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })
+                ) : (
                   <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
-                    No stories found.
+                    {message || 'No stories found.'}
                   </div>
-                ) : null}
+                )}
               </div>
             </div>
           </main>
