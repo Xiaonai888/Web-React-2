@@ -7,13 +7,6 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-function formatShortNumber(value) {
-  const number = Number(value || 0)
-  if (number >= 1000000) return `${(number / 1000000).toFixed(1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(1)}K`
-  return number.toLocaleString()
-}
-
 function uniqueStories(stories) {
   const map = new Map()
 
@@ -40,57 +33,40 @@ function EmptyCard({ title, text, icon }) {
 
 function BookCard({ story, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex gap-3 rounded-[18px] bg-[#f8fafc] p-2 text-left transition active:scale-[0.99]"
-    >
-      <div className="aspect-[2/3] w-[66px] shrink-0 overflow-hidden rounded-[14px] bg-[#e5e7eb]">
+    <button type="button" onClick={onClick} className="min-w-0 text-left active:scale-[0.99]">
+      <div className="aspect-[2/3] w-full overflow-hidden rounded-[14px] bg-[#eef1f5]">
         {story.cover_url ? (
           <img
             src={story.cover_url}
             alt={story.title || 'Story cover'}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
-            <i className="fa-regular fa-bookmark text-[18px]" />
+            <i className="fa-regular fa-bookmark text-[20px]" />
           </div>
         )}
       </div>
 
-      <div className="min-w-0 flex-1 py-1">
-        <h3 className="line-clamp-2 text-[13px] font-black leading-5 text-[#111827]">
-          {story.title || 'Untitled Story'}
-        </h3>
+      <h3 className="mt-2 line-clamp-2 text-[13px] font-black leading-4 text-[#111827]">
+        {story.title || 'Untitled Story'}
+      </h3>
 
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-extrabold text-[#98a2b3]">
-          {story.main_genre ? <span>{story.main_genre}</span> : null}
-          <span>
-            <i className="fa-regular fa-eye mr-1" />
-            {formatShortNumber(story.total_views)}
-          </span>
-        </div>
-
-        <div className="mt-2 flex items-center gap-2 text-[10.5px] font-bold text-[#667085]">
-          <span>EP {story.total_episodes || 0}</span>
-          {story.is_adult ? (
-            <span className="rounded-full bg-[#fff1f1] px-2 py-0.5 text-[#e5484d]">18+</span>
-          ) : null}
-        </div>
-      </div>
+      <p className="mt-0.5 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
+        {story.main_genre || 'Story'}
+      </p>
     </button>
   )
 }
 
-function StoryList({ stories, emptyTitle, emptyText, emptyIcon, onOpenStory }) {
+function StoryGrid({ stories, emptyTitle, emptyText, emptyIcon, onOpenStory }) {
   if (!stories.length) {
     return <EmptyCard icon={emptyIcon} title={emptyTitle} text={emptyText} />
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
-      {stories.map((item) => (
+    <div className="grid grid-cols-3 gap-3">
+      {stories.slice(0, 3).map((item) => (
         <BookCard key={item.id} story={item} onClick={() => onOpenStory(item.id)} />
       ))}
     </div>
@@ -104,7 +80,12 @@ export default function RecommendationSection({ story }) {
   const [similarStories, setSimilarStories] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const authorName = story?.author_page?.page_name || 'same author'
+  const authorName =
+    story?.author_page?.page_name ||
+    story?.authorPage?.page_name ||
+    story?.author?.page_name ||
+    story?.author_name ||
+    'Author'
 
   useEffect(() => {
     let ignore = false
@@ -138,7 +119,6 @@ export default function RecommendationSection({ story }) {
         const nextAuthorStories = Array.isArray(authorData.stories) ? authorData.stories.slice(0, 3) : []
         const nextTopStories = Array.isArray(topData.stories) ? topData.stories : []
         const sameGenreStories = Array.isArray(similarData.stories) ? similarData.stories : []
-
         const filledSimilarStories = uniqueStories([...sameGenreStories, ...nextTopStories]).slice(0, 3)
 
         if (ignore) return
@@ -176,11 +156,8 @@ export default function RecommendationSection({ story }) {
   return (
     <section className="mt-2 space-y-0 sm:mt-4 sm:space-y-4">
       <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3">
           <h2 className="text-[18px] font-black text-[#111827]">Other work by {authorName}</h2>
-          <span className="text-[11px] font-extrabold text-[#98a2b3]">
-            {authorStories.length ? 'Top views' : 'Top views'}
-          </span>
         </div>
 
         {loading ? (
@@ -190,7 +167,7 @@ export default function RecommendationSection({ story }) {
             text="Please wait while recommendations are loading."
           />
         ) : (
-          <StoryList
+          <StoryGrid
             stories={authorSectionStories}
             emptyIcon="fa-solid fa-pen-nib"
             emptyTitle="No other stories yet"
@@ -201,11 +178,8 @@ export default function RecommendationSection({ story }) {
       </div>
 
       <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3">
           <h2 className="text-[18px] font-black text-[#111827]">You Might Like</h2>
-          <span className="text-[11px] font-extrabold text-[#98a2b3]">
-            {story?.main_genre ? story.main_genre : 'Popular'}
-          </span>
         </div>
 
         {loading ? (
@@ -215,7 +189,7 @@ export default function RecommendationSection({ story }) {
             text="Please wait while similar stories are loading."
           />
         ) : (
-          <StoryList
+          <StoryGrid
             stories={similarStories}
             emptyIcon="fa-regular fa-compass"
             emptyTitle="No similar stories yet"
