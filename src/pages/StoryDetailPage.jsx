@@ -17,6 +17,19 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+function getReaderToken() {
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+}
+
+function authHeaders() {
+  const token = getReaderToken()
+
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 function LoadingBlock() {
   return (
     <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
@@ -75,6 +88,7 @@ export default function StoryDetailPage() {
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
+  const [savingCollection, setSavingCollection] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -124,12 +138,43 @@ export default function StoryDetailPage() {
   }, [realStoryId])
 
   useEffect(() => {
-    try {
-      setBookmarked(localStorage.getItem(`shadow_library_${realStoryId}`) === 'true')
-      setSubscribed(localStorage.getItem(`shadow_subscribe_${realStoryId}`) === 'true')
-    } catch {
-      setBookmarked(false)
-      setSubscribed(false)
+    let ignore = false
+
+    async function loadCollectionStatus() {
+      const token = getReaderToken()
+
+      if (!token || !realStoryId) {
+        setBookmarked(false)
+        setSubscribed(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/reader/status/${realStoryId}`, {
+          headers: authHeaders(),
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load collection status')
+        }
+
+        if (ignore) return
+
+        setBookmarked(Boolean(data.bookmarked))
+        setSubscribed(Boolean(data.subscribed))
+      } catch {
+        if (ignore) return
+        setBookmarked(false)
+        setSubscribed(false)
+      }
+    }
+
+    loadCollectionStatus()
+
+    return () => {
+      ignore = true
     }
   }, [realStoryId])
 
@@ -158,20 +203,68 @@ export default function StoryDetailPage() {
     navigate(`/story/${realStoryId}/episode/${episode.id}`)
   }
 
-  const handleToggleBookmark = () => {
-    setBookmarked((current) => {
-      const next = !current
-      localStorage.setItem(`shadow_library_${realStoryId}`, String(next))
-      return next
-    })
+  const handleToggleBookmark = async () => {
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (savingCollection) return
+
+    const next = !bookmarked
+    setBookmarked(next)
+    setSavingCollection(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reader/library/${realStoryId}`, {
+        method: next ? 'POST' : 'DELETE',
+        headers: authHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update library')
+      }
+    } catch {
+      setBookmarked(!next)
+    } finally {
+      setSavingCollection(false)
+    }
   }
 
-  const handleToggleSubscribe = () => {
-    setSubscribed((current) => {
-      const next = !current
-      localStorage.setItem(`shadow_subscribe_${realStoryId}`, String(next))
-      return next
-    })
+  const handleToggleSubscribe = async () => {
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (savingCollection) return
+
+    const next = !subscribed
+    setSubscribed(next)
+    setSavingCollection(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reader/subscriptions/${realStoryId}`, {
+        method: next ? 'POST' : 'DELETE',
+        headers: authHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update subscription')
+      }
+    } catch {
+      setSubscribed(!next)
+    } finally {
+      setSavingCollection(false)
+    }
   }
 
   const handleCommentChanged = () => {
