@@ -6,6 +6,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const REVIEW_READ_PROGRESS_PERCENT = 85
+
 const READER_THEMES = {
   light: {
     page: 'bg-[#f6f4ee]',
@@ -65,6 +67,32 @@ function splitParagraphs(content) {
     .split(/\n/)
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function getReviewReadKey(storyId) {
+  return `shadow_review_read_episodes_${storyId}`
+}
+
+function getReviewReadEpisodes(storyId) {
+  if (!storyId) return []
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getReviewReadKey(storyId)) || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveReviewReadEpisode(storyId, episodeId) {
+  if (!storyId || !episodeId) return
+
+  const current = getReviewReadEpisodes(storyId)
+  const exists = current.some((id) => String(id) === String(episodeId))
+
+  if (exists) return
+
+  localStorage.setItem(getReviewReadKey(storyId), JSON.stringify([...current, episodeId]))
 }
 
 function ReadingText({ content, fontSize, theme }) {
@@ -266,6 +294,7 @@ export default function ReaderPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
+  const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.light
 
@@ -311,6 +340,7 @@ export default function ReaderPage() {
         setEpisode(episodeData.episode || null)
         setEpisodes(episodesData.episodes || [])
         setReadingProgress(0)
+        setReviewProgressSaved(false)
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
         if (episodeData.episode?.is_adult) {
@@ -358,6 +388,15 @@ export default function ReaderPage() {
       window.removeEventListener('resize', updateProgress)
     }
   }, [episodeId])
+
+  useEffect(() => {
+    if (!storyId || !episodeId || reviewProgressSaved) return
+
+    if (readingProgress >= REVIEW_READ_PROGRESS_PERCENT) {
+      saveReviewReadEpisode(storyId, episodeId)
+      setReviewProgressSaved(true)
+    }
+  }, [episodeId, readingProgress, reviewProgressSaved, storyId])
 
   const currentIndex = episodes.findIndex((item) => item.id === episodeId)
   const previousEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null
