@@ -1,25 +1,10 @@
 import { useEffect, useState } from 'react'
 
-function getStorageKey(storyId) {
-  return `shadow_comments_story_${storyId}`
-}
-
-function getLatestComment(storyId) {
-  if (!storyId) return null
-
-  try {
-    const raw = localStorage.getItem(getStorageKey(storyId))
-    const comments = JSON.parse(raw || '[]')
-
-    if (!Array.isArray(comments) || !comments.length) return null
-
-    return [...comments].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0]
-  } catch {
-    return null
-  }
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 function formatTime(value) {
   if (!value) return 'Just now'
@@ -39,15 +24,23 @@ function formatTime(value) {
   return date.toLocaleDateString('en-GB')
 }
 
+function getCommentUser(comment) {
+  return comment?.user || {
+    name: comment?.name || 'Reader',
+    avatar_url: comment?.avatar_url || '',
+  }
+}
+
 function Avatar({ comment }) {
-  const avatar = comment?.avatar_url || ''
-  const letter = (comment?.name || 'R').slice(0, 1).toUpperCase()
+  const user = getCommentUser(comment)
+  const avatar = user?.avatar_url || ''
+  const letter = (user?.name || 'R').slice(0, 1).toUpperCase()
 
   if (avatar) {
     return (
       <img
         src={avatar}
-        alt={comment?.name || 'Reader'}
+        alt={user?.name || 'Reader'}
         className="h-11 w-11 shrink-0 rounded-full object-cover"
       />
     )
@@ -64,10 +57,34 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
   const [latestComment, setLatestComment] = useState(null)
 
   useEffect(() => {
-    setLatestComment(getLatestComment(story?.id))
+    let ignore = false
+
+    async function loadLatestComment() {
+      if (!story?.id) return
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/comments/story/${story.id}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) return
+
+        if (!ignore) {
+          setLatestComment((data.comments || [])[0] || null)
+        }
+      } catch {
+        if (!ignore) setLatestComment(null)
+      }
+    }
+
+    loadLatestComment()
+
+    return () => {
+      ignore = true
+    }
   }, [story?.id, refreshKey])
 
   const hasComment = Boolean(latestComment)
+  const user = getCommentUser(latestComment)
 
   return (
     <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:ring-1 sm:ring-black/5 sm:p-5">
@@ -104,7 +121,7 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
             <>
               <div className="flex items-center gap-2">
                 <div className="truncate text-[13px] font-black text-[#111827]">
-                  {latestComment.name || 'Reader'}
+                  {user.name || 'Reader'}
                 </div>
                 <div className="shrink-0 text-[11px] font-semibold text-[#98a2b3]">
                   {formatTime(latestComment.created_at)}
