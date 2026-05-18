@@ -6,7 +6,7 @@ function getPointerY(event) {
   return event.clientY
 }
 
-export default function CommentsModal({ open, story, onClose }) {
+export default function CommentsModal({ open, story, onClose, onCommentChanged }) {
   const sheetRef = useRef(null)
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
@@ -112,6 +112,7 @@ export default function CommentsModal({ open, story, onClose }) {
             targetType="story"
             targetId={story?.id}
             variant="modal"
+            onCommentsChange={onCommentChanged}
           />
         </div>
       </section>
