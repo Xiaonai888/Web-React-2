@@ -27,6 +27,8 @@ function formatTime(value) {
 }
 
 function loadComments(targetType, targetId) {
+  if (!targetId) return []
+
   try {
     const raw = localStorage.getItem(getStorageKey(targetType, targetId))
     const parsed = JSON.parse(raw || '[]')
@@ -37,6 +39,7 @@ function loadComments(targetType, targetId) {
 }
 
 function saveComments(targetType, targetId, comments) {
+  if (!targetId) return
   localStorage.setItem(getStorageKey(targetType, targetId), JSON.stringify(comments))
 }
 
@@ -254,9 +257,10 @@ function CommentComposer({
   onSend,
   onSticker,
   onEmoji,
+  isModal,
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#eef1f5] bg-white px-3 py-3">
+    <div className={`${isModal ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}>
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white">
           R
@@ -268,6 +272,7 @@ function CommentComposer({
           </button>
 
           <input
+            id="shadow-comment-input"
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder="Write a comment..."
@@ -293,11 +298,12 @@ function CommentComposer({
   )
 }
 
-export default function CommentSection({ targetType = 'story', targetId }) {
+export default function CommentSection({ targetType = 'story', targetId, variant = 'page' }) {
   const [comments, setComments] = useState([])
   const [sort, setSort] = useState('newest')
   const [text, setText] = useState('')
   const [toast, setToast] = useState('')
+  const isModal = variant === 'modal'
 
   useEffect(() => {
     setComments(loadComments(targetType, targetId))
@@ -406,8 +412,8 @@ export default function CommentSection({ targetType = 'story', targetId }) {
   }
 
   return (
-    <section className="min-h-screen bg-white pb-[84px]">
-      <div className="sticky top-[65px] z-30 border-b border-[#eef1f5] bg-white px-4 py-3 sm:top-[67px]">
+    <section className={`${isModal ? 'relative flex h-full flex-col bg-white' : 'min-h-screen bg-white pb-[84px]'}`}>
+      <div className="shrink-0 border-b border-[#eef1f5] bg-white px-4 py-3">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <div>
             <h2 className="text-[17px] font-black text-[#111827]">All Comments</h2>
@@ -448,25 +454,27 @@ export default function CommentSection({ targetType = 'story', targetId }) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl divide-y divide-[#eef1f5]">
-        {sortedComments.length ? (
-          sortedComments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              onLike={handleLike}
-              onReply={handleReply}
-              onReport={handleReport}
-              onCopy={handleCopy}
-            />
-          ))
-        ) : (
-          <EmptyComments onFocus={() => document.getElementById('shadow-comment-input')?.focus()} />
-        )}
+      <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto pb-[86px]' : 'mx-auto max-w-3xl divide-y divide-[#eef1f5]'}`}>
+        <div className="mx-auto max-w-3xl divide-y divide-[#eef1f5]">
+          {sortedComments.length ? (
+            sortedComments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onLike={handleLike}
+                onReply={handleReply}
+                onReport={handleReport}
+                onCopy={handleCopy}
+              />
+            ))
+          ) : (
+            <EmptyComments onFocus={() => document.getElementById('shadow-comment-input')?.focus()} />
+          )}
+        </div>
       </div>
 
       {toast ? (
-        <div className="fixed bottom-[88px] left-1/2 z-[70] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-black text-white shadow-lg">
+        <div className={`${isModal ? 'absolute' : 'fixed'} bottom-[88px] left-1/2 z-[70] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-black text-white shadow-lg`}>
           {toast}
         </div>
       ) : null}
@@ -477,6 +485,7 @@ export default function CommentSection({ targetType = 'story', targetId }) {
         onSend={handleSend}
         onSticker={handleSticker}
         onEmoji={handleEmoji}
+        isModal={isModal}
       />
     </section>
   )
