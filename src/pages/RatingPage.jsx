@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -107,6 +108,83 @@ function ReviewCard({ review }) {
   )
 }
 
+function ReviewBottomSheet({
+  open,
+  rating,
+  reviewText,
+  onClose,
+  onRatingChange,
+  onReviewTextChange,
+  onSubmit,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-4">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0"
+        aria-label="Close review sheet"
+      />
+
+      <section className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-5 shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[18px] font-black text-[#111827]">Leave a Review</h2>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Close"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div className="mt-5 flex justify-center gap-2">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => onRatingChange(star)}
+              className={`text-[36px] active:scale-95 ${
+                rating >= star ? 'text-[#ff8a3d]' : 'text-[#d9d9d9]'
+              }`}
+              aria-label={`Rate ${star}`}
+            >
+              <i className="fa-solid fa-star" />
+            </button>
+          ))}
+        </div>
+
+        <textarea
+          value={reviewText}
+          onChange={(event) => onReviewTextChange(event.target.value)}
+          rows={5}
+          placeholder="What made this story stand out?"
+          className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15"
+        />
+
+        <p className="mt-3 text-[12px] font-semibold leading-5 text-[#98a2b3]">
+          Share what you liked, how the story made you feel, or what helped you keep reading.
+        </p>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!rating}
+          className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-95 disabled:bg-[#d0d5dd]"
+        >
+          Submit Review
+        </button>
+      </section>
+    </div>
+  )
+}
+
 export default function RatingPage() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -166,6 +244,35 @@ export default function RatingPage() {
   const ratingValue = Number(story?.rating_average || story?.rating || averageRating || 0)
   const reviewCount = Number(story?.rating_count || story?.review_count || reviews.length || 0)
 
+  const handleOpenReviewSheet = () => {
+    setReviewSheetOpen(true)
+  }
+
+  const handleCloseReviewSheet = () => {
+    setReviewSheetOpen(false)
+  }
+
+  const handleSubmitReview = () => {
+    if (!newRating) return
+
+    const review = {
+      id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      name: 'Reader',
+      rating: newRating,
+      label: newRating >= 5 ? 'Excellent' : newRating >= 4 ? 'Good' : newRating >= 3 ? 'Okay' : 'Needs work',
+      text: newReviewText.trim(),
+      created_at: new Date().toISOString(),
+    }
+
+    const nextReviews = [review, ...storedReviews]
+    localStorage.setItem(`shadow_story_reviews_${id}`, JSON.stringify(nextReviews))
+
+    setStoredReviews(nextReviews)
+    setNewRating(0)
+    setNewReviewText('')
+    setReviewSheetOpen(false)
+  }
+
   return (
     <main className="min-h-screen bg-white pb-24 text-[#111827]">
       <header className="sticky top-0 z-40 border-b border-[#eef1f5] bg-white/95 px-4 py-3 backdrop-blur">
@@ -217,7 +324,7 @@ export default function RatingPage() {
 
                 <button
                   type="button"
-                  onClick={() => navigate(`/story/${id}/review`)}
+                  onClick={handleOpenReviewSheet}
                   className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-black text-[#111827] active:scale-95"
                 >
                   Leave a Review
@@ -263,10 +370,20 @@ export default function RatingPage() {
               <ReviewCard key={review.id || `${review.created_at}-${review.rating}`} review={review} />
             ))
           ) : (
-            <EmptyReviewState onWriteReview={() => navigate(`/story/${id}/review`)} />
+            <EmptyReviewState onWriteReview={handleOpenReviewSheet} />
           )}
         </div>
       </section>
+
+      <ReviewBottomSheet
+        open={reviewSheetOpen}
+        rating={newRating}
+        reviewText={newReviewText}
+        onClose={handleCloseReviewSheet}
+        onRatingChange={setNewRating}
+        onReviewTextChange={setNewReviewText}
+        onSubmit={handleSubmitReview}
+      />
     </main>
   )
 }
