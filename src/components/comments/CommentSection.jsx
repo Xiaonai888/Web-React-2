@@ -207,25 +207,14 @@ function CommentMenu({
   return (
     <div className="absolute right-0 top-8 z-20 w-52 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_14px_40px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
       {permissions.isOwner ? (
-        <>
-          <MenuButton
-            icon="fa-regular fa-pen-to-square"
-            label="Edit"
-            onClick={() => {
-              onEdit()
-              onClose()
-            }}
-          />
-          <MenuButton
-            icon="fa-regular fa-trash-can"
-            label="Delete"
-            danger
-            onClick={() => {
-              onDelete()
-              onClose()
-            }}
-          />
-        </>
+        <MenuButton
+          icon="fa-regular fa-pen-to-square"
+          label="Edit"
+          onClick={() => {
+            onEdit()
+            onClose()
+          }}
+        />
       ) : null}
 
       {permissions.isOtherReader ? (
@@ -375,9 +364,9 @@ function CommentItem({
   const admin = currentUser.is_admin
 
   const permissions = {
-    isOwner,
+    isOwner: isOwner && !admin,
     isOtherReader: !isOwner && !author && !admin,
-    isAuthor: author && !isOwner && !admin,
+    isAuthor: author && !admin,
     isAdmin: admin,
   }
 
@@ -778,6 +767,11 @@ export default function CommentSection({
   }
 
   const handleDelete = (comment) => {
+    if (!currentUser.is_admin) {
+      showToast('Only admin can delete comments.')
+      return
+    }
+
     const nextComments = comments.filter((item) => item.id !== comment.id)
 
     updateComments(nextComments)
