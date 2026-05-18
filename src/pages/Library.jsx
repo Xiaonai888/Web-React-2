@@ -145,7 +145,7 @@ function ContextCard({ item, tab }) {
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#ff3b5c] shadow-sm">
+            <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#111827] shadow-sm">
               {tab === 'Subscribed' ? 'Latest Update' : tab === 'Downloads' ? 'Downloaded' : 'In Library'}
             </div>
 
@@ -157,7 +157,7 @@ function ContextCard({ item, tab }) {
               {story.description || `${story.main_genre || 'Story'} • ${story.total_episodes || 0} episodes`}
             </p>
 
-            <p className="mt-2 text-[11px] font-extrabold text-[#4f46e5] sm:text-[12px]">
+            <p className="mt-2 text-[11px] font-extrabold text-[#111827] sm:text-[12px]">
               {formatInfo(tab, story)}
             </p>
           </div>
@@ -284,7 +284,7 @@ export default function Library() {
           width: 22px;
           height: 4px;
           border-radius: 9999px;
-          background: #ff3b5c;
+          background: #111827;
         }
       `}</style>
 
@@ -336,9 +336,8 @@ export default function Library() {
                     onClick={() => setActiveType(type)}
                     className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                       active
-                       active
-  ? 'bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)]'
-  : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
+                        ? 'bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)]'
+                        : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
                     }`}
                   >
                     {type}
@@ -386,7 +385,7 @@ export default function Library() {
                   </h2>
 
                   {activeTab === 'Subscribed' ? (
-                    <button className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#ff3b5c]">
+                    <button className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#111827]">
                       See All
                     </button>
                   ) : null}
