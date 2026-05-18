@@ -37,7 +37,10 @@ import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 
 function AppFooter() {
   const location = useLocation()
-  const shouldHideFooter = /^\/story\/[^/]+$/.test(location.pathname)
+
+  const shouldHideFooter =
+    /^\/story\/[^/]+$/.test(location.pathname) ||
+    /^\/story\/[^/]+\/rating$/.test(location.pathname)
 
   if (shouldHideFooter) return null
 
