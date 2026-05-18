@@ -1,23 +1,60 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import PlanSection from '../components/Shop/PlanSection'
+import PurchaseSection from '../components/Shop/PurchaseSection'
+import ShadowMallSection from '../components/Shop/ShadowMallSection'
 
-import React from 'react'
+const tabs = ['Purchase', 'Plans', 'Shadow Mall']
 
-export default function PurchaseSection() {
+export default function ShopPage() {
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('Purchase')
+
   return (
-    <section className="space-y-4">
-      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-        <p className="text-[15px] font-semibold text-neutral-900">Purchase</p>
-        <p className="mt-2 text-[13px] leading-6 text-gray-500">
-          Purchase content will go here later.
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#f5f5f5] pb-24">
+      <header className="sticky top-0 z-40 border-b border-[#eeeeee] bg-white">
+        <div className="flex h-14 items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-full active:bg-[#f1f1f1]"
+            aria-label="Go back"
+          >
+            <i className="fas fa-chevron-left text-[17px] text-[#111]" />
+          </button>
 
-      <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-        <p className="text-[14px] font-semibold text-neutral-900">Purchase Section Placeholder</p>
-        <p className="mt-2 text-[13px] text-gray-500">
-          Ready for future purchase UI
-        </p>
-      </div>
-    </section>
+          <h1 className="text-[18px] font-extrabold tracking-tight text-[#111]">
+            Shop
+          </h1>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[760px] px-4 pt-4">
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab
+
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[13px] font-extrabold transition ${
+                  isActive
+                    ? 'border-black bg-black text-white'
+                    : 'border-[#d8d8d8] bg-white text-[#111] active:bg-[#f1f1f1]'
+                }`}
+              >
+                {tab}
+              </button>
+            )
+          })}
+        </div>
+
+        {activeTab === 'Purchase' && <PurchaseSection />}
+        {activeTab === 'Plans' && <PlanSection />}
+        {activeTab === 'Shadow Mall' && <ShadowMallSection />}
+      </main>
+    </div>
   )
 }
-
