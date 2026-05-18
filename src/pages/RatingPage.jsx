@@ -302,7 +302,7 @@ export default function RatingPage() {
               />
             ) : null}
 
-            <div className="absolute inset-0 bg-gradient-to-br from-[#140f24]/95 via-[#2d1847]/78 to-[#5b2a86]/45" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#111827]/92 via-[#111827]/72 to-[#ff8a3d]/45" />
 
             <div className="relative z-10 flex min-h-[120px] flex-col justify-between">
               <h2 className="line-clamp-2 text-[22px] font-black leading-7">
