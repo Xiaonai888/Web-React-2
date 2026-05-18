@@ -145,7 +145,8 @@ export default function Me() {
   const isPremium = false
 
   const displayName = storedUser?.name || 'Click to Login'
-  const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
+const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
   const handleAuthorDashboard = async () => {
     if (authorLoading) return
@@ -197,11 +198,13 @@ export default function Me() {
               to={isLoggedIn ? '/profile' : '/login'}
               className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
             >
-              {isLoggedIn ? (
-                <span className="text-[26px] font-extrabold">{avatarLetter}</span>
-              ) : (
-                <i className="far fa-user text-[26px]" />
-              )}
+              {isLoggedIn && avatarUrl ? (
+  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+) : isLoggedIn ? (
+  <span className="text-[26px] font-extrabold">{avatarLetter}</span>
+) : (
+  <i className="far fa-user text-[26px]" />
+)}
             </Link>
 
             <div className="min-w-0 flex-1 pt-1.5">
