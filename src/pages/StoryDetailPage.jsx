@@ -7,6 +7,7 @@ import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSect
 import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
 import LatestCommentSection from '../components/story-detail/LatestCommentSection'
+import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 import CommentsModal from '../components/story-detail/CommentsModal'
@@ -70,6 +71,7 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
@@ -215,7 +217,7 @@ export default function StoryDetailPage() {
           onOpenAll={() => setEpisodeListOpen(true)}
         />
 
-        <LatestCommentSection
+       <LatestCommentSection
   story={story}
   onOpenComments={() => setCommentsOpen(true)}
 />
