@@ -565,7 +565,6 @@ export default function CommentSection({
         onChange={setText}
         onSend={handleSend}
         onSticker={handleSticker}
-        onEmoji={handleEmoji}
         isModal={isModal}
       />
     </section>
