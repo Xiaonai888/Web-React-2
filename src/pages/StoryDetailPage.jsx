@@ -10,7 +10,6 @@ import LatestCommentSection from '../components/story-detail/LatestCommentSectio
 import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
-import CommentsModal from '../components/story-detail/CommentsModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -71,7 +70,6 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
-  const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
@@ -217,10 +215,10 @@ export default function StoryDetailPage() {
           onOpenAll={() => setEpisodeListOpen(true)}
         />
 
-       <LatestCommentSection
-  story={story}
-  onOpenComments={() => setCommentsOpen(true)}
-/>
+        <LatestCommentSection
+          story={story}
+          onOpenComments={() => setCommentsOpen(true)}
+        />
 
         <RecommendationSection story={story} />
       </main>
@@ -244,11 +242,12 @@ export default function StoryDetailPage() {
         episode={lockedEpisode}
         onClose={() => setLockedEpisode(null)}
       />
+
       <CommentsModal
-  open={commentsOpen}
-  story={story}
-  onClose={() => setCommentsOpen(false)}
-/>
+        open={commentsOpen}
+        story={story}
+        onClose={() => setCommentsOpen(false)}
+      />
     </div>
   )
 }
