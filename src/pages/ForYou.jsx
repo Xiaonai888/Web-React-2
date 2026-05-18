@@ -233,7 +233,7 @@ export default function ForYou() {
       className="h-full w-full object-cover"
     />
   </div>
-  <h1 className="text-2xl font-bold tracking-tight text-[#111827]">Shadow</h1>
+  <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
 </div>
 
           <div className="flex space-x-5 text-gray-400 text-xl">
