@@ -336,8 +336,9 @@ export default function Library() {
                     onClick={() => setActiveType(type)}
                     className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                       active
-                        ? 'bg-[#ff3b5c] text-white shadow-[0_8px_18px_rgba(255,59,92,0.18)]'
-                        : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
+                       active
+  ? 'bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)]'
+  : 'bg-[#f3f3f5] text-[#7b7b85] hover:bg-[#ececef]'
                     }`}
                   >
                     {type}
