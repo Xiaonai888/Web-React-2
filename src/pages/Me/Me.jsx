@@ -64,13 +64,13 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
     <>
       <div className="flex min-w-0 items-center gap-3">
         <div
-         className={
-  dark
-    ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
-    : danger
-      ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d]'
-      : iconBox
-}
+          className={
+            dark
+              ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
+              : danger
+                ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d]'
+                : iconBox
+          }
         >
           <i className={`${icon} text-[14px]`} />
         </div>
@@ -139,14 +139,22 @@ export default function Me() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
 
-  const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
+  const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
 
   const isLoggedIn = Boolean(storedUser)
   const isPremium = false
 
   const displayName = storedUser?.name || 'Click to Login'
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
-const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+
+  const handleLogout = () => {
+    localStorage.removeItem('shadow_reader_token')
+    localStorage.removeItem('shadow_reader_user')
+    sessionStorage.removeItem('shadow_reader_token')
+    sessionStorage.removeItem('shadow_reader_user')
+    navigate('/login', { replace: true })
+  }
 
   const handleAuthorDashboard = async () => {
     if (authorLoading) return
@@ -199,12 +207,12 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
               className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white"
             >
               {isLoggedIn && avatarUrl ? (
-  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-) : isLoggedIn ? (
-  <span className="text-[26px] font-extrabold">{avatarLetter}</span>
-) : (
-  <i className="far fa-user text-[26px]" />
-)}
+                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              ) : isLoggedIn ? (
+                <span className="text-[26px] font-extrabold">{avatarLetter}</span>
+              ) : (
+                <i className="far fa-user text-[26px]" />
+              )}
             </Link>
 
             <div className="min-w-0 flex-1 pt-1.5">
@@ -283,7 +291,7 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
         {isLoggedIn ? (
           <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-            <MenuRow to="/logout" icon="fa-solid fa-right-from-bracket" title="Logout" danger />
+            <MenuRow onClick={handleLogout} icon="fa-solid fa-right-from-bracket" title="Logout" danger />
           </section>
         ) : null}
       </main>
