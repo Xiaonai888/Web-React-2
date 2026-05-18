@@ -119,7 +119,10 @@ export default function RecommendationSection({ story }) {
         const nextAuthorStories = Array.isArray(authorData.stories) ? authorData.stories.slice(0, 3) : []
         const nextTopStories = Array.isArray(topData.stories) ? topData.stories : []
         const sameGenreStories = Array.isArray(similarData.stories) ? similarData.stories : []
-        const filledSimilarStories = uniqueStories([...sameGenreStories, ...nextTopStories]).slice(0, 3)
+        const authorStoryIds = new Set(nextAuthorStories.map((item) => item.id))
+        const filledSimilarStories = uniqueStories([...sameGenreStories, ...nextTopStories])
+  .filter((item) => !authorStoryIds.has(item.id))
+  .slice(0, 3)
 
         if (ignore) return
 
@@ -145,8 +148,8 @@ export default function RecommendationSection({ story }) {
   }, [story?.author_id, story?.id, story?.main_genre])
 
   const authorSectionStories = useMemo(() => {
-    return authorStories.length ? authorStories : topStories
-  }, [authorStories, topStories])
+  return authorStories
+}, [authorStories])
 
   const handleOpenStory = (storyId) => {
     if (!storyId) return
