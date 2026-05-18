@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -25,6 +26,23 @@ function getStoredReviews(storyId) {
   try {
     const raw = localStorage.getItem(`shadow_story_reviews_${storyId}`)
     const parsed = JSON.parse(raw || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const REVIEW_REQUIRED_READ_EPISODES = 3
+
+function getReviewReadKey(storyId) {
+  return `shadow_review_read_episodes_${storyId}`
+}
+
+function getReviewReadEpisodes(storyId) {
+  if (!storyId) return []
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getReviewReadKey(storyId)) || '[]')
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
@@ -107,6 +125,50 @@ function ReviewCard({ review }) {
   )
 }
 
+
+function ReviewGateModal({ open, readCount, onClose, onStartReading }) {
+  if (!open) return null
+
+  const remaining = Math.max(0, REVIEW_REQUIRED_READ_EPISODES - Number(readCount || 0))
+
+  return (
+    <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 px-4">
+      <section className="w-full max-w-[420px] rounded-[26px] bg-white p-6 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d6] text-[#f59e0b]">
+          <i className="fa-solid fa-book-open-reader text-[25px]" />
+        </div>
+
+        <h2 className="mt-4 text-[20px] font-black text-[#111827]">
+          Read more before reviewing
+        </h2>
+
+        <p className="mt-3 text-[13px] font-semibold leading-6 text-[#667085]">
+          Please read at least {REVIEW_REQUIRED_READ_EPISODES} episodes before leaving a review.
+          You have read {Number(readCount || 0)} so far. Read {remaining} more to unlock reviews.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-black text-[#111827] active:scale-95"
+          >
+            Not now
+          </button>
+
+          <button
+            type="button"
+            onClick={onStartReading}
+            className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
+          >
+            Start reading
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function ReviewBottomSheet({
   open,
   rating,
@@ -119,7 +181,7 @@ function ReviewBottomSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-0 sm:px-4">
+    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-4">
       <button
         type="button"
         onClick={onClose}
@@ -127,7 +189,7 @@ function ReviewBottomSheet({
         aria-label="Close review sheet"
       />
 
-      <section className="relative w-full max-w-3xl rounded-t-[26px] bg-white px-5 pb-6 pt-5 shadow-2xl sm:mb-6 sm:rounded-[26px] sm:px-8 sm:pb-8 sm:pt-6">
+      <section className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-5 shadow-2xl">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
 
         <div className="flex items-center justify-between gap-3">
@@ -143,13 +205,13 @@ function ReviewBottomSheet({
           </button>
         </div>
 
-        <div className="mt-5 flex justify-center gap-2 sm:mt-6">
+        <div className="mt-5 flex justify-center gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               type="button"
               onClick={() => onRatingChange(star)}
-              className={`text-[36px] active:scale-95 sm:text-[42px] ${
+              className={`text-[36px] active:scale-95 ${
                 rating >= star ? 'text-[#ff8a3d]' : 'text-[#d9d9d9]'
               }`}
               aria-label={`Rate ${star}`}
@@ -164,7 +226,7 @@ function ReviewBottomSheet({
           onChange={(event) => onReviewTextChange(event.target.value)}
           rows={5}
           placeholder="What made this story stand out?"
-          className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15 sm:min-h-[150px]"
+          className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15"
         />
 
         <p className="mt-3 text-[12px] font-semibold leading-5 text-[#98a2b3]">
@@ -193,6 +255,7 @@ export default function RatingPage() {
   const [sort, setSort] = useState('newest')
   const [storedReviews, setStoredReviews] = useState([])
   const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
+  const [reviewGateOpen, setReviewGateOpen] = useState(false)
   const [newRating, setNewRating] = useState(0)
   const [newReviewText, setNewReviewText] = useState('')
 
@@ -244,7 +307,19 @@ export default function RatingPage() {
   const reviewCount = Number(story?.rating_count || story?.review_count || reviews.length || 0)
 
   const handleOpenReviewSheet = () => {
+    const readEpisodes = getReviewReadEpisodes(id)
+
+    if (readEpisodes.length < REVIEW_REQUIRED_READ_EPISODES) {
+      setReviewGateOpen(true)
+      return
+    }
+
     setReviewSheetOpen(true)
+  }
+
+  const handleStartReadingFromGate = () => {
+    setReviewGateOpen(false)
+    navigate(`/story/${id}`)
   }
 
   const handleCloseReviewSheet = () => {
@@ -373,6 +448,13 @@ export default function RatingPage() {
           )}
         </div>
       </section>
+
+      <ReviewGateModal
+        open={reviewGateOpen}
+        readCount={getReviewReadEpisodes(id).length}
+        onClose={() => setReviewGateOpen(false)}
+        onStartReading={handleStartReadingFromGate}
+      />
 
       <ReviewBottomSheet
         open={reviewSheetOpen}
