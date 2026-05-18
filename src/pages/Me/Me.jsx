@@ -196,7 +196,7 @@ const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
           <div className="mt-3 flex items-start gap-4">
             <Link
               to={isLoggedIn ? '/profile' : '/login'}
-              className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#202638] text-white"
+              className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white"
             >
               {isLoggedIn && avatarUrl ? (
   <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
