@@ -74,9 +74,13 @@ export default function LoginPage() {
 
         <section className="rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5">
           <div className="mb-7 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-white shadow-[0_14px_28px_rgba(17,24,39,0.18)]">
-              <i className="far fa-user text-[26px]" />
-            </div>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_14px_28px_rgba(17,24,39,0.18)] ring-1 ring-black/5">
+  <img
+    src="/assets/Icons/Shadow%20Logo.svg"
+    alt="Shadow"
+    className="h-full w-full object-cover"
+  />
+</div>
 
             <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827]">
               Welcome Back
