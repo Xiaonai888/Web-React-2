@@ -71,6 +71,7 @@ export default function StoryDetailPage() {
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -173,6 +174,10 @@ export default function StoryDetailPage() {
     })
   }
 
+  const handleCommentChanged = () => {
+    setCommentRefreshKey((value) => value + 1)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
@@ -217,6 +222,7 @@ export default function StoryDetailPage() {
 
         <LatestCommentSection
           story={story}
+          refreshKey={commentRefreshKey}
           onOpenComments={() => setCommentsOpen(true)}
         />
 
@@ -247,6 +253,7 @@ export default function StoryDetailPage() {
         open={commentsOpen}
         story={story}
         onClose={() => setCommentsOpen(false)}
+        onCommentChanged={handleCommentChanged}
       />
     </div>
   )
