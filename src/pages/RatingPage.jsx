@@ -115,6 +115,9 @@ export default function RatingPage() {
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState('newest')
   const [storedReviews, setStoredReviews] = useState([])
+  const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
+  const [newRating, setNewRating] = useState(0)
+  const [newReviewText, setNewReviewText] = useState('')
 
   useEffect(() => {
     let ignore = false
