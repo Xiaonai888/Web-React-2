@@ -4,6 +4,10 @@ function getStorageKey(targetType, targetId) {
   return `shadow_comments_${targetType}_${targetId}`
 }
 
+function getBanKey(targetType, targetId) {
+  return `shadow_comment_bans_${targetType}_${targetId}`
+}
+
 function createId() {
   return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random())
 }
@@ -31,16 +35,44 @@ function getCurrentUser() {
       id: null,
       name: 'Reader',
       avatar_url: '',
+      role: 'reader',
+      is_author: false,
+      is_admin: false,
     }
   }
 
   const emailName = user.email ? String(user.email).split('@')[0] : ''
+  const role = user.role || 'reader'
 
   return {
     id: user.id || user.user_id || null,
     name: user.name || user.username || user.display_name || emailName || 'Reader',
     avatar_url: user.avatar_url || user.profile_image || user.photo_url || '',
+    role,
+    is_author: Boolean(user.is_author),
+    is_admin: role === 'admin' || role === 'super_admin',
   }
+}
+
+function getStoryOwnerId(story) {
+  return (
+    story?.user_id ||
+    story?.author_user_id ||
+    story?.author_id ||
+    story?.owner_id ||
+    story?.created_by ||
+    story?.author?.user_id ||
+    story?.author_page?.user_id ||
+    null
+  )
+}
+
+function isStoryAuthor(currentUser, story) {
+  const ownerId = getStoryOwnerId(story)
+
+  if (!currentUser?.id || !ownerId) return false
+
+  return String(currentUser.id) === String(ownerId)
 }
 
 function formatTime(value) {
@@ -76,6 +108,23 @@ function loadComments(targetType, targetId) {
 function saveComments(targetType, targetId, comments) {
   if (!targetId) return
   localStorage.setItem(getStorageKey(targetType, targetId), JSON.stringify(comments))
+}
+
+function loadBannedUsers(targetType, targetId) {
+  if (!targetId) return []
+
+  try {
+    const raw = localStorage.getItem(getBanKey(targetType, targetId))
+    const parsed = JSON.parse(raw || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveBannedUsers(targetType, targetId, bannedUsers) {
+  if (!targetId) return
+  localStorage.setItem(getBanKey(targetType, targetId), JSON.stringify(bannedUsers))
 }
 
 function Avatar({ user, size = 'h-10 w-10', textSize = 'text-[13px]' }) {
@@ -123,34 +172,141 @@ function EmptyComments({ onFocus }) {
   )
 }
 
-function CommentMenu({ isOpen, onReport, onCopy, onClose }) {
+function MenuButton({ icon, label, danger = false, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa] ${
+        danger ? 'text-[#e5484d] hover:bg-[#fff1f1]' : 'text-[#111827]'
+      }`}
+    >
+      <i className={`${icon} w-4 ${danger ? '' : 'text-[#8d94a1]'}`} />
+      {label}
+    </button>
+  )
+}
+
+function CommentMenu({
+  isOpen,
+  permissions,
+  comment,
+  onEdit,
+  onDelete,
+  onHide,
+  onUnhide,
+  onPin,
+  onUnpin,
+  onSpoiler,
+  onUnspoiler,
+  onBan,
+  onClose,
+}) {
   if (!isOpen) return null
 
   return (
-    <div className="absolute right-0 top-8 z-20 w-44 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_14px_40px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
-      <button
-        type="button"
-        onClick={() => {
-          onReport()
-          onClose()
-        }}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
-      >
-        <i className="fa-regular fa-flag w-4 text-[#8d94a1]" />
-        Report
-      </button>
+    <div className="absolute right-0 top-8 z-20 w-52 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_14px_40px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
+      {permissions.isOwner ? (
+        <>
+          <MenuButton
+            icon="fa-regular fa-pen-to-square"
+            label="Edit"
+            onClick={() => {
+              onEdit()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon="fa-regular fa-trash-can"
+            label="Delete"
+            danger
+            onClick={() => {
+              onDelete()
+              onClose()
+            }}
+          />
+        </>
+      ) : null}
 
-      <button
-        type="button"
-        onClick={() => {
-          onCopy()
-          onClose()
-        }}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
-      >
-        <i className="fa-solid fa-link w-4 text-[#8d94a1]" />
-        Copy link
-      </button>
+      {permissions.isOtherReader ? (
+        <MenuButton
+          icon="fa-regular fa-eye-slash"
+          label="Hide this comment"
+          onClick={() => {
+            onHide()
+            onClose()
+          }}
+        />
+      ) : null}
+
+      {permissions.isAuthor ? (
+        <>
+          <MenuButton
+            icon="fa-solid fa-thumbtack"
+            label={comment.is_pinned ? 'Unpin comment' : 'Pin comment'}
+            onClick={() => {
+              comment.is_pinned ? onUnpin() : onPin()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon="fa-regular fa-eye-slash"
+            label="Hide comment"
+            onClick={() => {
+              onHide()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon="fa-solid fa-ban"
+            label="Ban user"
+            danger
+            onClick={() => {
+              onBan()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon={comment.is_spoiler ? 'fa-regular fa-eye' : 'fa-solid fa-triangle-exclamation'}
+            label={comment.is_spoiler ? 'Remove spoiler mark' : 'Spoiler mark'}
+            onClick={() => {
+              comment.is_spoiler ? onUnspoiler() : onSpoiler()
+              onClose()
+            }}
+          />
+        </>
+      ) : null}
+
+      {permissions.isAdmin ? (
+        <>
+          <MenuButton
+            icon="fa-regular fa-trash-can"
+            label="Delete"
+            danger
+            onClick={() => {
+              onDelete()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon={comment.is_hidden ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'}
+            label={comment.is_hidden ? 'Unhide' : 'Hide'}
+            onClick={() => {
+              comment.is_hidden ? onUnhide() : onHide()
+              onClose()
+            }}
+          />
+          <MenuButton
+            icon="fa-solid fa-ban"
+            label="Ban user"
+            danger
+            onClick={() => {
+              onBan()
+              onClose()
+            }}
+          />
+        </>
+      ) : null}
     </div>
   )
 }
@@ -190,16 +346,40 @@ function ReplyComposer({ value, onChange, onCancel, onSend }) {
 
 function CommentItem({
   comment,
+  story,
   onLike,
   onReply,
-  onReport,
-  onCopy,
+  onEdit,
+  onDelete,
+  onHide,
+  onUnhide,
+  onPin,
+  onUnpin,
+  onSpoiler,
+  onUnspoiler,
+  onBan,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replyOpen, setReplyOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [repliesShown, setRepliesShown] = useState(false)
+  const [spoilerOpen, setSpoilerOpen] = useState(false)
   const replies = Array.isArray(comment.replies) ? comment.replies : []
+  const currentUser = getCurrentUser()
+
+  const isOwner =
+    (comment.user_id && currentUser.id && String(comment.user_id) === String(currentUser.id)) ||
+    (!comment.user_id && comment.name === currentUser.name)
+
+  const author = isStoryAuthor(currentUser, story)
+  const admin = currentUser.is_admin
+
+  const permissions = {
+    isOwner,
+    isOtherReader: !isOwner && !author && !admin,
+    isAuthor: author && !isOwner && !admin,
+    isAdmin: admin,
+  }
 
   const handleSendReply = () => {
     if (!replyText.trim()) return
@@ -210,7 +390,7 @@ function CommentItem({
   }
 
   return (
-    <article className="px-4 py-4">
+    <article className={`px-4 py-4 ${comment.is_hidden ? 'opacity-60' : ''}`} id={`comment-${comment.id}`}>
       <div className="flex gap-3">
         <Avatar
           user={{
@@ -222,12 +402,32 @@ function CommentItem({
         <div className="min-w-0 flex-1">
           <div className="relative">
             <div className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-[13px] font-black text-[#111827]">{comment.name || 'Reader'}</h3>
                 <span className="text-[11px] font-semibold text-[#98a2b3]">{formatTime(comment.created_at)}</span>
+
+                {comment.is_pinned ? (
+                  <span className="rounded-full bg-[#fff7d6] px-2 py-0.5 text-[10px] font-black text-[#b7791f]">
+                    Pinned
+                  </span>
+                ) : null}
+
+                {comment.is_hidden ? (
+                  <span className="rounded-full bg-[#eef2ff] px-2 py-0.5 text-[10px] font-black text-[#4f46e5]">
+                    Hidden
+                  </span>
+                ) : null}
               </div>
 
-              {comment.type === 'sticker' ? (
+              {comment.is_spoiler && !spoilerOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setSpoilerOpen(true)}
+                  className="mt-2 rounded-[14px] bg-white px-3 py-2 text-left text-[12px] font-black text-[#667085]"
+                >
+                  This comment may contain spoilers. Tap to reveal.
+                </button>
+              ) : comment.type === 'sticker' ? (
                 <div className="mt-2 inline-flex h-20 w-20 items-center justify-center rounded-[18px] bg-white text-[#98a2b3]">
                   <i className="fa-regular fa-face-smile text-[30px]" />
                 </div>
@@ -249,8 +449,17 @@ function CommentItem({
 
             <CommentMenu
               isOpen={menuOpen}
-              onReport={() => onReport(comment)}
-              onCopy={() => onCopy(comment)}
+              permissions={permissions}
+              comment={comment}
+              onEdit={() => onEdit(comment)}
+              onDelete={() => onDelete(comment)}
+              onHide={() => onHide(comment)}
+              onUnhide={() => onUnhide(comment)}
+              onPin={() => onPin(comment)}
+              onUnpin={() => onUnpin(comment)}
+              onSpoiler={() => onSpoiler(comment)}
+              onUnspoiler={() => onUnspoiler(comment)}
+              onBan={() => onBan(comment)}
               onClose={() => setMenuOpen(false)}
             />
           </div>
@@ -365,9 +574,49 @@ function CommentComposer({
   )
 }
 
+function EditCommentSheet({ comment, value, onChange, onCancel, onSave }) {
+  if (!comment) return null
+
+  return (
+    <div className="absolute inset-0 z-[90] flex items-end justify-center bg-black/35 px-4">
+      <section className="w-full max-w-xl rounded-t-[26px] bg-white px-5 pb-6 pt-4 shadow-2xl sm:mb-6 sm:rounded-[26px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+
+        <div className="flex items-center justify-between">
+          <h3 className="text-[17px] font-black text-[#111827]">Edit comment</h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa]"
+          >
+            <i className="fa-solid fa-xmark text-[13px]" />
+          </button>
+        </div>
+
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          rows={5}
+          className="mt-4 w-full resize-none rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-[14px] font-medium leading-6 outline-none focus:ring-2 focus:ring-[#111827]/10"
+        />
+
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!value.trim()}
+          className="mt-4 h-11 w-full rounded-full bg-[#111827] text-[13px] font-black text-white disabled:bg-[#d0d5dd]"
+        >
+          Save comment
+        </button>
+      </section>
+    </div>
+  )
+}
+
 export default function CommentSection({
   targetType = 'story',
   targetId,
+  story,
   variant = 'page',
   onCommentsChange,
 }) {
@@ -375,30 +624,65 @@ export default function CommentSection({
   const [sort, setSort] = useState('newest')
   const [text, setText] = useState('')
   const [toast, setToast] = useState('')
+  const [editComment, setEditComment] = useState(null)
+  const [editText, setEditText] = useState('')
+  const [bannedUsers, setBannedUsers] = useState([])
   const isModal = variant === 'modal'
+  const currentUser = getCurrentUser()
+  const currentUserId = currentUser.id ? String(currentUser.id) : ''
 
   useEffect(() => {
     setComments(loadComments(targetType, targetId))
+    setBannedUsers(loadBannedUsers(targetType, targetId))
   }, [targetType, targetId])
 
+  const isBanned = currentUserId ? bannedUsers.some((userId) => String(userId) === currentUserId) : false
+
+  const visibleComments = useMemo(() => {
+    const author = isStoryAuthor(currentUser, story)
+    const admin = currentUser.is_admin
+
+    return comments.filter((comment) => {
+      if (!comment.is_hidden) return true
+
+      const owner =
+        (comment.user_id && currentUser.id && String(comment.user_id) === String(currentUser.id)) ||
+        (!comment.user_id && comment.name === currentUser.name)
+
+      return owner || author || admin
+    })
+  }, [comments, currentUser, story])
+
   const sortedComments = useMemo(() => {
-    const list = [...comments]
+    const list = [...visibleComments]
 
-    if (sort === 'top') {
-      return list.sort((a, b) => Number(b.likes || 0) - Number(a.likes || 0))
-    }
+    list.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1
+      if (!a.is_pinned && b.is_pinned) return 1
 
-    if (sort === 'oldest') {
-      return list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    }
+      if (sort === 'top') {
+        return Number(b.likes || 0) - Number(a.likes || 0)
+      }
 
-    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [comments, sort])
+      if (sort === 'oldest') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      }
+
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
+    return list
+  }, [visibleComments, sort])
 
   const updateComments = (nextComments) => {
     setComments(nextComments)
     saveComments(targetType, targetId, nextComments)
     onCommentsChange?.(nextComments)
+  }
+
+  const updateBannedUsers = (nextBannedUsers) => {
+    setBannedUsers(nextBannedUsers)
+    saveBannedUsers(targetType, targetId, nextBannedUsers)
   }
 
   const showToast = (message) => {
@@ -407,9 +691,7 @@ export default function CommentSection({
   }
 
   const handleSend = () => {
-    if (!text.trim()) return
-
-    const currentUser = getCurrentUser()
+    if (!text.trim() || isBanned) return
 
     const nextComment = {
       id: createId(),
@@ -420,6 +702,9 @@ export default function CommentSection({
       type: 'text',
       likes: 0,
       liked: false,
+      is_pinned: false,
+      is_hidden: false,
+      is_spoiler: false,
       created_at: new Date().toISOString(),
       replies: [],
     }
@@ -446,7 +731,7 @@ export default function CommentSection({
   }
 
   const handleReply = (commentId, replyText) => {
-    const currentUser = getCurrentUser()
+    if (isBanned) return
 
     const nextComments = comments.map((comment) => {
       if (comment.id !== commentId) return comment
@@ -472,20 +757,100 @@ export default function CommentSection({
     updateComments(nextComments)
   }
 
-  const handleReport = () => {
-    showToast('Report saved for demo.')
+  const handleEdit = (comment) => {
+    setEditComment(comment)
+    setEditText(comment.text || '')
   }
 
-  const handleCopy = (comment) => {
-    const url = `${window.location.href}#comment-${comment.id}`
+  const handleSaveEdit = () => {
+    if (!editComment || !editText.trim()) return
 
-    navigator.clipboard?.writeText(url)
-      .then(() => showToast('Comment link copied.'))
-      .catch(() => showToast('Copy is not available.'))
+    const nextComments = comments.map((comment) =>
+      comment.id === editComment.id
+        ? { ...comment, text: editText.trim(), updated_at: new Date().toISOString() }
+        : comment
+    )
+
+    updateComments(nextComments)
+    setEditComment(null)
+    setEditText('')
+    showToast('Comment updated.')
+  }
+
+  const handleDelete = (comment) => {
+    const nextComments = comments.filter((item) => item.id !== comment.id)
+
+    updateComments(nextComments)
+    showToast('Comment deleted.')
+  }
+
+  const handleHide = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_hidden: true } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Comment hidden.')
+  }
+
+  const handleUnhide = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_hidden: false } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Comment visible again.')
+  }
+
+  const handlePin = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_pinned: true } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Comment pinned.')
+  }
+
+  const handleUnpin = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_pinned: false } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Comment unpinned.')
+  }
+
+  const handleSpoiler = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_spoiler: true } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Spoiler mark added.')
+  }
+
+  const handleUnspoiler = (comment) => {
+    const nextComments = comments.map((item) =>
+      item.id === comment.id ? { ...item, is_spoiler: false } : item
+    )
+
+    updateComments(nextComments)
+    showToast('Spoiler mark removed.')
+  }
+
+  const handleBan = (comment) => {
+    if (!comment.user_id) {
+      showToast('This old demo comment has no user id.')
+      return
+    }
+
+    const nextBannedUsers = Array.from(new Set([...bannedUsers, String(comment.user_id)]))
+    updateBannedUsers(nextBannedUsers)
+    showToast('User banned from commenting.')
   }
 
   const handleSticker = () => {
-    showToast('Sticker picker is ready for Admin stickers later.')
+    showToast('Sticker picker is hidden for now.')
   }
 
   return (
@@ -495,7 +860,7 @@ export default function CommentSection({
           <div>
             <h2 className="text-[17px] font-black text-[#111827]">All Comments</h2>
             <p className="mt-0.5 text-[12px] font-semibold text-[#98a2b3]">
-              {comments.length ? `${comments.length} comments` : 'No comments yet'}
+              {visibleComments.length ? `${visibleComments.length} comments` : 'No comments yet'}
             </p>
           </div>
 
@@ -538,10 +903,18 @@ export default function CommentSection({
               <CommentItem
                 key={comment.id}
                 comment={comment}
+                story={story}
                 onLike={handleLike}
                 onReply={handleReply}
-                onReport={handleReport}
-                onCopy={handleCopy}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onHide={handleHide}
+                onUnhide={handleUnhide}
+                onPin={handlePin}
+                onUnpin={handleUnpin}
+                onSpoiler={handleSpoiler}
+                onUnspoiler={handleUnspoiler}
+                onBan={handleBan}
               />
             ))
           ) : (
@@ -562,6 +935,18 @@ export default function CommentSection({
         onSend={handleSend}
         onSticker={handleSticker}
         isModal={isModal}
+        isBanned={isBanned}
+      />
+
+      <EditCommentSheet
+        comment={editComment}
+        value={editText}
+        onChange={setEditText}
+        onCancel={() => {
+          setEditComment(null)
+          setEditText('')
+        }}
+        onSave={handleSaveEdit}
       />
     </section>
   )
