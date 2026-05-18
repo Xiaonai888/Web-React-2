@@ -111,6 +111,7 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
           <CommentSection
             targetType="story"
             targetId={story?.id}
+            story={story}
             variant="modal"
             onCommentsChange={onCommentChanged}
           />
