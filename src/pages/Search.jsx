@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const TABS = ['Trending Now', 'Popular', 'New Releases']
+const SEARCH_HISTORY_KEY = 'shadow_search_history'
 
 const RANK_STYLE = {
   1: 'linear-gradient(135deg,#fbbf24,#f59e0b)',
@@ -22,21 +23,81 @@ const BOOKS_DATA = [
   { rank: 10, id: '10', title: 'The Revenge', author: 'Author Name', likes: '2K', views: '50K' },
 ]
 
+function loadSearchHistory() {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY)
+    const parsed = JSON.parse(raw || '[]')
+    return Array.isArray(parsed) ? parsed.slice(0, 3) : []
+  } catch {
+    return []
+  }
+}
+
+function saveSearchHistory(items) {
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(items.slice(0, 3)))
+}
+
 export default function Search() {
   const [activeTab, setActiveTab] = useState('Trending Now')
   const [searchText, setSearchText] = useState('')
+  const [isSearchMode, setIsSearchMode] = useState(false)
+  const [searchHistory, setSearchHistory] = useState([])
   const navigate = useNavigate()
 
-  const filteredBooks = BOOKS_DATA.filter((book) => {
+  useEffect(() => {
+    setSearchHistory(loadSearchHistory())
+  }, [])
+
+  const filteredBooks = useMemo(() => {
     const keyword = searchText.trim().toLowerCase()
 
-    if (!keyword) return true
+    if (!keyword) return BOOKS_DATA
 
-    return (
-      book.title.toLowerCase().includes(keyword) ||
-      book.author.toLowerCase().includes(keyword)
-    )
-  })
+    return BOOKS_DATA.filter((book) => {
+      return (
+        book.title.toLowerCase().includes(keyword) ||
+        book.author.toLowerCase().includes(keyword)
+      )
+    })
+  }, [searchText])
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault()
+
+    const keyword = searchText.trim()
+
+    if (!keyword) return
+
+    const nextHistory = [
+      keyword,
+      ...searchHistory.filter((item) => item.toLowerCase() !== keyword.toLowerCase()),
+    ].slice(0, 3)
+
+    setSearchHistory(nextHistory)
+    saveSearchHistory(nextHistory)
+    setIsSearchMode(false)
+  }
+
+  const handleUseHistory = (keyword) => {
+    setSearchText(keyword)
+    setIsSearchMode(false)
+  }
+
+  const handleRemoveHistory = (keyword) => {
+    const nextHistory = searchHistory.filter((item) => item !== keyword)
+    setSearchHistory(nextHistory)
+    saveSearchHistory(nextHistory)
+  }
+
+  const handleClearHistory = () => {
+    setSearchHistory([])
+    saveSearchHistory([])
+  }
+
+  const handleCancelSearch = () => {
+    setIsSearchMode(false)
+    setSearchText('')
+  }
 
   return (
     <>
@@ -50,109 +111,174 @@ export default function Search() {
 
       <div style={{ paddingBottom: '80px' }}>
         <header className="sticky top-0 z-[100] border-b border-gray-100 bg-white/90 px-4 py-4 backdrop-blur-lg">
-          <div className="mx-auto flex max-w-3xl items-center space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-            >
-              <i className="fa-solid fa-chevron-left text-lg" />
-            </button>
+          <form onSubmit={handleSearchSubmit} className="mx-auto flex max-w-3xl items-center space-x-3">
+            {!isSearchMode ? (
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <i className="fa-solid fa-chevron-left text-lg" />
+              </button>
+            ) : null}
 
             <div className="relative flex-1">
               <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchText}
+                onFocus={() => setIsSearchMode(true)}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Search Shadow..."
-                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 shadow-sm outline-none"
+                className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 shadow-sm outline-none focus:border-[#111827]"
               />
             </div>
-          </div>
+
+            {isSearchMode ? (
+              <button
+                type="button"
+                onClick={handleCancelSearch}
+                className="shrink-0 text-[13px] font-extrabold text-[#111827]"
+              >
+                Cancel
+              </button>
+            ) : null}
+          </form>
         </header>
 
-        <main className="mx-auto mt-6 max-w-3xl px-4">
-          <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`whitespace-nowrap pb-3 text-sm font-semibold text-gray-400 transition-all ${
-                  activeTab === tab ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
+        {isSearchMode ? (
+          <main className="mx-auto max-w-3xl px-4 pt-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[15px] font-extrabold text-[#111827]">Recent Searches</h2>
 
-          <div>
-            <div className="mb-6 flex items-center space-x-3">
-              <div className="h-6 w-1.5 rounded-full bg-[#111827]" />
-              <h2 className="text-xl font-extrabold">{activeTab}</h2>
-            </div>
-
-            <div className="space-y-4">
-              {filteredBooks.map((book) => (
+              {searchHistory.length ? (
                 <button
-                  key={book.rank}
                   type="button"
-                  onClick={() => navigate(`/story/${book.id}`)}
-                  className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left"
+                  onClick={handleClearHistory}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-95"
+                  aria-label="Clear all search history"
                 >
-                  {book.rank <= 3 ? (
-                    <div
-                      className="absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center font-black italic text-white shadow-sm"
-                      style={{ background: RANK_STYLE[book.rank] }}
-                    >
-                      {book.rank}
-                    </div>
-                  ) : (
-                    <div className="w-10 text-center text-xl font-black italic text-gray-300">
-                      {book.rank}
-                    </div>
-                  )}
-
-                  <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner ${book.rank <= 3 ? 'ml-4' : ''}`}>
-                    <img
-                      src={`/assets/Search Pic/Book ${book.rank}.jpg`}
-                      className="h-full w-full object-cover"
-                      alt={book.title}
-                      onError={(event) => {
-                        event.currentTarget.src = 'https://via.placeholder.com/200x300?text=No+Cover'
-                      }}
-                    />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className={`${book.rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
-                      {book.title}
-                    </h3>
-                    <p className="text-sm text-gray-400">by {book.author}</p>
-                    <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
-                      <span className="text-[#ef4444]">
-                        <i className="fa-solid fa-heart mr-1" />
-                        {book.likes}
-                      </span>
-                      <span className="text-[#111827]">
-                        <i className="fa-solid fa-eye mr-1" />
-                        {book.views}
-                      </span>
-                    </div>
-                  </div>
+                  <i className="fa-regular fa-trash-can text-[14px]" />
                 </button>
-              ))}
-
-              {!filteredBooks.length ? (
-                <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
-                  No stories found.
-                </div>
               ) : null}
             </div>
-          </div>
-        </main>
+
+            {searchHistory.length ? (
+              <div className="mt-4 flex flex-col gap-3">
+                {searchHistory.map((keyword) => (
+                  <div
+                    key={keyword}
+                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleUseHistory(keyword)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <i className="fa-solid fa-clock-rotate-left shrink-0 text-[14px] text-gray-400" />
+                      <span className="truncate text-[13px] font-bold text-[#111827]">{keyword}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveHistory(keyword)}
+                      className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#111827]"
+                      aria-label={`Remove ${keyword}`}
+                    >
+                      <i className="fa-solid fa-xmark text-[14px]" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
+                No recent searches yet.
+              </div>
+            )}
+          </main>
+        ) : (
+          <main className="mx-auto mt-6 max-w-3xl px-4">
+            <nav className="no-scrollbar mb-8 flex space-x-8 overflow-x-auto border-b border-gray-100">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`whitespace-nowrap pb-3 text-sm font-semibold text-gray-400 transition-all ${
+                    activeTab === tab ? 'border-b-[3px] border-[#111827] font-black text-[#111827]' : ''
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </nav>
+
+            <div>
+              <div className="mb-6 flex items-center space-x-3">
+                <div className="h-6 w-1.5 rounded-full bg-[#111827]" />
+                <h2 className="text-xl font-extrabold">{activeTab}</h2>
+              </div>
+
+              <div className="space-y-4">
+                {filteredBooks.map((book) => (
+                  <button
+                    key={book.rank}
+                    type="button"
+                    onClick={() => navigate(`/story/${book.id}`)}
+                    className="book-card relative flex w-full items-center space-x-4 overflow-hidden rounded-3xl bg-white p-4 text-left"
+                  >
+                    {book.rank <= 3 ? (
+                      <div
+                        className="absolute left-0 top-0 z-10 flex h-10 w-10 items-center justify-center font-black italic text-white shadow-sm"
+                        style={{ background: RANK_STYLE[book.rank] }}
+                      >
+                        {book.rank}
+                      </div>
+                    ) : (
+                      <div className="w-10 text-center text-xl font-black italic text-gray-300">
+                        {book.rank}
+                      </div>
+                    )}
+
+                    <div className={`h-28 w-20 overflow-hidden rounded-xl bg-gray-100 shadow-inner ${book.rank <= 3 ? 'ml-4' : ''}`}>
+                      <img
+                        src={`/assets/Search Pic/Book ${book.rank}.jpg`}
+                        className="h-full w-full object-cover"
+                        alt={book.title}
+                        onError={(event) => {
+                          event.currentTarget.src = 'https://via.placeholder.com/200x300?text=No+Cover'
+                        }}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`${book.rank <= 3 ? 'font-extrabold' : 'font-bold'} truncate text-gray-900`}>
+                        {book.title}
+                      </h3>
+                      <p className="text-sm text-gray-400">by {book.author}</p>
+                      <div className="mt-4 flex items-center space-x-4 text-[12px] font-bold">
+                        <span className="inline-flex items-center text-[#111827]">
+                          <i className="fa-solid fa-heart mr-1 text-[#ef4444]" />
+                          {book.likes}
+                        </span>
+                        <span className="inline-flex items-center text-[#111827]">
+                          <i className="fa-solid fa-eye mr-1 text-[#111827]" />
+                          {book.views}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+
+                {!filteredBooks.length ? (
+                  <div className="rounded-3xl bg-white p-8 text-center text-sm font-bold text-gray-400 ring-1 ring-gray-100">
+                    No stories found.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </main>
+        )}
       </div>
     </>
   )
