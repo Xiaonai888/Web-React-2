@@ -88,7 +88,8 @@ export default function PurchaseSection() {
   const [purchases, setPurchases] = useState([])
   const [payerName, setPayerName] = useState('')
   const [paymentReference, setPaymentReference] = useState('')
-  const [proofUrl, setProofUrl] = useState('')
+  const [proofFile, setProofFile] = useState(null)
+  const [proofPreview, setProofPreview] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
@@ -129,6 +130,31 @@ export default function PurchaseSection() {
     }
   }
 
+  async function uploadProofImage() {
+    if (!proofFile) return ''
+
+    const token = getReaderToken()
+    const formData = new FormData()
+    formData.append('image', proofFile)
+    formData.append('folder', 'payment_proof')
+
+    const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || 'Failed to upload payment proof.')
+    }
+
+    return data.image_url || data.imageUrl || ''
+  }
+
   async function submitPurchase() {
     const token = getReaderToken()
 
@@ -142,6 +168,8 @@ export default function PurchaseSection() {
     try {
       setSubmitting(true)
       setMessage('')
+
+      const proofUrl = await uploadProofImage()
 
       const response = await fetch(`${API_BASE_URL}/api/purchase/requests`, {
         method: 'POST',
@@ -162,7 +190,8 @@ export default function PurchaseSection() {
 
       setPayerName('')
       setPaymentReference('')
-      setProofUrl('')
+      setProofFile(null)
+      setProofPreview('')
       setMessage('Purchase request submitted. Please wait for admin approval.')
       await loadPurchaseData()
     } catch (error) {
@@ -175,6 +204,18 @@ export default function PurchaseSection() {
   useEffect(() => {
     loadPurchaseData()
   }, [])
+
+  useEffect(() => {
+    if (!proofFile) {
+      setProofPreview('')
+      return
+    }
+
+    const url = URL.createObjectURL(proofFile)
+    setProofPreview(url)
+
+    return () => URL.revokeObjectURL(url)
+  }, [proofFile])
 
   if (!getReaderToken()) {
     return (
@@ -243,7 +284,7 @@ export default function PurchaseSection() {
       <div className="rounded-3xl border border-[#eeeeee] bg-white p-5">
         <h3 className="text-[18px] font-black text-[#111]">Payment Request</h3>
         <p className="mt-1 text-[12px] leading-5 text-[#777]">
-          Submit your payment information after sending payment. Admin will approve and add Diamonds to your wallet.
+          Submit payment proof after sending payment. Admin will approve and add Diamonds to your wallet.
         </p>
 
         <div className="mt-4 rounded-2xl bg-[#f6f6f6] p-4">
@@ -275,12 +316,26 @@ export default function PurchaseSection() {
             className="h-12 w-full rounded-2xl border border-[#e5e5e5] bg-white px-4 text-[14px] font-semibold text-[#111] outline-none focus:border-black"
           />
 
-          <input
-            value={proofUrl}
-            onChange={(event) => setProofUrl(event.target.value)}
-            placeholder="Proof image URL"
-            className="h-12 w-full rounded-2xl border border-[#e5e5e5] bg-white px-4 text-[14px] font-semibold text-[#111] outline-none focus:border-black"
-          />
+          <label className="block rounded-2xl border border-dashed border-[#d4d4d4] bg-[#fafafa] p-4 text-center active:bg-[#f1f1f1]">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => setProofFile(event.target.files?.[0] || null)}
+            />
+            <span className="text-[13px] font-black text-[#111]">
+              {proofFile ? proofFile.name : 'Upload payment proof'}
+            </span>
+            <span className="mt-1 block text-[11px] font-semibold text-[#777]">
+              Screenshot or photo of payment receipt
+            </span>
+          </label>
+
+          {proofPreview ? (
+            <div className="overflow-hidden rounded-2xl border border-[#e5e5e5] bg-[#f6f6f6]">
+              <img src={proofPreview} alt="Payment proof preview" className="max-h-[260px] w-full object-contain" />
+            </div>
+          ) : null}
 
           <button
             type="button"
