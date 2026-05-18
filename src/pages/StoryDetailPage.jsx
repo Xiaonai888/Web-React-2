@@ -7,8 +7,6 @@ import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSect
 import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
 import LatestCommentSection from '../components/story-detail/LatestCommentSection'
-import CommentsModal from '../components/story-detail/CommentsModal'
-
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
 
@@ -61,16 +59,6 @@ function getStoredProgress(storyId, episodes) {
   }
 }
 
-function getFinishedEpisodeCount(storyId) {
-  try {
-    const raw = localStorage.getItem(`shadow_story_finished_${storyId}`)
-    const number = Number(raw || 0)
-    return Number.isFinite(number) ? number : 0
-  } catch {
-    return 0
-  }
-}
-
 export default function StoryDetailPage() {
   const navigate = useNavigate()
   const { id, storyId } = useParams()
@@ -81,7 +69,6 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
-  const [commentsOpen, setCommentsOpen] = useState(false)
   const [lockedEpisode, setLockedEpisode] = useState(null)
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -157,8 +144,6 @@ export default function StoryDetailPage() {
     return getStoredProgress(realStoryId, episodes) || firstEpisode
   }, [episodes, firstEpisode, realStoryId])
 
-  const finishedEpisodeCount = useMemo(() => getFinishedEpisodeCount(realStoryId), [realStoryId])
-
   const handleOpenEpisode = (episode) => {
     if (!episode) return
 
@@ -230,7 +215,7 @@ export default function StoryDetailPage() {
 
         <LatestCommentSection
           story={story}
-          onOpenComments={() => setCommentsOpen(true)}
+          onOpenComments={() => navigate(`/story/${realStoryId}/comments`)}
         />
 
         <RecommendationSection story={story} />
@@ -255,13 +240,6 @@ export default function StoryDetailPage() {
         episode={lockedEpisode}
         onClose={() => setLockedEpisode(null)}
       />
-
-      <CommentsModal
-        open={commentsOpen}
-        story={story}
-        onClose={() => setCommentsOpen(false)}
-      />
-
     </div>
   )
 }
