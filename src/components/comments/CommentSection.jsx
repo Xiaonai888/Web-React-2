@@ -320,8 +320,8 @@ function CommentComposer({
   onChange,
   onSend,
   onSticker,
-  onEmoji,
   isModal,
+  isBanned,
 }) {
   const currentUser = getCurrentUser()
 
@@ -331,26 +331,29 @@ function CommentComposer({
         <Avatar user={currentUser} />
 
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[22px] bg-[#f3f4f6] px-3 py-2">
-          <button type="button" onClick={onEmoji} className="text-[#98a2b3]" aria-label="Emoji">
-            <i className="fa-regular fa-face-smile text-[18px]" />
-          </button>
-
           <input
             id="shadow-comment-input"
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            placeholder="Write a comment..."
-            className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#111827] outline-none placeholder:text-[#98a2b3]"
+            disabled={isBanned}
+            placeholder={isBanned ? 'You cannot comment on this story.' : 'Write a comment...'}
+            className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
           />
 
-          <button type="button" onClick={onSticker} className="text-[#98a2b3]" aria-label="Sticker">
+          <button
+            type="button"
+            onClick={onSticker}
+            className="hidden text-[#98a2b3]"
+            aria-label="Sticker"
+            disabled={isBanned}
+          >
             <i className="fa-regular fa-note-sticky text-[17px]" />
           </button>
 
           <button
             type="button"
             onClick={onSend}
-            disabled={!value.trim()}
+            disabled={!value.trim() || isBanned}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
             aria-label="Send comment"
           >
