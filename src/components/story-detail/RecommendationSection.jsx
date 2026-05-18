@@ -168,7 +168,7 @@ export default function RecommendationSection({ story }) {
     <section className="mt-2 space-y-0 sm:mt-4 sm:space-y-4">
       <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
         <div className="mb-3">
-          <h2 className="text-[18px] font-black text-[#111827]">Other work by {authorName}</h2>
+          <h2 className="text-[18px] font-black text-[#111827]">More by {authorName}</h2>
         </div>
 
         {loading ? (
