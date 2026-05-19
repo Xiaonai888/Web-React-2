@@ -18,7 +18,7 @@ const fallbackPackages = [
 ]
 
 function getReaderToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
 function getHeaders() {
@@ -32,6 +32,10 @@ function getHeaders() {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatUsd(value) {
+  return Number(value || 0).toFixed(2)
 }
 
 function formatTime(seconds) {
@@ -52,12 +56,16 @@ function PackageCard({ item, selected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-3xl border bg-white p-4 text-left transition active:scale-[0.99] ${selected ? 'border-black ring-2 ring-black/10' : 'border-[#e9e9e9]'}`}
+      className={`rounded-3xl border bg-white p-4 text-left transition active:scale-[0.99] ${
+        selected ? 'border-black ring-2 ring-black/10' : 'border-[#e9e9e9]'
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[24px] font-black tracking-tight text-[#111]">${item.package_usd}</p>
-          <p className="mt-2 text-[14px] font-extrabold text-[#111]">{formatNumber(item.diamonds)} Diamonds</p>
+          <p className="mt-2 text-[14px] font-extrabold text-[#111]">
+            {formatNumber(item.diamonds)} Diamonds
+          </p>
           <p className="mt-1 min-h-[20px] text-[12px] font-semibold text-[#777]">
             {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
           </p>
@@ -71,7 +79,43 @@ function PackageCard({ item, selected, onSelect }) {
   )
 }
 
-function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, creating, checking, paymentMessage, onClose, onCreateAbaPayment }) {
+function PaymentStatusBadge({ payment, secondsLeft }) {
+  if (!payment) return null
+
+  if (payment.status === 'success') {
+    return (
+      <div className="mx-auto mb-3 inline-flex rounded-full bg-green-100 px-3 py-1 text-[12px] font-black text-green-700">
+        Payment Success
+      </div>
+    )
+  }
+
+  if (['failed', 'expired', 'cancelled'].includes(payment.status)) {
+    return (
+      <div className="mx-auto mb-3 inline-flex rounded-full bg-red-100 px-3 py-1 text-[12px] font-black capitalize text-red-700">
+        {payment.status}
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto mb-3 inline-flex rounded-full bg-neutral-100 px-3 py-1 text-[12px] font-black text-neutral-800">
+      Expires in {formatTime(secondsLeft)}
+    </div>
+  )
+}
+
+function PaymentMethodModal({
+  selectedPackage,
+  payment,
+  qrImage,
+  secondsLeft,
+  creating,
+  checking,
+  paymentMessage,
+  onClose,
+  onCreateAbaPayment,
+}) {
   if (!selectedPackage) return null
 
   const isWaiting = payment?.status === 'waiting_payment'
@@ -93,6 +137,7 @@ function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, cr
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f3f3] text-[#111] active:scale-95"
+            aria-label="Close payment method"
           >
             <i className="fas fa-times text-[14px]" />
           </button>
@@ -101,12 +146,13 @@ function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, cr
         <div className="mb-4 rounded-2xl bg-[#f6f6f6] p-4">
           <div className="flex items-center justify-between gap-3">
             <span className="text-[13px] font-bold text-[#666]">Amount</span>
-            <span className="text-[16px] font-black text-[#111]">${selectedPackage.package_usd}</span>
+            <span className="text-[16px] font-black text-[#111]">${formatUsd(selectedPackage.package_usd)}</span>
           </div>
           <div className="mt-2 flex items-center justify-between gap-3">
             <span className="text-[13px] font-bold text-[#666]">You get</span>
             <span className="text-right text-[13px] font-black text-[#111]">
-              {formatNumber(selectedPackage.diamonds)} Diamonds{selectedPackage.bonus_gems > 0 ? ` + ${formatNumber(selectedPackage.bonus_gems)} Gems` : ''}
+              {formatNumber(selectedPackage.diamonds)} Diamonds
+              {selectedPackage.bonus_gems > 0 ? ` + ${formatNumber(selectedPackage.bonus_gems)} Gems` : ''}
             </span>
           </div>
         </div>
@@ -119,10 +165,14 @@ function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, cr
             className="flex w-full items-center justify-between rounded-2xl border border-black bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
+              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">
+                KHQR
+              </div>
               <div>
                 <p className="text-[14px] font-black text-[#111]">ABA KHQR</p>
-                <p className="mt-1 text-[11px] font-semibold text-[#777]">{creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}</p>
+                <p className="mt-1 text-[11px] font-semibold text-[#777]">
+                  {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
+                </p>
               </div>
             </div>
 
@@ -132,28 +182,33 @@ function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, cr
 
         {payment ? (
           <div className="rounded-3xl border border-[#eeeeee] bg-white p-4 text-center">
-            <div className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${isSuccess ? 'bg-green-100 text-green-700' : isEnded ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-800'}`}>
-              {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
-            </div>
+            <PaymentStatusBadge payment={payment} secondsLeft={secondsLeft} />
 
             {qrImage && isWaiting ? (
-              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#eeeeee] bg-white p-2" />
+              <div className="mx-auto w-fit rounded-[24px] border border-[#eeeeee] bg-white p-3 shadow-sm">
+                <img src={qrImage} alt="ABA KHQR" className="h-[230px] w-[230px] rounded-2xl bg-white object-contain" />
+              </div>
             ) : null}
 
             {!qrImage && payment.checkout_url && isWaiting ? (
-              <a href={payment.checkout_url} target="_blank" rel="noreferrer" className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-black text-[14px] font-black text-white">
+              <a
+                href={payment.checkout_url}
+                target="_blank"
+                rel="noreferrer"
+                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-black text-[14px] font-black text-white"
+              >
                 Open ABA Payment
               </a>
             ) : null}
 
             {!qrImage && !payment.checkout_url && isWaiting ? (
               <div className="rounded-2xl bg-[#f6f6f6] p-4 text-[12px] font-bold leading-5 text-[#777]">
-                ABA payment was created, but QR data is not available yet.
+                Payment order was created. ABA QR will appear after PayWay credentials are configured.
               </div>
             ) : null}
 
             {checking && isWaiting ? (
-              <p className="mt-3 text-[12px] font-bold text-[#777]">Checking payment safely...</p>
+              <p className="mt-3 text-[12px] font-bold text-[#777]">Checking payment status...</p>
             ) : null}
 
             {paymentMessage ? (
@@ -227,12 +282,12 @@ export default function PurchaseSection() {
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
       ])
 
-      const packagesData = await packagesResponse.json()
-      const walletData = await walletResponse.json()
+      const packagesData = await packagesResponse.json().catch(() => ({}))
+      const walletData = await walletResponse.json().catch(() => ({}))
 
       if (packagesData.ok && Array.isArray(packagesData.packages)) setPackages(packagesData.packages)
       if (walletData.ok) setWallet(walletData.wallet)
-    } catch (error) {
+    } catch {
       setMessage('Failed to load purchase data.')
     } finally {
       setLoading(false)
@@ -240,20 +295,28 @@ export default function PurchaseSection() {
   }
 
   async function createQrFromPayment(nextPayment) {
-    const value = nextPayment?.qr_string || nextPayment?.checkout_url || ''
-    if (!value) {
+    const directImage = nextPayment?.qr_image || nextPayment?.qrImage || nextPayment?.qr_image_url || ''
+
+    if (directImage) {
+      setQrImage(directImage)
+      return
+    }
+
+    const qrValue = nextPayment?.qr_string || nextPayment?.qrString || ''
+
+    if (!qrValue) {
       setQrImage('')
       return
     }
 
     try {
-      const url = await QRCode.toDataURL(value, {
+      const url = await QRCode.toDataURL(qrValue, {
         width: 420,
         margin: 1,
         errorCorrectionLevel: 'M',
       })
       setQrImage(url)
-    } catch (error) {
+    } catch {
       setQrImage('')
     }
   }
@@ -266,7 +329,7 @@ export default function PurchaseSection() {
       const response = await fetch(`${API_BASE_URL}/api/purchase/aba/status/${encodeURIComponent(orderId)}`, {
         headers: getHeaders(),
       })
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to check payment status.')
 
@@ -320,7 +383,7 @@ export default function PurchaseSection() {
         headers: getHeaders(),
         body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
       })
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create ABA payment.')
 
@@ -329,7 +392,9 @@ export default function PurchaseSection() {
       await createQrFromPayment(data.payment)
       startPolling(data.payment?.order_id)
 
-      if (!data.configured) setPaymentMessage('ABA PayWay is not configured yet. This is test mode only.')
+      if (!data.configured) {
+        setPaymentMessage('ABA PayWay credentials are not configured yet. Order structure is ready for sandbox testing later.')
+      }
     } catch (error) {
       setPaymentMessage(error.message || 'Failed to create ABA payment.')
     } finally {
@@ -380,7 +445,11 @@ export default function PurchaseSection() {
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#666]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
-        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-black px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="mt-5 rounded-full bg-black px-6 py-3 text-[13px] font-extrabold text-white active:scale-95"
+        >
           Log In
         </button>
       </section>
@@ -395,12 +464,16 @@ export default function PurchaseSection() {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-[#f6f6f6] p-4">
             <p className="text-[12px] font-bold text-[#777]">Diamonds</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+            <p className="mt-1 text-[24px] font-black text-[#111]">
+              {loading ? '...' : formatNumber(wallet?.diamond_balance)}
+            </p>
           </div>
 
           <div className="rounded-2xl bg-[#f6f6f6] p-4">
             <p className="text-[12px] font-bold text-[#777]">Gems</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
+            <p className="mt-1 text-[24px] font-black text-[#111]">
+              {loading ? '...' : formatNumber(wallet?.gem_balance)}
+            </p>
           </div>
         </div>
 
@@ -413,7 +486,7 @@ export default function PurchaseSection() {
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <h2 className="text-[20px] font-black text-[#111]">Choose Amount</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#777]">ABA KHQR expires in 2 minutes.</p>
+            <p className="mt-1 text-[12px] font-semibold text-[#777]">ABA KHQR expires in 3 minutes.</p>
           </div>
         </div>
 
@@ -429,7 +502,11 @@ export default function PurchaseSection() {
         </div>
       </div>
 
-      <button type="button" onClick={handlePurchase} className="w-full rounded-2xl bg-black py-4 text-[15px] font-black text-white active:scale-[0.99]">
+      <button
+        type="button"
+        onClick={handlePurchase}
+        className="w-full rounded-2xl bg-black py-4 text-[15px] font-black text-white active:scale-[0.99]"
+      >
         Purchase
       </button>
 
