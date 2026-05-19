@@ -12,13 +12,11 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [resetUrl, setResetUrl] = useState('')
 
   async function handleSubmit(event) {
     event.preventDefault()
     setMessage('')
     setError('')
-    setResetUrl('')
 
     const cleanEmail = email.trim().toLowerCase()
 
@@ -47,8 +45,12 @@ export default function ForgotPasswordPage() {
         return
       }
 
-      setMessage(data.message || 'If this email exists, a reset link has been sent.')
-      setResetUrl(data.reset_url || '')
+      if (data.email_sent === false) {
+        setError('Email sending is not configured yet. Please ask the admin to enable email service.')
+        return
+      }
+
+      setMessage('Please check your email. We sent a password reset link if this account exists.')
     } catch {
       setError('Cannot connect to backend.')
     } finally {
@@ -83,7 +85,7 @@ export default function ForgotPasswordPage() {
           </label>
 
           {error ? (
-            <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
               {error}
             </div>
           ) : null}
@@ -92,15 +94,6 @@ export default function ForgotPasswordPage() {
             <div className="rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#067647]">
               {message}
             </div>
-          ) : null}
-
-          {resetUrl ? (
-            <a
-              href={resetUrl}
-              className="block break-words rounded-[14px] bg-[#f5f3fa] px-4 py-3 text-[12px] font-bold leading-5 text-[#111827]"
-            >
-              {resetUrl}
-            </a>
           ) : null}
 
           <button
