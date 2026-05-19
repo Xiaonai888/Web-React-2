@@ -8,6 +8,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const DIAMOND_ICON = '/assets/icons/Diamond.png'
+
 const fallbackPackages = [
   { package_usd: 1, diamonds: 100, bonus_gems: 0 },
   { package_usd: 5, diamonds: 500, bonus_gems: 1000 },
@@ -18,7 +20,7 @@ const fallbackPackages = [
 ]
 
 function getReaderToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
 function getHeaders() {
@@ -34,8 +36,8 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
-function formatUsd(value) {
-  return Number(value || 0).toFixed(2)
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`
 }
 
 function formatTime(seconds) {
@@ -45,63 +47,87 @@ function formatTime(seconds) {
   return `${minutes}:${String(remain).padStart(2, '0')}`
 }
 
-function getSecondsLeft(expiredAt) {
-  if (!expiredAt) return 0
-  const diff = new Date(expiredAt).getTime() - Date.now()
+function getSecondsLeft(expiresAt) {
+  if (!expiresAt) return 0
+  const diff = new Date(expiresAt).getTime() - Date.now()
   return Math.max(0, Math.ceil(diff / 1000))
 }
 
+function getBadge(item) {
+  if (Number(item.package_usd) === 10) return 'Best Value'
+  if (Number(item.package_usd) === 100) return 'Max Pack'
+  if (Number(item.bonus_gems) > 0) return 'Bonus'
+  return ''
+}
+
+function DiamondIcon({ size = 'h-11 w-11' }) {
+  return (
+    <span className={`flex shrink-0 items-center justify-center rounded-2xl bg-[#eef8ff] shadow-[inset_0_0_0_1px_rgba(21,151,242,0.12)] ${size}`}>
+      <img src={DIAMOND_ICON} alt="Diamond" className="h-[78%] w-[78%] object-contain" />
+    </span>
+  )
+}
+
 function PackageCard({ item, selected, onSelect }) {
+  const badge = getBadge(item)
+
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-3xl border bg-white p-4 text-left transition active:scale-[0.99] ${
-        selected ? 'border-black ring-2 ring-black/10' : 'border-[#e9e9e9]'
+      className={`group relative min-h-[150px] overflow-hidden rounded-[26px] border bg-white p-4 text-left transition active:scale-[0.99] ${
+        selected
+          ? 'border-[#1597f2] shadow-[0_16px_36px_rgba(21,151,242,0.18)] ring-2 ring-[#5edcff]/30'
+          : 'border-[#e7edf5] shadow-[0_8px_22px_rgba(15,23,42,0.04)] hover:border-[#9bdcff] hover:shadow-[0_14px_30px_rgba(21,151,242,0.12)]'
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[24px] font-black tracking-tight text-[#111]">${item.package_usd}</p>
-          <p className="mt-2 text-[14px] font-extrabold text-[#111]">
-            {formatNumber(item.diamonds)} Diamonds
-          </p>
-          <p className="mt-1 min-h-[20px] text-[12px] font-semibold text-[#777]">
-            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
-          </p>
-        </div>
+      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[radial-gradient(circle,#5edcff_0%,#1597f2_44%,transparent_70%)] opacity-[0.16] transition group-hover:opacity-[0.24]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-24 bg-gradient-to-br from-transparent via-[#eef8ff] to-[#dff5ff] opacity-70" />
 
-        <span className={`mt-1 h-5 w-5 rounded-full border ${selected ? 'border-black bg-black' : 'border-[#cfcfcf] bg-white'}`}>
-          {selected ? <i className="fas fa-check block pt-[3px] text-center text-[10px] text-white" /> : null}
+      <div className="relative flex items-start justify-between gap-3">
+        <DiamondIcon />
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+            selected ? 'border-[#0b4fb3] bg-[#0b4fb3]' : 'border-[#cbd5e1] bg-white'
+          }`}
+        >
+          {selected ? <i className="fas fa-check text-[9px] text-white" /> : null}
         </span>
       </div>
+
+      <div className="relative mt-4">
+        {badge ? (
+          <div className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${
+            badge === 'Best Value' || badge === 'Max Pack'
+              ? 'bg-[#fff4cc] text-[#9a6a00]'
+              : 'bg-[#eef8ff] text-[#0b4fb3]'
+          }`}>
+            {badge}
+          </div>
+        ) : null}
+
+        <div className="flex items-baseline gap-1">
+          <span className="text-[30px] font-black leading-none tracking-[-0.04em] text-[#0b4fb3]">
+            {formatNumber(item.diamonds)}
+          </span>
+          <span className="text-[13px] font-black text-[#111827]">Diamonds</span>
+        </div>
+
+        <div className="mt-2 text-[14px] font-black text-[#ff4d4f]">
+          {formatMoney(item.package_usd)}
+        </div>
+
+        <div className="mt-2 min-h-[20px] text-[12px] font-extrabold text-[#667085]">
+          {item.bonus_gems > 0 ? (
+            <span className="inline-flex rounded-full bg-[#fff8e1] px-2.5 py-1 text-[#b77900]">
+              Bonus {formatNumber(item.bonus_gems)} Gems
+            </span>
+          ) : (
+            <span>No bonus gems</span>
+          )}
+        </div>
+      </div>
     </button>
-  )
-}
-
-function PaymentStatusBadge({ payment, secondsLeft }) {
-  if (!payment) return null
-
-  if (payment.status === 'success') {
-    return (
-      <div className="mx-auto mb-3 inline-flex rounded-full bg-green-100 px-3 py-1 text-[12px] font-black text-green-700">
-        Payment Success
-      </div>
-    )
-  }
-
-  if (['failed', 'expired', 'cancelled'].includes(payment.status)) {
-    return (
-      <div className="mx-auto mb-3 inline-flex rounded-full bg-red-100 px-3 py-1 text-[12px] font-black capitalize text-red-700">
-        {payment.status}
-      </div>
-    )
-  }
-
-  return (
-    <div className="mx-auto mb-3 inline-flex rounded-full bg-neutral-100 px-3 py-1 text-[12px] font-black text-neutral-800">
-      Expires in {formatTime(secondsLeft)}
-    </div>
   )
 }
 
@@ -124,11 +150,11 @@ function PaymentMethodModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
-      <div className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
+      <div className="w-full max-w-[430px] rounded-[30px] bg-white p-5 shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-[20px] font-black text-[#111]">Payment Method</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#777]">
+            <h3 className="text-[20px] font-black text-[#111827]">Payment Method</h3>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#667085]">
               {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
             </p>
           </div>
@@ -136,24 +162,27 @@ function PaymentMethodModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f3f3] text-[#111] active:scale-95"
-            aria-label="Close payment method"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] active:scale-95"
           >
             <i className="fas fa-times text-[14px]" />
           </button>
         </div>
 
-        <div className="mb-4 rounded-2xl bg-[#f6f6f6] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[13px] font-bold text-[#666]">Amount</span>
-            <span className="text-[16px] font-black text-[#111]">${formatUsd(selectedPackage.package_usd)}</span>
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="text-[13px] font-bold text-[#666]">You get</span>
-            <span className="text-right text-[13px] font-black text-[#111]">
-              {formatNumber(selectedPackage.diamonds)} Diamonds
-              {selectedPackage.bonus_gems > 0 ? ` + ${formatNumber(selectedPackage.bonus_gems)} Gems` : ''}
-            </span>
+        <div className="mb-4 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#eef8ff] via-white to-[#fff8e1] p-4 ring-1 ring-[#d9edf9]">
+          <div className="flex items-center gap-3">
+            <DiamondIcon size="h-12 w-12" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[18px] font-black leading-none text-[#0b4fb3]">
+                {formatNumber(selectedPackage.diamonds)} Diamonds
+              </div>
+              <div className="mt-1 text-[12px] font-extrabold text-[#667085]">
+                {selectedPackage.bonus_gems > 0 ? `Bonus ${formatNumber(selectedPackage.bonus_gems)} Gems` : 'No bonus gems'}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[16px] font-black text-[#ff4d4f]">{formatMoney(selectedPackage.package_usd)}</div>
+              <div className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">USD</div>
+            </div>
           </div>
         </div>
 
@@ -162,32 +191,38 @@ function PaymentMethodModal({
             type="button"
             onClick={onCreateAbaPayment}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-2xl border border-black bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[22px] border border-[#d9edf9] bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)] active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">
-                KHQR
-              </div>
+              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
               <div>
-                <p className="text-[14px] font-black text-[#111]">ABA KHQR</p>
-                <p className="mt-1 text-[11px] font-semibold text-[#777]">
+                <p className="text-[14px] font-black text-[#111827]">ABA KHQR</p>
+                <p className="mt-1 text-[11px] font-semibold text-[#667085]">
                   {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
                 </p>
               </div>
             </div>
 
-            <i className="fas fa-chevron-right text-[14px] text-[#111]" />
+            <i className="fas fa-chevron-right text-[14px] text-[#111827]" />
           </button>
         ) : null}
 
         {payment ? (
-          <div className="rounded-3xl border border-[#eeeeee] bg-white p-4 text-center">
-            <PaymentStatusBadge payment={payment} secondsLeft={secondsLeft} />
+          <div className="rounded-[26px] border border-[#e7edf5] bg-white p-4 text-center">
+            <div
+              className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
+                isSuccess
+                  ? 'bg-green-100 text-green-700'
+                  : isEnded
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-[#eef8ff] text-[#0b4fb3]'
+              }`}
+            >
+              {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
+            </div>
 
             {qrImage && isWaiting ? (
-              <div className="mx-auto w-fit rounded-[24px] border border-[#eeeeee] bg-white p-3 shadow-sm">
-                <img src={qrImage} alt="ABA KHQR" className="h-[230px] w-[230px] rounded-2xl bg-white object-contain" />
-              </div>
+              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#e7edf5] bg-white p-2" />
             ) : null}
 
             {!qrImage && payment.checkout_url && isWaiting ? (
@@ -195,24 +230,24 @@ function PaymentMethodModal({
                 href={payment.checkout_url}
                 target="_blank"
                 rel="noreferrer"
-                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-black text-[14px] font-black text-white"
+                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-[#111827] text-[14px] font-black text-white"
               >
                 Open ABA Payment
               </a>
             ) : null}
 
             {!qrImage && !payment.checkout_url && isWaiting ? (
-              <div className="rounded-2xl bg-[#f6f6f6] p-4 text-[12px] font-bold leading-5 text-[#777]">
-                Payment order was created. ABA QR will appear after PayWay credentials are configured.
+              <div className="rounded-2xl bg-[#f6f8fb] p-4 text-[12px] font-bold leading-5 text-[#667085]">
+                ABA payment was created, but QR data is not available yet.
               </div>
             ) : null}
 
             {checking && isWaiting ? (
-              <p className="mt-3 text-[12px] font-bold text-[#777]">Checking payment status...</p>
+              <p className="mt-3 text-[12px] font-bold text-[#667085]">Checking payment safely...</p>
             ) : null}
 
             {paymentMessage ? (
-              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111]">{paymentMessage}</p>
+              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111827]">{paymentMessage}</p>
             ) : null}
 
             {isEnded ? (
@@ -220,7 +255,7 @@ function PaymentMethodModal({
                 type="button"
                 onClick={onCreateAbaPayment}
                 disabled={creating}
-                className="mt-4 h-12 w-full rounded-2xl bg-black text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
+                className="mt-4 h-12 w-full rounded-2xl bg-[#111827] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
               >
                 Generate New QR
               </button>
@@ -231,7 +266,7 @@ function PaymentMethodModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 h-12 w-full rounded-2xl bg-black text-[14px] font-black text-white active:scale-[0.99]"
+          className="mt-3 h-12 w-full rounded-2xl bg-[#111827] text-[14px] font-black text-white active:scale-[0.99]"
         >
           {isSuccess ? 'Done' : 'Cancel'}
         </button>
@@ -282,12 +317,12 @@ export default function PurchaseSection() {
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
       ])
 
-      const packagesData = await packagesResponse.json().catch(() => ({}))
-      const walletData = await walletResponse.json().catch(() => ({}))
+      const packagesData = await packagesResponse.json()
+      const walletData = await walletResponse.json()
 
       if (packagesData.ok && Array.isArray(packagesData.packages)) setPackages(packagesData.packages)
       if (walletData.ok) setWallet(walletData.wallet)
-    } catch {
+    } catch (error) {
       setMessage('Failed to load purchase data.')
     } finally {
       setLoading(false)
@@ -295,28 +330,28 @@ export default function PurchaseSection() {
   }
 
   async function createQrFromPayment(nextPayment) {
-    const directImage = nextPayment?.qr_image || nextPayment?.qrImage || nextPayment?.qr_image_url || ''
+    const directImage = nextPayment?.qr_image || nextPayment?.qrImage || ''
 
     if (directImage) {
       setQrImage(directImage)
       return
     }
 
-    const qrValue = nextPayment?.qr_string || nextPayment?.qrString || ''
+    const value = nextPayment?.qr_string || nextPayment?.qrString || nextPayment?.checkout_url || ''
 
-    if (!qrValue) {
+    if (!value) {
       setQrImage('')
       return
     }
 
     try {
-      const url = await QRCode.toDataURL(qrValue, {
+      const url = await QRCode.toDataURL(value, {
         width: 420,
         margin: 1,
         errorCorrectionLevel: 'M',
       })
       setQrImage(url)
-    } catch {
+    } catch (error) {
       setQrImage('')
     }
   }
@@ -329,17 +364,23 @@ export default function PurchaseSection() {
       const response = await fetch(`${API_BASE_URL}/api/purchase/aba/status/${encodeURIComponent(orderId)}`, {
         headers: getHeaders(),
       })
-      const data = await response.json().catch(() => ({}))
+      const data = await response.json()
 
       if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to check payment status.')
 
       setPayment(data.payment)
-      setSecondsLeft(getSecondsLeft(data.payment?.expired_at))
+      setSecondsLeft(getSecondsLeft(data.payment?.expires_at || data.payment?.expired_at))
 
       if (data.payment?.status === 'success') {
         stopPolling()
         setPaymentMessage('Diamonds added to your wallet successfully.')
         await loadPurchaseData()
+        return
+      }
+
+      if (data.payment?.status === 'callback_received') {
+        stopPolling()
+        setPaymentMessage('Payment callback received. Waiting for final ABA verification before release.')
         return
       }
 
@@ -383,18 +424,16 @@ export default function PurchaseSection() {
         headers: getHeaders(),
         body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
       })
-      const data = await response.json().catch(() => ({}))
+      const data = await response.json()
 
       if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create ABA payment.')
 
       setPayment(data.payment)
-      setSecondsLeft(getSecondsLeft(data.payment?.expired_at))
+      setSecondsLeft(getSecondsLeft(data.payment?.expires_at || data.payment?.expired_at))
       await createQrFromPayment(data.payment)
       startPolling(data.payment?.order_id)
 
-      if (!data.configured) {
-        setPaymentMessage('ABA PayWay credentials are not configured yet. Order structure is ready for sandbox testing later.')
-      }
+      if (!data.configured) setPaymentMessage('ABA PayWay is not configured yet. This is preparation mode only.')
     } catch (error) {
       setPaymentMessage(error.message || 'Failed to create ABA payment.')
     } finally {
@@ -427,29 +466,27 @@ export default function PurchaseSection() {
   }, [])
 
   useEffect(() => {
-    if (!payment?.expired_at || payment.status !== 'waiting_payment') return undefined
+    const expiresAt = payment?.expires_at || payment?.expired_at
+
+    if (!expiresAt || payment.status !== 'waiting_payment') return undefined
 
     const timer = window.setInterval(() => {
-      const nextSeconds = getSecondsLeft(payment.expired_at)
+      const nextSeconds = getSecondsLeft(expiresAt)
       setSecondsLeft(nextSeconds)
       if (nextSeconds <= 0) checkPaymentStatus(payment.order_id)
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [payment?.order_id, payment?.expired_at, payment?.status])
+  }, [payment?.order_id, payment?.expires_at, payment?.expired_at, payment?.status])
 
   if (!getReaderToken()) {
     return (
-      <section className="rounded-3xl border border-[#eeeeee] bg-white p-6 text-center">
-        <h2 className="text-[20px] font-black text-[#111]">Purchase Diamonds</h2>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#666]">
+      <section className="rounded-[28px] border border-[#e7edf5] bg-white p-6 text-center shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+        <h2 className="text-[20px] font-black text-[#111827]">Purchase Diamonds</h2>
+        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#667085]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
-        <button
-          type="button"
-          onClick={() => navigate('/login')}
-          className="mt-5 rounded-full bg-black px-6 py-3 text-[13px] font-extrabold text-white active:scale-95"
-        >
+        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111827] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
           Log In
         </button>
       </section>
@@ -458,26 +495,27 @@ export default function PurchaseSection() {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-3xl border border-[#eeeeee] bg-white p-5">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#777]">My Balance</p>
+      <div className="rounded-[28px] border border-[#e7edf5] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#667085]">My Balance</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-[#f6f6f6] p-4">
-            <p className="text-[12px] font-bold text-[#777]">Diamonds</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">
-              {loading ? '...' : formatNumber(wallet?.diamond_balance)}
-            </p>
+          <div className="rounded-[22px] bg-gradient-to-br from-[#eef8ff] to-[#ffffff] p-4 ring-1 ring-[#d9edf9]">
+            <div className="flex items-center gap-3">
+              <DiamondIcon size="h-10 w-10" />
+              <div>
+                <p className="text-[12px] font-bold text-[#667085]">Diamonds</p>
+                <p className="mt-1 text-[24px] font-black text-[#0b4fb3]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-2xl bg-[#f6f6f6] p-4">
-            <p className="text-[12px] font-bold text-[#777]">Gems</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">
-              {loading ? '...' : formatNumber(wallet?.gem_balance)}
-            </p>
+          <div className="rounded-[22px] bg-gradient-to-br from-[#fff8e1] to-[#ffffff] p-4 ring-1 ring-[#fdecc8]">
+            <p className="text-[12px] font-bold text-[#667085]">Gems</p>
+            <p className="mt-1 text-[24px] font-black text-[#b77900]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
-        <p className="mt-3 text-[12px] leading-5 text-[#777]">
+        <p className="mt-3 text-[12px] leading-5 text-[#667085]">
           Diamonds unlock premium episodes. Bonus Gems are rewards from purchases and future tasks.
         </p>
       </div>
@@ -485,8 +523,8 @@ export default function PurchaseSection() {
       <div>
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-[20px] font-black text-[#111]">Choose Amount</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#777]">ABA KHQR expires in 3 minutes.</p>
+            <h2 className="text-[20px] font-black text-[#111827]">Choose Diamonds</h2>
+            <p className="mt-1 text-[12px] font-semibold text-[#667085]">ABA KHQR expires in 3 minutes.</p>
           </div>
         </div>
 
@@ -505,9 +543,9 @@ export default function PurchaseSection() {
       <button
         type="button"
         onClick={handlePurchase}
-        className="w-full rounded-2xl bg-black py-4 text-[15px] font-black text-white active:scale-[0.99]"
+        className="w-full rounded-[22px] bg-gradient-to-r from-[#111827] via-[#0b4fb3] to-[#1597f2] py-4 text-[15px] font-black text-white shadow-[0_16px_32px_rgba(11,79,179,0.24)] active:scale-[0.99]"
       >
-        Purchase
+        Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
       </button>
 
       {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
