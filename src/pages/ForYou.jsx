@@ -318,21 +318,21 @@ export default function ForYou() {
 
             <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
               {[
-                { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
-                { icon: 'fa-tasks', label: 'Tasks' },
-                { icon: 'fa-trophy', label: 'Ranking' },
-                { icon: 'fa-calendar', label: 'Event', path: '/event' },
-              ].map((item) => (
+               {[
+  { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop', color: 'text-[#D99A00]' },
+  { icon: 'fa-tasks', label: 'Tasks', color: 'text-[#111827]' },
+  { icon: 'fa-trophy', label: 'Ranking', color: 'text-[#D99A00]' },
+  { icon: 'fa-calendar', label: 'Event', path: '/event', color: 'text-[#111827]' },
+].map((item) => (
                 <div
                   key={item.label}
                   className="group cursor-pointer"
                   onClick={() => item.path && navigate(item.path)}
                 >
-                  <div className="w-12 h-12 bg-gray-50 rounded-full mb-1 mx-auto flex items-center justify-center group-hover:bg-blue-50 transition-all">
-                    <i className={`fas ${item.icon} text-gray-500 group-hover:text-blue-600`} />
-                  </div>
-                  <span className="text-[10px] text-gray-500 font-semibold">{item.label}</span>
-                </div>
+                  <div className="w-12 h-12 bg-gray-50 rounded-full mb-1 mx-auto flex items-center justify-center group-hover:bg-[#f8fafc] transition-all">
+  <i className={`fas ${item.icon} ${item.color}`} />
+</div>
+<span className="text-[10px] text-[#111827] font-semibold">{item.label}</span>
               ))}
             </div>
 
