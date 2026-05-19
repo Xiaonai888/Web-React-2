@@ -40,9 +40,9 @@ function formatMoney(value) {
   return `$${Number(value || 0).toFixed(2)}`
 }
 
-function getSecondsLeft(expiresAt) {
-  if (!expiresAt) return 0
-  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
+function getSecondsLeft(dateValue) {
+  if (!dateValue) return 0
+  return Math.max(0, Math.ceil((new Date(dateValue).getTime() - Date.now()) / 1000))
 }
 
 function formatCountdown(seconds) {
@@ -158,7 +158,8 @@ function ManualProofModal({
   payment,
   proofFile,
   proofPreview,
-  secondsLeft,
+  proofSecondsLeft,
+  paymentSecondsLeft,
   submitting,
   cancelling,
   proofChecked,
@@ -171,6 +172,8 @@ function ManualProofModal({
 }) {
   if (!payment) return null
 
+  const paymentExpired = paymentSecondsLeft <= 0
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
       <div className="max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl">
@@ -178,7 +181,7 @@ function ManualProofModal({
           <div>
             <h3 className="text-[20px] font-black text-[#111111]">Upload ABA Receipt</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              Pay exactly {formatMoney(payment.amount_usd)}. Upload your receipt within {formatCountdown(secondsLeft)}.
+              {paymentExpired ? 'ABA QR time ended. If you already paid, upload your receipt now.' : `ABA QR time left ${formatCountdown(paymentSecondsLeft)}.`}
             </p>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
@@ -192,15 +195,16 @@ function ManualProofModal({
               <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Amount</p>
               <p className="mt-1 text-[26px] font-black text-[#111111]">{formatMoney(payment.amount_usd)}</p>
             </div>
-            <div className="rounded-full bg-[#111111] px-3 py-1 text-[11px] font-black text-white">
-              {formatCountdown(secondsLeft)}
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Upload time</p>
+              <div className="mt-1 rounded-full bg-[#111111] px-3 py-1 text-[11px] font-black text-white">{formatCountdown(proofSecondsLeft)}</div>
             </div>
           </div>
         </div>
 
         <div className="mt-4 rounded-[22px] border border-[#E5E7EB] bg-white p-4">
           <p className="text-[13px] font-black text-[#111111]">Payment screenshot</p>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">After payment, return here and upload the ABA receipt.</p>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">After payment, return here and upload the ABA receipt for admin verification.</p>
 
           <label className="mt-3 flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D1D5DB] bg-[#F8F8F8] p-4 text-center">
             {proofPreview ? (
@@ -225,7 +229,7 @@ function ManualProofModal({
           <button
             type="button"
             onClick={onSubmitProof}
-            disabled={submitting || !proofFile || !proofChecked || secondsLeft <= 0}
+            disabled={submitting || !proofFile || !proofChecked || proofSecondsLeft <= 0}
             className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-40"
           >
             {submitting ? 'Submitting...' : 'Submit Payment Proof'}
@@ -260,7 +264,8 @@ export default function PurchaseSection() {
   const [proofFile, setProofFile] = useState(null)
   const [proofPreview, setProofPreview] = useState('')
   const [proofChecked, setProofChecked] = useState(false)
-  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [proofSecondsLeft, setProofSecondsLeft] = useState(0)
+  const [paymentSecondsLeft, setPaymentSecondsLeft] = useState(0)
   const [creatingPayment, setCreatingPayment] = useState(false)
   const [submittingProof, setSubmittingProof] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -278,7 +283,8 @@ export default function PurchaseSection() {
 
   function openProofModal(payment) {
     setManualPayment(payment)
-    setSecondsLeft(getSecondsLeft(payment.expires_at))
+    setPaymentSecondsLeft(getSecondsLeft(payment.expires_at))
+    setProofSecondsLeft(getSecondsLeft(payment.proof_expires_at || payment.expires_at))
   }
 
   async function loadPurchaseData() {
@@ -395,7 +401,7 @@ export default function PurchaseSection() {
   }
 
   async function submitProof() {
-    if (!manualPayment || !proofFile || !proofChecked || submittingProof || secondsLeft <= 0) return
+    if (!manualPayment || !proofFile || !proofChecked || submittingProof || proofSecondsLeft <= 0) return
 
     try {
       setSubmittingProof(true)
@@ -460,20 +466,23 @@ export default function PurchaseSection() {
   }, [])
 
   useEffect(() => {
-    if (!manualPayment?.expires_at || manualPayment.status !== 'waiting_payment') return undefined
+    if (!manualPayment?.proof_expires_at && !manualPayment?.expires_at) return undefined
 
     const timer = window.setInterval(() => {
-      const next = getSecondsLeft(manualPayment.expires_at)
-      setSecondsLeft(next)
-      if (next <= 0) {
+      const paymentNext = getSecondsLeft(manualPayment.expires_at)
+      const proofNext = getSecondsLeft(manualPayment.proof_expires_at || manualPayment.expires_at)
+      setPaymentSecondsLeft(paymentNext)
+      setProofSecondsLeft(proofNext)
+
+      if (proofNext <= 0) {
         clearSavedPendingPayment()
         setManualPayment(null)
-        setProofMessage('Payment time expired. Please create a new order.')
+        setProofMessage('Payment proof upload time expired. Please create a new order.')
       }
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [manualPayment?.order_id, manualPayment?.expires_at, manualPayment?.status])
+  }, [manualPayment?.order_id, manualPayment?.expires_at, manualPayment?.proof_expires_at])
 
   if (!getReaderToken()) {
     return (
@@ -536,7 +545,8 @@ export default function PurchaseSection() {
           payment={manualPayment}
           proofFile={proofFile}
           proofPreview={proofPreview}
-          secondsLeft={secondsLeft}
+          proofSecondsLeft={proofSecondsLeft}
+          paymentSecondsLeft={paymentSecondsLeft}
           submitting={submittingProof}
           cancelling={cancelling}
           proofChecked={proofChecked}
