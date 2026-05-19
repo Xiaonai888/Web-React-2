@@ -1,87 +1,88 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import AdminDashboard from './pages/AdminDashboard';
-import SlideSection from './pages/SlideSection';
-import BannerSystem from './pages/BannerSystem';
-import ShadowExclusiveAdmin from './pages/ShadowExclusiveAdmin';
-import AuthorsCommunity from './pages/AuthorsCommunity';
-import LoginPage from './pages/LoginPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminActivityLogsPage from "./pages/Admin/AdminActivityLogsPage";
-import ChangePasswordPage from "./pages/Admin/ChangePasswordPage";
-import AdminSettingsPage from "./pages/Admin/AdminSettingsPage";
-import GenreManagementPage from './pages/GenreManagementPage';
-import CommentModerationPage from './pages/CommentModerationPage';
-import PaymentControlPage from './pages/PaymentControlPage';
+import Footer from './components/Footer'
+import ForYou from './pages/ForYou'
+import Library from './pages/Library'
+import ShopPage from './pages/ShopPage'
+import EventPage from './pages/EventPage'
+import ProfilePage from './pages/ProfilePage'
+import StoryDetailPage from './pages/StoryDetailPage'
+import LoginPage from './pages/Auth/LoginPage'
+import RegisterPage from './pages/Auth/RegisterPage'
+import Me from './pages/Me/Me'
+import CreateAuthorPage from './pages/Author/CreateAuthorPage'
+import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 
 function ComingSoon({ title }) {
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#F8FAFC',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'Inter, sans-serif',
-      color: '#0F172A',
-      padding: 24,
-    }}>
-      <div style={{
-        width: 'min(520px, 100%)',
-        background: '#fff',
-        border: '1px solid #E2E8F0',
-        borderRadius: 18,
-        padding: 28,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: 28, marginBottom: 10 }}>🛠️</div>
-        <h1 style={{ fontSize: 22, marginBottom: 8 }}>{title}</h1>
-        <p style={{ color: '#64748B', lineHeight: 1.6 }}>
-          This page route is ready. We can build this section after the realtime system works.
+    <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-10">
+      <div className="mx-auto max-w-[560px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+        <h1 className="text-[22px] font-extrabold text-[#111827]">{title}</h1>
+        <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+          This page is ready for a future update.
         </p>
       </div>
     </div>
-  );
+  )
 }
 
-function ProtectedPage({ children }) {
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+function AppShell() {
+  const location = useLocation()
+  const hideFooterPaths = [
+    '/login',
+    '/register',
+    '/shop',
+    '/profile',
+    '/event',
+    '/author/create',
+    '/author/dashboard',
+  ]
+
+  const shouldHideFooter =
+    hideFooterPaths.includes(location.pathname) || location.pathname.startsWith('/story/')
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<ForYou />} />
+        <Route path="/fast" element={<ComingSoon title="Fast" />} />
+        <Route path="/discover" element={<ComingSoon title="Discover" />} />
+        <Route path="/library" element={<Library />} />
+        <Route path="/me" element={<Me />} />
+
+        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/event" element={<EventPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/story/:id" element={<StoryDetailPage />} />
+
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        <Route path="/author/create" element={<CreateAuthorPage />} />
+        <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
+
+        <Route path="/wallet" element={<ShopPage />} />
+        <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
+        <Route path="/premium" element={<ComingSoon title="Premium" />} />
+        <Route path="/inbox" element={<ComingSoon title="Inbox" />} />
+        <Route path="/comments" element={<ComingSoon title="My Comments" />} />
+        <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
+        <Route path="/help" element={<ComingSoon title="Help Center" />} />
+        <Route path="/about" element={<ComingSoon title="About Us" />} />
+        <Route path="/settings" element={<ComingSoon title="Settings" />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {!shouldHideFooter ? <Footer /> : null}
+    </>
+  )
 }
 
 export default function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/admin" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route path="/admin" element={<ProtectedPage><AdminDashboard /></ProtectedPage>} />
-        <Route path="/slides" element={<ProtectedPage><SlideSection /></ProtectedPage>} />
-        <Route path="/banners" element={<ProtectedPage><BannerSystem /></ProtectedPage>} />
-        <Route path="/shadow-exclusive" element={<ProtectedPage><ShadowExclusiveAdmin /></ProtectedPage>} />
-        <Route path="/authors" element={<ProtectedPage><AuthorsCommunity /></ProtectedPage>} />
-        <Route path="/advertisement" element={<ProtectedPage><ComingSoon title="Advertisement" /></ProtectedPage>} />
-        <Route path="/recommended" element={<ProtectedPage><ComingSoon title="Recommended" /></ProtectedPage>} />
-        <Route path="/category" element={<ProtectedPage><ComingSoon title="Category" /></ProtectedPage>} />
-        <Route path="/rule" element={<ProtectedPage><ComingSoon title="Rule" /></ProtectedPage>} />
-        <Route path="/account" element={<ProtectedPage><ComingSoon title="Account" /></ProtectedPage>} />
-        <Route path="/block-list" element={<ProtectedPage><ComingSoon title="Block List" /></ProtectedPage>} />
-        <Route path="/income" element={<ProtectedPage><ComingSoon title="Income" /></ProtectedPage>} />
-        <Route path="/history" element={<ProtectedPage><ComingSoon title="History" /></ProtectedPage>} />
-        <Route path="/payment" element={<ProtectedPage><PaymentControlPage /></ProtectedPage>} />
-        <Route path="/deposit" element={<Navigate to="/payment" replace />} />
-        <Route path="/withdraw" element={<ProtectedPage><ComingSoon title="Withdraw" /></ProtectedPage>} />
-        <Route path="/ranking" element={<ProtectedPage><ComingSoon title="Ranking" /></ProtectedPage>} />
-        <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
-        <Route path="/admin/change-password" element={<ProtectedPage><ChangePasswordPage /></ProtectedPage>} />
-        <Route path="/admin/settings" element={<ProtectedPage><AdminSettingsPage /></ProtectedPage>} />
-        <Route path="/genres" element={<ProtectedPage><GenreManagementPage /></ProtectedPage>} />
-        <Route path="/comments" element={<ProtectedPage><CommentModerationPage /></ProtectedPage>} />
-
-        <Route path="*" element={<Navigate to="/admin" replace />} />
-      </Routes>
+      <AppShell />
     </Router>
-  );
+  )
 }
