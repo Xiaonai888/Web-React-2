@@ -1,95 +1,87 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import Footer from './components/Footer'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import ForYou from './pages/ForYou'
-import Fast from './pages/Fast'
-import Discover from './pages/Discover'
-import Library from './pages/Library'
-import Me from './pages/Me/Me'
-import Search from './pages/Search'
-import ShadowExclusivePage from './pages/ShadowExclusivePage'
-import StoryDetailPage from './pages/StoryDetailPage'
-import ReaderPage from './pages/ReaderPage'
-import RatingPage from './pages/RatingPage'
-import LeaveReviewPage from './pages/LeaveReviewPage'
-import StoryCommentsPage from './pages/StoryCommentsPage'
-import UpdateTodayPage from './pages/UpdateTodayPage'
-import SubscriptionsPage from './pages/SubscriptionsPage'
-import PremiumPage from './pages/Me/PremiumPage'
-import SettingsPage from './pages/Me/SettingsPage'
-import TopNovelPage from './pages/TopNovelPage'
-import YouMightLikePage from './pages/YouMightLikePage'
-import NewArrivalsPage from './pages/NewArrivalsPage'
-import CompletedPage from './pages/CompletedPage'
-import ShopPage from './pages/ShopPage'
-import LoginPage from './pages/Auth/LoginPage'
-import RegisterPage from './pages/Auth/RegisterPage'
-import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
-import ProfilePage from './pages/ProfilePage'
-import EventPage from './pages/EventPage'
-import CreateAuthorPage from './pages/Author/CreateAuthorPage'
-import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
-import StoryManagerPage from './pages/Author/StoryManagerPage'
-import CreateStoryPage from './pages/Author/CreateStoryPage'
-import ShadowAuthorAgreementPage from './pages/Author/ShadowAuthorAgreementPage'
-import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
-import PublishEpisodePage from './pages/Author/PublishEpisodePage'
-import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
+import AdminDashboard from './pages/AdminDashboard';
+import SlideSection from './pages/SlideSection';
+import BannerSystem from './pages/BannerSystem';
+import ShadowExclusiveAdmin from './pages/ShadowExclusiveAdmin';
+import AuthorsCommunity from './pages/AuthorsCommunity';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminActivityLogsPage from "./pages/Admin/AdminActivityLogsPage";
+import ChangePasswordPage from "./pages/Admin/ChangePasswordPage";
+import AdminSettingsPage from "./pages/Admin/AdminSettingsPage";
+import GenreManagementPage from './pages/GenreManagementPage';
+import CommentModerationPage from './pages/CommentModerationPage';
+import PaymentControlPage from './pages/PaymentControlPage';
 
-function AppFooter() {
-  const location = useLocation()
+function ComingSoon({ title }) {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#F8FAFC',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'Inter, sans-serif',
+      color: '#0F172A',
+      padding: 24,
+    }}>
+      <div style={{
+        width: 'min(520px, 100%)',
+        background: '#fff',
+        border: '1px solid #E2E8F0',
+        borderRadius: 18,
+        padding: 28,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 28, marginBottom: 10 }}>🛠️</div>
+        <h1 style={{ fontSize: 22, marginBottom: 8 }}>{title}</h1>
+        <p style={{ color: '#64748B', lineHeight: 1.6 }}>
+          This page route is ready. We can build this section after the realtime system works.
+        </p>
+      </div>
+    </div>
+  );
+}
 
-  const shouldHideFooter =
-    /^\/story\/[^/]+$/.test(location.pathname) ||
-    /^\/story\/[^/]+\/rating$/.test(location.pathname) ||
-    /^\/story\/[^/]+\/comments$/.test(location.pathname)
-
-  if (shouldHideFooter) return null
-
-  return <Footer />
+function ProtectedPage({ children }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>;
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/" element={<ForYou />} />
-        <Route path="/fast" element={<Fast />} />
-        <Route path="/discover" element={<Discover />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/me" element={<Me />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/event" element={<EventPage />} />
-        <Route path="/author/create" element={<CreateAuthorPage />} />
-        <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/shadow-exclusive" element={<ShadowExclusivePage />} />
-        <Route path="/update-today" element={<UpdateTodayPage />} />
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
-        <Route path="/story/:id/rating" element={<RatingPage />} />
-        <Route path="/story/:id/review" element={<LeaveReviewPage />} />
-        <Route path="/story/:id/comments" element={<StoryCommentsPage />} />
-        <Route path="/story/:id" element={<StoryDetailPage />} />
-        <Route path="/subscriptions" element={<SubscriptionsPage />} />
-        <Route path="/premium" element={<PremiumPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/top-novel" element={<TopNovelPage />} />
-        <Route path="/you-might-like" element={<YouMightLikePage />} />
-        <Route path="/new-arrivals" element={<NewArrivalsPage />} />
-        <Route path="/completed" element={<CompletedPage />} />
-        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/" element={<Navigate to="/admin" replace />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/terms" element={<TermsPoliciesPage />} />
-        <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
-        <Route path="/author/create-story" element={<CreateStoryPage />} />
-        <Route path="/author/agreement" element={<ShadowAuthorAgreementPage />} />
-        <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
-        <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
-        <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
-      </Routes>
 
-      <AppFooter />
-    </BrowserRouter>
-  )
+        <Route path="/admin" element={<ProtectedPage><AdminDashboard /></ProtectedPage>} />
+        <Route path="/slides" element={<ProtectedPage><SlideSection /></ProtectedPage>} />
+        <Route path="/banners" element={<ProtectedPage><BannerSystem /></ProtectedPage>} />
+        <Route path="/shadow-exclusive" element={<ProtectedPage><ShadowExclusiveAdmin /></ProtectedPage>} />
+        <Route path="/authors" element={<ProtectedPage><AuthorsCommunity /></ProtectedPage>} />
+        <Route path="/advertisement" element={<ProtectedPage><ComingSoon title="Advertisement" /></ProtectedPage>} />
+        <Route path="/recommended" element={<ProtectedPage><ComingSoon title="Recommended" /></ProtectedPage>} />
+        <Route path="/category" element={<ProtectedPage><ComingSoon title="Category" /></ProtectedPage>} />
+        <Route path="/rule" element={<ProtectedPage><ComingSoon title="Rule" /></ProtectedPage>} />
+        <Route path="/account" element={<ProtectedPage><ComingSoon title="Account" /></ProtectedPage>} />
+        <Route path="/block-list" element={<ProtectedPage><ComingSoon title="Block List" /></ProtectedPage>} />
+        <Route path="/income" element={<ProtectedPage><ComingSoon title="Income" /></ProtectedPage>} />
+        <Route path="/history" element={<ProtectedPage><ComingSoon title="History" /></ProtectedPage>} />
+        <Route path="/payment" element={<ProtectedPage><PaymentControlPage /></ProtectedPage>} />
+        <Route path="/deposit" element={<Navigate to="/payment" replace />} />
+        <Route path="/withdraw" element={<ProtectedPage><ComingSoon title="Withdraw" /></ProtectedPage>} />
+        <Route path="/ranking" element={<ProtectedPage><ComingSoon title="Ranking" /></ProtectedPage>} />
+        <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+        <Route path="/admin/change-password" element={<ProtectedPage><ChangePasswordPage /></ProtectedPage>} />
+        <Route path="/admin/settings" element={<ProtectedPage><AdminSettingsPage /></ProtectedPage>} />
+        <Route path="/genres" element={<ProtectedPage><GenreManagementPage /></ProtectedPage>} />
+        <Route path="/comments" element={<ProtectedPage><CommentModerationPage /></ProtectedPage>} />
+
+        <Route path="*" element={<Navigate to="/admin" replace />} />
+      </Routes>
+    </Router>
+  );
 }
