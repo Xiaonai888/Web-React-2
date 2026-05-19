@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'qrcode'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -33,21 +34,30 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
+function formatTime(seconds) {
+  const safeSeconds = Math.max(0, Number(seconds || 0))
+  const minutes = Math.floor(safeSeconds / 60)
+  const remain = safeSeconds % 60
+  return `${minutes}:${String(remain).padStart(2, '0')}`
+}
+
+function getSecondsLeft(expiredAt) {
+  if (!expiredAt) return 0
+  const diff = new Date(expiredAt).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / 1000))
+}
+
 function PackageCard({ item, selected, onSelect }) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-3xl border bg-white p-4 text-left transition active:scale-[0.99] ${
-        selected ? 'border-black ring-2 ring-black/10' : 'border-[#e9e9e9]'
-      }`}
+      className={`rounded-3xl border bg-white p-4 text-left transition active:scale-[0.99] ${selected ? 'border-black ring-2 ring-black/10' : 'border-[#e9e9e9]'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[24px] font-black tracking-tight text-[#111]">${item.package_usd}</p>
-          <p className="mt-2 text-[14px] font-extrabold text-[#111]">
-            {formatNumber(item.diamonds)} Diamonds
-          </p>
+          <p className="mt-2 text-[14px] font-extrabold text-[#111]">{formatNumber(item.diamonds)} Diamonds</p>
           <p className="mt-1 min-h-[20px] text-[12px] font-semibold text-[#777]">
             {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
           </p>
@@ -61,8 +71,12 @@ function PackageCard({ item, selected, onSelect }) {
   )
 }
 
-function PaymentMethodModal({ selectedPackage, onClose }) {
+function PaymentMethodModal({ selectedPackage, payment, qrImage, secondsLeft, creating, checking, paymentMessage, onClose, onCreateAbaPayment }) {
   if (!selectedPackage) return null
+
+  const isWaiting = payment?.status === 'waiting_payment'
+  const isSuccess = payment?.status === 'success'
+  const isEnded = ['failed', 'expired', 'cancelled'].includes(payment?.status)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
@@ -71,7 +85,7 @@ function PaymentMethodModal({ selectedPackage, onClose }) {
           <div>
             <h3 className="text-[20px] font-black text-[#111]">Payment Method</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#777]">
-              Choose a payment method to continue.
+              {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
             </p>
           </div>
 
@@ -92,37 +106,79 @@ function PaymentMethodModal({ selectedPackage, onClose }) {
           <div className="mt-2 flex items-center justify-between gap-3">
             <span className="text-[13px] font-bold text-[#666]">You get</span>
             <span className="text-right text-[13px] font-black text-[#111]">
-              {formatNumber(selectedPackage.diamonds)} Diamonds
-              {selectedPackage.bonus_gems > 0 ? ` + ${formatNumber(selectedPackage.bonus_gems)} Gems` : ''}
+              {formatNumber(selectedPackage.diamonds)} Diamonds{selectedPackage.bonus_gems > 0 ? ` + ${formatNumber(selectedPackage.bonus_gems)} Gems` : ''}
             </span>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="flex w-full items-center justify-between rounded-2xl border border-black bg-white p-4 text-left active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">
-              KHQR
+        {!payment ? (
+          <button
+            type="button"
+            onClick={onCreateAbaPayment}
+            disabled={creating}
+            className="flex w-full items-center justify-between rounded-2xl border border-black bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
+              <div>
+                <p className="text-[14px] font-black text-[#111]">ABA KHQR</p>
+                <p className="mt-1 text-[11px] font-semibold text-[#777]">{creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[14px] font-black text-[#111]">ABA KHQR</p>
-              <p className="mt-1 text-[11px] font-semibold text-[#777]">
-                Pay with ABA Mobile or KHQR
-              </p>
-            </div>
-          </div>
 
-          <i className="fas fa-chevron-right text-[14px] text-[#111]" />
-        </button>
+            <i className="fas fa-chevron-right text-[14px] text-[#111]" />
+          </button>
+        ) : null}
+
+        {payment ? (
+          <div className="rounded-3xl border border-[#eeeeee] bg-white p-4 text-center">
+            <div className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${isSuccess ? 'bg-green-100 text-green-700' : isEnded ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-800'}`}>
+              {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
+            </div>
+
+            {qrImage && isWaiting ? (
+              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#eeeeee] bg-white p-2" />
+            ) : null}
+
+            {!qrImage && payment.checkout_url && isWaiting ? (
+              <a href={payment.checkout_url} target="_blank" rel="noreferrer" className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-black text-[14px] font-black text-white">
+                Open ABA Payment
+              </a>
+            ) : null}
+
+            {!qrImage && !payment.checkout_url && isWaiting ? (
+              <div className="rounded-2xl bg-[#f6f6f6] p-4 text-[12px] font-bold leading-5 text-[#777]">
+                ABA payment was created, but QR data is not available yet.
+              </div>
+            ) : null}
+
+            {checking && isWaiting ? (
+              <p className="mt-3 text-[12px] font-bold text-[#777]">Checking payment safely...</p>
+            ) : null}
+
+            {paymentMessage ? (
+              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111]">{paymentMessage}</p>
+            ) : null}
+
+            {isEnded ? (
+              <button
+                type="button"
+                onClick={onCreateAbaPayment}
+                disabled={creating}
+                className="mt-4 h-12 w-full rounded-2xl bg-black text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
+              >
+                Generate New QR
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
         <button
           type="button"
           onClick={onClose}
           className="mt-3 h-12 w-full rounded-2xl bg-black text-[14px] font-black text-white active:scale-[0.99]"
         >
-          Cancel
+          {isSuccess ? 'Done' : 'Cancel'}
         </button>
       </div>
     </div>
@@ -131,17 +187,29 @@ function PaymentMethodModal({ selectedPackage, onClose }) {
 
 export default function PurchaseSection() {
   const navigate = useNavigate()
+  const pollRef = useRef(null)
   const [wallet, setWallet] = useState(null)
   const [packages, setPackages] = useState(fallbackPackages)
   const [selectedUsd, setSelectedUsd] = useState(1)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [showPaymentMethods, setShowPaymentMethods] = useState(false)
+  const [payment, setPayment] = useState(null)
+  const [qrImage, setQrImage] = useState('')
+  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [creatingPayment, setCreatingPayment] = useState(false)
+  const [checkingPayment, setCheckingPayment] = useState(false)
+  const [paymentMessage, setPaymentMessage] = useState('')
 
   const selectedPackage = useMemo(
     () => packages.find((item) => Number(item.package_usd) === Number(selectedUsd)) || packages[0],
     [packages, selectedUsd]
   )
+
+  function stopPolling() {
+    if (pollRef.current) window.clearInterval(pollRef.current)
+    pollRef.current = null
+  }
 
   async function loadPurchaseData() {
     const token = getReaderToken()
@@ -171,6 +239,104 @@ export default function PurchaseSection() {
     }
   }
 
+  async function createQrFromPayment(nextPayment) {
+    const value = nextPayment?.qr_string || nextPayment?.checkout_url || ''
+    if (!value) {
+      setQrImage('')
+      return
+    }
+
+    try {
+      const url = await QRCode.toDataURL(value, {
+        width: 420,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+      })
+      setQrImage(url)
+    } catch (error) {
+      setQrImage('')
+    }
+  }
+
+  async function checkPaymentStatus(orderId) {
+    if (!orderId) return
+
+    try {
+      setCheckingPayment(true)
+      const response = await fetch(`${API_BASE_URL}/api/purchase/aba/status/${encodeURIComponent(orderId)}`, {
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to check payment status.')
+
+      setPayment(data.payment)
+      setSecondsLeft(getSecondsLeft(data.payment?.expired_at))
+
+      if (data.payment?.status === 'success') {
+        stopPolling()
+        setPaymentMessage('Diamonds added to your wallet successfully.')
+        await loadPurchaseData()
+        return
+      }
+
+      if (['failed', 'expired', 'cancelled'].includes(data.payment?.status)) {
+        stopPolling()
+        setPaymentMessage('Payment was not completed. No report was sent. You can generate a new QR.')
+      }
+    } catch (error) {
+      setPaymentMessage(error.message || 'Failed to check payment status.')
+    } finally {
+      setCheckingPayment(false)
+    }
+  }
+
+  function startPolling(orderId) {
+    stopPolling()
+    pollRef.current = window.setInterval(() => {
+      checkPaymentStatus(orderId)
+    }, 3000)
+  }
+
+  async function createAbaPayment() {
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!selectedPackage || creatingPayment) return
+
+    try {
+      stopPolling()
+      setCreatingPayment(true)
+      setPaymentMessage('')
+      setPayment(null)
+      setQrImage('')
+
+      const response = await fetch(`${API_BASE_URL}/api/purchase/aba/create`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create ABA payment.')
+
+      setPayment(data.payment)
+      setSecondsLeft(getSecondsLeft(data.payment?.expired_at))
+      await createQrFromPayment(data.payment)
+      startPolling(data.payment?.order_id)
+
+      if (!data.configured) setPaymentMessage('ABA PayWay is not configured yet. This is test mode only.')
+    } catch (error) {
+      setPaymentMessage(error.message || 'Failed to create ABA payment.')
+    } finally {
+      setCreatingPayment(false)
+    }
+  }
+
   function handlePurchase() {
     const token = getReaderToken()
 
@@ -179,12 +345,33 @@ export default function PurchaseSection() {
       return
     }
 
+    setPayment(null)
+    setQrImage('')
+    setPaymentMessage('')
     setShowPaymentMethods(true)
+  }
+
+  function closePaymentModal() {
+    stopPolling()
+    setShowPaymentMethods(false)
   }
 
   useEffect(() => {
     loadPurchaseData()
+    return () => stopPolling()
   }, [])
+
+  useEffect(() => {
+    if (!payment?.expired_at || payment.status !== 'waiting_payment') return undefined
+
+    const timer = window.setInterval(() => {
+      const nextSeconds = getSecondsLeft(payment.expired_at)
+      setSecondsLeft(nextSeconds)
+      if (nextSeconds <= 0) checkPaymentStatus(payment.order_id)
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [payment?.order_id, payment?.expired_at, payment?.status])
 
   if (!getReaderToken()) {
     return (
@@ -193,11 +380,7 @@ export default function PurchaseSection() {
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#666]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
-        <button
-          type="button"
-          onClick={() => navigate('/login')}
-          className="mt-5 rounded-full bg-black px-6 py-3 text-[13px] font-extrabold text-white active:scale-95"
-        >
+        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-black px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
           Log In
         </button>
       </section>
@@ -212,16 +395,12 @@ export default function PurchaseSection() {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-[#f6f6f6] p-4">
             <p className="text-[12px] font-bold text-[#777]">Diamonds</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">
-              {loading ? '...' : formatNumber(wallet?.diamond_balance)}
-            </p>
+            <p className="mt-1 text-[24px] font-black text-[#111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
           </div>
 
           <div className="rounded-2xl bg-[#f6f6f6] p-4">
             <p className="text-[12px] font-bold text-[#777]">Gems</p>
-            <p className="mt-1 text-[24px] font-black text-[#111]">
-              {loading ? '...' : formatNumber(wallet?.gem_balance)}
-            </p>
+            <p className="mt-1 text-[24px] font-black text-[#111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
@@ -234,7 +413,7 @@ export default function PurchaseSection() {
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <h2 className="text-[20px] font-black text-[#111]">Choose Amount</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#777]">No service fee in this stage.</p>
+            <p className="mt-1 text-[12px] font-semibold text-[#777]">ABA KHQR expires in 2 minutes.</p>
           </div>
         </div>
 
@@ -250,22 +429,23 @@ export default function PurchaseSection() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handlePurchase}
-        className="h-13 w-full rounded-2xl bg-black py-4 text-[15px] font-black text-white active:scale-[0.99]"
-      >
+      <button type="button" onClick={handlePurchase} className="w-full rounded-2xl bg-black py-4 text-[15px] font-black text-white active:scale-[0.99]">
         Purchase
       </button>
 
-      {message ? (
-        <p className="text-center text-[12px] font-bold text-[#555]">{message}</p>
-      ) : null}
+      {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
 
       {showPaymentMethods ? (
         <PaymentMethodModal
           selectedPackage={selectedPackage}
-          onClose={() => setShowPaymentMethods(false)}
+          payment={payment}
+          qrImage={qrImage}
+          secondsLeft={secondsLeft}
+          creating={creatingPayment}
+          checking={checkingPayment}
+          paymentMessage={paymentMessage}
+          onClose={closePaymentModal}
+          onCreateAbaPayment={createAbaPayment}
         />
       ) : null}
     </section>
