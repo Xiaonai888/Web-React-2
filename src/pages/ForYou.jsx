@@ -318,11 +318,11 @@ export default function ForYou() {
 
            <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
   {[
-    { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop', color: 'text-[#D99A00]' },
-    { icon: 'fa-tasks', label: 'Tasks', color: 'text-[#111827]' },
-    { icon: 'fa-trophy', label: 'Ranking', color: 'text-[#D99A00]' },
-    { icon: 'fa-calendar', label: 'Event', path: '/event', color: 'text-[#111827]' },
-  ].map((item) => (
+  { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
+  { icon: 'fa-tasks', label: 'Tasks' },
+  { icon: 'fa-trophy', label: 'Ranking' },
+  { icon: 'fa-calendar', label: 'Event', path: '/event' },
+].map((item) => (
     <div
       key={item.label}
       className="group cursor-pointer"
