@@ -8,7 +8,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const DIAMOND_ICON = '/assets/icons/Diamond.png'
+const DIAMOND_ICON = '/assets/Icons/Diamond.png'
 
 const fallbackPackages = [
   { package_usd: 1, diamonds: 100, bonus_gems: 0 },
