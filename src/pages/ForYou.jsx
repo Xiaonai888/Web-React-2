@@ -190,10 +190,10 @@ export default function ForYou() {
         }
 
         .swiper-pagination-bullet-active {
-          background: #3b82f6;
-          width: 20px;
-          border-radius: 5px;
-        }
+  background: #111827;
+  width: 20px;
+  border-radius: 5px;
+}
 
         @media (min-width: 768px) {
           .swiper-slide { width: 58%; }
@@ -207,9 +207,9 @@ export default function ForYou() {
         }
 
         .tab-item.active {
-          color: #3b82f6;
-          font-weight: 700;
-        }
+  color: #111827;
+  font-weight: 700;
+}
 
         .tab-item.active::after {
           content: '';
@@ -218,7 +218,7 @@ export default function ForYou() {
           left: 0;
           width: 100%;
           height: 3px;
-          background: #3b82f6;
+          background: #111827;
           border-radius: 10px;
         }
       `}</style>
@@ -237,7 +237,7 @@ export default function ForYou() {
 </div>
 
           <div className="flex space-x-5 text-gray-400 text-xl">
-            <Link to="/search" className="hover:text-blue-600 transition-colors">
+            <Link to="/search" className="hover:text-[#111827] transition-colors">
               <i className="fas fa-search" />
             </Link>
             <button className="hover:text-blue-600 transition-colors">
@@ -273,7 +273,7 @@ export default function ForYou() {
                     onClick={() => setActiveGenre(tab.slug)}
                     className={
                       active
-                        ? 'bg-blue-600 text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold'
+                        ? 'bg-[#111827] text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold'
                         : 'border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold bg-white'
                     }
                   >
