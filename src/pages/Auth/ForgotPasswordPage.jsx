@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -9,15 +9,56 @@ const API_BASE_URL =
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate()
+  const otpRefs = useRef([])
+
   const [step, setStep] = useState('email')
   const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const otp = otpDigits.join('')
+
+  function updateOtpDigit(index, value) {
+    const digit = value.replace(/\D/g, '').slice(-1)
+    const nextDigits = [...otpDigits]
+
+    nextDigits[index] = digit
+    setOtpDigits(nextDigits)
+
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus()
+    }
+  }
+
+  function handleOtpKeyDown(index, event) {
+    if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus()
+    }
+  }
+
+  function handleOtpPaste(event) {
+    event.preventDefault()
+
+    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+
+    if (!pasted) return
+
+    const nextDigits = ['', '', '', '', '', '']
+
+    pasted.split('').forEach((digit, index) => {
+      nextDigits[index] = digit
+    })
+
+    setOtpDigits(nextDigits)
+
+    const focusIndex = Math.min(pasted.length, 6) - 1
+    otpRefs.current[focusIndex]?.focus()
+  }
 
   async function handleSendOtp(event) {
     event.preventDefault()
@@ -57,8 +98,13 @@ export default function ForgotPasswordPage() {
       }
 
       setEmail(cleanEmail)
+      setOtpDigits(['', '', '', '', '', ''])
       setStep('reset')
       setMessage('Please check your email. We sent a 6-digit reset code if this account exists.')
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus()
+      }, 80)
     } catch {
       setError('Cannot connect to backend.')
     } finally {
@@ -72,14 +118,13 @@ export default function ForgotPasswordPage() {
     setError('')
 
     const cleanEmail = email.trim().toLowerCase()
-    const cleanOtp = otp.trim()
 
     if (!cleanEmail) {
       setError('Please enter your Gmail.')
       return
     }
 
-    if (!/^\d{6}$/.test(cleanOtp)) {
+    if (!/^\d{6}$/.test(otp)) {
       setError('Please enter the 6-digit code.')
       return
     }
@@ -104,7 +149,7 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify({
           email: cleanEmail,
-          otp: cleanOtp,
+          otp,
           password,
           confirmPassword,
         }),
@@ -137,9 +182,11 @@ export default function ForgotPasswordPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white">
             <i className="fa-solid fa-key text-[20px]" />
           </div>
+
           <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827]">
             {step === 'email' ? 'Forgot Password' : 'Enter Reset Code'}
           </h1>
+
           <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1]">
             {step === 'email'
               ? 'Enter your Gmail and we will send you a 6-digit reset code.'
@@ -197,15 +244,25 @@ export default function ForgotPasswordPage() {
 
             <label className="block">
               <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">OTP Code</span>
-              <input
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="6-digit code"
-                autoComplete="one-time-code"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-center text-[22px] font-extrabold tracking-[8px] text-[#111827] outline-none focus:border-[#111827]"
-              />
+              <div className="grid grid-cols-6 gap-2">
+                {otpDigits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(element) => {
+                      otpRefs.current[index] = element
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(event) => updateOtpDigit(index, event.target.value)}
+                    onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                    onPaste={handleOtpPaste}
+                    aria-label={`OTP digit ${index + 1}`}
+                    className="h-12 rounded-[14px] border border-[#d9dce3] bg-white text-center text-[20px] font-extrabold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-[#fafafe] focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+                  />
+                ))}
+              </div>
             </label>
 
             <label className="block">
