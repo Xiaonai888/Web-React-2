@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 const API_BASE_URL =
@@ -8,12 +8,18 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 export default function ForgotPasswordPage() {
+  const navigate = useNavigate()
+  const [step, setStep] = useState('email')
   const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  async function handleSubmit(event) {
+  async function handleSendOtp(event) {
     event.preventDefault()
     setMessage('')
     setError('')
@@ -41,7 +47,7 @@ export default function ForgotPasswordPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        setError(data.message || 'Failed to request reset link.')
+        setError(data.message || 'Failed to send reset code.')
         return
       }
 
@@ -50,7 +56,73 @@ export default function ForgotPasswordPage() {
         return
       }
 
-      setMessage('Please check your email. We sent a password reset link if this account exists.')
+      setEmail(cleanEmail)
+      setStep('reset')
+      setMessage('Please check your email. We sent a 6-digit reset code if this account exists.')
+    } catch {
+      setError('Cannot connect to backend.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetPassword(event) {
+    event.preventDefault()
+    setMessage('')
+    setError('')
+
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanOtp = otp.trim()
+
+    if (!cleanEmail) {
+      setError('Please enter your Gmail.')
+      return
+    }
+
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      setError('Please enter the 6-digit code.')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Password and confirm password do not match.')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/users/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: cleanEmail,
+          otp: cleanOtp,
+          password,
+          confirmPassword,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        setError(data.message || 'Failed to reset password.')
+        return
+      }
+
+      localStorage.setItem('shadow_reader_token', data.token)
+      localStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+      sessionStorage.setItem('shadow_reader_token', data.token)
+      sessionStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+
+      navigate('/me', { replace: true })
     } catch {
       setError('Cannot connect to backend.')
     } finally {
@@ -65,45 +137,129 @@ export default function ForgotPasswordPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white">
             <i className="fa-solid fa-key text-[20px]" />
           </div>
-          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827]">Forgot Password</h1>
+          <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827]">
+            {step === 'email' ? 'Forgot Password' : 'Enter Reset Code'}
+          </h1>
           <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1]">
-            Enter your Gmail and we will send you a link to reset your password.
+            {step === 'email'
+              ? 'Enter your Gmail and we will send you a 6-digit reset code.'
+              : 'Enter the 6-digit code from your email and create a new password.'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">Gmail</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="yourname@gmail.com"
-              autoComplete="email"
-              className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
-            />
-          </label>
+        {error ? (
+          <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
+            {error}
+          </div>
+        ) : null}
 
-          {error ? (
-            <div className="rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
-              {error}
-            </div>
-          ) : null}
+        {message ? (
+          <div className="mb-4 rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#067647]">
+            {message}
+          </div>
+        ) : null}
 
-          {message ? (
-            <div className="rounded-[14px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#067647]">
-              {message}
-            </div>
-          ) : null}
+        {step === 'email' ? (
+          <form onSubmit={handleSendOtp} className="space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">Gmail</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="yourname@gmail.com"
+                autoComplete="email"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </label>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+            >
+              {loading ? 'Sending...' : 'Send OTP Code'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">Gmail</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="yourname@gmail.com"
+                autoComplete="email"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">OTP Code</span>
+              <input
+                inputMode="numeric"
+                maxLength={6}
+                value={otp}
+                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="6-digit code"
+                autoComplete="one-time-code"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-center text-[22px] font-extrabold tracking-[8px] text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">New Password</span>
+              <div className="flex h-12 items-center rounded-[16px] border border-[#d9dce3] bg-white px-4 focus-within:border-[#111827]">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="New password"
+                  autoComplete="new-password"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="ml-3 flex h-8 w-8 items-center justify-center rounded-full text-[#8d94a1]"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <i className={`${showPassword ? 'far fa-eye-slash' : 'far fa-eye'} text-[15px]`} />
+                </button>
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-[13px] font-extrabold text-[#111827]">Confirm Password</span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Confirm password"
+                autoComplete="new-password"
+                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
+            >
+              {loading ? 'Changing...' : 'Change Password'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={loading}
+              className="h-11 w-full rounded-[16px] border border-[#d9dce3] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Resend Code
+            </button>
+          </form>
+        )}
 
         <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1]">
           Remember your password?{' '}
