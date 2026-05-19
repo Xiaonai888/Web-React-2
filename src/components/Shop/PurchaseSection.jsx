@@ -55,10 +55,10 @@ function DiamondIcon({ selected = false, size = 'h-9 w-9' }) {
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full border ${size} ${
-        selected ? 'border-[#7c3aed] bg-[#f5f0ff]' : 'border-[#eadffb] bg-[#faf7ff]'
+        selected ? 'border-[#c9a227] bg-[#fff9e6]' : 'border-[#e5e7eb] bg-[#f8f8f8]'
       }`}
     >
-      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#6d28d9]' : 'text-[#8b5cf6]'}`} />
+      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#c9a227]' : 'text-[#111111]'}`} />
     </span>
   )
 }
@@ -72,8 +72,8 @@ function PackageCard({ item, selected, onSelect }) {
       onClick={onSelect}
       className={`relative flex min-h-[112px] items-start gap-3 rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
         selected
-          ? 'border-[#7c3aed] shadow-[0_10px_24px_rgba(124,58,237,0.12)] ring-2 ring-[#7c3aed]/10'
-          : 'border-[#ece7f3] shadow-[0_6px_16px_rgba(17,24,39,0.035)] hover:border-[#c4b5fd]'
+          ? 'border-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.10)] ring-1 ring-[#c9a227]/60'
+          : 'border-[#e5e7eb] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#c9a227]/70'
       }`}
     >
       <DiamondIcon selected={selected} />
@@ -81,32 +81,32 @@ function PackageCard({ item, selected, onSelect }) {
       <div className="min-w-0 flex-1">
         <div className="flex min-h-[20px] items-center gap-2">
           {isBestValue ? (
-            <span className="rounded-full bg-[#fff4d6] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#9a6a00]">
+            <span className="rounded-full border border-[#ead997] bg-[#fff9e6] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#8a6f18]">
               Best Value
             </span>
           ) : null}
         </div>
 
         <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#24111f]">
+          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#111111]">
             {formatNumber(item.diamonds)}
           </span>
-          <span className="text-[12px] font-black text-[#111827]">Diamonds</span>
+          <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
         </div>
 
-        <p className="mt-1 text-[12px] font-black text-[#e11d48]">{formatMoney(item.package_usd)}</p>
+        <p className="mt-1 text-[12px] font-black text-[#6b7280]">{formatMoney(item.package_usd)}</p>
 
-        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#a16207]' : 'text-[#6b7280]'}`}>
+        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#8a6f18]' : 'text-[#6b7280]'}`}>
           {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
         </p>
       </div>
 
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-          selected ? 'border-[#7c3aed] bg-[#7c3aed]' : 'border-[#d1d5db] bg-white'
+          selected ? 'border-[#111111] bg-[#111111]' : 'border-[#d1d5db] bg-white'
         }`}
       >
-        {selected ? <i className="fas fa-check text-[9px] text-white" /> : null}
+        {selected ? <i className="fas fa-check text-[9px] text-[#c9a227]" /> : null}
       </span>
     </button>
   )
@@ -134,7 +134,7 @@ function PaymentMethodModal({
       <div className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-[20px] font-black text-[#111827]">Payment Method</h3>
+            <h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
               {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
             </p>
@@ -143,17 +143,17 @@ function PaymentMethodModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111111] active:scale-95"
           >
             <i className="fas fa-times text-[14px]" />
           </button>
         </div>
 
-        <div className="mb-4 rounded-[20px] border border-[#ece7f3] bg-[#faf7ff] p-4">
+        <div className="mb-4 rounded-[20px] border border-[#e5e7eb] bg-[#f8f8f8] p-4">
           <div className="flex items-center gap-3">
             <DiamondIcon selected size="h-11 w-11" />
             <div className="min-w-0 flex-1">
-              <p className="text-[18px] font-black leading-none text-[#24111f]">
+              <p className="text-[18px] font-black leading-none text-[#111111]">
                 {formatNumber(selectedPackage.diamonds)} Diamonds
               </p>
               <p className="mt-1 text-[12px] font-bold text-[#6b7280]">
@@ -161,7 +161,7 @@ function PaymentMethodModal({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[15px] font-black text-[#e11d48]">{formatMoney(selectedPackage.package_usd)}</p>
+              <p className="text-[15px] font-black text-[#111111]">{formatMoney(selectedPackage.package_usd)}</p>
               <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">USD</p>
             </div>
           </div>
@@ -172,38 +172,38 @@ function PaymentMethodModal({
             type="button"
             onClick={onCreateAbaPayment}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-[20px] border border-[#ece7f3] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[20px] border border-[#e5e7eb] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
               <div>
-                <p className="text-[14px] font-black text-[#111827]">ABA KHQR</p>
+                <p className="text-[14px] font-black text-[#111111]">ABA KHQR</p>
                 <p className="mt-1 text-[11px] font-semibold text-[#6b7280]">
                   {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
                 </p>
               </div>
             </div>
 
-            <i className="fas fa-chevron-right text-[14px] text-[#111827]" />
+            <i className="fas fa-chevron-right text-[14px] text-[#111111]" />
           </button>
         ) : null}
 
         {payment ? (
-          <div className="rounded-[22px] border border-[#ece7f3] bg-white p-4 text-center">
+          <div className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 text-center">
             <div
               className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
                 isSuccess
                   ? 'bg-green-100 text-green-700'
                   : isEnded
                     ? 'bg-red-100 text-red-700'
-                    : 'bg-[#f5f0ff] text-[#6d28d9]'
+                    : 'bg-[#fff9e6] text-[#8a6f18]'
               }`}
             >
               {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
             </div>
 
             {qrImage && isWaiting ? (
-              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#ece7f3] bg-white p-2" />
+              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#e5e7eb] bg-white p-2" />
             ) : null}
 
             {!qrImage && payment.checkout_url && isWaiting ? (
@@ -211,14 +211,14 @@ function PaymentMethodModal({
                 href={payment.checkout_url}
                 target="_blank"
                 rel="noreferrer"
-                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-[#111827] text-[14px] font-black text-white"
+                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-[#111111] text-[14px] font-black text-white"
               >
                 Open ABA Payment
               </a>
             ) : null}
 
             {!qrImage && !payment.checkout_url && isWaiting ? (
-              <div className="rounded-2xl bg-[#f9fafb] p-4 text-[12px] font-bold leading-5 text-[#6b7280]">
+              <div className="rounded-2xl bg-[#f8f8f8] p-4 text-[12px] font-bold leading-5 text-[#6b7280]">
                 ABA payment was created, but QR data is not available yet.
               </div>
             ) : null}
@@ -228,7 +228,7 @@ function PaymentMethodModal({
             ) : null}
 
             {paymentMessage ? (
-              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111827]">{paymentMessage}</p>
+              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111111]">{paymentMessage}</p>
             ) : null}
 
             {isEnded ? (
@@ -236,7 +236,7 @@ function PaymentMethodModal({
                 type="button"
                 onClick={onCreateAbaPayment}
                 disabled={creating}
-                className="mt-4 h-12 w-full rounded-2xl bg-[#111827] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
+                className="mt-4 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
               >
                 Generate New QR
               </button>
@@ -247,7 +247,7 @@ function PaymentMethodModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 h-12 w-full rounded-2xl bg-[#111827] text-[14px] font-black text-white active:scale-[0.99]"
+          className="mt-3 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]"
         >
           {isSuccess ? 'Done' : 'Cancel'}
         </button>
@@ -462,12 +462,12 @@ export default function PurchaseSection() {
 
   if (!getReaderToken()) {
     return (
-      <section className="rounded-[24px] border border-[#ece7f3] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,24,39,0.035)]">
-        <h2 className="text-[20px] font-black text-[#111827]">Purchase Diamonds</h2>
+      <section className="rounded-[24px] border border-[#e5e7eb] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
+        <h2 className="text-[20px] font-black text-[#111111]">Purchase Diamonds</h2>
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6b7280]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
-        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111827] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
+        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111111] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
           Log In
         </button>
       </section>
@@ -476,23 +476,23 @@ export default function PurchaseSection() {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-[24px] border border-[#ece7f3] bg-white p-5 shadow-[0_6px_16px_rgba(17,24,39,0.035)]">
+      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
         <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6b7280]">My Balance</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-[18px] border border-[#eadffb] bg-[#faf7ff] p-4">
+          <div className="rounded-[18px] border border-[#e5e7eb] bg-[#f8f8f8] p-4">
             <div className="flex items-center gap-3">
               <DiamondIcon size="h-9 w-9" />
               <div>
                 <p className="text-[12px] font-bold text-[#6b7280]">Diamonds</p>
-                <p className="mt-1 text-[23px] font-black text-[#24111f]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[#f4e4bb] bg-[#fffdf7] p-4">
+          <div className="rounded-[18px] border border-[#e5e7eb] bg-white p-4">
             <p className="text-[12px] font-bold text-[#6b7280]">Gems</p>
-            <p className="mt-1 text-[23px] font-black text-[#a16207]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
+            <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
@@ -504,7 +504,7 @@ export default function PurchaseSection() {
       <div>
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-[20px] font-black text-[#111827]">Choose Diamonds</h2>
+            <h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
             <p className="mt-1 text-[12px] font-semibold text-[#6b7280]">ABA KHQR expires in 3 minutes.</p>
           </div>
         </div>
@@ -524,12 +524,12 @@ export default function PurchaseSection() {
       <button
         type="button"
         onClick={handlePurchase}
-        className="w-full rounded-[18px] bg-[#111827] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,24,39,0.16)] active:scale-[0.99]"
+        className="w-full rounded-[18px] bg-[#111111] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,17,17,0.16)] active:scale-[0.99]"
       >
         Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
       </button>
 
-      {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
+      {message ? <p className="text-center text-[12px] font-bold text-[#555]\">{message}</p> : null}
 
       {showPaymentMethods ? (
         <PaymentMethodModal
