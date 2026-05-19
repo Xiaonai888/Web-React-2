@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
@@ -9,6 +9,48 @@ function getReaderToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+function getStoredReaderUser() {
+  try {
+    return JSON.parse(
+      localStorage.getItem('shadow_reader_user') ||
+        sessionStorage.getItem('shadow_reader_user') ||
+        'null'
+    )
+  } catch {
+    return null
+  }
+}
+
+function saveReaderUser(user) {
+  if (!user) return
+
+  const userText = JSON.stringify(user)
+  sessionStorage.setItem('shadow_reader_user', userText)
+
+  if (localStorage.getItem('shadow_reader_token')) {
+    localStorage.setItem('shadow_reader_user', userText)
+  }
+}
+
+function syncReaderToken() {
+  const localToken = localStorage.getItem('shadow_reader_token') || ''
+  const sessionToken = sessionStorage.getItem('shadow_reader_token') || ''
+  const token = localToken || sessionToken
+
+  if (token && localToken) {
+    sessionStorage.setItem('shadow_reader_token', token)
+  }
+
+  return token
+}
+
+function clearReaderSession() {
+  localStorage.removeItem('shadow_reader_token')
+  localStorage.removeItem('shadow_reader_user')
+  sessionStorage.removeItem('shadow_reader_token')
+  sessionStorage.removeItem('shadow_reader_user')
 }
 
 const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]'
@@ -138,30 +180,95 @@ export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
+  const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
+  const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
 
-  const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
-
-  const isLoggedIn = Boolean(storedUser)
+  const token = getReaderToken()
+  const isLoggedIn = Boolean(token)
   const isPremium = false
 
-  const displayName = storedUser?.name || 'Click to Login'
+  const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : 'Click to Login')
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
+  useEffect(() => {
+    let ignore = false
+
+    async function restoreUser() {
+      const currentToken = syncReaderToken()
+      const currentUser = getStoredReaderUser()
+
+      if (!currentToken) {
+        if (!ignore) {
+          setStoredUser(null)
+          setCheckingUser(false)
+        }
+        return
+      }
+
+      if (currentUser) {
+        if (!ignore) {
+          setStoredUser(currentUser)
+          setCheckingUser(false)
+        }
+        return
+      }
+
+      try {
+        setCheckingUser(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (response.status === 401 || response.status === 403) {
+          clearReaderSession()
+          if (!ignore) {
+            setStoredUser(null)
+          }
+          return
+        }
+
+        if (!response.ok || data.ok === false || !data.user) {
+          return
+        }
+
+        saveReaderUser(data.user)
+
+        if (!ignore) {
+          setStoredUser(data.user)
+        }
+      } catch {
+        if (!ignore) {
+          setStoredUser(currentUser || null)
+        }
+      } finally {
+        if (!ignore) setCheckingUser(false)
+      }
+    }
+
+    restoreUser()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const handleLogout = () => {
-    localStorage.removeItem('shadow_reader_token')
-    localStorage.removeItem('shadow_reader_user')
-    sessionStorage.removeItem('shadow_reader_token')
-    sessionStorage.removeItem('shadow_reader_user')
+    clearReaderSession()
     navigate('/login', { replace: true })
   }
 
   const handleAuthorDashboard = async () => {
     if (authorLoading) return
 
-    const token = getReaderToken()
+    const currentToken = getReaderToken()
 
-    if (!token) {
+    if (!currentToken) {
       navigate('/login')
       return
     }
@@ -171,11 +278,17 @@ export default function Me() {
 
       const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${currentToken}`,
         },
       })
 
       const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        navigate('/login', { replace: true })
+        return
+      }
 
       if (response.ok && data.has_author_page) {
         navigate('/author/dashboard')
@@ -220,7 +333,7 @@ export default function Me() {
                 <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
                   {isLoggedIn ? (
                     <>
-                      {displayName}
+                      {checkingUser ? 'Loading account...' : displayName}
                       {isPremium ? (
                         <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
                           <i className="fa-solid fa-crown text-[15px]" />
