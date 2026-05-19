@@ -12,6 +12,8 @@ import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 
 function ComingSoon({ title }) {
   return (
@@ -70,6 +72,9 @@ function AppShell() {
         <Route path="/help" element={<ComingSoon title="Help Center" />} />
         <Route path="/about" element={<ComingSoon title="About Us" />} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
