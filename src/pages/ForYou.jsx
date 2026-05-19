@@ -212,15 +212,15 @@ export default function ForYou() {
 }
 
         .tab-item.active::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 3px;
-          background: #111827;
-          border-radius: 10px;
-        }
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #F6B800;
+  border-radius: 10px;
+}
       `}</style>
 
       <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
