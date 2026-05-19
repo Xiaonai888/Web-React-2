@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import QRCode from 'qrcode'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -30,25 +29,20 @@ function getHeaders() {
   }
 }
 
+function getAuthHeaders() {
+  const token = getReaderToken()
+
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
 function formatMoney(value) {
   return `$${Number(value || 0).toFixed(2)}`
-}
-
-function formatTime(seconds) {
-  const safeSeconds = Math.max(0, Number(seconds || 0))
-  const minutes = Math.floor(safeSeconds / 60)
-  const remain = safeSeconds % 60
-  return `${minutes}:${String(remain).padStart(2, '0')}`
-}
-
-function getSecondsLeft(expiresAt) {
-  if (!expiresAt) return 0
-  const diff = new Date(expiresAt).getTime() - Date.now()
-  return Math.max(0, Math.ceil(diff / 1000))
 }
 
 function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
@@ -114,20 +108,11 @@ function PackageCard({ item, selected, onSelect }) {
 
 function PaymentMethodModal({
   selectedPackage,
-  payment,
-  qrImage,
-  secondsLeft,
   creating,
-  checking,
-  paymentMessage,
   onClose,
-  onCreateAbaPayment,
+  onCreateManualPayment,
 }) {
   if (!selectedPackage) return null
-
-  const isWaiting = payment?.status === 'waiting_payment'
-  const isSuccess = payment?.status === 'success'
-  const isEnded = ['failed', 'expired', 'cancelled'].includes(payment?.status)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
@@ -136,7 +121,7 @@ function PaymentMethodModal({
           <div>
             <h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
+              Choose a payment method to continue.
             </p>
           </div>
 
@@ -167,90 +152,168 @@ function PaymentMethodModal({
           </div>
         </div>
 
-        {!payment ? (
-          <button
-            type="button"
-            onClick={onCreateAbaPayment}
-            disabled={creating}
-            className="flex w-full items-center justify-between rounded-[20px] border border-[#E5E7EB] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div>
-              <div>
-                <p className="text-[14px] font-black text-[#111111]">ABA KHQR</p>
-                <p className="mt-1 text-[11px] font-semibold text-[#6B7280]">
-                  {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
-                </p>
-              </div>
+        <button
+          type="button"
+          onClick={onCreateManualPayment}
+          disabled={creating}
+          className="flex w-full items-center justify-between rounded-[20px] border border-[#E5E7EB] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">
+              KHQR
             </div>
-
-            <i className="fas fa-chevron-right text-[14px] text-[#111111]" />
-          </button>
-        ) : null}
-
-        {payment ? (
-          <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 text-center">
-            <div
-              className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
-                isSuccess
-                  ? 'bg-green-100 text-green-700'
-                  : isEnded
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-[#FFF7DF] text-[#8A6A12]'
-              }`}
-            >
-              {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
+            <div>
+              <p className="text-[14px] font-black text-[#111111]">ABA PayWay</p>
+              <p className="mt-1 text-[11px] font-semibold text-[#6B7280]">
+                {creating ? 'Creating order...' : 'Open ABA link and upload proof'}
+              </p>
             </div>
-
-            {qrImage && isWaiting ? (
-              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#E5E7EB] bg-white p-2" />
-            ) : null}
-
-            {!qrImage && payment.checkout_url && isWaiting ? (
-              <a
-                href={payment.checkout_url}
-                target="_blank"
-                rel="noreferrer"
-                className="mx-auto flex h-14 max-w-[260px] items-center justify-center rounded-2xl bg-[#111111] text-[14px] font-black text-white"
-              >
-                Open ABA Payment
-              </a>
-            ) : null}
-
-            {!qrImage && !payment.checkout_url && isWaiting ? (
-              <div className="rounded-2xl bg-[#F8F8F8] p-4 text-[12px] font-bold leading-5 text-[#6B7280]">
-                ABA payment was created, but QR data is not available yet.
-              </div>
-            ) : null}
-
-            {checking && isWaiting ? (
-              <p className="mt-3 text-[12px] font-bold text-[#6B7280]">Checking payment safely...</p>
-            ) : null}
-
-            {paymentMessage ? (
-              <p className="mt-3 text-[12px] font-extrabold leading-5 text-[#111111]">{paymentMessage}</p>
-            ) : null}
-
-            {isEnded ? (
-              <button
-                type="button"
-                onClick={onCreateAbaPayment}
-                disabled={creating}
-                className="mt-4 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
-              >
-                Generate New QR
-              </button>
-            ) : null}
           </div>
-        ) : null}
+
+          <i className="fas fa-chevron-right text-[14px] text-[#111111]" />
+        </button>
 
         <button
           type="button"
           onClick={onClose}
           className="mt-3 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]"
         >
-          {isSuccess ? 'Done' : 'Cancel'}
+          Cancel
         </button>
+      </div>
+    </div>
+  )
+}
+
+function ManualProofModal({
+  payment,
+  selectedPackage,
+  proofFile,
+  proofPreview,
+  submitting,
+  proofChecked,
+  message,
+  onChooseFile,
+  onSetProofChecked,
+  onSubmitProof,
+  onClose,
+}) {
+  if (!payment || !selectedPackage) return null
+
+  async function copyText(value) {
+    try {
+      await navigator.clipboard.writeText(String(value || ''))
+    } catch {}
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
+      <div className="max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-[20px] font-black text-[#111111]">Complete ABA Payment</h3>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+              Pay the exact amount, then upload your payment screenshot.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+          >
+            <i className="fas fa-times text-[14px]" />
+          </button>
+        </div>
+
+        <div className="space-y-3 rounded-[22px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Amount</p>
+              <p className="mt-1 text-[26px] font-black text-[#111111]">{formatMoney(payment.amount_usd)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => copyText(Number(payment.amount_usd).toFixed(2))}
+              className="rounded-full border border-[#D1D5DB] bg-white px-3 py-2 text-[12px] font-black text-[#111111]"
+            >
+              Copy Amount
+            </button>
+          </div>
+
+          <div className="h-px bg-[#E5E7EB]" />
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Order ID</p>
+              <p className="mt-1 break-all text-[14px] font-black text-[#111111]">{payment.order_id}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => copyText(payment.order_id)}
+              className="shrink-0 rounded-full border border-[#D1D5DB] bg-white px-3 py-2 text-[12px] font-black text-[#111111]"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <a
+          href={payment.checkout_url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex h-14 w-full items-center justify-center rounded-[18px] bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]"
+        >
+          Open ABA PayWay
+        </a>
+
+        <div className="mt-4 rounded-[22px] border border-[#E5E7EB] bg-white p-4">
+          <p className="text-[13px] font-black text-[#111111]">Upload payment screenshot</p>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+            Upload the successful payment receipt from ABA. Admin will verify it before Diamonds are released.
+          </p>
+
+          <label className="mt-3 flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D1D5DB] bg-[#F8F8F8] p-4 text-center">
+            {proofPreview ? (
+              <img src={proofPreview} alt="Payment proof" className="max-h-[220px] rounded-xl object-contain" />
+            ) : (
+              <>
+                <i className="fas fa-cloud-arrow-up text-[24px] text-[#111111]" />
+                <span className="mt-2 text-[12px] font-black text-[#111111]">Choose screenshot</span>
+                <span className="mt-1 text-[11px] font-semibold text-[#6B7280]">JPG, PNG, WEBP up to 5MB</span>
+              </>
+            )}
+
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onChooseFile} className="hidden" />
+          </label>
+
+          {proofFile ? (
+            <p className="mt-2 truncate text-[11px] font-bold text-[#6B7280]">{proofFile.name}</p>
+          ) : null}
+
+          <label className="mt-4 flex items-start gap-3 rounded-[16px] bg-[#F8F8F8] p-3">
+            <input
+              type="checkbox"
+              checked={proofChecked}
+              onChange={(event) => onSetProofChecked(event.target.checked)}
+              className="mt-1 h-4 w-4 accent-[#111111]"
+            />
+            <span className="text-[12px] font-bold leading-5 text-[#111111]">
+              I have paid the exact amount {formatMoney(payment.amount_usd)} and uploaded the correct payment screenshot.
+            </span>
+          </label>
+
+          <button
+            type="button"
+            onClick={onSubmitProof}
+            disabled={submitting || !proofFile || !proofChecked}
+            className="mt-4 h-13 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-40"
+          >
+            {submitting ? 'Submitting...' : 'Submit Payment Proof'}
+          </button>
+
+          {message ? <p className="mt-3 text-center text-[12px] font-bold leading-5 text-[#111111]">{message}</p> : null}
+        </div>
       </div>
     </div>
   )
@@ -258,28 +321,29 @@ function PaymentMethodModal({
 
 export default function PurchaseSection() {
   const navigate = useNavigate()
-  const pollRef = useRef(null)
+  const previewRef = useRef('')
   const [wallet, setWallet] = useState(null)
   const [packages, setPackages] = useState(fallbackPackages)
   const [selectedUsd, setSelectedUsd] = useState(1)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [showPaymentMethods, setShowPaymentMethods] = useState(false)
-  const [payment, setPayment] = useState(null)
-  const [qrImage, setQrImage] = useState('')
-  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [manualPayment, setManualPayment] = useState(null)
+  const [proofFile, setProofFile] = useState(null)
+  const [proofPreview, setProofPreview] = useState('')
+  const [proofChecked, setProofChecked] = useState(false)
   const [creatingPayment, setCreatingPayment] = useState(false)
-  const [checkingPayment, setCheckingPayment] = useState(false)
-  const [paymentMessage, setPaymentMessage] = useState('')
+  const [submittingProof, setSubmittingProof] = useState(false)
+  const [proofMessage, setProofMessage] = useState('')
 
   const selectedPackage = useMemo(
     () => packages.find((item) => Number(item.package_usd) === Number(selectedUsd)) || packages[0],
     [packages, selectedUsd]
   )
 
-  function stopPolling() {
-    if (pollRef.current) window.clearInterval(pollRef.current)
-    pollRef.current = null
+  function clearPreview() {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    previewRef.current = ''
   }
 
   async function loadPurchaseData() {
@@ -310,80 +374,7 @@ export default function PurchaseSection() {
     }
   }
 
-  async function createQrFromPayment(nextPayment) {
-    const directImage = nextPayment?.qr_image || nextPayment?.qrImage || ''
-
-    if (directImage) {
-      setQrImage(directImage)
-      return
-    }
-
-    const value = nextPayment?.qr_string || nextPayment?.qrString || nextPayment?.checkout_url || ''
-
-    if (!value) {
-      setQrImage('')
-      return
-    }
-
-    try {
-      const url = await QRCode.toDataURL(value, {
-        width: 420,
-        margin: 1,
-        errorCorrectionLevel: 'M',
-      })
-      setQrImage(url)
-    } catch (error) {
-      setQrImage('')
-    }
-  }
-
-  async function checkPaymentStatus(orderId) {
-    if (!orderId) return
-
-    try {
-      setCheckingPayment(true)
-      const response = await fetch(`${API_BASE_URL}/api/purchase/aba/status/${encodeURIComponent(orderId)}`, {
-        headers: getHeaders(),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to check payment status.')
-
-      setPayment(data.payment)
-      setSecondsLeft(getSecondsLeft(data.payment?.expires_at || data.payment?.expired_at))
-
-      if (data.payment?.status === 'success') {
-        stopPolling()
-        setPaymentMessage('Diamonds added to your wallet successfully.')
-        await loadPurchaseData()
-        return
-      }
-
-      if (data.payment?.status === 'callback_received') {
-        stopPolling()
-        setPaymentMessage('Payment callback received. Waiting for final ABA verification before release.')
-        return
-      }
-
-      if (['failed', 'expired', 'cancelled'].includes(data.payment?.status)) {
-        stopPolling()
-        setPaymentMessage('Payment was not completed. No report was sent. You can generate a new QR.')
-      }
-    } catch (error) {
-      setPaymentMessage(error.message || 'Failed to check payment status.')
-    } finally {
-      setCheckingPayment(false)
-    }
-  }
-
-  function startPolling(orderId) {
-    stopPolling()
-    pollRef.current = window.setInterval(() => {
-      checkPaymentStatus(orderId)
-    }, 3000)
-  }
-
-  async function createAbaPayment() {
+  async function createManualPayment() {
     const token = getReaderToken()
 
     if (!token) {
@@ -394,29 +385,26 @@ export default function PurchaseSection() {
     if (!selectedPackage || creatingPayment) return
 
     try {
-      stopPolling()
       setCreatingPayment(true)
-      setPaymentMessage('')
-      setPayment(null)
-      setQrImage('')
+      setProofMessage('')
+      setProofFile(null)
+      setProofChecked(false)
+      clearPreview()
+      setProofPreview('')
 
-      const response = await fetch(`${API_BASE_URL}/api/purchase/aba/create`, {
+      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/create`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
       })
       const data = await response.json()
 
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create ABA payment.')
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create payment order.')
 
-      setPayment(data.payment)
-      setSecondsLeft(getSecondsLeft(data.payment?.expires_at || data.payment?.expired_at))
-      await createQrFromPayment(data.payment)
-      startPolling(data.payment?.order_id)
-
-      if (!data.configured) setPaymentMessage('ABA PayWay is not configured yet. This is preparation mode only.')
+      setManualPayment(data.payment)
+      setShowPaymentMethods(false)
     } catch (error) {
-      setPaymentMessage(error.message || 'Failed to create ABA payment.')
+      setProofMessage(error.message || 'Failed to create payment order.')
     } finally {
       setCreatingPayment(false)
     }
@@ -430,35 +418,72 @@ export default function PurchaseSection() {
       return
     }
 
-    setPayment(null)
-    setQrImage('')
-    setPaymentMessage('')
+    setProofMessage('')
     setShowPaymentMethods(true)
   }
 
-  function closePaymentModal() {
-    stopPolling()
-    setShowPaymentMethods(false)
+  function handleChooseProof(event) {
+    const file = event.target.files?.[0] || null
+
+    clearPreview()
+    setProofFile(file)
+
+    if (file) {
+      const preview = URL.createObjectURL(file)
+      previewRef.current = preview
+      setProofPreview(preview)
+    } else {
+      setProofPreview('')
+    }
+  }
+
+  async function submitProof() {
+    if (!manualPayment || !proofFile || !proofChecked || submittingProof) return
+
+    try {
+      setSubmittingProof(true)
+      setProofMessage('')
+
+      const formData = new FormData()
+      formData.append('order_id', manualPayment.order_id)
+      formData.append('proof_image', proofFile)
+
+      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/proof/${encodeURIComponent(manualPayment.order_id)}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData,
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to submit payment proof.')
+
+      setManualPayment(data.payment)
+      setProofMessage('Payment proof submitted. Please wait for admin verification.')
+      setProofFile(null)
+      setProofChecked(false)
+      clearPreview()
+      setProofPreview('')
+    } catch (error) {
+      setProofMessage(error.message || 'Failed to submit payment proof.')
+    } finally {
+      setSubmittingProof(false)
+    }
+  }
+
+  function closeManualProofModal() {
+    setManualPayment(null)
+    setProofFile(null)
+    setProofChecked(false)
+    setProofMessage('')
+    clearPreview()
+    setProofPreview('')
   }
 
   useEffect(() => {
     loadPurchaseData()
-    return () => stopPolling()
+
+    return () => clearPreview()
   }, [])
-
-  useEffect(() => {
-    const expiresAt = payment?.expires_at || payment?.expired_at
-
-    if (!expiresAt || payment.status !== 'waiting_payment') return undefined
-
-    const timer = window.setInterval(() => {
-      const nextSeconds = getSecondsLeft(expiresAt)
-      setSecondsLeft(nextSeconds)
-      if (nextSeconds <= 0) checkPaymentStatus(payment.order_id)
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [payment?.order_id, payment?.expires_at, payment?.expired_at, payment?.status])
 
   if (!getReaderToken()) {
     return (
@@ -531,14 +556,25 @@ export default function PurchaseSection() {
       {showPaymentMethods ? (
         <PaymentMethodModal
           selectedPackage={selectedPackage}
-          payment={payment}
-          qrImage={qrImage}
-          secondsLeft={secondsLeft}
           creating={creatingPayment}
-          checking={checkingPayment}
-          paymentMessage={paymentMessage}
-          onClose={closePaymentModal}
-          onCreateAbaPayment={createAbaPayment}
+          onClose={() => setShowPaymentMethods(false)}
+          onCreateManualPayment={createManualPayment}
+        />
+      ) : null}
+
+      {manualPayment ? (
+        <ManualProofModal
+          payment={manualPayment}
+          selectedPackage={selectedPackage}
+          proofFile={proofFile}
+          proofPreview={proofPreview}
+          submitting={submittingProof}
+          proofChecked={proofChecked}
+          message={proofMessage}
+          onChooseFile={handleChooseProof}
+          onSetProofChecked={setProofChecked}
+          onSubmitProof={submitProof}
+          onClose={closeManualProofModal}
         />
       ) : null}
     </section>
