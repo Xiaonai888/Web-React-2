@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
 
 function getReaderToken() {
   return (
@@ -21,6 +22,122 @@ function AuthorCard({ name, fans, work, time }) {
       <div className="mt-4 text-[10px] font-semibold text-[#a0a6b2]">
         <i className="far fa-clock mr-1" />
         {time}
+      </div>
+    </div>
+  )
+}
+
+function EventSlideBanner() {
+  const navigate = useNavigate()
+  const swiperRef = useRef(null)
+  const [slides, setSlides] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchSlides() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/slides?section_key=${EVENT_SLIDE_SECTION_KEY}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to fetch Event slides')
+        }
+
+        if (!ignore) {
+          setSlides(data.slides || [])
+        }
+      } catch {
+        if (!ignore) setSlides([])
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchSlides()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!window.Swiper || slides.length === 0) return
+
+    if (swiperRef.current) {
+      swiperRef.current.destroy(true, true)
+      swiperRef.current = null
+    }
+
+    swiperRef.current = new window.Swiper('.eventSwiper', {
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 'auto',
+      coverflowEffect: {
+        rotate: 0,
+        stretch: 0,
+        depth: 80,
+        modifier: 2,
+        slideShadows: false,
+      },
+      loop: slides.length > 1,
+      autoplay: {
+        delay: 4500,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.event-swiper-pagination',
+        clickable: true,
+      },
+    })
+
+    return () => {
+      if (swiperRef.current) {
+        swiperRef.current.destroy(true, true)
+        swiperRef.current = null
+      }
+    }
+  }, [slides])
+
+  if (loading) {
+    return (
+      <div className="flex aspect-[2.6/1] w-full items-center justify-center rounded-[20px] bg-[#f4f5f7] text-[14px] font-bold text-[#8d94a1]">
+        Loading slides...
+      </div>
+    )
+  }
+
+  if (!slides.length) {
+    return (
+      <div className="flex aspect-[2.6/1] w-full items-center justify-center rounded-[20px] bg-black text-[34px] font-extrabold text-white/80">
+        Cover
+      </div>
+    )
+  }
+
+  return (
+    <div className="event-swiper-wrap">
+      <div className="swiper-container eventSwiper">
+        <div className="swiper-wrapper">
+          {slides.map((slide) => (
+            <div
+              key={slide.id}
+              className="swiper-slide aspect-[2.6/1] cursor-pointer overflow-hidden rounded-[20px]"
+              onClick={() => {
+                if (slide.link_url) navigate(slide.link_url)
+              }}
+            >
+              <img
+                src={slide.image_url}
+                alt={slide.title || 'Event slide'}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="event-swiper-pagination mt-3 text-center" />
       </div>
     </div>
   )
@@ -73,6 +190,29 @@ export default function EventPage() {
 
   return (
     <div className="min-h-screen bg-white pb-[92px]">
+      <style>{`
+        .eventSwiper {
+          width: 100%;
+          padding-top: 4px;
+          padding-bottom: 26px;
+        }
+        .eventSwiper .swiper-slide {
+          width: 100%;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .event-swiper-pagination .swiper-pagination-bullet {
+          width: 8px;
+          height: 8px;
+          opacity: 1;
+          background: #d1d5db;
+        }
+        .event-swiper-pagination .swiper-pagination-bullet-active {
+          background: #111827;
+          width: 22px;
+          border-radius: 999px;
+        }
+      `}</style>
+
       <header className="sticky top-0 z-40 bg-black px-4 py-4 text-center text-white">
         <button
           type="button"
@@ -96,7 +236,7 @@ export default function EventPage() {
           >
             Author
             {activeTab === 'author' ? (
-              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#1f4cff]" />
+              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#111827]" />
             ) : null}
           </button>
 
@@ -109,7 +249,7 @@ export default function EventPage() {
           >
             Event
             {activeTab === 'event' ? (
-              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#1f4cff]" />
+              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#111827]" />
             ) : null}
           </button>
         </section>
@@ -117,9 +257,7 @@ export default function EventPage() {
         {activeTab === 'author' ? (
           <>
             <section className="mt-10">
-              <div className="flex aspect-[2.6/1] w-full items-center justify-center rounded-[20px] bg-black text-[34px] font-extrabold text-white/80">
-                Cover
-              </div>
+              <EventSlideBanner />
 
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <button className="h-14 rounded-[16px] bg-black text-[20px] font-extrabold text-white">
