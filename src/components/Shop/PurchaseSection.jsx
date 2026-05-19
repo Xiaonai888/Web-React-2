@@ -51,14 +51,14 @@ function getSecondsLeft(expiresAt) {
   return Math.max(0, Math.ceil(diff / 1000))
 }
 
-function DiamondIcon({ selected = false, size = 'h-9 w-9' }) {
+function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full border ${size} ${
-        selected ? 'border-[#c9a227] bg-[#fff9e6]' : 'border-[#e5e7eb] bg-[#f8f8f8]'
+        selected ? 'border-[#C59B2D] bg-[#FFF7DF]' : 'border-[#E5E7EB] bg-[#F8F8F8]'
       }`}
     >
-      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#c9a227]' : 'text-[#111111]'}`} />
+      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#3B0764]' : 'text-[#111111]'}`} />
     </span>
   )
 }
@@ -70,43 +70,43 @@ function PackageCard({ item, selected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`relative flex min-h-[112px] items-start gap-3 rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
+      className={`relative min-h-[126px] overflow-hidden rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
         selected
-          ? 'border-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.10)] ring-1 ring-[#c9a227]/60'
-          : 'border-[#e5e7eb] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#c9a227]/70'
+          ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]'
+          : 'border-[#E5E7EB] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#C59B2D]/70'
       }`}
     >
-      <DiamondIcon selected={selected} />
+      {isBestValue ? (
+        <div className="absolute right-3 top-3 rounded-bl-[12px] rounded-tr-[14px] bg-[#F5C542] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#111111] shadow-sm">
+          Best Value
+        </div>
+      ) : null}
 
-      <div className="min-w-0 flex-1">
-        <div className="flex min-h-[20px] items-center gap-2">
-          {isBestValue ? (
-            <span className="rounded-full border border-[#ead997] bg-[#fff9e6] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#8a6f18]">
-              Best Value
+      <div className="flex items-start gap-3 pr-8">
+        <DiamondIcon selected={selected} />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+            <span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">
+              {formatNumber(item.diamonds)}
             </span>
-          ) : null}
+            <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
+          </div>
+
+          <p className="mt-2 text-[12px] font-extrabold text-[#6B7280]">{formatMoney(item.package_usd)}</p>
+
+          <p className={`mt-2 text-[11px] font-extrabold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
+            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
+          </p>
         </div>
-
-        <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#111111]">
-            {formatNumber(item.diamonds)}
-          </span>
-          <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
-        </div>
-
-        <p className="mt-1 text-[12px] font-black text-[#6b7280]">{formatMoney(item.package_usd)}</p>
-
-        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#8a6f18]' : 'text-[#6b7280]'}`}>
-          {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
-        </p>
       </div>
 
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-          selected ? 'border-[#111111] bg-[#111111]' : 'border-[#d1d5db] bg-white'
-        }`}
+        className={`absolute right-3 flex h-5 w-5 items-center justify-center rounded-full border ${
+          selected ? 'border-[#111111] bg-[#111111]' : 'border-[#D1D5DB] bg-white'
+        } ${isBestValue ? 'top-11' : 'top-3'}`}
       >
-        {selected ? <i className="fas fa-check text-[9px] text-[#c9a227]" /> : null}
+        {selected ? <i className="fas fa-check text-[9px] text-[#F5C542]" /> : null}
       </span>
     </button>
   )
@@ -135,7 +135,7 @@ function PaymentMethodModal({
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
               {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
             </p>
           </div>
@@ -143,26 +143,26 @@ function PaymentMethodModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111111] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
           >
             <i className="fas fa-times text-[14px]" />
           </button>
         </div>
 
-        <div className="mb-4 rounded-[20px] border border-[#e5e7eb] bg-[#f8f8f8] p-4">
+        <div className="mb-4 rounded-[20px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
           <div className="flex items-center gap-3">
             <DiamondIcon selected size="h-11 w-11" />
             <div className="min-w-0 flex-1">
               <p className="text-[18px] font-black leading-none text-[#111111]">
                 {formatNumber(selectedPackage.diamonds)} Diamonds
               </p>
-              <p className="mt-1 text-[12px] font-bold text-[#6b7280]">
+              <p className="mt-1 text-[12px] font-bold text-[#6B7280]">
                 {selectedPackage.bonus_gems > 0 ? `Bonus ${formatNumber(selectedPackage.bonus_gems)} Gems` : 'No bonus gems'}
               </p>
             </div>
             <div className="text-right">
               <p className="text-[15px] font-black text-[#111111]">{formatMoney(selectedPackage.package_usd)}</p>
-              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">USD</p>
+              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#9CA3AF]">USD</p>
             </div>
           </div>
         </div>
@@ -172,13 +172,13 @@ function PaymentMethodModal({
             type="button"
             onClick={onCreateAbaPayment}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-[20px] border border-[#e5e7eb] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[20px] border border-[#E5E7EB] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
+              <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div>
               <div>
                 <p className="text-[14px] font-black text-[#111111]">ABA KHQR</p>
-                <p className="mt-1 text-[11px] font-semibold text-[#6b7280]">
+                <p className="mt-1 text-[11px] font-semibold text-[#6B7280]">
                   {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
                 </p>
               </div>
@@ -189,21 +189,21 @@ function PaymentMethodModal({
         ) : null}
 
         {payment ? (
-          <div className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 text-center">
+          <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 text-center">
             <div
               className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
                 isSuccess
                   ? 'bg-green-100 text-green-700'
                   : isEnded
                     ? 'bg-red-100 text-red-700'
-                    : 'bg-[#fff9e6] text-[#8a6f18]'
+                    : 'bg-[#FFF7DF] text-[#8A6A12]'
               }`}
             >
               {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
             </div>
 
             {qrImage && isWaiting ? (
-              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#e5e7eb] bg-white p-2" />
+              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#E5E7EB] bg-white p-2" />
             ) : null}
 
             {!qrImage && payment.checkout_url && isWaiting ? (
@@ -218,13 +218,13 @@ function PaymentMethodModal({
             ) : null}
 
             {!qrImage && !payment.checkout_url && isWaiting ? (
-              <div className="rounded-2xl bg-[#f8f8f8] p-4 text-[12px] font-bold leading-5 text-[#6b7280]">
+              <div className="rounded-2xl bg-[#F8F8F8] p-4 text-[12px] font-bold leading-5 text-[#6B7280]">
                 ABA payment was created, but QR data is not available yet.
               </div>
             ) : null}
 
             {checking && isWaiting ? (
-              <p className="mt-3 text-[12px] font-bold text-[#6b7280]">Checking payment safely...</p>
+              <p className="mt-3 text-[12px] font-bold text-[#6B7280]">Checking payment safely...</p>
             ) : null}
 
             {paymentMessage ? (
@@ -462,9 +462,9 @@ export default function PurchaseSection() {
 
   if (!getReaderToken()) {
     return (
-      <section className="rounded-[24px] border border-[#e5e7eb] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
+      <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
         <h2 className="text-[20px] font-black text-[#111111]">Purchase Diamonds</h2>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6b7280]">
+        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6B7280]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
         <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111111] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
@@ -476,40 +476,37 @@ export default function PurchaseSection() {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6b7280]">My Balance</p>
+      <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-[18px] border border-[#e5e7eb] bg-[#f8f8f8] p-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
             <div className="flex items-center gap-3">
               <DiamondIcon size="h-9 w-9" />
               <div>
-                <p className="text-[12px] font-bold text-[#6b7280]">Diamonds</p>
+                <p className="text-[12px] font-bold text-[#6B7280]">Diamonds</p>
                 <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[#e5e7eb] bg-white p-4">
-            <p className="text-[12px] font-bold text-[#6b7280]">Gems</p>
+          <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4">
+            <p className="text-[12px] font-bold text-[#6B7280]">Gems</p>
             <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
-        <p className="mt-3 text-[12px] leading-5 text-[#6b7280]">
+        <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
           Diamonds unlock premium episodes. Bonus Gems are rewards from purchases and future tasks.
         </p>
       </div>
 
       <div>
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div>
-            <h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#6b7280]">ABA KHQR expires in 3 minutes.</p>
-          </div>
+        <div className="mb-3">
+          <h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {packages.map((item) => (
             <PackageCard
               key={item.package_usd}
@@ -529,7 +526,7 @@ export default function PurchaseSection() {
         Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
       </button>
 
-      {message ? <p className="text-center text-[12px] font-bold text-[#555]\">{message}</p> : null}
+      {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
 
       {showPaymentMethods ? (
         <PaymentMethodModal
