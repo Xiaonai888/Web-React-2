@@ -8,8 +8,6 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const DIAMOND_ICON = '/assets/Icons/Diamond.png'
-
 const fallbackPackages = [
   { package_usd: 1, diamonds: 100, bonus_gems: 0 },
   { package_usd: 5, diamonds: 500, bonus_gems: 1000 },
@@ -53,10 +51,14 @@ function getSecondsLeft(expiresAt) {
   return Math.max(0, Math.ceil(diff / 1000))
 }
 
-function DiamondIcon({ size = 'h-9 w-9' }) {
+function DiamondIcon({ selected = false, size = 'h-9 w-9' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full bg-[#eef8ff] ring-1 ring-[#d9edf9] ${size}`}>
-      <img src={DIAMOND_ICON} alt="Diamond" className="h-[70%] w-[70%] object-contain" />
+    <span
+      className={`flex shrink-0 items-center justify-center rounded-full border ${size} ${
+        selected ? 'border-[#7c3aed] bg-[#f5f0ff]' : 'border-[#eadffb] bg-[#faf7ff]'
+      }`}
+    >
+      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#6d28d9]' : 'text-[#8b5cf6]'}`} />
     </span>
   )
 }
@@ -68,40 +70,40 @@ function PackageCard({ item, selected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`relative flex min-h-[118px] items-start gap-3 rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
+      className={`relative flex min-h-[112px] items-start gap-3 rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
         selected
-          ? 'border-[#1597f2] shadow-[0_10px_22px_rgba(21,151,242,0.12)] ring-2 ring-[#1597f2]/10'
-          : 'border-[#e6edf5] shadow-[0_6px_18px_rgba(15,23,42,0.035)] hover:border-[#b9e8ff]'
+          ? 'border-[#7c3aed] shadow-[0_10px_24px_rgba(124,58,237,0.12)] ring-2 ring-[#7c3aed]/10'
+          : 'border-[#ece7f3] shadow-[0_6px_16px_rgba(17,24,39,0.035)] hover:border-[#c4b5fd]'
       }`}
     >
-      <DiamondIcon />
+      <DiamondIcon selected={selected} />
 
       <div className="min-w-0 flex-1">
-        <div className="flex min-h-[22px] items-center gap-2">
+        <div className="flex min-h-[20px] items-center gap-2">
           {isBestValue ? (
-            <span className="rounded-full bg-[#fff4cc] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#9a6a00]">
+            <span className="rounded-full bg-[#fff4d6] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#9a6a00]">
               Best Value
             </span>
           ) : null}
         </div>
 
         <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#0b4fb3]">
+          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#24111f]">
             {formatNumber(item.diamonds)}
           </span>
           <span className="text-[12px] font-black text-[#111827]">Diamonds</span>
         </div>
 
-        <p className="mt-1 text-[12px] font-black text-[#ff4d4f]">{formatMoney(item.package_usd)}</p>
+        <p className="mt-1 text-[12px] font-black text-[#e11d48]">{formatMoney(item.package_usd)}</p>
 
-        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#b77900]' : 'text-[#667085]'}`}>
+        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#a16207]' : 'text-[#6b7280]'}`}>
           {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
         </p>
       </div>
 
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-          selected ? 'border-[#0b4fb3] bg-[#0b4fb3]' : 'border-[#cbd5e1] bg-white'
+          selected ? 'border-[#7c3aed] bg-[#7c3aed]' : 'border-[#d1d5db] bg-white'
         }`}
       >
         {selected ? <i className="fas fa-check text-[9px] text-white" /> : null}
@@ -133,7 +135,7 @@ function PaymentMethodModal({
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-[20px] font-black text-[#111827]">Payment Method</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#667085]">
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
               {payment ? 'Scan and complete payment before the QR expires.' : 'Choose a payment method to continue.'}
             </p>
           </div>
@@ -147,20 +149,20 @@ function PaymentMethodModal({
           </button>
         </div>
 
-        <div className="mb-4 rounded-[20px] border border-[#e6edf5] bg-[#f8fbff] p-4">
+        <div className="mb-4 rounded-[20px] border border-[#ece7f3] bg-[#faf7ff] p-4">
           <div className="flex items-center gap-3">
-            <DiamondIcon size="h-11 w-11" />
+            <DiamondIcon selected size="h-11 w-11" />
             <div className="min-w-0 flex-1">
-              <p className="text-[18px] font-black leading-none text-[#0b4fb3]">
+              <p className="text-[18px] font-black leading-none text-[#24111f]">
                 {formatNumber(selectedPackage.diamonds)} Diamonds
               </p>
-              <p className="mt-1 text-[12px] font-bold text-[#667085]">
+              <p className="mt-1 text-[12px] font-bold text-[#6b7280]">
                 {selectedPackage.bonus_gems > 0 ? `Bonus ${formatNumber(selectedPackage.bonus_gems)} Gems` : 'No bonus gems'}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[15px] font-black text-[#ff4d4f]">{formatMoney(selectedPackage.package_usd)}</p>
-              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">USD</p>
+              <p className="text-[15px] font-black text-[#e11d48]">{formatMoney(selectedPackage.package_usd)}</p>
+              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">USD</p>
             </div>
           </div>
         </div>
@@ -170,13 +172,13 @@ function PaymentMethodModal({
             type="button"
             onClick={onCreateAbaPayment}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-[20px] border border-[#e6edf5] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[20px] border border-[#ece7f3] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
               <div>
                 <p className="text-[14px] font-black text-[#111827]">ABA KHQR</p>
-                <p className="mt-1 text-[11px] font-semibold text-[#667085]">
+                <p className="mt-1 text-[11px] font-semibold text-[#6b7280]">
                   {creating ? 'Generating secure QR...' : 'Pay with ABA Mobile or KHQR'}
                 </p>
               </div>
@@ -187,21 +189,21 @@ function PaymentMethodModal({
         ) : null}
 
         {payment ? (
-          <div className="rounded-[22px] border border-[#e6edf5] bg-white p-4 text-center">
+          <div className="rounded-[22px] border border-[#ece7f3] bg-white p-4 text-center">
             <div
               className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
                 isSuccess
                   ? 'bg-green-100 text-green-700'
                   : isEnded
                     ? 'bg-red-100 text-red-700'
-                    : 'bg-[#eef8ff] text-[#0b4fb3]'
+                    : 'bg-[#f5f0ff] text-[#6d28d9]'
               }`}
             >
               {isSuccess ? 'Payment Success' : isEnded ? payment.status : `Expires in ${formatTime(secondsLeft)}`}
             </div>
 
             {qrImage && isWaiting ? (
-              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#e7edf5] bg-white p-2" />
+              <img src={qrImage} alt="ABA KHQR" className="mx-auto h-[230px] w-[230px] rounded-2xl border border-[#ece7f3] bg-white p-2" />
             ) : null}
 
             {!qrImage && payment.checkout_url && isWaiting ? (
@@ -216,13 +218,13 @@ function PaymentMethodModal({
             ) : null}
 
             {!qrImage && !payment.checkout_url && isWaiting ? (
-              <div className="rounded-2xl bg-[#f6f8fb] p-4 text-[12px] font-bold leading-5 text-[#667085]">
+              <div className="rounded-2xl bg-[#f9fafb] p-4 text-[12px] font-bold leading-5 text-[#6b7280]">
                 ABA payment was created, but QR data is not available yet.
               </div>
             ) : null}
 
             {checking && isWaiting ? (
-              <p className="mt-3 text-[12px] font-bold text-[#667085]">Checking payment safely...</p>
+              <p className="mt-3 text-[12px] font-bold text-[#6b7280]">Checking payment safely...</p>
             ) : null}
 
             {paymentMessage ? (
@@ -460,9 +462,9 @@ export default function PurchaseSection() {
 
   if (!getReaderToken()) {
     return (
-      <section className="rounded-[24px] border border-[#e6edf5] bg-white p-6 text-center shadow-[0_6px_18px_rgba(15,23,42,0.035)]">
+      <section className="rounded-[24px] border border-[#ece7f3] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,24,39,0.035)]">
         <h2 className="text-[20px] font-black text-[#111827]">Purchase Diamonds</h2>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#667085]">
+        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6b7280]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
         </p>
         <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111827] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
@@ -474,27 +476,27 @@ export default function PurchaseSection() {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-[24px] border border-[#e6edf5] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.035)]">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#667085]">My Balance</p>
+      <div className="rounded-[24px] border border-[#ece7f3] bg-white p-5 shadow-[0_6px_16px_rgba(17,24,39,0.035)]">
+        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6b7280]">My Balance</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-[18px] border border-[#d9edf9] bg-[#f8fbff] p-4">
+          <div className="rounded-[18px] border border-[#eadffb] bg-[#faf7ff] p-4">
             <div className="flex items-center gap-3">
               <DiamondIcon size="h-9 w-9" />
               <div>
-                <p className="text-[12px] font-bold text-[#667085]">Diamonds</p>
-                <p className="mt-1 text-[23px] font-black text-[#0b4fb3]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+                <p className="text-[12px] font-bold text-[#6b7280]">Diamonds</p>
+                <p className="mt-1 text-[23px] font-black text-[#24111f]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[#fdecc8] bg-[#fffdf6] p-4">
-            <p className="text-[12px] font-bold text-[#667085]">Gems</p>
-            <p className="mt-1 text-[23px] font-black text-[#b77900]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
+          <div className="rounded-[18px] border border-[#f4e4bb] bg-[#fffdf7] p-4">
+            <p className="text-[12px] font-bold text-[#6b7280]">Gems</p>
+            <p className="mt-1 text-[23px] font-black text-[#a16207]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
-        <p className="mt-3 text-[12px] leading-5 text-[#667085]">
+        <p className="mt-3 text-[12px] leading-5 text-[#6b7280]">
           Diamonds unlock premium episodes. Bonus Gems are rewards from purchases and future tasks.
         </p>
       </div>
@@ -503,7 +505,7 @@ export default function PurchaseSection() {
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <h2 className="text-[20px] font-black text-[#111827]">Choose Diamonds</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#667085]">ABA KHQR expires in 3 minutes.</p>
+            <p className="mt-1 text-[12px] font-semibold text-[#6b7280]">ABA KHQR expires in 3 minutes.</p>
           </div>
         </div>
 
@@ -522,7 +524,7 @@ export default function PurchaseSection() {
       <button
         type="button"
         onClick={handlePurchase}
-        className="w-full rounded-[18px] bg-[#111827] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)] active:scale-[0.99]"
+        className="w-full rounded-[18px] bg-[#111827] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,24,39,0.16)] active:scale-[0.99]"
       >
         Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
       </button>
