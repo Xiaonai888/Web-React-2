@@ -53,80 +53,59 @@ function getSecondsLeft(expiresAt) {
   return Math.max(0, Math.ceil(diff / 1000))
 }
 
-function getBadge(item) {
-  if (Number(item.package_usd) === 10) return 'Best Value'
-  if (Number(item.package_usd) === 100) return 'Max Pack'
-  if (Number(item.bonus_gems) > 0) return 'Bonus'
-  return ''
-}
-
-function DiamondIcon({ size = 'h-11 w-11' }) {
+function DiamondIcon({ size = 'h-9 w-9' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-2xl bg-[#eef8ff] shadow-[inset_0_0_0_1px_rgba(21,151,242,0.12)] ${size}`}>
-      <img src={DIAMOND_ICON} alt="Diamond" className="h-[78%] w-[78%] object-contain" />
+    <span className={`flex shrink-0 items-center justify-center rounded-full bg-[#eef8ff] ring-1 ring-[#d9edf9] ${size}`}>
+      <img src={DIAMOND_ICON} alt="Diamond" className="h-[70%] w-[70%] object-contain" />
     </span>
   )
 }
 
 function PackageCard({ item, selected, onSelect }) {
-  const badge = getBadge(item)
+  const isBestValue = Number(item.package_usd) === 10
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`group relative min-h-[150px] overflow-hidden rounded-[26px] border bg-white p-4 text-left transition active:scale-[0.99] ${
+      className={`relative flex min-h-[118px] items-start gap-3 rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
         selected
-          ? 'border-[#1597f2] shadow-[0_16px_36px_rgba(21,151,242,0.18)] ring-2 ring-[#5edcff]/30'
-          : 'border-[#e7edf5] shadow-[0_8px_22px_rgba(15,23,42,0.04)] hover:border-[#9bdcff] hover:shadow-[0_14px_30px_rgba(21,151,242,0.12)]'
+          ? 'border-[#1597f2] shadow-[0_10px_22px_rgba(21,151,242,0.12)] ring-2 ring-[#1597f2]/10'
+          : 'border-[#e6edf5] shadow-[0_6px_18px_rgba(15,23,42,0.035)] hover:border-[#b9e8ff]'
       }`}
     >
-      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[radial-gradient(circle,#5edcff_0%,#1597f2_44%,transparent_70%)] opacity-[0.16] transition group-hover:opacity-[0.24]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-24 bg-gradient-to-br from-transparent via-[#eef8ff] to-[#dff5ff] opacity-70" />
+      <DiamondIcon />
 
-      <div className="relative flex items-start justify-between gap-3">
-        <DiamondIcon />
-        <span
-          className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-            selected ? 'border-[#0b4fb3] bg-[#0b4fb3]' : 'border-[#cbd5e1] bg-white'
-          }`}
-        >
-          {selected ? <i className="fas fa-check text-[9px] text-white" /> : null}
-        </span>
-      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex min-h-[22px] items-center gap-2">
+          {isBestValue ? (
+            <span className="rounded-full bg-[#fff4cc] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#9a6a00]">
+              Best Value
+            </span>
+          ) : null}
+        </div>
 
-      <div className="relative mt-4">
-        {badge ? (
-          <div className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] ${
-            badge === 'Best Value' || badge === 'Max Pack'
-              ? 'bg-[#fff4cc] text-[#9a6a00]'
-              : 'bg-[#eef8ff] text-[#0b4fb3]'
-          }`}>
-            {badge}
-          </div>
-        ) : null}
-
-        <div className="flex items-baseline gap-1">
-          <span className="text-[30px] font-black leading-none tracking-[-0.04em] text-[#0b4fb3]">
+        <div className="mt-1 flex items-baseline gap-1.5">
+          <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[#0b4fb3]">
             {formatNumber(item.diamonds)}
           </span>
-          <span className="text-[13px] font-black text-[#111827]">Diamonds</span>
+          <span className="text-[12px] font-black text-[#111827]">Diamonds</span>
         </div>
 
-        <div className="mt-2 text-[14px] font-black text-[#ff4d4f]">
-          {formatMoney(item.package_usd)}
-        </div>
+        <p className="mt-1 text-[12px] font-black text-[#ff4d4f]">{formatMoney(item.package_usd)}</p>
 
-        <div className="mt-2 min-h-[20px] text-[12px] font-extrabold text-[#667085]">
-          {item.bonus_gems > 0 ? (
-            <span className="inline-flex rounded-full bg-[#fff8e1] px-2.5 py-1 text-[#b77900]">
-              Bonus {formatNumber(item.bonus_gems)} Gems
-            </span>
-          ) : (
-            <span>No bonus gems</span>
-          )}
-        </div>
+        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#b77900]' : 'text-[#667085]'}`}>
+          {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
+        </p>
       </div>
+
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+          selected ? 'border-[#0b4fb3] bg-[#0b4fb3]' : 'border-[#cbd5e1] bg-white'
+        }`}
+      >
+        {selected ? <i className="fas fa-check text-[9px] text-white" /> : null}
+      </span>
     </button>
   )
 }
@@ -150,7 +129,7 @@ function PaymentMethodModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
-      <div className="w-full max-w-[430px] rounded-[30px] bg-white p-5 shadow-2xl">
+      <div className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-[20px] font-black text-[#111827]">Payment Method</h3>
@@ -168,20 +147,20 @@ function PaymentMethodModal({
           </button>
         </div>
 
-        <div className="mb-4 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#eef8ff] via-white to-[#fff8e1] p-4 ring-1 ring-[#d9edf9]">
+        <div className="mb-4 rounded-[20px] border border-[#e6edf5] bg-[#f8fbff] p-4">
           <div className="flex items-center gap-3">
-            <DiamondIcon size="h-12 w-12" />
+            <DiamondIcon size="h-11 w-11" />
             <div className="min-w-0 flex-1">
-              <div className="text-[18px] font-black leading-none text-[#0b4fb3]">
+              <p className="text-[18px] font-black leading-none text-[#0b4fb3]">
                 {formatNumber(selectedPackage.diamonds)} Diamonds
-              </div>
-              <div className="mt-1 text-[12px] font-extrabold text-[#667085]">
+              </p>
+              <p className="mt-1 text-[12px] font-bold text-[#667085]">
                 {selectedPackage.bonus_gems > 0 ? `Bonus ${formatNumber(selectedPackage.bonus_gems)} Gems` : 'No bonus gems'}
-              </div>
+              </p>
             </div>
             <div className="text-right">
-              <div className="text-[16px] font-black text-[#ff4d4f]">{formatMoney(selectedPackage.package_usd)}</div>
-              <div className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">USD</div>
+              <p className="text-[15px] font-black text-[#ff4d4f]">{formatMoney(selectedPackage.package_usd)}</p>
+              <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">USD</p>
             </div>
           </div>
         </div>
@@ -191,7 +170,7 @@ function PaymentMethodModal({
             type="button"
             onClick={onCreateAbaPayment}
             disabled={creating}
-            className="flex w-full items-center justify-between rounded-[22px] border border-[#d9edf9] bg-white p-4 text-left shadow-[0_10px_24px_rgba(15,23,42,0.04)] active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[20px] border border-[#e6edf5] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#e91d2d] text-[13px] font-black text-white">KHQR</div>
@@ -208,7 +187,7 @@ function PaymentMethodModal({
         ) : null}
 
         {payment ? (
-          <div className="rounded-[26px] border border-[#e7edf5] bg-white p-4 text-center">
+          <div className="rounded-[22px] border border-[#e6edf5] bg-white p-4 text-center">
             <div
               className={`mx-auto mb-3 inline-flex rounded-full px-3 py-1 text-[12px] font-black ${
                 isSuccess
@@ -481,7 +460,7 @@ export default function PurchaseSection() {
 
   if (!getReaderToken()) {
     return (
-      <section className="rounded-[28px] border border-[#e7edf5] bg-white p-6 text-center shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <section className="rounded-[24px] border border-[#e6edf5] bg-white p-6 text-center shadow-[0_6px_18px_rgba(15,23,42,0.035)]">
         <h2 className="text-[20px] font-black text-[#111827]">Purchase Diamonds</h2>
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#667085]">
           Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
@@ -495,23 +474,23 @@ export default function PurchaseSection() {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-[28px] border border-[#e7edf5] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <div className="rounded-[24px] border border-[#e6edf5] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.035)]">
         <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#667085]">My Balance</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-[22px] bg-gradient-to-br from-[#eef8ff] to-[#ffffff] p-4 ring-1 ring-[#d9edf9]">
+          <div className="rounded-[18px] border border-[#d9edf9] bg-[#f8fbff] p-4">
             <div className="flex items-center gap-3">
-              <DiamondIcon size="h-10 w-10" />
+              <DiamondIcon size="h-9 w-9" />
               <div>
                 <p className="text-[12px] font-bold text-[#667085]">Diamonds</p>
-                <p className="mt-1 text-[24px] font-black text-[#0b4fb3]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
+                <p className="mt-1 text-[23px] font-black text-[#0b4fb3]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[22px] bg-gradient-to-br from-[#fff8e1] to-[#ffffff] p-4 ring-1 ring-[#fdecc8]">
+          <div className="rounded-[18px] border border-[#fdecc8] bg-[#fffdf6] p-4">
             <p className="text-[12px] font-bold text-[#667085]">Gems</p>
-            <p className="mt-1 text-[24px] font-black text-[#b77900]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
+            <p className="mt-1 text-[23px] font-black text-[#b77900]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
           </div>
         </div>
 
@@ -543,7 +522,7 @@ export default function PurchaseSection() {
       <button
         type="button"
         onClick={handlePurchase}
-        className="w-full rounded-[22px] bg-gradient-to-r from-[#111827] via-[#0b4fb3] to-[#1597f2] py-4 text-[15px] font-black text-white shadow-[0_16px_32px_rgba(11,79,179,0.24)] active:scale-[0.99]"
+        className="w-full rounded-[18px] bg-[#111827] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)] active:scale-[0.99]"
       >
         Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
       </button>
