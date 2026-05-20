@@ -4,7 +4,6 @@ import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import Library from './pages/Library'
 import ShopPage from './pages/ShopPage'
-import ShopOrderHistoryPage from './pages/ShopOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
 import StoryDetailPage from './pages/StoryDetailPage'
@@ -13,6 +12,8 @@ import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
+import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 
@@ -35,11 +36,12 @@ function AppShell() {
     '/login',
     '/register',
     '/shop',
-    '/shop/orders',
     '/profile',
     '/event',
     '/author/create',
     '/author/dashboard',
+    '/authors/following',
+    '/authors/top',
   ]
 
   const shouldHideFooter =
@@ -55,7 +57,6 @@ function AppShell() {
         <Route path="/me" element={<Me />} />
 
         <Route path="/shop" element={<ShopPage />} />
-        <Route path="/shop/orders" element={<ShopOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
@@ -65,6 +66,8 @@ function AppShell() {
 
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
+        <Route path="/authors/following" element={<FollowingAuthorsPage />} />
+        <Route path="/authors/top" element={<TopAuthorsPage />} />
 
         <Route path="/wallet" element={<ShopPage />} />
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
