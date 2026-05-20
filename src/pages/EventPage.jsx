@@ -18,10 +18,10 @@ const benefitItems = [
   { icon: 'fa-star', title: 'Get Featured', text: 'Join events and get promoted.' },
 ]
 
-const benefitSlides = [
-  { title: 'Author Rewards', text: 'Write, grow, and unlock more chances to be featured.' },
-  { title: 'Weekly Ranking', text: 'Top authors can appear in special ranking areas.' },
-  { title: 'Writer Events', text: 'Join future writing challenges and author campaigns.' },
+const spotlightSlides = [
+  { title: 'Writer Events', label: 'NEW', text: 'Join future writing challenges and author campaigns.' },
+  { title: 'Author Rewards', label: 'HOT', text: 'Write, grow, and unlock more chances to be featured.' },
+  { title: 'Weekly Ranking', label: 'TOP', text: 'Top authors can appear in special ranking areas.' },
 ]
 
 function getReaderToken() {
@@ -34,18 +34,21 @@ function getReaderToken() {
 
 function AuthorCard({ name, fans, work, time, mode = 'recent' }) {
   return (
-    <div className="min-w-[132px] rounded-[18px] border border-[#e5e7eb] bg-white px-3 py-4 text-center shadow-sm">
-      <div className="mx-auto mb-3 h-16 w-16 rounded-full bg-[#1f1f1f]" />
-      <div className="line-clamp-1 text-[12px] font-bold text-[#111827]">{name}</div>
-      <div className="mt-1 text-[13px] font-extrabold text-[#111827]">{fans}</div>
-      <div className="mt-1 text-[12px] text-[#444]">{work}</div>
+    <div className="min-w-[110px] rounded-[14px] border border-[#e5e7eb] bg-white px-2.5 py-3 text-center shadow-sm">
+      <div className="mx-auto mb-2.5 h-14 w-14 rounded-full bg-[#1f1f1f]" />
+      <div className="line-clamp-1 text-[10px] font-bold text-[#111827]">{name}</div>
+      <div className="mt-1 text-[11px] font-extrabold text-[#111827]">{fans}</div>
+      <div className="mt-1 text-[10px] text-[#444]">{work}</div>
 
       {mode === 'top' ? (
-        <button type="button" className="mt-3 h-8 w-full rounded-full bg-black text-[12px] font-bold text-white active:scale-95">
+        <button
+          type="button"
+          className="mt-3 h-7 w-full rounded-full bg-black text-[10px] font-bold text-white active:scale-95"
+        >
           Follow
         </button>
       ) : (
-        <div className="mt-4 text-[10px] font-semibold text-[#a0a6b2]">
+        <div className="mt-3 text-[9px] font-semibold text-[#a0a6b2]">
           <i className="far fa-clock mr-1" />
           {time}
         </div>
@@ -57,9 +60,13 @@ function AuthorCard({ name, fans, work, time, mode = 'recent' }) {
 function SectionHeader({ title, onMore }) {
   return (
     <div className="mt-8 flex items-center justify-between">
-      <h3 className="text-[20px] font-extrabold text-[#111827]">{title}</h3>
-      <button type="button" onClick={onMore} className="flex h-9 w-9 items-center justify-center active:scale-95">
-        <i className="fas fa-chevron-right text-[24px]" />
+      <h3 className="text-[19px] font-extrabold text-[#111827]">{title}</h3>
+      <button
+        type="button"
+        onClick={onMore}
+        className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95"
+      >
+        <i className="fas fa-chevron-right text-[15px]" />
       </button>
     </div>
   )
@@ -177,7 +184,7 @@ function EventSlideBanner() {
   )
 }
 
-function AuthorBenefitsSlider() {
+function AuthorSpotlightSlider() {
   const swiperRef = useRef(null)
 
   useEffect(() => {
@@ -188,18 +195,17 @@ function AuthorBenefitsSlider() {
       swiperRef.current = null
     }
 
-    swiperRef.current = new window.Swiper('.authorBenefitSwiper', {
+    swiperRef.current = new window.Swiper('.authorSpotlightSwiper', {
       slidesPerView: 'auto',
-      spaceBetween: 14,
-      loop: benefitSlides.length > 2,
-      rewind: benefitSlides.length <= 2,
+      spaceBetween: 12,
       speed: 650,
+      loop: spotlightSlides.length > 2,
       autoplay: {
         delay: 5000,
         disableOnInteraction: false,
       },
       pagination: {
-        el: '.author-benefit-pagination',
+        el: '.author-spotlight-pagination',
         clickable: true,
       },
     })
@@ -213,20 +219,25 @@ function AuthorBenefitsSlider() {
   }, [])
 
   return (
-    <div className="mt-5">
-      <div className="swiper-container authorBenefitSwiper">
+    <div className="mt-4">
+      <div className="swiper-container authorSpotlightSwiper">
         <div className="swiper-wrapper">
-          {benefitSlides.map((slide) => (
+          {spotlightSlides.map((slide) => (
             <div
               key={slide.title}
-              className="swiper-slide flex aspect-[2.9/1] w-[86%] flex-col justify-center rounded-[18px] bg-black px-6 text-white shadow-[0_14px_28px_rgba(0,0,0,0.16)]"
+              className="swiper-slide flex aspect-[3/1] w-[82%] flex-col justify-end overflow-hidden rounded-[16px] bg-black px-4 pb-3 text-white shadow-sm"
             >
-              <div className="text-[20px] font-extrabold">{slide.title}</div>
-              <div className="mt-2 max-w-[340px] text-[13px] font-medium leading-5 text-white/70">{slide.text}</div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-[#ff3b6b] px-2 py-0.5 text-[8px] font-black uppercase text-white">
+                  {slide.label}
+                </span>
+                <span className="line-clamp-1 text-[12px] font-extrabold">{slide.title}</span>
+              </div>
+              <p className="mt-1 line-clamp-1 text-[10px] font-medium text-white/65">{slide.text}</p>
             </div>
           ))}
         </div>
-        <div className="author-benefit-pagination mt-3 text-center" />
+        <div className="author-spotlight-pagination mt-3 text-center" />
       </div>
     </div>
   )
@@ -314,100 +325,102 @@ export default function EventPage() {
           box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .event-swiper-pagination .swiper-pagination-bullet,
-        .author-benefit-pagination .swiper-pagination-bullet {
-          width: 8px;
-          height: 8px;
+        .author-spotlight-pagination .swiper-pagination-bullet {
+          width: 7px;
+          height: 7px;
           opacity: 1;
           background: #d1d5db;
         }
         .event-swiper-pagination .swiper-pagination-bullet-active,
-        .author-benefit-pagination .swiper-pagination-bullet-active {
+        .author-spotlight-pagination .swiper-pagination-bullet-active {
           background: #111827;
           width: 22px;
           border-radius: 999px;
         }
       `}</style>
 
-      <header className="sticky top-0 z-40 bg-black px-4 py-4 text-center text-white">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="absolute left-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white active:scale-95"
-          aria-label="Go back"
-        >
-          <i className="fas fa-chevron-left text-[14px]" />
-        </button>
-        <h1 className="text-[22px] font-medium">Event</h1>
+      <header className="sticky top-0 z-40 border-b border-[#f0f0f0] bg-white px-4 py-3 text-[#111827]">
+        <div className="mx-auto flex max-w-[760px] items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] active:scale-95"
+            aria-label="Go back"
+          >
+            <i className="fas fa-chevron-left text-[16px]" />
+          </button>
+          <h1 className="text-[18px] font-extrabold">Event</h1>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-[760px] px-4 py-6">
-        <section className="grid grid-cols-2 text-center">
+      <main className="mx-auto max-w-[760px] px-4 py-5">
+        <section className="flex gap-7 border-b border-[#f1f1f1]">
           <button
             type="button"
             onClick={() => setActiveTab('author')}
-            className={`relative pb-4 text-[20px] font-extrabold ${
-              activeTab === 'author' ? 'text-[#111827]' : 'text-[#c7c7c7]'
+            className={`relative pb-3 text-[13px] font-extrabold ${
+              activeTab === 'author' ? 'text-[#111827]' : 'text-[#9ca3af]'
             }`}
           >
             Author
             {activeTab === 'author' ? (
-              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#111827]" />
+              <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" />
             ) : null}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('event')}
-            className={`relative pb-4 text-[20px] font-extrabold ${
-              activeTab === 'event' ? 'text-[#111827]' : 'text-[#c7c7c7]'
+            className={`relative pb-3 text-[13px] font-extrabold ${
+              activeTab === 'event' ? 'text-[#111827]' : 'text-[#9ca3af]'
             }`}
           >
             Event
             {activeTab === 'event' ? (
-              <span className="absolute bottom-0 left-1/2 h-1 w-32 -translate-x-1/2 rounded-full bg-[#111827]" />
+              <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" />
             ) : null}
           </button>
         </section>
 
         {activeTab === 'author' ? (
           <>
-            <section className="mt-8">
+            <section className="mt-6">
               <EventSlideBanner />
 
-              <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+              <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
                 {shortcutItems.map((item) => (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => handleShortcut(item.label)}
-                    className={`flex h-9 shrink-0 items-center gap-2 rounded-full px-4 text-[13px] font-extrabold active:scale-95 ${
+                    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
                       item.type === 'primary'
                         ? 'bg-black text-white'
                         : 'border border-[#d8dbe3] bg-white text-[#111827]'
                     }`}
                   >
-                    <i className={`fas ${item.icon} text-[12px]`} />
+                    <i className={`fas ${item.icon} text-[10px]`} />
                     {item.label}
                   </button>
                 ))}
               </div>
             </section>
 
-            <section className="py-9 text-center">
-              <h2 className="text-[30px] font-extrabold text-[#111827]">Become A Writer</h2>
+            <section className="py-8 text-center">
+              <h2 className="text-[28px] font-extrabold text-[#111827]">Become A Writer</h2>
 
-              <p className="mx-auto mt-4 max-w-[520px] text-[16px] leading-7 text-[#4b5563]">
+              <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-7 text-[#4b5563]">
                 Share your stories, build your readers, and grow with Shadow.
               </p>
 
               <div className="mt-6 grid grid-cols-3 gap-3 text-left">
                 {benefitItems.map((item) => (
-                  <div key={item.title} className="rounded-[18px] border border-[#eceaf2] bg-white p-3 shadow-sm">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
-                      <i className={`fas ${item.icon} text-[13px]`} />
+                  <div key={item.title} className="rounded-[16px] border border-[#eceaf2] bg-white p-3 shadow-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
+                      <i className={`fas ${item.icon} text-[12px]`} />
                     </div>
-                    <div className="mt-3 text-[13px] font-extrabold text-[#111827]">{item.title}</div>
-                    <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">{item.text}</div>
+                    <div className="mt-3 text-[12px] font-extrabold text-[#111827]">{item.title}</div>
+                    <div className="mt-1 text-[10px] leading-4 text-[#8d94a1]">{item.text}</div>
                   </div>
                 ))}
               </div>
@@ -422,12 +435,12 @@ export default function EventPage() {
                 type="button"
                 onClick={handleStartYourWork}
                 aria-busy={loading}
-                className="mx-auto mt-7 flex h-12 w-[82%] max-w-[380px] items-center justify-center rounded-full bg-black text-[18px] font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99]"
+                className="mx-auto mt-7 flex h-11 w-[78%] max-w-[360px] items-center justify-center rounded-full bg-black text-[16px] font-bold text-white shadow-[0_12px_26px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-[#1b1b1b] active:scale-[0.99]"
               >
                 Start your work
               </button>
 
-              <div className="mt-4 text-[15px] text-[#111827]">
+              <div className="mt-4 text-[14px] text-[#111827]">
                 Need help?
                 <button type="button" onClick={() => navigate('/help')} className="ml-1 text-[#0b5cff]">
                   Help Center
@@ -436,19 +449,19 @@ export default function EventPage() {
             </section>
 
             <section className="pb-8">
-              <h2 className="text-[28px] font-extrabold text-[#111827]">Author Center</h2>
+              <h2 className="text-[24px] font-extrabold text-[#111827]">Author Center</h2>
 
-              <AuthorBenefitsSlider />
+              <AuthorSpotlightSlider />
 
               <SectionHeader title="My Following" onMore={() => navigate('/authors/following')} />
 
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex gap-2">
                 {['recent', 'popular', 'updated'].map((item) => (
                   <button
                     key={item}
                     type="button"
                     onClick={() => setFollowingFilter(item)}
-                    className={`rounded-full px-5 py-2 text-[14px] font-bold ${
+                    className={`rounded-full px-4 py-1.5 text-[12px] font-bold ${
                       followingFilter === item
                         ? 'bg-black text-white'
                         : 'border border-[#d8dbe3] bg-white text-[#111827]'
@@ -459,7 +472,7 @@ export default function EventPage() {
                 ))}
               </div>
 
-              <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
+              <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="1 days ago" />
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="2 days ago" />
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="3 days ago" />
@@ -468,7 +481,7 @@ export default function EventPage() {
 
               <SectionHeader title="Top Author" onMore={() => navigate('/authors/top')} />
 
-              <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
+              <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
                 <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
