@@ -200,10 +200,6 @@ function AuthorSpotlightSlider() {
       spaceBetween: 12,
       speed: 650,
       loop: spotlightSlides.length > 2,
-      autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-      },
       pagination: {
         el: '.author-spotlight-pagination',
         clickable: true,
