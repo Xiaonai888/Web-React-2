@@ -140,6 +140,43 @@ function PackageCard({ item, selected, onSelect }) {
   )
 }
 
+function PaymentProfileRequiredModal({ onClose, onGoWallet }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
+      <div className="w-full rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-[20px] font-black text-[#111111]">Set Payment Profile</h3>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+              Please add your payment account name before your first purchase.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
+            <i className="fas fa-times text-[14px]" />
+          </button>
+        </div>
+
+        <div className="rounded-[20px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
+          <p className="text-[12px] font-bold leading-5 text-[#6B7280]">
+            Use the same name as your payment account.
+          </p>
+          <p className="mt-2 text-[12px] font-black text-[#111111]">
+            Example: KEO DARIYA / DARIYA KEO
+          </p>
+        </div>
+
+        <button type="button" onClick={onGoWallet} className="mt-4 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]">
+          Go to Wallet
+        </button>
+
+        <button type="button" onClick={onClose} className="mt-3 h-12 w-full rounded-2xl border border-[#E5E7EB] bg-white text-[14px] font-black text-[#111111] active:scale-[0.99]">
+          Not Now
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment }) {
   if (!selectedPackage) return null
 
@@ -150,7 +187,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
           <div>
             <h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              After payment, your Diamonds will be added automatically when ABA confirms it.
+              After payment, your Diamonds will be added automatically when payment confirms it.
             </p>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
@@ -167,9 +204,9 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div>
             <div>
-              <p className="text-[14px] font-black text-[#111111]">ABA PayWay</p>
+              <p className="text-[14px] font-black text-[#111111]">PayWay</p>
               <p className="mt-1 text-[11px] font-semibold text-[#6B7280]">
-                {creating ? 'Opening ABA PayWay...' : `Pay exactly ${formatMoney(selectedPackage.package_usd)}`}
+                {creating ? 'Opening payment...' : `Pay exactly ${formatMoney(selectedPackage.package_usd)}`}
               </p>
             </div>
           </div>
@@ -203,7 +240,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
           <div>
             <h3 className="text-[20px] font-black text-[#111111]">{isSuccess ? 'Payment Successful' : isReview ? 'Waiting for Review' : 'Payment Confirmation'}</h3>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              {isSuccess ? `${formatNumber(payment.diamonds)} Diamonds were added to your wallet.` : isReview ? 'We received your payment but it needs manual review.' : 'Return here after payment. We will confirm it automatically through ABA.'}
+              {isSuccess ? `${formatNumber(payment.diamonds)} Diamonds were added to your wallet.` : isReview ? 'We received your payment but it needs manual review.' : 'Return here after payment. We will confirm it automatically.'}
             </p>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
@@ -257,11 +294,13 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel,
 export default function PurchaseSection() {
   const navigate = useNavigate()
   const [wallet, setWallet] = useState(null)
+  const [user, setUser] = useState(null)
   const [packages, setPackages] = useState(fallbackPackages)
   const [selectedUsd, setSelectedUsd] = useState(1)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [showPaymentMethods, setShowPaymentMethods] = useState(false)
+  const [showPaymentProfileRequired, setShowPaymentProfileRequired] = useState(false)
   const [manualPayment, setManualPayment] = useState(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [creatingPayment, setCreatingPayment] = useState(false)
@@ -272,6 +311,8 @@ export default function PurchaseSection() {
     () => packages.find((item) => Number(item.package_usd) === Number(selectedUsd)) || packages[0],
     [packages, selectedUsd]
   )
+
+  const hasPaymentProfile = Boolean(String(user?.payment_account_name || '').trim())
 
   function openStatusModal(payment) {
     setManualPayment(payment)
@@ -287,16 +328,19 @@ export default function PurchaseSection() {
 
     try {
       setLoading(true)
-      const [packagesResponse, walletResponse] = await Promise.all([
+      const [packagesResponse, walletResponse, userResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/purchase/packages`),
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/users/me`, { headers: getHeaders() }),
       ])
 
-      const packagesData = await packagesResponse.json()
-      const walletData = await walletResponse.json()
+      const packagesData = await packagesResponse.json().catch(() => ({}))
+      const walletData = await walletResponse.json().catch(() => ({}))
+      const userData = await userResponse.json().catch(() => ({}))
 
       if (packagesData.ok && Array.isArray(packagesData.packages)) setPackages(packagesData.packages)
       if (walletData.ok) setWallet(walletData.wallet)
+      if (userData.ok && userData.user) setUser(userData.user)
     } catch {
       setMessage('Failed to load purchase data.')
     } finally {
@@ -380,7 +424,14 @@ export default function PurchaseSection() {
       navigate('/login')
       return
     }
+
     setToast('')
+
+    if (!hasPaymentProfile) {
+      setShowPaymentProfileRequired(true)
+      return
+    }
+
     setShowPaymentMethods(true)
   }
 
@@ -439,9 +490,8 @@ export default function PurchaseSection() {
         <div className="flex items-center justify-between gap-3">
           <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
           <button type="button" onClick={() => navigate('/wallet')} className="text-[12px] font-semibold text-[#9CA3AF] active:scale-95">
-  Wallet <i className="fas fa-chevron-right ml-1 text-[9px]" />
-</button>
-
+            Wallet <i className="fas fa-chevron-right ml-1 text-[9px]" />
+          </button>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -467,7 +517,7 @@ export default function PurchaseSection() {
         </div>
 
         <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
-          Diamonds are added automatically after ABA confirms your payment.
+          Diamonds are added automatically after payment confirms.
         </p>
       </div>
 
@@ -496,6 +546,16 @@ export default function PurchaseSection() {
           </button>
         </div>
       </div>
+
+      {showPaymentProfileRequired ? (
+        <PaymentProfileRequiredModal
+          onClose={() => setShowPaymentProfileRequired(false)}
+          onGoWallet={() => {
+            setShowPaymentProfileRequired(false)
+            navigate('/wallet')
+          }}
+        />
+      ) : null}
 
       {showPaymentMethods ? (
         <PaymentMethodModal
