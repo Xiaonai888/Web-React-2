@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -27,11 +27,6 @@ function getHeaders() {
   return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
 }
 
-function getAuthHeaders() {
-  const token = getReaderToken()
-  return { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-}
-
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
@@ -47,9 +42,7 @@ function getSecondsLeft(dateValue) {
 
 function formatCountdown(seconds) {
   const safe = Math.max(0, Number(seconds || 0))
-  const minutes = Math.floor(safe / 60)
-  const remain = safe % 60
-  return `${minutes}:${String(remain).padStart(2, '0')}`
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`
 }
 
 function savePendingPayment(payment) {
@@ -57,11 +50,7 @@ function savePendingPayment(payment) {
 }
 
 function getSavedPendingPayment() {
-  try {
-    return JSON.parse(localStorage.getItem(PENDING_KEY) || 'null')
-  } catch {
-    return null
-  }
+  try { return JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') } catch { return null }
 }
 
 function clearSavedPendingPayment() {
@@ -76,488 +65,108 @@ function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
   )
 }
 
+function StatusBadge({ status }) {
+  const value = String(status || '').toLowerCase()
+  const labelMap = { success: 'Success', waiting_payment: 'Waiting', pending_review: 'Review', expired: 'Expired', cancelled: 'Cancelled', rejected: 'Rejected' }
+  const tone = value === 'success'
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : value === 'pending_review'
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : value === 'waiting_payment'
+        ? 'bg-slate-50 text-slate-700 border-slate-200'
+        : 'bg-red-50 text-red-700 border-red-200'
+  return <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${tone}`}>{labelMap[value] || value || 'Unknown'}</span>
+}
+
 function PackageCard({ item, selected, onSelect }) {
   const isBestValue = Number(item.package_usd) === 10
-
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative min-h-[126px] overflow-hidden rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${
-        selected ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[#E5E7EB] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#C59B2D]/70'
-      }`}
-    >
-      {isBestValue ? (
-        <div className="absolute right-3 top-3 rounded-bl-[12px] rounded-tr-[14px] bg-[#F5C542] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#111111] shadow-sm">
-          Best Value
-        </div>
-      ) : null}
-
+    <button type="button" onClick={onSelect} className={`relative min-h-[126px] overflow-hidden rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${selected ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[#E5E7EB] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#C59B2D]/70'}`}>
+      {isBestValue ? <div className="absolute right-3 top-3 rounded-bl-[12px] rounded-tr-[14px] bg-[#F5C542] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#111111] shadow-sm">Best Value</div> : null}
       <div className="flex items-start gap-3 pr-8">
         <DiamondIcon selected={selected} />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">{formatNumber(item.diamonds)}</span>
-            <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
-          </div>
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5"><span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">{formatNumber(item.diamonds)}</span><span className="text-[12px] font-black text-[#111111]">Diamonds</span></div>
           <p className="mt-2 text-[12px] font-extrabold text-[#6B7280]">{formatMoney(item.package_usd)}</p>
-          <p className={`mt-2 text-[11px] font-extrabold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
-            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
-          </p>
+          <p className={`mt-2 text-[11px] font-extrabold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>{item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}</p>
         </div>
       </div>
-
-      <span className={`absolute right-3 flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-[#111111] bg-[#111111]' : 'border-[#D1D5DB] bg-white'} ${isBestValue ? 'top-11' : 'top-3'}`}>
-        {selected ? <i className="fas fa-check text-[9px] text-[#F5C542]" /> : null}
-      </span>
+      <span className={`absolute right-3 flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-[#111111] bg-[#111111]' : 'border-[#D1D5DB] bg-white'} ${isBestValue ? 'top-11' : 'top-3'}`}>{selected ? <i className="fas fa-check text-[9px] text-[#F5C542]" /> : null}</span>
     </button>
   )
 }
 
 function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment }) {
   if (!selectedPackage) return null
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
       <div className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">Pay with ABA PayWay and upload receipt after payment.</p>
-          </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
-            <i className="fas fa-times text-[14px]" />
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={onCreateManualPayment}
-          disabled={creating}
-          className="flex w-full items-center justify-between rounded-[20px] border border-[#E5E7EB] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div>
-            <div>
-              <p className="text-[14px] font-black text-[#111111]">ABA PayWay</p>
-              <p className="mt-1 text-[11px] font-semibold text-[#6B7280]">{creating ? 'Opening ABA PayWay...' : `Pay exactly ${formatMoney(selectedPackage.package_usd)}`}</p>
-            </div>
-          </div>
-          <i className="fas fa-chevron-right text-[14px] text-[#111111]" />
-        </button>
-
-        <button type="button" onClick={onClose} className="mt-3 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]">
-          Cancel
-        </button>
+        <div className="mb-5 flex items-start justify-between gap-4"><div><h3 className="text-[20px] font-black text-[#111111]">Payment Method</h3><p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">After payment, your Diamonds will be added automatically when ABA confirms it.</p></div><button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"><i className="fas fa-times text-[14px]" /></button></div>
+        <button type="button" onClick={onCreateManualPayment} disabled={creating} className="flex w-full items-center justify-between rounded-[20px] border border-[#E5E7EB] bg-white p-4 text-left active:scale-[0.99] disabled:opacity-60"><div className="flex items-center gap-3"><div className="flex h-11 w-14 items-center justify-center rounded-xl bg-[#E91D2D] text-[13px] font-black text-white">KHQR</div><div><p className="text-[14px] font-black text-[#111111]">ABA PayWay</p><p className="mt-1 text-[11px] font-semibold text-[#6B7280]">{creating ? 'Opening ABA PayWay...' : `Pay exactly ${formatMoney(selectedPackage.package_usd)}`}</p></div></div><i className="fas fa-chevron-right text-[14px] text-[#111111]" /></button>
+        <button type="button" onClick={onClose} className="mt-3 h-12 w-full rounded-2xl bg-[#111111] text-[14px] font-black text-white active:scale-[0.99]">Cancel</button>
       </div>
     </div>
   )
 }
 
-function ManualProofModal({
-  payment,
-  proofFile,
-  proofPreview,
-  proofSecondsLeft,
-  paymentSecondsLeft,
-  submitting,
-  cancelling,
-  proofChecked,
-  message,
-  onChooseFile,
-  onSetProofChecked,
-  onSubmitProof,
-  onCancelPurchase,
-  onClose,
-}) {
+function PaymentStatusModal({ payment, secondsLeft, checking, message, onCancel, onClose, onRefresh }) {
   if (!payment) return null
-
-  const paymentExpired = paymentSecondsLeft <= 0
-
+  const status = String(payment.status || '').toLowerCase()
+  const isSuccess = status === 'success'
+  const isReview = status === 'pending_review'
+  const isWaiting = status === 'waiting_payment'
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
-      <div className="max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-[20px] font-black text-[#111111]">Upload ABA Receipt</h3>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              {paymentExpired ? 'ABA QR time ended. If you already paid, upload your receipt now.' : `ABA QR time left ${formatCountdown(paymentSecondsLeft)}.`}
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
-            <i className="fas fa-times text-[14px]" />
-          </button>
-        </div>
-
-        <div className="rounded-[20px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Amount</p>
-              <p className="mt-1 text-[26px] font-black text-[#111111]">{formatMoney(payment.amount_usd)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Upload time</p>
-              <div className="mt-1 rounded-full bg-[#111111] px-3 py-1 text-[11px] font-black text-white">{formatCountdown(proofSecondsLeft)}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-[22px] border border-[#E5E7EB] bg-white p-4">
-          <p className="text-[13px] font-black text-[#111111]">Payment screenshot</p>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">After payment, return here and upload the ABA receipt for admin verification.</p>
-
-          <label className="mt-3 flex min-h-[130px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-[#D1D5DB] bg-[#F8F8F8] p-4 text-center">
-            {proofPreview ? (
-              <img src={proofPreview} alt="Payment proof" className="max-h-[220px] rounded-xl object-contain" />
-            ) : (
-              <>
-                <i className="fas fa-cloud-arrow-up text-[24px] text-[#111111]" />
-                <span className="mt-2 text-[12px] font-black text-[#111111]">Choose screenshot</span>
-                <span className="mt-1 text-[11px] font-semibold text-[#6B7280]">JPG, PNG, WEBP up to 5MB</span>
-              </>
-            )}
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onChooseFile} className="hidden" />
-          </label>
-
-          {proofFile ? <p className="mt-2 truncate text-[11px] font-bold text-[#6B7280]">{proofFile.name}</p> : null}
-
-          <label className="mt-4 flex items-start gap-3 rounded-[16px] bg-[#F8F8F8] p-3">
-            <input type="checkbox" checked={proofChecked} onChange={(event) => onSetProofChecked(event.target.checked)} className="mt-1 h-4 w-4 accent-[#111111]" />
-            <span className="text-[12px] font-bold leading-5 text-[#111111]">I have paid the exact amount {formatMoney(payment.amount_usd)}.</span>
-          </label>
-
-          <button
-            type="button"
-            onClick={onSubmitProof}
-            disabled={submitting || !proofFile || !proofChecked || proofSecondsLeft <= 0}
-            className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-40"
-          >
-            {submitting ? 'Submitting...' : 'Submit Payment Proof'}
-          </button>
-
-          <button
-            type="button"
-            onClick={onCancelPurchase}
-            disabled={cancelling || submitting}
-            className="mt-3 w-full rounded-[18px] border border-[#E5E7EB] bg-white py-4 text-[14px] font-black text-[#111111] active:scale-[0.99] disabled:opacity-50"
-          >
-            {cancelling ? 'Cancelling...' : 'Cancel Purchase'}
-          </button>
-
-          {message ? <p className="mt-3 text-center text-[12px] font-bold leading-5 text-[#111111]">{message}</p> : null}
-        </div>
+      <div className="w-full max-w-[460px] rounded-[28px] bg-white p-5 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4"><div><h3 className="text-[20px] font-black text-[#111111]">{isSuccess ? 'Payment Successful' : isReview ? 'Waiting for Review' : 'Payment Confirmation'}</h3><p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">{isSuccess ? `${formatNumber(payment.diamonds)} Diamonds were added to your wallet.` : isReview ? 'We received your payment but it needs manual review.' : 'Return here after payment. We will confirm it automatically through ABA.'}</p></div><button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"><i className="fas fa-times text-[14px]" /></button></div>
+        <div className="rounded-[22px] border border-[#E5E7EB] bg-[#F8F8F8] p-4"><div className="flex items-center justify-between gap-3"><div><p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Amount</p><p className="mt-1 text-[26px] font-black text-[#111111]">{formatMoney(payment.amount_usd)}</p></div><StatusBadge status={payment.status} /></div><div className="mt-4 grid grid-cols-2 gap-3"><div><p className="text-[11px] font-black uppercase tracking-[0.08em] text-[#9CA3AF]">Diamonds</p><p className="mt-1 text-[15px] font-black text-[#111111]">{formatNumber(payment.diamonds)}</p></div><div><p className="text-[11px] font-black uppercase tracking-[0.08em] text-[#9CA3AF]">Time left</p><p className="mt-1 text-[15px] font-black text-[#111111]">{isWaiting ? formatCountdown(secondsLeft) : '-'}</p></div></div><p className="mt-4 break-all text-[11px] font-bold text-[#6B7280]">Order ID: {payment.order_id}</p>{payment.aba_trx_id ? <p className="mt-1 break-all text-[11px] font-bold text-[#6B7280]">Trx ID: {payment.aba_trx_id}</p> : null}</div>
+        {message ? <p className="mt-3 text-center text-[12px] font-bold leading-5 text-[#111111]">{message}</p> : null}
+        {isWaiting ? <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-50">{checking ? 'Checking...' : 'Check Status'}</button><button type="button" onClick={onCancel} disabled={checking} className="rounded-[18px] border border-[#E5E7EB] bg-white py-4 text-[14px] font-black text-[#111111] active:scale-[0.99] disabled:opacity-50">Cancel</button></div> : <button type="button" onClick={onClose} className="mt-4 w-full rounded-[18px] bg-[#111111] py-4 text-[14px] font-black text-white active:scale-[0.99]">Done</button>}
       </div>
     </div>
+  )
+}
+
+function OrderHistory({ orders }) {
+  return (
+    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]"><div className="mb-4"><h2 className="text-[18px] font-black text-[#111111]">Order History</h2><p className="mt-1 text-[12px] font-semibold text-[#6B7280]">You can use Order ID when contacting support.</p></div><div className="space-y-3">{orders.length ? orders.slice(0, 8).map((item) => (<div key={item.id || item.order_id} className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[14px] font-black text-[#111111]">{formatNumber(item.diamonds)} Diamonds</p><p className="mt-1 text-[12px] font-bold text-[#6B7280]">{formatMoney(item.amount_usd)} · {item.order_id}</p>{item.aba_trx_id ? <p className="mt-1 text-[11px] font-bold text-[#6B7280]">Trx ID: {item.aba_trx_id}</p> : null}</div><StatusBadge status={item.status} /></div></div>)) : <p className="rounded-[18px] bg-[#F8F8F8] p-4 text-center text-[12px] font-bold text-[#6B7280]">No purchase history yet.</p>}</div></section>
   )
 }
 
 export default function PurchaseSection() {
   const navigate = useNavigate()
-  const previewRef = useRef('')
   const [wallet, setWallet] = useState(null)
+  const [orders, setOrders] = useState([])
   const [packages, setPackages] = useState(fallbackPackages)
   const [selectedUsd, setSelectedUsd] = useState(1)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [showPaymentMethods, setShowPaymentMethods] = useState(false)
   const [manualPayment, setManualPayment] = useState(null)
-  const [proofFile, setProofFile] = useState(null)
-  const [proofPreview, setProofPreview] = useState('')
-  const [proofChecked, setProofChecked] = useState(false)
-  const [proofSecondsLeft, setProofSecondsLeft] = useState(0)
-  const [paymentSecondsLeft, setPaymentSecondsLeft] = useState(0)
+  const [secondsLeft, setSecondsLeft] = useState(0)
   const [creatingPayment, setCreatingPayment] = useState(false)
-  const [submittingProof, setSubmittingProof] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
-  const [proofMessage, setProofMessage] = useState('')
-
-  const selectedPackage = useMemo(
-    () => packages.find((item) => Number(item.package_usd) === Number(selectedUsd)) || packages[0],
-    [packages, selectedUsd]
-  )
-
-  function clearPreview() {
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
-    previewRef.current = ''
-  }
-
-  function openProofModal(payment) {
-    setManualPayment(payment)
-    setPaymentSecondsLeft(getSecondsLeft(payment.expires_at))
-    setProofSecondsLeft(getSecondsLeft(payment.proof_expires_at || payment.expires_at))
-  }
-
+  const [checking, setChecking] = useState(false)
+  const [toast, setToast] = useState('')
+  const selectedPackage = useMemo(() => packages.find((item) => Number(item.package_usd) === Number(selectedUsd)) || packages[0], [packages, selectedUsd])
+  function openStatusModal(payment) { setManualPayment(payment); setSecondsLeft(getSecondsLeft(payment.proof_expires_at || payment.expires_at || payment.expired_at)) }
   async function loadPurchaseData() {
-    const token = getReaderToken()
-    if (!token) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      setLoading(true)
-      const [packagesResponse, walletResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/purchase/packages`),
-        fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
-      ])
-      const packagesData = await packagesResponse.json()
-      const walletData = await walletResponse.json()
-
-      if (packagesData.ok && Array.isArray(packagesData.packages)) setPackages(packagesData.packages)
-      if (walletData.ok) setWallet(walletData.wallet)
-    } catch {
-      setMessage('Failed to load purchase data.')
-    } finally {
-      setLoading(false)
-    }
+    const token = getReaderToken(); if (!token) { setLoading(false); return }
+    try { setLoading(true); const [packagesResponse, walletResponse, requestsResponse] = await Promise.all([fetch(`${API_BASE_URL}/api/purchase/packages`), fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }), fetch(`${API_BASE_URL}/api/purchase/requests`, { headers: getHeaders() })]); const packagesData = await packagesResponse.json(); const walletData = await walletResponse.json(); const requestsData = await requestsResponse.json(); if (packagesData.ok && Array.isArray(packagesData.packages)) setPackages(packagesData.packages); if (walletData.ok) setWallet(walletData.wallet); if (requestsData.ok && Array.isArray(requestsData.purchases)) setOrders(requestsData.purchases) } catch { setMessage('Failed to load purchase data.') } finally { setLoading(false) }
   }
-
-  async function restorePendingPayment() {
-    const saved = getSavedPendingPayment()
-    if (!saved?.order_id || !getReaderToken()) return
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/status/${encodeURIComponent(saved.order_id)}`, {
-        headers: getHeaders(),
-      })
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || !data.ok) {
-        clearSavedPendingPayment()
-        return
-      }
-
-      if (data.payment?.status === 'waiting_payment') {
-        openProofModal(data.payment)
-        return
-      }
-
-      if (data.payment?.status === 'pending_review') {
-        clearSavedPendingPayment()
-        setProofMessage('Your payment proof is already submitted and waiting for admin verification.')
-      }
-    } catch {
-      clearSavedPendingPayment()
-    }
+  async function refreshPaymentStatus(orderId, silent = false) {
+    if (!orderId || !getReaderToken()) return null
+    try { setChecking(true); const response = await fetch(`${API_BASE_URL}/api/purchase/manual/status/${encodeURIComponent(orderId)}`, { headers: getHeaders() }); const data = await response.json().catch(() => ({})); if (!response.ok || !data.ok) { if (!silent) setToast(data.message || 'Payment not confirmed yet.'); return null } const payment = data.payment; openStatusModal(payment); if (payment.status === 'success') { clearSavedPendingPayment(); setToast(`${formatNumber(payment.diamonds)} Diamonds added to your wallet.`); loadPurchaseData() } else if (payment.status === 'pending_review') { clearSavedPendingPayment(); setToast('Payment is waiting for review.'); loadPurchaseData() } else if (['expired', 'cancelled', 'rejected'].includes(payment.status)) { clearSavedPendingPayment(); loadPurchaseData() } return payment } finally { setChecking(false) }
   }
-
+  async function restorePendingPayment() { const saved = getSavedPendingPayment(); if (!saved?.order_id || !getReaderToken()) return; const payment = await refreshPaymentStatus(saved.order_id, true); if (payment && payment.status === 'waiting_payment') openStatusModal(payment) }
   async function createManualPayment() {
-    if (!getReaderToken()) {
-      navigate('/login')
-      return
-    }
-
+    if (!getReaderToken()) { navigate('/login'); return }
     if (!selectedPackage || creatingPayment) return
-
-    try {
-      setCreatingPayment(true)
-      setProofMessage('')
-      setProofFile(null)
-      setProofChecked(false)
-      clearPreview()
-      setProofPreview('')
-
-      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/create`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
-      })
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create payment order.')
-
-      savePendingPayment(data.payment)
-      setShowPaymentMethods(false)
-      window.location.href = data.payment.checkout_url
-    } catch (error) {
-      setProofMessage(error.message || 'Failed to create payment order.')
-    } finally {
-      setCreatingPayment(false)
-    }
+    try { setCreatingPayment(true); setToast(''); const response = await fetch(`${API_BASE_URL}/api/purchase/manual/create`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ package_usd: selectedPackage.package_usd }) }); const data = await response.json().catch(() => ({})); if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to create payment order.'); savePendingPayment(data.payment); setShowPaymentMethods(false); window.location.href = data.payment.checkout_url } catch (error) { setToast(error.message || 'Failed to create payment order.') } finally { setCreatingPayment(false) }
   }
-
-  function handlePurchase() {
-    if (!getReaderToken()) {
-      navigate('/login')
-      return
-    }
-
-    setProofMessage('')
-    setShowPaymentMethods(true)
-  }
-
-  function handleChooseProof(event) {
-    const file = event.target.files?.[0] || null
-    clearPreview()
-    setProofFile(file)
-
-    if (file) {
-      const preview = URL.createObjectURL(file)
-      previewRef.current = preview
-      setProofPreview(preview)
-    } else {
-      setProofPreview('')
-    }
-  }
-
-  async function submitProof() {
-    if (!manualPayment || !proofFile || !proofChecked || submittingProof || proofSecondsLeft <= 0) return
-
-    try {
-      setSubmittingProof(true)
-      setProofMessage('')
-
-      const formData = new FormData()
-      formData.append('order_id', manualPayment.order_id)
-      formData.append('proof_image', proofFile)
-
-      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/proof/${encodeURIComponent(manualPayment.order_id)}`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: formData,
-      })
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to submit payment proof.')
-
-      clearSavedPendingPayment()
-      setManualPayment(null)
-      setProofFile(null)
-      setProofChecked(false)
-      clearPreview()
-      setProofPreview('')
-      setProofMessage('Payment proof submitted. Please wait for admin verification.')
-    } catch (error) {
-      setProofMessage(error.message || 'Failed to submit payment proof.')
-    } finally {
-      setSubmittingProof(false)
-    }
-  }
-
-  async function cancelPurchase() {
-    if (!manualPayment?.order_id || cancelling) return
-
-    try {
-      setCancelling(true)
-      await fetch(`${API_BASE_URL}/api/purchase/manual/cancel/${encodeURIComponent(manualPayment.order_id)}`, {
-        method: 'POST',
-        headers: getHeaders(),
-      })
-    } finally {
-      clearSavedPendingPayment()
-      setManualPayment(null)
-      setProofFile(null)
-      setProofChecked(false)
-      setProofMessage('')
-      clearPreview()
-      setProofPreview('')
-      setCancelling(false)
-    }
-  }
-
-  function closeManualProofModal() {
-    setProofMessage('Return here and upload your receipt, or cancel the purchase if you do not want to continue.')
-  }
-
-  useEffect(() => {
-    loadPurchaseData()
-    restorePendingPayment()
-    return () => clearPreview()
-  }, [])
-
-  useEffect(() => {
-    if (!manualPayment?.proof_expires_at && !manualPayment?.expires_at) return undefined
-
-    const timer = window.setInterval(() => {
-      const paymentNext = getSecondsLeft(manualPayment.expires_at)
-      const proofNext = getSecondsLeft(manualPayment.proof_expires_at || manualPayment.expires_at)
-      setPaymentSecondsLeft(paymentNext)
-      setProofSecondsLeft(proofNext)
-
-      if (proofNext <= 0) {
-        clearSavedPendingPayment()
-        setManualPayment(null)
-        setProofMessage('Payment proof upload time expired. Please create a new order.')
-      }
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [manualPayment?.order_id, manualPayment?.expires_at, manualPayment?.proof_expires_at])
-
-  if (!getReaderToken()) {
-    return (
-      <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-        <h2 className="text-[20px] font-black text-[#111111]">Purchase Diamonds</h2>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6B7280]">Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.</p>
-        <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111111] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
-          Log In
-        </button>
-      </section>
-    )
-  }
-
-  return (
-    <section className="space-y-5">
-      <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
-            <div className="flex items-center gap-3">
-              <DiamondIcon size="h-9 w-9" />
-              <div>
-                <p className="text-[12px] font-bold text-[#6B7280]">Diamonds</p>
-                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4">
-            <p className="text-[12px] font-bold text-[#6B7280]">Gems</p>
-            <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
-          </div>
-        </div>
-        <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">Diamonds unlock premium episodes. Bonus Gems are rewards from purchases and future tasks.</p>
-      </div>
-
-      <div>
-        <div className="mb-3">
-          <h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {packages.map((item) => (
-            <PackageCard key={item.package_usd} item={item} selected={Number(selectedUsd) === Number(item.package_usd)} onSelect={() => setSelectedUsd(item.package_usd)} />
-          ))}
-        </div>
-      </div>
-
-      <button type="button" onClick={handlePurchase} className="w-full rounded-[18px] bg-[#111111] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,17,17,0.16)] active:scale-[0.99]">
-        Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
-      </button>
-
-      {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
-      {proofMessage && !manualPayment ? <p className="text-center text-[12px] font-bold text-[#111111]">{proofMessage}</p> : null}
-
-      {showPaymentMethods ? (
-        <PaymentMethodModal selectedPackage={selectedPackage} creating={creatingPayment} onClose={() => setShowPaymentMethods(false)} onCreateManualPayment={createManualPayment} />
-      ) : null}
-
-      {manualPayment ? (
-        <ManualProofModal
-          payment={manualPayment}
-          proofFile={proofFile}
-          proofPreview={proofPreview}
-          proofSecondsLeft={proofSecondsLeft}
-          paymentSecondsLeft={paymentSecondsLeft}
-          submitting={submittingProof}
-          cancelling={cancelling}
-          proofChecked={proofChecked}
-          message={proofMessage}
-          onChooseFile={handleChooseProof}
-          onSetProofChecked={setProofChecked}
-          onSubmitProof={submitProof}
-          onCancelPurchase={cancelPurchase}
-          onClose={closeManualProofModal}
-        />
-      ) : null}
-    </section>
-  )
+  function handlePurchase() { if (!getReaderToken()) { navigate('/login'); return } setToast(''); setShowPaymentMethods(true) }
+  async function cancelPurchase() { if (!manualPayment?.order_id || checking) return; try { setChecking(true); await fetch(`${API_BASE_URL}/api/purchase/manual/cancel/${encodeURIComponent(manualPayment.order_id)}`, { method: 'POST', headers: getHeaders() }) } finally { clearSavedPendingPayment(); setManualPayment(null); setToast(''); setChecking(false); loadPurchaseData() } }
+  useEffect(() => { loadPurchaseData(); restorePendingPayment() }, [])
+  useEffect(() => { if (!manualPayment?.order_id || manualPayment.status !== 'waiting_payment') return undefined; const timer = window.setInterval(() => { const next = getSecondsLeft(manualPayment.proof_expires_at || manualPayment.expires_at || manualPayment.expired_at); setSecondsLeft(next); refreshPaymentStatus(manualPayment.order_id, true) }, 5000); return () => window.clearInterval(timer) }, [manualPayment?.order_id, manualPayment?.status])
+  if (!getReaderToken()) return (<section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]"><h2 className="text-[20px] font-black text-[#111111]">Purchase Diamonds</h2><p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6B7280]">Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.</p><button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111111] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">Log In</button></section>)
+  return (<section className="space-y-5"><div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]"><p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4"><div className="flex items-center gap-3"><DiamondIcon size="h-9 w-9" /><div><p className="text-[12px] font-bold text-[#6B7280]">Diamonds</p><p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p></div></div></div><div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4"><p className="text-[12px] font-bold text-[#6B7280]">Gems</p><p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p></div></div><p className="mt-3 text-[12px] leading-5 text-[#6B7280]">Diamonds are added automatically after ABA confirms your payment.</p></div><div><div className="mb-3"><h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2></div><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{packages.map((item) => <PackageCard key={item.package_usd} item={item} selected={Number(selectedUsd) === Number(item.package_usd)} onSelect={() => setSelectedUsd(item.package_usd)} />)}</div></div><button type="button" onClick={handlePurchase} className="w-full rounded-[18px] bg-[#111111] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,17,17,0.16)] active:scale-[0.99]">Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}</button>{message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}{toast ? <p className="text-center text-[12px] font-bold text-[#111111]">{toast}</p> : null}<OrderHistory orders={orders} />{showPaymentMethods ? <PaymentMethodModal selectedPackage={selectedPackage} creating={creatingPayment} onClose={() => setShowPaymentMethods(false)} onCreateManualPayment={createManualPayment} /> : null}{manualPayment ? <PaymentStatusModal payment={manualPayment} secondsLeft={secondsLeft} checking={checking} message={toast} onCancel={cancelPurchase} onClose={() => setManualPayment(null)} onRefresh={() => refreshPaymentStatus(manualPayment.order_id)} /> : null}</section>)
 }
