@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import Library from './pages/Library'
 import ShopPage from './pages/ShopPage'
+import ShopOrderHistoryPage from './pages/ShopOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
 import StoryDetailPage from './pages/StoryDetailPage'
@@ -34,6 +35,7 @@ function AppShell() {
     '/login',
     '/register',
     '/shop',
+    '/shop/orders',
     '/profile',
     '/event',
     '/author/create',
@@ -53,6 +55,7 @@ function AppShell() {
         <Route path="/me" element={<Me />} />
 
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/shop/orders" element={<ShopOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
@@ -74,7 +77,6 @@ function AppShell() {
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
