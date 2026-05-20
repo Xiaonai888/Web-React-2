@@ -454,7 +454,7 @@ export default function PurchaseSection() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
             <div className="flex items-center gap-3">
               <CrystalShardIcon />
               <div>
