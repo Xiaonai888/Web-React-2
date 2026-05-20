@@ -438,9 +438,9 @@ export default function PurchaseSection() {
       <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
-          <button type="button" onClick={() => navigate('/shop/orders')} className="text-[12px] font-black text-[#111111] active:scale-95">
-            Order History <i className="fas fa-chevron-right ml-1 text-[10px]" />
-          </button>
+          <button type="button" onClick={() => navigate('/shop/orders')} className="text-[12px] font-semibold text-[#9CA3AF] active:scale-95">
+  Order History <i className="fas fa-chevron-right ml-1 text-[9px]" />
+</button>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
