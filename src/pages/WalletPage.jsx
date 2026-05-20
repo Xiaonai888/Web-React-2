@@ -55,6 +55,7 @@ function CrystalShardIcon() {
 
 function SmallAssetIcon({ type }) {
   const icon = type === 'voucher' ? 'fas fa-ticket-alt' : 'fas fa-book-open'
+
   return (
     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-[#F8F8F8]">
       <i className={`${icon} text-[14px] text-[#111111]`} />
@@ -97,27 +98,93 @@ function BalanceCard({ icon, label, value }) {
   )
 }
 
+function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
+      <div className="w-full rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-w-[430px] sm:rounded-[28px]">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-[20px] font-black text-[#111111]">Payment Profile</h3>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+              Use the same name as your payment account.
+            </p>
+            <p className="mt-1 text-[11px] font-semibold text-[#9CA3AF]">
+              Example: KEO DARIYA / DARIYA KEO
+            </p>
+          </div>
+
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
+            <i className="fas fa-times text-[14px]" />
+          </button>
+        </div>
+
+        <label className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">
+          Payment account name
+        </label>
+
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="KEO DARIYA"
+          className="mt-2 h-12 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[14px] font-bold uppercase text-[#111111] outline-none focus:border-[#111111]"
+        />
+
+        {message ? <p className="mt-3 text-center text-[12px] font-bold text-[#111111]">{message}</p> : null}
+
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60"
+        >
+          {saving ? 'Saving...' : 'Save'}
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 h-12 w-full rounded-[18px] border border-[#E5E7EB] bg-white text-[14px] font-black text-[#111111] active:scale-[0.99]"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function WalletPage() {
   const navigate = useNavigate()
   const [wallet, setWallet] = useState(null)
   const [orders, setOrders] = useState([])
   const [paymentName, setPaymentName] = useState('')
+  const [draftPaymentName, setDraftPaymentName] = useState('')
+  const [showPaymentProfileModal, setShowPaymentProfileModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
   const [status, setStatus] = useState('all')
   const [search, setSearch] = useState('')
 
   const filteredOrders = useMemo(() => {
     const keyword = search.trim().toLowerCase()
+
     return orders.filter((item) => {
       const currentStatus = String(item.status || '').toLowerCase()
       const matchesStatus = status === 'all' || currentStatus === status
-      const matchesSearch = !keyword || [item.order_id, item.aba_trx_id, item.amount_usd, item.diamonds, item.status, item.match_reason]
+      const matchesSearch = !keyword || [
+        item.order_id,
+        item.aba_trx_id,
+        item.amount_usd,
+        item.diamonds,
+        item.status,
+        item.match_reason,
+      ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
         .includes(keyword)
+
       return matchesStatus && matchesSearch
     })
   }, [orders, status, search])
@@ -131,6 +198,7 @@ export default function WalletPage() {
     try {
       setLoading(true)
       setMessage('')
+
       const [walletResponse, requestsResponse, userResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/purchase/requests`, { headers: getHeaders() }),
@@ -143,7 +211,12 @@ export default function WalletPage() {
 
       if (walletData.ok) setWallet(walletData.wallet)
       if (requestsData.ok && Array.isArray(requestsData.purchases)) setOrders(requestsData.purchases)
-      if (userData.ok && userData.user) setPaymentName(userData.user.payment_account_name || '')
+
+      if (userData.ok && userData.user) {
+        const nextName = userData.user.payment_account_name || ''
+        setPaymentName(nextName)
+        setDraftPaymentName(nextName)
+      }
     } catch {
       setMessage('Failed to load wallet.')
     } finally {
@@ -151,23 +224,35 @@ export default function WalletPage() {
     }
   }
 
+  function openPaymentProfileModal() {
+    setDraftPaymentName(paymentName)
+    setProfileMessage('')
+    setShowPaymentProfileModal(true)
+  }
+
   async function savePaymentProfile() {
     if (saving) return
 
     try {
       setSaving(true)
-      setMessage('')
+      setProfileMessage('')
+
       const response = await fetch(`${API_BASE_URL}/api/users/payment-profile`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify({ payment_account_name: paymentName }),
+        body: JSON.stringify({ payment_account_name: draftPaymentName }),
       })
       const data = await response.json().catch(() => ({}))
+
       if (!response.ok || !data.ok) throw new Error(data.message || 'Failed to save payment profile.')
-      setPaymentName(data.user?.payment_account_name || '')
+
+      const nextName = data.user?.payment_account_name || ''
+      setPaymentName(nextName)
+      setDraftPaymentName(nextName)
+      setShowPaymentProfileModal(false)
       setMessage('Payment profile saved.')
     } catch (error) {
-      setMessage(error.message || 'Failed to save payment profile.')
+      setProfileMessage(error.message || 'Failed to save payment profile.')
     } finally {
       setSaving(false)
     }
@@ -191,6 +276,7 @@ export default function WalletPage() {
       <main className="space-y-5 px-4 pt-4">
         <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
           <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
+
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <BalanceCard icon={<DiamondIcon />} label="Diamonds" value={loading ? '...' : formatNumber(wallet?.diamond_balance)} />
             <BalanceCard icon={<CrystalShardIcon />} label="Gems" value={loading ? '...' : formatNumber(wallet?.gem_balance)} />
@@ -202,20 +288,29 @@ export default function WalletPage() {
         <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
           <div className="mb-4">
             <h2 className="text-[20px] font-black text-[#111111]">Payment Profile</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">Use the same name as your payment account.</p>
-            <p className="mt-1 text-[11px] font-semibold text-[#9CA3AF]">Example: KEO DARIYA / DARIYA KEO</p>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+              Use the same name as your payment account.
+            </p>
           </div>
 
-          <label className="text-[11px] font-black uppercase tracking-[0.1em] text-[#6B7280]">Payment account name</label>
-          <input
-            value={paymentName}
-            onChange={(event) => setPaymentName(event.target.value)}
-            placeholder="KEO DARIYA"
-            className="mt-2 h-12 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[14px] font-bold uppercase text-[#111111] outline-none focus:border-[#111111]"
-          />
+          <button
+            type="button"
+            onClick={openPaymentProfileModal}
+            className="flex w-full items-center justify-between gap-4 rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4 text-left active:scale-[0.99]"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#9CA3AF]">Payment account name</p>
+              <p className={`mt-1 truncate text-[15px] font-black ${paymentName ? 'text-[#111111]' : 'text-[#9CA3AF]'}`}>
+                {paymentName || 'Not set'}
+              </p>
+              {!paymentName ? (
+                <p className="mt-1 text-[11px] font-semibold text-[#9CA3AF]">Example: KEO DARIYA / DARIYA KEO</p>
+              ) : null}
+            </div>
 
-          <button type="button" onClick={savePaymentProfile} disabled={saving} className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-black text-white active:scale-[0.99] disabled:opacity-60">
-            {saving ? 'Saving...' : 'Save Payment Profile'}
+            <span className="shrink-0 text-[12px] font-black text-[#6B7280]">
+              {paymentName ? 'Edit' : 'Add'} <i className="fas fa-chevron-right ml-1 text-[10px]" />
+            </span>
           </button>
         </section>
 
@@ -224,10 +319,17 @@ export default function WalletPage() {
         <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
           <div className="mb-4">
             <h2 className="text-[20px] font-black text-[#111111]">Order History</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">Use Order ID or Trx ID when contacting support.</p>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
+              Use Order ID or Trx ID when contacting support.
+            </p>
           </div>
 
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search Order ID or Trx ID..." className="mb-3 h-11 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[13px] font-bold text-[#111111] outline-none focus:border-[#111111]" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search Order ID or Trx ID..."
+            className="mb-3 h-11 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[13px] font-bold text-[#111111] outline-none focus:border-[#111111]"
+          />
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
@@ -238,7 +340,12 @@ export default function WalletPage() {
               ['rejected', 'Rejected'],
               ['expired', 'Expired'],
             ].map(([key, label]) => (
-              <button key={key} type="button" onClick={() => setStatus(key)} className={`shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black ${status === key ? 'border-[#111111] bg-[#111111] text-white' : 'border-[#E5E7EB] bg-white text-[#6B7280]'}`}>
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatus(key)}
+                className={`shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black ${status === key ? 'border-[#111111] bg-[#111111] text-white' : 'border-[#E5E7EB] bg-white text-[#6B7280]'}`}
+              >
                 {label}
               </button>
             ))}
@@ -271,6 +378,17 @@ export default function WalletPage() {
           </div>
         </section>
       </main>
+
+      {showPaymentProfileModal ? (
+        <PaymentProfileModal
+          value={draftPaymentName}
+          saving={saving}
+          message={profileMessage}
+          onChange={setDraftPaymentName}
+          onClose={() => setShowPaymentProfileModal(false)}
+          onSave={savePaymentProfile}
+        />
+      ) : null}
     </div>
   )
 }
