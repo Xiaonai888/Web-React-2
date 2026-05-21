@@ -196,6 +196,10 @@ export default function StoryDetailPage() {
 
   const handleOpenEpisode = (episode) => {
     if (!episode) return
+    if (!getReaderToken()) {
+  navigate('/login')
+  return
+}
 
    const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
 
