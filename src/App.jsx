@@ -20,6 +20,7 @@ import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
+import CreateStoryPage from './pages/Author/CreateStoryPage'
 
 function ComingSoon({ title }) {
   return (
@@ -90,6 +91,7 @@ function AppShell() {
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+        <Route path="/author/create-story" element={<CreateStoryPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
