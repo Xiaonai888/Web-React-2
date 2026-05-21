@@ -342,9 +342,17 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
       />
 
       <LockedEpisodeModal
-        episode={lockedEpisode}
-        onClose={() => setLockedEpisode(null)}
-      />
+  episode={lockedEpisode}
+  storyId={realStoryId}
+  onClose={() => setLockedEpisode(null)}
+  onLogin={() => navigate('/login')}
+  onTopUp={() => navigate('/shop')}
+  onUnlocked={(episode) => {
+    setUnlockedEpisodeIds((current) => [...new Set([...current, episode.id])])
+    setLockedEpisode(null)
+    navigate(`/story/${realStoryId}/episode/${episode.id}`)
+  }}
+/>
 
       <CommentsModal
         open={commentsOpen}
