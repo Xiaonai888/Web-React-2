@@ -5,7 +5,14 @@ const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+function getReaderToken() {
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+}
 
+function readerAuthHeaders() {
+  const token = getReaderToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 const REVIEW_READ_PROGRESS_PERCENT = 85
 
 const READER_THEMES = {
