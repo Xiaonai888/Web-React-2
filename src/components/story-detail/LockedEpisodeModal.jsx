@@ -6,24 +6,10 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const FALLBACK_DIAMOND_PRICE = 10
-const FALLBACK_GEM_PRICE = 1000
+const DIAMOND_PRICE = 10
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
-}
-
-function authHeaders() {
-  const token = getReaderToken()
-
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      }
-    : {
-        'Content-Type': 'application/json',
-      }
 }
 
 function formatNumber(value) {
@@ -93,43 +79,42 @@ function TabButton({ active, children, onClick }) {
   )
 }
 
-function InstantOption({ option, active, onClick }) {
+function InstantOption({ active, disabled, title, oldPrice, price, discount, onClick }) {
   return (
     <button
       type="button"
-      disabled={!option.enabled}
+      disabled={disabled}
       onClick={onClick}
       className={`relative min-h-[88px] rounded-[18px] border bg-white px-4 py-3 text-left transition active:scale-[0.99] ${
         active ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[#E5E7EB]'
-      } ${!option.enabled ? 'opacity-55' : ''}`}
-      title={option.disabled_reason || ''}
+      } ${disabled ? 'opacity-55' : ''}`}
     >
-      {option.discount_percent > 0 ? (
+      {discount ? (
         <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
-          {option.discount_percent}% Off
+          {discount}
         </span>
       ) : null}
 
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 text-[14px] font-black leading-5 text-[#111111]">
-          {option.label}
+          {title}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          {option.original_price > option.price ? (
+          {oldPrice ? (
             <span className="text-[13px] font-medium text-[#C1C5CC] line-through">
-              {formatNumber(option.original_price)}
+              {oldPrice}
             </span>
           ) : null}
           <DiamondIcon selected={active} size="h-7 w-7" />
-          <span className="text-[15px] font-black text-[#111111]">{formatNumber(option.price)}</span>
+          <span className="text-[15px] font-black text-[#111111]">{price}</span>
         </div>
       </div>
     </button>
   )
 }
 
-function FreeAccessRow({ iconType, title, subtitle, disabled, buttonText = 'Access', onClick }) {
+function FreeAccessRow({ iconType, title, subtitle, disabled, buttonText = 'Access' }) {
   const iconMap = {
     ads: <VideoIcon />,
     gems: <GemIcon />,
@@ -149,8 +134,7 @@ function FreeAccessRow({ iconType, title, subtitle, disabled, buttonText = 'Acce
       <button
         type="button"
         disabled={disabled}
-        onClick={onClick}
-        className="h-8 shrink-0 rounded-full bg-[#111111] px-4 text-[12px] font-medium text-white disabled:bg-[#C9CBD1] disabled:opacity-75"
+        className="h-8 shrink-0 rounded-full bg-[#C9CBD1] px-4 text-[12px] font-medium text-white disabled:opacity-75"
       >
         {buttonText}
       </button>
@@ -165,79 +149,75 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   const [unlocking, setUnlocking] = useState(false)
   const [message, setMessage] = useState('')
   const [wallet, setWallet] = useState(null)
-  const [packageOptions, setPackageOptions] = useState([])
-  const [gemAccess, setGemAccess] = useState({
-    amount: FALLBACK_GEM_PRICE,
-    access_days: 7,
-  })
+  const [price, setPrice] = useState(DIAMOND_PRICE)
   const [autoUnlock, setAutoUnlock] = useState(false)
 
   const episodeStoryId = storyId || episode?.story_id
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-  const gemBalance = Number(wallet?.gem_balance || 0)
-  const selectedOption = packageOptions.find((option) => option.key === selectedPackage) || packageOptions[0]
-  const packagePrice = Number(selectedOption?.price || FALLBACK_DIAMOND_PRICE)
-  const hasEnoughDiamonds = diamondBalance >= packagePrice
-  const needDiamonds = Math.max(0, packagePrice - diamondBalance)
-  const hasEnoughGems = gemBalance >= Number(gemAccess.amount || FALLBACK_GEM_PRICE)
+  const hasEnoughDiamonds = diamondBalance >= price
+  const needDiamonds = Math.max(0, price - diamondBalance)
 
   const purchaseText = useMemo(() => {
     if (unlocking) return 'Unlocking...'
     if (!getReaderToken()) return 'Login to Unlock'
-    if (!selectedOption?.enabled) return 'Package unavailable'
     if (!hasEnoughDiamonds) return 'Top Up Diamonds'
     return 'Purchase'
-  }, [hasEnoughDiamonds, selectedOption, unlocking])
-
-  async function loadUnlockStatus() {
-    if (!episode?.id || !episodeStoryId) return
-
-    const token = getReaderToken()
-
-    if (!token) {
-      setWallet(null)
-      setMessage('Please login to unlock this episode.')
-      return
-    }
-
-    try {
-      setLoading(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${episodeStoryId}/episodes/${episode.id}/status`, {
-        headers: authHeaders(),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to check unlock status')
-      }
-
-      const options = Array.isArray(data.package_options) ? data.package_options : []
-
-      setWallet(data.wallet || null)
-      setAutoUnlock(Boolean(data.wallet?.auto_unlock))
-      setPackageOptions(options)
-      setGemAccess(data.gem_access || { amount: FALLBACK_GEM_PRICE, access_days: 7 })
-
-      if (!options.some((option) => option.key === selectedPackage)) {
-        setSelectedPackage(options[0]?.key || 'single')
-      }
-
-      if (data.unlocked) {
-        onUnlocked?.(episode)
-      }
-    } catch (error) {
-      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to check unlock status')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [hasEnoughDiamonds, unlocking])
 
   useEffect(() => {
+    let ignore = false
+
+    async function loadUnlockStatus() {
+      if (!episode?.id || !episodeStoryId) return
+
+      const token = getReaderToken()
+
+      if (!token) {
+        setWallet(null)
+        setMessage('Please login to unlock this episode.')
+        return
+      }
+
+      try {
+        setLoading(true)
+        setMessage('')
+
+        const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${episodeStoryId}/episodes/${episode.id}/status`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to check unlock status')
+        }
+
+        if (ignore) return
+
+        setWallet(data.wallet || null)
+        setAutoUnlock(Boolean(data.wallet?.auto_unlock))
+        setPrice(Number(data.price?.amount || DIAMOND_PRICE))
+
+        if (data.unlocked) {
+          onUnlocked?.(episode)
+        }
+      } catch (error) {
+        if (!ignore) {
+          setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to check unlock status')
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
     loadUnlockStatus()
-  }, [episode?.id, episodeStoryId])
+
+    return () => {
+      ignore = true
+    }
+  }, [episode, episodeStoryId, onUnlocked])
 
   if (!episode) return null
 
@@ -249,13 +229,13 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
       return
     }
 
-    if (!selectedOption?.enabled) {
-      setMessage(selectedOption?.disabled_reason || 'This package is not available.')
+    if (!hasEnoughDiamonds) {
+      onTopUp?.()
       return
     }
 
-    if (!hasEnoughDiamonds) {
-      onTopUp?.()
+    if (selectedPackage !== 'single') {
+      setMessage('Package unlock will be available in the next stage.')
       return
     }
 
@@ -263,12 +243,11 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
       setUnlocking(true)
       setMessage('')
 
-      const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${episodeStoryId}/episodes/${episode.id}/package`, {
+      const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${episodeStoryId}/episodes/${episode.id}/diamond`, {
         method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          package_key: selectedPackage,
-        }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       const data = await response.json().catch(() => ({}))
@@ -280,63 +259,16 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
           return
         }
 
-        throw new Error(data.message || 'Failed to unlock episodes')
+        throw new Error(data.message || 'Failed to unlock episode')
       }
 
       setWallet(data.wallet || wallet)
       onUnlocked?.(episode)
     } catch (error) {
-      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episodes')
+      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
     } finally {
       setUnlocking(false)
     }
-  }
-
-  const handleGemAccess = async () => {
-    const token = getReaderToken()
-
-    if (!token) {
-      onLogin?.()
-      return
-    }
-
-    if (!hasEnoughGems) {
-      setMessage(`Not enough Gems. Need ${Number(gemAccess.amount || FALLBACK_GEM_PRICE) - gemBalance} more.`)
-      return
-    }
-
-    try {
-      setUnlocking(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${episodeStoryId}/episodes/${episode.id}/gem`, {
-        method: 'POST',
-        headers: authHeaders(),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        if (data.code === 'INSUFFICIENT_GEMS') {
-          setWallet(data.wallet || wallet)
-          setMessage(`Not enough Gems. Need ${data.need || 0} more.`)
-          return
-        }
-
-        throw new Error(data.message || 'Failed to unlock with Gems')
-      }
-
-      setWallet(data.wallet || wallet)
-      onUnlocked?.(episode)
-    } catch (error) {
-      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock with Gems')
-    } finally {
-      setUnlocking(false)
-    }
-  }
-
-  const handleComingSoon = () => {
-    setMessage('Tasks page is coming soon.')
   }
 
   return (
@@ -386,45 +318,59 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
               </button>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                {packageOptions.filter((option) => option.key !== 'all_released').map((option) => (
-                  <InstantOption
-                    key={option.key}
-                    option={option}
-                    active={selectedPackage === option.key}
-                    onClick={() => setSelectedPackage(option.key)}
-                  />
-                ))}
+                <InstantOption
+                  active={selectedPackage === 'single'}
+                  title="1 Episode"
+                  price={price}
+                  onClick={() => setSelectedPackage('single')}
+                />
+                <InstantOption
+                  disabled
+                  active={selectedPackage === 'next10'}
+                  title="Next 10 Eps"
+                  oldPrice="100"
+                  price="90"
+                  discount="10% Off"
+                  onClick={() => setSelectedPackage('next10')}
+                />
+                <InstantOption
+                  disabled
+                  active={selectedPackage === 'next30'}
+                  title="Next 30 Eps"
+                  oldPrice="300"
+                  price="240"
+                  discount="20% Off"
+                  onClick={() => setSelectedPackage('next30')}
+                />
+                <InstantOption
+                  disabled
+                  active={selectedPackage === 'next50'}
+                  title="Next 50 Eps"
+                  oldPrice="500"
+                  price="375"
+                  discount="25% Off"
+                  onClick={() => setSelectedPackage('next50')}
+                />
               </div>
 
-              {packageOptions.filter((option) => option.key === 'all_released').map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  disabled={!option.enabled}
-                  onClick={() => setSelectedPackage(option.key)}
-                  className={`mt-3 flex min-h-[88px] w-full items-center justify-between rounded-[18px] border bg-white px-4 py-3 text-left ${
-                    selectedPackage === option.key ? 'border-[#C59B2D]' : 'border-[#E5E7EB]'
-                  } ${!option.enabled ? 'opacity-55' : ''}`}
-                  title={option.disabled_reason || ''}
-                >
-                  <div>
-                    <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
-                      {option.discount_percent}% Off
-                    </span>
-                    <div className="text-[14px] font-black text-[#111111]">{option.label}</div>
-                  </div>
+              <button
+                type="button"
+                disabled
+                className="mt-3 flex min-h-[88px] w-full items-center justify-between rounded-[18px] border border-[#C59B2D] bg-white px-4 py-3 text-left opacity-65"
+              >
+                <div>
+                  <span className="mb-2 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111111]">
+                    40% Off
+                  </span>
+                  <div className="text-[14px] font-black text-[#111111]">All Released Episodes</div>
+                </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {option.original_price > option.price ? (
-                      <span className="text-[13px] font-medium text-[#C1C5CC] line-through">
-                        {formatNumber(option.original_price)}
-                      </span>
-                    ) : null}
-                    <DiamondIcon selected={selectedPackage === option.key} size="h-7 w-7" />
-                    <span className="text-[15px] font-black text-[#111111]">{formatNumber(option.price)}</span>
-                  </div>
-                </button>
-              ))}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-medium text-[#C1C5CC] line-through">5000</span>
+                  <DiamondIcon selected size="h-7 w-7" />
+                  <span className="text-[15px] font-black text-[#111111]">3000</span>
+                </div>
+              </button>
 
               <div className="mt-5 flex items-center justify-between gap-4">
                 <div className="text-[14px] font-medium text-[#B8BDC7]">
@@ -434,7 +380,6 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 <button
                   type="button"
                   onClick={() => setAutoUnlock((value) => !value)}
-                  title="Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply."
                   className="flex items-center gap-2 text-[14px] font-medium text-[#B8BDC7]"
                 >
                   <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]">
@@ -446,10 +391,6 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                   </span>
                 </button>
               </div>
-
-              <p className="mt-2 text-right text-[11px] font-medium leading-4 text-[#8D94A1]">
-                Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
-              </p>
 
               {message ? (
                 <button
@@ -463,14 +404,14 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
 
               {!hasEnoughDiamonds && getReaderToken() ? (
                 <div className="mt-3 text-center text-[12px] font-medium text-[#8D94A1]">
-                  Need {needDiamonds} more Diamonds to unlock this package.
+                  Need {needDiamonds} more Diamonds to unlock this episode.
                 </div>
               ) : null}
 
               <button
                 type="button"
                 onClick={handlePurchase}
-                disabled={loading || unlocking || !selectedOption?.enabled}
+                disabled={loading || unlocking}
                 className="mt-5 h-[56px] w-full rounded-full bg-[#111111] text-[16px] font-medium text-white shadow-[0_16px_32px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9CA3AF]"
               >
                 {purchaseText}
@@ -478,11 +419,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
             </>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={handleComingSoon}
-                className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
-              >
+              <div className="flex items-center gap-3">
                 <span className="rounded-[14px] bg-[#111111] px-4 py-3 text-[14px] font-medium text-white">
                   Free Unlock
                 </span>
@@ -490,7 +427,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                   Earn more from tasks & events
                 </span>
                 <i className="fa-solid fa-chevron-right text-[13px] text-[#8D94A1]" />
-              </button>
+              </div>
 
               <div className="mt-5 space-y-3">
                 <FreeAccessRow
@@ -502,11 +439,9 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 />
                 <FreeAccessRow
                   iconType="gems"
-                  title={`Gems — ${formatNumber(gemBalance)} remaining`}
-                  subtitle={`Access lasts ${Number(gemAccess.access_days || 7)} days.`}
-                  buttonText={hasEnoughGems ? 'Access' : 'Not enough'}
-                  disabled={unlocking || !hasEnoughGems}
-                  onClick={handleGemAccess}
+                  title="Gems — Coming soon"
+                  subtitle="Temporary access will be added later."
+                  disabled
                 />
                 <FreeAccessRow
                   iconType="voucher"
@@ -521,16 +456,6 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                   disabled
                 />
               </div>
-
-              {message ? (
-                <button
-                  type="button"
-                  onClick={() => setMessage('')}
-                  className="mt-4 w-full rounded-[16px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#E5484D]"
-                >
-                  {message}
-                </button>
-              ) : null}
 
               <button
                 type="button"
