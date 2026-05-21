@@ -920,7 +920,7 @@ export default function CreateStoryPage() {
         return
       }
 
-      navigate(`/author/story/${storyId}/manage`)
+      navigate('/author/dashboard')
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
