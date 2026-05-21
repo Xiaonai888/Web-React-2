@@ -324,6 +324,11 @@ export default function ReaderPage() {
       setLoading(true)
       setMessage('')
 
+      if (!getReaderToken()) {
+  navigate('/login')
+  return
+}
+
       try {
         const [episodeResponse, episodesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}`, {
