@@ -41,6 +41,19 @@ function formatUpdateDays(days) {
   return shortDays ? `Updates ${shortDays}` : 'All Episodes'
 }
 
+function ReverseIcon() {
+  return (
+    <span className="relative block h-6 w-6 text-current">
+      <span className="absolute left-[6px] top-[4px] h-[15px] w-[3px] rounded-full bg-current" />
+      <span className="absolute left-[3px] top-[3px] h-[8px] w-[3px] rotate-45 rounded-full bg-current" />
+      <span className="absolute left-[8px] top-[3px] h-[8px] w-[3px] -rotate-45 rounded-full bg-current" />
+      <span className="absolute right-[6px] bottom-[4px] h-[15px] w-[3px] rounded-full bg-current" />
+      <span className="absolute right-[3px] bottom-[3px] h-[8px] w-[3px] -rotate-45 rounded-full bg-current" />
+      <span className="absolute right-[8px] bottom-[3px] h-[8px] w-[3px] rotate-45 rounded-full bg-current" />
+    </span>
+  )
+}
+
 function EpisodeListItem({ episode, story, onOpenEpisode }) {
   const cover = episode.cover_url || story?.cover_url || ''
   const locked = Boolean(episode.is_locked) && Number(episode.episode_number || 0) > 1
@@ -51,46 +64,34 @@ function EpisodeListItem({ episode, story, onOpenEpisode }) {
     <button
       type="button"
       onClick={() => onOpenEpisode(episode)}
-      className="flex w-full gap-4 border-b border-white/10 px-4 py-4 text-left active:scale-[0.995]"
+      className="flex w-full gap-3 border-b border-[#eef0f4] px-4 py-3.5 text-left transition active:scale-[0.995] sm:gap-4 sm:px-5"
     >
-      <div className="relative h-[74px] w-[114px] shrink-0 overflow-hidden rounded-[10px] bg-[#2a2a2d]">
+      <div className="relative h-[76px] w-[108px] shrink-0 overflow-hidden rounded-[14px] bg-[#f0f2f5] sm:h-[86px] sm:w-[128px]">
         {cover ? (
           <img src={cover} alt={episode.title || 'Episode cover'} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-white/35">
+          <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#98a2b3]">
             Cover
           </div>
         )}
 
         {locked ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-white">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/32 text-white">
             <i className="fa-solid fa-lock text-[18px]" />
           </div>
         ) : null}
       </div>
 
-      <div className="min-w-0 flex-1 pt-1">
-        <div className="flex items-center gap-2">
-          <h3 className="line-clamp-1 text-[17px] font-extrabold text-white">
-            Ep. {episode.episode_number || 1}
-          </h3>
-
-          {locked ? (
-            <span className="rounded-full bg-[#fff7ed] px-2 py-0.5 text-[9.5px] font-black text-[#f97316]">
-              Locked
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-white/80">
+      <div className="min-w-0 flex-1 py-1">
+        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#111827] sm:text-[15px]">
           {episode.title || 'Untitled Episode'}
-        </div>
+        </h3>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] font-semibold text-white/45">
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11.5px] font-medium text-[#8d94a1]">
           {date ? <span>{date}</span> : null}
 
           <span className="inline-flex items-center gap-1.5">
-            <i className="fa-solid fa-comment-dots text-[13px]" />
+            <i className="fa-solid fa-comment-dots text-[12px]" />
             {comments}
           </span>
         </div>
@@ -112,36 +113,24 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
   if (!open) return null
 
-  const status = formatStatus(story?.status)
+  const status = formatStatus(story?.story_status || story?.status)
   const updateText = formatUpdateDays(story?.update_days)
 
   return (
-    <div className="fixed inset-0 z-[140] bg-black/60 sm:flex sm:items-end sm:justify-center">
-      <section className="h-full w-full overflow-hidden bg-[#1f1f22] text-white shadow-2xl sm:h-[88vh] sm:max-w-[560px] sm:rounded-t-[26px]">
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1f1f22]/95 px-4 py-4 backdrop-blur">
+    <div className="fixed inset-0 z-[140] bg-black/35 sm:flex sm:items-center sm:justify-center sm:px-6">
+      <section className="absolute bottom-0 left-3 right-3 top-[84px] overflow-hidden rounded-t-[28px] bg-white text-[#111827] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
+        <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
           <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 active:scale-95"
-              aria-label="Close"
-            >
-              <i className="fa-solid fa-chevron-left text-[18px]" />
-            </button>
+            <div className="h-10 w-10" />
 
-            <div className="min-w-0 flex-1 text-center">
-              <h2 className="line-clamp-1 text-[20px] font-black text-white">
-                {story?.title || 'Episodes'}
-              </h2>
-              <div className="mt-1 text-[11px] font-bold text-white/40">
-                All Episodes · {episodes.length} total
-              </div>
-            </div>
+            <h2 className="line-clamp-1 text-center text-[18px] font-black text-[#111827]">
+              Episodes
+            </h2>
 
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white/90 active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:scale-95"
               aria-label="Close"
             >
               <i className="fa-solid fa-xmark text-[24px]" />
@@ -150,38 +139,33 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
           <button
             type="button"
-            className="mt-5 flex items-center gap-2 text-[15px] font-extrabold text-white/75 active:scale-[0.99]"
+            className="mt-4 flex items-center gap-2 text-[13px] font-normal text-[#555b66] active:scale-[0.99]"
           >
             <span className="rounded-[4px] bg-[#3a3426] px-1.5 py-0.5 text-[9px] font-black text-[#ffd66b]">
               <i className="fa-solid fa-crown mr-1" />
               Premium
             </span>
             <span>Early Access</span>
-            <i className="fa-solid fa-caret-right text-[12px]" />
+            <i className="fa-solid fa-caret-right text-[10px]" />
           </button>
         </header>
 
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-4">
-          <div>
-            <div className="text-[17px] font-black text-white">
-              {status} · {updateText}
-            </div>
-            <div className="mt-1 text-[11px] font-bold text-white/35">
-              Showing {newestFirst ? 'newest first' : 'oldest first'}
-            </div>
+        <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
+          <div className="text-[14px] font-normal text-[#555b66] sm:text-[15px]">
+            {status} · {updateText}
           </div>
 
           <button
             type="button"
             onClick={() => setNewestFirst((value) => !value)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
             aria-label="Reverse episodes"
           >
-            <i className="fa-solid fa-arrow-down-wide-short text-[20px]" />
+            <ReverseIcon />
           </button>
         </div>
 
-        <main className="h-[calc(100%-174px)] overflow-y-auto pb-8">
+        <main className="h-[calc(100%-142px)] overflow-y-auto pb-8">
           {visibleEpisodes.length ? (
             visibleEpisodes.map((episode) => (
               <EpisodeListItem
@@ -193,9 +177,9 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
             ))
           ) : (
             <div className="px-5 py-14 text-center">
-              <i className="fa-regular fa-file-lines text-[34px] text-white/30" />
-              <div className="mt-4 text-[16px] font-black text-white">No episodes yet</div>
-              <div className="mt-1 text-[12px] font-semibold text-white/40">
+              <i className="fa-regular fa-file-lines text-[34px] text-[#98a2b3]" />
+              <div className="mt-4 text-[16px] font-black text-[#111827]">No episodes yet</div>
+              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
                 Published episodes will appear here.
               </div>
             </div>
