@@ -537,9 +537,6 @@ export default function ReaderPage() {
 
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur">
-                        EP {episode.episode_number || 1}
-                      </span>
 
                       {episode.is_adult ? (
                         <span className="rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
