@@ -5,6 +5,7 @@ import ForYou from './pages/ForYou'
 import Library from './pages/Library'
 import ShopPage from './pages/ShopPage'
 import WalletPage from './pages/WalletPage'
+import WalletOrderHistoryPage from './pages/WalletOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
 import StoryDetailPage from './pages/StoryDetailPage'
@@ -39,6 +40,7 @@ function AppShell() {
     '/register',
     '/shop',
     '/wallet',
+    '/wallet/orders',
     '/profile',
     '/event',
     '/author/create',
@@ -62,6 +64,7 @@ function AppShell() {
 
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
