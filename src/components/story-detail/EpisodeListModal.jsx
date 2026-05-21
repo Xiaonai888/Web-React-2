@@ -151,9 +151,9 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
         </header>
 
         <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
-          <div className="text-[14px] font-normal text-[#555b66] sm:text-[15px]">
-            {status} · {updateText}
-          </div>
+          <div className="font-['Roboto'] text-[16px] font-bold text-[#111827] sm:text-[17px]">
+  {status}, {updateText}
+</div>
 
           <button
             type="button"
@@ -164,7 +164,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
             <img
   src="/assets/Icons/Revers.svg"
   alt="Reverse episodes"
-  className="h-6 w-6"
+  className="h-7 w-7"
 />
           </button>
         </div>
