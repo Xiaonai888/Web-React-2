@@ -286,6 +286,10 @@ export default function EventPage() {
   }
 
   const handleShortcut = (label) => {
+  if (label === 'Write') {
+    handleStartYourWork()
+  }
+}
     if (label === 'Write') {
       handleStartYourWork()
       return
@@ -386,14 +390,15 @@ export default function EventPage() {
               <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
                 {shortcutItems.map((item) => (
                   <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => handleShortcut(item.label)}
-                    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
-                      item.type === 'primary'
-                        ? 'bg-black text-white'
-                        : 'border border-[#d8dbe3] bg-white text-[#111827]'
-                    }`}
+  key={item.label}
+  type="button"
+  onClick={() => handleShortcut(item.label)}
+  disabled={item.label !== 'Write'}
+                   className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
+  item.type === 'primary'
+    ? 'bg-black text-white'
+    : 'border border-[#d8dbe3] bg-white text-[#9ca3af]'
+} ${item.label !== 'Write' ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <i className={`fas ${item.icon} text-[10px]`} />
                     {item.label}
