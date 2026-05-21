@@ -161,7 +161,9 @@ export default function RecommendationSection({ story }) {
 
   const handleOpenStory = (storyId) => {
     if (!storyId) return
-    navigate(`/story/${storyId}`)
+    navigate(`/story/${storyId}`, {
+  state: { returnTo: `/story/${story.id}` },
+})
   }
 
   return (
