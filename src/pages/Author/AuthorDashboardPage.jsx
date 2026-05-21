@@ -400,7 +400,7 @@ export default function AuthorDashboardPage() {
   }
 
   const handleEditStory = (story) => {
-  navigate(`/author/create-story?editStoryId=${story.id}`)
+  navigate(`/author/story/${story.id}/manage`)
 }
 
   const handleAddEpisode = (story) => {
