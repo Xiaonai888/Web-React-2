@@ -612,12 +612,12 @@ export default function EpisodeEditorPage() {
       return
     }
 
-    navigate(-1)
+    navigate(`/author/story/${storyId}/manage`, { replace: true })
   }
 
   const handleDiscard = () => {
     setShowExitModal(false)
-    navigate(-1)
+    navigate(`/author/story/${storyId}/manage`, { replace: true })
   }
 
   const handleSaveDraftAndLeave = async () => {
