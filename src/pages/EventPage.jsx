@@ -286,27 +286,8 @@ export default function EventPage() {
   }
 
   const handleShortcut = (label) => {
-  if (label === 'Write') {
-    handleStartYourWork()
-  }
-}
     if (label === 'Write') {
       handleStartYourWork()
-      return
-    }
-
-    if (label === 'Ranking') {
-      navigate('/ranking')
-      return
-    }
-
-    if (label === 'Reward') {
-      navigate('/check-in')
-      return
-    }
-
-    if (label === 'Guide') {
-      navigate('/help')
     }
   }
 
