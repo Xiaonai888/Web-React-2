@@ -138,10 +138,10 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
           </div>
 
           <button
-            type="button"
-            className="mt-4 flex items-center gap-2 text-[13px] font-normal text-[#555b66] active:scale-[0.99]"
-          >
-            <span className="rounded-[4px] bg-[#3a3426] px-1.5 py-0.5 text-[9px] font-black text-[#ffd66b]">
+  type="button"
+  className="mt-4 flex items-center gap-2 font-['Roboto'] text-[17px] font-medium text-[#111827] active:scale-[0.99]"
+>
+            <span className="rounded-[4px] bg-[#111827] px-2 py-1 text-[10px] font-black text-white">
               <i className="fa-solid fa-crown mr-1" />
               Premium
             </span>
