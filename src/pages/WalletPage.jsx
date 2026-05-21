@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -154,6 +154,7 @@ function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave
 
 export default function WalletPage() {
   const navigate = useNavigate()
+  const orderHistoryRef = useRef(null)
   const [wallet, setWallet] = useState(null)
   const [orders, setOrders] = useState([])
   const [paymentName, setPaymentName] = useState('')
@@ -230,6 +231,10 @@ export default function WalletPage() {
     setShowPaymentProfileModal(true)
   }
 
+  function scrollToOrderHistory() {
+    orderHistoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   async function savePaymentProfile() {
     if (saving) return
 
@@ -269,13 +274,30 @@ export default function WalletPage() {
           <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 transition-colors" aria-label="Go back">
             <i className="fas fa-chevron-left text-[18px] text-gray-700" />
           </button>
-          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">Wallet</h1>
+
+          <h1 className="flex-1 text-[18px] font-extrabold tracking-tight text-neutral-900">Wallet</h1>
+
+          <button
+            type="button"
+            onClick={openPaymentProfileModal}
+            className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] active:scale-95"
+            aria-label="Payment profile"
+          >
+            <i className="fas fa-user text-[14px]" />
+            {!paymentName ? <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border border-white bg-[#F59E0B]" /> : null}
+          </button>
         </div>
       </header>
 
       <main className="space-y-5 px-4 pt-4">
         <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-          <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
+
+            <button type="button" onClick={scrollToOrderHistory} className="text-[12px] font-semibold text-[#9CA3AF] active:scale-95">
+              Order History <i className="fas fa-chevron-right ml-1 text-[9px]" />
+            </button>
+          </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <BalanceCard icon={<DiamondIcon />} label="Diamonds" value={loading ? '...' : formatNumber(wallet?.diamond_balance)} />
@@ -285,38 +307,9 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-          <div className="mb-4">
-            <h2 className="text-[20px] font-black text-[#111111]">Payment Profile</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
-              Use the same name as your payment account.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={openPaymentProfileModal}
-            className="flex w-full items-center justify-between gap-4 rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4 text-left active:scale-[0.99]"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#9CA3AF]">Payment account name</p>
-              <p className={`mt-1 truncate text-[15px] font-black ${paymentName ? 'text-[#111111]' : 'text-[#9CA3AF]'}`}>
-                {paymentName || 'Not set'}
-              </p>
-              {!paymentName ? (
-                <p className="mt-1 text-[11px] font-semibold text-[#9CA3AF]">Example: KEO DARIYA / DARIYA KEO</p>
-              ) : null}
-            </div>
-
-            <span className="shrink-0 text-[12px] font-black text-[#6B7280]">
-              {paymentName ? 'Edit' : 'Add'} <i className="fas fa-chevron-right ml-1 text-[10px]" />
-            </span>
-          </button>
-        </section>
-
         {message ? <p className="text-center text-[12px] font-bold text-[#111111]">{message}</p> : null}
 
-        <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
+        <section ref={orderHistoryRef} className="scroll-mt-20 rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
           <div className="mb-4">
             <h2 className="text-[20px] font-black text-[#111111]">Order History</h2>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6B7280]">
