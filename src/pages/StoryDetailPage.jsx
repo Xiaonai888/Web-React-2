@@ -86,6 +86,7 @@ export default function StoryDetailPage() {
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [lockedEpisode, setLockedEpisode] = useState(null)
+  const [unlockedEpisodeIds, setUnlockedEpisodeIds] = useState([])
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [savingCollection, setSavingCollection] = useState(false)
@@ -196,10 +197,12 @@ export default function StoryDetailPage() {
   const handleOpenEpisode = (episode) => {
     if (!episode) return
 
-    if (episode.is_locked && Number(episode.episode_number || 0) > 1) {
-      setLockedEpisode(episode)
-      return
-    }
+   const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
+
+if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlocked) {
+  setLockedEpisode(episode)
+  return
+}
 
     navigate(`/story/${realStoryId}/episode/${episode.id}`)
   }
