@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
+const AUTHOR_CENTER_SECTION_KEY = 'author_center'
 
 const shortcutItems = [
   { label: 'Write', icon: 'fa-pen-nib', type: 'primary' },
@@ -16,12 +17,6 @@ const benefitItems = [
   { icon: 'fa-sack-dollar', title: 'Earn More', text: 'Grow income from your stories.' },
   { icon: 'fa-users', title: 'Grow Fans', text: 'Build your own reader base.' },
   { icon: 'fa-star', title: 'Get Featured', text: 'Join events and get promoted.' },
-]
-
-const spotlightSlides = [
-  { title: 'Writer Events', label: 'NEW', text: 'Join future writing challenges and author campaigns.' },
-  { title: 'Author Rewards', label: 'HOT', text: 'Write, grow, and unlock more chances to be featured.' },
-  { title: 'Weekly Ranking', label: 'TOP', text: 'Top authors can appear in special ranking areas.' },
 ]
 
 function getReaderToken() {
@@ -185,10 +180,40 @@ function EventSlideBanner() {
 }
 
 function AuthorSpotlightSlider() {
+  const navigate = useNavigate()
   const swiperRef = useRef(null)
+  const [banners, setBanners] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!window.Swiper) return
+    let ignore = false
+
+    async function fetchBanners() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/slides?section_key=${AUTHOR_CENTER_SECTION_KEY}`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to fetch Author Center banners')
+        }
+
+        if (!ignore) setBanners(data.slides || [])
+      } catch {
+        if (!ignore) setBanners([])
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchBanners()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!window.Swiper || banners.length === 0) return
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -199,7 +224,7 @@ function AuthorSpotlightSlider() {
       slidesPerView: 'auto',
       spaceBetween: 12,
       speed: 650,
-      loop: spotlightSlides.length > 2,
+      loop: banners.length > 2,
       pagination: {
         el: '.author-spotlight-pagination',
         clickable: true,
@@ -212,24 +237,52 @@ function AuthorSpotlightSlider() {
         swiperRef.current = null
       }
     }
-  }, [])
+  }, [banners])
+
+  if (loading) {
+    return (
+      <div className="mt-4 flex aspect-[3/1] w-full items-center justify-center rounded-[16px] bg-[#f4f5f7] text-[13px] font-bold text-[#8d94a1]">
+        Loading banners...
+      </div>
+    )
+  }
+
+  if (!banners.length) {
+    return (
+      <div className="mt-4 flex aspect-[3/1] w-full items-center justify-center rounded-[16px] bg-black text-[14px] font-extrabold text-white/70">
+        No Author Center banner yet
+      </div>
+    )
+  }
 
   return (
     <div className="mt-4">
       <div className="swiper-container authorSpotlightSwiper">
         <div className="swiper-wrapper">
-          {spotlightSlides.map((slide) => (
+          {banners.map((banner) => (
             <div
-              key={slide.title}
-              className="swiper-slide flex aspect-[3/1] w-[82%] flex-col justify-end overflow-hidden rounded-[16px] bg-black px-4 pb-3 text-white shadow-sm"
+              key={banner.id}
+              className="swiper-slide relative aspect-[3/1] w-[82%] cursor-pointer overflow-hidden rounded-[16px] bg-black text-white shadow-sm"
+              onClick={() => {
+                if (banner.link_url) navigate(banner.link_url)
+              }}
             >
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-[#ff3b6b] px-2 py-0.5 text-[8px] font-black uppercase text-white">
-                  {slide.label}
-                </span>
-                <span className="line-clamp-1 text-[12px] font-extrabold">{slide.title}</span>
-              </div>
-              <p className="mt-1 line-clamp-1 text-[10px] font-medium text-white/65">{slide.text}</p>
+              <img
+                src={banner.image_url}
+                alt={banner.title || 'Author Center banner'}
+                className="h-full w-full object-cover"
+              />
+
+              {(banner.title || banner.subtitle) ? (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8">
+                  {banner.title ? (
+                    <div className="line-clamp-1 text-[12px] font-extrabold">{banner.title}</div>
+                  ) : null}
+                  {banner.subtitle ? (
+                    <p className="mt-1 line-clamp-1 text-[10px] font-medium text-white/70">{banner.subtitle}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -371,15 +424,15 @@ export default function EventPage() {
               <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
                 {shortcutItems.map((item) => (
                   <button
-  key={item.label}
-  type="button"
-  onClick={() => handleShortcut(item.label)}
-  disabled={item.label !== 'Write'}
-                   className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
-  item.type === 'primary'
-    ? 'bg-black text-white'
-    : 'border border-[#d8dbe3] bg-white text-[#9ca3af]'
-} ${item.label !== 'Write' ? 'cursor-not-allowed opacity-50' : ''}`}
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleShortcut(item.label)}
+                    disabled={item.label !== 'Write'}
+                    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold active:scale-95 ${
+                      item.type === 'primary'
+                        ? 'bg-black text-white'
+                        : 'border border-[#d8dbe3] bg-white text-[#9ca3af]'
+                    } ${item.label !== 'Write' ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <i className={`fas ${item.icon} text-[10px]`} />
                     {item.label}
