@@ -139,15 +139,15 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
           <button
   type="button"
-  className="mt-4 flex items-center gap-2 font-['Roboto'] text-[17px] font-medium text-[#111827] active:scale-[0.99]"
+  className="mt-4 flex items-center gap-2 font-['Roboto'] text-[17px] font-medium text-[#8d94a1] active:scale-[0.99]"
 >
-            <span className="rounded-[4px] bg-[#111827] px-2 py-1 text-[10px] font-black text-white">
-              <i className="fa-solid fa-crown mr-1" />
-              Premium
-            </span>
-            <span>Early Access</span>
-            <i className="fa-solid fa-caret-right text-[10px]" />
-          </button>
+  <span className="rounded-[4px] bg-[#111827] px-2 py-1 text-[10px] font-black text-white">
+    <i className="fa-solid fa-crown mr-1 text-[#f5c542]" />
+    Premium
+  </span>
+  <span>Early Access</span>
+  <i className="fa-solid fa-caret-right text-[10px] text-[#8d94a1]" />
+</button>
         </header>
 
         <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
