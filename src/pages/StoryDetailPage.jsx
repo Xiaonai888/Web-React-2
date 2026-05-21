@@ -10,6 +10,7 @@ import LatestCommentSection from '../components/story-detail/LatestCommentSectio
 import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -89,6 +90,7 @@ export default function StoryDetailPage() {
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [savingCollection, setSavingCollection] = useState(false)
+  const location = useLocation()
 
   useEffect(() => {
     let ignore = false
@@ -291,7 +293,7 @@ export default function StoryDetailPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
       <StoryHeroSection
   story={story}
-  onBack={() => navigate('/', { replace: true })}
+  onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
       />
