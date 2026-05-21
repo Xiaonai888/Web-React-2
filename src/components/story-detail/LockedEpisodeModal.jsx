@@ -72,20 +72,20 @@ function InstantOption({ active, disabled, title, oldPrice, price, discount, onC
   )
 }
 
-function FreeAccessRow({ image, title, subtitle, disabled }) {
+function FreeAccessRow({ image, icon, iconClass = '', title, subtitle, disabled, buttonText = 'Access' }) {
   return (
     <div className="flex min-h-[92px] items-center gap-4 rounded-[18px] border border-[#d8dce4] bg-white px-4 py-3">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#f5f3fa]">
         {image ? (
           <img src={image} alt={title} className="h-full w-full object-contain" />
         ) : (
-          <i className="fa-solid fa-gem text-[20px] text-[#7c3aed]" />
+          <i className={`${icon || 'fa-solid fa-gem'} ${iconClass || 'text-[#7c3aed]'} text-[20px]`} />
         )}
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="text-[14px] font-medium text-[#111827]">{title}</div>
-        <div className="mt-1 text-[12px] font-medium text-[#555b66]">{subtitle}</div>
+        <div className="mt-1 text-[12px] font-medium leading-4 text-[#555b66]">{subtitle}</div>
       </div>
 
       <button
@@ -93,7 +93,7 @@ function FreeAccessRow({ image, title, subtitle, disabled }) {
         disabled={disabled}
         className="h-8 shrink-0 rounded-full bg-[#c9cbd1] px-4 text-[12px] font-medium text-white disabled:opacity-75"
       >
-        Access
+        {buttonText}
       </button>
     </div>
   )
@@ -229,10 +229,10 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   }
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:px-6 sm:pb-0">
+    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 px-0 pb-0 sm:items-center sm:px-6 sm:pb-0">
       <button type="button" onClick={onClose} className="absolute inset-0" aria-label="Close" />
 
-      <section className="relative w-full max-w-[680px] overflow-hidden rounded-[28px] bg-white shadow-2xl sm:rounded-[30px]">
+      <section className="relative w-full max-w-none overflow-hidden rounded-t-[28px] rounded-b-none bg-white shadow-2xl sm:max-w-[680px] sm:rounded-[30px]">
         <header className="relative px-5 pt-5">
           <button
             type="button"
@@ -257,7 +257,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
           </div>
         </header>
 
-        <div className="max-h-[78vh] overflow-y-auto px-5 pb-5 pt-5">
+        <div className="max-h-[82vh] overflow-y-auto px-5 pb-5 pt-5">
           {activeTab === 'instant' ? (
             <>
               <button
@@ -388,19 +388,27 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
 
               <div className="mt-5 space-y-3">
                 <FreeAccessRow
+                  icon="fa-solid fa-video"
+                  iconClass="text-[#0b5cff]"
+                  title="Watch Ads — Coming soon"
+                  subtitle="Unlock for one read only. After you leave or finish reading, this episode will lock again."
+                  buttonText="Watch"
+                  disabled
+                />
+                <FreeAccessRow
                   title="Gems — Coming soon"
-                  subtitle="Temporary access will be added later"
+                  subtitle="Temporary access will be added later."
                   disabled
                 />
                 <FreeAccessRow
                   image="/assets/Icons/echo.svg"
                   title="Vouchers — Coming soon"
-                  subtitle="Permanent unlock will be added later"
+                  subtitle="Permanent unlock will be added later."
                   disabled
                 />
                 <FreeAccessRow
                   title="Story Cards — Coming soon"
-                  subtitle="Permanent unlock for same story only"
+                  subtitle="Permanent unlock for same story only."
                   disabled
                 />
               </div>
