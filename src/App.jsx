@@ -17,6 +17,7 @@ import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
+import Search from './pages/Search'
 
 function ComingSoon({ title }) {
   return (
@@ -44,6 +45,7 @@ function AppShell() {
     '/author/dashboard',
     '/authors/following',
     '/authors/top',
+    '/search',
   ]
 
   const shouldHideFooter =
@@ -82,6 +84,7 @@ function AppShell() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/authors/following" element={<FollowingAuthorsPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
+        <Route path="/search" element={<Search />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
