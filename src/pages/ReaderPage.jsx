@@ -319,19 +319,36 @@ export default function ReaderPage() {
 
       try {
         const [episodeResponse, episodesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}`),
+          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}`, {
+            headers: readerAuthHeaders(),
+          }),
           fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes`),
         ])
 
         const episodeData = await episodeResponse.json().catch(() => ({}))
         const episodesData = await episodesResponse.json().catch(() => ({}))
 
-        if (!episodeResponse.ok || episodeData.ok === false) {
-          throw new Error(episodeData.message || 'Episode not found')
-        }
-
         if (!episodesResponse.ok || episodesData.ok === false) {
           throw new Error(episodesData.message || 'Episode list not found')
+        }
+
+        if (episodeResponse.status === 423 || episodeData.code === 'EPISODE_LOCKED') {
+          if (ignore) return
+
+          setStory(episodeData.story || null)
+          setEpisode(episodeData.episode || null)
+          setEpisodes(episodesData.episodes || [])
+          setReadingProgress(0)
+          setReviewProgressSaved(false)
+          setAdultAccepted(true)
+          setAdultWarningOpen(false)
+          setMessage('This episode is locked. Please unlock it from the story page.')
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+          return
+        }
+
+        if (!episodeResponse.ok || episodeData.ok === false) {
+          throw new Error(episodeData.message || 'Episode not found')
         }
 
         if (ignore) return
