@@ -290,8 +290,8 @@ export default function StoryDetailPage() {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
       <StoryHeroSection
-        story={story}
-        onBack={() => navigate(-1)}
+  story={story}
+  onBack={() => navigate('/', { replace: true })}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
       />
