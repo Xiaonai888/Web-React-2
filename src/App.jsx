@@ -20,7 +20,12 @@ import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
+import CreateStoryPage from './pages/Author/CreateStoryPage'.
 import CreateStoryPage from './pages/Author/CreateStoryPage'
+import StoryManagerPage from './pages/Author/StoryManagerPage'
+import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
+import PublishEpisodePage from './pages/Author/PublishEpisodePage'
+import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 
 function ComingSoon({ title }) {
   return (
@@ -92,6 +97,11 @@ function AppShell() {
         <Route path="/search" element={<Search />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
+        <Route path="/author/create-story" element={<CreateStoryPage />} />
+        <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
+        <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
+        <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
+        <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
