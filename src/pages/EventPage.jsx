@@ -179,6 +179,16 @@ function EventSlideBanner() {
   )
 }
 
+function parseBannerTitle(value = '') {
+  const match = String(value).match(/^\[(NEW|HOT|TOP)\]\s*(.*)$/i);
+
+  if (!match) {
+    return { badge: '', title: value || '' };
+  }
+
+  return { badge: match[1].toUpperCase(), title: match[2] || '' };
+}
+
 function AuthorSpotlightSlider() {
   const navigate = useNavigate()
   const swiperRef = useRef(null)
@@ -259,32 +269,45 @@ function AuthorSpotlightSlider() {
     <div className="mt-4">
       <div className="swiper-container authorSpotlightSwiper">
         <div className="swiper-wrapper">
-          {banners.map((banner) => (
-            <div
-              key={banner.id}
-              className="swiper-slide relative aspect-[3/1] w-[82%] cursor-pointer overflow-hidden rounded-[16px] bg-black text-white shadow-sm"
-              onClick={() => {
-                if (banner.link_url) navigate(banner.link_url)
-              }}
-            >
-              <img
-                src={banner.image_url}
-                alt={banner.title || 'Author Center banner'}
-                className="h-full w-full object-cover"
-              />
+          {banners.map((banner) => {
+            const parsedTitle = parseBannerTitle(banner.title)
 
-              {(banner.title || banner.subtitle) ? (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8">
-                  {banner.title ? (
-                    <div className="line-clamp-1 text-[12px] font-extrabold">{banner.title}</div>
-                  ) : null}
-                  {banner.subtitle ? (
-                    <p className="mt-1 line-clamp-1 text-[10px] font-medium text-white/70">{banner.subtitle}</p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ))}
+            return (
+              <div
+                key={banner.id}
+                className="swiper-slide relative aspect-[3/1] w-[82%] cursor-pointer overflow-hidden rounded-[16px] bg-black text-white shadow-sm"
+                onClick={() => {
+                  if (banner.link_url) navigate(banner.link_url)
+                }}
+              >
+                <img
+                  src={banner.image_url}
+                  alt={parsedTitle.title || 'Author Center banner'}
+                  className="h-full w-full object-cover"
+                />
+
+                {(parsedTitle.title || banner.subtitle) ? (
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8">
+                    {parsedTitle.title ? (
+                      <div className="flex items-center gap-2">
+                        {parsedTitle.badge ? (
+                          <span className="rounded-full bg-[#ff3b6b] px-2 py-0.5 text-[8px] font-black uppercase text-white">
+                            {parsedTitle.badge}
+                          </span>
+                        ) : null}
+                        <span className="line-clamp-1 text-[12px] font-extrabold">
+                          {parsedTitle.title}
+                        </span>
+                      </div>
+                    ) : null}
+                    {banner.subtitle ? (
+                      <p className="mt-1 line-clamp-1 text-[10px] font-medium text-white/70">{banner.subtitle}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
         <div className="author-spotlight-pagination mt-3 text-center" />
       </div>
