@@ -151,7 +151,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
         </header>
 
         <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
-          <div className="font-['Roboto'] text-[16px] font-bold text-[#111827] sm:text-[17px]">
+          <div className="font-['Roboto'] text-[17px] font-medium text-[#111827]">
   {status}, {updateText}
 </div>
 
