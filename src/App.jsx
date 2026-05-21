@@ -14,18 +14,17 @@ import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+import CreateStoryPage from './pages/Author/CreateStoryPage'
+import StoryManagerPage from './pages/Author/StoryManagerPage'
+import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
+import PublishEpisodePage from './pages/Author/PublishEpisodePage'
+import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
-import CreateStoryPage from './pages/Author/CreateStoryPage'.
-import CreateStoryPage from './pages/Author/CreateStoryPage'
-import StoryManagerPage from './pages/Author/StoryManagerPage'
-import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
-import PublishEpisodePage from './pages/Author/PublishEpisodePage'
-import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 
 function ComingSoon({ title }) {
   return (
@@ -52,13 +51,16 @@ function AppShell() {
     '/event',
     '/author/create',
     '/author/dashboard',
+    '/author/create-story',
     '/authors/following',
     '/authors/top',
     '/search',
   ]
 
   const shouldHideFooter =
-    hideFooterPaths.includes(location.pathname) || location.pathname.startsWith('/story/')
+    hideFooterPaths.includes(location.pathname) ||
+    location.pathname.startsWith('/story/') ||
+    location.pathname.startsWith('/author/story/')
 
   return (
     <>
@@ -75,12 +77,18 @@ function AppShell() {
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
+        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
 
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
+        <Route path="/author/create-story" element={<CreateStoryPage />} />
+        <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
+        <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
+        <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
+        <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
 
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<ComingSoon title="Premium" />} />
@@ -95,13 +103,6 @@ function AppShell() {
         <Route path="/authors/following" element={<FollowingAuthorsPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
-        <Route path="/author/create-story" element={<CreateStoryPage />} />
-        <Route path="/author/create-story" element={<CreateStoryPage />} />
-        <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
-        <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
-        <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
-        <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
