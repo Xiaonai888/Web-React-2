@@ -118,7 +118,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
   return (
     <div className="fixed inset-0 z-[140] bg-black/35 sm:flex sm:items-center sm:justify-center sm:px-6">
-      <section className="absolute bottom-0 left-3 right-3 top-[84px] overflow-hidden rounded-t-[28px] bg-white text-[#111827] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
+      <section className="absolute bottom-0 left-3 right-3 top-[64px] overflow-hidden rounded-t-[28px] bg-white text-[#111827] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
         <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <div className="h-10 w-10" />
