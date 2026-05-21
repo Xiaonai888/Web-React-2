@@ -1,223 +1,206 @@
 import { useMemo, useState } from 'react'
 
-function formatEpisodeDate(value) {
-  if (!value) return 'New'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'New'
-
-  return date.toLocaleDateString('en-GB').replaceAll('/', '-')
+function formatShortNumber(value) {
+  const number = Number(value || 0)
+  if (number >= 1000000) return `${(number / 1000000).toFixed(1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(1)}K`
+  return number.toLocaleString()
 }
 
-function normalizeStatus(value) {
+function formatDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
+function formatStatus(value) {
   const status = String(value || 'ongoing').toLowerCase()
 
   if (status === 'completed') return 'Completed'
   if (status === 'new') return 'New'
-
   return 'Ongoing'
 }
 
-function normalizeUpdateDays(days) {
-  if (!Array.isArray(days) || !days.length) return 'Updates weekly'
+function formatUpdateDays(days) {
+  if (!Array.isArray(days) || !days.length) return 'All Episodes'
 
-  const map = {
-    monday: 'Mon',
-    tuesday: 'Tue',
-    wednesday: 'Wed',
-    thursday: 'Thu',
-    friday: 'Fri',
-    saturday: 'Sat',
-    sunday: 'Sun',
-    mon: 'Mon',
-    tue: 'Tue',
-    wed: 'Wed',
-    thu: 'Thu',
-    fri: 'Fri',
-    sat: 'Sat',
-    sun: 'Sun',
-  }
-
-  const labels = days
-    .map((day) => map[String(day).toLowerCase()] || String(day))
+  const shortDays = days
+    .map((day) => String(day || '').trim())
     .filter(Boolean)
+    .map((day) => day.slice(0, 3))
+    .join(' & ')
 
-  if (!labels.length) return 'Updates weekly'
-
-  return `Updates ${labels.join(' & ')}`
+  return shortDays ? `Updates ${shortDays}` : 'All Episodes'
 }
 
-export default function EpisodeSheetDrawer({
-  open,
-  onClose,
-  episodes,
-  currentEpisodeId,
-  storyId,
-  story,
-  navigate,
-  theme,
-}) {
-  const [newestFirst, setNewestFirst] = useState(false)
-  const [touchStartY, setTouchStartY] = useState(null)
+function EpisodeListItem({ episode, story, onOpenEpisode }) {
+  const cover = episode.cover_url || story?.cover_url || ''
+  const locked = Boolean(episode.is_locked) && Number(episode.episode_number || 0) > 1
+  const date = formatDate(episode.published_at || episode.created_at || episode.updated_at)
+  const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
 
-  const sortedEpisodes = useMemo(() => {
-    const list = [...episodes]
+  return (
+    <button
+      type="button"
+      onClick={() => onOpenEpisode(episode)}
+      className="flex w-full gap-4 border-b border-white/10 px-4 py-4 text-left active:scale-[0.995]"
+    >
+      <div className="relative h-[74px] w-[114px] shrink-0 overflow-hidden rounded-[10px] bg-[#2a2a2d]">
+        {cover ? (
+          <img src={cover} alt={episode.title || 'Episode cover'} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-white/35">
+            Cover
+          </div>
+        )}
 
-    list.sort((a, b) => {
+        {locked ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-white">
+            <i className="fa-solid fa-lock text-[18px]" />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="min-w-0 flex-1 pt-1">
+        <div className="flex items-center gap-2">
+          <h3 className="line-clamp-1 text-[17px] font-extrabold text-white">
+            Ep. {episode.episode_number || 1}
+          </h3>
+
+          {locked ? (
+            <span className="rounded-full bg-[#fff7ed] px-2 py-0.5 text-[9.5px] font-black text-[#f97316]">
+              Locked
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-white/80">
+          {episode.title || 'Untitled Episode'}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] font-semibold text-white/45">
+          {date ? <span>{date}</span> : null}
+
+          <span className="inline-flex items-center gap-1.5">
+            <i className="fa-solid fa-comment-dots text-[13px]" />
+            {comments}
+          </span>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+export default function EpisodeListModal({ open, story, episodes = [], onClose, onOpenEpisode }) {
+  const [newestFirst, setNewestFirst] = useState(true)
+
+  const visibleEpisodes = useMemo(() => {
+    return [...episodes].sort((a, b) => {
       const first = Number(a.episode_number || 0)
       const second = Number(b.episode_number || 0)
       return newestFirst ? second - first : first - second
     })
-
-    return list
   }, [episodes, newestFirst])
 
   if (!open) return null
 
-  const title = story?.title || 'Episodes'
-  const totalEpisodes = story?.total_episodes || episodes.length
-  const status = normalizeStatus(story?.status)
-  const updateDays = normalizeUpdateDays(story?.update_days)
+  const status = formatStatus(story?.status)
+  const updateText = formatUpdateDays(story?.update_days)
 
   return (
-    <div className="fixed inset-0 z-[140] bg-black/45 md:flex md:items-center md:justify-center md:px-4">
-      <button
-        type="button"
-        aria-label="Close episode list"
-        onClick={onClose}
-        className="absolute inset-0"
-      />
-
-      <section
-        onTouchStart={(event) => setTouchStartY(event.touches[0].clientY)}
-        onTouchEnd={(event) => {
-          if (touchStartY === null) return
-
-          const diff = event.changedTouches[0].clientY - touchStartY
-          setTouchStartY(null)
-
-          if (diff > 80) onClose()
-        }}
-        className={`absolute bottom-0 left-0 right-0 z-10 max-h-[88vh] overflow-hidden rounded-t-[28px] ${theme.card} shadow-2xl md:relative md:max-h-[82vh] md:w-full md:max-w-[560px] md:rounded-[28px]`}
-      >
-        <div className={`sticky top-0 z-20 border-b ${theme.border} ${theme.card}`}>
-          <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-black/15 md:hidden" />
-
-          <div className="flex items-center justify-between gap-3 px-5 py-4">
+    <div className="fixed inset-0 z-[140] bg-black/60 sm:flex sm:items-end sm:justify-center">
+      <section className="h-full w-full overflow-hidden bg-[#1f1f22] text-white shadow-2xl sm:h-[88vh] sm:max-w-[560px] sm:rounded-t-[26px]">
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1f1f22]/95 px-4 py-4 backdrop-blur">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={onClose}
-              className={`flex h-9 w-9 items-center justify-center rounded-full ${theme.ghost}`}
-              aria-label="Back"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white/80 active:scale-95"
+              aria-label="Close"
             >
-              <i className="fa-solid fa-chevron-left text-[14px]" />
+              <i className="fa-solid fa-chevron-left text-[18px]" />
             </button>
 
             <div className="min-w-0 flex-1 text-center">
-              <h3 className={`line-clamp-1 text-[17px] font-extrabold ${theme.text}`}>{title}</h3>
-              <p className={`mt-0.5 text-[11px] font-bold ${theme.muted}`}>
-                All Episodes · {totalEpisodes} total
-              </p>
+              <h2 className="line-clamp-1 text-[20px] font-black text-white">
+                {story?.title || 'Episodes'}
+              </h2>
+              <div className="mt-1 text-[11px] font-bold text-white/40">
+                All Episodes · {episodes.length} total
+              </div>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className={`flex h-9 w-9 items-center justify-center rounded-full ${theme.ghost}`}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white/90 active:scale-95"
               aria-label="Close"
             >
-              <i className="fa-solid fa-xmark text-[18px]" />
+              <i className="fa-solid fa-xmark text-[24px]" />
             </button>
           </div>
 
           <button
             type="button"
-            className={`flex w-full items-center gap-2 border-t ${theme.border} px-5 py-3 text-left ${theme.text}`}
+            className="mt-5 flex items-center gap-2 text-[15px] font-extrabold text-white/75 active:scale-[0.99]"
           >
-            <span className="rounded-[6px] bg-[#3b331d] px-2 py-1 text-[10px] font-black text-[#ffd166]">
-              <i className="fa-solid fa-crown mr-1 text-[9px]" />
+            <span className="rounded-[4px] bg-[#3a3426] px-1.5 py-0.5 text-[9px] font-black text-[#ffd66b]">
+              <i className="fa-solid fa-crown mr-1" />
               Premium
             </span>
-            <span className="text-[13px] font-extrabold">Early Access</span>
-            <i className="fa-solid fa-chevron-right text-[10px] opacity-60" />
+            <span>Early Access</span>
+            <i className="fa-solid fa-caret-right text-[12px]" />
+          </button>
+        </header>
+
+        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-4">
+          <div>
+            <div className="text-[17px] font-black text-white">
+              {status} · {updateText}
+            </div>
+            <div className="mt-1 text-[11px] font-bold text-white/35">
+              Showing {newestFirst ? 'newest first' : 'oldest first'}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setNewestFirst((value) => !value)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:scale-95"
+            aria-label="Reverse episodes"
+          >
+            <i className="fa-solid fa-arrow-down-wide-short text-[20px]" />
           </button>
         </div>
 
-        <div className="max-h-[64vh] overflow-y-auto md:max-h-[58vh]">
-          <div className={`flex items-center justify-between gap-4 border-b ${theme.border} px-5 py-4`}>
-            <div>
-              <h4 className={`text-[15px] font-black ${theme.text}`}>{status}</h4>
-              <p className={`mt-1 text-[12px] font-bold ${theme.muted}`}>{updateDays}</p>
+        <main className="h-[calc(100%-174px)] overflow-y-auto pb-8">
+          {visibleEpisodes.length ? (
+            visibleEpisodes.map((episode) => (
+              <EpisodeListItem
+                key={episode.id}
+                episode={episode}
+                story={story}
+                onOpenEpisode={onOpenEpisode}
+              />
+            ))
+          ) : (
+            <div className="px-5 py-14 text-center">
+              <i className="fa-regular fa-file-lines text-[34px] text-white/30" />
+              <div className="mt-4 text-[16px] font-black text-white">No episodes yet</div>
+              <div className="mt-1 text-[12px] font-semibold text-white/40">
+                Published episodes will appear here.
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setNewestFirst((value) => !value)}
-              className={`flex h-10 w-10 items-center justify-center rounded-full ${theme.ghost}`}
-              aria-label="Reverse episode order"
-            >
-              <i className="fa-solid fa-arrow-down-wide-short text-[16px]" />
-            </button>
-          </div>
-
-          {sortedEpisodes.map((item) => {
-            const active = String(item.id) === String(currentEpisodeId)
-            const cover = item.cover_url || story?.cover_url || ''
-            const comments = item.total_comments || item.comments_count || item.comment_count || 0
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onClose()
-                  navigate(`/story/${storyId}/episode/${item.id}`)
-                }}
-                className={`flex w-full items-center gap-4 border-b ${theme.border} px-5 py-4 text-left transition active:scale-[0.99] ${
-                  active ? theme.soft : ''
-                }`}
-              >
-                <div className="relative h-[72px] w-[114px] shrink-0 overflow-hidden rounded-[10px] bg-[#111827]">
-                  {cover ? (
-                    <img src={cover} alt={item.title || 'Episode'} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[#e5e7eb] text-[#98a2b3]">
-                      <i className="fa-solid fa-book-open text-[20px]" />
-                    </div>
-                  )}
-
-                  {item.is_locked ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
-                      <i className="fa-solid fa-lock text-[17px] drop-shadow" />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className={`line-clamp-1 text-[15px] font-extrabold ${theme.text}`}>
-                      {item.title || `Ep. ${item.episode_number || 1}`}
-                    </h4>
-
-                    {item.is_locked ? (
-                      <span className="shrink-0 rounded-full bg-[#fff4e8] px-2.5 py-1 text-[10px] font-black text-[#ff6b00]">
-                        Locked
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className={`mt-2 flex flex-wrap items-center gap-4 text-[12px] font-bold ${theme.muted}`}>
-                    <span>{formatEpisodeDate(item.published_at || item.created_at)}</span>
-                    <span className="flex items-center gap-1.5">
-                      <i className="fa-solid fa-comment-dots text-[12px]" />
-                      {comments}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+          )}
+        </main>
       </section>
     </div>
   )
