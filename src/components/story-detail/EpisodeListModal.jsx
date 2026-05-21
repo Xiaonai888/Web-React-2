@@ -164,7 +164,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
             <img
   src="/assets/Icons/Revers.svg"
   alt="Reverse episodes"
-  className="h-3 w-3"
+  className="h-4 w-4"
 />
           </button>
         </div>
