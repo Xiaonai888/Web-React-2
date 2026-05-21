@@ -158,7 +158,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
           <button
             type="button"
             onClick={() => setNewestFirst((value) => !value)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent active:scale-95"
             aria-label="Reverse episodes"
           >
             <img
