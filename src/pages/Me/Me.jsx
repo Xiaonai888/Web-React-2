@@ -466,6 +466,11 @@ export default function Me() {
   const [authorLoading, setAuthorLoading] = useState(false)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
+  const [walletBalance, setWalletBalance] = useState({
+  diamonds: 0,
+  gems: 0,
+  vouchers: 0,
+})
 
   const token = getReaderToken()
   const isLoggedIn = Boolean(token)
@@ -486,6 +491,46 @@ export default function Me() {
 
   useEffect(() => {
     applyTheme(getStoredTheme())
+    useEffect(() => {
+  let ignore = false
+
+  async function loadWalletBalance() {
+    const currentToken = getReaderToken()
+
+    if (!currentToken) {
+      setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/purchase/wallet`, {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!ignore && response.ok && data.ok && data.wallet) {
+        setWalletBalance({
+          diamonds: Number(data.wallet.diamond_balance || 0),
+          gems: Number(data.wallet.gem_balance || 0),
+          vouchers: 0,
+        })
+      }
+    } catch {
+      if (!ignore) {
+        setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
+      }
+    }
+  }
+
+  loadWalletBalance()
+
+  return () => {
+    ignore = true
+  }
+}, [])
   }, [])
 
   useEffect(() => {
@@ -660,9 +705,9 @@ export default function Me() {
           </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
-            <BalanceItem value="120" label={tx('diamond')} />
-            <BalanceItem value="480" label={tx('gem')} />
-            <BalanceItem value="3" label={tx('voucher')} />
+            <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} />
+            <BalanceItem value={walletBalance.gems} label={tx('gem')} />
+            <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
         </section>
 
