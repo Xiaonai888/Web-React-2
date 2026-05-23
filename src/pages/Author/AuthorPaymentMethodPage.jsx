@@ -81,41 +81,35 @@ function SelectField({ label, value, onChange, children }) {
   )
 }
 
-function MethodButton({ option, onClick, active = false }) {
+function MethodButton({ option, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex min-w-0 items-center gap-3 rounded-[22px] border p-3 text-left shadow-sm transition active:scale-[0.99] ${
-        active
-          ? 'border-[#111827] bg-[#111827] text-white'
-          : 'border-[#eceaf2] bg-white text-[#111827] md:hover:-translate-y-0.5 md:hover:shadow-md'
-      }`}
+      className="relative flex min-w-0 items-center gap-3 rounded-[22px] border border-[#eceaf2] bg-white p-3 text-left text-[#111827] shadow-sm transition active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:shadow-md"
     >
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] ${
-        active ? 'bg-white/10 text-[#f7c948]' : 'bg-[#f7f4ee] text-[#c89b1e]'
-      }`}>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[17px] bg-[#f7f4ee] text-[#c89b1e]">
         <i className={`${option.icon} text-[15px]`} />
       </div>
 
-      <div className="min-w-0 flex-1 pr-16">
+      <div className="min-w-0 flex-1 pr-24">
         <div className="line-clamp-1 text-[14px] font-black">{option.title}</div>
-        <div className={`mt-0.5 line-clamp-1 text-[11.5px] font-semibold ${
-          active ? 'text-white/55' : 'text-[#98a2b3]'
-        }`}>
+        <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#98a2b3]">
           {option.subtitle}
         </div>
       </div>
 
       {option.badge ? (
-        <span className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-          active ? 'bg-white/10 text-[#f7c948]' : option.key === 'bank_qr' ? 'bg-[#fff7ed] text-[#c05621]' : 'bg-[#f2f4f7] text-[#667085]'
-        }`}>
+        <span
+          className={`absolute right-8 top-3 rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
+            option.key === 'bank_qr' ? 'bg-[#fff7ed] text-[#c05621]' : 'bg-[#f2f4f7] text-[#667085]'
+          }`}
+        >
           {option.badge}
         </span>
       ) : null}
 
-      <i className={`fa-solid fa-chevron-right shrink-0 text-[11px] ${active ? 'text-white/45' : 'text-[#c6c9d1]'}`} />
+      <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
     </button>
   )
 }
@@ -201,9 +195,9 @@ function ImageUpload({ value, onChange }) {
     <div>
       <div className="mb-2 text-[12px] font-black uppercase tracking-[0.06em] text-[#667085]">QR code image</div>
 
-      <label className="flex min-h-[148px] cursor-pointer flex-col items-center justify-center rounded-[22px] border border-dashed border-[#cfd4dc] bg-[#fafafa] px-4 py-5 text-center transition active:scale-[0.99] md:hover:border-[#111827]">
+      <label className="flex min-h-[168px] cursor-pointer flex-col items-center justify-center rounded-[22px] border border-dashed border-[#cfd4dc] bg-[#fafafa] px-4 py-5 text-center transition active:scale-[0.99] md:hover:border-[#111827]">
         {value ? (
-          <img src={value} alt="Bank QR preview" className="max-h-[220px] max-w-full rounded-[18px] object-contain shadow-sm" />
+          <img src={value} alt="Bank QR preview" className="max-h-[260px] max-w-full rounded-[18px] object-contain shadow-sm" />
         ) : (
           <>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
@@ -248,6 +242,24 @@ function ImportantCard() {
   )
 }
 
+function FormHeader({ title, subtitle, onBack }) {
+  return (
+    <div className="mb-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-3 inline-flex h-9 items-center gap-2 rounded-full bg-[#f4f5f7] px-3 text-[12px] font-black text-[#667085] active:scale-95"
+      >
+        <i className="fa-solid fa-chevron-left text-[10px]" />
+        Back to methods
+      </button>
+
+      <h2 className="text-[20px] font-black tracking-[-0.04em] text-[#111827]">{title}</h2>
+      <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#8d94a1]">{subtitle}</p>
+    </div>
+  )
+}
+
 export default function AuthorPaymentMethodPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -255,6 +267,7 @@ export default function AuthorPaymentMethodPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [methods, setMethods] = useState([])
+  const [viewMode, setViewMode] = useState('list')
   const [selectedMethod, setSelectedMethod] = useState('')
 
   const [bankName, setBankName] = useState('')
@@ -320,10 +333,11 @@ export default function AuthorPaymentMethodPage() {
     }
   }, [navigate])
 
-  function fillExistingMethod(methodType) {
+  function openMethod(methodType) {
     const old = methods.find((method) => method.method_type === methodType && method.status === 'active')
 
     setSelectedMethod(methodType)
+    setViewMode('form')
     setError('')
     setSuccess('')
 
@@ -345,6 +359,13 @@ export default function AuthorPaymentMethodPage() {
     setPaypalEmail(old.paypal_email || '')
     setPhoneProvider(old.phone_provider || 'Wing')
     setPhoneNumber(old.phone_number || '')
+  }
+
+  function backToMethods() {
+    setViewMode('list')
+    setSelectedMethod('')
+    setError('')
+    setSuccess('')
   }
 
   async function handleSubmit(event) {
@@ -391,6 +412,8 @@ export default function AuthorPaymentMethodPage() {
 
       setMethods((old) => [result.payment_method, ...old.map((method) => ({ ...method, is_primary: false }))])
       setSuccess('Payment method saved successfully.')
+      setViewMode('list')
+      setSelectedMethod('')
     } catch (err) {
       setError(err.message || 'Failed to save payment method')
     } finally {
@@ -402,7 +425,18 @@ export default function AuthorPaymentMethodPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
       <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/income', { replace: true })} />
+          <HeaderButton
+            icon="fa-solid fa-chevron-left"
+            label="Back"
+            onClick={() => {
+              if (viewMode === 'form') {
+                backToMethods()
+                return
+              }
+
+              navigate('/author/income', { replace: true })
+            }}
+          />
 
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">Payment Method</h1>
@@ -419,7 +453,9 @@ export default function AuthorPaymentMethodPage() {
             <div className="h-[110px] animate-pulse rounded-[26px] bg-white" />
             <div className="h-[320px] animate-pulse rounded-[26px] bg-white" />
           </div>
-        ) : (
+        ) : null}
+
+        {!loading && viewMode === 'list' ? (
           <>
             <CurrentMethodCard method={primaryMethod} />
 
@@ -431,106 +467,108 @@ export default function AuthorPaymentMethodPage() {
                 </p>
               </div>
 
+              {success ? (
+                <div className="mb-3 rounded-[18px] bg-[#ecfdf3] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#16803c]">
+                  {success}
+                </div>
+              ) : null}
+
+              {error ? (
+                <div className="mb-3 rounded-[18px] bg-[#fff1f2] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#e11d48]">
+                  {error}
+                </div>
+              ) : null}
+
               <div className="grid gap-2.5">
                 {METHOD_OPTIONS.map((option) => (
                   <MethodButton
                     key={option.key}
                     option={option}
-                    active={selectedMethod === option.key}
-                    onClick={() => fillExistingMethod(option.key)}
+                    onClick={() => openMethod(option.key)}
                   />
                 ))}
               </div>
             </section>
 
-            {selectedMethod ? (
-              <form onSubmit={handleSubmit} className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#111827]">
-                      {selectedMethod === 'bank_qr'
-                        ? 'Add Bank QR'
-                        : selectedMethod === 'paypal'
-                          ? 'Add PayPal'
-                          : 'Add Phone Number'}
-                    </h2>
-                    <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#8d94a1]">
-                      Use the same account name as your real payment account.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedMethod('')
-                      setError('')
-                      setSuccess('')
-                    }}
-                    className="shrink-0 rounded-full bg-[#f4f5f7] px-3 py-2 text-[11.5px] font-black text-[#667085]"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {selectedMethod === 'bank_qr' ? (
-                    <>
-                      <Field label="Bank account name" value={accountName} onChange={setAccountName} placeholder="Example: KEO DARIYA" />
-                      <Field label="Bank name" value={bankName} onChange={setBankName} placeholder="Example: ABA, ACLEDA, Wing Bank" />
-                      <ImageUpload value={qrImageUrl} onChange={setQrImageUrl} />
-                    </>
-                  ) : null}
-
-                  {selectedMethod === 'paypal' ? (
-                    <>
-                      <Field label="PayPal name" value={paypalName} onChange={setPaypalName} placeholder="Your PayPal account name" />
-                      <Field label="PayPal email" type="email" value={paypalEmail} onChange={setPaypalEmail} placeholder="name@example.com" />
-                      <div className="rounded-[18px] bg-[#fff7ed] px-4 py-3 text-[12px] font-semibold leading-5 text-[#9a5b00]">
-                        PayPal fees may apply depending on country, currency, and transfer type.
-                      </div>
-                    </>
-                  ) : null}
-
-                  {selectedMethod === 'phone' ? (
-                    <>
-                      <SelectField label="Provider" value={phoneProvider} onChange={setPhoneProvider}>
-                        <option value="Wing">Wing</option>
-                        <option value="Other">Other</option>
-                      </SelectField>
-                      <Field label="Phone number" value={phoneNumber} onChange={setPhoneNumber} placeholder="Example: 012 345 678" />
-                      <Field label="Account name" value={accountName} onChange={setAccountName} placeholder="Name on the account" />
-                      <div className="rounded-[18px] bg-[#fff7ed] px-4 py-3 text-[12px] font-semibold leading-5 text-[#9a5b00]">
-                        Phone number payouts may have handling fees. Bank QR is recommended when available.
-                      </div>
-                    </>
-                  ) : null}
-
-                  {error ? (
-                    <div className="rounded-[18px] bg-[#fff1f2] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#e11d48]">
-                      {error}
-                    </div>
-                  ) : null}
-
-                  {success ? (
-                    <div className="rounded-[18px] bg-[#ecfdf3] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#16803c]">
-                      {success}
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white shadow-sm active:scale-[0.99] disabled:opacity-60"
-                  >
-                    {saving ? 'Saving...' : 'Save Payment Method'}
-                  </button>
-                </div>
-              </form>
-            ) : null}
-
             <ImportantCard />
           </>
-        )}
+        ) : null}
+
+        {!loading && viewMode === 'form' ? (
+          <form onSubmit={handleSubmit} className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            {selectedMethod === 'bank_qr' ? (
+              <FormHeader
+                title="Add Bank QR"
+                subtitle="Upload your Bank QR and make sure the name matches your real bank account."
+                onBack={backToMethods}
+              />
+            ) : null}
+
+            {selectedMethod === 'paypal' ? (
+              <FormHeader
+                title="Add PayPal"
+                subtitle="Use the PayPal name and email that can receive payouts."
+                onBack={backToMethods}
+              />
+            ) : null}
+
+            {selectedMethod === 'phone' ? (
+              <FormHeader
+                title="Add Phone Number"
+                subtitle="Use the phone account name that matches your payout account."
+                onBack={backToMethods}
+              />
+            ) : null}
+
+            <div className="space-y-4">
+              {selectedMethod === 'bank_qr' ? (
+                <>
+                  <Field label="Bank account name" value={accountName} onChange={setAccountName} placeholder="Example: KEO DARIYA" />
+                  <Field label="Bank name" value={bankName} onChange={setBankName} placeholder="Example: ABA, ACLEDA, Wing Bank" />
+                  <ImageUpload value={qrImageUrl} onChange={setQrImageUrl} />
+                </>
+              ) : null}
+
+              {selectedMethod === 'paypal' ? (
+                <>
+                  <Field label="PayPal name" value={paypalName} onChange={setPaypalName} placeholder="Your PayPal account name" />
+                  <Field label="PayPal email" type="email" value={paypalEmail} onChange={setPaypalEmail} placeholder="name@example.com" />
+                  <div className="rounded-[18px] bg-[#fff7ed] px-4 py-3 text-[12px] font-semibold leading-5 text-[#9a5b00]">
+                    PayPal fees may apply depending on country, currency, and transfer type.
+                  </div>
+                </>
+              ) : null}
+
+              {selectedMethod === 'phone' ? (
+                <>
+                  <SelectField label="Provider" value={phoneProvider} onChange={setPhoneProvider}>
+                    <option value="Wing">Wing</option>
+                    <option value="Other">Other</option>
+                  </SelectField>
+                  <Field label="Phone number" value={phoneNumber} onChange={setPhoneNumber} placeholder="Example: 012 345 678" />
+                  <Field label="Account name" value={accountName} onChange={setAccountName} placeholder="Name on the account" />
+                  <div className="rounded-[18px] bg-[#fff7ed] px-4 py-3 text-[12px] font-semibold leading-5 text-[#9a5b00]">
+                    Phone number payouts may have handling fees. Bank QR is recommended when available.
+                  </div>
+                </>
+              ) : null}
+
+              {error ? (
+                <div className="rounded-[18px] bg-[#fff1f2] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#e11d48]">
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white shadow-sm active:scale-[0.99] disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save Payment Method'}
+              </button>
+            </div>
+          </form>
+        ) : null}
       </main>
     </div>
   )
