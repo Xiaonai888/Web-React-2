@@ -355,13 +355,15 @@ export default function AuthorIncomePage() {
                 icon="fa-solid fa-calendar-check"
               />
 
-              <SummaryCard
-                label="Payment Method"
-                value={paymentComplete ? methodLabel(paymentMethod) : 'Missing'}
-                detail={paymentComplete ? 'Your payment details are ready for admin payout.' : 'Add Bank QR, PayPal, or phone payout details in the next setup stage.'}
-                icon={paymentComplete ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'}
-                dark={!paymentComplete}
-              />
+               <button type="button" onClick={() => navigate('/author/payment-method')} className="text-left">
+                <SummaryCard
+                  label="Payment Method"
+                  value={paymentComplete ? methodLabel(paymentMethod) : 'Missing'}
+                  detail={paymentComplete ? 'Tap to review or update your payout details.' : 'Tap to add Bank QR, PayPal, or phone payout details.'}
+                  icon={paymentComplete ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'}
+                  dark={!paymentComplete}
+                />
+              </button>
             </div>
 
             <SectionCard
