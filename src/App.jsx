@@ -30,6 +30,7 @@ import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 import ShadowMallProductDetailPage from './pages/Shop/ShadowMallProductDetailPage'
+import ShadowMallCartPage from './pages/Shop/ShadowMallCartPage'
 
 
 function ComingSoon({ title }) {
@@ -70,7 +71,8 @@ function AppShell() {
   const shouldHideFooter =
     hideFooterPaths.includes(location.pathname) ||
     location.pathname.startsWith('/story/') ||
-    location.pathname.startsWith('/author/story/')
+    location.pathname.startsWith('/author/story/') ||
+location.pathname.startsWith('/shop/mall/')
 
   return (
     <>
@@ -118,6 +120,7 @@ function AppShell() {
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
         <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
+        <Route path="/shop/mall/cart" element={<ShadowMallCartPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
