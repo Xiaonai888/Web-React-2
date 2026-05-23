@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const THEME_STORAGE_KEY = 'shadow_theme'
 
 function getReaderToken() {
   return (
@@ -21,6 +22,16 @@ function getStoredReaderUser() {
   } catch {
     return null
   }
+}
+
+function getStoredTheme() {
+  return localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light'
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark'
+  document.documentElement.classList.toggle('dark', isDark)
+  localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light')
 }
 
 function saveReaderUser(user) {
@@ -53,7 +64,7 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
-const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]'
+const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827] dark:bg-white/10 dark:text-white'
 
 function HeaderIcon({ icon, label, to, onClick }) {
   const content = (
@@ -61,7 +72,7 @@ function HeaderIcon({ icon, label, to, onClick }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f2430] shadow-sm ring-1 ring-black/5 active:scale-95"
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f2430] shadow-sm ring-1 ring-black/5 active:scale-95 dark:bg-[#202331] dark:text-white dark:ring-white/10"
     >
       <i className={`${icon} text-[15px]`} />
     </button>
@@ -73,8 +84,8 @@ function HeaderIcon({ icon, label, to, onClick }) {
 function BalanceItem({ value, label }) {
   return (
     <div className="text-center">
-      <div className="text-[15px] font-extrabold text-[#111827]">{value}</div>
-      <div className="mt-1 text-[10.5px] font-semibold text-[#8d94a1]">{label}</div>
+      <div className="text-[15px] font-extrabold text-[#111827] dark:text-white">{value}</div>
+      <div className="mt-1 text-[10.5px] font-semibold text-[#8d94a1] dark:text-white/50">{label}</div>
     </div>
   )
 }
@@ -86,8 +97,8 @@ function QuickAction({ icon, title, subtitle, to, onClick }) {
         <i className={`${icon} text-[14px]`} />
       </div>
       <div className="min-w-0">
-        <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827]">{title}</div>
-        <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1]">{subtitle}</div>
+        <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{title}</div>
+        <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{subtitle}</div>
       </div>
     </div>
   )
@@ -110,7 +121,7 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
             dark
               ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
               : danger
-                ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d]'
+                ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d] dark:bg-[#3a1f25]'
                 : iconBox
           }
         >
@@ -119,55 +130,93 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
         <div className="min-w-0">
           <div
             className={`line-clamp-1 text-[13.5px] font-extrabold ${
-              dark ? 'text-white' : danger ? 'text-[#e5484d]' : 'text-[#111827]'
+              dark ? 'text-white' : danger ? 'text-[#e5484d]' : 'text-[#111827] dark:text-white'
             }`}
           >
             {title}
           </div>
           {subtitle ? (
-            <div className={`mt-0.5 line-clamp-1 text-[11.5px] ${dark ? 'text-white/55' : 'text-[#8d94a1]'}`}>
+            <div className={`mt-0.5 line-clamp-1 text-[11.5px] ${dark ? 'text-white/55' : 'text-[#8d94a1] dark:text-white/50'}`}>
               {subtitle}
             </div>
           ) : null}
         </div>
       </div>
-      <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1]'}`} />
+      <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
     </>
   )
 
   const className = `flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99] ${
-    dark ? 'bg-[#171923]' : ''
+    dark ? 'bg-[#171923]' : 'dark:bg-[#171923]'
   }`
 
   return to ? <Link to={to} className={className}>{body}</Link> : <button type="button" onClick={onClick} className={className}>{body}</button>
 }
 
+function ThemeSwitchRow({ darkMode, onChange }) {
+  return (
+    <div className="flex w-full items-center justify-between gap-4 px-4 py-3.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className={iconBox}>
+          <i className={`${darkMode ? 'fa-solid fa-moon' : 'far fa-sun'} text-[14px]`} />
+        </div>
+        <div className="min-w-0">
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">Dark Mode</div>
+          <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
+            Switch between light and dark theme
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={darkMode}
+        onClick={onChange}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition ${darkMode ? 'bg-[#f6b800]' : 'bg-[#d9dce4]'}`}
+      >
+        <span
+          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
+            darkMode ? 'left-6' : 'left-1'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
 function SettingsSheet({ open, onClose, isLoggedIn }) {
+  const [darkMode, setDarkMode] = useState(() => getStoredTheme() === 'dark')
+
+  useEffect(() => {
+    applyTheme(darkMode ? 'dark' : 'light')
+  }, [darkMode])
+
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[120]">
       <button type="button" aria-label="Close settings" onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-[74px] left-0 right-0 max-h-[72vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden" />
+      <div className="absolute bottom-[74px] left-0 right-0 max-h-[72vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-[17px] font-extrabold text-[#111827]">Settings</div>
-            <div className="mt-0.5 text-[12px] text-[#8d94a1]">Account and app options</div>
+            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">Settings</div>
+            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">Account and app options</div>
           </div>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]">
-            <i className="fa-solid fa-times text-[13px] text-[#555]" />
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
+            <i className="fa-solid fa-times text-[13px] text-[#555] dark:text-white/70" />
           </button>
         </div>
 
         <div className="max-h-[52vh] overflow-y-auto pb-2">
-          <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white">
-            <div className="divide-y divide-[#f0eef6]">
+          <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white dark:border-white/10 dark:bg-[#171923]">
+            <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
               <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title="Edit Profile" subtitle="Name, avatar, bio" />
               <MenuRow to="/settings" icon="fa-solid fa-shield-alt" title="Account Settings" subtitle="Password, privacy, security" />
-              <MenuRow to="/settings" icon="far fa-moon" title="Appearance" subtitle="Theme and reading display" />
+              <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} />
             </div>
           </div>
         </div>
@@ -190,6 +239,10 @@ export default function Me() {
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : 'Click to Login')
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+
+  useEffect(() => {
+    applyTheme(getStoredTheme())
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -304,11 +357,11 @@ export default function Me() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
           <div className="flex justify-end gap-2">
             <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
             <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
@@ -330,7 +383,7 @@ export default function Me() {
 
             <div className="min-w-0 flex-1 pt-1.5">
               <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
-                <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827]">
+                <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
                   {isLoggedIn ? (
                     <>
                       {checkingUser ? 'Loading account...' : displayName}
@@ -347,13 +400,13 @@ export default function Me() {
               </Link>
 
               {!isLoggedIn ? (
-                <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1]">
+                <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
                   Login to save reading and author tools
                 </p>
               ) : (
                 <Link
                   to="/profile"
-                  className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1]"
+                  className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50"
                 >
                   <span>View Profile</span>
                   <i className="fa-solid fa-chevron-right text-[9px]" />
@@ -362,37 +415,37 @@ export default function Me() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
             <BalanceItem value="120" label="Diamond" />
             <BalanceItem value="480" label="Gem" />
             <BalanceItem value="3" label="Voucher" />
           </div>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-          <div className="grid grid-cols-2 divide-x divide-[#f0eef6]">
+        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
+          <div className="grid grid-cols-2 divide-x divide-[#f0eef6] dark:divide-white/10">
             <QuickAction to="/wallet" icon="fa-solid fa-wallet" title="Wallet" subtitle="Balance & purchases" />
             <QuickAction to="/check-in" icon="far fa-calendar-check" title="Check-in" subtitle="Daily rewards" />
           </div>
         </section>
 
-        <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
+        <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827]">
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">Author Dashboard</div>
-                <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1]">Manage stories, episodes, and your author page</div>
+                <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">Author Dashboard</div>
+                <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">Manage stories, episodes, and your author page</div>
               </div>
             </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
+            <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1] dark:text-white/35" />
           </button>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
-          <div className="divide-y divide-[#f0eef6]">
+        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
+          <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
             <MenuRow to="/premium" icon="fa-solid fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
             <MenuRow to="/inbox" icon="far fa-envelope" title="Inbox" subtitle="Messages and notifications" />
             <MenuRow to="/comments" icon="far fa-comment-dots" title="My Comments" subtitle="Replies and comment activity" />
@@ -403,7 +456,7 @@ export default function Me() {
         </section>
 
         {isLoggedIn ? (
-          <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
+          <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
             <MenuRow onClick={handleLogout} icon="fa-solid fa-right-from-bracket" title="Logout" danger />
           </section>
         ) : null}
