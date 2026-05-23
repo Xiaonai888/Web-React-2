@@ -289,14 +289,14 @@ function BoostRequirement({ item }) {
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <i className={`${done ? 'fa-solid fa-check' : item.icon} text-[12px] ${done ? 'text-[#d4a72c]' : 'text-[#f7c948]'}`} />
-          <span className={`line-clamp-1 text-[11px] font-black ${done ? 'text-[#16803c]' : 'text-white'}`}>{item.shortLabel}</span>
+          <span className={`line-clamp-1 text-[11px] font-black ${done ? 'text-[#111827]' : 'text-white'}`}>{item.shortLabel}</span>
         </div>
         <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${done ? 'bg-[#111827] text-[#f7c948]' : 'bg-white/10 text-white/55'}`}>
           {done ? 'Done' : `${progressPercent(item.current, item.required)}%`}
         </span>
       </div>
 
-      <div className={`text-[10.5px] font-semibold ${done ? 'text-[#16803c]/75' : 'text-white/55'}`}>
+      <div className={`text-[10.5px] font-semibold ${done ? 'text-[#9a6a00]' : 'text-white/55'}`}>
         {compactNumber(item.current, item.prefix)} / {compactNumber(item.required, item.prefix)}
       </div>
 
