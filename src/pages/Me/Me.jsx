@@ -230,14 +230,21 @@ function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick }) {
   )
 }
 
-function LanguageOption({ language, selected, onClick }) {
+function LanguageOption({
+  language,
+  selected,
+  onClick,
+  selectedClassName = 'bg-[#fff7d8] ring-1 ring-[#f6b800]/45 dark:bg-[#2a2414] dark:ring-[#f6b800]/35',
+  selectedTextClassName = 'text-[#d99a00]',
+  selectedIconClassName = 'text-[#d99a00]',
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-left transition active:scale-[0.99] ${
         selected
-          ? 'bg-[#fff7d8] ring-1 ring-[#f6b800]/45 dark:bg-[#2a2414] dark:ring-[#f6b800]/35'
+          ? selectedClassName
           : 'bg-[#f8f8fb] ring-1 ring-transparent dark:bg-white/5'
       }`}
     >
@@ -248,11 +255,11 @@ function LanguageOption({ language, selected, onClick }) {
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{language.label}</div>
           {selected ? (
-            <div className="mt-0.5 text-[11px] font-semibold text-[#d99a00]">Selected</div>
+            <div className={`mt-0.5 text-[11px] font-semibold ${selectedTextClassName}`}>Selected</div>
           ) : null}
         </div>
       </div>
-      {selected ? <i className="fa-solid fa-check text-[13px] text-[#d99a00]" /> : null}
+      {selected ? <i className={`fa-solid fa-check text-[13px] ${selectedIconClassName}`} /> : null}
     </button>
   )
 }
@@ -320,17 +327,24 @@ function LanguageSheet({
         <div className="max-h-[50vh] space-y-2 overflow-y-auto pb-1">
           {LANGUAGES.map((language) => (
             <LanguageOption
-              key={language.id}
-              language={language}
-              selected={selectedLanguage === language.id}
-              onClick={() => {
-                if (isStoryTab) {
-                  onStoryLanguageChange(language.id)
-                } else {
-                  onDisplayLanguageChange(language.id)
-                }
-              }}
-            />
+  key={language.id}
+  language={language}
+  selected={selectedLanguage === language.id}
+  onClick={() => {
+    if (isStoryTab) {
+      onStoryLanguageChange(language.id)
+    } else {
+      onDisplayLanguageChange(language.id)
+    }
+  }}
+  {...(!isStoryTab
+    ? {
+        selectedClassName: 'bg-[#eef4ff] ring-1 ring-[#2563eb]/35 dark:bg-[#17233d] dark:ring-[#8bb6ff]/35',
+        selectedTextClassName: 'text-[#2563eb]',
+        selectedIconClassName: 'text-[#2563eb]',
+      }
+    : {})}
+/>
           ))}
         </div>
       </div>
