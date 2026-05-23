@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'.
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -242,11 +243,11 @@ export default function CompletedSection() {
       try {
         setLoading(true)
 
-        const [allResponse, romanceResponse, fantasyResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Romance`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Fantasy`),
-        ])
+       const [allResponse, romanceResponse, fantasyResponse] = await Promise.all([
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated`)),
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Romance`)),
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=9&sort=updated&genre=Fantasy`)),
+])
 
         const allData = await allResponse.json().catch(() => ({}))
         const romanceData = await romanceResponse.json().catch(() => ({}))
