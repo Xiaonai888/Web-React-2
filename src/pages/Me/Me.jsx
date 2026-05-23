@@ -234,10 +234,13 @@ function LanguageOption({
   language,
   selected,
   onClick,
+  isDisplayLanguage = false,
   selectedClassName = 'bg-[#fff7d8] ring-1 ring-[#f6b800]/45 dark:bg-[#2a2414] dark:ring-[#f6b800]/35',
   selectedTextClassName = 'text-[#d99a00]',
   selectedIconClassName = 'text-[#d99a00]',
 }) {
+  const countryCode = language.flagCode?.toUpperCase() || ''
+
   return (
     <button
       type="button"
@@ -249,8 +252,23 @@ function LanguageOption({
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[20px] shadow-sm dark:bg-white/10">
-          {language.flag}
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[13px] font-bold text-[#111827] shadow-sm ring-1 ring-black/5 dark:bg-white dark:text-[#111827]">
+          {isDisplayLanguage ? (
+            <>
+              <img
+                src={`https://flagcdn.com/w40/${language.flagCode}.png`}
+                alt={`${language.label} flag`}
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                  event.currentTarget.nextElementSibling.style.display = 'inline'
+                }}
+              />
+              <span className="hidden">{countryCode}</span>
+            </>
+          ) : (
+            countryCode
+          )}
         </span>
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{language.label}</div>
@@ -330,6 +348,7 @@ function LanguageSheet({
   key={language.id}
   language={language}
   selected={selectedLanguage === language.id}
+  isDisplayLanguage={!isStoryTab}
   onClick={() => {
     if (isStoryTab) {
       onStoryLanguageChange(language.id)
