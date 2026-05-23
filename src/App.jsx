@@ -34,6 +34,7 @@ import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
 const ShadowMallCheckoutPage = lazy(() => import('./pages/Shop/ShadowMallCheckoutPage'))
+const ShadowMallPaymentPage = lazy(() => import('./pages/Shop/ShadowMallPaymentPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -122,6 +123,14 @@ function AppShell() {
           element={
             <LazyPage>
               <ShadowMallCheckoutPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/shop/mall/payment"
+          element={
+            <LazyPage>
+              <ShadowMallPaymentPage />
             </LazyPage>
           }
         />
