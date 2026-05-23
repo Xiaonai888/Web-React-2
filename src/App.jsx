@@ -29,6 +29,7 @@ import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
+import ShadowMallProductDetailPage from './pages/Shop/ShadowMallProductDetailPage'
 
 
 function ComingSoon({ title }) {
@@ -116,6 +117,7 @@ function AppShell() {
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
+        <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
