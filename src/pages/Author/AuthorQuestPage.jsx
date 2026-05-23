@@ -185,7 +185,7 @@ function SectionCard({ title, subtitle, action, children }) {
 
 function ProgressBar({ current, required, done = false, dark = false }) {
   const percent = progressPercent(current, required)
-  const barColor = done ? 'bg-[#22c55e]' : 'bg-[#d4a72c]'
+  const barColor = 'bg-[#d4a72c]'
   const bgColor = dark ? 'bg-white/10' : 'bg-[#eef0f4]'
 
   return (
@@ -205,14 +205,14 @@ function RequirementRow({ icon, label, current, required }) {
     <div
       className={`rounded-[20px] border p-3 ${
         done
-          ? 'border-[#b7ebc6] bg-[#ecfdf3]'
-          : 'border-[#f0eef6] bg-white'
+  ? 'border-[#d4a72c] bg-[#fff8e6]'
+  : 'border-[#f0eef6] bg-white'
       }`}
     >
       <div className="mb-2 flex items-center gap-3">
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-            done ? 'bg-[#16803c] text-white' : 'bg-[#f7f4ee] text-[#c89b1e]'
+            done ? 'bg-[#111827] text-[#f7c948]' : 'bg-[#f7f4ee] text-[#c89b1e]'
           }`}
         >
           <i className={`${done ? 'fa-solid fa-check' : icon} text-[13px]`} />
@@ -227,7 +227,7 @@ function RequirementRow({ icon, label, current, required }) {
 
         <div
           className={`rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase ${
-            done ? 'bg-white text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'
+            done ? 'bg-[#111827] text-[#f7c948]' : 'bg-[#f2f4f7] text-[#667085]'
           }`}
         >
           {done ? 'Done' : `${progressPercent(current, required)}%`}
@@ -282,16 +282,16 @@ function BoostRequirement({ item }) {
     <div
       className={`rounded-[18px] px-3 py-3 ring-1 ${
         done
-          ? 'bg-[#ecfdf3] text-[#16803c] ring-[#b7ebc6]'
-          : 'bg-white/10 text-white ring-white/10'
+  ? 'bg-[#fff8e6] text-[#9a6a00] ring-[#d4a72c]'
+  : 'bg-white/10 text-white ring-white/10'
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <i className={`${done ? 'fa-solid fa-check' : item.icon} text-[12px] ${done ? 'text-[#16803c]' : 'text-[#f7c948]'}`} />
+          <i className={`${done ? 'fa-solid fa-check' : item.icon} text-[12px] ${done ? 'text-[#d4a72c]' : 'text-[#f7c948]'}`} />
           <span className={`line-clamp-1 text-[11px] font-black ${done ? 'text-[#16803c]' : 'text-white'}`}>{item.shortLabel}</span>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${done ? 'bg-white text-[#16803c]' : 'bg-white/10 text-white/55'}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${done ? 'bg-[#111827] text-[#f7c948]' : 'bg-white/10 text-white/55'}`}>
           {done ? 'Done' : `${progressPercent(item.current, item.required)}%`}
         </span>
       </div>
