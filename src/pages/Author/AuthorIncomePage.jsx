@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -121,32 +121,16 @@ function SmallStat({ label, value }) {
 
 function SectionCard({ title, subtitle, action, children }) {
   return (
-    <button
-  type="button"
-  onClick={() => navigate('/author/quest?from=income')}
-  className="w-full rounded-[26px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:shadow-md"
->
-  <div className="flex items-center justify-between gap-4">
-    <div className="min-w-0 flex-1">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f7f4ee] text-[#c89b1e]">
-          <i className="fa-solid fa-scale-balanced text-[13px]" />
-        </span>
-        <span className="text-[15px] font-black text-[#111827]">
-          Income Rules
-        </span>
+    <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#111827]">{title}</h2>
+          {subtitle ? <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#8d94a1]">{subtitle}</p> : null}
+        </div>
+        {action}
       </div>
-
-      <p className="mt-3 text-[12.5px] font-medium leading-6 text-[#8d94a1]">
-        Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and free first episodes do not count as paid income yet.
-      </p>
-    </div>
-
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
-      <i className="fa-solid fa-chevron-right text-[12px]" />
-    </div>
-  </div>
-</button>
+      {children}
+    </section>
   )
 }
 
@@ -243,10 +227,8 @@ function LoadingSkeleton() {
   )
 }
 
-export default function AuthorQuestPage() {
+export default function AuthorIncomePage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const fromPage = searchParams.get('from')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
@@ -311,11 +293,8 @@ export default function AuthorQuestPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
       <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton
-  icon="fa-solid fa-chevron-left"
-  label="Back"
-  onClick={() => navigate(fromPage === 'income' ? '/author/income' : '/author/dashboard', { replace: true })}
-/>
+          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/dashboard', { replace: true })} />
+
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">My Income</h1>
             <p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">Net author earnings</p>
@@ -497,12 +476,8 @@ export default function AuthorQuestPage() {
               )}
             </SectionCard>
 
-            <button
-  type="button"
-  onClick={() => navigate('/author/quest?from=income')}
-  className="w-full rounded-[26px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
->
-  <div className="flex items-center justify-between gap-4">
+            <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f7f4ee] text-[#c89b1e]">
                   <i className="fa-solid fa-scale-balanced text-[15px]" />
                 </div>
@@ -511,13 +486,16 @@ export default function AuthorQuestPage() {
                   <p className="mt-1 text-[12.5px] font-medium leading-6 text-[#8d94a1]">
                     Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and free first episodes do not count as paid income yet.
                   </p>
-                 
+                  <button
+                    type="button"
+                    onClick={() => navigate('/author/quest')}
+                    className="mt-3 inline-flex h-10 items-center rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-95"
+                  >
+                    View Quest
+                  </button>
                 </div>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
-      <i className="fa-solid fa-chevron-right text-[12px]" />
-    </div>
-  </div>
-</button>
+              </div>
+            </section>
           </>
         ) : null}
       </main>
