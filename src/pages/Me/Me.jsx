@@ -477,7 +477,7 @@ export default function Me() {
         type="button"
         onClick={handleAuthorDashboard}
         aria-label="Author Dashboard shortcut"
-        className="fixed bottom-[92px] right-5 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[#f6b800] text-[17px] text-[#111827] shadow-[0_14px_30px_rgba(246,184,0,0.34)] active:scale-95"
+        className="fixed bottom-[92px] right-5 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[#f6b800] text-[17px] text-[#111827] shadow-[0_14px_30px_rgba(246,184,0,0.34)] active:scale-95 dark:text-[#111827]"
       >
         <i className="fa-solid fa-pen-nib" />
       </button>
