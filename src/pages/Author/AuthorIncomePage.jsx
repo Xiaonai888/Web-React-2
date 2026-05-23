@@ -89,7 +89,7 @@ function HeaderButton({ icon, onClick, label }) {
 
 function SummaryCard({ label, value, detail, icon, dark = false }) {
   return (
-    <div className={`rounded-[24px] p-4 shadow-sm ring-1 ring-black/5 ${dark ? 'bg-[#111827] text-white' : 'bg-white text-[#111827]'}`}>
+        <div className={`flex h-full min-h-[142px] flex-col justify-between rounded-[24px] p-4 shadow-sm ring-1 ring-black/5 ${dark ? 'bg-[#111827] text-white' : 'bg-white text-[#111827]'}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className={`text-[11px] font-extrabold uppercase tracking-[0.08em] ${dark ? 'text-white/55' : 'text-[#98a2b3]'}`}>
@@ -395,7 +395,7 @@ export default function AuthorIncomePage() {
               </div>
             </section>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
               <SummaryCard
                 label="Next Payout"
                 value={dateText(data.next_payout_date)}
@@ -403,7 +403,7 @@ export default function AuthorIncomePage() {
                 icon="fa-solid fa-calendar-check"
               />
 
-               <button type="button" onClick={() => navigate('/author/payment-method')} className="text-left">
+                <button type="button" onClick={() => navigate('/author/payment-method')} className="h-full w-full text-left">
                 <SummaryCard
                   label="Payment Method"
                   value={paymentComplete ? methodLabel(paymentMethod) : 'Missing'}
