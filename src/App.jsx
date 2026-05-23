@@ -54,6 +54,7 @@ function AppShell() {
     '/author/create',
     '/author/dashboard',
     '/author/income',
+    '/author/payment-method',
     '/author/create-story',
     '/authors/following',
     '/authors/top',
