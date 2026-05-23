@@ -66,21 +66,6 @@ function Field({ label, value, onChange, placeholder, type = 'text' }) {
   )
 }
 
-function SelectField({ label, value, onChange, children }) {
-  return (
-    <label className="block">
-      <div className="mb-2 text-[12px] font-black uppercase tracking-[0.06em] text-[#667085]">{label}</div>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-[18px] border border-[#e5e7eb] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827]"
-      >
-        {children}
-      </select>
-    </label>
-  )
-}
-
 function MethodButton({ option, onClick }) {
   return (
     <button
@@ -275,7 +260,7 @@ export default function AuthorPaymentMethodPage() {
   const [qrImageUrl, setQrImageUrl] = useState('')
   const [paypalName, setPaypalName] = useState('')
   const [paypalEmail, setPaypalEmail] = useState('')
-  const [phoneProvider, setPhoneProvider] = useState('Wing')
+  const [phoneProvider, setPhoneProvider] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
 
   const primaryMethod = useMemo(() => {
@@ -347,7 +332,7 @@ export default function AuthorPaymentMethodPage() {
       setQrImageUrl('')
       setPaypalName('')
       setPaypalEmail('')
-      setPhoneProvider(methodType === 'phone' ? 'Wing' : '')
+      setPhoneProvider('')
       setPhoneNumber('')
       return
     }
@@ -541,10 +526,12 @@ export default function AuthorPaymentMethodPage() {
 
               {selectedMethod === 'phone' ? (
                 <>
-                  <SelectField label="Provider" value={phoneProvider} onChange={setPhoneProvider}>
-                    <option value="Wing">Wing</option>
-                    <option value="Other">Other</option>
-                  </SelectField>
+                  <Field
+  label="Provider"
+  value={phoneProvider}
+  onChange={setPhoneProvider}
+  placeholder="Wing, Other"
+/>
                   <Field label="Phone number" value={phoneNumber} onChange={setPhoneNumber} placeholder="Example: 012 345 678" />
                   <Field label="Account name" value={accountName} onChange={setAccountName} placeholder="Name on the account" />
                   <div className="rounded-[18px] bg-[#fff7ed] px-4 py-3 text-[12px] font-semibold leading-5 text-[#9a5b00]">
