@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const mallSlides = [
@@ -37,102 +37,77 @@ function SlideBadge({ badge }) {
   if (!badge) return null
 
   return (
-    <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[10px] font-extrabold shadow-sm ${getBadgeClass(badge)}`}>
+    <span className={`absolute left-3 top-3 z-10 rounded-full px-3 py-1 text-[10px] font-extrabold shadow-sm ${getBadgeClass(badge)}`}>
       {badge}
     </span>
   )
 }
 
-function ShadowMallHeroSlide() {
-  const [activeIndex, setActiveIndex] = useState(0)
+function ShadowMallSwiperSlide() {
+  const swiperRef = useRef(null)
+
+  useEffect(() => {
+    if (!window.Swiper || mallSlides.length === 0) return
+
+    if (swiperRef.current) {
+      swiperRef.current.destroy(true, true)
+      swiperRef.current = null
+    }
+
+    swiperRef.current = new window.Swiper('.shadowMallSwiper', {
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 'auto',
+      coverflowEffect: {
+        rotate: 0,
+        stretch: 0,
+        depth: 80,
+        modifier: 2,
+        slideShadows: false,
+      },
+      loop: mallSlides.length > 1,
+      autoplay: {
+        delay: 4500,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.shadow-mall-pagination',
+        clickable: true,
+      },
+    })
+
+    return () => {
+      if (swiperRef.current) {
+        swiperRef.current.destroy(true, true)
+        swiperRef.current = null
+      }
+    }
+  }, [])
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-[16px] font-extrabold text-[#111827]">Shadow Mall Slide</h3>
-          <p className="mt-0.5 text-[11px] font-semibold text-[#8d94a1]">Featured books and mall updates</p>
-        </div>
-
-        <div className="flex gap-1.5">
-          {mallSlides.map((slide, index) => (
-            <button
-              key={slide.id}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              className={`h-2 rounded-full transition-all ${activeIndex === index ? 'w-5 bg-[#111827]' : 'w-2 bg-[#d7dbe3]'}`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-[26px] bg-[#111827] shadow-sm ring-1 ring-black/5">
-        <div
-          className="flex transition-transform duration-500 ease-out"
-          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
-        >
-          {mallSlides.map((slide) => (
-            <button
-              key={slide.id}
-              type="button"
-              className="relative aspect-[16/9] w-full shrink-0 overflow-hidden text-left"
-            >
+    <div className="shadow-mall-swiper-container shadowMallSwiper">
+      <div className="swiper-wrapper">
+        {mallSlides.map((slide) => (
+          <div key={slide.id} className="swiper-slide aspect-[16/9] cursor-pointer">
+            <div className="relative h-full w-full overflow-hidden rounded-[20px] bg-[#111827]">
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="h-full w-full object-cover opacity-80"
+                className="h-full w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.style.display = 'none'
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-black/5 to-black/10" />
               <SlideBadge badge={slide.badge} />
-              <div className="absolute bottom-5 left-5 right-5">
-                <div className="line-clamp-1 text-[22px] font-extrabold text-white">{slide.title}</div>
-                <div className="mt-1 line-clamp-2 text-[12px] font-semibold leading-5 text-white/75">{slide.subtitle}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function ShadowMallBannerRow() {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[16px] font-extrabold text-[#111827]">Mall Banner</h3>
-        <span className="text-[11px] font-bold text-[#8d94a1]">7 slides</span>
-      </div>
-
-      <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {mallSlides.map((slide) => (
-          <button
-            key={slide.id}
-            type="button"
-            className="relative aspect-[16/9] w-[82%] max-w-[520px] shrink-0 overflow-hidden rounded-[24px] bg-[#111827] text-left shadow-sm ring-1 ring-black/5 sm:w-[48%] lg:w-[33%]"
-          >
-            <img
-              src={slide.image}
-              alt={slide.title}
-              className="h-full w-full object-cover opacity-80"
-              onError={(event) => {
-                event.currentTarget.style.display = 'none'
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/20 to-transparent" />
-            <SlideBadge badge={slide.badge} />
-            <div className="absolute bottom-4 left-4 right-4">
-              <div className="line-clamp-1 text-[17px] font-extrabold text-white">{slide.title}</div>
-              <div className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-white/75">{slide.subtitle}</div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
-    </section>
+
+      <div className="shadow-mall-pagination swiper-pagination" />
+    </div>
   )
 }
 
@@ -209,6 +184,41 @@ export default function ShadowMallSection() {
 
   return (
     <section className="space-y-5 pb-4">
+      <style>{`
+        .shadow-mall-swiper-container {
+          width: 100%;
+          padding-top: 10px;
+          padding-bottom: 30px;
+          overflow: hidden;
+        }
+
+        .shadow-mall-swiper-container .swiper-slide {
+          width: 85%;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+        }
+
+        .shadow-mall-swiper-container .swiper-slide-next,
+        .shadow-mall-swiper-container .swiper-slide-prev {
+          opacity: 0.4;
+          transform: scale(0.9);
+        }
+
+        .shadow-mall-swiper-container .swiper-pagination-bullet-active {
+          background: #111827;
+          width: 20px;
+          border-radius: 5px;
+        }
+
+        @media (min-width: 768px) {
+          .shadow-mall-swiper-container .swiper-slide {
+            width: 58%;
+          }
+        }
+      `}</style>
+
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-[22px] font-extrabold tracking-tight text-[#111827]">Shadow Mall</h2>
@@ -228,6 +238,8 @@ export default function ShadowMallSection() {
         </button>
       </div>
 
+      <ShadowMallSwiperSlide />
+
       <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
         <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
         <input
@@ -237,10 +249,6 @@ export default function ShadowMallSection() {
           className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#111827] outline-none placeholder:text-[#a0a5b1]"
         />
       </div>
-
-      <ShadowMallHeroSlide />
-
-      <ShadowMallBannerRow />
 
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((category) => {
