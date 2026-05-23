@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useMemo, useState, useEffect, useRef } from 'react'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -198,10 +199,10 @@ export default function TrendingNowSection() {
         setLoading(true)
 
         const [dailyResponse, weeklyResponse, monthlyResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=likes`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`),
-        ])
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=likes`)),
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)),
+  fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`)),
+])
 
         const dailyData = await dailyResponse.json().catch(() => ({}))
         const weeklyData = await weeklyResponse.json().catch(() => ({}))
