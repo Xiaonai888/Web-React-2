@@ -7,11 +7,11 @@ const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
 const DISPLAY_LANGUAGE_STORAGE_KEY = 'shadow_display_language'
 
 const LANGUAGES = [
-  { id: 'km', label: 'Khmer', flag: '🇰🇭' },
-  { id: 'en', label: 'English', flag: '🇺🇸' },
-  { id: 'zh', label: 'Chinese', flag: '🇨🇳' },
-  { id: 'ja', label: 'Japanese', flag: '🇯🇵' },
-  { id: 'ko', label: 'Korean', flag: '🇰🇷' },
+  { id: 'km', label: 'Khmer', flagCode: 'kh' },
+  { id: 'en', label: 'English', flagCode: 'us' },
+  { id: 'zh', label: 'Chinese', flagCode: 'cn' },
+  { id: 'ja', label: 'Japanese', flagCode: 'jp' },
+  { id: 'ko', label: 'Korean', flagCode: 'kr' },
 ]
 
 function getReaderToken() {
