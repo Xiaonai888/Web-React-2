@@ -27,6 +27,8 @@ import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
+import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
+
 
 function ComingSoon({ title }) {
   return (
@@ -55,6 +57,7 @@ function AppShell() {
     '/author/dashboard',
     '/author/income',
     '/author/payment-method',
+    '/author/benefits',
     '/author/create-story',
     '/authors/following',
     '/authors/top',
@@ -109,6 +112,7 @@ function AppShell() {
         <Route path="/search" element={<Search />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
+        <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
