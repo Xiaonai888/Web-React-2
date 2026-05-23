@@ -426,8 +426,8 @@ const tx = (key) => getDisplayText(key)
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">Settings</div>
-            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">Account and app options</div>
+            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">{tx('settings')}</div>
+            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">{tx('accountAndAppOptions')}</div>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
             <i className="fa-solid fa-times text-[13px] text-[#555] dark:text-white/70" />
@@ -437,8 +437,8 @@ const tx = (key) => getDisplayText(key)
         <div className="max-h-[62vh] overflow-y-auto pb-2">
           <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white dark:border-white/10 dark:bg-[#171923]">
             <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
-              <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title="Edit Profile" subtitle="Name, avatar, bio" />
-              <MenuRow to="/settings" icon="fa-solid fa-shield-alt" title="Account Settings" subtitle="Password, privacy, security" />
+              <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
+<MenuRow to="/settings" icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
               <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} />
               <LanguageSummaryRow
                 storyLanguage={storyLanguage}
