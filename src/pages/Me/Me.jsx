@@ -157,11 +157,13 @@ function ThemeSwitchRow({ darkMode, onChange }) {
   return (
     <div className="flex w-full items-center justify-between gap-4 px-4 py-3.5">
       <div className="flex min-w-0 items-center gap-3">
-        <div className={iconBox}>
-          <i className={`${darkMode ? 'fa-solid fa-moon' : 'far fa-sun'} text-[14px]`} />
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${darkMode ? 'bg-[#2b2f42] text-[#f6b800]' : 'bg-[#fff7d8] text-[#d99a00]'}`}>
+          <i className={`${darkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun'} text-[14px]`} />
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">Dark Mode</div>
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">
+            {darkMode ? 'Dark Mode' : 'Light Mode'}
+          </div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
             Switch between light and dark theme
           </div>
@@ -176,10 +178,12 @@ function ThemeSwitchRow({ darkMode, onChange }) {
         className={`relative h-7 w-12 shrink-0 rounded-full transition ${darkMode ? 'bg-[#f6b800]' : 'bg-[#d9dce4]'}`}
       >
         <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
-            darkMode ? 'left-6' : 'left-1'
+          className={`absolute top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] shadow transition ${
+            darkMode ? 'left-6 text-[#d99a00]' : 'left-1 text-[#9aa1ad]'
           }`}
-        />
+        >
+          <i className={`fa-solid ${darkMode ? 'fa-moon' : 'fa-sun'}`} />
+        </span>
       </button>
     </div>
   )
@@ -198,7 +202,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
     <div className="fixed inset-0 z-[120]">
       <button type="button" aria-label="Close settings" onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-[74px] left-0 right-0 max-h-[72vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
+      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
 
         <div className="mb-4 flex items-center justify-between">
@@ -211,7 +215,7 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
           </button>
         </div>
 
-        <div className="max-h-[52vh] overflow-y-auto pb-2">
+        <div className="max-h-[62vh] overflow-y-auto pb-2">
           <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white dark:border-white/10 dark:bg-[#171923]">
             <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
               <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title="Edit Profile" subtitle="Name, avatar, bio" />
