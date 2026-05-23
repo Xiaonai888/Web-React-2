@@ -8,10 +8,15 @@
   <link rel="shortcut icon" type="image/svg+xml" href="/assets/Icons/Shadow%20Logo.svg?v=2" />
   <link rel="mask-icon" href="/assets/Icons/Shadow%20Logo.svg?v=2" color="#111827" />
   <script>
-    tailwind = {
-      config: {
-        darkMode: 'class',
-      },
+    try {
+      if (localStorage.getItem('shadow_theme') === 'dark') {
+        document.documentElement.classList.add('dark')
+      }
+    } catch {}
+  </script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
     }
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
