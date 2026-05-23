@@ -1,15 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const mallSlides = [
-  { id: 1, badge: 'NEW', image: '/assets/ShadowMall/slide-1.jpg', title: 'Shadow Mall', subtitle: 'Official books from Shadow Era' },
-  { id: 2, badge: 'HOT', image: '/assets/ShadowMall/slide-2.jpg', title: 'Khmer Novels', subtitle: 'Printed stories for your shelf' },
-  { id: 3, badge: 'TOP', image: '/assets/ShadowMall/slide-3.jpg', title: 'Reader Picks', subtitle: 'Books selected for Shadow readers' },
-  { id: 4, badge: 'NEW', image: '/assets/ShadowMall/slide-4.jpg', title: 'New Release', subtitle: 'Fresh books and upcoming titles' },
-  { id: 5, badge: 'HOT', image: '/assets/ShadowMall/slide-5.jpg', title: 'Special Price', subtitle: 'Discount books when available' },
-  { id: 6, badge: 'TOP', image: '/assets/ShadowMall/slide-6.jpg', title: 'Author Spotlight', subtitle: 'Featured authors and publishers' },
-  { id: 7, badge: 'NEW', image: '/assets/ShadowMall/slide-7.jpg', title: 'Pre-order', subtitle: 'Reserve upcoming books early' },
-]
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const categories = ['All', 'New Release', 'Best Seller', 'Discount', 'Khmer Novel', 'Pre-order']
 
@@ -25,6 +21,14 @@ const products = [
     badge: 'SALE',
   },
 ]
+
+function getSlideBadge(slide, index) {
+  const fromTitle = String(slide?.badge || '').trim().toUpperCase()
+  if (['NEW', 'HOT', 'TOP'].includes(fromTitle)) return fromTitle
+
+  const badges = ['NEW', 'HOT', 'TOP']
+  return badges[index % badges.length]
+}
 
 function getBadgeClass(badge) {
   if (badge === 'HOT') return 'bg-[#ff3b30] text-white'
@@ -43,11 +47,11 @@ function SlideBadge({ badge }) {
   )
 }
 
-function ShadowMallSwiperSlide() {
+function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
   const swiperRef = useRef(null)
 
   useEffect(() => {
-    if (!window.Swiper || mallSlides.length === 0) return
+    if (!window.Swiper || slides.length === 0) return
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -66,9 +70,9 @@ function ShadowMallSwiperSlide() {
         modifier: 2,
         slideShadows: false,
       },
-      loop: mallSlides.length > 1,
+      loop: slides.length > 1,
       autoplay: {
-        delay: 4500,
+        delay: 5000,
         disableOnInteraction: false,
       },
       pagination: {
@@ -83,25 +87,49 @@ function ShadowMallSwiperSlide() {
         swiperRef.current = null
       }
     }
-  }, [])
+  }, [slides])
+
+  if (loading) {
+    return (
+      <div className="shadow-mall-swiper-container">
+        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[#f4f5f7] text-[13px] font-extrabold text-[#98a2b3] md:w-[58%]">
+          Loading mall slides...
+        </div>
+      </div>
+    )
+  }
+
+  if (!slides.length) {
+    return (
+      <div className="shadow-mall-swiper-container">
+        <div className="mx-auto flex aspect-[16/9] w-[85%] items-center justify-center rounded-[20px] bg-[#f4f5f7] text-center text-[13px] font-extrabold text-[#98a2b3] md:w-[58%]">
+          No Mall Slide yet
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="shadow-mall-swiper-container shadowMallSwiper">
       <div className="swiper-wrapper">
-        {mallSlides.map((slide) => (
-          <div key={slide.id} className="swiper-slide aspect-[16/9] cursor-pointer">
-            <div className="relative h-full w-full overflow-hidden rounded-[20px] bg-[#111827]">
+        {slides.map((slide, index) => (
+          <div key={slide.id || index} className="swiper-slide aspect-[16/9] cursor-pointer">
+            <button
+              type="button"
+              onClick={() => onSlideClick(slide)}
+              className="relative h-full w-full overflow-hidden rounded-[20px] bg-[#111827]"
+            >
               <img
-                src={slide.image}
-                alt={slide.title}
+                src={slide.image_url}
+                alt={slide.title || `Mall Slide ${index + 1}`}
                 className="h-full w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.style.display = 'none'
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-black/5 to-black/10" />
-              <SlideBadge badge={slide.badge} />
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/10" />
+              <SlideBadge badge={getSlideBadge(slide, index)} />
+            </button>
           </div>
         ))}
       </div>
@@ -167,6 +195,40 @@ export default function ShadowMallSection() {
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
+  const [mallSlides, setMallSlides] = useState([])
+  const [slidesLoading, setSlidesLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchMallSlides() {
+      try {
+        const response = await fetch(`${API_URL}/api/slides?section_key=mall_top_slider`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!ignore && response.ok && data.ok) {
+          setMallSlides((data.slides || []).slice(0, 7))
+        }
+      } catch {
+        if (!ignore) {
+          setMallSlides([])
+        }
+      } finally {
+        if (!ignore) {
+          setSlidesLoading(false)
+        }
+      }
+    }
+
+    fetchMallSlides()
+
+    const interval = setInterval(fetchMallSlides, 5000)
+
+    return () => {
+      ignore = true
+      clearInterval(interval)
+    }
+  }, [])
 
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -181,6 +243,12 @@ export default function ShadowMallSection() {
       return categoryMatch && searchMatch
     })
   }, [activeCategory, search])
+
+  const handleSlideClick = (slide) => {
+    if (slide?.link_url) {
+      navigate(slide.link_url)
+    }
+  }
 
   return (
     <section className="space-y-5 pb-4">
@@ -238,7 +306,11 @@ export default function ShadowMallSection() {
         </button>
       </div>
 
-      <ShadowMallSwiperSlide />
+      <ShadowMallSwiperSlide
+        slides={mallSlides}
+        loading={slidesLoading}
+        onSlideClick={handleSlideClick}
+      />
 
       <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
         <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
