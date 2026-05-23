@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { getDisplayText, setDisplayLanguageId } from '../../utils/displayLanguage'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
@@ -376,10 +377,24 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   const [languageOpen, setLanguageOpen] = useState(false)
   const [storyLanguage, setStoryLanguage] = useState(() => getStoredStoryLanguage())
   const [displayLanguage, setDisplayLanguage] = useState(() => getStoredDisplayLanguage())
+  const [displayTextVersion, setDisplayTextVersion] = useState(0)
+const tx = (key) => getDisplayText(key)
 
   useEffect(() => {
     applyTheme(darkMode ? 'dark' : 'light')
   }, [darkMode])
+
+  useEffect(() => {
+  const handleDisplayLanguageChange = () => {
+    setDisplayTextVersion((value) => value + 1)
+  }
+
+  window.addEventListener('shadow-display-language-change', handleDisplayLanguageChange)
+
+  return () => {
+    window.removeEventListener('shadow-display-language-change', handleDisplayLanguageChange)
+  }
+}, [])
 
   const handleStoryLanguageChange = (languageId) => {
     localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
@@ -387,9 +402,9 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
   }
 
   const handleDisplayLanguageChange = (languageId) => {
-    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, languageId)
-    setDisplayLanguage(languageId)
-  }
+  setDisplayLanguageId(languageId)
+  setDisplayLanguage(languageId)
+}
 
   if (!open) return null
 
