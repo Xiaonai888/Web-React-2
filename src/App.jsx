@@ -29,6 +29,9 @@ import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
+import ShadowMallProductDetailPage from './pages/Shop/ShadowMallProductDetailPage'
+import ShadowMallCartPage from './pages/Shop/ShadowMallCartPage'
+import ShadowMallCheckoutPage from './pages/Shop/ShadowMallCheckoutPage'
 
 function ComingSoon({ title }) {
   return (
@@ -68,7 +71,8 @@ function AppShell() {
   const shouldHideFooter =
     hideFooterPaths.includes(location.pathname) ||
     location.pathname.startsWith('/story/') ||
-    location.pathname.startsWith('/author/story/')
+    location.pathname.startsWith('/author/story/') ||
+    location.pathname.startsWith('/shop/mall/')
 
   return (
     <>
@@ -80,6 +84,9 @@ function AppShell() {
         <Route path="/me" element={<Me />} />
 
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
+        <Route path="/shop/mall/cart" element={<ShadowMallCartPage />} />
+        <Route path="/shop/mall/checkout" element={<ShadowMallCheckoutPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
