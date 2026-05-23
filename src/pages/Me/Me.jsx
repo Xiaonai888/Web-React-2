@@ -232,6 +232,13 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
 export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  useEffect(() => {
+  document.body.classList.toggle('settings-popup-open', settingsOpen)
+
+  return () => {
+    document.body.classList.remove('settings-popup-open')
+  }
+}, [settingsOpen])
   const [authorLoading, setAuthorLoading] = useState(false)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
