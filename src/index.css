@@ -59,3 +59,15 @@ html.dark .divide-\[\#f0eef6\] > :not([hidden]) ~ :not([hidden]),
 html.dark .divide-\[\#eef0f4\] > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+@media (max-width: 767px) {
+  body.settings-popup-open nav,
+  body.settings-popup-open footer,
+  body.settings-popup-open [class*="bottom-0"] {
+    display: none !important;
+  }
+
+  body.settings-popup-open .z-\[120\] {
+    display: block !important;
+  }
+}
