@@ -17,7 +17,7 @@ function HeaderButton({ icon, onClick, label }) {
 
 function SectionCard({ title, subtitle, children }) {
   return (
-    <section className="bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+    <section className="bg-white px-4 py-4 shadow-sm ring-1 ring-black/5 md:rounded-[26px]">
       <div className="mb-3">
         <h2 className="text-[17px] font-black tracking-[-0.03em] text-[#111827]">{title}</h2>
         {subtitle ? <p className="mt-1 text-[12px] font-medium leading-5 text-[#8d94a1]">{subtitle}</p> : null}
@@ -27,14 +27,31 @@ function SectionCard({ title, subtitle, children }) {
   )
 }
 
-function BenefitPill({ icon, label }) {
+function BenefitItem({ icon, label, text }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-[18px] bg-white px-3 py-2 shadow-sm ring-1 ring-black/5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[#f7c948]">
-        <i className={`${icon} text-[12px]`} />
+    <div className="flex min-w-0 items-center gap-3 rounded-[18px] bg-[#fafafa] px-3 py-3 ring-1 ring-black/5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#111827] text-[#f7c948]">
+        <i className={`${icon} text-[13px]`} />
       </div>
-      <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{label}</div>
+
+      <div className="min-w-0 flex-1">
+        <div className="line-clamp-1 text-[12.5px] font-black text-[#111827]">{label}</div>
+        <div className="mt-0.5 line-clamp-1 text-[10.5px] font-semibold text-[#98a2b3]">{text}</div>
+      </div>
     </div>
+  )
+}
+
+function BenefitSummary() {
+  return (
+    <section className="bg-white px-4 py-3 shadow-sm ring-1 ring-black/5 md:rounded-[26px]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <BenefitItem icon="fa-solid fa-gem" label="Diamond Income" text="Earn from paid unlocks" />
+        <BenefitItem icon="fa-solid fa-chart-line" label="Quest Share" text="Grow your share level" />
+        <BenefitItem icon="fa-solid fa-calendar-check" label="Auto Payout" text="Monthly admin payout" />
+        <BenefitItem icon="fa-solid fa-crown" label="100-Day Boost" text="One lifetime reward" />
+      </div>
+    </section>
   )
 }
 
@@ -143,8 +160,8 @@ export default function AuthorBenefitsPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[760px] space-y-2.5 pt-0">
-        <section className="overflow-hidden bg-[#111827] shadow-sm">
+      <main className="mx-auto max-w-[760px] space-y-2.5 pt-0 md:px-4 md:pt-4">
+        <section className="overflow-hidden bg-[#111827] shadow-sm md:rounded-[30px] md:ring-1 md:ring-black/5">
           <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#111827]">
             <img
               src={HERO_IMAGE}
@@ -164,14 +181,9 @@ export default function AuthorBenefitsPage() {
               </p>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 bg-[#f5f3fa] px-4 py-3 sm:grid-cols-4">
-            <BenefitPill icon="fa-solid fa-gem" label="Diamond Income" />
-            <BenefitPill icon="fa-solid fa-chart-line" label="Quest Share" />
-            <BenefitPill icon="fa-solid fa-calendar-check" label="Auto Payout" />
-            <BenefitPill icon="fa-solid fa-crown" label="100-Day Boost" />
-          </div>
         </section>
+
+        <BenefitSummary />
 
         <SectionCard
           title="How You Earn"
