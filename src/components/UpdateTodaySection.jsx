@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+src/components/UpdateTodaySection.jsx
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -167,7 +168,9 @@ export default function UpdateTodaySection() {
       try {
         setLoading(true)
 
-        const response = await fetch(`${API_BASE_URL}/api/public/stories?limit=7&sort=updated`)
+        const response = await fetch(
+  addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=7&sort=updated`)
+)
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
