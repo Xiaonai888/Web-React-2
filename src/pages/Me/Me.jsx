@@ -489,9 +489,11 @@ export default function Me() {
     }
   }, [settingsOpen])
 
-  useEffect(() => {
-    applyTheme(getStoredTheme())
-    useEffect(() => {
+useEffect(() => {
+  applyTheme(getStoredTheme())
+}, [])
+
+useEffect(() => {
   let ignore = false
 
   async function loadWalletBalance() {
