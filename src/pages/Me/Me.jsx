@@ -470,6 +470,7 @@ export default function Me() {
   const token = getReaderToken()
   const isLoggedIn = Boolean(token)
   const isPremium = false
+  const tx = (key) => getDisplayText(key)
 
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
