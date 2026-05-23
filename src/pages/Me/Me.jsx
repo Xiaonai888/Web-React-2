@@ -291,6 +291,7 @@ function LanguageSheet({
   displayLanguage,
   onStoryLanguageChange,
   onDisplayLanguageChange,
+  tx,
 }) {
   const [activeTab, setActiveTab] = useState('story')
 
@@ -298,9 +299,9 @@ function LanguageSheet({
 
   const isStoryTab = activeTab === 'story'
   const selectedLanguage = isStoryTab ? storyLanguage : displayLanguage
-  const description = isStoryTab
-    ? 'Choose the language used inside your story.'
-    : 'Choose the language used for menus, buttons, and app text.'
+ const description = isStoryTab
+  ? tx('storyLanguageHelp')
+  : tx('displayLanguageHelp')
 
   return (
     <div className="fixed inset-0 z-[140]">
@@ -312,7 +313,7 @@ function LanguageSheet({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">Language</div>
-            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">Story and display language</div>
+            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">{tx('languageSub')}</div>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
             <i className="fa-solid fa-times text-[13px] text-[#555] dark:text-white/70" />
@@ -327,7 +328,7 @@ function LanguageSheet({
               isStoryTab ? 'bg-white text-[#111827] shadow-sm dark:bg-[#f6b800] dark:text-[#111827]' : 'text-[#8d94a1] dark:text-white/55'
             }`}
           >
-            Story Language
+            {tx('storyLanguage')}
           </button>
           <button
             type="button"
@@ -336,7 +337,7 @@ function LanguageSheet({
               !isStoryTab ? 'bg-white text-[#111827] shadow-sm dark:bg-[#f6b800] dark:text-[#111827]' : 'text-[#8d94a1] dark:text-white/55'
             }`}
           >
-            Display Language
+            {tx('displayLanguage')}
           </button>
         </div>
 
@@ -351,6 +352,8 @@ function LanguageSheet({
   language={language}
   selected={selectedLanguage === language.id}
   isDisplayLanguage={!isStoryTab}
+  selectedLabel={tx('selected')}
+              
   onClick={() => {
     if (isStoryTab) {
       onStoryLanguageChange(language.id)
@@ -420,7 +423,9 @@ const tx = (key) => getDisplayText(key)
         displayLanguage={displayLanguage}
         onStoryLanguageChange={handleStoryLanguageChange}
         onDisplayLanguageChange={handleDisplayLanguageChange}
+        tx={tx}
       />
+      
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
@@ -440,11 +445,12 @@ const tx = (key) => getDisplayText(key)
             <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
               <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title={tx('editProfile')} subtitle={tx('editProfileSub')} />
 <MenuRow to="/settings" icon="fa-solid fa-shield-alt" title={tx('accountSettings')} subtitle={tx('accountSettingsSub')} />
-              <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} />
+              <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} tx={tx} />
               <LanguageSummaryRow
                 storyLanguage={storyLanguage}
                 displayLanguage={displayLanguage}
                 onClick={() => setLanguageOpen(true)}
+                tx={tx}
               />
             </div>
           </div>
