@@ -642,7 +642,7 @@ export default function AuthorQuestPage() {
               </div>
             </section>
 
-            <RulesNote onLearnMore={() => navigate('/author/benefits')} />
+            <RulesNote onLearnMore={() => navigate('/author/benefits?from=quest')} />
           </>
         ) : null}
       </main>
