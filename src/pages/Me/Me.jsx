@@ -176,7 +176,7 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
   return to ? <Link to={to} className={className}>{body}</Link> : <button type="button" onClick={onClick} className={className}>{body}</button>
 }
 
-function ThemeSwitchRow({ darkMode, onChange }) {
+function ThemeSwitchRow({ darkMode, onChange, tx }) {
   return (
     <div className="flex w-full items-center justify-between gap-4 px-4 py-3.5">
       <div className="flex min-w-0 items-center gap-3">
@@ -185,10 +185,10 @@ function ThemeSwitchRow({ darkMode, onChange }) {
         </div>
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">
-            {darkMode ? 'Dark Mode' : 'Light Mode'}
+            {darkMode ? tx('darkMode') : tx('lightMode')}
           </div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
-            Switch between light and dark theme
+            {tx('themeSub')}
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ function ThemeSwitchRow({ darkMode, onChange }) {
   )
 }
 
-function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick }) {
+function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick, tx }) {
   return (
     <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99]">
       <div className="flex min-w-0 items-center gap-3">
@@ -220,9 +220,9 @@ function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick }) {
           <i className="fa-solid fa-globe text-[14px]" />
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">Language</div>
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{tx('language')}</div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
-            Story: {getLanguageLabel(storyLanguage)} • Display: {getLanguageLabel(displayLanguage)}
+            {tx('storyLanguage')}: {getLanguageLabel(storyLanguage)} • {tx('displayLanguage')}: {getLanguageLabel(displayLanguage)}
           </div>
         </div>
       </div>
@@ -275,7 +275,7 @@ function LanguageOption({
         <div className="min-w-0">
           <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{language.label}</div>
           {selected ? (
-            <div className={`mt-0.5 text-[11px] font-semibold ${selectedTextClassName}`}>Selected</div>
+            <div className={`mt-0.5 text-[11px] font-semibold ${selectedTextClassName}`}>{selectedLabel}</div>
           ) : null}
         </div>
       </div>
