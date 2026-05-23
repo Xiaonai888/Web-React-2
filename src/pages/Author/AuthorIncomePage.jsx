@@ -232,6 +232,7 @@ export default function AuthorIncomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
+  const [showTip, setShowTip] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -299,9 +300,56 @@ export default function AuthorIncomePage() {
             <p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">Net author earnings</p>
           </div>
 
-          <HeaderButton icon="fa-solid fa-circle-info" label="Info" onClick={() => navigate('/author/benefits')} />
+          <HeaderButton icon="fa-solid fa-circle-info" label="Info" onClick={() => setShowTip(true)} />
         </div>
       </div>
+      {showTip ? (
+  <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
+    <button
+      type="button"
+      aria-label="Close income tip"
+      onClick={() => setShowTip(false)}
+      className="absolute inset-0"
+    />
+
+    <div className="relative w-full max-w-[420px] rounded-[28px] bg-white p-5 shadow-2xl">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[18px] font-black text-[#111827]">How income works</div>
+          <div className="mt-1 text-[12.5px] font-semibold text-[#98a2b3]">
+            Quick guide for author earnings
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowTip(false)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7]"
+        >
+          <i className="fa-solid fa-xmark text-[13px] text-[#555]" />
+        </button>
+      </div>
+
+      <div className="space-y-3 text-[13px] font-semibold leading-6 text-[#667085]">
+        <p>Your income is shown as money, but the system records earnings from Diamond unlocks.</p>
+        <p>Your share depends on your Quest stage.</p>
+        <p>Payouts are processed automatically every 15th. You don’t need to request withdrawal.</p>
+        <p>Free unlocks, Gems, Vouchers, Story Cards, and free first episodes don’t count as paid income yet.</p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setShowTip(false)
+          navigate('/author/benefits')
+        }}
+        className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-[0.99]"
+      >
+        View Author Benefits
+      </button>
+    </div>
+  </div>
+) : null}
 
       <main className="mx-auto max-w-[760px] space-y-4 px-4 pt-4">
         {loading ? <LoadingSkeleton /> : null}
