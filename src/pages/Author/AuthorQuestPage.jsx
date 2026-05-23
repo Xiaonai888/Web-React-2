@@ -314,16 +314,16 @@ function RulesNote({ onLearnMore }) {
       onClick={onLearnMore}
       className="w-full rounded-[26px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:shadow-md"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-[#f7f4ee] text-[#c89b1e]">
-              <i className="fa-solid fa-circle-info text-[13px]" />
-            </div>
-
-            <div className="text-[15px] font-black text-[#111827]">
-              Quest Rules
-            </div>
+          <div className="inline-flex items-center gap-2">
+  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f7f4ee] text-[#c89b1e]">
+    <i className="fa-solid fa-circle-info text-[12px]" />
+  </span>
+  <span className="text-[15px] font-black text-[#111827]">
+    Quest Rules
+  </span>
+</div>
           </div>
 
           <div className="mt-3 space-y-1.5 text-[12.5px] font-medium leading-5 text-[#667085]">
