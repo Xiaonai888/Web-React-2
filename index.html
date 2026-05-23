@@ -7,23 +7,25 @@
   <link rel="icon" type="image/svg+xml" href="/assets/Icons/Shadow%20Logo.svg?v=2" />
   <link rel="shortcut icon" type="image/svg+xml" href="/assets/Icons/Shadow%20Logo.svg?v=2" />
   <link rel="mask-icon" href="/assets/Icons/Shadow%20Logo.svg?v=2" color="#111827" />
- <script>
-  try {
-    const theme = localStorage.getItem('shadow_theme') === 'dark' ? 'dark' : 'light'
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    document.documentElement.style.colorScheme = theme
-  } catch {
-    document.documentElement.classList.remove('dark')
-    document.documentElement.style.colorScheme = 'light'
-  }
-</script>
+
   <script>
-  window.tailwind = window.tailwind || {}
-  window.tailwind.config = {
-    darkMode: 'class',
-  }
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
+    try {
+      const theme = localStorage.getItem('shadow_theme') === 'dark' ? 'dark' : 'light'
+      document.documentElement.classList.toggle('dark', theme === 'dark')
+      document.documentElement.style.colorScheme = theme
+    } catch {
+      document.documentElement.classList.remove('dark')
+      document.documentElement.style.colorScheme = 'light'
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&family=Inter:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
