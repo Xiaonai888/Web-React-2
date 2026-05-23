@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -209,6 +210,8 @@ export default function NewArrivalsSection() {
     'Recent Complete': [],
   })
   const [loading, setLoading] = useState(true)
+  const [fetchFailed, setFetchFailed] = useState(false)
+  const [storyLanguage, setStoryLanguage] = useState(() => getStoryLanguageLabel())
 
   useEffect(() => {
     let ignore = false
@@ -216,11 +219,13 @@ export default function NewArrivalsSection() {
     async function fetchNewArrivals() {
       try {
         setLoading(true)
+        setFetchFailed(false)
+        setStoryLanguage(getStoryLanguageLabel())
 
         const [freshResponse, popularResponse, recentResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=latest`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`),
-          fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`),
+          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=latest`)),
+          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)),
+          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`)),
         ])
 
         const freshData = await freshResponse.json().catch(() => ({}))
@@ -250,6 +255,7 @@ export default function NewArrivalsSection() {
         console.error('NewArrivalsSection fetch error:', error)
 
         if (!ignore) {
+          setFetchFailed(true)
           setRealBooks({
             Fresh: [],
             Popular: [],
@@ -270,8 +276,9 @@ export default function NewArrivalsSection() {
 
   const books = useMemo(() => {
     const list = realBooks[activeTab]
-    return list?.length ? list : fallbackNewArrivalsData[activeTab] || []
-  }, [activeTab, realBooks])
+    if (list?.length) return list
+    return fetchFailed ? fallbackNewArrivalsData[activeTab] || [] : []
+  }, [activeTab, fetchFailed, realBooks])
 
   if (loading) {
     return <LoadingGrid />
@@ -318,15 +325,26 @@ export default function NewArrivalsSection() {
         })}
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
-        {books.map((book) => (
-          <BookCard
-            key={book.id}
-            book={book}
-            onClick={() => navigate(book.link)}
-          />
-        ))}
-      </div>
+      {books.length ? (
+        <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+          {books.map((book) => (
+            <BookCard
+              key={book.id}
+              book={book}
+              onClick={() => navigate(book.link)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[22px] bg-[#f8f8fb] px-4 py-6 text-center">
+          <div className="text-[14px] font-extrabold text-[#111827]">
+            No {storyLanguage} stories yet
+          </div>
+          <div className="mt-1 text-[12px] text-[#8d94a1]">
+            Try another story language from Settings.
+          </div>
+        </div>
+      )}
     </section>
   )
 }
