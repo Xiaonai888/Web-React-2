@@ -229,6 +229,7 @@ export default function ShadowMallCartPage() {
 
             <button
               type="button"
+              onClick={() => navigate('/shop/mall/checkout')}
               className="flex h-[52px] min-w-[160px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
             >
               Checkout
