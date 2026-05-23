@@ -519,17 +519,14 @@ export default function AuthorQuestPage() {
                   </p>
                 </div>
 
-                <div className="shrink-0 rounded-[20px] bg-white/10 px-4 py-3 text-center ring-1 ring-white/10">
-                  <div className="text-[9.5px] font-black uppercase tracking-[0.08em] text-white/45">
-                    Current
-                  </div>
-                  <div className="mt-1 text-[15px] font-black text-[#f7c948]">
-                    Stage {currentStage.stage_number || 1}
-                  </div>
-                  <div className="mt-0.5 text-[10.5px] font-bold text-white/45">
-                    {percentText(currentStage.share_percent || activeShare.share_percent)} Share
-                  </div>
-                </div>
+                <div className="shrink-0 rounded-full border border-[#d4a72c] bg-[#fff8e6] px-3.5 py-1.5 shadow-[0_0_0_2px_rgba(212,167,44,0.18)]">
+  <div className="flex items-center gap-1.5">
+    <i className="fa-solid fa-crown text-[10px] text-[#d4a72c]" />
+    <span className="text-[11px] font-black uppercase tracking-[0.04em] text-[#111827]">
+      Stage {currentStage.stage_number || 1}
+    </span>
+  </div>
+</div>
               </div>
 
               <div className="mt-5 rounded-[22px] bg-white/10 p-3 ring-1 ring-white/10">
