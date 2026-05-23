@@ -52,6 +52,7 @@ function AppShell() {
     '/event',
     '/author/create',
     '/author/dashboard',
+    '/author/income',
     '/author/create-story',
     '/authors/following',
     '/authors/top',
