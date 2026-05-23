@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -95,6 +96,8 @@ function LoadingShadowExclusive() {
 export default function ShadowExclusiveSection() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchFailed, setFetchFailed] = useState(false)
+  const [storyLanguage, setStoryLanguage] = useState(() => getStoryLanguageLabel())
 
   useEffect(() => {
     let ignore = false
@@ -102,9 +105,11 @@ export default function ShadowExclusiveSection() {
     async function fetchExclusiveStories() {
       try {
         setLoading(true)
+        setFetchFailed(false)
+        setStoryLanguage(getStoryLanguageLabel())
 
         const response = await fetch(
-          `${API_BASE_URL}/api/public/shadow-exclusive/stories?limit=6&section=featured&sort=updated`
+          addStoryLanguageParam(`${API_BASE_URL}/api/public/shadow-exclusive/stories?limit=6&section=featured&sort=updated`)
         )
         const data = await response.json().catch(() => ({}))
 
@@ -119,6 +124,7 @@ export default function ShadowExclusiveSection() {
         console.error('ShadowExclusiveSection fetch error:', error)
 
         if (!ignore) {
+          setFetchFailed(true)
           setStories([])
         }
       } finally {
@@ -134,8 +140,9 @@ export default function ShadowExclusiveSection() {
   }, [])
 
   const sectionData = useMemo(() => {
-    return stories.length ? stories : fallbackSectionData
-  }, [stories])
+    if (stories.length) return stories
+    return fetchFailed ? fallbackSectionData : []
+  }, [fetchFailed, stories])
 
   if (loading) {
     return <LoadingShadowExclusive />
@@ -161,57 +168,68 @@ export default function ShadowExclusiveSection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-10 md:grid-cols-6">
-        {sectionData.map((item) => (
-          <Link
-            to={item.link || `/story/${item.id}`}
-            key={item.id}
-            className="group flex cursor-pointer flex-col"
-          >
-            <div className="relative mb-3 aspect-[2/3] overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-[0_8px_24px_rgba(212,175,55,0.18)] transition-all duration-500 group-hover:shadow-[0_12px_30px_rgba(212,175,55,0.28)]">
-              <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 ring-inset ring-amber-300/80" />
+      {sectionData.length ? (
+        <div className="grid grid-cols-3 gap-x-4 gap-y-10 md:grid-cols-6">
+          {sectionData.map((item) => (
+            <Link
+              to={item.link || `/story/${item.id}`}
+              key={item.id}
+              className="group flex cursor-pointer flex-col"
+            >
+              <div className="relative mb-3 aspect-[2/3] overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-[0_8px_24px_rgba(212,175,55,0.18)] transition-all duration-500 group-hover:shadow-[0_12px_30px_rgba(212,175,55,0.28)]">
+                <div className="pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 ring-inset ring-amber-300/80" />
 
-              <img
-                src={item.image}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                alt={item.title}
-                loading="lazy"
-                onError={(event) => {
-                  event.currentTarget.src = '/assets/Must Read pic/Must Read 1.jpg'
-                }}
-              />
+                <img
+                  src={item.image}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  alt={item.title}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.src = '/assets/Must Read pic/Must Read 1.jpg'
+                  }}
+                />
 
-              <div className="absolute right-2 top-2 z-20 rounded-full border border-amber-100 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-amber-950 shadow-[0_6px_18px_rgba(212,175,55,0.35)]">
-                Premium
-              </div>
-
-              {item.isAdult ? (
-                <div className="absolute bottom-2 left-2 z-20 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[9px] font-extrabold text-[#e5484d]">
-                  18+
+                <div className="absolute right-2 top-2 z-20 rounded-full border border-amber-100 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-amber-950 shadow-[0_6px_18px_rgba(212,175,55,0.35)]">
+                  Premium
                 </div>
-              ) : null}
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
-            </div>
+                {item.isAdult ? (
+                  <div className="absolute bottom-2 left-2 z-20 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[9px] font-extrabold text-[#e5484d]">
+                    18+
+                  </div>
+                ) : null}
 
-            <div className="px-0.5">
-              <h4 className="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-extrabold leading-tight text-gray-900 transition-colors group-hover:text-amber-700">
-                {item.title}
-              </h4>
-
-              <div className="flex items-center gap-2 text-[9px] font-semibold">
-                <span className={genreTextClass(item.genreColor)}>
-                  {item.genre}
-                </span>
-
-                <span className="text-gray-400">•</span>
-
-                <span className="text-gray-500">{item.episode}</span>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+
+              <div className="px-0.5">
+                <h4 className="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-extrabold leading-tight text-gray-900 transition-colors group-hover:text-amber-700">
+                  {item.title}
+                </h4>
+
+                <div className="flex items-center gap-2 text-[9px] font-semibold">
+                  <span className={genreTextClass(item.genreColor)}>
+                    {item.genre}
+                  </span>
+
+                  <span className="text-gray-400">•</span>
+
+                  <span className="text-gray-500">{item.episode}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[22px] bg-[#fff7d8] px-4 py-6 text-center ring-1 ring-[#f6b800]/25">
+          <div className="text-[14px] font-extrabold text-[#111827]">
+            No {storyLanguage} exclusive stories yet
+          </div>
+          <div className="mt-1 text-[12px] text-[#8d94a1]">
+            Try another story language from Settings.
+          </div>
+        </div>
+      )}
     </div>
   )
 }
