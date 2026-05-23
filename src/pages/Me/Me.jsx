@@ -533,7 +533,6 @@ useEffect(() => {
     ignore = true
   }
 }, [])
-  }, [])
 
   useEffect(() => {
     let ignore = false
