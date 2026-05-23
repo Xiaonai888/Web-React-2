@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+src/components/YouMightLikeSection.jsx
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -123,7 +124,9 @@ export default function YouMightLikeSection() {
       try {
         setLoading(true)
 
-        const response = await fetch(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)
+        const response = await fetch(
+  addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)
+)
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
