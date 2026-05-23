@@ -68,3 +68,11 @@ html.dark .divide-\[\#eef0f4\] > :not([hidden]) ~ :not([hidden]) {
     display: none !important;
   }
 }
+
+html.dark .dark\:text-\[\#111827\] {
+  color: #111827 !important;
+}
+
+html.dark .dark\:bg-\[\#FFE9A6\] {
+  background-color: #FFE9A6 !important;
+}
