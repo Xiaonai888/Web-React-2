@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -368,6 +368,8 @@ function getStageProgress(nextStage) {
 
 export default function AuthorQuestPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromPage = searchParams.get('from')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
@@ -479,8 +481,11 @@ export default function AuthorQuestPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
       <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/dashboard', { replace: true })} />
-
+          <HeaderButton
+  icon="fa-solid fa-chevron-left"
+  label="Back"
+  onClick={() => navigate(fromPage === 'income' ? '/author/income' : '/author/dashboard', { replace: true })}
+/>
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">Quest</h1>
             <p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">Stage and creator rewards</p>
