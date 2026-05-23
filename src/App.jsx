@@ -31,6 +31,7 @@ import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 import ShadowMallProductDetailPage from './pages/Shop/ShadowMallProductDetailPage'
 import ShadowMallCartPage from './pages/Shop/ShadowMallCartPage'
+import ShadowMallCheckoutPage from './pages/Shop/ShadowMallCheckoutPage'
 
 
 function ComingSoon({ title }) {
@@ -121,6 +122,7 @@ location.pathname.startsWith('/shop/mall/')
         <Route path="/author/quest" element={<AuthorQuestPage />} />
         <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
         <Route path="/shop/mall/cart" element={<ShadowMallCartPage />} />
+        <Route path="/shop/mall/checkout" element={<ShadowMallCheckoutPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
