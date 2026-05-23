@@ -1,178 +1,6 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
-const products = [
-  {
-    id: '1',
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    publisher: 'ពិភពសុបិន',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'ប្រលោមលោកខ្មែរ',
-    genre: 'មនោសញ្ចេតនា',
-    pages: '370 ទំព័រ',
-    paperType: 'កាកអំពៅ',
-    coverType: 'ក្របទន់បត់',
-    condition: 'ថ្មី',
-    price: '36,000៛',
-    oldPrice: '44,000៛',
-    badge: 'SALE',
-    summary: 'ប្រលោមលោកខ្មែរ បែបមនោសញ្ចេតនា ក្របទន់ សៀវភៅថ្មី សមសម្រាប់អ្នកចូលចិត្តអារម្មណ៍ស្នេហា និងនិស្ស័យ។',
-    fullDetails: [
-      ['ប្រភេទសៀវភៅ', 'ប្រលោមលោកខ្មែរ'],
-      ['និពន្ធដោយ', 'ពេជ្រ ជិន្នា'],
-      ['ចេញផ្សាយដោយ', 'ពិភពសុបិន'],
-      ['ប្រភេទ', 'មនោសញ្ចេតនា'],
-      ['កម្រាស់', '370 ទំព័រ'],
-      ['ប្រភេទក្រដាស', 'កាកអំពៅ'],
-      ['ក្រប', 'ក្របទន់បត់'],
-      ['គុណភាព', 'ថ្មី'],
-      ['តម្លៃដើម', '44,000៛'],
-      ['តម្លៃលក់', '36,000៛'],
-    ],
-  },
-  {
-    id: '2',
-    title: 'Silent Moon',
-    author: 'Shadow Author',
-    publisher: 'Shadow Era',
-    cover: '/assets/ShadowMall/books/book-2.jpg',
-    category: 'New Release',
-    genre: 'Romance',
-    pages: '280 pages',
-    paperType: 'Standard paper',
-    coverType: 'Soft cover',
-    condition: 'New',
-    price: '32,000៛',
-    oldPrice: '',
-    badge: 'NEW',
-    summary: 'A soft emotional novel for readers who love quiet romance and late-night stories.',
-    fullDetails: [
-      ['Book type', 'Novel'],
-      ['Author', 'Shadow Author'],
-      ['Publisher', 'Shadow Era'],
-      ['Genre', 'Romance'],
-      ['Pages', '280 pages'],
-      ['Paper type', 'Standard paper'],
-      ['Cover type', 'Soft cover'],
-      ['Condition', 'New'],
-      ['Sale price', '32,000៛'],
-    ],
-  },
-  {
-    id: '3',
-    title: 'The Last Letter',
-    author: 'Shadow Author',
-    publisher: 'Shadow Era',
-    cover: '/assets/ShadowMall/books/book-3.jpg',
-    category: 'Best Seller',
-    genre: 'Drama',
-    pages: '310 pages',
-    paperType: 'Standard paper',
-    coverType: 'Soft cover',
-    condition: 'New',
-    price: '40,000៛',
-    oldPrice: '',
-    badge: 'TOP',
-    summary: 'A dramatic story about memory, goodbye, and words that arrive too late.',
-    fullDetails: [
-      ['Book type', 'Novel'],
-      ['Author', 'Shadow Author'],
-      ['Publisher', 'Shadow Era'],
-      ['Genre', 'Drama'],
-      ['Pages', '310 pages'],
-      ['Paper type', 'Standard paper'],
-      ['Cover type', 'Soft cover'],
-      ['Condition', 'New'],
-      ['Sale price', '40,000៛'],
-    ],
-  },
-  {
-    id: '4',
-    title: 'Love After Rain',
-    author: 'Shadow Author',
-    publisher: 'Shadow Era',
-    cover: '/assets/ShadowMall/books/book-4.jpg',
-    category: 'Discount',
-    genre: 'Romance',
-    pages: '260 pages',
-    paperType: 'Standard paper',
-    coverType: 'Soft cover',
-    condition: 'New',
-    price: '30,000៛',
-    oldPrice: '38,000៛',
-    badge: 'SALE',
-    summary: 'A gentle romance about healing after heartbreak and finding warmth again.',
-    fullDetails: [
-      ['Book type', 'Novel'],
-      ['Author', 'Shadow Author'],
-      ['Publisher', 'Shadow Era'],
-      ['Genre', 'Romance'],
-      ['Pages', '260 pages'],
-      ['Paper type', 'Standard paper'],
-      ['Cover type', 'Soft cover'],
-      ['Condition', 'New'],
-      ['Original price', '38,000៛'],
-      ['Sale price', '30,000៛'],
-    ],
-  },
-  {
-    id: '5',
-    title: 'Before Goodbye',
-    author: 'Shadow Author',
-    publisher: 'Shadow Era',
-    cover: '/assets/ShadowMall/books/book-5.jpg',
-    category: 'Pre-order',
-    genre: 'Sad Romance',
-    pages: 'Coming soon',
-    paperType: 'Standard paper',
-    coverType: 'Soft cover',
-    condition: 'Pre-order',
-    price: '35,000៛',
-    oldPrice: '',
-    badge: 'PRE',
-    summary: 'A pre-order title for readers who love emotional romance and quiet goodbye stories.',
-    fullDetails: [
-      ['Book type', 'Novel'],
-      ['Author', 'Shadow Author'],
-      ['Publisher', 'Shadow Era'],
-      ['Genre', 'Sad Romance'],
-      ['Pages', 'Coming soon'],
-      ['Paper type', 'Standard paper'],
-      ['Cover type', 'Soft cover'],
-      ['Condition', 'Pre-order'],
-      ['Sale price', '35,000៛'],
-    ],
-  },
-  {
-    id: '6',
-    title: 'Broken Promise',
-    author: 'Shadow Author',
-    publisher: 'Shadow Era',
-    cover: '/assets/ShadowMall/books/book-6.jpg',
-    category: 'Khmer Novel',
-    genre: 'Drama',
-    pages: '295 pages',
-    paperType: 'Standard paper',
-    coverType: 'Soft cover',
-    condition: 'New',
-    price: '39,000៛',
-    oldPrice: '',
-    badge: 'HOT',
-    summary: 'A strong emotional novel about promises, distance, and the truth behind silence.',
-    fullDetails: [
-      ['Book type', 'Novel'],
-      ['Author', 'Shadow Author'],
-      ['Publisher', 'Shadow Era'],
-      ['Genre', 'Drama'],
-      ['Pages', '295 pages'],
-      ['Paper type', 'Standard paper'],
-      ['Cover type', 'Soft cover'],
-      ['Condition', 'New'],
-      ['Sale price', '39,000៛'],
-    ],
-  },
-]
+import { formatMallPrice, getShadowMallProductById } from '../../data/shadowMallProducts'
 
 function DetailRow({ label, value }) {
   return (
@@ -212,7 +40,7 @@ function FullDetailsSheet({ open, product, onClose }) {
           </div>
 
           <div className="mt-4 rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-            Please check title, price, and book condition before placing your order.
+            Please check title, price, condition, and delivery information before placing your order.
           </div>
         </div>
       </div>
@@ -226,8 +54,30 @@ export default function ShadowMallProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  const product = useMemo(() => products.find((item) => item.id === productId) || products[0], [productId])
+  const product = getShadowMallProductById(productId)
 
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-[#f5f3fa] px-4 pt-10">
+        <div className="mx-auto max-w-[420px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+            <i className="fa-solid fa-book-open text-[18px]" />
+          </div>
+          <h1 className="mt-4 text-[18px] font-extrabold text-[#111827]">Book not found</h1>
+          <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">This Shadow Mall product is not available.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/shop')}
+            className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+          >
+            Back to Shop
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const hasDiscount = product.originalPrice && product.originalPrice > product.salePrice
   const increaseQuantity = () => setQuantity((value) => Math.min(value + 1, 99))
   const decreaseQuantity = () => setQuantity((value) => Math.max(value - 1, 1))
 
@@ -243,7 +93,7 @@ export default function ShadowMallProductDetailPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Book Detail</h1>
 
-          <button type="button" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95">
+          <button type="button" onClick={() => navigate('/shop/mall/cart')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95">
             <i className="fa-solid fa-cart-shopping text-[14px]" />
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">0</span>
           </button>
@@ -286,9 +136,13 @@ export default function ShadowMallProductDetailPage() {
 
               <div className="mt-4 rounded-[20px] bg-[#fafafe] p-4">
                 <div className="flex items-end gap-2">
-                  <div className="text-[22px] font-extrabold text-[#e5484d]">{product.price}</div>
-                  {product.oldPrice ? (
-                    <div className="pb-1 text-[13px] font-semibold text-[#a0a5b1] line-through">{product.oldPrice}</div>
+                  <div className="text-[22px] font-extrabold text-[#e5484d]">
+                    {formatMallPrice(product.salePrice, product.currency)}
+                  </div>
+                  {hasDiscount ? (
+                    <div className="pb-1 text-[13px] font-semibold text-[#a0a5b1] line-through">
+                      {formatMallPrice(product.originalPrice, product.currency)}
+                    </div>
                   ) : null}
                 </div>
 
@@ -307,7 +161,7 @@ export default function ShadowMallProductDetailPage() {
               <div className="mt-4 rounded-[20px] bg-[#fafafe] p-4">
                 <div className="text-[13px] font-extrabold text-[#111827]">Short Info</div>
                 <p className="mt-2 line-clamp-3 text-[12.5px] font-medium leading-6 text-[#667085]">
-                  {product.summary}
+                  {product.shortInfo}
                 </p>
                 <button
                   type="button"
@@ -344,12 +198,14 @@ export default function ShadowMallProductDetailPage() {
         <div className="mx-auto grid max-w-5xl grid-cols-[1fr_1.3fr] gap-3">
           <button
             type="button"
+            onClick={() => navigate('/shop/mall/cart')}
             className="flex h-13 min-h-[52px] items-center justify-center rounded-full border border-[#111827] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
           >
             Add to Cart
           </button>
           <button
             type="button"
+            onClick={() => navigate('/shop/mall/checkout')}
             className="flex h-13 min-h-[52px] items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
           >
             Buy Now
