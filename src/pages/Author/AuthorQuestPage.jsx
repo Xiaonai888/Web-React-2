@@ -309,23 +309,6 @@ function BoostRequirement({ item }) {
 
 function RulesNote({ onLearnMore }) {
   return (
-    <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="flex gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f7f4ee] text-[#c89b1e]">
-          <i className="fa-solid fa-circle-info text-[15px]" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-black text-[#111827]">Quest Rules</div>
-          <div className="mt-2 space-y-1.5 text-[12.5px] font-medium leading-5 text-[#667085]">
-            <p>Quest progress is calculated from published stories and verified reader activity.</p>
-            <p>Paid income comes from Diamond unlocks only.</p>
-            <p>100-Day Creator Boost requires all required milestones plus any 3 growth milestones.</p>
-            <p>The 100-Day Creator Boost can be used only once per author account.</p>
-          </div>
-
-          function RulesNote({ onLearnMore }) {
-  return (
     <button
       type="button"
       onClick={onLearnMore}
@@ -351,11 +334,6 @@ function RulesNote({ onLearnMore }) {
         </div>
       </div>
     </button>
-  )
-}
-        </div>
-      </div>
-    </section>
   )
 }
 
