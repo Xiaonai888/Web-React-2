@@ -28,6 +28,7 @@ import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
+import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 
 
 function ComingSoon({ title }) {
@@ -58,6 +59,7 @@ function AppShell() {
     '/author/income',
     '/author/payment-method',
     '/author/benefits',
+    '/author/quest',
     '/author/create-story',
     '/authors/following',
     '/authors/top',
@@ -113,6 +115,7 @@ function AppShell() {
         <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
+        <Route path="/author/quest" element={<AuthorQuestPage />} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
