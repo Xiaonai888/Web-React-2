@@ -6,6 +6,93 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const BOOST_REQUIRED_MILESTONES = [
+  {
+    key: 'episodes',
+    label: 'Published Episodes',
+    shortLabel: 'Episodes',
+    icon: 'fa-solid fa-book-open',
+    required: 100,
+    text: '100 published episodes',
+  },
+  {
+    key: 'words',
+    label: 'Published Words',
+    shortLabel: 'Words',
+    icon: 'fa-solid fa-pen-nib',
+    required: 100000,
+    text: '100,000 total published words',
+  },
+  {
+    key: 'paid_fans',
+    label: 'Paid Fans',
+    shortLabel: 'Paid Fans',
+    icon: 'fa-solid fa-users',
+    required: 1000,
+    text: 'Readers who unlocked 10+ paid episodes with Diamonds',
+  },
+  {
+    key: 'paid_earnings',
+    label: 'Paid Earnings',
+    shortLabel: 'Earnings',
+    icon: 'fa-solid fa-gem',
+    required: 100,
+    text: '$100 net paid author earnings from Diamond unlocks',
+    prefix: '$',
+  },
+  {
+    key: 'policy',
+    label: 'Account Status',
+    shortLabel: 'Policy',
+    icon: 'fa-solid fa-shield-heart',
+    required: 1,
+    text: 'No serious policy violations',
+  },
+]
+
+const BOOST_GROWTH_MILESTONES = [
+  {
+    key: 'views',
+    label: 'Qualified Views',
+    shortLabel: 'Views',
+    icon: 'fa-solid fa-eye',
+    required: 1000000,
+    text: '1,000,000 qualified views',
+  },
+  {
+    key: 'read_hours',
+    label: 'Read Hours',
+    shortLabel: 'Read Hours',
+    icon: 'fa-solid fa-clock',
+    required: 1000,
+    text: '1,000 qualified read hours',
+  },
+  {
+    key: 'likes',
+    label: 'Unique Likes',
+    shortLabel: 'Likes',
+    icon: 'fa-solid fa-heart',
+    required: 1000000,
+    text: '1,000,000 unique likes',
+  },
+  {
+    key: 'ratings',
+    label: 'Unique Ratings',
+    shortLabel: 'Ratings',
+    icon: 'fa-solid fa-star',
+    required: 1000,
+    text: '1,000 unique ratings',
+  },
+  {
+    key: 'followers',
+    label: 'Followers',
+    shortLabel: 'Followers',
+    icon: 'fa-solid fa-user-plus',
+    required: 1000,
+    text: '1,000 followers',
+  },
+]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -22,8 +109,12 @@ function numberValue(value) {
   return number
 }
 
-function compactNumber(value) {
+function compactNumber(value, prefix = '') {
   const number = numberValue(value)
+
+  if (prefix) {
+    return `${prefix}${number.toFixed(number % 1 === 0 ? 0 : 2)}`
+  }
 
   if (number >= 1000000) {
     return `${(number / 1000000).toFixed(number % 1000000 === 0 ? 0 : 1)}M`
@@ -92,17 +183,17 @@ function SectionCard({ title, subtitle, action, children }) {
   )
 }
 
-function ProgressBar({ current, required, dark = false }) {
+function ProgressBar({ current, required, done = false, dark = false }) {
   const percent = progressPercent(current, required)
+  const barColor = done ? 'bg-[#22c55e]' : 'bg-[#d4a72c]'
+  const bgColor = dark ? 'bg-white/10' : 'bg-[#eef0f4]'
 
   return (
-    <div>
-      <div className={`h-2 overflow-hidden rounded-full ${dark ? 'bg-white/10' : 'bg-[#eef0f4]'}`}>
-        <div
-          className="h-full rounded-full bg-[#d4a72c] transition-all"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+    <div className={`h-2 overflow-hidden rounded-full ${bgColor}`}>
+      <div
+        className={`h-full rounded-full transition-all ${barColor}`}
+        style={{ width: `${percent}%` }}
+      />
     </div>
   )
 }
@@ -111,25 +202,39 @@ function RequirementRow({ icon, label, current, required }) {
   const done = numberValue(current) >= numberValue(required)
 
   return (
-    <div className="rounded-[20px] border border-[#f0eef6] bg-white p-3">
+    <div
+      className={`rounded-[20px] border p-3 ${
+        done
+          ? 'border-[#b7ebc6] bg-[#ecfdf3]'
+          : 'border-[#f0eef6] bg-white'
+      }`}
+    >
       <div className="mb-2 flex items-center gap-3">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${done ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f7f4ee] text-[#c89b1e]'}`}>
-          <i className={`${icon} text-[13px]`} />
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+            done ? 'bg-[#16803c] text-white' : 'bg-[#f7f4ee] text-[#c89b1e]'
+          }`}
+        >
+          <i className={`${done ? 'fa-solid fa-check' : icon} text-[13px]`} />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-black text-[#111827]">{label}</div>
-          <div className="mt-0.5 text-[11.5px] font-semibold text-[#98a2b3]">
+          <div className="mt-0.5 text-[11.5px] font-semibold text-[#667085]">
             {compactNumber(current)} / {compactNumber(required)}
           </div>
         </div>
 
-        <div className={`rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase ${done ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
+        <div
+          className={`rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase ${
+            done ? 'bg-white text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'
+          }`}
+        >
           {done ? 'Done' : `${progressPercent(current, required)}%`}
         </div>
       </div>
 
-      <ProgressBar current={current} required={required} />
+      <ProgressBar current={current} required={required} done={done} />
     </div>
   )
 }
@@ -170,31 +275,39 @@ function StageCard({ stage, currentStageNumber }) {
   )
 }
 
-function BoostRequirement({ label, item, icon }) {
+function BoostRequirement({ item }) {
+  const done = numberValue(item.current) >= numberValue(item.required)
+
   return (
-    <div className="rounded-[18px] bg-white/10 px-3 py-3 ring-1 ring-white/10">
+    <div
+      className={`rounded-[18px] px-3 py-3 ring-1 ${
+        done
+          ? 'bg-[#ecfdf3] text-[#16803c] ring-[#b7ebc6]'
+          : 'bg-white/10 text-white ring-white/10'
+      }`}
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <i className={`${icon} text-[12px] text-[#f7c948]`} />
-          <span className="line-clamp-1 text-[11px] font-black text-white">{label}</span>
+          <i className={`${done ? 'fa-solid fa-check' : item.icon} text-[12px] ${done ? 'text-[#16803c]' : 'text-[#f7c948]'}`} />
+          <span className={`line-clamp-1 text-[11px] font-black ${done ? 'text-[#16803c]' : 'text-white'}`}>{item.shortLabel}</span>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${item?.completed ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-white/10 text-white/55'}`}>
-          {item?.completed ? 'Done' : `${item?.percent || 0}%`}
+        <span className={`rounded-full px-2 py-0.5 text-[9px] font-black ${done ? 'bg-white text-[#16803c]' : 'bg-white/10 text-white/55'}`}>
+          {done ? 'Done' : `${progressPercent(item.current, item.required)}%`}
         </span>
       </div>
 
-      <div className="text-[10.5px] font-semibold text-white/55">
-        {compactNumber(item?.current)} / {compactNumber(item?.required)}
+      <div className={`text-[10.5px] font-semibold ${done ? 'text-[#16803c]/75' : 'text-white/55'}`}>
+        {compactNumber(item.current, item.prefix)} / {compactNumber(item.required, item.prefix)}
       </div>
 
       <div className="mt-2">
-        <ProgressBar current={item?.current} required={item?.required} dark />
+        <ProgressBar current={item.current} required={item.required} done={done} dark={!done} />
       </div>
     </div>
   )
 }
 
-function RulesNote() {
+function RulesNote({ onLearnMore }) {
   return (
     <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="flex gap-3">
@@ -205,10 +318,19 @@ function RulesNote() {
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-black text-[#111827]">Quest Rules</div>
           <div className="mt-2 space-y-1.5 text-[12.5px] font-medium leading-5 text-[#667085]">
-            <p>Quest progress is calculated from your published stories and account activity.</p>
-            <p>Paid income still comes from Diamond unlocks only.</p>
+            <p>Quest progress is calculated from published stories and verified reader activity.</p>
+            <p>Paid income comes from Diamond unlocks only.</p>
+            <p>100-Day Creator Boost requires all required milestones plus any 3 growth milestones.</p>
             <p>The 100-Day Creator Boost can be used only once per author account.</p>
           </div>
+
+          <button
+            type="button"
+            onClick={onLearnMore}
+            className="mt-4 inline-flex h-10 items-center rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-95"
+          >
+            Learn More
+          </button>
         </div>
       </div>
     </section>
@@ -222,6 +344,21 @@ function LoadingSkeleton() {
       <div className="h-[260px] animate-pulse rounded-[26px] bg-white" />
       <div className="h-[340px] animate-pulse rounded-[26px] bg-white" />
     </div>
+  )
+}
+
+function getStageProgress(nextStage) {
+  if (!nextStage) return 100
+
+  const requirements = [
+    nextStage.requirements?.episodes,
+    nextStage.requirements?.words,
+    nextStage.requirements?.likes,
+    nextStage.requirements?.followers,
+  ]
+
+  return Math.min(
+    ...requirements.map((item) => progressPercent(item?.current, item?.required)),
   )
 }
 
@@ -283,7 +420,8 @@ export default function AuthorQuestPage() {
   const activeShare = data?.active_share || {}
   const nextStage = data?.next_stage || null
   const lifetimeBoost = data?.lifetime_boost || null
-  const lastStage = lifetimeBoost?.last_stage || null
+  const totals = data?.totals || {}
+  const stageProgress = getStageProgress(nextStage)
 
   const nextRequirements = useMemo(() => {
     if (!nextStage?.requirements) return []
@@ -296,20 +434,42 @@ export default function AuthorQuestPage() {
     ]
   }, [nextStage])
 
-  const boostRequirements = useMemo(() => {
-    const requirements = lastStage?.requirements || {}
+  const requiredMilestones = useMemo(() => {
+    return BOOST_REQUIRED_MILESTONES.map((item) => {
+      let current = 0
 
-    return [
-      ['Fans', requirements.fans, 'fa-solid fa-users'],
-      ['Views', requirements.views, 'fa-solid fa-eye'],
-      ['Likes', requirements.likes, 'fa-solid fa-heart'],
-      ['Comments', requirements.comments, 'fa-solid fa-comment'],
-      ['Ratings', requirements.ratings, 'fa-solid fa-star'],
-      ['Read Hours', requirements.read_hours, 'fa-solid fa-clock'],
-      ['Episodes', requirements.episodes, 'fa-solid fa-book-open'],
-      ['Followers', requirements.followers, 'fa-solid fa-user-plus'],
-    ]
-  }, [lastStage])
+      if (item.key === 'episodes') current = totals.total_published_episodes
+      if (item.key === 'words') current = totals.total_words
+      if (item.key === 'paid_fans') current = totals.total_paid_fans || totals.total_fans || 0
+      if (item.key === 'paid_earnings') current = totals.total_net_paid_earnings_usd || 0
+      if (item.key === 'policy') current = totals.has_serious_policy_violation ? 0 : 1
+
+      return {
+        ...item,
+        current,
+      }
+    })
+  }, [totals])
+
+  const growthMilestones = useMemo(() => {
+    return BOOST_GROWTH_MILESTONES.map((item) => {
+      let current = 0
+
+      if (item.key === 'views') current = totals.total_qualified_views || totals.total_views || 0
+      if (item.key === 'read_hours') current = Math.floor(numberValue(totals.total_read_seconds) / 3600)
+      if (item.key === 'likes') current = totals.total_unique_likes || totals.total_likes || 0
+      if (item.key === 'ratings') current = totals.total_unique_ratings || totals.total_ratings || 0
+      if (item.key === 'followers') current = totals.total_followers || 0
+
+      return {
+        ...item,
+        current,
+      }
+    })
+  }, [totals])
+
+  const requiredDoneCount = requiredMilestones.filter((item) => numberValue(item.current) >= numberValue(item.required)).length
+  const growthDoneCount = growthMilestones.filter((item) => numberValue(item.current) >= numberValue(item.required)).length
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
@@ -359,37 +519,34 @@ export default function AuthorQuestPage() {
                   </p>
                 </div>
 
-                <div className="rounded-[20px] bg-white/10 px-3 py-3 text-right ring-1 ring-white/10">
-                  <div className="text-[10px] font-black uppercase tracking-[0.08em] text-white/45">Stage</div>
-                  <div className="mt-1 text-[23px] font-black text-[#f7c948]">{currentStage.stage_number || 1}</div>
-                  <div className="mt-1 text-[10.5px] font-bold text-white/45">{currentStage.stage_name || 'Stage 1'}</div>
+                <div className="shrink-0 rounded-[20px] bg-white/10 px-4 py-3 text-center ring-1 ring-white/10">
+                  <div className="text-[9.5px] font-black uppercase tracking-[0.08em] text-white/45">
+                    Current
+                  </div>
+                  <div className="mt-1 text-[15px] font-black text-[#f7c948]">
+                    Stage {currentStage.stage_number || 1}
+                  </div>
+                  <div className="mt-0.5 text-[10.5px] font-bold text-white/45">
+                    {percentText(currentStage.share_percent || activeShare.share_percent)} Share
+                  </div>
                 </div>
               </div>
 
               <div className="mt-5 rounded-[22px] bg-white/10 p-3 ring-1 ring-white/10">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div className="text-[12px] font-black text-white">
-                    {nextStage ? `Next: Stage ${nextStage.stage_number} — ${percentText(nextStage.share_percent)}` : 'Maximum normal stage reached'}
+                    {nextStage ? `Next Milestone: Stage ${nextStage.stage_number}` : 'Maximum normal stage reached'}
                   </div>
                   <div className="text-[11px] font-bold text-white/55">
-                    {nextStage ? 'Keep going' : 'Great work'}
+                    {nextStage ? `Unlock ${percentText(nextStage.share_percent)} Share` : 'Great work'}
                   </div>
                 </div>
 
-                <ProgressBar
-                  current={
-                    nextStage
-                      ? Math.min(
-                          progressPercent(nextStage.requirements?.episodes?.current, nextStage.requirements?.episodes?.required),
-                          progressPercent(nextStage.requirements?.words?.current, nextStage.requirements?.words?.required),
-                          progressPercent(nextStage.requirements?.likes?.current, nextStage.requirements?.likes?.required),
-                          progressPercent(nextStage.requirements?.followers?.current, nextStage.requirements?.followers?.required),
-                        )
-                      : 100
-                  }
-                  required={100}
-                  dark
-                />
+                <ProgressBar current={stageProgress} required={100} dark />
+
+                <div className="mt-2 text-right text-[10.5px] font-black text-white/55">
+                  {stageProgress}% complete
+                </div>
               </div>
             </section>
 
@@ -447,14 +604,44 @@ export default function AuthorQuestPage() {
                 </div>
               ) : null}
 
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {boostRequirements.map(([label, item, icon]) => (
-                  <BoostRequirement key={label} label={label} item={item} icon={icon} />
-                ))}
+              <div className="mt-5 rounded-[24px] bg-white/10 p-4 ring-1 ring-white/10">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-[15px] font-black text-white">Required Milestones</h3>
+                    <p className="mt-1 text-[11.5px] font-semibold text-white/55">Complete all required milestones.</p>
+                  </div>
+                  <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-[#f7c948]">
+                    {requiredDoneCount}/{requiredMilestones.length}
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {requiredMilestones.map((item) => (
+                    <BoostRequirement key={item.key} item={item} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-[24px] bg-white/10 p-4 ring-1 ring-white/10">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-[15px] font-black text-white">Growth Milestones</h3>
+                    <p className="mt-1 text-[11.5px] font-semibold text-white/55">Complete any 3 of 5.</p>
+                  </div>
+                  <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-[#f7c948]">
+                    {Math.min(growthDoneCount, 3)}/3
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {growthMilestones.map((item) => (
+                    <BoostRequirement key={item.key} item={item} />
+                  ))}
+                </div>
               </div>
             </section>
 
-            <RulesNote />
+            <RulesNote onLearnMore={() => navigate('/author/benefits')} />
           </>
         ) : null}
       </main>
