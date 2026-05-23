@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const mallSlides = [
   { id: 1, badge: 'NEW', image: '/assets/ShadowMall/slide-1.jpg', title: 'New Books', subtitle: 'Fresh stories ready for your shelf' },
@@ -92,40 +93,44 @@ function SlideBadge({ badge }) {
   )
 }
 
-function ProductCard({ product }) {
+function ProductCard({ product, onOpen }) {
   return (
     <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
-      <div className="relative aspect-[2/3] overflow-hidden bg-[#f3f4f6]">
-        <img
-          src={product.cover}
-          alt={product.title}
-          className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none'
-          }}
-        />
-        {product.badge ? (
-          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-extrabold text-[#111827] shadow-sm">
-            {product.badge}
-          </span>
-        ) : null}
-      </div>
+      <button type="button" onClick={onOpen} className="block w-full text-left">
+        <div className="relative aspect-[2/3] overflow-hidden bg-[#f3f4f6]">
+          <img
+            src={product.cover}
+            alt={product.title}
+            className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
+          />
+          {product.badge ? (
+            <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-extrabold text-[#111827] shadow-sm">
+              {product.badge}
+            </span>
+          ) : null}
+        </div>
+      </button>
 
       <div className="p-3">
-        <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
-          {product.title}
-        </h3>
-        <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
-          {product.author}
-        </p>
+        <button type="button" onClick={onOpen} className="block w-full text-left">
+          <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
+            {product.title}
+          </h3>
+          <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
+            {product.author}
+          </p>
+        </button>
 
         <div className="mt-3 flex items-end justify-between gap-2">
-          <div className="min-w-0">
+          <button type="button" onClick={onOpen} className="min-w-0 text-left">
             <div className="text-[13px] font-extrabold text-[#e5484d]">{product.price}</div>
             {product.oldPrice ? (
               <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">{product.oldPrice}</div>
             ) : null}
-          </div>
+          </button>
 
           <button
             type="button"
@@ -141,6 +146,7 @@ function ProductCard({ product }) {
 }
 
 export default function ShadowMallSection() {
+  const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
 
@@ -242,7 +248,11 @@ export default function ShadowMallSection() {
       {filteredProducts.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+            />
           ))}
         </div>
       ) : (
