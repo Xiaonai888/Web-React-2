@@ -236,6 +236,7 @@ function LanguageOption({
   selected,
   onClick,
   isDisplayLanguage = false,
+  selectedLabel = 'Selected',
   selectedClassName = 'bg-[#fff7d8] ring-1 ring-[#f6b800]/45 dark:bg-[#2a2414] dark:ring-[#f6b800]/35',
   selectedTextClassName = 'text-[#d99a00]',
   selectedIconClassName = 'text-[#d99a00]',
