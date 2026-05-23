@@ -312,7 +312,7 @@ function LanguageSheet({
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">Language</div>
+            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">{tx('language')}</div>
             <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">{tx('languageSub')}</div>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
