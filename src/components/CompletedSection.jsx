@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'.
+import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
