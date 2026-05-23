@@ -120,9 +120,7 @@ location.pathname.startsWith('/shop/mall/')
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
-        <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
-        <Route path="/shop/mall/cart" element={<ShadowMallCartPage />} />
-        <Route path="/shop/mall/checkout" element={<ShadowMallCheckoutPage />} />
+    
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
