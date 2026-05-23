@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const HERO_IMAGE = '/assets/Author Benefits/Author Benefits 1.png'
 
@@ -144,12 +144,18 @@ function ActionCard({ title, text, button, icon, onClick }) {
 
 export default function AuthorBenefitsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromPage = searchParams.get('from')
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-8">
       <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/dashboard', { replace: true })} />
+          <HeaderButton
+  icon="fa-solid fa-chevron-left"
+  label="Back"
+  onClick={() => navigate(fromPage === 'quest' ? '/author/quest' : '/author/dashboard', { replace: true })}
+/>
 
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">Author Benefits</h1>
