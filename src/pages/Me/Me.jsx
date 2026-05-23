@@ -471,7 +471,7 @@ export default function Me() {
   const isLoggedIn = Boolean(token)
   const isPremium = false
 
-  const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : 'Click to Login')
+  const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
 
@@ -629,7 +629,7 @@ export default function Me() {
                 <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
                   {isLoggedIn ? (
                     <>
-                      {checkingUser ? 'Loading account...' : displayName}
+                      {checkingUser ? tx('loadingAccount') : displayName}
                       {isPremium ? (
                         <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
                           <i className="fa-solid fa-crown text-[15px]" />
@@ -637,21 +637,21 @@ export default function Me() {
                       ) : null}
                     </>
                   ) : (
-                    'Click to Login'
+                    tx('clickToLogin')
                   )}
                 </h1>
               </Link>
 
               {!isLoggedIn ? (
                 <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
-                  Login to save reading and author tools
+                  {tx('loginToSave')}
                 </p>
               ) : (
                 <Link
                   to="/profile"
                   className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50"
                 >
-                  <span>View Profile</span>
+                  <span>{tx('viewProfile')}</span>
                   <i className="fa-solid fa-chevron-right text-[9px]" />
                 </Link>
               )}
@@ -659,16 +659,16 @@ export default function Me() {
           </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
-            <BalanceItem value="120" label="Diamond" />
-            <BalanceItem value="480" label="Gem" />
-            <BalanceItem value="3" label="Voucher" />
+            <BalanceItem value="120" label={tx('diamond')} />
+            <BalanceItem value="480" label={tx('gem')} />
+            <BalanceItem value="3" label={tx('voucher')} />
           </div>
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <div className="grid grid-cols-2 divide-x divide-[#f0eef6] dark:divide-white/10">
-            <QuickAction to="/wallet" icon="fa-solid fa-wallet" title="Wallet" subtitle="Balance & purchases" />
-            <QuickAction to="/check-in" icon="far fa-calendar-check" title="Check-in" subtitle="Daily rewards" />
+            <QuickAction to="/wallet" icon="fa-solid fa-wallet" title={tx('wallet')} subtitle={tx('walletSub')} />
+            <QuickAction to="/check-in" icon="far fa-calendar-check" title={tx('checkIn')} subtitle={tx('checkInSub')} />
           </div>
         </section>
 
@@ -679,8 +679,8 @@ export default function Me() {
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">Author Dashboard</div>
-                <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">Manage stories, episodes, and your author page</div>
+                <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">{tx('authorDashboard')}</div>
+                <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{tx('authorDashboardSub')}</div>
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1] dark:text-white/35" />
@@ -689,18 +689,18 @@ export default function Me() {
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
-            <MenuRow to="/premium" icon="fa-solid fa-crown" title="Premium" subtitle="Ad-free reading and exclusive stories" dark />
-            <MenuRow to="/inbox" icon="far fa-envelope" title="Inbox" subtitle="Messages and notifications" />
-            <MenuRow to="/comments" icon="far fa-comment-dots" title="My Comments" subtitle="Replies and comment activity" />
-            <MenuRow to="/feedback" icon="far fa-pen-to-square" title="Feedback" subtitle="Report issues or suggestions" />
-            <MenuRow to="/help" icon="far fa-circle-question" title="Help Center" subtitle="Support and common questions" />
-            <MenuRow to="/about" icon="fa-solid fa-circle-info" title="About Us" subtitle="About Shadowera and policies" />
+            <MenuRow to="/premium" icon="fa-solid fa-crown" title={tx('premium')} subtitle={tx('premiumSub')} dark />
+            <MenuRow to="/inbox" icon="far fa-envelope" title={tx('inbox')} subtitle={tx('inboxSub')} />
+            <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} subtitle={tx('myCommentsSub')} />
+            <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} subtitle={tx('feedbackSub')} />
+            <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} subtitle={tx('helpCenterSub')} />
+            <MenuRow to="/about" icon="fa-solid fa-circle-info" title={tx('aboutUs')} subtitle={tx('aboutUsSub')} />
           </div>
         </section>
 
         {isLoggedIn ? (
           <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-            <MenuRow onClick={handleLogout} icon="fa-solid fa-right-from-bracket" title="Logout" danger />
+            <MenuRow onClick={handleLogout} icon="fa-solid fa-right-from-bracket" title={tx('logout')} danger />
           </section>
         ) : null}
       </main>
