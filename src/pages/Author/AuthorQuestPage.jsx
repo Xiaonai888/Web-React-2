@@ -317,13 +317,12 @@ function RulesNote({ onLearnMore }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="inline-flex items-center gap-2">
-  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f7f4ee] text-[#c89b1e]">
-    <i className="fa-solid fa-circle-info text-[12px]" />
-  </span>
-  <span className="text-[15px] font-black text-[#111827]">
-    Quest Rules
-  </span>
-</div>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f7f4ee] text-[#c89b1e]">
+              <i className="fa-solid fa-circle-info text-[12px]" />
+            </span>
+            <span className="text-[15px] font-black text-[#111827]">
+              Quest Rules
+            </span>
           </div>
 
           <div className="mt-3 space-y-1.5 text-[12.5px] font-medium leading-5 text-[#667085]">
