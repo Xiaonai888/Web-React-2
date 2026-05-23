@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Footer from './components/Footer'
@@ -29,9 +30,10 @@ import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
-import ShadowMallProductDetailPage from './pages/Shop/ShadowMallProductDetailPage'
-import ShadowMallCartPage from './pages/Shop/ShadowMallCartPage'
-import ShadowMallCheckoutPage from './pages/Shop/ShadowMallCheckoutPage'
+
+const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
+const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
+const ShadowMallCheckoutPage = lazy(() => import('./pages/Shop/ShadowMallCheckoutPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -44,6 +46,21 @@ function ComingSoon({ title }) {
       </div>
     </div>
   )
+}
+
+function PageLoading() {
+  return (
+    <div className="min-h-screen bg-[#f5f3fa] px-4 pt-16">
+      <div className="mx-auto max-w-[420px] rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+        <div className="text-[14px] font-extrabold text-[#111827]">Loading...</div>
+      </div>
+    </div>
+  )
+}
+
+function LazyPage({ children }) {
+  return <Suspense fallback={<PageLoading />}>{children}</Suspense>
 }
 
 function AppShell() {
@@ -84,9 +101,30 @@ function AppShell() {
         <Route path="/me" element={<Me />} />
 
         <Route path="/shop" element={<ShopPage />} />
-        <Route path="/shop/mall/product/:productId" element={<ShadowMallProductDetailPage />} />
-        <Route path="/shop/mall/cart" element={<ShadowMallCartPage />} />
-        <Route path="/shop/mall/checkout" element={<ShadowMallCheckoutPage />} />
+        <Route
+          path="/shop/mall/product/:productId"
+          element={
+            <LazyPage>
+              <ShadowMallProductDetailPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/shop/mall/cart"
+          element={
+            <LazyPage>
+              <ShadowMallCartPage />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="/shop/mall/checkout"
+          element={
+            <LazyPage>
+              <ShadowMallCheckoutPage />
+            </LazyPage>
+          }
+        />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
