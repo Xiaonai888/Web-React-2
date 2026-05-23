@@ -61,13 +61,10 @@ html.dark .divide-\[\#eef0f4\] > :not([hidden]) ~ :not([hidden]) {
 }
 
 @media (max-width: 767px) {
-  body.settings-popup-open nav,
   body.settings-popup-open footer,
-  body.settings-popup-open [class*="bottom-0"] {
+  body.settings-popup-open nav[aria-label="Bottom navigation"],
+  body.settings-popup-open .bottom-navigation,
+  body.settings-popup-open .mobile-bottom-nav {
     display: none !important;
-  }
-
-  body.settings-popup-open .z-\[120\] {
-    display: block !important;
   }
 }
