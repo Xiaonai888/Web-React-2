@@ -25,6 +25,7 @@ import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
+import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 
 function ComingSoon({ title }) {
   return (
@@ -103,6 +104,8 @@ function AppShell() {
         <Route path="/authors/following" element={<FollowingAuthorsPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/author/income" element={<AuthorIncomePage />} />
+
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
