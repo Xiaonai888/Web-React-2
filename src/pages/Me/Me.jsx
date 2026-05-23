@@ -443,7 +443,7 @@ export default function Me() {
         <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827] dark:bg-[#FFE9A6] dark:text-[#111827]"
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
