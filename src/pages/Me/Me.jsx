@@ -3,6 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
+const STORY_LANGUAGE_STORAGE_KEY = 'shadow_story_language'
+const DISPLAY_LANGUAGE_STORAGE_KEY = 'shadow_display_language'
+
+const LANGUAGES = [
+  { id: 'km', label: 'Khmer', flag: '🇰🇭' },
+  { id: 'en', label: 'English', flag: '🇺🇸' },
+  { id: 'zh', label: 'Chinese', flag: '🇨🇳' },
+  { id: 'ja', label: 'Japanese', flag: '🇯🇵' },
+  { id: 'ko', label: 'Korean', flag: '🇰🇷' },
+]
 
 function getReaderToken() {
   return (
@@ -26,6 +36,18 @@ function getStoredReaderUser() {
 
 function getStoredTheme() {
   return localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light'
+}
+
+function getStoredStoryLanguage() {
+  return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
+}
+
+function getStoredDisplayLanguage() {
+  return localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY) || 'en'
+}
+
+function getLanguageLabel(languageId) {
+  return LANGUAGES.find((language) => language.id === languageId)?.label || 'Khmer'
 }
 
 function applyTheme(theme) {
@@ -189,18 +211,167 @@ function ThemeSwitchRow({ darkMode, onChange }) {
   )
 }
 
+function LanguageSummaryRow({ storyLanguage, displayLanguage, onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99]">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef4ff] text-[#2563eb] dark:bg-[#22304d] dark:text-[#8bb6ff]">
+          <i className="fa-solid fa-globe text-[14px]" />
+        </div>
+        <div className="min-w-0">
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">Language</div>
+          <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
+            Story: {getLanguageLabel(storyLanguage)} • Display: {getLanguageLabel(displayLanguage)}
+          </div>
+        </div>
+      </div>
+      <i className="fa-solid fa-chevron-right text-[11px] text-[#c6c9d1] dark:text-white/35" />
+    </button>
+  )
+}
+
+function LanguageOption({ language, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-left transition active:scale-[0.99] ${
+        selected
+          ? 'bg-[#fff7d8] ring-1 ring-[#f6b800]/45 dark:bg-[#2a2414] dark:ring-[#f6b800]/35'
+          : 'bg-[#f8f8fb] ring-1 ring-transparent dark:bg-white/5'
+      }`}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[20px] shadow-sm dark:bg-white/10">
+          {language.flag}
+        </span>
+        <div className="min-w-0">
+          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{language.label}</div>
+          {selected ? (
+            <div className="mt-0.5 text-[11px] font-semibold text-[#d99a00]">Selected</div>
+          ) : null}
+        </div>
+      </div>
+      {selected ? <i className="fa-solid fa-check text-[13px] text-[#d99a00]" /> : null}
+    </button>
+  )
+}
+
+function LanguageSheet({
+  open,
+  onClose,
+  storyLanguage,
+  displayLanguage,
+  onStoryLanguageChange,
+  onDisplayLanguageChange,
+}) {
+  const [activeTab, setActiveTab] = useState('story')
+
+  if (!open) return null
+
+  const isStoryTab = activeTab === 'story'
+  const selectedLanguage = isStoryTab ? storyLanguage : displayLanguage
+  const description = isStoryTab
+    ? 'Choose the language used inside your story.'
+    : 'Choose the language used for menus, buttons, and app text.'
+
+  return (
+    <div className="fixed inset-0 z-[140]">
+      <button type="button" aria-label="Close language" onClick={onClose} className="absolute inset-0 bg-black/40" />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[340px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
+
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="text-[17px] font-extrabold text-[#111827] dark:text-white">Language</div>
+            <div className="mt-0.5 text-[12px] text-[#8d94a1] dark:text-white/50">Story and display language</div>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] dark:bg-white/10">
+            <i className="fa-solid fa-times text-[13px] text-[#555] dark:text-white/70" />
+          </button>
+        </div>
+
+        <div className="mb-3 grid grid-cols-2 rounded-2xl bg-[#f4f5f7] p-1 dark:bg-white/10">
+          <button
+            type="button"
+            onClick={() => setActiveTab('story')}
+            className={`rounded-xl px-3 py-2 text-[12px] font-extrabold transition ${
+              isStoryTab ? 'bg-white text-[#111827] shadow-sm dark:bg-[#f6b800] dark:text-[#111827]' : 'text-[#8d94a1] dark:text-white/55'
+            }`}
+          >
+            Story Language
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('display')}
+            className={`rounded-xl px-3 py-2 text-[12px] font-extrabold transition ${
+              !isStoryTab ? 'bg-white text-[#111827] shadow-sm dark:bg-[#f6b800] dark:text-[#111827]' : 'text-[#8d94a1] dark:text-white/55'
+            }`}
+          >
+            Display Language
+          </button>
+        </div>
+
+        <div className="mb-3 rounded-[18px] bg-[#f8f8fb] px-3.5 py-3 text-[12px] leading-5 text-[#6b7280] dark:bg-white/5 dark:text-white/60">
+          {description}
+        </div>
+
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto pb-1">
+          {LANGUAGES.map((language) => (
+            <LanguageOption
+              key={language.id}
+              language={language}
+              selected={selectedLanguage === language.id}
+              onClick={() => {
+                if (isStoryTab) {
+                  onStoryLanguageChange(language.id)
+                } else {
+                  onDisplayLanguageChange(language.id)
+                }
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SettingsSheet({ open, onClose, isLoggedIn }) {
   const [darkMode, setDarkMode] = useState(() => getStoredTheme() === 'dark')
+  const [languageOpen, setLanguageOpen] = useState(false)
+  const [storyLanguage, setStoryLanguage] = useState(() => getStoredStoryLanguage())
+  const [displayLanguage, setDisplayLanguage] = useState(() => getStoredDisplayLanguage())
 
   useEffect(() => {
     applyTheme(darkMode ? 'dark' : 'light')
   }, [darkMode])
+
+  const handleStoryLanguageChange = (languageId) => {
+    localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
+    setStoryLanguage(languageId)
+  }
+
+  const handleDisplayLanguageChange = (languageId) => {
+    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, languageId)
+    setDisplayLanguage(languageId)
+  }
 
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[120]">
       <button type="button" aria-label="Close settings" onClick={onClose} className="absolute inset-0 bg-black/35" />
+
+      <LanguageSheet
+        open={languageOpen}
+        onClose={() => setLanguageOpen(false)}
+        storyLanguage={storyLanguage}
+        displayLanguage={displayLanguage}
+        onStoryLanguageChange={handleStoryLanguageChange}
+        onDisplayLanguageChange={handleDisplayLanguageChange}
+      />
 
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[26px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-16 md:w-[320px] md:rounded-[22px] md:pb-4 dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
@@ -221,6 +392,11 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
               <MenuRow to={isLoggedIn ? '/profile' : '/login'} icon="far fa-user" title="Edit Profile" subtitle="Name, avatar, bio" />
               <MenuRow to="/settings" icon="fa-solid fa-shield-alt" title="Account Settings" subtitle="Password, privacy, security" />
               <ThemeSwitchRow darkMode={darkMode} onChange={() => setDarkMode((value) => !value)} />
+              <LanguageSummaryRow
+                storyLanguage={storyLanguage}
+                displayLanguage={displayLanguage}
+                onClick={() => setLanguageOpen(true)}
+              />
             </div>
           </div>
         </div>
@@ -232,13 +408,6 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
 export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  useEffect(() => {
-  document.body.classList.toggle('settings-popup-open', settingsOpen)
-
-  return () => {
-    document.body.classList.remove('settings-popup-open')
-  }
-}, [settingsOpen])
   const [authorLoading, setAuthorLoading] = useState(false)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
@@ -250,6 +419,14 @@ export default function Me() {
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : 'Click to Login')
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+
+  useEffect(() => {
+    document.body.classList.toggle('settings-popup-open', settingsOpen)
+
+    return () => {
+      document.body.classList.remove('settings-popup-open')
+    }
+  }, [settingsOpen])
 
   useEffect(() => {
     applyTheme(getStoredTheme())
@@ -444,8 +621,8 @@ export default function Me() {
           <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827] dark:bg-[#FFE9A6] dark:text-[#111827]">
-  <i className="fa-solid fa-pen-nib text-[14px]" />
-</div>
+                <i className="fa-solid fa-pen-nib text-[14px]" />
+              </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">Author Dashboard</div>
                 <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">Manage stories, episodes, and your author page</div>
