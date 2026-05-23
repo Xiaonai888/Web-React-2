@@ -1,80 +1,11 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const mallSlides = [
-  { id: 1, badge: 'NEW', image: '/assets/ShadowMall/slide-1.jpg', title: 'New Books', subtitle: 'Fresh stories ready for your shelf' },
-  { id: 2, badge: 'HOT', image: '/assets/ShadowMall/slide-2.jpg', title: 'Hot Picks', subtitle: 'Books readers are watching now' },
-  { id: 3, badge: 'TOP', image: '/assets/ShadowMall/slide-3.jpg', title: 'Top Seller', subtitle: 'Popular titles from Shadow Mall' },
-  { id: 4, badge: 'NEW', image: '/assets/ShadowMall/slide-4.jpg', title: 'Khmer Novels', subtitle: 'Emotional stories and local favorites' },
-  { id: 5, badge: 'HOT', image: '/assets/ShadowMall/slide-5.jpg', title: 'Discount Books', subtitle: 'Special price for selected titles' },
-  { id: 6, badge: 'TOP', image: '/assets/ShadowMall/slide-6.jpg', title: 'Author Spotlight', subtitle: 'Featured books from selected authors' },
-  { id: 7, badge: 'NEW', image: '/assets/ShadowMall/slide-7.jpg', title: 'Pre-order', subtitle: 'Reserve upcoming books early' },
-]
-
-const categories = ['All', 'New Release', 'Best Seller', 'Discount', 'Khmer Novel', 'Pre-order']
-
-const products = [
-  {
-    id: 1,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Khmer Novel',
-    price: '36,000៛',
-    oldPrice: '44,000៛',
-    badge: 'SALE',
-  },
-  {
-    id: 2,
-    title: 'Silent Moon',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-2.jpg',
-    category: 'New Release',
-    price: '32,000៛',
-    oldPrice: '',
-    badge: 'NEW',
-  },
-  {
-    id: 3,
-    title: 'The Last Letter',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-3.jpg',
-    category: 'Best Seller',
-    price: '40,000៛',
-    oldPrice: '',
-    badge: 'TOP',
-  },
-  {
-    id: 4,
-    title: 'Love After Rain',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-4.jpg',
-    category: 'Discount',
-    price: '30,000៛',
-    oldPrice: '38,000៛',
-    badge: 'SALE',
-  },
-  {
-    id: 5,
-    title: 'Before Goodbye',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-5.jpg',
-    category: 'Pre-order',
-    price: '35,000៛',
-    oldPrice: '',
-    badge: 'PRE',
-  },
-  {
-    id: 6,
-    title: 'Broken Promise',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-6.jpg',
-    category: 'Khmer Novel',
-    price: '39,000៛',
-    oldPrice: '',
-    badge: 'HOT',
-  },
-]
+import {
+  formatMallPrice,
+  shadowMallCategories,
+  shadowMallProducts,
+  shadowMallSlides,
+} from '../../data/shadowMallProducts'
 
 function getBadgeClass(badge) {
   if (badge === 'HOT') return 'bg-[#ff3b30] text-white'
@@ -94,6 +25,8 @@ function SlideBadge({ badge }) {
 }
 
 function ProductCard({ product, onOpen }) {
+  const hasDiscount = product.originalPrice && product.originalPrice > product.salePrice
+
   return (
     <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
       <button type="button" onClick={onOpen} className="block w-full text-left">
@@ -126,14 +59,19 @@ function ProductCard({ product, onOpen }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <button type="button" onClick={onOpen} className="min-w-0 text-left">
-            <div className="text-[13px] font-extrabold text-[#e5484d]">{product.price}</div>
-            {product.oldPrice ? (
-              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">{product.oldPrice}</div>
+            <div className="text-[13px] font-extrabold text-[#e5484d]">
+              {formatMallPrice(product.salePrice, product.currency)}
+            </div>
+            {hasDiscount ? (
+              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
+                {formatMallPrice(product.originalPrice, product.currency)}
+              </div>
             ) : null}
           </button>
 
           <button
             type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('shadow-mall-add-demo-cart', { detail: product }))}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
             aria-label={`Add ${product.title} to cart`}
           >
@@ -153,12 +91,13 @@ export default function ShadowMallSection() {
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase()
 
-    return products.filter((product) => {
+    return shadowMallProducts.filter((product) => {
       const categoryMatch = activeCategory === 'All' || product.category === activeCategory
       const searchMatch =
         !keyword ||
         product.title.toLowerCase().includes(keyword) ||
-        product.author.toLowerCase().includes(keyword)
+        product.author.toLowerCase().includes(keyword) ||
+        product.publisher.toLowerCase().includes(keyword)
 
       return categoryMatch && searchMatch
     })
@@ -169,11 +108,12 @@ export default function ShadowMallSection() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-[22px] font-extrabold tracking-tight text-[#111827]">Shadow Mall</h2>
-          <p className="mt-1 text-[12px] font-medium text-[#8d94a1]">Buy official books from Shadow Era</p>
+          <p className="mt-1 text-[12px] font-medium text-[#8d94a1]">Buy official printed books from Shadow Era</p>
         </div>
 
         <button
           type="button"
+          onClick={() => navigate('/shop/mall/cart')}
           className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-95"
           aria-label="Open cart"
         >
@@ -195,7 +135,7 @@ export default function ShadowMallSection() {
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {mallSlides.map((slide) => (
+        {shadowMallSlides.map((slide) => (
           <button
             key={slide.id}
             type="button"
@@ -220,7 +160,7 @@ export default function ShadowMallSection() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {categories.map((category) => {
+        {shadowMallCategories.map((category) => {
           const active = activeCategory === category
 
           return (
@@ -241,7 +181,7 @@ export default function ShadowMallSection() {
       </div>
 
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[16px] font-extrabold text-[#111827]">Books For You</h3>
+        <h3 className="text-[16px] font-extrabold text-[#111827]">Available Books</h3>
         <span className="text-[11px] font-bold text-[#8d94a1]">{filteredProducts.length} items</span>
       </div>
 
