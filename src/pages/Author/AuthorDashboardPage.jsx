@@ -415,7 +415,7 @@ export default function AuthorDashboardPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/me')}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
