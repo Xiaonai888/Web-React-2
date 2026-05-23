@@ -146,11 +146,18 @@ voucher: 'Voucher',
 }
 
 export function getDisplayLanguageId() {
-  return localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY) || 'en'
+  try {
+    return localStorage.getItem(DISPLAY_LANGUAGE_STORAGE_KEY) || 'en'
+  } catch {
+    return 'en'
+  }
 }
 
 export function setDisplayLanguageId(languageId) {
-  localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, languageId || 'en')
+  try {
+    localStorage.setItem(DISPLAY_LANGUAGE_STORAGE_KEY, languageId || 'en')
+  } catch {}
+
   window.dispatchEvent(new Event('shadow-display-language-change'))
 }
 
