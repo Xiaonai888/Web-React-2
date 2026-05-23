@@ -9,7 +9,11 @@ const STORY_LANGUAGE_LABELS = {
 }
 
 export function getStoryLanguageId() {
-  return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
+  try {
+    return localStorage.getItem(STORY_LANGUAGE_STORAGE_KEY) || 'km'
+  } catch {
+    return 'km'
+  }
 }
 
 export function getStoryLanguageLabel() {
