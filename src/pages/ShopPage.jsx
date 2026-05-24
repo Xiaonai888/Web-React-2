@@ -73,28 +73,7 @@ useEffect(() => {
       </header>
 
       <main className="px-4 pt-4">
-        {activeTab !== 'Shadow Mall' ? (
-          <div className="mb-6 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
-                    isActive
-                      ? 'border-black bg-black text-white'
-                      : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
-                  }`}
-                >
-                  {tab}
-                </button>
-              )
-            })}
-          </div>
-        ) : null}
+        
 
         {activeTab === 'Plans' && <PlanSection />}
         {activeTab === 'Purchase' && <PurchaseSection />}
