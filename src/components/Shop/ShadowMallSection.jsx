@@ -309,14 +309,11 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
       }
     }
 
-    fetchMallSlides()
+   fetchMallSlides()
 
-    const interval = setInterval(fetchMallSlides, 5000)
-
-    return () => {
-      ignore = true
-      clearInterval(interval)
-    }
+return () => {
+  ignore = true
+}
   }, [])
 
   const filteredProducts = useMemo(() => {
