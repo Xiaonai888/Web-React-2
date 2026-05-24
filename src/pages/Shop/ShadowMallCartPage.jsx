@@ -1,29 +1,38 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const initialCartItems = [
-  {
-    id: '1',
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    price: 36000,
-    oldPrice: 44000,
-    quantity: 1,
-  },
-  {
-    id: '2',
-    title: 'Silent Moon',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-2.jpg',
-    price: 32000,
-    oldPrice: 0,
-    quantity: 1,
-  },
-]
+const CART_KEY = 'shadow_mall_cart'
 
-function formatRiel(value) {
-  return `${Number(value || 0).toLocaleString('en-US')}៛`
+function readCart() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CART_KEY) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+}
+
+function saveCart(items) {
+  localStorage.setItem(CART_KEY, JSON.stringify(items))
+  window.dispatchEvent(new Event('shadow-mall-cart-updated'))
+}
+
+function formatUsd(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '$0.00'
+  return `$${number.toFixed(2)}`
+}
+
+function normalizeItem(item) {
+  return {
+    id: item.id,
+    title: item.title || 'Untitled book',
+    author: item.author || item.author_name || 'Unknown author',
+    cover: item.cover || item.cover_url || '',
+    price: Number(item.price || item.price_usd || 0),
+    oldPrice: item.oldPrice || item.old_price_usd ? Number(item.oldPrice || item.old_price_usd || 0) : 0,
+    quantity: Math.max(Number(item.quantity || 1), 1),
+  }
 }
 
 function CartItem({ item, onIncrease, onDecrease, onRemove }) {
@@ -31,14 +40,20 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
     <article className="rounded-[24px] bg-white p-3 shadow-sm ring-1 ring-black/5">
       <div className="flex gap-3">
         <div className="h-[116px] w-[78px] shrink-0 overflow-hidden rounded-[16px] bg-[#eef0f4]">
-          <img
-            src={item.cover}
-            alt={item.title}
-            className="h-full w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none'
-            }}
-          />
+          {item.cover ? (
+            <img
+              src={item.cover}
+              alt={item.title}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+              <i className="fa-solid fa-book-open text-[18px]" />
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -64,10 +79,10 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 
           <div className="mt-3 flex items-end justify-between gap-3">
             <div>
-              <div className="text-[14px] font-extrabold text-[#e5484d]">{formatRiel(item.price)}</div>
+              <div className="text-[14px] font-extrabold text-[#e5484d]">{formatUsd(item.price)}</div>
               {item.oldPrice ? (
                 <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
-                  {formatRiel(item.oldPrice)}
+                  {formatUsd(item.oldPrice)}
                 </div>
               ) : null}
             </div>
@@ -98,7 +113,16 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 
 export default function ShadowMallCartPage() {
   const navigate = useNavigate()
-  const [items, setItems] = useState(initialCartItems)
+  const [items, setItems] = useState([])
+
+  useEffect(() => {
+    setItems(readCart().map(normalizeItem))
+  }, [])
+
+  function updateItems(nextItems) {
+    setItems(nextItems)
+    saveCart(nextItems)
+  }
 
   const subtotal = useMemo(
     () => items.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -111,23 +135,23 @@ export default function ShadowMallCartPage() {
   )
 
   const increaseItem = (id) => {
-    setItems((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, quantity: Math.min(item.quantity + 1, 99) } : item
+    updateItems(
+      items.map((item) =>
+        String(item.id) === String(id) ? { ...item, quantity: Math.min(item.quantity + 1, 99) } : item
       )
     )
   }
 
   const decreaseItem = (id) => {
-    setItems((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(item.quantity - 1, 1) } : item
+    updateItems(
+      items.map((item) =>
+        String(item.id) === String(id) ? { ...item, quantity: Math.max(item.quantity - 1, 1) } : item
       )
     )
   }
 
   const removeItem = (id) => {
-    setItems((current) => current.filter((item) => item.id !== id))
+    updateItems(items.filter((item) => String(item.id) !== String(id)))
   }
 
   return (
@@ -179,7 +203,7 @@ export default function ShadowMallCartPage() {
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
                   <span>Subtotal</span>
-                  <span className="font-extrabold text-[#111827]">{formatRiel(subtotal)}</span>
+                  <span className="font-extrabold text-[#111827]">{formatUsd(subtotal)}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
@@ -190,7 +214,7 @@ export default function ShadowMallCartPage() {
                 <div className="border-t border-[#f0eef6] pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
-                    <span className="text-[18px] font-extrabold text-[#e5484d]">{formatRiel(subtotal)}</span>
+                    <span className="text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</span>
                   </div>
                   <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
                     Delivery fee will be added after address information.
@@ -206,7 +230,7 @@ export default function ShadowMallCartPage() {
             </div>
             <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Your cart is empty</h2>
             <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
-              Add books from Shadow Mall before checkout.
+              Add real books from Shadow Mall before checkout.
             </p>
             <button
               type="button"
@@ -224,7 +248,7 @@ export default function ShadowMallCartPage() {
           <div className="mx-auto flex max-w-5xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
-              <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatRiel(subtotal)}</div>
+              <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</div>
             </div>
 
             <button
