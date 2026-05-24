@@ -134,7 +134,7 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/10" />
-              <SlideBadge badge={getSlideBadge(slide, index)} />
+              <SlideBadge badge={getSlideBadge(slide)} />
             </button>
           </div>
         ))}
