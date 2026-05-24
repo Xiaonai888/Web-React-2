@@ -9,6 +9,22 @@ const API_URL =
 
 const CART_KEY = 'shadow_mall_cart'
 const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
+const DELIVERY_FEE = 2
+
+const deliveryCompanies = [
+  {
+    key: 'jnt',
+    name: 'J&T Express',
+    shortName: 'J&T',
+    logo: '/assets/ShadowMall/delivery/jnt.png',
+  },
+  {
+    key: 'vireak_buntham',
+    name: 'Vireak Buntham Express',
+    shortName: 'VET',
+    logo: '/assets/ShadowMall/delivery/vireak-buntham.png',
+  },
+]
 
 const provinces = [
   'Phnom Penh',
@@ -78,7 +94,6 @@ function getReaderName(user) {
 
   return (
     user.name ||
-    user.username ||
     user.full_name ||
     user.display_name ||
     user.email ||
@@ -147,6 +162,131 @@ function SelectInput(props) {
   )
 }
 
+function DeliveryLogo({ company }) {
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white shadow-sm ring-1 ring-black/5">
+      <img
+        src={company.logo}
+        alt={company.name}
+        className="h-full w-full object-cover"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none'
+          event.currentTarget.nextElementSibling.style.display = 'flex'
+        }}
+      />
+      <span className="hidden h-full w-full items-center justify-center bg-[#f5f3fa] text-[11px] font-extrabold text-[#111827]">
+        {company.shortName}
+      </span>
+    </div>
+  )
+}
+
+function BuyerProfileSheet({
+  open,
+  onClose,
+  readerName,
+  profileLoading,
+  phone,
+  setPhone,
+  province,
+  setProvince,
+  address,
+  setAddress,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[120]">
+      <button
+        type="button"
+        aria-label="Close Buyer Profile"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[28px] bg-white shadow-2xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-[520px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[26px]">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden" />
+
+        <div className="flex items-center justify-between gap-3 border-b border-[#f0eef6] px-5 pb-4 pt-5">
+          <div>
+            <div className="text-[18px] font-extrabold text-[#111827]">Buyer Profile</div>
+            <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              Required for printed book delivery.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#555b66]"
+          >
+            <i className="fa-solid fa-xmark text-[13px]" />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-5 pb-5 pt-4">
+          {profileLoading ? (
+            <div className="mb-4 rounded-[16px] bg-[#eef2ff] px-4 py-3 text-[12px] font-extrabold text-[#4f46e5]">
+              Loading buyer profile...
+            </div>
+          ) : null}
+
+          <div className="space-y-4">
+            <div>
+              <FieldLabel required>Name</FieldLabel>
+              <TextInput
+                value={readerName || 'Please login first'}
+                disabled
+                readOnly
+              />
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
+                Name comes from your reader account. To change it, update your main profile.
+              </p>
+            </div>
+
+            <div>
+              <FieldLabel required>Phone Number</FieldLabel>
+              <TextInput
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="Enter phone number"
+                inputMode="tel"
+              />
+            </div>
+
+            <div>
+              <FieldLabel required>Province / City</FieldLabel>
+              <SelectInput value={province} onChange={(event) => setProvince(event.target.value)}>
+                {provinces.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </SelectInput>
+            </div>
+
+            <div>
+              <FieldLabel required>Delivery Address</FieldLabel>
+              <textarea
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                placeholder="House number, street, village, commune, district..."
+                className="min-h-[120px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+            >
+              Save Information
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CheckoutItem({ item }) {
   return (
     <div className="flex gap-3 border-b border-[#f0eef6] py-3 last:border-b-0">
@@ -189,10 +329,12 @@ export default function ShadowMallCheckoutPage() {
   const [province, setProvince] = useState('Phnom Penh')
   const [address, setAddress] = useState('')
   const [note, setNote] = useState('')
+  const [deliveryCompany, setDeliveryCompany] = useState('jnt')
   const [message, setMessage] = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showOrderItems, setShowOrderItems] = useState(true)
+  const [buyerProfileOpen, setBuyerProfileOpen] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -210,6 +352,7 @@ export default function ShadowMallCheckoutPage() {
 
       if (!token) {
         setProfileLoading(false)
+        setBuyerProfileOpen(true)
         return
       }
 
@@ -236,6 +379,10 @@ export default function ShadowMallCheckoutPage() {
           setAddress(serverProfile.delivery_address)
           setNote(serverProfile.delivery_note)
           saveBuyerProfileLocal(serverProfile)
+        }
+
+        if (!ignore && (!data.profile?.phone_number || !data.profile?.delivery_address)) {
+          setBuyerProfileOpen(true)
         }
       } catch (error) {
         if (!ignore) {
@@ -265,11 +412,21 @@ export default function ShadowMallCheckoutPage() {
     [items]
   )
 
-  const canContinue =
+  const selectedDeliveryCompany = useMemo(
+    () => deliveryCompanies.find((company) => company.key === deliveryCompany) || deliveryCompanies[0],
+    [deliveryCompany]
+  )
+
+  const total = subtotal + DELIVERY_FEE
+
+  const profileComplete =
     Boolean(readerName.trim()) &&
     Boolean(phone.trim()) &&
     Boolean(province) &&
-    Boolean(address.trim()) &&
+    Boolean(address.trim())
+
+  const canContinue =
+    profileComplete &&
     items.length > 0 &&
     !saving
 
@@ -278,6 +435,7 @@ export default function ShadowMallCheckoutPage() {
 
     if (!readerName.trim() || !token) {
       setMessage('Please login before checkout.')
+      setBuyerProfileOpen(true)
       return
     }
 
@@ -288,6 +446,7 @@ export default function ShadowMallCheckoutPage() {
 
     if (!phone.trim() || !address.trim()) {
       setMessage('Phone number and delivery address are required.')
+      setBuyerProfileOpen(true)
       return
     }
 
@@ -321,10 +480,11 @@ export default function ShadowMallCheckoutPage() {
       const checkoutDraft = {
         buyer_name: readerName,
         buyer_profile: savedProfile,
+        delivery_company: selectedDeliveryCompany,
         items,
         subtotal,
-        delivery_fee: null,
-        grand_total: subtotal,
+        delivery_fee: DELIVERY_FEE,
+        grand_total: total,
         currency: 'USD',
         created_at: new Date().toISOString(),
       }
@@ -341,20 +501,45 @@ export default function ShadowMallCheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+      <BuyerProfileSheet
+        open={buyerProfileOpen}
+        onClose={() => setBuyerProfileOpen(false)}
+        readerName={readerName}
+        profileLoading={profileLoading}
+        phone={phone}
+        setPhone={setPhone}
+        province={province}
+        setProvince={setProvince}
+        address={address}
+        setAddress={setAddress}
+      />
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Checkout</h1>
+          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[#111827]">
+            Checkout
+          </h1>
 
-          <div className="h-10 w-10" />
+          <button
+            type="button"
+            onClick={() => setBuyerProfileOpen(true)}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Open Buyer Profile"
+          >
+            <i className="fa-solid fa-user text-[14px]" />
+            {!profileComplete ? (
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[#e5484d] ring-2 ring-white" />
+            ) : null}
+          </button>
         </div>
       </header>
 
@@ -366,66 +551,51 @@ export default function ShadowMallCheckoutPage() {
         ) : null}
 
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[16px] font-extrabold text-[#111827]">Buyer Profile</div>
+              <div className="text-[16px] font-extrabold text-[#111827]">Delivery Company</div>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
-                Used only for printed book delivery and order contact.
+                Choose the company for printed book delivery.
               </p>
             </div>
 
-            {profileLoading ? (
-              <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[10px] font-extrabold text-[#4f46e5]">
-                Loading
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <FieldLabel required>Name</FieldLabel>
-              <TextInput
-                value={readerName || 'Please login first'}
-                disabled
-                readOnly
-              />
-              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
-                Name comes from your reader account. To change it, update your main profile.
-              </p>
-            </div>
-
-            <div>
-              <FieldLabel required>Phone Number</FieldLabel>
-              <TextInput
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="Enter phone number"
-                inputMode="tel"
-              />
-            </div>
-
-            <div>
-              <FieldLabel required>Province / City</FieldLabel>
-              <SelectInput value={province} onChange={(event) => setProvince(event.target.value)}>
-                {provinces.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </SelectInput>
-            </div>
-
-            <div className="rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-              You can pay using ABA PayWay / KHQR from any supported bank app. No bank selection is needed here.
+            <div className="rounded-full bg-[#fff7d8] px-3 py-1 text-[11px] font-extrabold text-[#7a5600]">
+              {formatUsd(DELIVERY_FEE)}
             </div>
           </div>
 
-          <div className="mt-4">
-            <FieldLabel required>Delivery Address</FieldLabel>
-            <textarea
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              placeholder="House number, street, village, commune, district..."
-              className="min-h-[110px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-            />
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {deliveryCompanies.map((company) => {
+              const selected = deliveryCompany === company.key
+
+              return (
+                <button
+                  key={company.key}
+                  type="button"
+                  onClick={() => setDeliveryCompany(company.key)}
+                  className={`flex items-center gap-3 rounded-[18px] border-2 p-3 text-left transition active:scale-[0.99] ${
+                    selected
+                      ? 'border-[#d4af37] bg-[#fffaf0] shadow-[0_10px_24px_rgba(212,175,55,0.18)]'
+                      : 'border-[#eceaf2] bg-[#fafafe]'
+                  }`}
+                >
+                  <DeliveryLogo company={company} />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-extrabold text-[#111827]">{company.shortName}</div>
+                    <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
+                      {company.name}
+                    </div>
+                  </div>
+
+                  {selected ? (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d4af37] text-white">
+                      <i className="fa-solid fa-check text-[11px]" />
+                    </div>
+                  ) : null}
+                </button>
+              )
+            })}
           </div>
 
           <div className="mt-4">
@@ -480,17 +650,19 @@ export default function ShadowMallCheckoutPage() {
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
               <span>Delivery Fee</span>
-              <span className="font-extrabold text-[#111827]">Calculate later</span>
+              <span className="font-extrabold text-[#111827]">{formatUsd(DELIVERY_FEE)}</span>
+            </div>
+
+            <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
+              <span>Delivery Company</span>
+              <span className="font-extrabold text-[#111827]">{selectedDeliveryCompany.shortName}</span>
             </div>
 
             <div className="border-t border-[#f0eef6] pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
-                <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</span>
+                <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(total)}</span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
-                Delivery fee will be confirmed by Admin based on address.
-              </p>
             </div>
           </div>
         </section>
@@ -500,7 +672,7 @@ export default function ShadowMallCheckoutPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
-            <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</div>
+            <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(total)}</div>
           </div>
 
           {readerName ? (
