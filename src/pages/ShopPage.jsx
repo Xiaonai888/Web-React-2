@@ -9,6 +9,7 @@ const tabs = ['Shadow Mall', 'Purchase', 'Plans']
 export default function ShopPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Shadow Mall')
+  const [mallSearchOpen, setMallSearchOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-white pb-24">
