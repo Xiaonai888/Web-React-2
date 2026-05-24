@@ -300,11 +300,12 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         }
       `}</style>
 
-      <ShadowMallSwiperSlide
-        slides={mallSlides}
-        loading={slidesLoading}
-        onSlideClick={handleSlideClick}
-      />
+      <div className="relative">
+  <ShadowMallSwiperSlide
+    slides={mallSlides}
+    loading={slidesLoading}
+    onSlideClick={handleSlideClick}
+  />
       {showSearch ? (
   <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
     <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
