@@ -41,7 +41,7 @@ function SlideBadge({ badge }) {
   if (!badge) return null
 
   return (
-    <span className={`absolute left-3 top-3 z-10 rounded-full px-3 py-1 text-[10px] font-extrabold shadow-sm ${getBadgeClass(badge)}`}>
+    <span className={`absolute bottom-3 left-3 z-10 rounded-full px-3 py-1 text-[10px] font-extrabold shadow-sm ${getBadgeClass(badge)}`}>
       {badge}
     </span>
   )
