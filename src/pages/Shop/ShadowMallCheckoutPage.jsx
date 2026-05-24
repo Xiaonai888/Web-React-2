@@ -115,7 +115,6 @@ export default function ShadowMallCheckoutPage() {
   const [province, setProvince] = useState('Phnom Penh')
   const [address, setAddress] = useState('')
   const [note, setNote] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('aba_khqr')
   const [showOrderItems, setShowOrderItems] = useState(false)
 
   const subtotal = useMemo(
@@ -181,14 +180,6 @@ export default function ShadowMallCheckoutPage() {
                 ))}
               </SelectInput>
             </div>
-
-            <div>
-              <FieldLabel>Payment method</FieldLabel>
-              <SelectInput value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-                <option value="aba_khqr">ABA KHQR</option>
-              </SelectInput>
-            </div>
-          </div>
 
           <div className="mt-4">
             <FieldLabel required>Full address</FieldLabel>
@@ -263,7 +254,7 @@ export default function ShadowMallCheckoutPage() {
           </div>
 
           <div className="mt-4 rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-            After payment, your book order will show as successful, but Admin still needs to prepare and deliver the books.
+            You can pay using ABA PayWay / KHQR from any supported bank app. After payment, Admin will prepare and deliver your books.
           </div>
         </section>
       </main>
