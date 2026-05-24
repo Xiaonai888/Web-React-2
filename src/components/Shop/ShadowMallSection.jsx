@@ -22,12 +22,18 @@ const products = [
   },
 ]
 
-function getSlideBadge(slide, index) {
-  const fromTitle = String(slide?.badge || '').trim().toUpperCase()
-  if (['NEW', 'HOT', 'TOP'].includes(fromTitle)) return fromTitle
+function parseSlideTitle(value = '') {
+  const match = String(value).match(/^\[(NEW|HOT|TOP)\]\s*(.*)$/i)
 
-  const badges = ['NEW', 'HOT', 'TOP']
-  return badges[index % badges.length]
+  if (!match) {
+    return { badge: '', title: value || '' }
+  }
+
+  return { badge: match[1].toUpperCase(), title: match[2] || '' }
+}
+
+function getSlideBadge(slide) {
+  return parseSlideTitle(slide?.title || '').badge
 }
 
 function getBadgeClass(badge) {
