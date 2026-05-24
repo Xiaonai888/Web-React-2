@@ -206,8 +206,39 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
     </div>
   )
 }
+function getProductStatus(product) {
+  const status = String(product.status || 'in_stock').toLowerCase()
+
+  if (status === 'sold_out') {
+    return {
+      label: 'SOLD OUT',
+      className: 'bg-[#f1f5f9] text-[#64748b]',
+      disabled: true,
+      coverClass: 'opacity-60',
+    }
+  }
+
+  if (status === 'pre_order') {
+    return {
+      label: 'PRE-ORDER',
+      className: 'bg-[#fff7d8] text-[#7a5600]',
+      disabled: false,
+      coverClass: '',
+    }
+  }
+
+  return {
+    label: 'IN STOCK',
+    className: 'bg-[#dcfce7] text-[#166534]',
+    disabled: false,
+    coverClass: '',
+  }
+}
 
 function ProductCard({ product, onOpen }) {
+  const status = getProductStatus(product)
+  const hasOldPrice = Boolean(String(product.oldPrice || '').trim())
+
   return (
     <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
       <button type="button" onClick={onOpen} className="block w-full text-left">
@@ -215,16 +246,26 @@ function ProductCard({ product, onOpen }) {
           <img
             src={product.cover}
             alt={product.title}
-            className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
+            className={`h-full w-full object-cover transition duration-300 hover:scale-[1.03] ${status.coverClass}`}
             onError={(event) => {
               event.currentTarget.style.display = 'none'
             }}
           />
-          {product.badge ? (
-            <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-extrabold text-[#111827] shadow-sm">
-              {product.badge}
-            </span>
-          ) : null}
+
+          <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${status.className}`}>
+            {status.label}
+          </span>
+
+          <button
+            type="button"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95"
+            aria-label={`Save ${product.title}`}
+            onClick={(event) => {
+              event.stopPropagation()
+            }}
+          >
+            <i className="fa-regular fa-heart text-[13px]" />
+          </button>
         </div>
       </button>
 
@@ -233,26 +274,33 @@ function ProductCard({ product, onOpen }) {
           <h3 className="line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
             {product.title}
           </h3>
+
           <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
             {product.author}
           </p>
-          {product.note ? (
-            <p className="mt-1 line-clamp-1 text-[10.5px] font-bold text-[#a0a5b1]">
-              {product.note}
-            </p>
-          ) : null}
         </button>
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <button type="button" onClick={onOpen} className="min-w-0 text-left">
-            <div className="text-[13px] font-extrabold text-[#e5484d]">{product.price}</div>
-            {product.oldPrice ? (
-              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">{product.oldPrice}</div>
+            <div className="text-[13px] font-extrabold text-[#e5484d]">
+              {product.price}
+            </div>
+
+            {hasOldPrice ? (
+              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">
+                {product.oldPrice}
+              </div>
             ) : null}
           </button>
+
           <button
             type="button"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+            disabled={status.disabled}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+              status.disabled
+                ? 'bg-[#eef2f7] text-[#98a2b3]'
+                : 'bg-[#111827] text-white'
+            }`}
             aria-label={`Add ${product.title} to cart`}
           >
             <i className="fa-solid fa-cart-shopping text-[12px]" />
@@ -262,6 +310,7 @@ function ProductCard({ product, onOpen }) {
     </article>
   )
 }
+
 
 function MallShortcutRow({ setActiveTab }) {
   return (
