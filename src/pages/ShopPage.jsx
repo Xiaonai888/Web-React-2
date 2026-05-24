@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { useNavigate } from 'react-router-dom'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
+
 
 const tabs = ['Shadow Mall', 'Purchase', 'Plans']
 
@@ -10,6 +12,23 @@ export default function ShopPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Shadow Mall')
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
+
+useEffect(() => {
+  const refreshCartCount = () => {
+    setCartCount(getShadowMallCartCount())
+  }
+
+  window.addEventListener('shadow-mall-cart-change', refreshCartCount)
+  window.addEventListener('storage', refreshCartCount)
+  window.addEventListener('focus', refreshCartCount)
+
+  return () => {
+    window.removeEventListener('shadow-mall-cart-change', refreshCartCount)
+    window.removeEventListener('storage', refreshCartCount)
+    window.removeEventListener('focus', refreshCartCount)
+  }
+}, [])
 
   return (
     <div className="min-h-screen bg-white pb-24">
