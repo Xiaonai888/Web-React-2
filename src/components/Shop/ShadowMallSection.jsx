@@ -462,7 +462,7 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
 
       <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
       <MallShortcutRow setActiveTab={setActiveTab} />
-      <MainChoiceCards />
+
       <PreOrderFeature />
 
       {mallSections.map((section) => {
