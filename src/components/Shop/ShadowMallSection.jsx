@@ -332,12 +332,7 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         loading={slidesLoading}
         onSlideClick={handleSlideClick}
       />
-      <ShadowMallSwiperSlide
-  slides={mallSlides}
-  loading={slidesLoading}
-  onSlideClick={handleSlideClick}
-/>
-
+    
 <div className="flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   {tabs.map((tab) => {
     const isActive = activeTab === tab
