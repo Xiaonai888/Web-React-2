@@ -21,7 +21,7 @@ const products = [
 ]
 
 const mallShortcuts = [
-  { label: 'Purchase', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
+  { label: 'Diamond', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
   { label: 'Plans', icon: 'fa-crown', type: 'tab', tab: 'Plans' },
   { label: 'A', icon: 'fa-book-open', type: 'disabled' },
   { label: 'B', icon: 'fa-box-open', type: 'disabled' },
