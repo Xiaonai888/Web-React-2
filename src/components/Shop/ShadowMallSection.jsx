@@ -15,7 +15,7 @@ const mallShortcuts = [
 ]
 
 const mallSections = [
-  { key: 'new_books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals' },
+  { key: 'new_books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals.' },
   { key: 'second_hand', title: 'Second Hand', subtitle: 'Checked condition, lower price, limited stock' },
   { key: 'best_seller', title: 'Best Seller', subtitle: 'Books readers are choosing most' },
   { key: 'discount', title: 'Discount Books', subtitle: 'Special prices while stock lasts' },
