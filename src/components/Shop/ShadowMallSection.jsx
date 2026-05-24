@@ -277,7 +277,7 @@ function MallShortcutRow({ setActiveTab }) {
             onClick={() => {
               if (item.type === 'tab') setActiveTab?.(item.tab)
             }}
-            className={`rounded-[20px] bg-white px-2 py-3 text-center shadow-sm ring-1 ring-black/5 active:scale-[0.98] ${disabled ? 'opacity-45' : ''}`}
+            className={`rounded-[20px] bg-white px-2 py-3 text-center active:scale-[0.98] ${disabled ? 'opacity-45' : ''}`}
           >
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
               <i className={`fa-solid ${item.icon} text-[14px]`} />
