@@ -7,63 +7,6 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const products = [
-  {
-  id: 1,
-  title: 'ឈ្មោះសៀវភៅ',
-  author: 'ឈ្មោះអ្នកនិពន្ធ',
-  cover: '/assets/ShadowMall/books/book-1.jpg',
-  category: 'New Books',
-  price: '$8.75',
-  oldPrice: '',
-  status: 'in_stock',
-},
-  {
-    id: 2,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Second Hand',
-    price: '28,000៛',
-    oldPrice: '36,000៛',
-    badge: 'LIKE NEW',
-    note: 'Checked condition',
-  },
-  {
-    id: 3,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Best Seller',
-    price: '36,000៛',
-    oldPrice: '',
-    badge: 'TOP',
-    note: 'Reader favorite',
-  },
-  {
-    id: 4,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Discount',
-    price: '30,000៛',
-    oldPrice: '44,000៛',
-    badge: 'SALE',
-    note: 'Limited deal',
-  },
-  {
-    id: 5,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Pre-order',
-    price: '36,000៛',
-    oldPrice: '',
-    badge: 'RESERVE',
-    note: 'Coming soon',
-  },
-]
-
 const mallShortcuts = [
   { label: 'Diamond', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
   { label: 'Plans', icon: 'fa-crown', type: 'tab', tab: 'Plans' },
@@ -72,12 +15,12 @@ const mallShortcuts = [
 ]
 
 const mallSections = [
-  { key: 'new-books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals', filter: 'New Books' },
-  { key: 'second-hand', title: 'Second Hand', subtitle: 'Checked condition, lower price, limited stock', filter: 'Second Hand' },
-  { key: 'best-seller', title: 'Best Seller', subtitle: 'Books readers are choosing most', filter: 'Best Seller' },
-  { key: 'discount', title: 'Discount Books', subtitle: 'Special prices while stock lasts', filter: 'Discount' },
-  { key: 'pre-order', title: 'Pre-order', subtitle: 'Reserve upcoming books before release', filter: 'Pre-order' },
-  { key: 'sold-out', title: 'Recently Sold Out', subtitle: 'Popular books that sold out recently', filter: 'Sold Out', limit: 6 },
+  { key: 'new_books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals' },
+  { key: 'second_hand', title: 'Second Hand', subtitle: 'Checked condition, lower price, limited stock' },
+  { key: 'best_seller', title: 'Best Seller', subtitle: 'Books readers are choosing most' },
+  { key: 'discount', title: 'Discount Books', subtitle: 'Special prices while stock lasts' },
+  { key: 'pre_order', title: 'Pre-order', subtitle: 'Reserve upcoming books before release' },
+  { key: 'sold_out', title: 'Recently Sold Out', subtitle: 'Popular books that sold out recently' },
 ]
 
 function parseSlideTitle(value = '') {
@@ -206,6 +149,7 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
     </div>
   )
 }
+
 function getProductStatus(product) {
   const status = String(product.status || 'in_stock').toLowerCase()
 
@@ -235,6 +179,27 @@ function getProductStatus(product) {
   }
 }
 
+function formatUsd(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '$0.00'
+
+  return `$${number.toFixed(2)}`
+}
+
+function normalizeProduct(product) {
+  return {
+    id: product.id,
+    title: product.title || 'Untitled book',
+    author: product.author_name || 'Unknown author',
+    cover: product.cover_url || '',
+    category: product.category || 'new_books',
+    price: formatUsd(product.price_usd),
+    oldPrice: product.old_price_usd ? formatUsd(product.old_price_usd) : '',
+    status: product.stock_status || 'in_stock',
+  }
+}
+
 function ProductCard({ product, onOpen }) {
   const status = getProductStatus(product)
   const hasOldPrice = Boolean(String(product.oldPrice || '').trim())
@@ -243,14 +208,16 @@ function ProductCard({ product, onOpen }) {
     <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
       <button type="button" onClick={onOpen} className="block w-full text-left">
         <div className="relative aspect-[2/3] overflow-hidden bg-[#f3f4f6]">
-          <img
-            src={product.cover}
-            alt={product.title}
-            className={`h-full w-full object-cover transition duration-300 hover:scale-[1.03] ${status.coverClass}`}
-            onError={(event) => {
-              event.currentTarget.style.display = 'none'
-            }}
-          />
+          {product.cover ? (
+            <img
+              src={product.cover}
+              alt={product.title}
+              className={`h-full w-full object-cover transition duration-300 hover:scale-[1.03] ${status.coverClass}`}
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : null}
 
           <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-extrabold shadow-sm ${status.className}`}>
             {status.label}
@@ -311,7 +278,6 @@ function ProductCard({ product, onOpen }) {
   )
 }
 
-
 function MallShortcutRow({ setActiveTab }) {
   return (
     <div className="grid grid-cols-4 gap-3">
@@ -340,36 +306,9 @@ function MallShortcutRow({ setActiveTab }) {
   )
 }
 
-function MainChoiceCards() {
-  return (
-    <section className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <button type="button" className="overflow-hidden rounded-[24px] bg-[#111827] p-4 text-left text-white shadow-sm active:scale-[0.99]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
-            <i className="fa-solid fa-book text-[15px]" />
-          </div>
-          <div className="mt-4 text-[17px] font-extrabold">New Books</div>
-          <div className="mt-1 text-[11px] font-semibold leading-5 text-white/70">Fresh copies and latest arrivals</div>
-        </button>
+function PreOrderFeature({ products, onOpen }) {
+  const firstProduct = products[0]
 
-        <button type="button" className="overflow-hidden rounded-[24px] bg-[#fff7d8] p-4 text-left text-[#111827] shadow-sm ring-1 ring-[#ffe8a3] active:scale-[0.99]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70">
-            <i className="fa-solid fa-tags text-[15px]" />
-          </div>
-          <div className="mt-4 text-[17px] font-extrabold">Second Hand</div>
-          <div className="mt-1 text-[11px] font-semibold leading-5 text-[#7a5600]">Checked condition, lower price</div>
-        </button>
-      </div>
-
-      <div className="flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center shadow-sm ring-1 ring-black/5">
-        <i className="fa-solid fa-circle-check text-[13px] text-[#10b981]" />
-        <span className="text-[11.5px] font-extrabold text-[#667085]">Checked condition • Clear price • Delivery available</span>
-      </div>
-    </section>
-  )
-}
-
-function PreOrderFeature() {
   return (
     <section className="overflow-hidden rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="flex items-start justify-between gap-4">
@@ -395,7 +334,7 @@ function PreOrderFeature() {
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
           <div className="text-[9px] font-bold text-[#98a2b3]">STATUS</div>
-          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Open</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">{firstProduct ? 'Open' : 'Soon'}</div>
         </div>
 
         <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
@@ -412,6 +351,9 @@ function PreOrderFeature() {
       <button
         type="button"
         className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+        onClick={() => {
+          if (firstProduct) onOpen(firstProduct)
+        }}
       >
         View Pre-order
       </button>
@@ -419,7 +361,7 @@ function PreOrderFeature() {
   )
 }
 
-function MallBookSection({ title, subtitle, books, onOpen }) {
+function MallBookSection({ title, subtitle, books, onOpen, loading }) {
   return (
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
@@ -432,7 +374,13 @@ function MallBookSection({ title, subtitle, books, onOpen }) {
         </button>
       </div>
 
-      {books.length ? (
+      {loading ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div key={item} className="aspect-[2/3] animate-pulse rounded-[22px] bg-[#eef2f7]" />
+          ))}
+        </div>
+      ) : books.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {books.map((product) => (
             <ProductCard key={`${title}-${product.id}`} product={product} onOpen={() => onOpen(product)} />
@@ -452,6 +400,15 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
   const [search, setSearch] = useState('')
   const [mallSlides, setMallSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
+  const [homeSections, setHomeSections] = useState({
+    new_books: [],
+    second_hand: [],
+    best_seller: [],
+    discount: [],
+    pre_order: [],
+    sold_out: [],
+  })
+  const [productsLoading, setProductsLoading] = useState(true)
 
   useEffect(() => {
     let ignore = false
@@ -478,18 +435,74 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
     }
   }, [])
 
-  const filteredProducts = useMemo(() => {
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchShadowMallHome() {
+      try {
+        setProductsLoading(true)
+
+        const response = await fetch(`${API_URL}/api/shadow-mall/home`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Shadow Mall products')
+        }
+
+        const sections = data.sections || {}
+
+        if (!ignore) {
+          setHomeSections({
+            new_books: (sections.new_books || []).map(normalizeProduct),
+            second_hand: (sections.second_hand || []).map(normalizeProduct),
+            best_seller: (sections.best_seller || []).map(normalizeProduct),
+            discount: (sections.discount || []).map(normalizeProduct),
+            pre_order: (sections.pre_order || []).map(normalizeProduct),
+            sold_out: (sections.sold_out || []).map(normalizeProduct),
+          })
+        }
+      } catch {
+        if (!ignore) {
+          setHomeSections({
+            new_books: [],
+            second_hand: [],
+            best_seller: [],
+            discount: [],
+            pre_order: [],
+            sold_out: [],
+          })
+        }
+      } finally {
+        if (!ignore) setProductsLoading(false)
+      }
+    }
+
+    fetchShadowMallHome()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const filteredSections = useMemo(() => {
     const keyword = search.trim().toLowerCase()
 
-    return products.filter((product) => {
-      return (
-        !keyword ||
-        product.title.toLowerCase().includes(keyword) ||
-        product.author.toLowerCase().includes(keyword) ||
-        product.category.toLowerCase().includes(keyword)
-      )
+    if (!keyword) return homeSections
+
+    const nextSections = {}
+
+    Object.entries(homeSections).forEach(([key, items]) => {
+      nextSections[key] = items.filter((product) => {
+        return (
+          product.title.toLowerCase().includes(keyword) ||
+          product.author.toLowerCase().includes(keyword) ||
+          String(product.category || '').toLowerCase().includes(keyword)
+        )
+      })
     })
-  }, [search])
+
+    return nextSections
+  }, [homeSections, search])
 
   const handleSlideClick = () => {}
 
@@ -530,21 +543,18 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
       <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
       <MallShortcutRow setActiveTab={setActiveTab} />
 
-      <PreOrderFeature />
+      <PreOrderFeature products={filteredSections.pre_order || []} onOpen={openProduct} />
 
-      {mallSections.map((section) => {
-        const sectionBooks = filteredProducts.filter((product) => product.category === section.filter)
-
-        return (
-          <MallBookSection
-            key={section.key}
-            title={section.title}
-            subtitle={section.subtitle}
-            books={sectionBooks}
-            onOpen={openProduct}
-          />
-        )
-      })}
+      {mallSections.map((section) => (
+        <MallBookSection
+          key={section.key}
+          title={section.title}
+          subtitle={section.subtitle}
+          books={filteredSections[section.key] || []}
+          loading={productsLoading}
+          onOpen={openProduct}
+        />
+      ))}
     </section>
   )
 }
