@@ -133,8 +133,15 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
                   event.currentTarget.style.display = 'none'
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/10" />
-              <SlideBadge badge={getSlideBadge(slide)} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+
+{slide.subtitle ? (
+  <div className="absolute bottom-10 left-3 right-3 z-10 line-clamp-2 text-left text-[12px] font-bold leading-5 text-white drop-shadow">
+    {slide.subtitle}
+  </div>
+) : null}
+
+<SlideBadge badge={getSlideBadge(slide)} />
             </button>
           </div>
         ))}
