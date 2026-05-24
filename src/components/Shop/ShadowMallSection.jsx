@@ -204,7 +204,7 @@ function ProductCard({ product, onOpen }) {
   )
 }
 
-export default function ShadowMallSection() {
+export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall', setActiveTab }) {
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
@@ -332,6 +332,32 @@ export default function ShadowMallSection() {
         loading={slidesLoading}
         onSlideClick={handleSlideClick}
       />
+      <ShadowMallSwiperSlide
+  slides={mallSlides}
+  loading={slidesLoading}
+  onSlideClick={handleSlideClick}
+/>
+
+<div className="flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  {tabs.map((tab) => {
+    const isActive = activeTab === tab
+
+    return (
+      <button
+        key={tab}
+        type="button"
+        onClick={() => setActiveTab?.(tab)}
+        className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
+          isActive
+            ? 'border-black bg-black text-white'
+            : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
+        }`}
+      >
+        {tab}
+      </button>
+    )
+  })}
+</div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((category) => {
