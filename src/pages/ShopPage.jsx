@@ -63,8 +63,12 @@ useEffect(() => {
   aria-label="Open cart"
 >
   <i className="fa-solid fa-cart-shopping text-[20px]" />
-            
-          </button>
+  {cartCount > 0 ? (
+    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
+      {cartCount}
+    </span>
+  ) : null}
+</button>
         </div>
       </header>
 
