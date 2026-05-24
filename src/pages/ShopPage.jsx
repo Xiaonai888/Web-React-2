@@ -4,11 +4,11 @@ import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 
-const tabs = ['Purchase', 'Plans', 'Shadow Mall']
+const tabs = ['Shadow Mall', 'Purchase', 'Plans']
 
 export default function ShopPage() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Purchase')
+  const [activeTab, setActiveTab] = useState('Shadow Mall')
 
   return (
     <div className="min-h-screen bg-white pb-24">
