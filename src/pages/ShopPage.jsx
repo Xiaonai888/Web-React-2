@@ -23,12 +23,9 @@ export default function ShopPage() {
             <i className="fas fa-chevron-left text-[18px] text-gray-700" />
           </button>
 
-          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-  Shop
-</h1>
-          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-  Shop
-</h1>
+<h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+  Shadow Mall
+</h1>       
 
 <button
   type="button"
