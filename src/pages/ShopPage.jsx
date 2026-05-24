@@ -6,7 +6,7 @@ import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
 
 
-const tabs = ['Shadow Mall', 'Purchase', 'Plans']
+const tabs = ['Shadow Mall', 'Plans']
 
 export default function ShopPage() {
   const navigate = useNavigate()
