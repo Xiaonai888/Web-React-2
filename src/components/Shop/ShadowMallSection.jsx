@@ -317,21 +317,21 @@ export default function ShadowMallSection() {
         </button>
       </div>
 
+      <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
+  <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
+  <input
+    value={search}
+    onChange={(event) => setSearch(event.target.value)}
+    placeholder="Search books, author, publisher..."
+    className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#111827] outline-none placeholder:text-[#a0a5b1]"
+  />
+</div>
+
       <ShadowMallSwiperSlide
         slides={mallSlides}
         loading={slidesLoading}
         onSlideClick={handleSlideClick}
       />
-
-      <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
-        <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search books, author, publisher..."
-          className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#111827] outline-none placeholder:text-[#a0a5b1]"
-        />
-      </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((category) => {
