@@ -27,17 +27,6 @@ export default function ShopPage() {
   Shop
 </h1>
 
-<button
-  type="button"
-  onClick={() => navigate('/shop/mall/cart')}
-  className="relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-95"
-  aria-label="Open cart"
->
-  <i className="fa-solid fa-cart-shopping text-[15px]" />
-  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-    0
-  </span>
-</button>
         </div>
       </header>
 
