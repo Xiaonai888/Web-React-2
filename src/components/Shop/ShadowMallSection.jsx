@@ -302,7 +302,6 @@ export default function ShadowMallSection() {
 
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="mt-1 text-[12px] font-medium text-[#8d94a1]">Buy official printed books from Shadow Era</p>
         </div>
 
         <button
