@@ -1,24 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const cartItems = [
-  {
-    id: '1',
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    price: 36000,
-    quantity: 1,
-  },
-  {
-    id: '2',
-    title: 'Silent Moon',
-    author: 'Shadow Author',
-    cover: '/assets/ShadowMall/books/book-2.jpg',
-    price: 32000,
-    quantity: 1,
-  },
-]
+const CART_KEY = 'shadow_mall_cart'
+const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
 
 const provinces = [
   'Phnom Penh',
@@ -48,8 +32,70 @@ const provinces = [
   'Tboung Khmum',
 ]
 
-function formatRiel(value) {
-  return `${Number(value || 0).toLocaleString('en-US')}៛`
+function readJson(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null')
+    return value || fallback
+  } catch {
+    return fallback
+  }
+}
+
+function readCart() {
+  const value = readJson(CART_KEY, [])
+  return Array.isArray(value) ? value : []
+}
+
+function saveBuyerProfile(profile) {
+  localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
+}
+
+function readBuyerProfile() {
+  return readJson(BUYER_PROFILE_KEY, {
+    phone_number: '',
+    province_city: 'Phnom Penh',
+    delivery_address: '',
+    delivery_note: '',
+  })
+}
+
+function readReaderUser() {
+  return readJson('shadow_reader_user', null)
+}
+
+function getReaderName(user) {
+  if (!user) return ''
+
+  return (
+    user.username ||
+    user.name ||
+    user.full_name ||
+    user.display_name ||
+    user.email ||
+    ''
+  )
+}
+
+function normalizePrice(value) {
+  return Number(String(value || '').replace('$', '')) || 0
+}
+
+function normalizeCartItem(item) {
+  return {
+    id: item.id,
+    title: item.title || 'Untitled book',
+    author: item.author || item.author_name || 'Unknown author',
+    cover: item.cover || item.cover_url || '',
+    price: normalizePrice(item.price || item.price_usd),
+    oldPrice: normalizePrice(item.oldPrice || item.old_price_usd),
+    quantity: Math.max(Number(item.quantity || 1), 1),
+  }
+}
+
+function formatUsd(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '$0.00'
+  return `$${number.toFixed(2)}`
 }
 
 function FieldLabel({ children, required = false }) {
@@ -65,7 +111,7 @@ function TextInput(props) {
   return (
     <input
       {...props}
-      className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-semibold text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+      className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-semibold text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] disabled:bg-[#f4f5f7] disabled:text-[#667085]"
     />
   )
 }
@@ -86,14 +132,20 @@ function CheckoutItem({ item }) {
   return (
     <div className="flex gap-3 border-b border-[#f0eef6] py-3 last:border-b-0">
       <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
-        <img
-          src={item.cover}
-          alt={item.title}
-          className="h-full w-full object-cover"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none'
-          }}
-        />
+        {item.cover ? (
+          <img
+            src={item.cover}
+            alt={item.title}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[#98a2b3]">
+            <i className="fa-solid fa-book-open text-[15px]" />
+          </div>
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -101,7 +153,9 @@ function CheckoutItem({ item }) {
         <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">{item.author}</div>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="text-[12px] font-bold text-[#8d94a1]">Qty: {item.quantity}</span>
-          <span className="text-[13px] font-extrabold text-[#e5484d]">{formatRiel(item.price * item.quantity)}</span>
+          <span className="text-[13px] font-extrabold text-[#e5484d]">
+            {formatUsd(item.price * item.quantity)}
+          </span>
         </div>
       </div>
     </div>
@@ -110,21 +164,84 @@ function CheckoutItem({ item }) {
 
 export default function ShadowMallCheckoutPage() {
   const navigate = useNavigate()
-  const [receiverName, setReceiverName] = useState('')
+  const [items, setItems] = useState([])
+  const [readerUser, setReaderUser] = useState(null)
   const [phone, setPhone] = useState('')
   const [province, setProvince] = useState('Phnom Penh')
   const [address, setAddress] = useState('')
   const [note, setNote] = useState('')
-  const [showOrderItems, setShowOrderItems] = useState(false)
+  const [message, setMessage] = useState('')
+  const [showOrderItems, setShowOrderItems] = useState(true)
+
+  useEffect(() => {
+    const profile = readBuyerProfile()
+
+    setItems(readCart().map(normalizeCartItem))
+    setReaderUser(readReaderUser())
+    setPhone(profile.phone_number || '')
+    setProvince(profile.province_city || 'Phnom Penh')
+    setAddress(profile.delivery_address || '')
+    setNote(profile.delivery_note || '')
+  }, [])
+
+  const readerName = useMemo(() => getReaderName(readerUser), [readerUser])
 
   const subtotal = useMemo(
-    () => cartItems.reduce((total, item) => total + item.price * item.quantity, 0),
-    []
+    () => items.reduce((total, item) => total + item.price * item.quantity, 0),
+    [items]
   )
 
-  const deliveryFee = province === 'Phnom Penh' ? 3000 : 5000
-  const grandTotal = subtotal + deliveryFee
-  const canContinue = receiverName.trim() && phone.trim() && province && address.trim()
+  const itemCount = useMemo(
+    () => items.reduce((total, item) => total + item.quantity, 0),
+    [items]
+  )
+
+  const canContinue =
+    Boolean(readerName.trim()) &&
+    Boolean(phone.trim()) &&
+    Boolean(province) &&
+    Boolean(address.trim()) &&
+    items.length > 0
+
+  function handleContinue() {
+    if (!readerName.trim()) {
+      setMessage('Please login before checkout.')
+      return
+    }
+
+    if (!items.length) {
+      setMessage('Your cart is empty.')
+      return
+    }
+
+    if (!phone.trim() || !address.trim()) {
+      setMessage('Phone number and delivery address are required.')
+      return
+    }
+
+    const profile = {
+      phone_number: phone.trim(),
+      province_city: province,
+      delivery_address: address.trim(),
+      delivery_note: note.trim(),
+      updated_at: new Date().toISOString(),
+    }
+
+    const checkoutDraft = {
+      buyer_name: readerName,
+      buyer_profile: profile,
+      items,
+      subtotal,
+      delivery_fee: null,
+      grand_total: subtotal,
+      currency: 'USD',
+      created_at: new Date().toISOString(),
+    }
+
+    saveBuyerProfile(profile)
+    localStorage.setItem('shadow_mall_checkout_draft', JSON.stringify(checkoutDraft))
+    navigate('/shop/mall/payment')
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
@@ -146,24 +263,33 @@ export default function ShadowMallCheckoutPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
+        {message ? (
+          <div className="mb-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d]">
+            {message}
+          </div>
+        ) : null}
+
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-[16px] font-extrabold text-[#111827]">Delivery Information</div>
+          <div className="text-[16px] font-extrabold text-[#111827]">Buyer Profile</div>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
-            Please enter correct information so Admin can prepare your book order.
+            Used only for printed book delivery and order contact.
           </p>
 
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <FieldLabel required>Receiver name</FieldLabel>
+              <FieldLabel required>Name</FieldLabel>
               <TextInput
-                value={receiverName}
-                onChange={(event) => setReceiverName(event.target.value)}
-                placeholder="Enter receiver name"
+                value={readerName || 'Please login first'}
+                disabled
+                readOnly
               />
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
+                Name comes from your reader account. To change it, update your main profile.
+              </p>
             </div>
 
             <div>
-              <FieldLabel required>Phone number</FieldLabel>
+              <FieldLabel required>Phone Number</FieldLabel>
               <TextInput
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
@@ -181,8 +307,13 @@ export default function ShadowMallCheckoutPage() {
               </SelectInput>
             </div>
 
+            <div className="rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
+              You can pay using ABA PayWay / KHQR from any supported bank app. No bank selection is needed here.
+            </div>
+          </div>
+
           <div className="mt-4">
-            <FieldLabel required>Full address</FieldLabel>
+            <FieldLabel required>Delivery Address</FieldLabel>
             <textarea
               value={address}
               onChange={(event) => setAddress(event.target.value)}
@@ -192,7 +323,7 @@ export default function ShadowMallCheckoutPage() {
           </div>
 
           <div className="mt-4">
-            <FieldLabel>Delivery note</FieldLabel>
+            <FieldLabel>Delivery Note</FieldLabel>
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
@@ -211,7 +342,7 @@ export default function ShadowMallCheckoutPage() {
             <div>
               <div className="text-[16px] font-extrabold text-[#111827]">Order Items</div>
               <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
-                {cartItems.length} books in this order
+                {itemCount} books in this order
               </div>
             </div>
             <i className={`fa-solid fa-chevron-down text-[12px] text-[#98a2b3] transition ${showOrderItems ? 'rotate-180' : ''}`} />
@@ -219,9 +350,15 @@ export default function ShadowMallCheckoutPage() {
 
           {showOrderItems ? (
             <div className="px-4 pb-3">
-              {cartItems.map((item) => (
-                <CheckoutItem key={item.id} item={item} />
-              ))}
+              {items.length ? (
+                items.map((item) => (
+                  <CheckoutItem key={item.id} item={item} />
+                ))
+              ) : (
+                <div className="py-8 text-center text-[13px] font-extrabold text-[#98a2b3]">
+                  No books in cart.
+                </div>
+              )}
             </div>
           ) : null}
         </section>
@@ -232,29 +369,23 @@ export default function ShadowMallCheckoutPage() {
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
               <span>Subtotal</span>
-              <span className="font-extrabold text-[#111827]">{formatRiel(subtotal)}</span>
+              <span className="font-extrabold text-[#111827]">{formatUsd(subtotal)}</span>
             </div>
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
-              <span>Delivery fee</span>
-              <span className="font-extrabold text-[#111827]">{formatRiel(deliveryFee)}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
-              <span>Discount</span>
-              <span className="font-extrabold text-[#111827]">0៛</span>
+              <span>Delivery Fee</span>
+              <span className="font-extrabold text-[#111827]">Calculate later</span>
             </div>
 
             <div className="border-t border-[#f0eef6] pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-[14px] font-extrabold text-[#111827]">Grand total</span>
-                <span className="text-[20px] font-extrabold text-[#e5484d]">{formatRiel(grandTotal)}</span>
+                <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
+                <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</span>
               </div>
+              <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
+                Delivery fee will be confirmed by Admin based on address.
+              </p>
             </div>
-          </div>
-
-          <div className="mt-4 rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-            You can pay using ABA PayWay / KHQR from any supported bank app. After payment, Admin will prepare and deliver your books.
           </div>
         </section>
       </main>
@@ -262,17 +393,28 @@ export default function ShadowMallCheckoutPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold text-[#8d94a1]">Grand total</div>
-            <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatRiel(grandTotal)}</div>
+            <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
+            <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(subtotal)}</div>
           </div>
 
-          <button
-            type="button"
-            disabled={!canContinue}
-            className="flex h-[52px] min-w-[170px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#9ca3af] disabled:shadow-none"
-          >
-            Continue to Payment
-          </button>
+          {readerName ? (
+            <button
+              type="button"
+              disabled={!canContinue}
+              onClick={handleContinue}
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
+            >
+              Continue to Payment
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
+            >
+              Login to Checkout
+            </button>
+          )}
         </div>
       </div>
     </div>
