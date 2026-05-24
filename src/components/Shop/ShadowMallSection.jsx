@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addShadowMallCartItem } from '../../utils/shadowMallCart'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -263,35 +264,12 @@ function ProductCard({ product, onOpen }) {
           <button
   type="button"
   disabled={status.disabled}
-  onClick={() => {
-    if (status.disabled) return
 
-    const cartKey = 'shadow_mall_cart'
-    const current = JSON.parse(localStorage.getItem(cartKey) || '[]')
-    const existingIndex = current.findIndex((item) => String(item.id) === String(product.id))
-
-    const cartItem = {
-      id: product.id,
-      title: product.title,
-      author: product.author,
-      cover: product.cover,
-      price: Number(String(product.price || '').replace('$', '')) || 0,
-      oldPrice: product.oldPrice ? Number(String(product.oldPrice).replace('$', '')) || 0 : 0,
-      quantity: 1,
-    }
-
-    if (existingIndex >= 0) {
-      current[existingIndex] = {
-        ...current[existingIndex],
-        quantity: Number(current[existingIndex].quantity || 0) + 1,
-      }
-    } else {
-      current.push(cartItem)
-    }
-
-    localStorage.setItem(cartKey, JSON.stringify(current))
-    window.dispatchEvent(new Event('shadow-mall-cart-updated'))
-  }}
+  onClick={(event) => {
+  event.stopPropagation()
+  if (status.disabled) return
+  addShadowMallCartItem(product, 1)
+}}          
   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
     status.disabled
       ? 'bg-[#eef2f7] text-[#98a2b3]'
