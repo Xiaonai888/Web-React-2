@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const API_URL =
@@ -160,19 +160,94 @@ function FullDetailsSheet({ open, product, onClose }) {
 
 function ImageSlider({ images, title, youtubeUrl }) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const startXRef = useRef(0)
+  const endXRef = useRef(0)
   const embedUrl = getYoutubeEmbedUrl(youtubeUrl)
   const totalSlides = images.length + (embedUrl ? 1 : 0)
 
+  function goTo(index) {
+    if (totalSlides <= 0) return
+    setActiveIndex(Math.max(0, Math.min(index, totalSlides - 1)))
+  }
+
+  function goNext() {
+    if (totalSlides <= 1) return
+    setActiveIndex((current) => (current + 1 >= totalSlides ? 0 : current + 1))
+  }
+
+  function goPrev() {
+    if (totalSlides <= 1) return
+    setActiveIndex((current) => (current - 1 < 0 ? totalSlides - 1 : current - 1))
+  }
+
+  function handleTouchStart(event) {
+    startXRef.current = event.touches[0].clientX
+    endXRef.current = event.touches[0].clientX
+  }
+
+  function handleTouchMove(event) {
+    endXRef.current = event.touches[0].clientX
+  }
+
+  function handleTouchEnd() {
+    const distance = startXRef.current - endXRef.current
+
+    if (Math.abs(distance) < 45) return
+
+    if (distance > 0) {
+      goNext()
+    } else {
+      goPrev()
+    }
+  }
+
+  function handleMouseDown(event) {
+    startXRef.current = event.clientX
+    endXRef.current = event.clientX
+  }
+
+  function handleMouseMove(event) {
+    if (!startXRef.current) return
+    endXRef.current = event.clientX
+  }
+
+  function handleMouseUp() {
+    if (!startXRef.current) return
+
+    const distance = startXRef.current - endXRef.current
+
+    startXRef.current = 0
+    endXRef.current = 0
+
+    if (Math.abs(distance) < 45) return
+
+    if (distance > 0) {
+      goNext()
+    } else {
+      goPrev()
+    }
+  }
+
   return (
     <div>
-      <div className="relative overflow-hidden rounded-[26px] bg-[#eef0f4] shadow-sm ring-1 ring-black/5">
-        <div className="relative aspect-[2/3]">
+      <div
+        className="relative cursor-grab overflow-hidden rounded-[26px] bg-[#eef0f4] shadow-sm ring-1 ring-black/5 active:cursor-grabbing"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div className="relative aspect-[2/3] select-none">
           {activeIndex < images.length ? (
             images.length ? (
               <img
                 src={images[activeIndex]}
                 alt={`${title} image ${activeIndex + 1}`}
-                className="h-full w-full object-cover"
+                draggable="false"
+                className="h-full w-full select-none object-cover"
                 onError={(event) => {
                   event.currentTarget.style.display = 'none'
                 }}
@@ -196,6 +271,26 @@ function ImageSlider({ images, title, youtubeUrl }) {
             {activeIndex < images.length ? `${Math.min(activeIndex + 1, Math.max(images.length, 1))}/${Math.max(images.length, 1)}` : 'VIDEO'}
           </div>
 
+          {totalSlides > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95 md:flex"
+              >
+                <i className="fa-solid fa-chevron-left text-[11px]" />
+              </button>
+
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-3 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95 md:flex"
+              >
+                <i className="fa-solid fa-chevron-right text-[11px]" />
+              </button>
+            </>
+          ) : null}
+
           {embedUrl && activeIndex < images.length ? (
             <button
               type="button"
@@ -215,7 +310,7 @@ function ImageSlider({ images, title, youtubeUrl }) {
             <button
               key={index}
               type="button"
-              onClick={() => setActiveIndex(index)}
+              onClick={() => goTo(index)}
               aria-label={`Open media ${index + 1}`}
               className={`h-2 rounded-full transition-all ${
                 activeIndex === index ? 'w-6 bg-[#111827]' : 'w-2 bg-[#d7dce5]'
@@ -236,7 +331,12 @@ function ImageSlider({ images, title, youtubeUrl }) {
                 activeIndex === index ? 'ring-[#111827]' : 'ring-transparent'
               }`}
             >
-              <img src={image} alt={`${title} thumbnail ${index + 1}`} className="h-full w-full object-cover" />
+              <img
+                src={image}
+                alt={`${title} thumbnail ${index + 1}`}
+                draggable="false"
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
 
