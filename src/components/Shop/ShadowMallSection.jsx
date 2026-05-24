@@ -329,8 +329,9 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         </button>
       ) : null}
     </div>
-  </div>
-) : null}
+           </div>
+        ) : null}
+      </div>
     
 <div className="flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   {tabs.map((tab) => {
