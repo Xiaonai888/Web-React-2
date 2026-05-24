@@ -307,7 +307,7 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
     onSlideClick={handleSlideClick}
   />
       {showSearch ? (
-  <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
+  <div className="absolute left-4 right-4 top-5 z-30 rounded-2xl bg-white/95 p-3 shadow-lg ring-1 ring-black/5 backdrop-blur">
     <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
       <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
       <input
