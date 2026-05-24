@@ -300,22 +300,6 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         }
       `}</style>
 
-      <div className="flex items-center justify-between gap-3">
-        <div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => navigate('/shop/mall/cart')}
-          className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-95"
-          aria-label="Open cart"
-        >
-          <i className="fa-solid fa-cart-shopping text-[15px]" />
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-            0
-          </span>
-        </button>
-      </div>
 
       <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
   <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
