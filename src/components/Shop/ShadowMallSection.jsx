@@ -305,6 +305,30 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         loading={slidesLoading}
         onSlideClick={handleSlideClick}
       />
+      {showSearch ? (
+  <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
+    <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
+      <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
+      <input
+        type="text"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search books or authors"
+        className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
+      />
+      {search ? (
+        <button
+          type="button"
+          onClick={() => setSearch('')}
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
+          aria-label="Clear search"
+        >
+          <i className="fa-solid fa-xmark text-[12px]" />
+        </button>
+      ) : null}
+    </div>
+  </div>
+) : null}
     
 <div className="flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   {tabs.map((tab) => {
