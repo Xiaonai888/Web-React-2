@@ -74,10 +74,11 @@ const mallShortcuts = [
 
 const mallSections = [
   { key: 'new-books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals', filter: 'New Books' },
-  { key: 'second-hand', title: 'Second Hand Deals', subtitle: 'Checked condition, lower price, limited stock', filter: 'Second Hand' },
+  { key: 'second-hand', title: 'Second Hand', subtitle: 'Checked condition, lower price, limited stock', filter: 'Second Hand' },
   { key: 'best-seller', title: 'Best Seller', subtitle: 'Books readers are choosing most', filter: 'Best Seller' },
   { key: 'discount', title: 'Discount Books', subtitle: 'Special prices while stock lasts', filter: 'Discount' },
   { key: 'pre-order', title: 'Pre-order', subtitle: 'Reserve upcoming books before release', filter: 'Pre-order' },
+  { key: 'sold-out', title: 'Recently Sold Out', subtitle: 'Popular books that sold out recently', filter: 'Sold Out', limit: 6 },
 ]
 
 function parseSlideTitle(value = '') {
