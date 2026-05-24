@@ -13,10 +13,55 @@ const products = [
     title: 'គ្រោះព្រោះនិស្ស័យ',
     author: 'ពេជ្រ ជិន្នា',
     cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'New Release',
+    category: 'New Books',
     price: '36,000៛',
     oldPrice: '44,000៛',
+    badge: 'NEW',
+    note: 'Fresh copy',
+  },
+  {
+    id: 2,
+    title: 'គ្រោះព្រោះនិស្ស័យ',
+    author: 'ពេជ្រ ជិន្នា',
+    cover: '/assets/ShadowMall/books/book-1.jpg',
+    category: 'Second Hand',
+    price: '28,000៛',
+    oldPrice: '36,000៛',
+    badge: 'LIKE NEW',
+    note: 'Checked condition',
+  },
+  {
+    id: 3,
+    title: 'គ្រោះព្រោះនិស្ស័យ',
+    author: 'ពេជ្រ ជិន្នា',
+    cover: '/assets/ShadowMall/books/book-1.jpg',
+    category: 'Best Seller',
+    price: '36,000៛',
+    oldPrice: '',
+    badge: 'TOP',
+    note: 'Reader favorite',
+  },
+  {
+    id: 4,
+    title: 'គ្រោះព្រោះនិស្ស័យ',
+    author: 'ពេជ្រ ជិន្នា',
+    cover: '/assets/ShadowMall/books/book-1.jpg',
+    category: 'Discount',
+    price: '30,000៛',
+    oldPrice: '44,000៛',
     badge: 'SALE',
+    note: 'Limited deal',
+  },
+  {
+    id: 5,
+    title: 'គ្រោះព្រោះនិស្ស័យ',
+    author: 'ពេជ្រ ជិន្នា',
+    cover: '/assets/ShadowMall/books/book-1.jpg',
+    category: 'Pre-order',
+    price: '36,000៛',
+    oldPrice: '',
+    badge: 'RESERVE',
+    note: 'Coming soon',
   },
 ]
 
@@ -28,10 +73,11 @@ const mallShortcuts = [
 ]
 
 const mallSections = [
-  { key: 'new-release', title: 'New Release', filter: 'New Release' },
-  { key: 'best-seller', title: 'Best Seller', filter: 'Best Seller' },
-  { key: 'discount', title: 'Discount', filter: 'Discount' },
-  { key: 'pre-order', title: 'Pre-order', filter: 'Pre-order' },
+  { key: 'new-books', title: 'New Books', subtitle: 'Fresh copies and latest arrivals', filter: 'New Books' },
+  { key: 'second-hand', title: 'Second Hand Deals', subtitle: 'Checked condition, lower price, limited stock', filter: 'Second Hand' },
+  { key: 'best-seller', title: 'Best Seller', subtitle: 'Books readers are choosing most', filter: 'Best Seller' },
+  { key: 'discount', title: 'Discount Books', subtitle: 'Special prices while stock lasts', filter: 'Discount' },
+  { key: 'pre-order', title: 'Pre-order', subtitle: 'Reserve upcoming books before release', filter: 'Pre-order' },
 ]
 
 function parseSlideTitle(value = '') {
@@ -146,19 +192,16 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
-
               {slide.subtitle ? (
                 <div className="absolute bottom-10 left-3 right-3 z-10 line-clamp-2 text-left text-[12px] font-bold leading-5 text-white drop-shadow">
                   {slide.subtitle}
                 </div>
               ) : null}
-
               <SlideBadge badge={getSlideBadge(slide)} />
             </button>
           </div>
         ))}
       </div>
-
       <div className="shadow-mall-pagination swiper-pagination" />
     </div>
   )
@@ -193,6 +236,11 @@ function ProductCard({ product, onOpen }) {
           <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">
             {product.author}
           </p>
+          {product.note ? (
+            <p className="mt-1 line-clamp-1 text-[10.5px] font-bold text-[#a0a5b1]">
+              {product.note}
+            </p>
+          ) : null}
         </button>
 
         <div className="mt-3 flex items-end justify-between gap-2">
@@ -202,7 +250,6 @@ function ProductCard({ product, onOpen }) {
               <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1] line-through">{product.oldPrice}</div>
             ) : null}
           </button>
-
           <button
             type="button"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
@@ -230,17 +277,13 @@ function MallShortcutRow({ setActiveTab }) {
             onClick={() => {
               if (item.type === 'tab') setActiveTab?.(item.tab)
             }}
-            className={`rounded-[20px] bg-white px-2 py-3 text-center shadow-sm ring-1 ring-black/5 active:scale-[0.98] ${
-              disabled ? 'opacity-45' : ''
-            }`}
+            className={`rounded-[20px] bg-white px-2 py-3 text-center shadow-sm ring-1 ring-black/5 active:scale-[0.98] ${disabled ? 'opacity-45' : ''}`}
           >
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
               <i className={`fa-solid ${item.icon} text-[14px]`} />
             </div>
             <div className="mt-2 text-[11px] font-extrabold text-[#111827]">{item.label}</div>
-            {disabled ? (
-              <div className="mt-0.5 text-[9px] font-bold text-[#98a2b3]">Soon</div>
-            ) : null}
+            {disabled ? <div className="mt-0.5 text-[9px] font-bold text-[#98a2b3]">Soon</div> : null}
           </button>
         )
       })}
@@ -248,16 +291,76 @@ function MallShortcutRow({ setActiveTab }) {
   )
 }
 
-function MallBookSection({ title, books, onOpen }) {
+function MainChoiceCards() {
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[16px] font-extrabold text-[#111827]">{title}</h3>
-        <button
-          type="button"
-          className="text-[12px] font-extrabold text-[#8d94a1]"
-          onClick={() => {}}
-        >
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" className="overflow-hidden rounded-[24px] bg-[#111827] p-4 text-left text-white shadow-sm active:scale-[0.99]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+            <i className="fa-solid fa-book text-[15px]" />
+          </div>
+          <div className="mt-4 text-[17px] font-extrabold">New Books</div>
+          <div className="mt-1 text-[11px] font-semibold leading-5 text-white/70">Fresh copies and latest arrivals</div>
+        </button>
+
+        <button type="button" className="overflow-hidden rounded-[24px] bg-[#fff7d8] p-4 text-left text-[#111827] shadow-sm ring-1 ring-[#ffe8a3] active:scale-[0.99]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70">
+            <i className="fa-solid fa-tags text-[15px]" />
+          </div>
+          <div className="mt-4 text-[17px] font-extrabold">Second Hand</div>
+          <div className="mt-1 text-[11px] font-semibold leading-5 text-[#7a5600]">Checked condition, lower price</div>
+        </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3 text-center shadow-sm ring-1 ring-black/5">
+        <i className="fa-solid fa-circle-check text-[13px] text-[#10b981]" />
+        <span className="text-[11.5px] font-extrabold text-[#667085]">Checked condition • Clear price • Delivery available</span>
+      </div>
+    </section>
+  )
+}
+
+function PreOrderFeature() {
+  return (
+    <section className="overflow-hidden rounded-[26px] bg-gradient-to-br from-[#171923] via-[#25293a] to-[#3b2f63] p-4 text-white shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[10px] font-extrabold">PRE-ORDER OPEN</div>
+          <h3 className="mt-3 text-[20px] font-extrabold leading-7">Reserve upcoming books before release</h3>
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-white/70">Pre-order books are not ready stock. Check release date and reserve early before closing.</p>
+        </div>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-white/15">
+          <i className="fa-solid fa-calendar-check text-[22px]" />
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="rounded-[16px] bg-white/10 px-3 py-2">
+          <div className="text-[9px] font-bold text-white/55">STATUS</div>
+          <div className="mt-1 text-[11px] font-extrabold">Open</div>
+        </div>
+        <div className="rounded-[16px] bg-white/10 px-3 py-2">
+          <div className="text-[9px] font-bold text-white/55">TYPE</div>
+          <div className="mt-1 text-[11px] font-extrabold">Reserve</div>
+        </div>
+        <div className="rounded-[16px] bg-white/10 px-3 py-2">
+          <div className="text-[9px] font-bold text-white/55">STOCK</div>
+          <div className="mt-1 text-[11px] font-extrabold">Limited</div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function MallBookSection({ title, subtitle, books, onOpen }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-[17px] font-extrabold text-[#111827]">{title}</h3>
+          {subtitle ? <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#98a2b3]">{subtitle}</p> : null}
+        </div>
+        <button type="button" className="shrink-0 text-[12px] font-extrabold text-[#8d94a1]" onClick={() => {}}>
           More &gt;
         </button>
       </div>
@@ -265,11 +368,7 @@ function MallBookSection({ title, books, onOpen }) {
       {books.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {books.map((product) => (
-            <ProductCard
-              key={`${title}-${product.id}`}
-              product={product}
-              onOpen={() => onOpen(product)}
-            />
+            <ProductCard key={`${title}-${product.id}`} product={product} onOpen={() => onOpen(product)} />
           ))}
         </div>
       ) : (
@@ -299,33 +398,29 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
           setMallSlides((data.slides || []).slice(0, 7))
         }
       } catch {
-        if (!ignore) {
-          setMallSlides([])
-        }
+        if (!ignore) setMallSlides([])
       } finally {
-        if (!ignore) {
-          setSlidesLoading(false)
-        }
+        if (!ignore) setSlidesLoading(false)
       }
     }
 
-   fetchMallSlides()
+    fetchMallSlides()
 
-return () => {
-  ignore = true
-}
+    return () => {
+      ignore = true
+    }
   }, [])
 
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase()
 
     return products.filter((product) => {
-      const searchMatch =
+      return (
         !keyword ||
         product.title.toLowerCase().includes(keyword) ||
-        product.author.toLowerCase().includes(keyword)
-
-      return searchMatch
+        product.author.toLowerCase().includes(keyword) ||
+        product.category.toLowerCase().includes(keyword)
+      )
     })
   }, [search])
 
@@ -338,38 +433,11 @@ return () => {
   return (
     <section className="space-y-5 pb-4">
       <style>{`
-        .shadow-mall-swiper-container {
-          width: 100%;
-          padding-top: 10px;
-          padding-bottom: 30px;
-          overflow: hidden;
-        }
-
-        .shadow-mall-swiper-container .swiper-slide {
-          width: 85%;
-          border-radius: 20px;
-          overflow: hidden;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-          transition: all 0.3s ease;
-        }
-
-        .shadow-mall-swiper-container .swiper-slide-next,
-        .shadow-mall-swiper-container .swiper-slide-prev {
-          opacity: 0.4;
-          transform: scale(0.9);
-        }
-
-        .shadow-mall-swiper-container .swiper-pagination-bullet-active {
-          background: #111827;
-          width: 20px;
-          border-radius: 5px;
-        }
-
-        @media (min-width: 768px) {
-          .shadow-mall-swiper-container .swiper-slide {
-            width: 58%;
-          }
-        }
+        .shadow-mall-swiper-container { width: 100%; padding-top: 10px; padding-bottom: 30px; overflow: hidden; }
+        .shadow-mall-swiper-container .swiper-slide { width: 85%; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .shadow-mall-swiper-container .swiper-slide-next, .shadow-mall-swiper-container .swiper-slide-prev { opacity: 0.4; transform: scale(0.9); }
+        .shadow-mall-swiper-container .swiper-pagination-bullet-active { background: #111827; width: 20px; border-radius: 5px; }
+        @media (min-width: 768px) { .shadow-mall-swiper-container .swiper-slide { width: 58%; } }
       `}</style>
 
       {showSearch ? (
@@ -384,12 +452,7 @@ return () => {
               className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
             />
             {search ? (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
-                aria-label="Clear search"
-              >
+              <button type="button" onClick={() => setSearch('')} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]" aria-label="Clear search">
                 <i className="fa-solid fa-xmark text-[12px]" />
               </button>
             ) : null}
@@ -397,24 +460,19 @@ return () => {
         </div>
       ) : null}
 
-      <ShadowMallSwiperSlide
-        slides={mallSlides}
-        loading={slidesLoading}
-        onSlideClick={handleSlideClick}
-      />
-
+      <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
       <MallShortcutRow setActiveTab={setActiveTab} />
+      <MainChoiceCards />
+      <PreOrderFeature />
 
       {mallSections.map((section) => {
-        const sectionBooks =
-          section.filter === 'New Release'
-            ? filteredProducts
-            : filteredProducts.filter((product) => product.category === section.filter)
+        const sectionBooks = filteredProducts.filter((product) => product.category === section.filter)
 
         return (
           <MallBookSection
             key={section.key}
             title={section.title}
+            subtitle={section.subtitle}
             books={sectionBooks}
             onOpen={openProduct}
           />
