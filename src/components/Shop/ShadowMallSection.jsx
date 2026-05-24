@@ -7,19 +7,31 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const categories = ['All', 'New Release', 'Best Seller', 'Discount', 'Khmer Novel', 'Pre-order']
-
 const products = [
   {
     id: 1,
     title: 'គ្រោះព្រោះនិស្ស័យ',
     author: 'ពេជ្រ ជិន្នា',
     cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'Khmer Novel',
+    category: 'New Release',
     price: '36,000៛',
     oldPrice: '44,000៛',
     badge: 'SALE',
   },
+]
+
+const mallShortcuts = [
+  { label: 'Purchase', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
+  { label: 'Plans', icon: 'fa-crown', type: 'tab', tab: 'Plans' },
+  { label: 'A', icon: 'fa-book-open', type: 'disabled' },
+  { label: 'B', icon: 'fa-box-open', type: 'disabled' },
+]
+
+const mallSections = [
+  { key: 'new-release', title: 'New Release', filter: 'New Release' },
+  { key: 'best-seller', title: 'Best Seller', filter: 'Best Seller' },
+  { key: 'discount', title: 'Discount', filter: 'Discount' },
+  { key: 'pre-order', title: 'Pre-order', filter: 'Pre-order' },
 ]
 
 function parseSlideTitle(value = '') {
@@ -135,13 +147,13 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
 
-{slide.subtitle ? (
-  <div className="absolute bottom-10 left-3 right-3 z-10 line-clamp-2 text-left text-[12px] font-bold leading-5 text-white drop-shadow">
-    {slide.subtitle}
-  </div>
-) : null}
+              {slide.subtitle ? (
+                <div className="absolute bottom-10 left-3 right-3 z-10 line-clamp-2 text-left text-[12px] font-bold leading-5 text-white drop-shadow">
+                  {slide.subtitle}
+                </div>
+              ) : null}
 
-<SlideBadge badge={getSlideBadge(slide)} />
+              <SlideBadge badge={getSlideBadge(slide)} />
             </button>
           </div>
         ))}
@@ -204,9 +216,73 @@ function ProductCard({ product, onOpen }) {
   )
 }
 
-export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall', setActiveTab, showSearch = false }) {
+function MallShortcutRow({ setActiveTab }) {
+  return (
+    <div className="grid grid-cols-4 gap-3">
+      {mallShortcuts.map((item) => {
+        const disabled = item.type === 'disabled'
+
+        return (
+          <button
+            key={item.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              if (item.type === 'tab') setActiveTab?.(item.tab)
+            }}
+            className={`rounded-[20px] bg-white px-2 py-3 text-center shadow-sm ring-1 ring-black/5 active:scale-[0.98] ${
+              disabled ? 'opacity-45' : ''
+            }`}
+          >
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]">
+              <i className={`fa-solid ${item.icon} text-[14px]`} />
+            </div>
+            <div className="mt-2 text-[11px] font-extrabold text-[#111827]">{item.label}</div>
+            {disabled ? (
+              <div className="mt-0.5 text-[9px] font-bold text-[#98a2b3]">Soon</div>
+            ) : null}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function MallBookSection({ title, books, onOpen }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[16px] font-extrabold text-[#111827]">{title}</h3>
+        <button
+          type="button"
+          className="text-[12px] font-extrabold text-[#8d94a1]"
+          onClick={() => {}}
+        >
+          More &gt;
+        </button>
+      </div>
+
+      {books.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {books.map((product) => (
+            <ProductCard
+              key={`${title}-${product.id}`}
+              product={product}
+              onOpen={() => onOpen(product)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[22px] bg-white px-4 py-7 text-center shadow-sm ring-1 ring-black/5">
+          <div className="text-[13px] font-extrabold text-[#98a2b3]">Coming soon</div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+export default function ShadowMallSection({ setActiveTab, showSearch = false }) {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [mallSlides, setMallSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
@@ -247,20 +323,19 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
     const keyword = search.trim().toLowerCase()
 
     return products.filter((product) => {
-      const categoryMatch = activeCategory === 'All' || product.category === activeCategory
       const searchMatch =
         !keyword ||
         product.title.toLowerCase().includes(keyword) ||
         product.author.toLowerCase().includes(keyword)
 
-      return categoryMatch && searchMatch
+      return searchMatch
     })
-  }, [activeCategory, search])
+  }, [search])
 
-  const handleSlideClick = (slide) => {
-    if (slide?.link_url) {
-      navigate(slide.link_url)
-    }
+  const handleSlideClick = () => {}
+
+  const openProduct = (product) => {
+    navigate(`/shop/mall/product/${product.id}`)
   }
 
   return (
@@ -299,103 +374,55 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
           }
         }
       `}</style>
-{showSearch ? (
-  <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
-    <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
-      <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
-      <input
-        type="text"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search books or authors"
-        className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
-      />
-      {search ? (
-        <button
-          type="button"
-          onClick={() => setSearch('')}
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
-          aria-label="Clear search"
-        >
-          <i className="fa-solid fa-xmark text-[12px]" />
-        </button>
-      ) : null}
-    </div>
-  </div>
-) : null}
 
-<ShadowMallSwiperSlide
-  slides={mallSlides}
-  loading={slidesLoading}
-  onSlideClick={handleSlideClick}
-/>
-    
-<div className="flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-  {tabs.map((tab) => {
-    const isActive = activeTab === tab
-
-    return (
-      <button
-        key={tab}
-        type="button"
-        onClick={() => setActiveTab?.(tab)}
-        className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
-          isActive
-            ? 'border-black bg-black text-white'
-            : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
-        }`}
-      >
-        {tab}
-      </button>
-    )
-  })}
-</div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {categories.map((category) => {
-          const active = activeCategory === category
-
-          return (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setActiveCategory(category)}
-              className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold transition ${
-                active
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
-              }`}
-            >
-              {category}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-[16px] font-extrabold text-[#111827]">Available Books</h3>
-        <span className="text-[11px] font-bold text-[#8d94a1]">{filteredProducts.length} items</span>
-      </div>
-
-      {filteredProducts.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onOpen={() => navigate(`/shop/mall/product/${product.id}`)}
+      {showSearch ? (
+        <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
+            <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search books or authors"
+              className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
             />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-[22px] bg-white px-4 py-10 text-center shadow-sm ring-1 ring-black/5">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f4f5f7] text-[#98a2b3]">
-            <i className="fa-solid fa-book-open text-[16px]" />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
+                aria-label="Clear search"
+              >
+                <i className="fa-solid fa-xmark text-[12px]" />
+              </button>
+            ) : null}
           </div>
-          <div className="mt-3 text-[14px] font-extrabold text-[#111827]">No books found</div>
-          <div className="mt-1 text-[12px] text-[#8d94a1]">Try another keyword or category.</div>
         </div>
-      )}
+      ) : null}
+
+      <ShadowMallSwiperSlide
+        slides={mallSlides}
+        loading={slidesLoading}
+        onSlideClick={handleSlideClick}
+      />
+
+      <MallShortcutRow setActiveTab={setActiveTab} />
+
+      {mallSections.map((section) => {
+        const sectionBooks =
+          section.filter === 'New Release'
+            ? filteredProducts
+            : filteredProducts.filter((product) => product.category === section.filter)
+
+        return (
+          <MallBookSection
+            key={section.key}
+            title={section.title}
+            books={sectionBooks}
+            onOpen={openProduct}
+          />
+        )
+      })}
     </section>
   )
 }
