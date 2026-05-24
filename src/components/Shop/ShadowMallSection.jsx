@@ -9,16 +9,15 @@ const API_URL =
 
 const products = [
   {
-    id: 1,
-    title: 'គ្រោះព្រោះនិស្ស័យ',
-    author: 'ពេជ្រ ជិន្នា',
-    cover: '/assets/ShadowMall/books/book-1.jpg',
-    category: 'New Books',
-    price: '36,000៛',
-    oldPrice: '44,000៛',
-    badge: 'NEW',
-    note: 'Fresh copy',
-  },
+  id: 1,
+  title: 'ឈ្មោះសៀវភៅ',
+  author: 'ឈ្មោះអ្នកនិពន្ធ',
+  cover: '/assets/ShadowMall/books/book-1.jpg',
+  category: 'New Books',
+  price: '$8.75',
+  oldPrice: '',
+  status: 'in_stock',
+},
   {
     id: 2,
     title: 'គ្រោះព្រោះនិស្ស័យ',
