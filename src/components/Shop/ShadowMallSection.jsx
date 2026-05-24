@@ -300,20 +300,6 @@ export default function ShadowMallSection({ tabs = [], activeTab = 'Shadow Mall'
         }
       `}</style>
 
-
-      {showSearch ? (
-  <div className="flex h-12 items-center rounded-full bg-[#f4f5f7] px-4 ring-1 ring-black/5">
-    <i className="fa-solid fa-magnifying-glass mr-3 text-[13px] text-[#98a2b3]" />
-    <input
-      value={search}
-      onChange={(event) => setSearch(event.target.value)}
-      placeholder="Search books, author, publisher..."
-      className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#111827] outline-none placeholder:text-[#a0a5b1]"
-      autoFocus
-    />
-  </div>
-) : null}
-
       <ShadowMallSwiperSlide
         slides={mallSlides}
         loading={slidesLoading}
