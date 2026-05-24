@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
 const CART_KEY = 'shadow_mall_cart'
 const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
 
@@ -46,11 +52,11 @@ function readCart() {
   return Array.isArray(value) ? value : []
 }
 
-function saveBuyerProfile(profile) {
+function saveBuyerProfileLocal(profile) {
   localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
 }
 
-function readBuyerProfile() {
+function readBuyerProfileLocal() {
   return readJson(BUYER_PROFILE_KEY, {
     phone_number: '',
     province_city: 'Phnom Penh',
@@ -63,12 +69,16 @@ function readReaderUser() {
   return readJson('shadow_reader_user', null)
 }
 
+function getReaderToken() {
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+}
+
 function getReaderName(user) {
   if (!user) return ''
 
   return (
-    user.username ||
     user.name ||
+    user.username ||
     user.full_name ||
     user.display_name ||
     user.email ||
@@ -89,6 +99,15 @@ function normalizeCartItem(item) {
     price: normalizePrice(item.price || item.price_usd),
     oldPrice: normalizePrice(item.oldPrice || item.old_price_usd),
     quantity: Math.max(Number(item.quantity || 1), 1),
+  }
+}
+
+function normalizeProfile(profile) {
+  return {
+    phone_number: profile?.phone_number || '',
+    province_city: profile?.province_city || 'Phnom Penh',
+    delivery_address: profile?.delivery_address || '',
+    delivery_note: profile?.delivery_note || '',
   }
 }
 
@@ -171,17 +190,67 @@ export default function ShadowMallCheckoutPage() {
   const [address, setAddress] = useState('')
   const [note, setNote] = useState('')
   const [message, setMessage] = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [showOrderItems, setShowOrderItems] = useState(true)
 
   useEffect(() => {
-    const profile = readBuyerProfile()
+    let ignore = false
 
-    setItems(readCart().map(normalizeCartItem))
-    setReaderUser(readReaderUser())
-    setPhone(profile.phone_number || '')
-    setProvince(profile.province_city || 'Phnom Penh')
-    setAddress(profile.delivery_address || '')
-    setNote(profile.delivery_note || '')
+    async function loadCheckout() {
+      const localProfile = readBuyerProfileLocal()
+      const token = getReaderToken()
+
+      setItems(readCart().map(normalizeCartItem))
+      setReaderUser(readReaderUser())
+      setPhone(localProfile.phone_number || '')
+      setProvince(localProfile.province_city || 'Phnom Penh')
+      setAddress(localProfile.delivery_address || '')
+      setNote(localProfile.delivery_note || '')
+
+      if (!token) {
+        setProfileLoading(false)
+        return
+      }
+
+      try {
+        setProfileLoading(true)
+
+        const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load buyer profile')
+        }
+
+        if (!ignore && data.profile) {
+          const serverProfile = normalizeProfile(data.profile)
+
+          setPhone(serverProfile.phone_number)
+          setProvince(serverProfile.province_city)
+          setAddress(serverProfile.delivery_address)
+          setNote(serverProfile.delivery_note)
+          saveBuyerProfileLocal(serverProfile)
+        }
+      } catch (error) {
+        if (!ignore) {
+          setMessage(error.message || 'Failed to load buyer profile')
+        }
+      } finally {
+        if (!ignore) setProfileLoading(false)
+      }
+    }
+
+    loadCheckout()
+
+    return () => {
+      ignore = true
+    }
   }, [])
 
   const readerName = useMemo(() => getReaderName(readerUser), [readerUser])
@@ -201,10 +270,13 @@ export default function ShadowMallCheckoutPage() {
     Boolean(phone.trim()) &&
     Boolean(province) &&
     Boolean(address.trim()) &&
-    items.length > 0
+    items.length > 0 &&
+    !saving
 
-  function handleContinue() {
-    if (!readerName.trim()) {
+  async function handleContinue() {
+    const token = getReaderToken()
+
+    if (!readerName.trim() || !token) {
       setMessage('Please login before checkout.')
       return
     }
@@ -224,23 +296,47 @@ export default function ShadowMallCheckoutPage() {
       province_city: province,
       delivery_address: address.trim(),
       delivery_note: note.trim(),
-      updated_at: new Date().toISOString(),
     }
 
-    const checkoutDraft = {
-      buyer_name: readerName,
-      buyer_profile: profile,
-      items,
-      subtotal,
-      delivery_fee: null,
-      grand_total: subtotal,
-      currency: 'USD',
-      created_at: new Date().toISOString(),
-    }
+    try {
+      setSaving(true)
+      setMessage('')
 
-    saveBuyerProfile(profile)
-    localStorage.setItem('shadow_mall_checkout_draft', JSON.stringify(checkoutDraft))
-    navigate('/shop/mall/payment')
+      const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profile),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to save buyer profile')
+      }
+
+      const savedProfile = normalizeProfile(data.profile || profile)
+      const checkoutDraft = {
+        buyer_name: readerName,
+        buyer_profile: savedProfile,
+        items,
+        subtotal,
+        delivery_fee: null,
+        grand_total: subtotal,
+        currency: 'USD',
+        created_at: new Date().toISOString(),
+      }
+
+      saveBuyerProfileLocal(savedProfile)
+      localStorage.setItem('shadow_mall_checkout_draft', JSON.stringify(checkoutDraft))
+      navigate('/shop/mall/payment')
+    } catch (error) {
+      setMessage(error.message || 'Failed to save buyer profile')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -270,10 +366,20 @@ export default function ShadowMallCheckoutPage() {
         ) : null}
 
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-[16px] font-extrabold text-[#111827]">Buyer Profile</div>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
-            Used only for printed book delivery and order contact.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[16px] font-extrabold text-[#111827]">Buyer Profile</div>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+                Used only for printed book delivery and order contact.
+              </p>
+            </div>
+
+            {profileLoading ? (
+              <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[10px] font-extrabold text-[#4f46e5]">
+                Loading
+              </span>
+            ) : null}
+          </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -404,7 +510,7 @@ export default function ShadowMallCheckoutPage() {
               onClick={handleContinue}
               className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
             >
-              Continue to Payment
+              {saving ? 'Saving...' : 'Continue to Payment'}
             </button>
           ) : (
             <button
