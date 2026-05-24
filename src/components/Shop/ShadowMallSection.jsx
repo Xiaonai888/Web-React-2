@@ -322,32 +322,50 @@ function MainChoiceCards() {
 
 function PreOrderFeature() {
   return (
-    <section className="overflow-hidden rounded-[26px] bg-gradient-to-br from-[#171923] via-[#25293a] to-[#3b2f63] p-4 text-white shadow-sm">
+    <section className="overflow-hidden rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[10px] font-extrabold">PRE-ORDER OPEN</div>
-          <h3 className="mt-3 text-[20px] font-extrabold leading-7">Reserve upcoming books before release</h3>
-          <p className="mt-2 text-[12px] font-semibold leading-5 text-white/70">Pre-order books are not ready stock. Check release date and reserve early before closing.</p>
+          <div className="inline-flex rounded-full bg-[#fff7d8] px-3 py-1 text-[10px] font-extrabold text-[#7a5600]">
+            PRE-ORDER OPEN
+          </div>
+
+          <h3 className="mt-3 text-[20px] font-extrabold leading-7 text-[#111827]">
+            Reserve upcoming books before release
+          </h3>
+
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+            Pre-order books are not ready stock. Check release date and reserve early before closing.
+          </p>
         </div>
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-white/15">
+
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#f4f5f7] text-[#111827]">
           <i className="fa-solid fa-calendar-check text-[22px]" />
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-[16px] bg-white/10 px-3 py-2">
-          <div className="text-[9px] font-bold text-white/55">STATUS</div>
-          <div className="mt-1 text-[11px] font-extrabold">Open</div>
+        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
+          <div className="text-[9px] font-bold text-[#98a2b3]">STATUS</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Open</div>
         </div>
-        <div className="rounded-[16px] bg-white/10 px-3 py-2">
-          <div className="text-[9px] font-bold text-white/55">TYPE</div>
-          <div className="mt-1 text-[11px] font-extrabold">Reserve</div>
+
+        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
+          <div className="text-[9px] font-bold text-[#98a2b3]">TYPE</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Reserve</div>
         </div>
-        <div className="rounded-[16px] bg-white/10 px-3 py-2">
-          <div className="text-[9px] font-bold text-white/55">STOCK</div>
-          <div className="mt-1 text-[11px] font-extrabold">Limited</div>
+
+        <div className="rounded-[16px] bg-[#f8f8f8] px-3 py-2">
+          <div className="text-[9px] font-bold text-[#98a2b3]">STOCK</div>
+          <div className="mt-1 text-[11px] font-extrabold text-[#111827]">Limited</div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+      >
+        View Pre-order
+      </button>
     </section>
   )
 }
