@@ -91,6 +91,7 @@ function normalizeProduct(product) {
     genre: product.genre || '',
     paperType: product.paper_type || '',
     coverType: product.cover_type || '',
+    pageCount: product.page_count || 0,
     isDiscount: Boolean(product.is_discount),
     isBestSeller: Boolean(product.is_best_seller),
   }
@@ -135,6 +136,7 @@ function FullDetailsSheet({ open, product, onClose }) {
             <DetailRow label="Genre" value={product.genre} />
             <DetailRow label="Paper Type" value={product.paperType} />
             <DetailRow label="Cover Type" value={product.coverType} />
+            <DetailRow label="Page Count" value={product.pageCount ? `${product.pageCount} pages` : ''} />
             <DetailRow label="Condition" value={product.condition} />
             <DetailRow label="Category" value={getCategoryLabel(product.category)} />
             <DetailRow label="Stock" value={getStatusLabel(product.stockStatus)} />
