@@ -78,6 +78,8 @@ function readBuyerProfileLocal() {
     province_city: 'Phnom Penh',
     delivery_address: '',
     delivery_note: '',
+    telegram_username: '',
+    facebook_link: '',
   })
 }
 
