@@ -33,6 +33,7 @@ import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
+const ShadowMallOrderHistoryPage = lazy(() => import('./pages/Shop/ShadowMallOrderHistoryPage'))
 const ShadowMallWishlistPage = lazy(() => import('./pages/Shop/ShadowMallWishlistPage'))
 const ShadowMallCheckoutPage = lazy(() => import('./pages/Shop/ShadowMallCheckoutPage'))
 const ShadowMallPaymentPage = lazy(() => import('./pages/Shop/ShadowMallPaymentPage'))
@@ -144,6 +145,15 @@ function AppShell() {
             </LazyPage>
           }
         />
+
+        <Route
+  path="/shop/mall/orders"
+  element={
+    <LazyPage>
+      <ShadowMallOrderHistoryPage />
+    </LazyPage>
+  }
+/>
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
