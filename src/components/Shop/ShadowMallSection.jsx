@@ -582,17 +582,20 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
 
       <PreOrderFeature products={filteredSections.pre_order || []} onOpen={openProduct} />
 
-     {mallSections.map((section) => (
-  <MallBookSection
-    key={section.key}
-    title={section.title}
-    subtitle={section.subtitle}
-    books={filteredSections[section.key] || []}
-    loading={productsLoading}
-    onOpen={openProduct}
-    sectionKey={section.key}
-    onMore={() => {
-      if (section.key === 'new_books') navigate('/shop/mall/new-books')
-    }}
-  />
-))}
+      {mallSections.map((section) => (
+        <MallBookSection
+          key={section.key}
+          title={section.title}
+          subtitle={section.subtitle}
+          books={filteredSections[section.key] || []}
+          loading={productsLoading}
+          onOpen={openProduct}
+          sectionKey={section.key}
+          onMore={() => {
+            if (section.key === 'new_books') navigate('/shop/mall/new-books')
+          }}
+        />
+      ))}
+    </section>
+  )
+}
