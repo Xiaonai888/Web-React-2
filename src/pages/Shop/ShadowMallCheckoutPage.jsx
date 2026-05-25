@@ -42,6 +42,12 @@ function readCart() {
   return Array.isArray(value) ? value : []
 }
 
+function saveCart(items) {
+  localStorage.setItem(CART_KEY, JSON.stringify(items))
+  window.dispatchEvent(new Event('shadow-mall-cart-updated'))
+  window.dispatchEvent(new Event('shadow-mall-cart-change'))
+}
+
 function saveBuyerProfileLocal(profile) {
   localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
 }
@@ -267,10 +273,10 @@ function BuyerProfileSheet({
   )
 }
 
-function CheckoutItem({ item }) {
+function CheckoutItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
     <div className="flex gap-3 border-b border-[#f0eef6] py-3 last:border-b-0">
-      <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
+      <div className="h-[86px] w-[58px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
         {item.cover ? (
           <img
             src={item.cover}
@@ -288,13 +294,53 @@ function CheckoutItem({ item }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[#111827]">{item.title}</div>
-        <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">{item.author}</div>
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <span className="text-[12px] font-bold text-[#8d94a1]">Qty: {item.quantity}</span>
-          <span className="text-[13px] font-extrabold text-[#e5484d]">
-            {formatUsd(item.price * item.quantity)}
-          </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[#111827]">{item.title}</div>
+            <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">{item.author}</div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onRemove}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95"
+            aria-label={`Remove ${item.title}`}
+          >
+            <i className="fa-solid fa-trash text-[11px]" />
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-extrabold text-[#e5484d]">
+              {formatUsd(item.price * item.quantity)}
+            </div>
+            {item.quantity > 1 ? (
+              <div className="mt-0.5 text-[10.5px] font-semibold text-[#a0a5b1]">
+                {formatUsd(item.price)} each
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex items-center rounded-full bg-[#f5f3fa] p-1">
+            <button
+              type="button"
+              onClick={onDecrease}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#111827] active:scale-95"
+              aria-label={`Decrease ${item.title}`}
+            >
+              <i className="fa-solid fa-minus text-[10px]" />
+            </button>
+            <div className="w-9 text-center text-[13px] font-extrabold text-[#111827]">{item.quantity}</div>
+            <button
+              type="button"
+              onClick={onIncrease}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+              aria-label={`Increase ${item.title}`}
+            >
+              <i className="fa-solid fa-plus text-[10px]" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -411,6 +457,32 @@ export default function ShadowMallCheckoutPage() {
     profileComplete &&
     items.length > 0 &&
     !saving
+
+  function updateItems(nextItems) {
+    const normalizedItems = nextItems.map(normalizeCartItem)
+    setItems(normalizedItems)
+    saveCart(normalizedItems)
+  }
+
+  function increaseItem(id) {
+    updateItems(
+      items.map((item) =>
+        String(item.id) === String(id) ? { ...item, quantity: Math.min(item.quantity + 1, 99) } : item
+      )
+    )
+  }
+
+  function decreaseItem(id) {
+    updateItems(
+      items.map((item) =>
+        String(item.id) === String(id) ? { ...item, quantity: Math.max(item.quantity - 1, 1) } : item
+      )
+    )
+  }
+
+  function removeItem(id) {
+    updateItems(items.filter((item) => String(item.id) !== String(id)))
+  }
 
   async function saveBuyerProfileOnly() {
     const token = getReaderToken()
@@ -699,11 +771,27 @@ export default function ShadowMallCheckoutPage() {
             <div className="px-4 pb-3">
               {items.length ? (
                 items.map((item) => (
-                  <CheckoutItem key={item.id} item={item} />
+                  <CheckoutItem
+                    key={item.id}
+                    item={item}
+                    onIncrease={() => increaseItem(item.id)}
+                    onDecrease={() => decreaseItem(item.id)}
+                    onRemove={() => removeItem(item.id)}
+                  />
                 ))
               ) : (
-                <div className="py-8 text-center text-[13px] font-extrabold text-[#98a2b3]">
-                  No books in cart.
+                <div className="py-8 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+                    <i className="fa-solid fa-cart-shopping text-[18px]" />
+                  </div>
+                  <div className="mt-3 text-[14px] font-extrabold text-[#111827]">No books in cart</div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/shop')}
+                    className="mt-4 rounded-full bg-[#111827] px-5 py-3 text-[12px] font-extrabold text-white active:scale-95"
+                  >
+                    Back to Shop
+                  </button>
                 </div>
               )}
             </div>
