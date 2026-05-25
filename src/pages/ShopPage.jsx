@@ -42,7 +42,7 @@ useEffect(() => {
       return
     }
 
-    navigate(-1)
+    navigate('/')
   }}
   className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
   aria-label="Go back"
