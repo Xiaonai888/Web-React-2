@@ -261,25 +261,7 @@ function BuyerProfileSheet({
                 inputMode="tel"
               />
             </div>
-
-            <div>
-  <FieldLabel>Telegram Username</FieldLabel>
-  <TextInput
-    value={telegramUsername}
-    onChange={(event) => setTelegramUsername(event.target.value)}
-    placeholder="@yourname"
-  />
-</div>
-
-<div>
-  <FieldLabel>Facebook Link</FieldLabel>
-  <TextInput
-    value={facebookLink}
-    onChange={(event) => setFacebookLink(event.target.value)}
-    placeholder="Paste Facebook profile or Messenger link"
-  />
-</div>
-
+              
             <div>
   <FieldLabel>Telegram Username</FieldLabel>
   <TextInput
