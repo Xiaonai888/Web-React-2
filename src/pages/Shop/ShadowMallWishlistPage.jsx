@@ -159,9 +159,13 @@ export default function ShadowMallWishlistPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">My Wishlist</h1>
 
-          <div className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#111827] px-3 text-[12px] font-extrabold text-white">
-            {itemCount}
-          </div>
+          {itemCount > 0 ? (
+            <div className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#111827] px-3 text-[12px] font-extrabold text-white">
+              {itemCount}
+            </div>
+          ) : (
+            <div className="h-10 w-10" />
+          )}
         </div>
       </header>
 
