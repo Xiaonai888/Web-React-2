@@ -10,7 +10,7 @@ const API_URL =
 const CHECKOUT_DRAFT_KEY = 'shadow_mall_checkout_draft'
 const CURRENT_ORDER_KEY = 'shadow_mall_current_order_payment'
 const CART_KEY = 'shadow_mall_cart'
-const SHADOW_MALL_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 
 function readJson(key, fallback) {
   try {
@@ -44,6 +44,14 @@ function getDraftKey(draft) {
     delivery_company: draft?.delivery_company?.key || '',
     total: Number(draft?.grand_total || 0),
   })
+}
+
+function getRedirectFlag(orderId) {
+  return `shadow_mall_payway_opened_${orderId}`
+}
+
+function getPayWayUrl(order) {
+  return order?.checkout_url || order?.deeplink || FALLBACK_PAYWAY_LINK
 }
 
 function getStatusText(status) {
@@ -99,6 +107,7 @@ function PaymentItem({ item }) {
 export default function ShadowMallPaymentPage() {
   const navigate = useNavigate()
   const hasCreatedRef = useRef(false)
+  const redirectedRef = useRef(false)
   const [draft, setDraft] = useState(null)
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -116,6 +125,19 @@ export default function ShadowMallPaymentPage() {
   const deliveryCompany = useMemo(() => {
     return order?.delivery_company || draft?.delivery_company || {}
   }, [order, draft])
+
+  function redirectToPayWay(targetOrder) {
+    if (!targetOrder?.order_id || redirectedRef.current) return
+
+    const flag = getRedirectFlag(targetOrder.order_id)
+
+    if (sessionStorage.getItem(flag) === '1') return
+
+    redirectedRef.current = true
+    sessionStorage.setItem(flag, '1')
+
+    window.location.href = getPayWayUrl(targetOrder)
+  }
 
   async function checkOrderStatus(targetOrderId) {
     const token = getReaderToken()
@@ -152,6 +174,7 @@ export default function ShadowMallPaymentPage() {
 
         if (data.order.status === 'paid') {
           localStorage.removeItem(CART_KEY)
+          localStorage.removeItem(CURRENT_ORDER_KEY)
           window.dispatchEvent(new Event('shadow-mall-cart-change'))
           window.dispatchEvent(new Event('shadow-mall-cart-updated'))
         }
@@ -191,7 +214,13 @@ export default function ShadowMallPaymentPage() {
 
       if (savedPayment?.draft_key === draftKey && savedPayment?.order?.order_id) {
         setOrder(savedPayment.order)
-        await checkOrderStatus(savedPayment.order.order_id)
+        const checkedOrder = await checkOrderStatus(savedPayment.order.order_id)
+        const latestOrder = checkedOrder || savedPayment.order
+
+        if (latestOrder.status !== 'paid') {
+          window.setTimeout(() => redirectToPayWay(latestOrder), 500)
+        }
+
         return
       }
 
@@ -226,6 +255,8 @@ export default function ShadowMallPaymentPage() {
           created_at: new Date().toISOString(),
         })
       )
+
+      window.setTimeout(() => redirectToPayWay(data.order), 500)
     } catch (error) {
       setMessage(error.message || 'Failed to create Shadow Mall payment')
     } finally {
@@ -259,19 +290,22 @@ export default function ShadowMallPaymentPage() {
     return () => window.clearInterval(timer)
   }, [order?.order_id, isWaiting])
 
-  function openPayWay() {
-  const url = order?.checkout_url || order?.deeplink || SHADOW_MALL_PAYWAY_LINK
-  window.location.href = url
-}
+  function createNewPayment() {
+    if (order?.order_id) {
+      sessionStorage.removeItem(getRedirectFlag(order.order_id))
+    }
 
-  function resetPayment() {
     localStorage.removeItem(CURRENT_ORDER_KEY)
     setOrder(null)
-    if (draft) createPayment(draft)
+
+    if (draft) {
+      redirectedRef.current = false
+      createPayment(draft)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[40px]">
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
@@ -333,6 +367,9 @@ export default function ShadowMallPaymentPage() {
             <div className="mt-5 rounded-[22px] bg-[#fafafe] px-4 py-8 text-center">
               <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
               <div className="text-[13px] font-extrabold text-[#111827]">Creating payment...</div>
+              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+                Redirecting to ABA PayWay...
+              </div>
             </div>
           ) : isPaid ? (
             <div className="mt-5 rounded-[22px] bg-[#f0fdf4] px-4 py-6 text-center ring-1 ring-[#bbf7d0]">
@@ -343,37 +380,39 @@ export default function ShadowMallPaymentPage() {
               <p className="mt-2 text-[12.5px] font-semibold leading-6 text-[#3f7b4f]">
                 Your book order has been received. Admin will prepare and deliver your books after checking the order.
               </p>
+              <button
+                type="button"
+                onClick={() => navigate('/shop')}
+                className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+              >
+                Back to Shop
+              </button>
             </div>
           ) : (
-            <div className="mt-5 space-y-3">
-              {order?.qr_image ? (
-                <div className="flex justify-center">
-                  <div className="flex h-[230px] w-[230px] items-center justify-center overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-[#eceaf2]">
-                    <img src={order.qr_image} alt="ABA KHQR" className="h-full w-full object-contain" />
-                  </div>
-                </div>
-              ) : null}
+            <div className="mt-5 rounded-[22px] bg-[#fff7d8] px-4 py-5 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#f6df9a] border-t-[#7a5600]" />
+              <div className="text-[14px] font-extrabold text-[#7a5600]">Redirecting to ABA PayWay...</div>
+              <p className="mt-2 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
+                After payment, return to this page and tap refresh if the status does not update automatically.
+              </p>
 
-              <button
-                type="button"
-                disabled={!order?.order_id}
-                onClick={openPayWay}
-                className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
-              >
-                Open ABA PayWay / KHQR
-              </button>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => order && redirectToPayWay(order)}
+                  className="h-11 flex-1 rounded-full bg-[#111827] text-[12px] font-extrabold text-white active:scale-[0.99]"
+                >
+                  Open PayWay Again
+                </button>
 
-              <button
-                type="button"
-                disabled={!order?.order_id || checking}
-                onClick={() => checkOrderStatus(order.order_id)}
-                className="h-12 w-full rounded-full border border-[#111827] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:border-[#cbd5e1] disabled:text-[#94a3b8]"
-              >
-                {checking ? 'Checking...' : 'I have paid, check status'}
-              </button>
-
-              <div className="rounded-[18px] bg-[#fff7d8] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-                After payment, this page will show whether the order is successful. Your printed books will be prepared and delivered after payment is confirmed.
+                <button
+                  type="button"
+                  disabled={!order?.order_id || checking}
+                  onClick={() => checkOrderStatus(order.order_id)}
+                  className="h-11 flex-1 rounded-full border border-[#111827] bg-white text-[12px] font-extrabold text-[#111827] active:scale-[0.99] disabled:border-[#cbd5e1] disabled:text-[#94a3b8]"
+                >
+                  {checking ? 'Checking...' : 'Check Status'}
+                </button>
               </div>
             </div>
           )}
@@ -431,37 +470,17 @@ export default function ShadowMallPaymentPage() {
             )}
           </div>
         </section>
-      </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto grid max-w-5xl grid-cols-[1fr_1.2fr] gap-3">
+        {!isPaid && !loading ? (
           <button
             type="button"
-            onClick={() => navigate('/shop/mall/checkout')}
-            className="flex h-[52px] items-center justify-center rounded-full border border-[#111827] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+            onClick={createNewPayment}
+            className="mt-4 h-11 w-full rounded-full bg-white text-[12px] font-extrabold text-[#667085] ring-1 ring-black/5 active:scale-[0.99]"
           >
-            Edit Info
+            Create New Payment
           </button>
-
-          {isPaid ? (
-            <button
-              type="button"
-              onClick={() => navigate('/shop')}
-              className="flex h-[52px] items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
-            >
-              Back to Shop
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={resetPayment}
-              className="flex h-[52px] items-center justify-center rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
-            >
-              New Payment
-            </button>
-          )}
-        </div>
-      </div>
+        ) : null}
+      </main>
     </div>
   )
 }
