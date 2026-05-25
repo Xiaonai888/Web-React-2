@@ -177,12 +177,12 @@ export default function ShadowMallCartPage() {
           <button
             type="button"
             onClick={() => navigate('/shop/mall/cart')}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
             aria-label="Cart items"
           >
-            <i className="fa-solid fa-cart-shopping text-[14px]" />
+            <i className="fa-solid fa-cart-shopping text-[20px]" />
             {itemCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827] ring-2 ring-white">
+              <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
                 {itemCount}
               </span>
             ) : null}
@@ -205,7 +205,7 @@ export default function ShadowMallCartPage() {
               onClick={() => navigate('/shop/mall/orders')}
               className="mt-3 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
                 <i className="fa-solid fa-clock-rotate-left text-[15px]" />
               </div>
 
@@ -264,7 +264,7 @@ export default function ShadowMallCartPage() {
               onClick={() => navigate('/shop/mall/orders')}
               className="mb-4 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
                 <i className="fa-solid fa-clock-rotate-left text-[15px]" />
               </div>
 
