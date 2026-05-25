@@ -394,7 +394,7 @@ function PreOrderFeature({ products, onOpen }) {
   )
 }
 
-function MallBookSection({ title, subtitle, books, onOpen, loading }) {
+function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey }) {
   return (
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
@@ -402,9 +402,15 @@ function MallBookSection({ title, subtitle, books, onOpen, loading }) {
           <h3 className="text-[17px] font-extrabold text-[#111827]">{title}</h3>
           {subtitle ? <p className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#98a2b3]">{subtitle}</p> : null}
         </div>
-        <button type="button" className="shrink-0 text-[12px] font-extrabold text-[#8d94a1]" onClick={() => {}}>
-          More &gt;
-        </button>
+        <button
+  type="button"
+  className="shrink-0 text-[12px] font-extrabold text-[#8d94a1]"
+  onClick={() => {
+    if (sectionKey === 'new_books') navigate('/shop/mall/new-books')
+  }}
+>
+  More &gt;
+</button>
       </div>
 
       {loading ? (
@@ -587,6 +593,15 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
           loading={productsLoading}
           onOpen={openProduct}
         />
+      <MallBookSection
+  key={section.key}
+  title={section.title}
+  subtitle={section.subtitle}
+  books={filteredSections[section.key] || []}
+  loading={productsLoading}
+  onOpen={openProduct}
+  sectionKey={section.key}
+/>
       ))}
     </section>
   )
