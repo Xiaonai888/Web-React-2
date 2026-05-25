@@ -524,8 +524,43 @@ export default function ShadowMallCheckoutPage() {
       }
 
       saveBuyerProfileLocal(savedProfile)
-      localStorage.setItem('shadow_mall_checkout_draft', JSON.stringify(checkoutDraft))
-      navigate('/shop/mall/payment')
+
+const orderResponse = await fetch(`${API_URL}/api/shadow-mall/orders/create-payment`, {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    items,
+    delivery_company: selectedDeliveryCompany,
+  }),
+})
+
+const orderData = await orderResponse.json().catch(() => ({}))
+
+if (!orderResponse.ok || orderData.ok === false) {
+  throw new Error(orderData.message || 'Failed to create Shadow Mall payment')
+}
+
+if (!orderData.order) {
+  throw new Error('Payment order was not created')
+}
+
+localStorage.setItem(
+  'shadow_mall_current_order_payment',
+  JSON.stringify({
+    order: orderData.order,
+    created_at: new Date().toISOString(),
+  })
+)
+
+const paywayUrl =
+  orderData.order.checkout_url ||
+  orderData.order.deeplink ||
+  'https://link.payway.com.kh/ABAPAYnw446278Y'
+
+window.location.replace(paywayUrl)
     } catch (error) {
       setMessage(error.message || 'Failed to save buyer profile')
     } finally {
