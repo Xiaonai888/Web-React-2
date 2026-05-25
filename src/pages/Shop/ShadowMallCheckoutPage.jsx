@@ -10,6 +10,7 @@ const API_URL =
 const CART_KEY = 'shadow_mall_cart'
 const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
 const DELIVERY_FEE = 2
+const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 
 const deliveryCompanies = [
   {
@@ -263,24 +264,24 @@ function BuyerProfileSheet({
                 inputMode="tel"
               />
             </div>
-              
-            <div>
-  <FieldLabel>Telegram Username</FieldLabel>
-  <TextInput
-    value={telegramUsername}
-    onChange={(event) => setTelegramUsername(event.target.value)}
-    placeholder="@yourname"
-  />
-</div>
 
-<div>
-  <FieldLabel>Facebook Link</FieldLabel>
-  <TextInput
-    value={facebookLink}
-    onChange={(event) => setFacebookLink(event.target.value)}
-    placeholder="Paste Facebook profile or Messenger link"
-  />
-</div>
+            <div>
+              <FieldLabel>Telegram Username</FieldLabel>
+              <TextInput
+                value={telegramUsername}
+                onChange={(event) => setTelegramUsername(event.target.value)}
+                placeholder="@yourname"
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Facebook Link</FieldLabel>
+              <TextInput
+                value={facebookLink}
+                onChange={(event) => setFacebookLink(event.target.value)}
+                placeholder="Paste Facebook profile or Messenger link"
+              />
+            </div>
 
             <div>
               <FieldLabel required>Province / City</FieldLabel>
@@ -302,13 +303,13 @@ function BuyerProfileSheet({
             </div>
 
             <button
-  type="button"
-  disabled={saving}
-  onClick={onSave}
-  className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#aeb6c4]"
->
-  {saving ? 'Saving...' : 'Save Information'}
-</button>
+              type="button"
+              disabled={saving}
+              onClick={onSave}
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#aeb6c4]"
+            >
+              {saving ? 'Saving...' : 'Save Information'}
+            </button>
           </div>
         </div>
       </div>
@@ -411,9 +412,9 @@ export default function ShadowMallCheckoutPage() {
           setProvince(serverProfile.province_city)
           setAddress(serverProfile.delivery_address)
           setNote(serverProfile.delivery_note)
-          saveBuyerProfileLocal(serverProfile)
           setTelegramUsername(serverProfile.telegram_username)
           setFacebookLink(serverProfile.facebook_link)
+          saveBuyerProfileLocal(serverProfile)
         }
 
         if (!ignore && (!data.profile?.phone_number || !data.profile?.delivery_address)) {
@@ -465,67 +466,68 @@ export default function ShadowMallCheckoutPage() {
     items.length > 0 &&
     !saving
 
-  async function handleContinue() {
-    async function saveBuyerProfileOnly() {
-  const token = getReaderToken()
+  async function saveBuyerProfileOnly() {
+    const token = getReaderToken()
 
-  if (!readerName.trim() || !token) {
-    setMessage('Please login before saving buyer profile.')
-    return false
-  }
-
-  if (!phone.trim() || !address.trim()) {
-    setMessage('Phone number and delivery address are required.')
-    return false
-  }
-
-  const profile = {
-    phone_number: phone.trim(),
-    province_city: province,
-    delivery_address: address.trim(),
-    delivery_note: note.trim(),
-    telegram_username: telegramUsername.trim(),
-    facebook_link: facebookLink.trim(),
-  }
-
-  try {
-    setSaving(true)
-    setMessage('')
-
-    const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to save buyer profile')
+    if (!readerName.trim() || !token) {
+      setMessage('Please login before saving buyer profile.')
+      return false
     }
 
-    const savedProfile = normalizeProfile(data.profile || profile)
+    if (!phone.trim() || !address.trim()) {
+      setMessage('Phone number and delivery address are required.')
+      return false
+    }
 
-    saveBuyerProfileLocal(savedProfile)
-    setPhone(savedProfile.phone_number)
-    setProvince(savedProfile.province_city)
-    setAddress(savedProfile.delivery_address)
-    setNote(savedProfile.delivery_note)
-    setTelegramUsername(savedProfile.telegram_username)
-    setFacebookLink(savedProfile.facebook_link)
-    setBuyerProfileOpen(false)
+    const profile = {
+      phone_number: phone.trim(),
+      province_city: province,
+      delivery_address: address.trim(),
+      delivery_note: note.trim(),
+      telegram_username: telegramUsername.trim(),
+      facebook_link: facebookLink.trim(),
+    }
 
-    return true
-  } catch (error) {
-    setMessage(error.message || 'Failed to save buyer profile')
-    return false
-  } finally {
-    setSaving(false)
+    try {
+      setSaving(true)
+      setMessage('')
+
+      const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profile),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to save buyer profile')
+      }
+
+      const savedProfile = normalizeProfile(data.profile || profile)
+
+      saveBuyerProfileLocal(savedProfile)
+      setPhone(savedProfile.phone_number)
+      setProvince(savedProfile.province_city)
+      setAddress(savedProfile.delivery_address)
+      setNote(savedProfile.delivery_note)
+      setTelegramUsername(savedProfile.telegram_username)
+      setFacebookLink(savedProfile.facebook_link)
+      setBuyerProfileOpen(false)
+
+      return true
+    } catch (error) {
+      setMessage(error.message || 'Failed to save buyer profile')
+      return false
+    } finally {
+      setSaving(false)
+    }
   }
-}
+
+  async function handleContinue() {
     const token = getReaderToken()
 
     if (!readerName.trim() || !token) {
@@ -574,58 +576,46 @@ export default function ShadowMallCheckoutPage() {
       }
 
       const savedProfile = normalizeProfile(data.profile || profile)
-      const checkoutDraft = {
-        buyer_name: readerName,
-        buyer_profile: savedProfile,
-        delivery_company: selectedDeliveryCompany,
-        items,
-        subtotal,
-        delivery_fee: DELIVERY_FEE,
-        grand_total: total,
-        currency: 'USD',
-        created_at: new Date().toISOString(),
-      }
-
       saveBuyerProfileLocal(savedProfile)
 
-const orderResponse = await fetch(`${API_URL}/api/shadow-mall/orders/create-payment`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    items,
-    delivery_company: selectedDeliveryCompany,
-  }),
-})
+      const orderResponse = await fetch(`${API_URL}/api/shadow-mall/orders/create-payment`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items,
+          delivery_company: selectedDeliveryCompany,
+        }),
+      })
 
-const orderData = await orderResponse.json().catch(() => ({}))
+      const orderData = await orderResponse.json().catch(() => ({}))
 
-if (!orderResponse.ok || orderData.ok === false) {
-  throw new Error(orderData.message || 'Failed to create Shadow Mall payment')
-}
+      if (!orderResponse.ok || orderData.ok === false) {
+        throw new Error(orderData.message || 'Failed to create Shadow Mall payment')
+      }
 
-if (!orderData.order) {
-  throw new Error('Payment order was not created')
-}
+      if (!orderData.order) {
+        throw new Error('Payment order was not created')
+      }
 
-localStorage.setItem(
-  'shadow_mall_current_order_payment',
-  JSON.stringify({
-    order: orderData.order,
-    created_at: new Date().toISOString(),
-  })
-)
+      localStorage.setItem(
+        'shadow_mall_current_order_payment',
+        JSON.stringify({
+          order: orderData.order,
+          created_at: new Date().toISOString(),
+        })
+      )
 
-const paywayUrl =
-  orderData.order.checkout_url ||
-  orderData.order.deeplink ||
-  'https://link.payway.com.kh/ABAPAYnw446278Y'
+      const paywayUrl =
+        orderData.order.checkout_url ||
+        orderData.order.deeplink ||
+        FALLBACK_PAYWAY_LINK
 
-window.location.replace(paywayUrl)
+      window.location.replace(paywayUrl)
     } catch (error) {
-      setMessage(error.message || 'Failed to save buyer profile')
+      setMessage(error.message || 'Failed to continue payment')
     } finally {
       setSaving(false)
     }
@@ -650,12 +640,13 @@ window.location.replace(paywayUrl)
         setFacebookLink={setFacebookLink}
         saving={saving}
         onSave={saveBuyerProfileOnly}
-/>
+      />
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/shop/mall/cart')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
@@ -819,7 +810,7 @@ window.location.replace(paywayUrl)
               onClick={handleContinue}
               className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
             >
-              {saving ? 'Saving...' : 'Continue to Payment'}
+              {saving ? 'Opening PayWay...' : 'Continue to Payment'}
             </button>
           ) : (
             <button
