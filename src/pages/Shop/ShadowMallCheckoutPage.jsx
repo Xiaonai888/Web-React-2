@@ -11,6 +11,7 @@ const CART_KEY = 'shadow_mall_cart'
 const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
 const DELIVERY_FEE = 2
 const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+const DEFAULT_PROVINCE_CITY = 'Phnom Penh'
 
 const deliveryCompanies = [
   {
@@ -25,34 +26,6 @@ const deliveryCompanies = [
     shortName: 'VET',
     logo: '/assets/ShadowMall/delivery/vireak-buntham.png',
   },
-]
-
-const provinces = [
-  'Phnom Penh',
-  'Banteay Meanchey',
-  'Battambang',
-  'Kampong Cham',
-  'Kampong Chhnang',
-  'Kampong Speu',
-  'Kampong Thom',
-  'Kampot',
-  'Kandal',
-  'Kep',
-  'Koh Kong',
-  'Kratie',
-  'Mondulkiri',
-  'Oddar Meanchey',
-  'Pailin',
-  'Preah Sihanouk',
-  'Preah Vihear',
-  'Prey Veng',
-  'Pursat',
-  'Ratanakiri',
-  'Siem Reap',
-  'Stung Treng',
-  'Svay Rieng',
-  'Takeo',
-  'Tboung Khmum',
 ]
 
 function readJson(key, fallback) {
@@ -76,7 +49,7 @@ function saveBuyerProfileLocal(profile) {
 function readBuyerProfileLocal() {
   return readJson(BUYER_PROFILE_KEY, {
     phone_number: '',
-    province_city: 'Phnom Penh',
+    province_city: DEFAULT_PROVINCE_CITY,
     delivery_address: '',
     delivery_note: '',
     telegram_username: '',
@@ -123,7 +96,7 @@ function normalizeCartItem(item) {
 function normalizeProfile(profile) {
   return {
     phone_number: profile?.phone_number || '',
-    province_city: profile?.province_city || 'Phnom Penh',
+    province_city: profile?.province_city || DEFAULT_PROVINCE_CITY,
     delivery_address: profile?.delivery_address || '',
     delivery_note: profile?.delivery_note || '',
     telegram_username: profile?.telegram_username || '',
@@ -155,18 +128,6 @@ function TextInput(props) {
   )
 }
 
-function SelectInput(props) {
-  return (
-    <div className="relative">
-      <select
-        {...props}
-        className="h-12 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 pr-10 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-      />
-      <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[#98a2b3]" />
-    </div>
-  )
-}
-
 function DeliveryLogo({ company }) {
   return (
     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white shadow-sm ring-1 ring-black/5">
@@ -193,8 +154,6 @@ function BuyerProfileSheet({
   profileLoading,
   phone,
   setPhone,
-  province,
-  setProvince,
   address,
   setAddress,
   telegramUsername,
@@ -284,20 +243,11 @@ function BuyerProfileSheet({
             </div>
 
             <div>
-              <FieldLabel required>Province / City</FieldLabel>
-              <SelectInput value={province} onChange={(event) => setProvince(event.target.value)}>
-                {provinces.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </SelectInput>
-            </div>
-
-            <div>
               <FieldLabel required>Delivery Address</FieldLabel>
               <textarea
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
-                placeholder="House number, street, village, commune, district..."
+                placeholder="House number, street, village, commune, district, province/city..."
                 className="min-h-[120px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
               />
             </div>
@@ -356,7 +306,6 @@ export default function ShadowMallCheckoutPage() {
   const [items, setItems] = useState([])
   const [readerUser, setReaderUser] = useState(null)
   const [phone, setPhone] = useState('')
-  const [province, setProvince] = useState('Phnom Penh')
   const [address, setAddress] = useState('')
   const [telegramUsername, setTelegramUsername] = useState('')
   const [facebookLink, setFacebookLink] = useState('')
@@ -378,7 +327,6 @@ export default function ShadowMallCheckoutPage() {
       setItems(readCart().map(normalizeCartItem))
       setReaderUser(readReaderUser())
       setPhone(localProfile.phone_number || '')
-      setProvince(localProfile.province_city || 'Phnom Penh')
       setAddress(localProfile.delivery_address || '')
       setTelegramUsername(localProfile.telegram_username || '')
       setFacebookLink(localProfile.facebook_link || '')
@@ -409,7 +357,6 @@ export default function ShadowMallCheckoutPage() {
           const serverProfile = normalizeProfile(data.profile)
 
           setPhone(serverProfile.phone_number)
-          setProvince(serverProfile.province_city)
           setAddress(serverProfile.delivery_address)
           setNote(serverProfile.delivery_note)
           setTelegramUsername(serverProfile.telegram_username)
@@ -458,7 +405,6 @@ export default function ShadowMallCheckoutPage() {
   const profileComplete =
     Boolean(readerName.trim()) &&
     Boolean(phone.trim()) &&
-    Boolean(province) &&
     Boolean(address.trim())
 
   const canContinue =
@@ -481,7 +427,7 @@ export default function ShadowMallCheckoutPage() {
 
     const profile = {
       phone_number: phone.trim(),
-      province_city: province,
+      province_city: DEFAULT_PROVINCE_CITY,
       delivery_address: address.trim(),
       delivery_note: note.trim(),
       telegram_username: telegramUsername.trim(),
@@ -511,7 +457,6 @@ export default function ShadowMallCheckoutPage() {
 
       saveBuyerProfileLocal(savedProfile)
       setPhone(savedProfile.phone_number)
-      setProvince(savedProfile.province_city)
       setAddress(savedProfile.delivery_address)
       setNote(savedProfile.delivery_note)
       setTelegramUsername(savedProfile.telegram_username)
@@ -549,7 +494,7 @@ export default function ShadowMallCheckoutPage() {
 
     const profile = {
       phone_number: phone.trim(),
-      province_city: province,
+      province_city: DEFAULT_PROVINCE_CITY,
       delivery_address: address.trim(),
       delivery_note: note.trim(),
       telegram_username: telegramUsername.trim(),
@@ -630,8 +575,6 @@ export default function ShadowMallCheckoutPage() {
         profileLoading={profileLoading}
         phone={phone}
         setPhone={setPhone}
-        province={province}
-        setProvince={setProvince}
         address={address}
         setAddress={setAddress}
         telegramUsername={telegramUsername}
