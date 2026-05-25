@@ -18,13 +18,13 @@ const deliveryCompanies = [
     key: 'jnt',
     name: 'J&T Express',
     shortName: 'J&T',
-    logo: '/assets/ShadowMall/delivery/jnt.png',
+    logo: '/assets/Icons/J&T.svg',
   },
   {
     key: 'vireak_buntham',
     name: 'Vireak Buntham Express',
     shortName: 'VET',
-    logo: '/assets/ShadowMall/delivery/vireak-buntham.png',
+    logo: '/assets/Icons/VET.svg',
   },
 ]
 
