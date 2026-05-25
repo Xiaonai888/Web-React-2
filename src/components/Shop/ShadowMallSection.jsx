@@ -394,7 +394,7 @@ function PreOrderFeature({ products, onOpen }) {
   )
 }
 
-function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey }) {
+function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey, onMore }) {
   return (
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
@@ -405,9 +405,7 @@ function MallBookSection({ title, subtitle, books, onOpen, loading, sectionKey }
         <button
   type="button"
   className="shrink-0 text-[12px] font-extrabold text-[#8d94a1]"
-  onClick={() => {
-    if (sectionKey === 'new_books') navigate('/shop/mall/new-books')
-  }}
+  onClick={onMore}
 >
   More &gt;
 </button>
