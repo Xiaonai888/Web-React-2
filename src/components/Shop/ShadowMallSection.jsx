@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
+import {
+  isShadowMallWishlisted,
+  toggleShadowMallWishlist,
+} from '../../utils/shadowMallWishlist'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -204,6 +208,29 @@ function normalizeProduct(product) {
 function ProductCard({ product, onOpen }) {
   const status = getProductStatus(product)
   const hasOldPrice = Boolean(String(product.oldPrice || '').trim())
+  const [wishlisted, setWishlisted] = useState(() => isShadowMallWishlisted(product.id))
+
+  useEffect(() => {
+    const refreshWishlist = () => {
+      setWishlisted(isShadowMallWishlisted(product.id))
+    }
+
+    window.addEventListener('shadow-mall-wishlist-change', refreshWishlist)
+    window.addEventListener('storage', refreshWishlist)
+    window.addEventListener('focus', refreshWishlist)
+
+    return () => {
+      window.removeEventListener('shadow-mall-wishlist-change', refreshWishlist)
+      window.removeEventListener('storage', refreshWishlist)
+      window.removeEventListener('focus', refreshWishlist)
+    }
+  }, [product.id])
+
+  function handleWishlistClick(event) {
+    event.stopPropagation()
+    const result = toggleShadowMallWishlist(product)
+    setWishlisted(result.wishlisted)
+  }
 
   return (
     <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
@@ -226,13 +253,13 @@ function ProductCard({ product, onOpen }) {
 
           <button
             type="button"
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95"
-            aria-label={`Save ${product.title}`}
-            onClick={(event) => {
-              event.stopPropagation()
-            }}
+            className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm active:scale-95 ${
+              wishlisted ? 'text-[#e5484d]' : 'text-[#111827]'
+            }`}
+            aria-label={`${wishlisted ? 'Remove saved' : 'Save'} ${product.title}`}
+            onClick={handleWishlistClick}
           >
-            <i className="fa-regular fa-heart text-[13px]" />
+            <i className={`${wishlisted ? 'fa-solid' : 'fa-regular'} fa-heart text-[13px]`} />
           </button>
         </div>
       </button>
@@ -262,23 +289,22 @@ function ProductCard({ product, onOpen }) {
           </button>
 
           <button
-  type="button"
-  disabled={status.disabled}
-
-  onClick={(event) => {
-  event.stopPropagation()
-  if (status.disabled) return
-  addShadowMallCartItem(product, 1)
-}}          
-  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
-    status.disabled
-      ? 'bg-[#eef2f7] text-[#98a2b3]'
-      : 'bg-[#111827] text-white'
-  }`}
-  aria-label={`Add ${product.title} to cart`}
->
-  <i className="fa-solid fa-cart-shopping text-[12px]" />
-</button>
+            type="button"
+            disabled={status.disabled}
+            onClick={(event) => {
+              event.stopPropagation()
+              if (status.disabled) return
+              addShadowMallCartItem(product, 1)
+            }}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+              status.disabled
+                ? 'bg-[#eef2f7] text-[#98a2b3]'
+                : 'bg-[#111827] text-white'
+            }`}
+            aria-label={`Add ${product.title} to cart`}
+          >
+            <i className="fa-solid fa-cart-shopping text-[12px]" />
+          </button>
         </div>
       </div>
     </article>
