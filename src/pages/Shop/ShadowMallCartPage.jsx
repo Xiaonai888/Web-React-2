@@ -160,7 +160,7 @@ export default function ShadowMallCartPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/shop')}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
