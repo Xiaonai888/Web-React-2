@@ -293,6 +293,32 @@ export default function ShadowMallNewBooksPage() {
 
       <main className="mx-auto max-w-6xl px-4 pt-4">
         {searchOpen ? (
+      <section className="mb-3 overflow-hidden rounded-[24px] bg-[#fff7d8] px-4 py-4 shadow-sm ring-1 ring-[#f6d56f]/40">
+  <div className="flex items-center gap-4">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-white/80 text-[#7a5600]">
+      <i className="fa-solid fa-book-open text-[18px]" />
+    </div>
+
+    <div className="min-w-0 flex-1">
+      <h2 className="text-[16px] font-extrabold text-[#111827]">
+        New arrivals this week
+      </h2>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a5600]/80">
+        Fresh printed books added regularly. Find your next read before it sells out.
+      </p>
+    </div>
+  </div>
+</section>
+      <main className="mx-auto max-w-6xl px-4 pt-4">
+  [Banner here]
+
+  {searchOpen ? (
+    ...
+  ) : null}
+
+  [Sort buttons]
+  [Book grid]
+</main>
           <form onSubmit={handleSearchSubmit} className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
             <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
               <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
