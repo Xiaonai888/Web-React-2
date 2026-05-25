@@ -584,17 +584,15 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
 
      {mallSections.map((section) => (
   <MallBookSection
-  key={section.key}
-  title={section.title}
-  subtitle={section.subtitle}
-  books={filteredSections[section.key] || []}
-  loading={productsLoading}
-  onOpen={openProduct}
-  sectionKey={section.key}
-  onMore={() => {
-    if (section.key === 'new_books') navigate('/shop/mall/new-books')
-  }}
-/>
-    </section>
-  )
-}
+    key={section.key}
+    title={section.title}
+    subtitle={section.subtitle}
+    books={filteredSections[section.key] || []}
+    loading={productsLoading}
+    onOpen={openProduct}
+    sectionKey={section.key}
+    onMore={() => {
+      if (section.key === 'new_books') navigate('/shop/mall/new-books')
+    }}
+  />
+))}
