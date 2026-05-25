@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_URL =
@@ -7,10 +7,53 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const CHECKOUT_DRAFT_KEY = 'shadow_mall_checkout_draft'
-const CURRENT_ORDER_KEY = 'shadow_mall_current_order_payment'
 const CART_KEY = 'shadow_mall_cart'
+const BUYER_PROFILE_KEY = 'shadow_mall_buyer_profile'
+const DELIVERY_FEE = 2
 const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+
+const deliveryCompanies = [
+  {
+    key: 'jnt',
+    name: 'J&T Express',
+    shortName: 'J&T',
+    logo: '/assets/ShadowMall/delivery/jnt.png',
+  },
+  {
+    key: 'vireak_buntham',
+    name: 'Vireak Buntham Express',
+    shortName: 'VET',
+    logo: '/assets/ShadowMall/delivery/vireak-buntham.png',
+  },
+]
+
+const provinces = [
+  'Phnom Penh',
+  'Banteay Meanchey',
+  'Battambang',
+  'Kampong Cham',
+  'Kampong Chhnang',
+  'Kampong Speu',
+  'Kampong Thom',
+  'Kampot',
+  'Kandal',
+  'Kep',
+  'Koh Kong',
+  'Kratie',
+  'Mondulkiri',
+  'Oddar Meanchey',
+  'Pailin',
+  'Preah Sihanouk',
+  'Preah Vihear',
+  'Prey Veng',
+  'Pursat',
+  'Ratanakiri',
+  'Siem Reap',
+  'Stung Treng',
+  'Svay Rieng',
+  'Takeo',
+  'Tboung Khmum',
+]
 
 function readJson(key, fallback) {
   try {
@@ -21,8 +64,67 @@ function readJson(key, fallback) {
   }
 }
 
+function readCart() {
+  const value = readJson(CART_KEY, [])
+  return Array.isArray(value) ? value : []
+}
+
+function saveBuyerProfileLocal(profile) {
+  localStorage.setItem(BUYER_PROFILE_KEY, JSON.stringify(profile))
+}
+
+function readBuyerProfileLocal() {
+  return readJson(BUYER_PROFILE_KEY, {
+    phone_number: '',
+    province_city: 'Phnom Penh',
+    delivery_address: '',
+    delivery_note: '',
+  })
+}
+
+function readReaderUser() {
+  return readJson('shadow_reader_user', null)
+}
+
 function getReaderToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+}
+
+function getReaderName(user) {
+  if (!user) return ''
+
+  return (
+    user.name ||
+    user.full_name ||
+    user.display_name ||
+    user.email ||
+    ''
+  )
+}
+
+function normalizePrice(value) {
+  return Number(String(value || '').replace('$', '')) || 0
+}
+
+function normalizeCartItem(item) {
+  return {
+    id: item.id,
+    title: item.title || 'Untitled book',
+    author: item.author || item.author_name || 'Unknown author',
+    cover: item.cover || item.cover_url || '',
+    price: normalizePrice(item.price || item.price_usd),
+    oldPrice: normalizePrice(item.oldPrice || item.old_price_usd),
+    quantity: Math.max(Number(item.quantity || 1), 1),
+  }
+}
+
+function normalizeProfile(profile) {
+  return {
+    phone_number: profile?.phone_number || '',
+    province_city: profile?.province_city || 'Phnom Penh',
+    delivery_address: profile?.delivery_address || '',
+    delivery_note: profile?.delivery_note || '',
+  }
 }
 
 function formatUsd(value) {
@@ -31,48 +133,168 @@ function formatUsd(value) {
   return `$${number.toFixed(2)}`
 }
 
-function getDraftKey(draft) {
-  const items = Array.isArray(draft?.items)
-    ? draft.items.map((item) => ({
-        id: item.id,
-        quantity: item.quantity,
-      }))
-    : []
-
-  return JSON.stringify({
-    items,
-    delivery_company: draft?.delivery_company?.key || '',
-    total: Number(draft?.grand_total || 0),
-  })
+function FieldLabel({ children, required = false }) {
+  return (
+    <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+      {children}
+      {required ? <span className="ml-1 text-[#e5484d]">*</span> : null}
+    </label>
+  )
 }
 
-function getRedirectFlag(orderId) {
-  return `shadow_mall_payway_opened_${orderId}`
+function TextInput(props) {
+  return (
+    <input
+      {...props}
+      className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-semibold text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] disabled:bg-[#f4f5f7] disabled:text-[#667085]"
+    />
+  )
 }
 
-function getPayWayUrl(order) {
-  return order?.checkout_url || order?.deeplink || FALLBACK_PAYWAY_LINK
+function SelectInput(props) {
+  return (
+    <div className="relative">
+      <select
+        {...props}
+        className="h-12 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 pr-10 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+      />
+      <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[#98a2b3]" />
+    </div>
+  )
 }
 
-function getStatusText(status) {
-  if (status === 'paid') return 'Payment Successful'
-  if (status === 'amount_mismatch') return 'Payment Needs Review'
-  if (status === 'expired') return 'Payment Expired'
-  if (status === 'cancelled') return 'Payment Cancelled'
-  return 'Waiting Payment'
+function DeliveryLogo({ company }) {
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white shadow-sm ring-1 ring-black/5">
+      <img
+        src={company.logo}
+        alt={company.name}
+        className="h-full w-full object-cover"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none'
+          event.currentTarget.nextElementSibling.style.display = 'flex'
+        }}
+      />
+      <span className="hidden h-full w-full items-center justify-center bg-[#f5f3fa] text-[11px] font-extrabold text-[#111827]">
+        {company.shortName}
+      </span>
+    </div>
+  )
 }
 
-function getStatusClass(status) {
-  if (status === 'paid') return 'bg-[#dcfce7] text-[#166534]'
-  if (status === 'amount_mismatch') return 'bg-[#fff7d8] text-[#7a5600]'
-  if (status === 'expired' || status === 'cancelled') return 'bg-[#fff1f1] text-[#e5484d]'
-  return 'bg-[#fff7d8] text-[#7a5600]'
+function BuyerProfileSheet({
+  open,
+  onClose,
+  readerName,
+  profileLoading,
+  phone,
+  setPhone,
+  province,
+  setProvince,
+  address,
+  setAddress,
+  saving,
+  onSave,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[120]">
+      <button
+        type="button"
+        aria-label="Close Buyer Profile"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[28px] bg-white shadow-2xl md:bottom-auto md:left-1/2 md:top-1/2 md:w-[520px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[26px]">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden" />
+
+        <div className="flex items-center justify-between gap-3 border-b border-[#f0eef6] px-5 pb-4 pt-5">
+          <div>
+            <div className="text-[18px] font-extrabold text-[#111827]">Buyer Profile</div>
+            <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+              Required for printed book delivery.
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#555b66]"
+          >
+            <i className="fa-solid fa-xmark text-[13px]" />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-5 pb-5 pt-4">
+          {profileLoading ? (
+            <div className="mb-4 rounded-[16px] bg-[#eef2ff] px-4 py-3 text-[12px] font-extrabold text-[#4f46e5]">
+              Loading buyer profile...
+            </div>
+          ) : null}
+
+          <div className="space-y-4">
+            <div>
+              <FieldLabel required>Name</FieldLabel>
+              <TextInput
+                value={readerName || 'Please login first'}
+                disabled
+                readOnly
+              />
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
+                Name comes from your reader account. To change it, update your main profile.
+              </p>
+            </div>
+
+            <div>
+              <FieldLabel required>Phone Number</FieldLabel>
+              <TextInput
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="Enter phone number"
+                inputMode="tel"
+              />
+            </div>
+
+            <div>
+              <FieldLabel required>Province / City</FieldLabel>
+              <SelectInput value={province} onChange={(event) => setProvince(event.target.value)}>
+                {provinces.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </SelectInput>
+            </div>
+
+            <div>
+              <FieldLabel required>Delivery Address</FieldLabel>
+              <textarea
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                placeholder="House number, street, village, commune, district..."
+                className="min-h-[120px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+              />
+            </div>
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={onSave}
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#aeb6c4]"
+            >
+              {saving ? 'Saving...' : 'Save Information'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-function PaymentItem({ item }) {
+function CheckoutItem({ item }) {
   return (
     <div className="flex gap-3 border-b border-[#f0eef6] py-3 last:border-b-0">
-      <div className="h-[74px] w-[50px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
+      <div className="h-[76px] w-[52px] shrink-0 overflow-hidden rounded-[12px] bg-[#eef0f4]">
         {item.cover ? (
           <img
             src={item.cover}
@@ -90,244 +312,313 @@ function PaymentItem({ item }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[#111827]">
-          {item.title}
-        </div>
-        <div className="mt-1 text-[11px] font-semibold text-[#8d94a1]">
-          Qty: {item.quantity}
-        </div>
-        <div className="mt-2 text-[13px] font-extrabold text-[#e5484d]">
-          {formatUsd(Number(item.price || item.unit_price_usd || 0) * Number(item.quantity || 1))}
+        <div className="line-clamp-2 text-[13px] font-extrabold leading-5 text-[#111827]">{item.title}</div>
+        <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1]">{item.author}</div>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <span className="text-[12px] font-bold text-[#8d94a1]">Qty: {item.quantity}</span>
+          <span className="text-[13px] font-extrabold text-[#e5484d]">
+            {formatUsd(item.price * item.quantity)}
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-export default function ShadowMallPaymentPage() {
+export default function ShadowMallCheckoutPage() {
   const navigate = useNavigate()
-  const hasCreatedRef = useRef(false)
-  const redirectedRef = useRef(false)
-  const [draft, setDraft] = useState(null)
-  const [order, setOrder] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [checking, setChecking] = useState(false)
+  const [items, setItems] = useState([])
+  const [readerUser, setReaderUser] = useState(null)
+  const [phone, setPhone] = useState('')
+  const [province, setProvince] = useState('Phnom Penh')
+  const [address, setAddress] = useState('')
+  const [note, setNote] = useState('')
+  const [deliveryCompany, setDeliveryCompany] = useState('jnt')
   const [message, setMessage] = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [showOrderItems, setShowOrderItems] = useState(true)
+  const [buyerProfileOpen, setBuyerProfileOpen] = useState(false)
 
-  const status = order?.status || 'waiting_payment'
-  const isPaid = status === 'paid'
-  const isWaiting = status === 'waiting_payment'
+  useEffect(() => {
+    let ignore = false
 
-  const subtotal = Number(order?.subtotal_usd ?? draft?.subtotal ?? 0)
-  const deliveryFee = Number(order?.delivery_fee_usd ?? draft?.delivery_fee ?? 0)
-  const total = Number(order?.total_usd ?? draft?.grand_total ?? 0)
+    async function loadCheckout() {
+      const localProfile = readBuyerProfileLocal()
+      const token = getReaderToken()
 
-  const deliveryCompany = useMemo(() => {
-    return order?.delivery_company || draft?.delivery_company || {}
-  }, [order, draft])
+      setItems(readCart().map(normalizeCartItem))
+      setReaderUser(readReaderUser())
+      setPhone(localProfile.phone_number || '')
+      setProvince(localProfile.province_city || 'Phnom Penh')
+      setAddress(localProfile.delivery_address || '')
+      setNote(localProfile.delivery_note || '')
 
-  function redirectToPayWay(targetOrder) {
-    if (!targetOrder?.order_id || redirectedRef.current) return
+      if (!token) {
+        setProfileLoading(false)
+        setBuyerProfileOpen(true)
+        return
+      }
 
-    const flag = getRedirectFlag(targetOrder.order_id)
+      try {
+        setProfileLoading(true)
 
-    if (sessionStorage.getItem(flag) === '1') return
+        const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
-    redirectedRef.current = true
-    sessionStorage.setItem(flag, '1')
+        const data = await response.json().catch(() => ({}))
 
-    window.location.href = getPayWayUrl(targetOrder)
-  }
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load buyer profile')
+        }
 
-  async function checkOrderStatus(targetOrderId) {
+        if (!ignore && data.profile) {
+          const serverProfile = normalizeProfile(data.profile)
+
+          setPhone(serverProfile.phone_number)
+          setProvince(serverProfile.province_city)
+          setAddress(serverProfile.delivery_address)
+          setNote(serverProfile.delivery_note)
+          saveBuyerProfileLocal(serverProfile)
+        }
+
+        if (!ignore && (!data.profile?.phone_number || !data.profile?.delivery_address)) {
+          setBuyerProfileOpen(true)
+        }
+      } catch (error) {
+        if (!ignore) {
+          setMessage(error.message || 'Failed to load buyer profile')
+        }
+      } finally {
+        if (!ignore) setProfileLoading(false)
+      }
+    }
+
+    loadCheckout()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const readerName = useMemo(() => getReaderName(readerUser), [readerUser])
+
+  const subtotal = useMemo(
+    () => items.reduce((total, item) => total + item.price * item.quantity, 0),
+    [items]
+  )
+
+  const itemCount = useMemo(
+    () => items.reduce((total, item) => total + item.quantity, 0),
+    [items]
+  )
+
+  const selectedDeliveryCompany = useMemo(
+    () => deliveryCompanies.find((company) => company.key === deliveryCompany) || deliveryCompanies[0],
+    [deliveryCompany]
+  )
+
+  const total = subtotal + DELIVERY_FEE
+
+  const profileComplete =
+    Boolean(readerName.trim()) &&
+    Boolean(phone.trim()) &&
+    Boolean(province) &&
+    Boolean(address.trim())
+
+  const canContinue =
+    profileComplete &&
+    items.length > 0 &&
+    !saving
+
+  async function saveBuyerProfileOnly() {
     const token = getReaderToken()
-    if (!token || !targetOrderId) return null
+
+    if (!readerName.trim() || !token) {
+      setMessage('Please login before saving buyer profile.')
+      return false
+    }
+
+    if (!phone.trim() || !address.trim()) {
+      setMessage('Phone number and delivery address are required.')
+      return false
+    }
+
+    const profile = {
+      phone_number: phone.trim(),
+      province_city: province,
+      delivery_address: address.trim(),
+      delivery_note: note.trim(),
+    }
 
     try {
-      setChecking(true)
+      setSaving(true)
+      setMessage('')
 
-      const response = await fetch(`${API_URL}/api/shadow-mall/orders/status/${targetOrderId}`, {
+      const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(profile),
       })
 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to check order status')
+        throw new Error(data.message || 'Failed to save buyer profile')
       }
 
-      if (data.order) {
-        setOrder(data.order)
-
-        const currentPayment = readJson(CURRENT_ORDER_KEY, null)
-        if (currentPayment) {
-          localStorage.setItem(
-            CURRENT_ORDER_KEY,
-            JSON.stringify({
-              ...currentPayment,
-              order: data.order,
-            })
-          )
-        }
-
-        if (data.order.status === 'paid') {
-          localStorage.removeItem(CART_KEY)
-          localStorage.removeItem(CURRENT_ORDER_KEY)
-          window.dispatchEvent(new Event('shadow-mall-cart-change'))
-          window.dispatchEvent(new Event('shadow-mall-cart-updated'))
-        }
-
-        return data.order
-      }
+      const savedProfile = normalizeProfile(data.profile || profile)
+      saveBuyerProfileLocal(savedProfile)
+      setPhone(savedProfile.phone_number)
+      setProvince(savedProfile.province_city)
+      setAddress(savedProfile.delivery_address)
+      setNote(savedProfile.delivery_note)
+      setBuyerProfileOpen(false)
+      return true
     } catch (error) {
-      setMessage(error.message || 'Failed to check order status')
+      setMessage(error.message || 'Failed to save buyer profile')
+      return false
     } finally {
-      setChecking(false)
+      setSaving(false)
     }
-
-    return null
   }
 
-  async function createPayment(currentDraft) {
+  async function handleContinue() {
     const token = getReaderToken()
 
-    if (!token) {
-      setMessage('Please login before payment.')
-      setLoading(false)
+    if (!readerName.trim() || !token) {
+      setMessage('Please login before checkout.')
+      setBuyerProfileOpen(true)
       return
     }
 
-    if (!currentDraft?.items?.length) {
-      setMessage('Your cart is empty. Please add books before payment.')
-      setLoading(false)
+    if (!items.length) {
+      setMessage('Your cart is empty.')
       return
+    }
+
+    if (!phone.trim() || !address.trim()) {
+      setMessage('Phone number and delivery address are required.')
+      setBuyerProfileOpen(true)
+      return
+    }
+
+    const profile = {
+      phone_number: phone.trim(),
+      province_city: province,
+      delivery_address: address.trim(),
+      delivery_note: note.trim(),
     }
 
     try {
-      setLoading(true)
+      setSaving(true)
       setMessage('')
 
-      const draftKey = getDraftKey(currentDraft)
-      const savedPayment = readJson(CURRENT_ORDER_KEY, null)
+      const profileResponse = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profile),
+      })
 
-      if (savedPayment?.draft_key === draftKey && savedPayment?.order?.order_id) {
-        setOrder(savedPayment.order)
-        const checkedOrder = await checkOrderStatus(savedPayment.order.order_id)
-        const latestOrder = checkedOrder || savedPayment.order
+      const profileData = await profileResponse.json().catch(() => ({}))
 
-        if (latestOrder.status !== 'paid') {
-          window.setTimeout(() => redirectToPayWay(latestOrder), 500)
-        }
-
-        return
+      if (!profileResponse.ok || profileData.ok === false) {
+        throw new Error(profileData.message || 'Failed to save buyer profile')
       }
 
-      const response = await fetch(`${API_URL}/api/shadow-mall/orders/create-payment`, {
+      const savedProfile = normalizeProfile(profileData.profile || profile)
+      saveBuyerProfileLocal(savedProfile)
+
+      const orderResponse = await fetch(`${API_URL}/api/shadow-mall/orders/create-payment`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          items: currentDraft.items,
-          delivery_company: currentDraft.delivery_company,
+          items,
+          delivery_company: selectedDeliveryCompany,
         }),
       })
 
-      const data = await response.json().catch(() => ({}))
+      const orderData = await orderResponse.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to create Shadow Mall payment')
+      if (!orderResponse.ok || orderData.ok === false) {
+        throw new Error(orderData.message || 'Failed to create Shadow Mall payment')
       }
 
-      if (!data.order) {
+      if (!orderData.order) {
         throw new Error('Payment order was not created')
       }
 
-      setOrder(data.order)
       localStorage.setItem(
-        CURRENT_ORDER_KEY,
+        'shadow_mall_current_order_payment',
         JSON.stringify({
-          draft_key: draftKey,
-          order: data.order,
+          order: orderData.order,
           created_at: new Date().toISOString(),
         })
       )
 
-      window.setTimeout(() => redirectToPayWay(data.order), 500)
+      const paywayUrl = orderData.order.checkout_url || orderData.order.deeplink || FALLBACK_PAYWAY_LINK
+      window.location.href = paywayUrl
     } catch (error) {
-      setMessage(error.message || 'Failed to create Shadow Mall payment')
+      setMessage(error.message || 'Failed to continue payment')
     } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    const currentDraft = readJson(CHECKOUT_DRAFT_KEY, null)
-    setDraft(currentDraft)
-
-    if (!currentDraft) {
-      setMessage('Checkout information was not found. Please go back to checkout.')
-      setLoading(false)
-      return
-    }
-
-    if (!hasCreatedRef.current) {
-      hasCreatedRef.current = true
-      createPayment(currentDraft)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!order?.order_id || !isWaiting) return undefined
-
-    const timer = window.setInterval(() => {
-      checkOrderStatus(order.order_id)
-    }, 5000)
-
-    return () => window.clearInterval(timer)
-  }, [order?.order_id, isWaiting])
-
-  function createNewPayment() {
-    if (order?.order_id) {
-      sessionStorage.removeItem(getRedirectFlag(order.order_id))
-    }
-
-    localStorage.removeItem(CURRENT_ORDER_KEY)
-    setOrder(null)
-
-    if (draft) {
-      redirectedRef.current = false
-      createPayment(draft)
+      setSaving(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[40px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+      <BuyerProfileSheet
+        open={buyerProfileOpen}
+        onClose={() => setBuyerProfileOpen(false)}
+        readerName={readerName}
+        profileLoading={profileLoading}
+        phone={phone}
+        setPhone={setPhone}
+        province={province}
+        setProvince={setProvince}
+        address={address}
+        setAddress={setAddress}
+        saving={saving}
+        onSave={saveBuyerProfileOnly}
+      />
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/shop/mall/checkout')}
+            onClick={() => navigate('/shop/mall/cart')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Back to checkout"
+            aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[#111827]">
-            Payment
+            Checkout
           </h1>
 
           <button
             type="button"
-            onClick={() => order?.order_id && checkOrderStatus(order.order_id)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Refresh payment status"
+            onClick={() => setBuyerProfileOpen(true)}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Open Buyer Profile"
           >
-            <i className={`fa-solid fa-rotate-right text-[14px] ${checking ? 'animate-spin' : ''}`} />
+            <i className="fa-solid fa-user text-[14px]" />
+            {!profileComplete ? (
+              <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[#e5484d] ring-2 ring-white" />
+            ) : null}
           </button>
         </div>
       </header>
@@ -339,83 +630,93 @@ export default function ShadowMallPaymentPage() {
           </div>
         ) : null}
 
-        <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-start justify-between gap-4">
+        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[16px] font-extrabold text-[#111827]">Shadow Mall Order</div>
-              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
-                Order ID: {order?.order_id || 'Creating...'}
-              </div>
+              <div className="text-[16px] font-extrabold text-[#111827]">Delivery Company</div>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+                Choose the company for printed book delivery.
+              </p>
             </div>
 
-            <span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${getStatusClass(status)}`}>
-              {getStatusText(status)}
-            </span>
-          </div>
-
-          <div className="mt-5 rounded-[22px] bg-[#fafafe] p-4">
-            <div className="text-center text-[12px] font-bold text-[#8d94a1]">Grand Total</div>
-            <div className="mt-1 text-center text-[32px] font-extrabold text-[#e5484d]">
-              {formatUsd(total)}
-            </div>
-            <div className="mt-1 text-center text-[12px] font-semibold text-[#8d94a1]">
-              Pay with ABA PayWay / KHQR
+            <div className="rounded-full bg-[#fff7d8] px-3 py-1 text-[11px] font-extrabold text-[#7a5600]">
+              {formatUsd(DELIVERY_FEE)}
             </div>
           </div>
 
-          {loading ? (
-            <div className="mt-5 rounded-[22px] bg-[#fafafe] px-4 py-8 text-center">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-              <div className="text-[13px] font-extrabold text-[#111827]">Creating payment...</div>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {deliveryCompanies.map((company) => {
+              const selected = deliveryCompany === company.key
+
+              return (
+                <button
+                  key={company.key}
+                  type="button"
+                  onClick={() => setDeliveryCompany(company.key)}
+                  className={`flex items-center gap-3 rounded-[18px] border-2 p-3 text-left transition active:scale-[0.99] ${
+                    selected
+                      ? 'border-[#d4af37] bg-[#fffaf0] shadow-[0_10px_24px_rgba(212,175,55,0.18)]'
+                      : 'border-[#eceaf2] bg-[#fafafe]'
+                  }`}
+                >
+                  <DeliveryLogo company={company} />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-extrabold text-[#111827]">{company.shortName}</div>
+                    <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
+                      {company.name}
+                    </div>
+                  </div>
+
+                  {selected ? (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d4af37] text-white">
+                      <i className="fa-solid fa-check text-[11px]" />
+                    </div>
+                  ) : null}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-4">
+            <FieldLabel>Delivery Note</FieldLabel>
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Optional note for admin or delivery..."
+              className="min-h-[90px] w-full resize-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none transition placeholder:text-[#a0a5b1] focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+            />
+          </div>
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+          <button
+            type="button"
+            onClick={() => setShowOrderItems((value) => !value)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+          >
+            <div>
+              <div className="text-[16px] font-extrabold text-[#111827]">Order Items</div>
               <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
-                Redirecting to ABA PayWay...
+                {itemCount} books in this order
               </div>
             </div>
-          ) : isPaid ? (
-            <div className="mt-5 rounded-[22px] bg-[#f0fdf4] px-4 py-6 text-center ring-1 ring-[#bbf7d0]">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#dcfce7] text-[#166534]">
-                <i className="fa-solid fa-check text-[26px]" />
-              </div>
-              <div className="mt-4 text-[18px] font-extrabold text-[#166534]">Payment Successful</div>
-              <p className="mt-2 text-[12.5px] font-semibold leading-6 text-[#3f7b4f]">
-                Your book order has been received. Admin will prepare and deliver your books after checking the order.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate('/shop')}
-                className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
-              >
-                Back to Shop
-              </button>
-            </div>
-          ) : (
-            <div className="mt-5 rounded-[22px] bg-[#fff7d8] px-4 py-5 text-center">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#f6df9a] border-t-[#7a5600]" />
-              <div className="text-[14px] font-extrabold text-[#7a5600]">Redirecting to ABA PayWay...</div>
-              <p className="mt-2 text-[11.5px] font-semibold leading-5 text-[#7a5600]">
-                After payment, return to this page and tap refresh if the status does not update automatically.
-              </p>
+            <i className={`fa-solid fa-chevron-down text-[12px] text-[#98a2b3] transition ${showOrderItems ? 'rotate-180' : ''}`} />
+          </button>
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => order && redirectToPayWay(order)}
-                  className="h-11 flex-1 rounded-full bg-[#111827] text-[12px] font-extrabold text-white active:scale-[0.99]"
-                >
-                  Open PayWay Again
-                </button>
-
-                <button
-                  type="button"
-                  disabled={!order?.order_id || checking}
-                  onClick={() => checkOrderStatus(order.order_id)}
-                  className="h-11 flex-1 rounded-full border border-[#111827] bg-white text-[12px] font-extrabold text-[#111827] active:scale-[0.99] disabled:border-[#cbd5e1] disabled:text-[#94a3b8]"
-                >
-                  {checking ? 'Checking...' : 'Check Status'}
-                </button>
-              </div>
+          {showOrderItems ? (
+            <div className="px-4 pb-3">
+              {items.length ? (
+                items.map((item) => (
+                  <CheckoutItem key={item.id} item={item} />
+                ))
+              ) : (
+                <div className="py-8 text-center text-[13px] font-extrabold text-[#98a2b3]">
+                  No books in cart.
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
         </section>
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
@@ -428,59 +729,52 @@ export default function ShadowMallPaymentPage() {
             </div>
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
-              <span>Delivery fee</span>
-              <span className="font-extrabold text-[#111827]">{formatUsd(deliveryFee)}</span>
+              <span>Delivery Fee</span>
+              <span className="font-extrabold text-[#111827]">{formatUsd(DELIVERY_FEE)}</span>
             </div>
 
             <div className="flex items-center justify-between text-[13px] font-semibold text-[#667085]">
-              <span>Delivery company</span>
-              <span className="font-extrabold text-[#111827]">
-                {deliveryCompany.shortName || deliveryCompany.name || '-'}
-              </span>
+              <span>Delivery Company</span>
+              <span className="font-extrabold text-[#111827]">{selectedDeliveryCompany.shortName}</span>
             </div>
 
             <div className="border-t border-[#f0eef6] pt-3">
               <div className="flex items-center justify-between">
-                <span className="text-[14px] font-extrabold text-[#111827]">Grand total</span>
+                <span className="text-[14px] font-extrabold text-[#111827]">Total</span>
                 <span className="text-[20px] font-extrabold text-[#e5484d]">{formatUsd(total)}</span>
               </div>
             </div>
           </div>
         </section>
-
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[16px] font-extrabold text-[#111827]">Order Items</div>
-              <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
-                {draft?.items?.length || order?.items?.length || 0} items
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            {(draft?.items || order?.items || []).length ? (
-              (draft?.items || order?.items || []).map((item) => (
-                <PaymentItem key={item.id || item.product_id} item={item} />
-              ))
-            ) : (
-              <div className="py-8 text-center text-[13px] font-extrabold text-[#98a2b3]">
-                No books found.
-              </div>
-            )}
-          </div>
-        </section>
-
-        {!isPaid && !loading ? (
-          <button
-            type="button"
-            onClick={createNewPayment}
-            className="mt-4 h-11 w-full rounded-full bg-white text-[12px] font-extrabold text-[#667085] ring-1 ring-black/5 active:scale-[0.99]"
-          >
-            Create New Payment
-          </button>
-        ) : null}
       </main>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#eceaf2] bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold text-[#8d94a1]">Total</div>
+            <div className="line-clamp-1 text-[18px] font-extrabold text-[#e5484d]">{formatUsd(total)}</div>
+          </div>
+
+          {readerName ? (
+            <button
+              type="button"
+              disabled={!canContinue}
+              onClick={handleContinue}
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
+            >
+              {saving ? 'Opening PayWay...' : 'Continue to Payment'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="flex h-[52px] min-w-[180px] items-center justify-center rounded-full bg-[#111827] px-5 text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99]"
+            >
+              Login to Checkout
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
