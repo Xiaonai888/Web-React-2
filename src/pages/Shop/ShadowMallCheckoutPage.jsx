@@ -125,6 +125,8 @@ function normalizeProfile(profile) {
     province_city: profile?.province_city || 'Phnom Penh',
     delivery_address: profile?.delivery_address || '',
     delivery_note: profile?.delivery_note || '',
+    telegram_username: profile?.telegram_username || '',
+    facebook_link: profile?.facebook_link || '',
   }
 }
 
@@ -330,6 +332,8 @@ export default function ShadowMallCheckoutPage() {
   const [phone, setPhone] = useState('')
   const [province, setProvince] = useState('Phnom Penh')
   const [address, setAddress] = useState('')
+  const [telegramUsername, setTelegramUsername] = useState('')
+  const [facebookLink, setFacebookLink] = useState('')
   const [note, setNote] = useState('')
   const [deliveryCompany, setDeliveryCompany] = useState('jnt')
   const [message, setMessage] = useState('')
@@ -350,6 +354,8 @@ export default function ShadowMallCheckoutPage() {
       setPhone(localProfile.phone_number || '')
       setProvince(localProfile.province_city || 'Phnom Penh')
       setAddress(localProfile.delivery_address || '')
+      setTelegramUsername(localProfile.telegram_username || '')
+      setFacebookLink(localProfile.facebook_link || '')
       setNote(localProfile.delivery_note || '')
 
       if (!token) {
@@ -381,6 +387,8 @@ export default function ShadowMallCheckoutPage() {
           setAddress(serverProfile.delivery_address)
           setNote(serverProfile.delivery_note)
           saveBuyerProfileLocal(serverProfile)
+          setTelegramUsername(serverProfile.telegram_username)
+          setFacebookLink(serverProfile.facebook_link)
         }
 
         if (!ignore && (!data.profile?.phone_number || !data.profile?.delivery_address)) {
@@ -457,6 +465,8 @@ export default function ShadowMallCheckoutPage() {
       province_city: province,
       delivery_address: address.trim(),
       delivery_note: note.trim(),
+      telegram_username: telegramUsername.trim(),
+      facebook_link: facebookLink.trim(),
     }
 
     try {
@@ -509,11 +519,32 @@ export default function ShadowMallCheckoutPage() {
         readerName={readerName}
         profileLoading={profileLoading}
         phone={phone}
+        <div>
+  <FieldLabel>Telegram Username</FieldLabel>
+  <TextInput
+    value={telegramUsername}
+    onChange={(event) => setTelegramUsername(event.target.value)}
+    placeholder="@yourname"
+  />
+</div>
+
+<div>
+  <FieldLabel>Facebook Link</FieldLabel>
+  <TextInput
+    value={facebookLink}
+    onChange={(event) => setFacebookLink(event.target.value)}
+    placeholder="Paste Facebook profile or Messenger link"
+  />
+</div>
         setPhone={setPhone}
         province={province}
         setProvince={setProvince}
         address={address}
         setAddress={setAddress}
+        telegramUsername={telegramUsername}
+        setTelegramUsername={setTelegramUsername}
+        facebookLink={facebookLink}
+        setFacebookLink={setFacebookLink}
       />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
