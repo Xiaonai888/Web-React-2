@@ -15,6 +15,7 @@ function readCart() {
 function saveCart(items) {
   localStorage.setItem(CART_KEY, JSON.stringify(items))
   window.dispatchEvent(new Event('shadow-mall-cart-updated'))
+  window.dispatchEvent(new Event('shadow-mall-cart-change'))
 }
 
 function formatUsd(value) {
@@ -92,6 +93,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
                 type="button"
                 onClick={onDecrease}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#111827] active:scale-95"
+                aria-label={`Decrease ${item.title}`}
               >
                 <i className="fa-solid fa-minus text-[10px]" />
               </button>
@@ -100,6 +102,7 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
                 type="button"
                 onClick={onIncrease}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+                aria-label={`Increase ${item.title}`}
               >
                 <i className="fa-solid fa-plus text-[10px]" />
               </button>
@@ -157,35 +160,66 @@ export default function ShadowMallCartPage() {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">My Cart</h1>
+          <h1 className="min-w-0 flex-1 text-left text-[18px] font-extrabold text-[#111827]">
+            My Cart
+          </h1>
 
-          <div className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#111827] px-3 text-[12px] font-extrabold text-white">
-            {itemCount}
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/shop/mall/cart')}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
+            aria-label="Cart items"
+          >
+            <i className="fa-solid fa-cart-shopping text-[14px]" />
+            {itemCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827] ring-2 ring-white">
+                {itemCount}
+              </span>
+            ) : null}
+          </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {items.length ? (
           <>
-            <section className="mb-4 rounded-[22px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+            <section className="rounded-[22px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
               <div className="text-[14px] font-extrabold text-[#111827]">Selected Books</div>
               <div className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
                 Check your books and quantity before checkout.
               </div>
             </section>
 
-            <section className="space-y-3">
+            <button
+              type="button"
+              onClick={() => navigate('/shop/mall/orders')}
+              className="mt-3 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                <i className="fa-solid fa-clock-rotate-left text-[15px]" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-extrabold text-[#111827]">Order History</div>
+                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#8d94a1]">
+                  View your previous Shadow Mall orders.
+                </div>
+              </div>
+
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
+            </button>
+
+            <section className="mt-3 space-y-3">
               {items.map((item) => (
                 <CartItem
                   key={item.id}
@@ -224,22 +258,43 @@ export default function ShadowMallCartPage() {
             </section>
           </>
         ) : (
-          <section className="rounded-[26px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
-              <i className="fa-solid fa-cart-shopping text-[22px]" />
-            </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Your cart is empty</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
-              Add real books from Shadow Mall before checkout.
-            </p>
+          <>
             <button
               type="button"
-              onClick={() => navigate('/shop')}
-              className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+              onClick={() => navigate('/shop/mall/orders')}
+              className="mb-4 flex w-full items-center gap-3 rounded-[22px] bg-white px-4 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
             >
-              Back to Shop
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                <i className="fa-solid fa-clock-rotate-left text-[15px]" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-extrabold text-[#111827]">Order History</div>
+                <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#8d94a1]">
+                  View your previous Shadow Mall orders.
+                </div>
+              </div>
+
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
             </button>
-          </section>
+
+            <section className="rounded-[26px] bg-white px-5 py-12 text-center shadow-sm ring-1 ring-black/5">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+                <i className="fa-solid fa-cart-shopping text-[22px]" />
+              </div>
+              <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Your cart is empty</h2>
+              <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+                Add real books from Shadow Mall before checkout.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/shop')}
+                className="mt-5 rounded-full bg-[#111827] px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
+              >
+                Back to Shop
+              </button>
+            </section>
+          </>
         )}
       </main>
 
