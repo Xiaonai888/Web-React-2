@@ -37,6 +37,7 @@ const ShadowMallOrderHistoryPage = lazy(() => import('./pages/Shop/ShadowMallOrd
 const ShadowMallWishlistPage = lazy(() => import('./pages/Shop/ShadowMallWishlistPage'))
 const ShadowMallCheckoutPage = lazy(() => import('./pages/Shop/ShadowMallCheckoutPage'))
 const ShadowMallPaymentPage = lazy(() => import('./pages/Shop/ShadowMallPaymentPage'))
+const ShadowMallSectionPage = lazy(() => import('./pages/Shop/ShadowMallSectionPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -151,6 +152,15 @@ function AppShell() {
   element={
     <LazyPage>
       <ShadowMallOrderHistoryPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/shop/mall/section/:sectionKey"
+  element={
+    <LazyPage>
+      <ShadowMallSectionPage />
     </LazyPage>
   }
 />
