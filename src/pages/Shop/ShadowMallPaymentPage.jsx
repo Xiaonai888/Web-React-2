@@ -10,6 +10,7 @@ const API_URL =
 const CHECKOUT_DRAFT_KEY = 'shadow_mall_checkout_draft'
 const CURRENT_ORDER_KEY = 'shadow_mall_current_order_payment'
 const CART_KEY = 'shadow_mall_cart'
+const SHADOW_MALL_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 
 function readJson(key, fallback) {
   try {
@@ -259,15 +260,9 @@ export default function ShadowMallPaymentPage() {
   }, [order?.order_id, isWaiting])
 
   function openPayWay() {
-    const url = order?.checkout_url || order?.deeplink
-
-    if (!url) {
-      setMessage('ABA PayWay link is not available yet.')
-      return
-    }
-
-    window.location.href = url
-  }
+  const url = order?.checkout_url || order?.deeplink || SHADOW_MALL_PAYWAY_LINK
+  window.location.href = url
+}
 
   function resetPayment() {
     localStorage.removeItem(CURRENT_ORDER_KEY)
@@ -361,7 +356,7 @@ export default function ShadowMallPaymentPage() {
 
               <button
                 type="button"
-                disabled={!order?.checkout_url && !order?.deeplink}
+                disabled={!order?.order_id}
                 onClick={openPayWay}
                 className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_12px_28px_rgba(17,24,39,0.24)] active:scale-[0.99] disabled:bg-[#aeb6c4] disabled:shadow-none"
               >
