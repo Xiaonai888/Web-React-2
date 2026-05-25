@@ -266,9 +266,12 @@ export default function ShadowMallOrderHistoryPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
-  {orderCountText} · Recent orders from the last 90 days.
-</div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-left text-[18px] font-extrabold text-[#111827]">Order History</h1>
+            <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
+              {orderCountText} · Recent orders from the last 90 days.
+            </div>
+          </div>
 
           <button
             type="button"
