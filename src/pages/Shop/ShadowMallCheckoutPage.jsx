@@ -200,6 +200,8 @@ function BuyerProfileSheet({
   setTelegramUsername,
   facebookLink,
   setFacebookLink,
+  saving,
+  onSave,
 }) {
   if (!open) return null
 
@@ -300,12 +302,13 @@ function BuyerProfileSheet({
             </div>
 
             <button
-              type="button"
-              onClick={onClose}
-              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
-            >
-              Save Information
-            </button>
+  type="button"
+  disabled={saving}
+  onClick={onSave}
+  className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:bg-[#aeb6c4]"
+>
+  {saving ? 'Saving...' : 'Save Information'}
+</button>
           </div>
         </div>
       </div>
@@ -463,6 +466,66 @@ export default function ShadowMallCheckoutPage() {
     !saving
 
   async function handleContinue() {
+    async function saveBuyerProfileOnly() {
+  const token = getReaderToken()
+
+  if (!readerName.trim() || !token) {
+    setMessage('Please login before saving buyer profile.')
+    return false
+  }
+
+  if (!phone.trim() || !address.trim()) {
+    setMessage('Phone number and delivery address are required.')
+    return false
+  }
+
+  const profile = {
+    phone_number: phone.trim(),
+    province_city: province,
+    delivery_address: address.trim(),
+    delivery_note: note.trim(),
+    telegram_username: telegramUsername.trim(),
+    facebook_link: facebookLink.trim(),
+  }
+
+  try {
+    setSaving(true)
+    setMessage('')
+
+    const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profile),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to save buyer profile')
+    }
+
+    const savedProfile = normalizeProfile(data.profile || profile)
+
+    saveBuyerProfileLocal(savedProfile)
+    setPhone(savedProfile.phone_number)
+    setProvince(savedProfile.province_city)
+    setAddress(savedProfile.delivery_address)
+    setNote(savedProfile.delivery_note)
+    setTelegramUsername(savedProfile.telegram_username)
+    setFacebookLink(savedProfile.facebook_link)
+    setBuyerProfileOpen(false)
+
+    return true
+  } catch (error) {
+    setMessage(error.message || 'Failed to save buyer profile')
+    return false
+  } finally {
+    setSaving(false)
+  }
+}
     const token = getReaderToken()
 
     if (!readerName.trim() || !token) {
@@ -585,8 +648,9 @@ window.location.replace(paywayUrl)
         setTelegramUsername={setTelegramUsername}
         facebookLink={facebookLink}
         setFacebookLink={setFacebookLink}
-      />
-
+        saving={saving}
+        onSave={saveBuyerProfileOnly}
+/>
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
