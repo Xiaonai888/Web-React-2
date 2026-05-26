@@ -575,7 +575,7 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
       <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
       <MallShortcutRow setActiveTab={setActiveTab} />
 
-      <PreOrderFeature products={filteredSections.pre_order || []} onOpen={openProduct} />
+      <PreOrderFeature products={filteredSections.pre_order || []} onOpen={() => navigate('/shop/mall/pre-order')} />
 
       {mallSections.map((section) => (
         <MallBookSection
