@@ -45,6 +45,7 @@ const ShadowMallSecondHandPage = lazy(() => import('./pages/Shop/ShadowMallSecon
 const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestSellerPage'))
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
+const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -94,6 +95,7 @@ function AppShell() {
     '/authors/following',
     '/authors/top',
     '/search',
+    '/update-today',
   ]
 
   const shouldHideFooter =
@@ -227,6 +229,15 @@ function AppShell() {
   element={
     <LazyPage>
       <ShadowMallPreOrderPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/update-today"
+  element={
+    <LazyPage>
+      <UpdateTodayPage />
     </LazyPage>
   }
 />
