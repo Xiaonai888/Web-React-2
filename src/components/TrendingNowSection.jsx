@@ -289,8 +289,8 @@ export default function TrendingNowSection() {
                 onClick={() => setActiveTab(tab)}
                 className={`shrink-0 rounded-full border px-5 py-2 text-[13px] font-medium transition-colors md:px-5 md:py-2 md:text-[13px] ${
                   active
-                    ? 'border-[#2047f4] bg-[#2047f4] text-white shadow-[0_4px_12px_rgba(32,71,244,0.18)]'
-                    : 'border-[#dddddd] bg-white text-[#222] hover:bg-[#f7f7f7]'
+  ? 'border-[#111827] bg-[#111827] text-white shadow-[0_4px_12px_rgba(17,24,39,0.18)]'
+  : 'border-[#111827] bg-white text-[#111827] hover:bg-[#111827] hover:text-white'
                 }`}
               >
                 {tab}
