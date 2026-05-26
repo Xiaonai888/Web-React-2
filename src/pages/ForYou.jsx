@@ -111,9 +111,6 @@ export default function ForYou() {
     }
 
     fetchSlides()
-
-    const interval = setInterval(fetchSlides, 5000)
-    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
