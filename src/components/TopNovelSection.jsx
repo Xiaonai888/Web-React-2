@@ -7,20 +7,62 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const topNovelCategories = [
+const lockedTopNovelCategories = ['Completed', 'Recently Completed']
+
+const fallbackTopNovelCategories = [
   'Romance',
   'Fantasy',
   'Investigation',
-  'Completed',
-  'Recently Completed',
+  ...lockedTopNovelCategories,
 ]
 
-const queryByCategory = {
-  Romance: '/api/public/stories?limit=3&sort=likes&genre=Romance',
-  Fantasy: '/api/public/stories?limit=3&sort=likes&genre=Fantasy',
-  Investigation: '/api/public/stories?limit=3&sort=popular&genre=Mystery',
-  Completed: '/api/public/stories?limit=3&sort=popular',
-  'Recently Completed': '/api/public/stories?limit=3&sort=updated',
+function getWeekSeed() {
+  const now = new Date()
+  const firstDayOfYear = new Date(now.getFullYear(), 0, 1)
+  const pastDaysOfYear = Math.floor((now - firstDayOfYear) / 86400000)
+  return `${now.getFullYear()}-${Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7)}`
+}
+
+function seededRandom(seed) {
+  let hash = 0
+
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i)
+    hash |= 0
+  }
+
+  return () => {
+    hash = (hash * 1664525 + 1013904223) | 0
+    return Math.abs(hash / 2147483647)
+  }
+}
+
+function getWeeklyRandomGenres(genres) {
+  const genreNames = (genres || [])
+    .map((genre) => genre.name)
+    .filter(Boolean)
+    .filter((name) => !lockedTopNovelCategories.includes(name))
+
+  const random = seededRandom(getWeekSeed())
+  const shuffled = [...genreNames].sort(() => random() - 0.5)
+  const selectedGenres = shuffled.slice(0, 3)
+
+  return [
+    ...(selectedGenres.length ? selectedGenres : fallbackTopNovelCategories.slice(0, 3)),
+    ...lockedTopNovelCategories,
+  ]
+}
+
+function getTopNovelEndpoint(category) {
+  if (category === 'Completed') {
+    return '/api/public/stories?limit=3&sort=popular'
+  }
+
+  if (category === 'Recently Completed') {
+    return '/api/public/stories?limit=3&sort=updated'
+  }
+
+  return `/api/public/stories?limit=3&sort=likes&genre=${encodeURIComponent(category)}`
 }
 
 const fallbackDataByCategory = {
@@ -325,9 +367,40 @@ function LoadingTopNovel() {
 
 export default function TopNovelSection() {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState('Romance')
+  const [categoryTabs, setCategoryTabs] = useState(fallbackTopNovelCategories)
+  const [activeCategory, setActiveCategory] = useState(fallbackTopNovelCategories[0])
   const [realDataByCategory, setRealDataByCategory] = useState({})
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchWeeklyGenres() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/genres`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load genres')
+        }
+
+        const nextTabs = getWeeklyRandomGenres(data.genres)
+
+        if (!ignore && nextTabs.length) {
+          setCategoryTabs(nextTabs)
+          setActiveCategory((current) => (nextTabs.includes(current) ? current : nextTabs[0]))
+        }
+      } catch (error) {
+        console.error('TopNovelSection genres fetch error:', error)
+      }
+    }
+
+    fetchWeeklyGenres()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -337,8 +410,8 @@ export default function TopNovelSection() {
         setLoading(true)
 
         const results = await Promise.all(
-          topNovelCategories.map(async (category) => {
-            const endpoint = queryByCategory[category] || '/api/public/stories?limit=3&sort=popular'
+          categoryTabs.map(async (category) => {
+            const endpoint = getTopNovelEndpoint(category)
             const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${endpoint}`))
             const data = await response.json().catch(() => ({}))
 
@@ -369,7 +442,7 @@ export default function TopNovelSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [categoryTabs])
 
   const filteredData = useMemo(() => {
     const realList = realDataByCategory[activeCategory]
@@ -411,10 +484,8 @@ export default function TopNovelSection() {
         </button>
       </div>
 
-      <div
-        className="mb-5 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {topNovelCategories.map((category) => {
+      <div className="mb-5 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {categoryTabs.map((category) => {
           const isActive = activeCategory === category
 
           return (
@@ -424,8 +495,8 @@ export default function TopNovelSection() {
               onClick={() => setActiveCategory(category)}
               className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                 isActive
-  ? 'border-[#111827] bg-[#111827] text-white'
-  : 'border-neutral-300 bg-white text-[#111827] hover:border-[#111827] hover:bg-[#111827] hover:text-white'
+                  ? 'border-[#111827] bg-[#111827] text-white'
+                  : 'border-neutral-300 bg-white text-[#111827] hover:border-[#111827] hover:bg-[#111827] hover:text-white'
               }`}
             >
               {category}
