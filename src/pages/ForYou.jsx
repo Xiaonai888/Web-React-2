@@ -51,8 +51,38 @@ export default function ForYou() {
   const [slidesLoading, setSlidesLoading] = useState(true)
 
   const navigate = useNavigate()
-  const swiperRef = useRef(null)
+const swiperRef = useRef(null)
+const [hideBars, setHideBars] = useState(false)
+const lastScrollYRef = useRef(0)
 
+  useEffect(() => {
+  function handleScroll() {
+    const currentScrollY = window.scrollY
+    const previousScrollY = lastScrollYRef.current
+    const difference = currentScrollY - previousScrollY
+
+    if (currentScrollY < 20) {
+      setHideBars(false)
+      document.body.classList.remove('for-you-bars-hidden')
+    } else if (difference > 8) {
+      setHideBars(true)
+      document.body.classList.add('for-you-bars-hidden')
+    } else if (difference < -8) {
+      setHideBars(false)
+      document.body.classList.remove('for-you-bars-hidden')
+    }
+
+    lastScrollYRef.current = currentScrollY
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true })
+
+  return () => {
+    window.removeEventListener('scroll', handleScroll)
+    document.body.classList.remove('for-you-bars-hidden')
+  }
+}, [])
+  
   useEffect(() => {
     async function fetchGenreTabs() {
       try {
