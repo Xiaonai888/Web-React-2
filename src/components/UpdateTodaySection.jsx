@@ -126,7 +126,7 @@ function SmallBookCard({ book }) {
 function LoadingSkeleton() {
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
-      <div className="mx-auto max-w-7xl">
+      <div>
         <div className="mb-5 flex items-center justify-between">
           <div className="h-7 w-48 animate-pulse rounded-full bg-gray-100" />
           <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
