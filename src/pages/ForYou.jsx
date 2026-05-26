@@ -51,37 +51,33 @@ export default function ForYou() {
   const [slidesLoading, setSlidesLoading] = useState(true)
 
   const navigate = useNavigate()
-const swiperRef = useRef(null)
-const [hideBars, setHideBars] = useState(false)
-const lastScrollYRef = useRef(0)
+  const swiperRef = useRef(null)
+  const lastScrollYRef = useRef(0)
 
   useEffect(() => {
-  function handleScroll() {
-    const currentScrollY = window.scrollY
-    const previousScrollY = lastScrollYRef.current
-    const difference = currentScrollY - previousScrollY
+    function handleScroll() {
+      const currentScrollY = window.scrollY
+      const previousScrollY = lastScrollYRef.current
+      const difference = currentScrollY - previousScrollY
 
-    if (currentScrollY < 20) {
-      setHideBars(false)
-      document.body.classList.remove('for-you-bars-hidden')
-    } else if (difference > 8) {
-      setHideBars(true)
-      document.body.classList.add('for-you-bars-hidden')
-    } else if (difference < -8) {
-      setHideBars(false)
-      document.body.classList.remove('for-you-bars-hidden')
+      if (currentScrollY < 20) {
+        document.body.classList.remove('for-you-bars-hidden')
+      } else if (difference > 8) {
+        document.body.classList.add('for-you-bars-hidden')
+      } else if (difference < -8) {
+        document.body.classList.remove('for-you-bars-hidden')
+      }
+
+      lastScrollYRef.current = currentScrollY
     }
 
-    lastScrollYRef.current = currentScrollY
-  }
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
-  window.addEventListener('scroll', handleScroll, { passive: true })
-
-  return () => {
-    window.removeEventListener('scroll', handleScroll)
-    document.body.classList.remove('for-you-bars-hidden')
-  }
-}, [])
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.body.classList.remove('for-you-bars-hidden')
+    }
+  }, [])
   
   useEffect(() => {
     async function fetchGenreTabs() {
@@ -193,10 +189,23 @@ const lastScrollYRef = useRef(0)
           overflow-x: hidden;
         }
 
-        body.for-you-bars-hidden footer {
-  transform: translateY(110%);
-}
+        .for-you-header,
+        .for-you-tabs {
+          transition: transform 0.2s ease-out;
+          will-change: transform;
+        }
 
+        body.for-you-bars-hidden .for-you-header {
+          transform: translateY(-100%);
+        }
+
+        body.for-you-bars-hidden .for-you-tabs {
+          transform: translateY(-140px);
+        }
+
+        body.for-you-bars-hidden footer {
+          transform: translateY(110%);
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -255,7 +264,7 @@ const lastScrollYRef = useRef(0)
       `}</style>
 
       <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
-       <header className={`flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm transition-transform duration-200 ease-out ${hideBars ? '-translate-y-full' : 'translate-y-0'}`}>
+        <header className="for-you-header flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
          <div className="flex items-center space-x-2">
   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
     <img
@@ -277,7 +286,7 @@ const lastScrollYRef = useRef(0)
           </div>
         </header>
 
-        <nav className={`flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2 transition-transform duration-200 ease-out ${hideBars ? '-translate-y-[140px]' : 'translate-y-0'}`}>
+        <nav className="for-you-tabs flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2">
           {['novel', 'chat', 'manga'].map((tab) => (
             <div
               key={tab}
