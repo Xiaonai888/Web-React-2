@@ -65,6 +65,10 @@ function getTopNovelEndpoint(category) {
   return `/api/public/stories?limit=3&sort=likes&genre=${encodeURIComponent(category)}`
 }
 
+function getTopNovelBadge(rank) {
+  return `/assets/Top%20Novel%20Badge/Top%20Novel%20Badge%20${rank}.png`
+}
+
 const fallbackDataByCategory = {
   Romance: [
     {
@@ -78,7 +82,6 @@ const fallbackDataByCategory = {
         'A romance story about two people tied together by fate, secrets, and impossible choices.',
       image: '/assets/top-novel/top-1.jpg',
       link: '/story/1',
-      rankIcon: '',
     },
     {
       id: 2,
@@ -91,7 +94,6 @@ const fallbackDataByCategory = {
         'She kept her feelings hidden for years until one moment changed everything.',
       image: '/assets/top-novel/top-2.jpg',
       link: '/story/2',
-      rankIcon: '',
     },
     {
       id: 3,
@@ -104,7 +106,6 @@ const fallbackDataByCategory = {
         'A second-chance romance where old love returns in the most unexpected way.',
       image: '/assets/top-novel/top-3.jpg',
       link: '/story/3',
-      rankIcon: '',
     },
   ],
 
@@ -120,7 +121,6 @@ const fallbackDataByCategory = {
         'A fantasy adventure filled with dragons, hidden powers, and a lost kingdom.',
       image: '/assets/top-novel/top-1.jpg',
       link: '/story/4',
-      rankIcon: '',
     },
     {
       id: 5,
@@ -133,7 +133,6 @@ const fallbackDataByCategory = {
         'A young mage must survive ancient enemies while uncovering the truth of her bloodline.',
       image: '/assets/top-novel/top-2.jpg',
       link: '/story/5',
-      rankIcon: '',
     },
     {
       id: 6,
@@ -146,7 +145,6 @@ const fallbackDataByCategory = {
         'Magic, war, and betrayal collide in a kingdom that refuses to stay buried.',
       image: '/assets/top-novel/top-3.jpg',
       link: '/story/6',
-      rankIcon: '',
     },
   ],
 
@@ -162,7 +160,6 @@ const fallbackDataByCategory = {
         'A gripping investigation story where every clue uncovers a darker truth.',
       image: '/assets/top-novel/top-1.jpg',
       link: '/story/7',
-      rankIcon: '',
     },
     {
       id: 8,
@@ -175,7 +172,6 @@ const fallbackDataByCategory = {
         'A detective follows a missing witness into a case that changes everything.',
       image: '/assets/top-novel/top-2.jpg',
       link: '/story/8',
-      rankIcon: '',
     },
     {
       id: 9,
@@ -188,7 +184,6 @@ const fallbackDataByCategory = {
         'An old unresolved case returns, pulling everyone back into the shadows.',
       image: '/assets/top-novel/top-3.jpg',
       link: '/story/9',
-      rankIcon: '',
     },
   ],
 
@@ -204,7 +199,6 @@ const fallbackDataByCategory = {
         'A finished emotional story with a full journey from heartbreak to healing.',
       image: '/assets/top-novel/top-1.jpg',
       link: '/story/10',
-      rankIcon: '',
     },
     {
       id: 11,
@@ -217,7 +211,6 @@ const fallbackDataByCategory = {
         'Completed and unforgettable, this story delivers romance, pain, and closure.',
       image: '/assets/top-novel/top-2.jpg',
       link: '/story/11',
-      rankIcon: '',
     },
     {
       id: 12,
@@ -230,7 +223,6 @@ const fallbackDataByCategory = {
         'A finished series that captures the quiet weight of love after loss.',
       image: '/assets/top-novel/top-3.jpg',
       link: '/story/12',
-      rankIcon: '',
     },
   ],
 
@@ -246,7 +238,6 @@ const fallbackDataByCategory = {
         'Recently completed and already beloved by readers who enjoy emotional endings.',
       image: '/assets/top-novel/top-1.jpg',
       link: '/story/13',
-      rankIcon: '',
     },
     {
       id: 14,
@@ -259,7 +250,6 @@ const fallbackDataByCategory = {
         'A newly completed story about warmth, distance, and finding your way back.',
       image: '/assets/top-novel/top-2.jpg',
       link: '/story/14',
-      rankIcon: '',
     },
     {
       id: 15,
@@ -272,7 +262,6 @@ const fallbackDataByCategory = {
         'Freshly completed, with a bittersweet ending and strong emotional payoff.',
       image: '/assets/top-novel/top-3.jpg',
       link: '/story/15',
-      rankIcon: '',
     },
   ],
 }
@@ -288,46 +277,42 @@ function formatCompactNumber(value) {
 }
 
 function normalizeStory(story, index = 0) {
+  const rank = index + 1
+
   return {
     id: story.id,
-    rank: index + 1,
+    rank,
     title: story.title || 'Untitled Story',
     author: story.author_name || 'Shadow Author',
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
     description: story.description || 'No description yet.',
-    image: story.cover_url || `/assets/top-novel/top-${Math.min(index + 1, 3)}.jpg`,
+    image: story.cover_url || `/assets/top-novel/top-${Math.min(rank, 3)}.jpg`,
     link: `/story/${story.id}`,
-    rankIcon: '',
     isAdult: Boolean(story.is_adult),
     genre: story.main_genre || '',
   }
 }
 
-function RankBadge({ rank, rankIcon }) {
-  const fallbackStyles = {
-    1: 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 text-white shadow-[0_6px_16px_rgba(217,119,6,0.35)]',
-    2: 'bg-gradient-to-br from-slate-200 via-slate-400 to-slate-500 text-white shadow-[0_6px_16px_rgba(100,116,139,0.30)]',
-    3: 'bg-gradient-to-br from-amber-200 via-orange-400 to-amber-700 text-white shadow-[0_6px_16px_rgba(180,83,9,0.30)]',
-  }
+function RankBadge({ rank }) {
+  const [imageError, setImageError] = useState(false)
 
-  if (rankIcon) {
+  if (!imageError) {
     return (
       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden">
         <img
-          src={rankIcon}
+          src={getTopNovelBadge(rank)}
           alt={`Rank ${rank}`}
           className="h-full w-full object-contain"
           loading="lazy"
+          onError={() => setImageError(true)}
         />
       </div>
     )
   }
 
   return (
-    <div
-      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-black ${fallbackStyles[rank] || fallbackStyles[3]}`}
-    >
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#111827] text-2xl font-black text-white">
       {rank}
     </div>
   )
@@ -514,7 +499,7 @@ export default function TopNovelSection() {
             className="flex w-full items-start gap-4 text-left"
           >
             <div className="pt-5">
-              <RankBadge rank={item.rank} rankIcon={item.rankIcon} />
+              <RankBadge rank={item.rank} />
             </div>
 
             <div className="relative h-[128px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 shadow-sm">
