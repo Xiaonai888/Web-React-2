@@ -587,9 +587,10 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
           onOpen={openProduct}
           sectionKey={section.key}
           onMore={() => {
-            if (section.key === 'new_books') navigate('/shop/mall/new-books')
-            if (section.key === 'discount') navigate('/shop/mall/discount-books')
-          }}
+  if (section.key === 'new_books') navigate('/shop/mall/new-books')
+  if (section.key === 'second_hand') navigate('/shop/mall/second-hand')
+  if (section.key === 'discount') navigate('/shop/mall/discount-books')
+}}
         />
       ))}
     </section>
