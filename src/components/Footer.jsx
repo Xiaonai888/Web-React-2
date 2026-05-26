@@ -25,6 +25,9 @@ export default function Footer() {
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
     }}>
+
+      transition: 'transform 0.2s ease-out',
+willChange: 'transform',
       <div style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center',
         gap: '32px', maxWidth: '480px', margin: '0 auto', padding: '0 8px',
