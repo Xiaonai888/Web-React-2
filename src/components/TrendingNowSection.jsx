@@ -301,14 +301,12 @@ export default function TrendingNowSection() {
 
         <div className="relative shrink-0" ref={sortRef}>
           <button
-            type="button"
-            onClick={() => setSortOpen((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-full border border-transparent px-2 py-1 text-[13px] font-medium text-[#1c1c1c] transition hover:bg-black/[0.03] md:text-[13px]"
-          >
-            <span>Sort by</span>
-            <SortIcon open={sortOpen} />
-          </button>
-
+  type="button"
+  onClick={() => setSortOpen((value) => !value)}
+  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#111827] bg-white text-[#111827] transition hover:bg-[#111827] hover:text-white"
+>
+  <SortIcon open={sortOpen} />
+</button>
           {sortOpen ? (
             <div className="absolute right-0 top-11 z-20 w-[150px] overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_14px_30px_rgba(0,0,0,0.10)]">
               {sortOptions.map((option) => (
