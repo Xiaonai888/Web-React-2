@@ -145,6 +145,8 @@ function SearchResultItem({ product, onOpen }) {
 }
 
 function PublisherCard({ publisher, selected, onClick }) {
+  const bookCount = Number(publisher.book_count || 0)
+
   return (
     <button
       type="button"
@@ -155,29 +157,40 @@ function PublisherCard({ publisher, selected, onClick }) {
           : 'bg-white text-[#111827] ring-black/5'
       }`}
     >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-        selected ? 'bg-white/15 text-white' : 'bg-[#fff7d8] text-[#7a5600]'
-      }`}>
-        <i className="fa-solid fa-building text-[14px]" />
-      </div>
-
-      <div className="mt-3 line-clamp-1 text-[14px] font-extrabold">
-        {publisher.name}
-      </div>
-
-      {publisher.description ? (
-        <div className={`mt-1 line-clamp-1 text-[11px] font-semibold ${
-          selected ? 'text-white/65' : 'text-[#8d94a1]'
-        }`}>
-          {publisher.description}
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${
+            selected ? 'bg-white/15 text-white' : 'bg-[#fff7d8] text-[#7a5600]'
+          }`}
+        >
+          {publisher.logo_url ? (
+            <img
+              src={publisher.logo_url}
+              alt={publisher.name}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <i className="fa-solid fa-building text-[15px]" />
+          )}
         </div>
-      ) : (
-        <div className={`mt-1 text-[11px] font-semibold ${
-          selected ? 'text-white/65' : 'text-[#8d94a1]'
-        }`}>
-          Tap to view books
+
+        <div className="min-w-0 flex-1">
+          <div className="line-clamp-1 text-[14px] font-extrabold">
+            {publisher.name}
+          </div>
+
+          <div
+            className={`mt-1 text-[11.5px] font-semibold ${
+              selected ? 'text-white/65' : 'text-[#8d94a1]'
+            }`}
+          >
+            {bookCount} {bookCount === 1 ? 'book' : 'books'}
+          </div>
         </div>
-      )}
+      </div>
     </button>
   )
 }
