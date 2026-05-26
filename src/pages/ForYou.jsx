@@ -251,7 +251,7 @@ const lastScrollYRef = useRef(0)
       `}</style>
 
       <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
-        <header className="flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
+       <header className={`flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm transition-transform duration-200 ease-out ${hideBars ? '-translate-y-full' : 'translate-y-0'}`}>
          <div className="flex items-center space-x-2">
   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
     <img
