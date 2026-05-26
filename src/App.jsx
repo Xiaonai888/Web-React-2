@@ -195,6 +195,15 @@ function AppShell() {
 />
 
         <Route
+  path="/shop/mall/best-seller"
+  element={
+    <LazyPage>
+      <ShadowMallBestSellerPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
   path="/shop/mall/search"
   element={
     <LazyPage>
