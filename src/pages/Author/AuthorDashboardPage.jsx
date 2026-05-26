@@ -320,9 +320,12 @@ export default function AuthorDashboardPage() {
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
 
   const author = {
-    name: storedUser?.name || storedUser?.username || 'Author Page Name',
-    avatarLetter: (storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
-  }
+  name: storedUser?.name || storedUser?.username || 'Author Page Name',
+  username: storedUser?.page_username || storedUser?.username || storedUser?.name || 'username',
+  avatarLetter: (storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
+}
+
+const authorPagePath = `/author/page/${encodeURIComponent(author.username)}`
 
   async function fetchMyStories() {
     const token = getAuthToken()
