@@ -40,6 +40,7 @@ const ShadowMallPaymentPage = lazy(() => import('./pages/Shop/ShadowMallPaymentP
 const ShadowMallSectionPage = lazy(() => import('./pages/Shop/ShadowMallSectionPage'))
 const ShadowMallNewBooksPage = lazy(() => import('./pages/Shop/ShadowMallNewBooksPage'))
 const ShadowMallSearchPage = lazy(() => import('./pages/Shop/ShadowMallSearchPage'))
+const ShadowMallDiscountBooksPage = lazy(() => import('./pages/Shop/ShadowMallDiscountBooksPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -171,6 +172,15 @@ function AppShell() {
   element={
     <LazyPage>
       <ShadowMallNewBooksPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/shop/mall/discount-books"
+  element={
+    <LazyPage>
+      <ShadowMallDiscountBooksPage />
     </LazyPage>
   }
 />
