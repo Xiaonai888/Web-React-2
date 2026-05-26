@@ -558,24 +558,19 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
       `}</style>
 
       {showSearch ? (
-        <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
-            <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search books or authors"
-              className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
-            />
-            {search ? (
-              <button type="button" onClick={() => setSearch('')} className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]" aria-label="Clear search">
-                <i className="fa-solid fa-xmark text-[12px]" />
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+  <button
+    type="button"
+    onClick={() => navigate('/shop/mall/search')}
+    className="w-full rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+  >
+    <div className="flex items-center gap-2 rounded-full bg-[#f4f5f7] px-4 py-3">
+      <i className="fa-solid fa-magnifying-glass text-[14px] text-[#8d94a1]" />
+      <span className="min-w-0 flex-1 text-[14px] font-semibold text-[#9ca3af]">
+        Search books or authors
+      </span>
+    </div>
+  </button>
+) : null}
 
       <ShadowMallSwiperSlide slides={mallSlides} loading={slidesLoading} onSlideClick={handleSlideClick} />
       <MallShortcutRow setActiveTab={setActiveTab} />
