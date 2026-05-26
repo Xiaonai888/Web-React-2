@@ -193,6 +193,10 @@ const lastScrollYRef = useRef(0)
           overflow-x: hidden;
         }
 
+        body.for-you-bars-hidden footer {
+  transform: translateY(110%);
+}
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
