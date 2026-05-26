@@ -42,6 +42,7 @@ const ShadowMallNewBooksPage = lazy(() => import('./pages/Shop/ShadowMallNewBook
 const ShadowMallSearchPage = lazy(() => import('./pages/Shop/ShadowMallSearchPage'))
 const ShadowMallDiscountBooksPage = lazy(() => import('./pages/Shop/ShadowMallDiscountBooksPage'))
 const ShadowMallSecondHandPage = lazy(() => import('./pages/Shop/ShadowMallSecondHandPage'))
+const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestSellerPage'))
 
 function ComingSoon({ title }) {
   return (
