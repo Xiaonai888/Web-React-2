@@ -1,68 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const fallbackBooks = [
-  {
-    id: 201,
-    title: 'Name book',
-    author: 'Shadow Author',
-    cover: '/assets/Update Today/Update Today 1.jpg',
-    badge: 'red',
-    views: '100k',
-    likes: '1000',
-    episodes: 'Ep 17',
-    genres: ['Romance', 'Comedy', 'Fantasy', 'Action'],
-    description: 'A featured Shadow story waiting for real published updates.',
-  },
-  {
-    id: 202,
-    title: 'Name Novel',
-    author: 'Shadow Author',
-    cover: '/assets/Update Today/Update Today 2.jpg',
-    badge: 'green',
-    views: '100k',
-    likes: '2.5k',
-    episodes: 'Ep 17',
-    genres: ['Romance', 'Fantasy'],
-    description: 'A published story will appear here after authors publish episodes.',
-  },
-  {
-    id: 203,
-    title: 'Name Novel',
-    author: 'Shadow Author',
-    cover: '/assets/Update Today/Update Today 3.jpg',
-    badge: 'yellow',
-    views: '80k',
-    likes: '1.8k',
-    episodes: 'Ep 17',
-    genres: ['Action', 'Drama'],
-    description: 'Real stories from Supabase will replace this fallback list.',
-  },
+const dayTabs = [
+  { key: 1, label: 'MON' },
+  { key: 2, label: 'TUE' },
+  { key: 3, label: 'WED' },
+  { key: 4, label: 'THU' },
+  { key: 5, label: 'FRI' },
+  { key: 6, label: 'SAT' },
+  { key: 0, label: 'SUN' },
 ]
 
-const badgeStyles = {
-  red: 'bg-red-500 text-white',
-  yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
+const badgeConfig = {
+  new: 'bg-[#111827] text-white',
+  up: 'bg-[#facc15] text-[#111827]',
+  end: 'bg-[#22c55e] text-[#052e16]',
 }
-
-const badgeText = {
-  red: 'HOT',
-  yellow: 'UP',
-  green: 'NEW',
-}
-
-const sortTabs = [
-  { key: 'updated', label: 'Updated' },
-  { key: 'latest', label: 'Latest' },
-  { key: 'popular', label: 'Popular' },
-  { key: 'likes', label: 'Likes' },
-]
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -74,79 +33,48 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
+function getStoryDate(story) {
+  const value = story.updated_at || story.last_episode_updated_at || story.last_updated_at || story.created_at
+  const date = value ? new Date(value) : null
+  return date && !Number.isNaN(date.getTime()) ? date : null
+}
+
+function isWithinLastSevenDays(date) {
+  if (!date) return true
+
+  const now = new Date()
+  const sevenDaysAgo = new Date(now)
+  sevenDaysAgo.setDate(now.getDate() - 7)
+
+  return date >= sevenDaysAgo && date <= now
+}
+
 function normalizeStory(story, index = 0) {
+  const updateDate = getStoryDate(story)
+
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
+    author: story.author_name || story.author?.page_name || 'Shadow Author',
     cover: story.cover_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
-    badge: index === 0 ? 'green' : index % 3 === 0 ? 'red' : index % 3 === 1 ? 'yellow' : 'green',
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
-    genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
-    description: story.description || 'No description yet.',
-    isAdult: Boolean(story.is_adult),
-    language: story.story_language || 'Khmer',
-    updatedAt: story.updated_at || story.created_at,
-    isReal: true,
+    genre: story.main_genre || story.genre || '',
+    badge: story.status === 'completed' ? 'end' : index % 3 === 0 ? 'new' : 'up',
+    updateDate,
+    dayKey: updateDate ? updateDate.getDay() : new Date().getDay(),
+    isSubscription: Boolean(story.is_subscription || story.subscription_only || story.is_subscribed || story.requires_subscription),
   }
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="divide-y divide-gray-100">
-      {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="flex gap-4 p-4">
-          <div className="h-[112px] w-[80px] shrink-0 animate-pulse rounded-xl bg-gray-100" />
-          <div className="min-w-0 flex-1 py-1">
-            <div className="h-5 w-3/4 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-2 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-4 flex gap-2">
-              <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100" />
-              <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100" />
-            </div>
-            <div className="mt-4 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function EmptyState({ onRetry }) {
-  return (
-    <div className="px-5 py-12 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-        <i className="fa-regular fa-file-lines text-[24px]" />
-      </div>
-
-      <h2 className="mt-4 text-[18px] font-extrabold text-neutral-900">
-        No published stories yet
-      </h2>
-
-      <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-gray-500">
-        Published stories will appear here after authors publish their episodes.
-      </p>
-
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 rounded-full bg-neutral-950 px-5 py-3 text-[13px] font-extrabold text-white active:scale-95"
-      >
-        Refresh
-      </button>
-    </div>
-  )
-}
-
 function BookCard({ book }) {
-  const updatedText = book.updatedAt ? new Date(book.updatedAt).toLocaleDateString() : ''
+  const badgeText = book.badge === 'end' ? 'End' : book.badge === 'up' ? 'UP' : 'New'
 
   return (
-    <Link to={`/story/${book.id}`} className="group block">
-      <div className="flex gap-4 rounded-2xl p-4 transition-colors hover:bg-gray-50">
-        <div className="relative h-[112px] w-[80px] shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm">
+    <Link to={`/story/${book.id}`} className="group block min-w-0">
+      <div className="relative overflow-hidden rounded-[18px] bg-[#202124] shadow-sm">
+        <div className="aspect-[2/3] overflow-hidden">
           <img
             src={book.cover}
             alt={book.title}
@@ -155,66 +83,31 @@ function BookCard({ book }) {
               event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
             }}
           />
-
-          <div className={`absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold ${badgeStyles[book.badge] || badgeStyles.green}`}>
-            {badgeText[book.badge] || 'NEW'}
-          </div>
-
-          {book.isAdult ? (
-            <div className="absolute bottom-1.5 left-1.5 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-extrabold text-[#e5484d]">
-              18+
-            </div>
-          ) : null}
         </div>
 
-        <div className="min-w-0 flex-1 py-1">
-          <h3 className="line-clamp-2 text-[16px] font-extrabold tracking-tight text-neutral-900">
-            {book.title}
-          </h3>
+        <div className={`absolute right-2 top-2 rounded-full px-3 py-1 text-[10px] font-black uppercase ${badgeConfig[book.badge] || badgeConfig.new}`}>
+          {badgeText}
+        </div>
+      </div>
 
-          <p className="mt-0.5 text-[13px] font-medium text-gray-500">{book.author}</p>
+      <div className="mt-2.5 min-w-0">
+        <h3 className="line-clamp-1 text-[13px] font-black tracking-tight text-[#111827] sm:text-[15px]">
+          {book.title}
+        </h3>
 
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {book.genres.slice(0, 3).map((genre) => (
-              <span key={genre} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-                {genre}
-              </span>
-            ))}
+        <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#6b7280] sm:text-[12px]">
+          {book.author}
+        </p>
 
-            {book.language ? (
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">
-                {book.language}
-              </span>
-            ) : null}
-          </div>
-
-          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-500">
-            {book.description}
-          </p>
-
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
-            <div className="flex items-center gap-1 text-gray-600">
-              <i className="fas fa-eye text-[12px]" />
-              <span>{book.views}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-[12px] text-red-500" />
-              <span className="text-gray-600">{book.likes}</span>
-            </div>
-
-            <div className="flex items-center gap-1 text-gray-600">
-              <i className="fas fa-list text-[12px]" />
-              <span>{book.episodes}</span>
-            </div>
-
-            {updatedText ? (
-              <div className="flex items-center gap-1 text-gray-400">
-                <i className="fa-regular fa-clock text-[12px]" />
-                <span>{updatedText}</span>
-              </div>
-            ) : null}
-          </div>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-bold text-[#111827] sm:text-[11px]">
+          <span className="inline-flex items-center gap-1">
+            <i className="fas fa-eye text-[10px]" />
+            {book.views}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[#1d4ed8]">
+            <i className="fas fa-list text-[10px] text-[#111827]" />
+            {book.episodes}
+          </span>
         </div>
       </div>
     </Link>
@@ -222,124 +115,208 @@ function BookCard({ book }) {
 }
 
 export default function UpdateTodayPage() {
-  const [books, setBooks] = useState([])
-  const [sort, setSort] = useState('updated')
+  const navigate = useNavigate()
+  const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState('')
-
-  const realBooksCount = useMemo(() => books.filter((book) => book.isReal).length, [books])
-
-  async function fetchStories(selectedSort = sort) {
-    try {
-      setLoading(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=${selectedSort}`)
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load stories')
-      }
-
-      const normalized = (data.stories || []).map(normalizeStory)
-
-      setBooks(normalized.length ? normalized : [])
-    } catch (error) {
-      console.error('UpdateTodayPage fetch error:', error)
-      setBooks([])
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to server. Please try again later.'
-          : error.message || 'Failed to load stories'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [activeDay, setActiveDay] = useState(new Date().getDay())
+  const [sortBy, setSortBy] = useState('newest')
+  const [subscriptionOnly, setSubscriptionOnly] = useState(false)
+  const [sortOpen, setSortOpen] = useState(false)
 
   useEffect(() => {
-    fetchStories(sort)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sort])
+    let ignore = false
 
-  const displayBooks = books.length ? books : message ? [] : fallbackBooks
+    async function fetchStories() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=60&sort=updated`))
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load update today stories')
+        }
+
+        if (!ignore) {
+          setStories((data.stories || []).map(normalizeStory))
+        }
+      } catch (error) {
+        console.error('UpdateTodayPage fetch error:', error)
+
+        if (!ignore) {
+          setStories([])
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const dayCounts = useMemo(() => {
+    return dayTabs.reduce((counts, day) => {
+      counts[day.key] = stories.filter((story) => story.dayKey === day.key && isWithinLastSevenDays(story.updateDate)).length
+      return counts
+    }, {})
+  }, [stories])
+
+  const filteredStories = useMemo(() => {
+    const list = stories
+      .filter((story) => story.dayKey === activeDay)
+      .filter((story) => isWithinLastSevenDays(story.updateDate))
+      .filter((story) => !subscriptionOnly || story.isSubscription)
+
+    return list.sort((a, b) => {
+      const aTime = a.updateDate ? a.updateDate.getTime() : 0
+      const bTime = b.updateDate ? b.updateDate.getTime() : 0
+      return sortBy === 'oldest' ? aTime - bTime : bTime - aTime
+    })
+  }, [activeDay, sortBy, stories, subscriptionOnly])
 
   return (
-    <div className="min-h-screen bg-white pb-32">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <Link
-            to="/"
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
-          </Link>
-
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="text-[22px]">🎉</span>
-            <h1 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-900">
-              UPDATE TODAY
-            </h1>
-          </div>
-
+    <div className="min-h-screen bg-white pb-12">
+      <header className="sticky top-0 z-30 border-b border-[#eef0f4] bg-white/95 px-4 py-4 backdrop-blur">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between">
           <button
             type="button"
-            onClick={() => fetchStories(sort)}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
-            aria-label="Refresh"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f6f8] text-[#111827]"
           >
-            <i className="fa-solid fa-rotate-right text-[15px]" />
+            <i className="fas fa-chevron-left text-[14px]" />
           </button>
-        </div>
 
-        <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-3">
-          {sortTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setSort(tab.key)}
-              className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold transition active:scale-95 ${
-                sort === tab.key
-                  ? 'bg-neutral-950 text-white'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <div className="text-center">
+            <h1 className="text-[18px] font-black tracking-[0.14em] text-[#111827] sm:text-[22px]">
+              UPDATE TODAY
+            </h1>
+            <p className="mt-0.5 text-[11px] font-semibold text-[#8b93a1] sm:text-[12px]">
+              Weekly updates stay visible for 7 days
+            </p>
+          </div>
+
+          <div className="h-10 w-10" />
         </div>
       </header>
 
-      <main className="px-2 pt-3">
-        <div className="px-4 pb-2">
-          <p className="text-[13px] font-medium text-gray-400">
-            {realBooksCount || displayBooks.length} stories updated today
-          </p>
+      <main className="mx-auto max-w-[1180px] px-4 pt-5">
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {dayTabs.map((day) => {
+            const active = activeDay === day.key
 
-          {message ? (
+            return (
+              <button
+                key={day.key}
+                type="button"
+                onClick={() => setActiveDay(day.key)}
+                className={`shrink-0 rounded-full border px-4 py-2 text-[12px] font-black transition ${
+                  active
+                    ? 'border-[#111827] bg-[#111827] text-white'
+                    : 'border-[#e5e7eb] bg-white text-[#8b93a1] hover:border-[#111827] hover:text-[#111827]'
+                }`}
+              >
+                <span>{day.label}</span>
+                <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${active ? 'bg-white/15 text-white' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>
+                  {dayCounts[day.key] || 0}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-black text-[#111827] sm:text-[22px]">Newest Updates</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+              {filteredStories.length} stories in this day
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setMessage('')}
-              className="mt-3 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+              onClick={() => setSubscriptionOnly((value) => !value)}
+              className={`rounded-full border px-4 py-2 text-[12px] font-black transition ${
+                subscriptionOnly
+                  ? 'border-[#111827] bg-[#111827] text-white'
+                  : 'border-[#e5e7eb] bg-white text-[#111827]'
+              }`}
             >
-              {message}
+              My subscriptions
             </button>
-          ) : null}
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSortOpen((value) => !value)}
+                className="rounded-full border border-[#e5e7eb] bg-white px-4 py-2 text-[12px] font-black text-[#111827]"
+              >
+                Sort: {sortBy === 'newest' ? 'Newest' : 'Oldest'} <i className="fas fa-chevron-down ml-1 text-[10px]" />
+              </button>
+
+              {sortOpen ? (
+                <div className="absolute right-0 top-11 z-20 w-[150px] overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_16px_35px_rgba(0,0,0,0.12)]">
+                  {[
+                    { key: 'newest', label: 'Newest first' },
+                    { key: 'oldest', label: 'Oldest first' },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => {
+                        setSortBy(option.key)
+                        setSortOpen(false)
+                      }}
+                      className={`block w-full px-4 py-3 text-left text-[13px] font-bold ${
+                        sortBy === option.key ? 'bg-[#f3f4f6] text-[#111827]' : 'text-[#6b7280] hover:bg-[#f9fafb]'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {loading ? (
-          <LoadingSkeleton />
-        ) : displayBooks.length ? (
-          <div className="divide-y divide-gray-100">
-            {displayBooks.map((book) => (
+          <div className="mt-7 grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-5">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div key={index}>
+                <div className="aspect-[2/3] animate-pulse rounded-[18px] bg-[#f3f4f6]" />
+                <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
+                <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6]" />
+              </div>
+            ))}
+          </div>
+        ) : filteredStories.length ? (
+          <div className="mt-7 grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-5 md:gap-y-9">
+            {filteredStories.map((book) => (
               <BookCard key={book.id} book={book} />
             ))}
           </div>
         ) : (
-          <EmptyState onRetry={() => fetchStories(sort)} />
+          <div className="mt-10 rounded-[24px] bg-[#f7f7f8] px-6 py-12 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
+              <i className="fas fa-book-open text-[20px]" />
+            </div>
+            <h3 className="text-[18px] font-black text-[#111827]">No updates found</h3>
+            <p className="mt-2 text-[13px] font-semibold text-[#8b93a1]">
+              Try another day or turn off subscription filter.
+            </p>
+          </div>
         )}
       </main>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   )
 }
