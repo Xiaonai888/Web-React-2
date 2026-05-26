@@ -273,7 +273,7 @@ const lastScrollYRef = useRef(0)
           </div>
         </header>
 
-        <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2">
+        <nav className={`flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2 transition-transform duration-200 ease-out ${hideBars ? '-translate-y-[140px]' : 'translate-y-0'}`}>
           {['novel', 'chat', 'manga'].map((tab) => (
             <div
               key={tab}
