@@ -49,6 +49,7 @@ export default function ForYou() {
   const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
+  const [barsHidden, setBarsHidden] = useState(false)
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
@@ -61,10 +62,13 @@ export default function ForYou() {
       const difference = currentScrollY - previousScrollY
 
       if (currentScrollY < 20) {
+        setBarsHidden(false)
         document.body.classList.remove('for-you-bars-hidden')
       } else if (difference > 8) {
+        setBarsHidden(true)
         document.body.classList.add('for-you-bars-hidden')
       } else if (difference < -8) {
+        setBarsHidden(false)
         document.body.classList.remove('for-you-bars-hidden')
       }
 
@@ -189,18 +193,15 @@ export default function ForYou() {
           overflow-x: hidden;
         }
 
-        .for-you-header,
-        .for-you-tabs {
+        .for-you-top-bars {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 100000;
+          background: #fff;
           transition: transform 0.2s ease-out;
           will-change: transform;
-        }
-
-        body.for-you-bars-hidden .for-you-header {
-          transform: translateY(-100%);
-        }
-
-        body.for-you-bars-hidden .for-you-tabs {
-          transform: translateY(-140px);
         }
 
         body.for-you-bars-hidden footer {
@@ -265,39 +266,46 @@ export default function ForYou() {
       `}</style>
 
       <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
-        <header className="for-you-header flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
-          <div className="flex items-center space-x-2">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
-              <img
-                src="/assets/Icons/Shadow%20Logo.svg"
-                alt="Shadow"
-                className="h-full w-full object-cover"
-              />
+        <div
+          className="for-you-top-bars"
+          style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
+        >
+          <header className="flex justify-between items-center px-4 py-4 bg-white shadow-sm">
+            <div className="flex items-center space-x-2">
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
+                <img
+                  src="/assets/Icons/Shadow%20Logo.svg"
+                  alt="Shadow"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
-          </div>
 
-          <div className="flex space-x-5 text-gray-400 text-xl">
-            <Link to="/search" className="hover:text-[#111827] transition-colors">
-              <i className="fas fa-search" />
-            </Link>
-            <button className="hover:text-blue-600 transition-colors">
-              <i className="fas fa-bell" />
-            </button>
-          </div>
-        </header>
-
-        <nav className="for-you-tabs flex px-4 space-x-8 border-b border-gray-100 bg-white sticky top-[68px] z-[90] pt-2">
-          {['novel', 'chat', 'manga'].map((tab) => (
-            <div
-              key={tab}
-              className={`tab-item text-sm capitalize ${activeTab === tab ? 'active' : 'text-gray-400 font-semibold'}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
+            <div className="flex space-x-5 text-gray-400 text-xl">
+              <Link to="/search" className="hover:text-[#111827] transition-colors">
+                <i className="fas fa-search" />
+              </Link>
+              <button className="hover:text-blue-600 transition-colors">
+                <i className="fas fa-bell" />
+              </button>
             </div>
-          ))}
-        </nav>
+          </header>
+
+          <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2">
+            {['novel', 'chat', 'manga'].map((tab) => (
+              <div
+                key={tab}
+                className={`tab-item text-sm capitalize ${activeTab === tab ? 'active' : 'text-gray-400 font-semibold'}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        <div style={{ height: '110px' }} />
 
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
