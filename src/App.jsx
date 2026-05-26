@@ -30,6 +30,7 @@ import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
+import AuthorPublicPage from './pages/Author/AuthorPublicPage'
 
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -277,6 +278,7 @@ function AppShell() {
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
+        <Route path="/author/page/:pageUsername" element={<AuthorPublicPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
