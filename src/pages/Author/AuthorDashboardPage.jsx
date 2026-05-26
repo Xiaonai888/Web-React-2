@@ -390,9 +390,15 @@ const authorPagePath = `/author/page/${encodeURIComponent(author.username)}`
   }, [stories])
 
   const handleMenuSelect = (path) => {
-    setMenuOpen(false)
-    navigate(path)
+  setMenuOpen(false)
+
+  if (path === '/author/page') {
+    navigate(authorPagePath)
+    return
   }
+
+  navigate(path)
+}
 
   const handleCreateStory = (type) => {
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
@@ -461,7 +467,7 @@ const authorPagePath = `/author/page/${encodeURIComponent(author.username)}`
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => navigate('/author/page')}
+                  onClick={() => navigate(authorPagePath)}
                   className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
                 >
                   View Page
