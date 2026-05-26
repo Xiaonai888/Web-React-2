@@ -424,8 +424,8 @@ export default function TopNovelSection() {
               onClick={() => setActiveCategory(category)}
               className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                 isActive
-                  ? 'border-blue-600 bg-blue-600 text-white'
-                  : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
+  ? 'border-[#111827] bg-[#111827] text-white'
+  : 'border-neutral-300 bg-white text-[#111827] hover:border-[#111827] hover:bg-[#111827] hover:text-white'
               }`}
             >
               {category}
