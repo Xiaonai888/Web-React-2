@@ -78,7 +78,7 @@ export default function ForYou() {
       document.body.classList.remove('for-you-bars-hidden')
     }
   }, [])
-  
+
   useEffect(() => {
     async function fetchGenreTabs() {
       try {
@@ -106,7 +106,7 @@ export default function ForYou() {
             : [{ label: 'Today', slug: 'today', is_locked: true }, ...others].slice(0, 12)
 
           setGenreTabs(finalTabs)
-          setActiveGenre((current) => finalTabs.some((tab) => tab.slug === current) ? current : 'today')
+          setActiveGenre((current) => (finalTabs.some((tab) => tab.slug === current) ? current : 'today'))
         }
       } catch (error) {
         console.error('Fetch genre tabs error:', error)
@@ -206,6 +206,7 @@ export default function ForYou() {
         body.for-you-bars-hidden footer {
           transform: translateY(110%);
         }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -230,10 +231,10 @@ export default function ForYou() {
         }
 
         .swiper-pagination-bullet-active {
-  background: #111827;
-  width: 20px;
-  border-radius: 5px;
-}
+          background: #111827;
+          width: 20px;
+          border-radius: 5px;
+        }
 
         @media (min-width: 768px) {
           .swiper-slide { width: 58%; }
@@ -247,34 +248,34 @@ export default function ForYou() {
         }
 
         .tab-item.active {
-  color: #111827;
-  font-weight: 700;
-}
+          color: #111827;
+          font-weight: 700;
+        }
 
         .tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: #F6B800;
-  border-radius: 10px;
-}
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: #F6B800;
+          border-radius: 10px;
+        }
       `}</style>
 
       <div style={{ paddingBottom: '80px', overflowX: 'hidden', width: '100%' }}>
         <header className="for-you-header flex justify-between items-center px-4 py-4 sticky top-0 bg-white z-[100] shadow-sm">
-         <div className="flex items-center space-x-2">
-  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
-    <img
-      src="/assets/Icons/Shadow%20Logo.svg"
-      alt="Shadow"
-      className="h-full w-full object-cover"
-    />
-  </div>
-  <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
-</div>
+          <div className="flex items-center space-x-2">
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
+              <img
+                src="/assets/Icons/Shadow%20Logo.svg"
+                alt="Shadow"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
+          </div>
 
           <div className="flex space-x-5 text-gray-400 text-xl">
             <Link to="/search" className="hover:text-[#111827] transition-colors">
@@ -356,25 +357,26 @@ export default function ForYou() {
               <div className="swiper-pagination" />
             </div>
 
-           <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
-  {[
-  { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
-  { icon: 'fa-tasks', label: 'Tasks' },
-  { icon: 'fa-trophy', label: 'Ranking' },
-  { icon: 'fa-calendar', label: 'Event', path: '/event' },
-].map((item) => (
-    <div
-      key={item.label}
-      className="group cursor-pointer"
-      onClick={() => item.path && navigate(item.path)}
-    >
-      <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-[#f8fafc]">
-        <i className={`fas ${item.icon} ${item.color}`} />
-      </div>
-      <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
-    </div>
-  ))}
-</div>
+            <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
+              {[
+                { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
+                { icon: 'fa-tasks', label: 'Tasks' },
+                { icon: 'fa-trophy', label: 'Ranking' },
+                { icon: 'fa-calendar', label: 'Event', path: '/event' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="group cursor-pointer"
+                  onClick={() => item.path && navigate(item.path)}
+                >
+                  <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-[#f8fafc]">
+                    <i className={`fas ${item.icon} ${item.color}`} />
+                  </div>
+                  <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
+                </div>
+              ))}
+            </div>
+
             <div className="my-6">
               <ShadowSpotlight />
             </div>
