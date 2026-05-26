@@ -23,6 +23,7 @@ function normalizeProduct(product) {
     id: product.id,
     title: product.title || 'Untitled book',
     author: product.author_name || 'Unknown author',
+    publisher: product.publisher || '',
     cover: product.cover_url || '',
     price: formatUsd(product.price_usd),
     oldPrice: product.old_price_usd ? formatUsd(product.old_price_usd) : '',
@@ -93,6 +94,11 @@ function SearchResultItem({ product, onOpen }) {
               <p className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[#8d94a1]">
                 {product.author}
               </p>
+              {product.publisher ? (
+                <p className="mt-1 line-clamp-1 text-[10.5px] font-extrabold text-[#7a5600]">
+                  {product.publisher}
+                </p>
+              ) : null}
             </button>
 
             <button
@@ -138,17 +144,78 @@ function SearchResultItem({ product, onOpen }) {
   )
 }
 
+function PublisherCard({ publisher, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-[22px] px-4 py-4 text-left shadow-sm ring-1 active:scale-[0.99] ${
+        selected
+          ? 'bg-[#111827] text-white ring-[#111827]'
+          : 'bg-white text-[#111827] ring-black/5'
+      }`}
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+        selected ? 'bg-white/15 text-white' : 'bg-[#fff7d8] text-[#7a5600]'
+      }`}>
+        <i className="fa-solid fa-building text-[14px]" />
+      </div>
+
+      <div className="mt-3 line-clamp-1 text-[14px] font-extrabold">
+        {publisher.name}
+      </div>
+
+      {publisher.description ? (
+        <div className={`mt-1 line-clamp-1 text-[11px] font-semibold ${
+          selected ? 'text-white/65' : 'text-[#8d94a1]'
+        }`}>
+          {publisher.description}
+        </div>
+      ) : (
+        <div className={`mt-1 text-[11px] font-semibold ${
+          selected ? 'text-white/65' : 'text-[#8d94a1]'
+        }`}>
+          Tap to view books
+        </div>
+      )}
+    </button>
+  )
+}
+
 export default function ShadowMallSearchPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [products, setProducts] = useState([])
+  const [publishers, setPublishers] = useState([])
+  const [selectedPublisher, setSelectedPublisher] = useState('')
   const [loading, setLoading] = useState(false)
+  const [publishersLoading, setPublishersLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  async function searchProducts(keyword) {
-    const cleanKeyword = keyword.trim()
+  async function loadPublishers() {
+    try {
+      setPublishersLoading(true)
 
-    if (!cleanKeyword) {
+      const response = await fetch(`${API_URL}/api/shadow-mall/publishers`)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load publishers')
+      }
+
+      setPublishers(data.publishers || [])
+    } catch {
+      setPublishers([])
+    } finally {
+      setPublishersLoading(false)
+    }
+  }
+
+  async function searchProducts({ keyword = query, publisher = selectedPublisher } = {}) {
+    const cleanKeyword = keyword.trim()
+    const cleanPublisher = publisher.trim()
+
+    if (!cleanKeyword && !cleanPublisher) {
       setProducts([])
       setMessage('')
       setLoading(false)
@@ -162,9 +229,11 @@ export default function ShadowMallSearchPage() {
       const params = new URLSearchParams({
         section: 'all',
         page: '1',
-        limit: '30',
-        search: cleanKeyword,
+        limit: '50',
       })
+
+      if (cleanKeyword) params.set('search', cleanKeyword)
+      if (cleanPublisher) params.set('publisher', cleanPublisher)
 
       const response = await fetch(`${API_URL}/api/shadow-mall/products?${params.toString()}`)
       const data = await response.json().catch(() => ({}))
@@ -183,21 +252,35 @@ export default function ShadowMallSearchPage() {
   }
 
   useEffect(() => {
+    loadPublishers()
+  }, [])
+
+  useEffect(() => {
     const timer = window.setTimeout(() => {
-      searchProducts(query)
+      searchProducts({ keyword: query, publisher: selectedPublisher })
     }, 350)
 
     return () => window.clearTimeout(timer)
-  }, [query])
+  }, [query, selectedPublisher])
 
   const hasQuery = query.trim().length > 0
+  const hasPublisher = selectedPublisher.trim().length > 0
+  const showPublishers = !hasQuery && !hasPublisher
 
   const helperText = useMemo(() => {
-    if (!hasQuery) return 'Search all Shadow Mall books by title or author.'
+    if (hasPublisher) return `${selectedPublisher} books`
+    if (!hasQuery) return 'Search by title, author, or browse by publisher.'
     if (loading) return 'Searching...'
     if (products.length) return `${products.length} result${products.length > 1 ? 's' : ''} found`
     return 'No results found'
-  }, [hasQuery, loading, products.length])
+  }, [hasQuery, hasPublisher, selectedPublisher, loading, products.length])
+
+  function clearAll() {
+    setQuery('')
+    setSelectedPublisher('')
+    setProducts([])
+    setMessage('')
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
@@ -230,15 +313,17 @@ export default function ShadowMallSearchPage() {
             <input
               type="text"
               value={query}
+              onFocus={() => {
+                if (selectedPublisher) setSelectedPublisher('')
+              }}
               onChange={(event) => setQuery(event.target.value)}
-              autoFocus
               placeholder="Search books or authors"
               className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
             />
-            {query ? (
+            {query || selectedPublisher ? (
               <button
                 type="button"
-                onClick={() => setQuery('')}
+                onClick={clearAll}
                 className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#8d94a1]"
                 aria-label="Clear search"
               >
@@ -248,29 +333,80 @@ export default function ShadowMallSearchPage() {
           </div>
         </section>
 
+        {showPublishers ? (
+          <section className="mt-4">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="text-[16px] font-extrabold text-[#111827]">Browse by Publisher</h2>
+                <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">
+                  Choose a publisher to view their books.
+                </p>
+              </div>
+            </div>
+
+            {publishersLoading ? (
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-[112px] animate-pulse rounded-[22px] bg-white shadow-sm ring-1 ring-black/5" />
+                ))}
+              </div>
+            ) : publishers.length ? (
+              <div className="grid grid-cols-2 gap-3">
+                {publishers.map((publisher) => (
+                  <PublisherCard
+                    key={publisher.id}
+                    publisher={publisher}
+                    selected={selectedPublisher === publisher.name}
+                    onClick={() => {
+                      setQuery('')
+                      setSelectedPublisher(publisher.name)
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[24px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
+                  <i className="fa-solid fa-building text-[22px]" />
+                </div>
+                <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">No publishers yet</h2>
+                <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
+                  Publishers will appear here after admin creates them.
+                </p>
+              </div>
+            )}
+          </section>
+        ) : null}
+
+        {selectedPublisher ? (
+          <section className="mt-4 flex items-center justify-between gap-3 rounded-[20px] bg-[#111827] px-4 py-3 text-white shadow-sm">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold text-white/60">Selected publisher</div>
+              <div className="line-clamp-1 text-[14px] font-extrabold">{selectedPublisher}</div>
+            </div>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-full bg-white/12 px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+            >
+              Clear
+            </button>
+          </section>
+        ) : null}
+
         {message ? (
           <div className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-extrabold text-[#e5484d]">
             {message}
           </div>
         ) : null}
 
-        {!hasQuery ? (
-          <section className="mt-4 rounded-[26px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff7d8] text-[#7a5600]">
-              <i className="fa-solid fa-magnifying-glass text-[22px]" />
-            </div>
-            <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">Find books faster</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
-              Type a book title or author name to see results here.
-            </p>
-          </section>
-        ) : loading ? (
+        {(hasQuery || hasPublisher) && loading ? (
           <section className="mt-4 space-y-3">
             {[1, 2, 3, 4].map((item) => (
               <div key={item} className="h-[140px] animate-pulse rounded-[22px] bg-white shadow-sm ring-1 ring-black/5" />
             ))}
           </section>
-        ) : products.length ? (
+        ) : (hasQuery || hasPublisher) && products.length ? (
           <section className="mt-4 space-y-3">
             {products.map((product) => (
               <SearchResultItem
@@ -280,17 +416,17 @@ export default function ShadowMallSearchPage() {
               />
             ))}
           </section>
-        ) : (
+        ) : (hasQuery || hasPublisher) ? (
           <section className="mt-4 rounded-[26px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
               <i className="fa-solid fa-book-open text-[22px]" />
             </div>
             <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">No books found</h2>
             <p className="mt-2 text-[13px] leading-6 text-[#8d94a1]">
-              Try another title or author name.
+              Try another title, author, or publisher.
             </p>
           </section>
-        )}
+        ) : null}
       </main>
     </div>
   )
