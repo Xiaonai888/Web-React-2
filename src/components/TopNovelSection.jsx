@@ -69,6 +69,23 @@ function getTopNovelBadge(rank) {
   return `/assets/Top%20Novel%20Badge/Top%20Novel%20Badge%20${rank}.png`
 }
 
+function createFallbackBooks(category) {
+  return [1, 2, 3].map((rank) => ({
+    id: `fallback-${category}-${rank}`,
+    rank,
+    title: `${category} Top ${rank}`,
+    author: 'Shadow Author',
+    views: rank === 1 ? '100k' : rank === 2 ? '88k' : '72k',
+    likes: rank === 1 ? '1000' : rank === 2 ? '860' : '740',
+    description: `Top weekly ${category} story preview.`,
+    image: `/assets/top-novel/top-${rank}.jpg`,
+    link: '/',
+    isAdult: false,
+    genre: category,
+    isFallback: true,
+  }))
+}
+
 const fallbackDataByCategory = {
   Romance: [
     {
@@ -291,6 +308,7 @@ function normalizeStory(story, index = 0) {
     link: `/story/${story.id}`,
     isAdult: Boolean(story.is_adult),
     genre: story.main_genre || '',
+    isFallback: false,
   }
 }
 
@@ -404,7 +422,8 @@ export default function TopNovelSection() {
               throw new Error(data.message || `Failed to load ${category}`)
             }
 
-            return [category, (data.stories || []).map(normalizeStory)]
+            const stories = (data.stories || []).map(normalizeStory)
+            return [category, stories.length ? stories : createFallbackBooks(category)]
           })
         )
 
@@ -415,7 +434,9 @@ export default function TopNovelSection() {
         console.error('TopNovelSection fetch error:', error)
 
         if (!ignore) {
-          setRealDataByCategory({})
+          setRealDataByCategory(
+            Object.fromEntries(categoryTabs.map((category) => [category, createFallbackBooks(category)]))
+          )
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -430,8 +451,7 @@ export default function TopNovelSection() {
   }, [categoryTabs])
 
   const filteredData = useMemo(() => {
-    const realList = realDataByCategory[activeCategory]
-    return realList?.length ? realList : fallbackDataByCategory[activeCategory] || []
+    return realDataByCategory[activeCategory] || createFallbackBooks(activeCategory)
   }, [activeCategory, realDataByCategory])
 
   if (loading) {
@@ -495,7 +515,11 @@ export default function TopNovelSection() {
           <button
             key={item.id}
             type="button"
-            onClick={() => navigate(item.link)}
+            onClick={() => {
+              if (!item.isFallback) {
+                navigate(item.link)
+              }
+            }}
             className="flex w-full items-start gap-4 text-left"
           >
             <div className="pt-5">
