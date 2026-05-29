@@ -318,14 +318,19 @@ export default function AuthorDashboardPage() {
   const [message, setMessage] = useState('')
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
+const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
 
-  const author = {
-  name: storedUser?.name || storedUser?.username || 'Author Page Name',
-  username: storedUser?.page_username || storedUser?.username || storedUser?.name || 'username',
-  avatarLetter: (storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
+const [authorPage, setAuthorPage] = useState(storedAuthorPage)
+
+const author = {
+  name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
+  username: authorPage?.page_username || '',
+  avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
 }
 
-const authorPagePath = `/author/page/${encodeURIComponent(author.username)}`
+const authorPagePath = author.username
+  ? `/author/page/${encodeURIComponent(author.username)}`
+  : '/author/page'
 
   async function fetchMyStories() {
     const token = getAuthToken()
