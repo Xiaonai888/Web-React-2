@@ -33,6 +33,7 @@ import AuthorQuestPage from './pages/Author/AuthorQuestPage'
 import AuthorPublicPage from './pages/Author/AuthorPublicPage'
 import RankingPage from './pages/RankingPage'
 import TaskCenterPage from './pages/TaskCenterPage'
+import TaskHistoryPage from './pages/TaskHistoryPage'
 
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -100,6 +101,7 @@ function AppShell() {
     '/search',
     '/update-today',
     '/tasks',
+    '/tasks/history',
   ]
 
   const shouldHideFooter =
@@ -285,6 +287,7 @@ function AppShell() {
         <Route path="/author/page" element={<AuthorPublicPage />} />
         <Route path="/ranking" element={<RankingPage />} />
         <Route path="/tasks" element={<TaskCenterPage />} />
+        <Route path="/tasks/history" element={<TaskHistoryPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
