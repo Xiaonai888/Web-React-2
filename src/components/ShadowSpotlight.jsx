@@ -1,38 +1,92 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const badgeColors = {
+  NEW: 'bg-[#ff2f55] text-white',
+  HOT: 'bg-[#ff7a00] text-white',
+  TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+function getBadge(item) {
+  const directBadge = String(item.badge || item.badge_label || item.tag || '').trim().toUpperCase()
+  const titleBadge = String(item.title || '').match(/^\s*\[(HOT|NEW|TOP)\]\s*/i)?.[1]?.toUpperCase() || ''
+  const badge = directBadge || titleBadge
+
+  return ['NEW', 'HOT', 'TOP'].includes(badge) ? badge : ''
+}
+
+function getTitle(item) {
+  return String(item.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
+}
+
+function getSubtitle(item) {
+  return String(item.subtitle || item.sub_title || item.description || '').trim()
+}
+
+function getBadgeClass(badge) {
+  return badgeColors[badge] || 'bg-[#ff2f55] text-white'
+}
 
 export default function ShadowSpotlight() {
-  useEffect(() => {
-    const initSwiper = () => {
-      if (window.Swiper) {
-        new window.Swiper('.alphaSwiper', {
-          slidesPerView: 1.1,
-          spaceBetween: 12,
-          centeredSlides: false,
-          loop: false,
-          pagination: {
-            el: '.alpha-pagination',
-            clickable: true,
-          },
-        });
-      }
-    };
+  const navigate = useNavigate()
+  const swiperRef = useRef(null)
+  const [spotlights, setSpotlights] = useState([])
+  const [loading, setLoading] = useState(true)
 
-    if (document.readyState === 'complete') {
-      initSwiper();
-    } else {
-      window.addEventListener('load', initSwiper);
-      return () => window.removeEventListener('load', initSwiper);
+  useEffect(() => {
+    async function fetchSpotlights() {
+      try {
+        const response = await fetch(`${API_URL}/api/slides?section_key=shadow_spotlight`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to fetch spotlight')
+        }
+
+        setSpotlights(data.slides || [])
+      } catch (error) {
+        console.error('Fetch Shadow Spotlight error:', error)
+        setSpotlights([])
+      } finally {
+        setLoading(false)
+      }
     }
-  }, []);
- 
-  const spotlightData = [
-    { id: 1, title: "Royal Scheme", img: "/assets/alpha-spotlight/AP 1.jpg", tag: "NEW" },
-    { id: 2, title: "The Revenge", img: "/assets/alpha-spotlight/AP 2.jpg", tag: "HOT" },
-    { id: 3, title: "Omega Dragon", img: "/assets/alpha-spotlight/AP 3.jpg", tag: "TOP" },
-    { id: 4, title: "My Princess", img: "/assets/alpha-spotlight/AP 4.jpg", tag: "NEW" },
-    { id: 5, title: "Hidden Love", img: "/assets/alpha-spotlight/AP 5.jpg", tag: "HOT" },
-    { id: 6, title: "CEO's Secret Baby", img: "/assets/alpha-spotlight/AP 6.jpg", tag: "END" },
-  ];
+
+    fetchSpotlights()
+  }, [])
+
+  useEffect(() => {
+    if (!window.Swiper || spotlights.length === 0) return
+
+    if (swiperRef.current) {
+      swiperRef.current.destroy(true, true)
+      swiperRef.current = null
+    }
+
+    swiperRef.current = new window.Swiper('.shadowSpotlightSwiper', {
+      slidesPerView: 1.08,
+      spaceBetween: 12,
+      centeredSlides: false,
+      loop: spotlights.length > 1,
+      pagination: {
+        el: '.shadow-spotlight-pagination',
+        clickable: true,
+      },
+    })
+
+    return () => {
+      if (swiperRef.current) {
+        swiperRef.current.destroy(true, true)
+        swiperRef.current = null
+      }
+    }
+  }, [spotlights])
 
   return (
     <div className="w-full overflow-hidden">
@@ -42,32 +96,74 @@ export default function ShadowSpotlight() {
         </h2>
       </div>
 
-      <div className="swiper alphaSwiper !pl-4 !pr-10">
+      <div className="swiper shadowSpotlightSwiper !pl-4 !pr-10">
         <div className="swiper-wrapper">
-          {spotlightData.map((item) => (
-            <div key={item.id} className="swiper-slide">
-              <div className="relative aspect-[3/1] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-50">
-                <img 
-                  src={item.img} 
-                  className="w-full h-full object-cover" 
-                  alt={item.title} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent p-3 flex flex-col justify-end">
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-[#ff3b5c] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
-                      {item.tag}
-                    </span>
-                    <h2 className="text-white font-bold text-[11px] truncate">
-                      {item.title}
-                    </h2>
-                  </div>
-                </div>
+          {loading ? (
+            <div className="swiper-slide">
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+                <span className="text-[12px] font-bold text-gray-400">Loading spotlight...</span>
               </div>
             </div>
-          ))}
+          ) : null}
+
+          {!loading && spotlights.length === 0 ? (
+            <div className="swiper-slide">
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 shadow-sm">
+                <span className="text-[12px] font-bold text-gray-400">No spotlight yet</span>
+              </div>
+            </div>
+          ) : null}
+
+          {!loading && spotlights.map((item) => {
+            const badge = getBadge(item)
+            const title = getTitle(item)
+            const subtitle = getSubtitle(item)
+
+            return (
+              <div key={item.id} className="swiper-slide">
+                <div
+                  className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm"
+                  onClick={() => {
+                    if (item.link_url) navigate(item.link_url)
+                  }}
+                >
+                  <img
+                    src={item.image_url}
+                    className="h-full w-full object-cover"
+                    alt={title || `Shadow Spotlight ${item.order_index}`}
+                  />
+
+                  {(badge || title || subtitle) ? (
+                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {badge ? (
+                          <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getBadgeClass(badge)}`}>
+                            {badge}
+                          </span>
+                        ) : null}
+
+                        {title ? (
+                          <h2 className="min-w-0 truncate text-[12px] font-black leading-tight text-white drop-shadow sm:text-[16px]">
+                            {title}
+                          </h2>
+                        ) : null}
+                      </div>
+
+                      {subtitle ? (
+                        <p className="mt-1 truncate text-[9.5px] font-semibold leading-4 text-white/90 sm:text-[11px]">
+                          {subtitle}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )
+          })}
         </div>
-        <div className="alpha-pagination flex justify-center mt-4"></div>
+
+        <div className="shadow-spotlight-pagination mt-4 flex justify-center" />
       </div>
     </div>
-  );
+  )
 }
