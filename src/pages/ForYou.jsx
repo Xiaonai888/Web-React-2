@@ -27,6 +27,32 @@ const fallbackGenreTabs = [
   { label: 'Drama', slug: 'drama' },
 ]
 
+const slideBadgeColors = {
+  HOT: 'bg-[#ff2f55] text-white',
+  NEW: 'bg-[#ff2f55] text-white',
+  TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+function getSlideBadge(slide) {
+  const directBadge = String(slide.badge || slide.badge_label || slide.tag || '').trim().toUpperCase()
+  const titleBadge = String(slide.title || '').match(/^\s*\[(HOT|NEW|TOP)\]\s*/i)?.[1]?.toUpperCase() || ''
+  const badge = directBadge || titleBadge
+
+  return ['HOT', 'NEW', 'TOP'].includes(badge) ? badge : ''
+}
+
+function getSlideTitle(slide) {
+  return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
+}
+
+function getSlideSubtitle(slide) {
+  return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
+}
+
+function getSlideBadgeClass(badge) {
+  return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
+}
+
 function ComingSoonPanel({ title }) {
   return (
     <div className="px-4 py-8">
@@ -346,45 +372,51 @@ export default function ForYou() {
                   </div>
                 )}
 
-                {!slidesLoading && slides.map((slide) => (
-  <div
-    key={slide.id}
-    className="swiper-slide relative aspect-[16/9] cursor-pointer"
-    onClick={() => {
-      if (slide.link_url) navigate(slide.link_url)
-    }}
-  >
-    <img
-      src={slide.image_url}
-      className="h-full w-full object-cover"
-      alt={slide.title || `Slide ${slide.order_index}`}
-    />
+                {!slidesLoading && slides.map((slide) => {
+                  const slideBadge = getSlideBadge(slide)
+                  const slideTitle = getSlideTitle(slide)
+                  const slideSubtitle = getSlideSubtitle(slide)
 
-    {(slide.badge || slide.title || slide.subtitle) ? (
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent px-4 pb-4 pt-10">
-        <div className="flex min-w-0 items-center gap-2">
-          {slide.badge ? (
-            <span className="shrink-0 rounded-[5px] bg-[#ff2f55] px-2 py-1 text-[8px] font-black uppercase leading-none text-white">
-              {slide.badge}
-            </span>
-          ) : null}
+                  return (
+                    <div
+                      key={slide.id}
+                      className="swiper-slide relative aspect-[16/9] cursor-pointer"
+                      onClick={() => {
+                        if (slide.link_url) navigate(slide.link_url)
+                      }}
+                    >
+                      <img
+                        src={slide.image_url}
+                        className="h-full w-full object-cover"
+                        alt={slideTitle || `Slide ${slide.order_index}`}
+                      />
 
-          {slide.title ? (
-            <h2 className="min-w-0 truncate text-[15px] font-black leading-tight text-white drop-shadow sm:text-[22px]">
-              {slide.title}
-            </h2>
-          ) : null}
-        </div>
+                      {(slideBadge || slideTitle || slideSubtitle) ? (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {slideBadge ? (
+                              <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getSlideBadgeClass(slideBadge)}`}>
+                                {slideBadge}
+                              </span>
+                            ) : null}
 
-        {slide.subtitle ? (
-          <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
-            {slide.subtitle}
-          </p>
-        ) : null}
-      </div>
-    ) : null}
-  </div>
-))}
+                            {slideTitle ? (
+                              <h2 className="min-w-0 truncate text-[16px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+                                {slideTitle}
+                              </h2>
+                            ) : null}
+                          </div>
+
+                          {slideSubtitle ? (
+                            <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
+                              {slideSubtitle}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
               </div>
               <div className="swiper-pagination" />
             </div>
