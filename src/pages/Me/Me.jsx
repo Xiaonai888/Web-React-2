@@ -715,7 +715,7 @@ useEffect(() => {
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <div className="grid grid-cols-2 divide-x divide-[#f0eef6] dark:divide-white/10">
             <QuickAction to="/wallet" icon="fa-solid fa-wallet" title={tx('wallet')} subtitle={tx('walletSub')} />
-            <QuickAction to="/check-in" icon="far fa-calendar-check" title={tx('checkIn')} subtitle={tx('checkInSub')} />
+            <QuickAction to="/tasks" icon="far fa-calendar-check" title={tx('checkIn')} subtitle={tx('checkInSub')} />
           </div>
         </section>
 
