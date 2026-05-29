@@ -347,20 +347,44 @@ export default function ForYou() {
                 )}
 
                 {!slidesLoading && slides.map((slide) => (
-                  <div
-                    key={slide.id}
-                    className="swiper-slide aspect-[16/9] cursor-pointer"
-                    onClick={() => {
-                      if (slide.link_url) navigate(slide.link_url)
-                    }}
-                  >
-                    <img
-                      src={slide.image_url}
-                      className="w-full h-full object-cover"
-                      alt={slide.title || `Slide ${slide.order_index}`}
-                    />
-                  </div>
-                ))}
+  <div
+    key={slide.id}
+    className="swiper-slide relative aspect-[16/9] cursor-pointer"
+    onClick={() => {
+      if (slide.link_url) navigate(slide.link_url)
+    }}
+  >
+    <img
+      src={slide.image_url}
+      className="h-full w-full object-cover"
+      alt={slide.title || `Slide ${slide.order_index}`}
+    />
+
+    {(slide.badge || slide.title || slide.subtitle) ? (
+      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/20 to-transparent p-4">
+        <div className="max-w-[75%]">
+          {slide.badge ? (
+            <div className="mb-2 inline-flex rounded-full bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#111827]">
+              {slide.badge}
+            </div>
+          ) : null}
+
+          {slide.title ? (
+            <h2 className="line-clamp-1 text-[18px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+              {slide.title}
+            </h2>
+          ) : null}
+
+          {slide.subtitle ? (
+            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-white/90 sm:text-[13px]">
+              {slide.subtitle}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    ) : null}
+  </div>
+))}
               </div>
               <div className="swiper-pagination" />
             </div>
