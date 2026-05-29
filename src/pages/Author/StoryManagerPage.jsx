@@ -269,6 +269,53 @@ function ConfirmDeleteModal({ episode, onClose }) {
   )
 }
 
+
+function ConfirmTrashStoryModal({ story, open, busy, onClose, onConfirm }) {
+  if (!open || !story) return null
+
+  return (
+    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
+      <button type="button" aria-label="Close story trash modal" onClick={onClose} className="absolute inset-0" />
+
+      <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-regular fa-trash-can text-[25px]" />
+        </div>
+
+        <h2 className="mt-4 text-[20px] font-black text-[#111827]">Move story to Trash?</h2>
+        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
+          This will hide the story, episodes, likes, comments, and stats. You can restore it within 30 days.
+        </p>
+
+        <div className="mt-4 rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left">
+          <div className="line-clamp-1 text-[13px] font-extrabold text-[#111827]">{story.title || 'Untitled Story'}</div>
+          <div className="mt-1 text-[11.5px] font-semibold text-[#8d94a1]">No permanent delete is allowed from author account.</div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onConfirm}
+            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white disabled:opacity-60"
+          >
+            {busy ? 'Moving...' : 'Move to Trash'}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function EpisodeRow({ episode, onOpen, onMore }) {
   const views = formatCompactNumber(episode.total_views || episode.views || 0)
   const likes = formatCompactNumber(episode.total_likes || episode.likes || 0)
@@ -359,6 +406,7 @@ export default function StoryManagerPage() {
   const [activeTab, setActiveTab] = useState('published')
   const [selectedEpisode, setSelectedEpisode] = useState(null)
   const [deleteEpisode, setDeleteEpisode] = useState(null)
+  const [trashStoryOpen, setTrashStoryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const publishedEpisodes = useMemo(
@@ -517,6 +565,41 @@ export default function StoryManagerPage() {
     setDeleteEpisode(episode)
   }
 
+  const handleMoveStoryToTrash = async () => {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setBusy(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to move story to Trash')
+      }
+
+      setTrashStoryOpen(false)
+      navigate('/author/dashboard', { replace: true })
+    } catch (error) {
+      setTrashStoryOpen(false)
+      setMessage(error.message || 'Failed to move story to Trash')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <EpisodeActionSheet
@@ -536,6 +619,14 @@ export default function StoryManagerPage() {
         onClose={() => setDeleteEpisode(null)}
       />
 
+      <ConfirmTrashStoryModal
+        story={story}
+        open={trashStoryOpen}
+        busy={busy}
+        onClose={() => setTrashStoryOpen(false)}
+        onConfirm={handleMoveStoryToTrash}
+      />
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -549,13 +640,24 @@ export default function StoryManagerPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Story Manager</h1>
 
-          <button
-            type="button"
-            onClick={handleEditStory}
-            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
-          >
-            Edit Story
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTrashStoryOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95"
+              aria-label="Move story to Trash"
+            >
+              <i className="fa-regular fa-trash-can text-[13px]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleEditStory}
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+            >
+              Edit Story
+            </button>
+          </div>
         </div>
       </header>
 
