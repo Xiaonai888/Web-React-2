@@ -173,6 +173,7 @@ function PageMenu({ open, onClose, onSelect }) {
             <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
             <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
             <ToolRow icon="fa-solid fa-gear" title="Settings" subtitle="Privacy and author options" onClick={() => onSelect('/author/settings')} />
+            <ToolRow icon="fa-regular fa-trash-can" title="Trash" subtitle="Restore deleted stories within 30 days" onClick={() => onSelect('/author/trash')} />
           </div>
         </div>
       </div>
