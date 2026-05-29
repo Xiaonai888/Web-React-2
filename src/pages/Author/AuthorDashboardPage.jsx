@@ -500,9 +500,17 @@ export default function AuthorDashboardPage() {
 
         <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center rounded-full bg-[#111827] text-[24px] font-extrabold text-white shadow-sm">
-              {author.avatarLetter}
-            </div>
+            <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[24px] font-extrabold text-white shadow-sm">
+  {author.avatarUrl ? (
+    <img
+      src={author.avatarUrl}
+      alt={author.name}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    author.avatarLetter
+  )}
+</div>
 
             <div className="min-w-0 flex-1">
               <div className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{author.name}</div>
