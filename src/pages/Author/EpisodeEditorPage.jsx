@@ -9,7 +9,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const MIN_CHARACTERS = 1500
-const MAX_CHARACTERS = 12000
+const MAX_CHARACTERS = 30000
 
 function getAuthToken() {
   return (
@@ -520,7 +520,7 @@ export default function EpisodeEditorPage() {
     }
 
     if (characterCount > MAX_CHARACTERS) {
-      setMessage('This episode is too long. Maximum is 12,000 characters.')
+      setMessage('This episode is too long. Maximum is 30,000 characters.')
       return null
     }
 
