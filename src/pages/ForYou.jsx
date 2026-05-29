@@ -425,7 +425,7 @@ export default function ForYou() {
               {[
                 { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
                 { icon: 'fa-tasks', label: 'Tasks' },
-                { icon: 'fa-trophy', label: 'Ranking' },
+                { icon: 'fa-trophy', label: 'Ranking', path: '/ranking' },
                 { icon: 'fa-calendar', label: 'Event', path: '/event' },
               ].map((item) => (
                 <div
