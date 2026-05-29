@@ -273,7 +273,7 @@ export default function TaskCenterPage() {
 
           <button
             type="button"
-            onClick={() => navigate('/tasks/history')}
+            onClick={() => {}}
             className="rounded-full bg-white/20 px-4 py-2 text-[12px] font-black text-white active:scale-95"
           >
             History
