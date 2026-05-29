@@ -323,10 +323,11 @@ export default function AuthorDashboardPage() {
   const [authorPage, setAuthorPage] = useState(storedAuthorPage)
 
   const author = {
-    name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
-    username: authorPage?.page_username || '',
-    avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
-  }
+  name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
+  username: authorPage?.page_username || '',
+  avatarUrl: authorPage?.avatar_url || '',
+  avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
+}
 
   const authorPagePath = author.username
     ? `/author/page/${encodeURIComponent(author.username)}`
