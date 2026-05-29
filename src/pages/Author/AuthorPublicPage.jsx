@@ -26,7 +26,7 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function normalizeAuthor(page, pageUsername, myPage = null) {
+function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) {
   const author = page || {}
 
   return {
@@ -44,7 +44,7 @@ function normalizeAuthor(page, pageUsername, myPage = null) {
     likes_count: Number(author.total_likes || author.likes_count || 0),
     created_at: author.created_at || '',
     updated_at: author.updated_at || '',
-    is_owner: Boolean(myPage?.id && author.id && myPage.id === author.id),
+    is_owner: forceOwner || Boolean(myPage?.id && author.id && myPage.id === author.id),
   }
 }
 
@@ -64,21 +64,18 @@ async function fetchMyAuthorPage() {
 
   if (!token) return null
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    const data = await response.json().catch(() => ({}))
+  const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  const data = await response.json().catch(() => ({}))
 
-    if (!response.ok || data.ok === false) return null
-
-    return data.author_page || null
-  } catch (error) {
-    console.error('Fetch my author page error:', error)
+  if (!response.ok || data.ok === false) {
     return null
   }
+
+  return data.author_page || null
 }
 
 function StatItem({ value, label }) {
@@ -147,9 +144,23 @@ export default function AuthorPublicPage() {
         setLoading(true)
         setError('')
 
+        if (!pageUsername) {
+          const myPage = await fetchMyAuthorPage()
+
+          if (!myPage) {
+            throw new Error('Author page not found')
+          }
+
+          if (!ignore) {
+            setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
+          }
+
+          return
+        }
+
         const [publicPage, myPage] = await Promise.all([
           fetchPublicAuthorPage(pageUsername),
-          fetchMyAuthorPage(),
+          fetchMyAuthorPage().catch(() => null),
         ])
 
         if (!ignore) {
