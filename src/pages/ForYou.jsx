@@ -361,26 +361,26 @@ export default function ForYou() {
     />
 
     {(slide.badge || slide.title || slide.subtitle) ? (
-      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/65 via-black/20 to-transparent p-4">
-        <div className="max-w-[75%]">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent px-4 pb-4 pt-10">
+        <div className="flex min-w-0 items-center gap-2">
           {slide.badge ? (
-            <div className="mb-2 inline-flex rounded-full bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#111827]">
+            <span className="shrink-0 rounded-[5px] bg-[#ff2f55] px-2 py-1 text-[8px] font-black uppercase leading-none text-white">
               {slide.badge}
-            </div>
+            </span>
           ) : null}
 
           {slide.title ? (
-            <h2 className="line-clamp-1 text-[18px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+            <h2 className="min-w-0 truncate text-[15px] font-black leading-tight text-white drop-shadow sm:text-[22px]">
               {slide.title}
             </h2>
           ) : null}
-
-          {slide.subtitle ? (
-            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-white/90 sm:text-[13px]">
-              {slide.subtitle}
-            </p>
-          ) : null}
         </div>
+
+        {slide.subtitle ? (
+          <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
+            {slide.subtitle}
+          </p>
+        ) : null}
       </div>
     ) : null}
   </div>
