@@ -5,6 +5,7 @@ const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
@@ -13,10 +14,12 @@ function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
+
 const REVIEW_READ_PROGRESS_PERCENT = 85
 
 const READER_THEMES = {
   light: {
+    name: 'White',
     page: 'bg-[#f6f4ee]',
     card: 'bg-[#fffdf8]',
     text: 'text-[#24201b]',
@@ -25,8 +28,10 @@ const READER_THEMES = {
     border: 'border-[#eee5d9]',
     button: 'bg-[#111827] text-white',
     ghost: 'bg-white/85 text-[#111827] ring-1 ring-black/5',
+    swatch: 'bg-[#fffdf8]',
   },
   paper: {
+    name: 'Paper',
     page: 'bg-[#efe7d8]',
     card: 'bg-[#fbf3e3]',
     text: 'text-[#2c241d]',
@@ -35,8 +40,22 @@ const READER_THEMES = {
     border: 'border-[#e5d3bb]',
     button: 'bg-[#3b2f25] text-white',
     ghost: 'bg-[#fff8ed] text-[#3b2f25] ring-1 ring-[#dec8ae]',
+    swatch: 'bg-[#fbf3e3]',
+  },
+  sepia: {
+    name: 'Sepia',
+    page: 'bg-[#e6d7b8]',
+    card: 'bg-[#f1e2bf]',
+    text: 'text-[#332719]',
+    muted: 'text-[#7c6544]',
+    soft: 'bg-[#dfcda7]',
+    border: 'border-[#d1bc91]',
+    button: 'bg-[#3b2f25] text-white',
+    ghost: 'bg-[#f8edcf] text-[#3b2f25] ring-1 ring-[#c8b180]',
+    swatch: 'bg-[#e5d6ad]',
   },
   dark: {
+    name: 'Dark',
     page: 'bg-[#0f172a]',
     card: 'bg-[#111827]',
     text: 'text-[#e5e7eb]',
@@ -45,6 +64,58 @@ const READER_THEMES = {
     border: 'border-[#263244]',
     button: 'bg-white text-[#111827]',
     ghost: 'bg-[#1f2937] text-white ring-1 ring-white/10',
+    swatch: 'bg-[#050505]',
+  },
+}
+
+const FONT_SIZE_LEVELS = [15, 17, 19, 21, 23]
+const DEFAULT_FONT_SIZE_INDEX = 1
+
+const FONT_OPTIONS = [
+  {
+    key: 'noto-khmer',
+    label: 'Noto Sans Khmer',
+    family: '"Noto Sans Khmer", "Khmer OS Content", system-ui, sans-serif',
+  },
+  {
+    key: 'khmer-os-content',
+    label: 'Khmer OS Content',
+    family: '"Khmer OS Content", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'battambang',
+    label: 'Battambang',
+    family: '"Battambang", "Khmer OS Battambang", "Noto Sans Khmer", serif',
+  },
+  {
+    key: 'kantumruy',
+    label: 'Kantumruy Pro',
+    family: '"Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'siemreap',
+    label: 'Siemreap',
+    family: '"Siemreap", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'system',
+    label: 'System',
+    family: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+]
+
+const LINE_SPACING_OPTIONS = {
+  compact: {
+    label: 'Compact',
+    className: 'leading-[1.85]',
+  },
+  normal: {
+    label: 'Normal',
+    className: 'leading-[2.05]',
+  },
+  comfort: {
+    label: 'Comfort',
+    className: 'leading-[2.25]',
   },
 }
 
@@ -102,15 +173,24 @@ function saveReviewReadEpisode(storyId, episodeId) {
   localStorage.setItem(getReviewReadKey(storyId), JSON.stringify([...current, episodeId]))
 }
 
-function ReadingText({ content, fontSize, theme }) {
-  const paragraphs = useMemo(() => splitParagraphs(content), [content])
+function getInitialFontSizeIndex() {
+  const savedIndex = Number(localStorage.getItem('reader_font_size_index'))
 
-  const textSize =
-    fontSize === 'large'
-      ? 'text-[19px] sm:text-[20px]'
-      : fontSize === 'small'
-        ? 'text-[15.5px] sm:text-[16px]'
-        : 'text-[17px] sm:text-[18px]'
+  if (Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < FONT_SIZE_LEVELS.length) {
+    return savedIndex
+  }
+
+  const oldValue = localStorage.getItem('reader_font_size')
+
+  if (oldValue === 'small') return 0
+  if (oldValue === 'large') return 2
+
+  return DEFAULT_FONT_SIZE_INDEX
+}
+
+function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
+  const paragraphs = useMemo(() => splitParagraphs(content), [content])
+  const lineHeightClass = LINE_SPACING_OPTIONS[lineSpacing]?.className || LINE_SPACING_OPTIONS.comfort.className
 
   if (!paragraphs.length) {
     return (
@@ -121,11 +201,15 @@ function ReadingText({ content, fontSize, theme }) {
   }
 
   return (
-    <div className="space-y-7">
+    <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
       {paragraphs.map((paragraph, index) => (
         <p
           key={`${paragraph.slice(0, 20)}-${index}`}
-          className={`${textSize} ${theme.text} whitespace-pre-line break-words leading-[2.15] tracking-[0.003em]`}
+          className={`${theme.text} ${lineHeightClass} whitespace-pre-line break-words tracking-[0.003em]`}
+          style={{
+            fontFamily,
+            fontSize: `${fontSizePx}px`,
+          }}
         >
           {paragraph}
         </p>
@@ -144,20 +228,6 @@ function ReaderIconButton({ icon, label, onClick, className = '', disabled = fal
       aria-label={label}
     >
       <i className={`${icon} text-[14px]`} />
-    </button>
-  )
-}
-
-function ReaderSettingButton({ children, active, onClick, theme }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-10 rounded-full px-4 text-[12px] font-extrabold transition active:scale-95 ${
-        active ? theme.button : theme.ghost
-      }`}
-    >
-      {children}
     </button>
   )
 }
@@ -284,6 +354,231 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
   )
 }
 
+function SettingSection({ title, children }) {
+  return (
+    <section className="border-t border-[#f0eef6] px-4 py-4 first:border-t-0">
+      <h3 className="mb-3 text-[14px] font-black text-[#111827]">{title}</h3>
+      {children}
+    </section>
+  )
+}
+
+function ChoiceButton({ active, children, onClick, className = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-[16px] px-3 py-3 text-[12px] font-extrabold transition active:scale-[0.98] ${
+        active ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+      } ${className}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ReaderSettingsDrawer({
+  open,
+  onClose,
+  themeName,
+  setThemeName,
+  fontSizeIndex,
+  setFontSizeIndex,
+  fontKey,
+  setFontKey,
+  brightness,
+  setBrightness,
+  lineSpacing,
+  setLineSpacing,
+  wideMode,
+  setWideMode,
+  readingMode,
+  setReadingMode,
+  onReset,
+}) {
+  if (!open) return null
+
+  const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
+  const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
+
+  const decreaseFont = () => {
+    setFontSizeIndex((current) => Math.max(0, current - 1))
+  }
+
+  const increaseFont = () => {
+    setFontSizeIndex((current) => Math.min(FONT_SIZE_LEVELS.length - 1, current + 1))
+  }
+
+  return (
+    <div className="fixed inset-0 z-[145]">
+      <button
+        type="button"
+        aria-label="Close reader settings"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
+        <div className="sticky top-0 z-10 border-b border-[#f0eef6] bg-white px-4 py-4">
+          <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-black/15 md:hidden" />
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[18px] font-black text-[#111827]">Aa Reading Settings</h2>
+              <p className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
+                Font, color, brightness, and reading comfort
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[72vh] overflow-y-auto pb-4">
+          <SettingSection title="Brightness">
+            <div className="flex items-center gap-3">
+              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
+              <input
+                type="range"
+                min="60"
+                max="100"
+                step="5"
+                value={brightness}
+                onChange={(event) => setBrightness(Number(event.target.value))}
+                className="w-full accent-[#111827]"
+              />
+              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
+            </div>
+          </SettingSection>
+
+          <SettingSection title="Font Size">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <button
+                type="button"
+                onClick={decreaseFont}
+                disabled={fontSizeIndex <= 0}
+                className="h-12 rounded-[16px] bg-[#f5f3fa] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
+              >
+                Aa-
+              </button>
+
+              <div className="min-w-[72px] text-center text-[13px] font-black text-[#111827]">
+                {fontSizePx}px
+              </div>
+
+              <button
+                type="button"
+                onClick={increaseFont}
+                disabled={fontSizeIndex >= FONT_SIZE_LEVELS.length - 1}
+                className="h-12 rounded-[16px] bg-[#111827] text-[14px] font-black text-white active:scale-[0.98] disabled:opacity-40"
+              >
+                Aa+
+              </button>
+            </div>
+          </SettingSection>
+
+          <SettingSection title="Font Style">
+            <div className="grid grid-cols-2 gap-2">
+              {FONT_OPTIONS.map((font) => (
+                <ChoiceButton
+                  key={font.key}
+                  active={activeFont.key === font.key}
+                  onClick={() => setFontKey(font.key)}
+                  className="min-h-[48px]"
+                >
+                  <span style={{ fontFamily: font.family }}>{font.label}</span>
+                </ChoiceButton>
+              ))}
+            </div>
+          </SettingSection>
+
+          <SettingSection title="Page Color">
+            <div className="grid grid-cols-4 gap-2">
+              {Object.entries(READER_THEMES).map(([key, item]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setThemeName(key)}
+                  className={`rounded-[16px] border p-2 text-center active:scale-[0.98] ${
+                    themeName === key ? 'border-[#111827] bg-[#f5f3fa]' : 'border-[#e4e7ec] bg-white'
+                  }`}
+                >
+                  <span className={`mx-auto block h-9 rounded-[12px] border border-black/10 ${item.swatch}`} />
+                  <span className="mt-2 block text-[10.5px] font-extrabold text-[#111827]">{item.name}</span>
+                </button>
+              ))}
+            </div>
+          </SettingSection>
+
+          <SettingSection title="Reading Mode">
+            <div className="grid grid-cols-2 gap-2">
+              <ChoiceButton active={readingMode === 'scroll'} onClick={() => setReadingMode('scroll')}>
+                Scrolling
+              </ChoiceButton>
+              <button
+                type="button"
+                onClick={() => setReadingMode('paging')}
+                className={`rounded-[16px] px-3 py-3 text-[12px] font-extrabold transition active:scale-[0.98] ${
+                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                Paging
+                <span className={`ml-1 text-[9px] ${readingMode === 'paging' ? 'text-white/70' : 'text-[#98a2b3]'}`}>
+                  Soon
+                </span>
+              </button>
+            </div>
+
+            {readingMode === 'paging' ? (
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
+                Paging UI is saved now. Real page-by-page reading will be added in the next stage.
+              </p>
+            ) : null}
+          </SettingSection>
+
+          <SettingSection title="Line Spacing">
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(LINE_SPACING_OPTIONS).map(([key, item]) => (
+                <ChoiceButton key={key} active={lineSpacing === key} onClick={() => setLineSpacing(key)}>
+                  {item.label}
+                </ChoiceButton>
+              ))}
+            </div>
+          </SettingSection>
+
+          <SettingSection title="Reading Width">
+            <div className="grid grid-cols-2 gap-2">
+              <ChoiceButton active={!wideMode} onClick={() => setWideMode(false)}>
+                Comfort
+              </ChoiceButton>
+              <ChoiceButton active={wideMode} onClick={() => setWideMode(true)}>
+                Wide
+              </ChoiceButton>
+            </div>
+          </SettingSection>
+
+          <section className="px-4 pt-2">
+            <button
+              type="button"
+              onClick={onReset}
+              className="h-12 w-full rounded-full border border-[#e4e7ec] bg-white text-[13px] font-black text-[#111827] active:scale-[0.99]"
+            >
+              Reset Settings
+            </button>
+          </section>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function ReaderPage() {
   const navigate = useNavigate()
   const { storyId, episodeId } = useParams()
@@ -293,8 +588,12 @@ export default function ReaderPage() {
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [fontSize, setFontSize] = useState(() => localStorage.getItem('reader_font_size') || 'normal')
-  const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'light')
+  const [fontSizeIndex, setFontSizeIndex] = useState(getInitialFontSizeIndex)
+  const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-khmer')
+  const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'paper')
+  const [brightness, setBrightness] = useState(() => Number(localStorage.getItem('reader_brightness') || 100))
+  const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
+  const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
   const [wideMode, setWideMode] = useState(() => localStorage.getItem('reader_wide_mode') === 'true')
   const [adultWarningOpen, setAdultWarningOpen] = useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
@@ -303,15 +602,35 @@ export default function ReaderPage() {
   const [readingProgress, setReadingProgress] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
 
-  const theme = READER_THEMES[themeName] || READER_THEMES.light
+  const theme = READER_THEMES[themeName] || READER_THEMES.paper
+  const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
+  const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
+  const brightnessOpacity = Math.max(0, Math.min(0.35, (100 - brightness) / 125))
 
   useEffect(() => {
-    localStorage.setItem('reader_font_size', fontSize)
-  }, [fontSize])
+    localStorage.setItem('reader_font_size_index', String(fontSizeIndex))
+    localStorage.setItem('reader_font_size', fontSizeIndex <= 0 ? 'small' : fontSizeIndex >= 2 ? 'large' : 'normal')
+  }, [fontSizeIndex])
+
+  useEffect(() => {
+    localStorage.setItem('reader_font_key', fontKey)
+  }, [fontKey])
 
   useEffect(() => {
     localStorage.setItem('reader_theme', themeName)
   }, [themeName])
+
+  useEffect(() => {
+    localStorage.setItem('reader_brightness', String(brightness))
+  }, [brightness])
+
+  useEffect(() => {
+    localStorage.setItem('reader_line_spacing', lineSpacing)
+  }, [lineSpacing])
+
+  useEffect(() => {
+    localStorage.setItem('reader_reading_mode', readingMode)
+  }, [readingMode])
 
   useEffect(() => {
     localStorage.setItem('reader_wide_mode', String(wideMode))
@@ -325,9 +644,9 @@ export default function ReaderPage() {
       setMessage('')
 
       if (!getReaderToken()) {
-  navigate('/login')
-  return
-}
+        navigate('/login')
+        return
+      }
 
       try {
         const [episodeResponse, episodesResponse] = await Promise.all([
@@ -397,7 +716,7 @@ export default function ReaderPage() {
     return () => {
       ignore = true
     }
-  }, [episodeId, storyId])
+  }, [episodeId, navigate, storyId])
 
   useEffect(() => {
     const updateProgress = () => {
@@ -445,24 +764,25 @@ export default function ReaderPage() {
     navigate(`/story/${storyId}/episode/${nextEpisode.id}`)
   }
 
-  const cycleFont = () => {
-    setFontSize((current) => {
-      if (current === 'normal') return 'large'
-      if (current === 'large') return 'small'
-      return 'normal'
-    })
-  }
-
-  const cycleTheme = () => {
-    setThemeName((current) => {
-      if (current === 'light') return 'paper'
-      if (current === 'paper') return 'dark'
-      return 'light'
-    })
+  const handleResetSettings = () => {
+    setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
+    setFontKey('noto-khmer')
+    setThemeName('paper')
+    setBrightness(100)
+    setLineSpacing('comfort')
+    setReadingMode('scroll')
+    setWideMode(false)
   }
 
   return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
+      {brightnessOpacity > 0 ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-[65] bg-black"
+          style={{ opacity: brightnessOpacity }}
+        />
+      ) : null}
+
       <div className="fixed left-0 right-0 top-0 z-[70] h-1 bg-black/5">
         <div
           className="h-full bg-[#0b5cff] transition-all duration-150"
@@ -477,6 +797,26 @@ export default function ReaderPage() {
           setAdultAccepted(true)
           setAdultWarningOpen(false)
         }}
+      />
+
+      <ReaderSettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        themeName={themeName}
+        setThemeName={setThemeName}
+        fontSizeIndex={fontSizeIndex}
+        setFontSizeIndex={setFontSizeIndex}
+        fontKey={fontKey}
+        setFontKey={setFontKey}
+        brightness={brightness}
+        setBrightness={setBrightness}
+        lineSpacing={lineSpacing}
+        setLineSpacing={setLineSpacing}
+        wideMode={wideMode}
+        setWideMode={setWideMode}
+        readingMode={readingMode}
+        setReadingMode={setReadingMode}
+        onReset={handleResetSettings}
       />
 
       <EpisodeListDrawer
@@ -514,7 +854,7 @@ export default function ReaderPage() {
             <ReaderIconButton
               icon="fa-solid fa-sliders"
               label="Reader settings"
-              onClick={() => setSettingsOpen((value) => !value)}
+              onClick={() => setSettingsOpen(true)}
               className={`${settingsOpen ? theme.button : theme.ghost}`}
             />
 
@@ -526,25 +866,6 @@ export default function ReaderPage() {
             />
           </div>
         </div>
-
-        {settingsOpen ? (
-          <div className={`mx-auto mt-3 flex ${wideMode ? 'max-w-5xl' : 'max-w-3xl'} flex-wrap gap-2`}>
-            <ReaderSettingButton theme={theme} active={fontSize !== 'normal'} onClick={cycleFont}>
-              <i className="fa-solid fa-font mr-2 text-[11px]" />
-              {fontSize === 'large' ? 'Large' : fontSize === 'small' ? 'Small' : 'Normal'}
-            </ReaderSettingButton>
-
-            <ReaderSettingButton theme={theme} active={themeName !== 'light'} onClick={cycleTheme}>
-              <i className="fa-solid fa-circle-half-stroke mr-2 text-[11px]" />
-              {themeName === 'paper' ? 'Paper' : themeName === 'dark' ? 'Dark' : 'Light'}
-            </ReaderSettingButton>
-
-            <ReaderSettingButton theme={theme} active={wideMode} onClick={() => setWideMode((value) => !value)}>
-              <i className="fa-solid fa-arrows-left-right mr-2 text-[11px]" />
-              {wideMode ? 'Wide' : 'Comfort'}
-            </ReaderSettingButton>
-          </div>
-        ) : null}
       </header>
 
       <main className={`mx-auto px-4 pt-4 ${wideMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
@@ -566,7 +887,6 @@ export default function ReaderPage() {
 
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-
                       {episode.is_adult ? (
                         <span className="rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
                           18+
@@ -627,7 +947,7 @@ export default function ReaderPage() {
 
                   <div>
                     <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Mode</div>
-                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{themeName}</div>
+                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{READER_THEMES[themeName]?.name || themeName}</div>
                   </div>
 
                   <div>
@@ -637,7 +957,13 @@ export default function ReaderPage() {
                 </div>
 
                 <article>
-                  <ReadingText content={episode.content} fontSize={fontSize} theme={theme} />
+                  <ReadingText
+                    content={episode.content}
+                    fontSizePx={fontSizePx}
+                    fontFamily={activeFont.family}
+                    lineSpacing={lineSpacing}
+                    theme={theme}
+                  />
                 </article>
               </div>
             </section>
