@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -73,34 +73,124 @@ const DEFAULT_FONT_SIZE_INDEX = 1
 
 const FONT_OPTIONS = [
   {
-    key: 'noto-khmer',
+    key: 'noto-sans-khmer',
     label: 'Noto Sans Khmer',
+    group: 'Khmer Fonts',
     family: '"Noto Sans Khmer", "Khmer OS Content", system-ui, sans-serif',
   },
   {
     key: 'khmer-os-content',
     label: 'Khmer OS Content',
+    group: 'Khmer Fonts',
     family: '"Khmer OS Content", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'khmer-os-battambang',
+    label: 'Khmer OS Battambang',
+    group: 'Khmer Fonts',
+    family: '"Khmer OS Battambang", "Battambang", "Noto Sans Khmer", serif',
   },
   {
     key: 'battambang',
     label: 'Battambang',
+    group: 'Khmer Fonts',
     family: '"Battambang", "Khmer OS Battambang", "Noto Sans Khmer", serif',
   },
   {
-    key: 'kantumruy',
+    key: 'kantumruy-pro',
     label: 'Kantumruy Pro',
+    group: 'Khmer Fonts',
     family: '"Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif',
   },
   {
     key: 'siemreap',
     label: 'Siemreap',
+    group: 'Khmer Fonts',
     family: '"Siemreap", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'hanuman',
+    label: 'Hanuman',
+    group: 'Khmer Fonts',
+    family: '"Hanuman", "Noto Sans Khmer", serif',
+  },
+  {
+    key: 'preahvihear',
+    label: 'Preahvihear',
+    group: 'Khmer Fonts',
+    family: '"Preahvihear", "Noto Sans Khmer", system-ui, sans-serif',
+  },
+  {
+    key: 'content',
+    label: 'Content',
+    group: 'Khmer Fonts',
+    family: '"Content", "Khmer OS Content", "Noto Sans Khmer", serif',
+  },
+  {
+    key: 'metal',
+    label: 'Metal',
+    group: 'Khmer Fonts',
+    family: '"Metal", "Noto Sans Khmer", serif',
+  },
+  {
+    key: 'moulpali',
+    label: 'Moulpali',
+    group: 'Khmer Fonts',
+    family: '"Moulpali", "Noto Sans Khmer", serif',
+  },
+  {
+    key: 'dangrek',
+    label: 'Dangrek',
+    group: 'Khmer Fonts',
+    family: '"Dangrek", "Noto Sans Khmer", system-ui, sans-serif',
   },
   {
     key: 'system',
     label: 'System',
+    group: 'Other Fonts',
     family: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+  {
+    key: 'sans-serif',
+    label: 'Sans Serif',
+    group: 'Other Fonts',
+    family: 'Arial, Helvetica, system-ui, sans-serif',
+  },
+  {
+    key: 'serif',
+    label: 'Serif',
+    group: 'Other Fonts',
+    family: 'Georgia, "Times New Roman", serif',
+  },
+  {
+    key: 'inter',
+    label: 'Inter',
+    group: 'Other Fonts',
+    family: '"Inter", system-ui, sans-serif',
+  },
+  {
+    key: 'roboto',
+    label: 'Roboto',
+    group: 'Other Fonts',
+    family: '"Roboto", Arial, sans-serif',
+  },
+  {
+    key: 'merriweather',
+    label: 'Merriweather',
+    group: 'Other Fonts',
+    family: '"Merriweather", Georgia, serif',
+  },
+  {
+    key: 'lora',
+    label: 'Lora',
+    group: 'Other Fonts',
+    family: '"Lora", Georgia, serif',
+  },
+  {
+    key: 'georgia',
+    label: 'Georgia',
+    group: 'Other Fonts',
+    family: 'Georgia, serif',
   },
 ]
 
@@ -118,6 +208,29 @@ const LINE_SPACING_OPTIONS = {
     className: 'leading-[2.25]',
   },
 }
+
+const AUTO_SCROLL_SPEEDS = [
+  {
+    label: 'Very slow',
+    value: 0.35,
+  },
+  {
+    label: 'Slow',
+    value: 0.55,
+  },
+  {
+    label: 'Normal',
+    value: 0.8,
+  },
+  {
+    label: 'Fast',
+    value: 1.1,
+  },
+  {
+    label: 'Very fast',
+    value: 1.45,
+  },
+]
 
 function formatDate(value) {
   if (!value) return ''
@@ -377,6 +490,128 @@ function ChoiceButton({ active, children, onClick, className = '' }) {
   )
 }
 
+function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
+  if (!open) return null
+
+  const groups = FONT_OPTIONS.reduce((result, font) => {
+    if (!result[font.group]) result[font.group] = []
+    result[font.group].push(font)
+    return result
+  }, {})
+
+  return (
+    <div className="fixed inset-0 z-[170]">
+      <button
+        type="button"
+        aria-label="Close font list"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
+        <div className="sticky top-0 z-10 border-b border-[#f0eef6] bg-white px-4 py-4">
+          <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-black/15 md:hidden" />
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[18px] font-black text-[#111827]">Choose Font</h2>
+              <p className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
+                Khmer fonts are shown first
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[66vh] overflow-y-auto p-4">
+          {Object.entries(groups).map(([group, fonts]) => (
+            <section key={group} className="mb-5 last:mb-0">
+              <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#8d94a1]">
+                {group}
+              </h3>
+
+              <div className="space-y-2">
+                {fonts.map((font) => {
+                  const active = font.key === selectedFontKey
+
+                  return (
+                    <button
+                      key={font.key}
+                      type="button"
+                      onClick={() => {
+                        onSelect(font.key)
+                        onClose()
+                      }}
+                      className={`flex w-full items-center justify-between gap-3 rounded-[18px] px-4 py-3 text-left active:scale-[0.995] ${
+                        active ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                      }`}
+                    >
+                      <span className="line-clamp-1 text-[14px] font-extrabold" style={{ fontFamily: font.family }}>
+                        {font.label}
+                      </span>
+
+                      {active ? (
+                        <i className="fa-solid fa-check text-[13px]" />
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function ResetSettingsModal({ open, onCancel, onConfirm }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
+      <button type="button" aria-label="Cancel reset" onClick={onCancel} className="absolute inset-0" />
+
+      <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-solid fa-rotate-left text-[24px]" />
+        </div>
+
+        <h2 className="mt-4 text-[20px] font-black text-[#111827]">Reset reading settings?</h2>
+        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
+          This will restore font size, font style, page color, brightness, line spacing, and auto scroll to default.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white"
+          >
+            Reset
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function ReaderSettingsDrawer({
   open,
   onClose,
@@ -386,20 +621,21 @@ function ReaderSettingsDrawer({
   setFontSizeIndex,
   fontKey,
   setFontKey,
+  selectedFont,
   brightness,
   setBrightness,
   lineSpacing,
   setLineSpacing,
-  wideMode,
-  setWideMode,
-  readingMode,
-  setReadingMode,
-  onReset,
+  autoScrollEnabled,
+  setAutoScrollEnabled,
+  autoScrollSpeed,
+  setAutoScrollSpeed,
+  onOpenFontList,
+  onOpenReset,
 }) {
   if (!open) return null
 
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
-  const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -407,6 +643,14 @@ function ReaderSettingsDrawer({
 
   const increaseFont = () => {
     setFontSizeIndex((current) => Math.min(FONT_SIZE_LEVELS.length - 1, current + 1))
+  }
+
+  const handleAutoScrollToggle = () => {
+    setAutoScrollEnabled((current) => {
+      const next = !current
+      if (next) onClose()
+      return next
+    })
   }
 
   return (
@@ -426,7 +670,7 @@ function ReaderSettingsDrawer({
             <div>
               <h2 className="text-[18px] font-black text-[#111827]">Aa Reading Settings</h2>
               <p className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
-                Font, color, brightness, and reading comfort
+                Font, color, brightness, and auto scroll
               </p>
             </div>
 
@@ -442,22 +686,6 @@ function ReaderSettingsDrawer({
         </div>
 
         <div className="max-h-[72vh] overflow-y-auto pb-4">
-          <SettingSection title="Brightness">
-            <div className="flex items-center gap-3">
-              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
-              <input
-                type="range"
-                min="60"
-                max="100"
-                step="5"
-                value={brightness}
-                onChange={(event) => setBrightness(Number(event.target.value))}
-                className="w-full accent-[#111827]"
-              />
-              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
-            </div>
-          </SettingSection>
-
           <SettingSection title="Font Size">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               <button
@@ -485,18 +713,16 @@ function ReaderSettingsDrawer({
           </SettingSection>
 
           <SettingSection title="Font Style">
-            <div className="grid grid-cols-2 gap-2">
-              {FONT_OPTIONS.map((font) => (
-                <ChoiceButton
-                  key={font.key}
-                  active={activeFont.key === font.key}
-                  onClick={() => setFontKey(font.key)}
-                  className="min-h-[48px]"
-                >
-                  <span style={{ fontFamily: font.family }}>{font.label}</span>
-                </ChoiceButton>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={onOpenFontList}
+              className="flex h-14 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-left active:scale-[0.995]"
+            >
+              <span className="line-clamp-1 text-[14px] font-black text-[#111827]" style={{ fontFamily: selectedFont.family }}>
+                {selectedFont.label}
+              </span>
+              <i className="fa-solid fa-chevron-right text-[12px] text-[#8d94a1]" />
+            </button>
           </SettingSection>
 
           <SettingSection title="Page Color">
@@ -506,41 +732,36 @@ function ReaderSettingsDrawer({
                   key={key}
                   type="button"
                   onClick={() => setThemeName(key)}
-                  className={`rounded-[16px] border p-2 text-center active:scale-[0.98] ${
+                  className={`relative rounded-[16px] border p-2 text-center active:scale-[0.98] ${
                     themeName === key ? 'border-[#111827] bg-[#f5f3fa]' : 'border-[#e4e7ec] bg-white'
                   }`}
                 >
                   <span className={`mx-auto block h-9 rounded-[12px] border border-black/10 ${item.swatch}`} />
                   <span className="mt-2 block text-[10.5px] font-extrabold text-[#111827]">{item.name}</span>
+                  {themeName === key ? (
+                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#111827] text-white">
+                      <i className="fa-solid fa-check text-[9px]" />
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
           </SettingSection>
 
-          <SettingSection title="Reading Mode">
-            <div className="grid grid-cols-2 gap-2">
-              <ChoiceButton active={readingMode === 'scroll'} onClick={() => setReadingMode('scroll')}>
-                Scrolling
-              </ChoiceButton>
-              <button
-                type="button"
-                onClick={() => setReadingMode('paging')}
-                className={`rounded-[16px] px-3 py-3 text-[12px] font-extrabold transition active:scale-[0.98] ${
-                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
-              >
-                Paging
-                <span className={`ml-1 text-[9px] ${readingMode === 'paging' ? 'text-white/70' : 'text-[#98a2b3]'}`}>
-                  Soon
-                </span>
-              </button>
+          <SettingSection title="Brightness">
+            <div className="flex items-center gap-3">
+              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
+              <input
+                type="range"
+                min="60"
+                max="100"
+                step="5"
+                value={brightness}
+                onChange={(event) => setBrightness(Number(event.target.value))}
+                className="w-full accent-[#111827]"
+              />
+              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
             </div>
-
-            {readingMode === 'paging' ? (
-              <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8d94a1]">
-                Paging UI is saved now. Real page-by-page reading will be added in the next stage.
-              </p>
-            ) : null}
           </SettingSection>
 
           <SettingSection title="Line Spacing">
@@ -553,22 +774,43 @@ function ReaderSettingsDrawer({
             </div>
           </SettingSection>
 
-          <SettingSection title="Reading Width">
-            <div className="grid grid-cols-2 gap-2">
-              <ChoiceButton active={!wideMode} onClick={() => setWideMode(false)}>
-                Comfort
-              </ChoiceButton>
-              <ChoiceButton active={wideMode} onClick={() => setWideMode(true)}>
-                Wide
-              </ChoiceButton>
-            </div>
+          <SettingSection title="Auto Scroll">
+            <button
+              type="button"
+              onClick={handleAutoScrollToggle}
+              className={`h-12 w-full rounded-[18px] text-[13px] font-black active:scale-[0.995] ${
+                autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+              }`}
+            >
+              {autoScrollEnabled ? 'Turn Off Auto Scroll' : 'Turn On Auto Scroll'}
+            </button>
+
+            {autoScrollEnabled ? (
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between text-[12px] font-black text-[#667085]">
+                  <span>🐢</span>
+                  <span>{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
+                  <span>🐇</span>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max={AUTO_SCROLL_SPEEDS.length - 1}
+                  step="1"
+                  value={autoScrollSpeed}
+                  onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
+                  className="w-full accent-[#111827]"
+                />
+              </div>
+            ) : null}
           </SettingSection>
 
           <section className="px-4 pt-2">
             <button
               type="button"
-              onClick={onReset}
-              className="h-12 w-full rounded-full border border-[#e4e7ec] bg-white text-[13px] font-black text-[#111827] active:scale-[0.99]"
+              onClick={onOpenReset}
+              className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
             >
               Reset Settings
             </button>
@@ -582,6 +824,7 @@ function ReaderSettingsDrawer({
 export default function ReaderPage() {
   const navigate = useNavigate()
   const { storyId, episodeId } = useParams()
+  const autoScrollFrameRef = useRef(null)
 
   const [story, setStory] = useState(null)
   const [episode, setEpisode] = useState(null)
@@ -589,15 +832,17 @@ export default function ReaderPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [fontSizeIndex, setFontSizeIndex] = useState(getInitialFontSizeIndex)
-  const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-khmer')
+  const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-sans-khmer')
   const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'paper')
   const [brightness, setBrightness] = useState(() => Number(localStorage.getItem('reader_brightness') || 100))
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
-  const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
-  const [wideMode, setWideMode] = useState(() => localStorage.getItem('reader_wide_mode') === 'true')
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(false)
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState(() => Number(localStorage.getItem('reader_auto_scroll_speed') || 1))
   const [adultWarningOpen, setAdultWarningOpen] = useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [fontSelectOpen, setFontSelectOpen] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
@@ -629,12 +874,8 @@ export default function ReaderPage() {
   }, [lineSpacing])
 
   useEffect(() => {
-    localStorage.setItem('reader_reading_mode', readingMode)
-  }, [readingMode])
-
-  useEffect(() => {
-    localStorage.setItem('reader_wide_mode', String(wideMode))
-  }, [wideMode])
+    localStorage.setItem('reader_auto_scroll_speed', String(autoScrollSpeed))
+  }, [autoScrollSpeed])
 
   useEffect(() => {
     let ignore = false
@@ -642,6 +883,7 @@ export default function ReaderPage() {
     async function loadReader() {
       setLoading(true)
       setMessage('')
+      setAutoScrollEnabled(false)
 
       if (!getReaderToken()) {
         navigate('/login')
@@ -746,6 +988,42 @@ export default function ReaderPage() {
     }
   }, [episodeId, readingProgress, reviewProgressSaved, storyId])
 
+  useEffect(() => {
+    if (autoScrollFrameRef.current) {
+      cancelAnimationFrame(autoScrollFrameRef.current)
+      autoScrollFrameRef.current = null
+    }
+
+    if (!autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
+      return undefined
+    }
+
+    const scrollStep = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+
+      if (scrollHeight <= 0 || window.scrollY >= scrollHeight - 4) {
+        setAutoScrollEnabled(false)
+        return
+      }
+
+      window.scrollBy({
+        top: AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.value || AUTO_SCROLL_SPEEDS[1].value,
+        behavior: 'auto',
+      })
+
+      autoScrollFrameRef.current = requestAnimationFrame(scrollStep)
+    }
+
+    autoScrollFrameRef.current = requestAnimationFrame(scrollStep)
+
+    return () => {
+      if (autoScrollFrameRef.current) {
+        cancelAnimationFrame(autoScrollFrameRef.current)
+        autoScrollFrameRef.current = null
+      }
+    }
+  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
+
   const currentIndex = episodes.findIndex((item) => item.id === episodeId)
   const previousEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null
   const nextEpisode = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null
@@ -766,12 +1044,13 @@ export default function ReaderPage() {
 
   const handleResetSettings = () => {
     setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
-    setFontKey('noto-khmer')
+    setFontKey('noto-sans-khmer')
     setThemeName('paper')
     setBrightness(100)
     setLineSpacing('comfort')
-    setReadingMode('scroll')
-    setWideMode(false)
+    setAutoScrollEnabled(false)
+    setAutoScrollSpeed(1)
+    setResetOpen(false)
   }
 
   return (
@@ -781,6 +1060,17 @@ export default function ReaderPage() {
           className="pointer-events-none fixed inset-0 z-[65] bg-black"
           style={{ opacity: brightnessOpacity }}
         />
+      ) : null}
+
+      {autoScrollEnabled ? (
+        <button
+          type="button"
+          onClick={() => setAutoScrollEnabled(false)}
+          className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#111827] px-5 py-3 text-[12px] font-black text-white shadow-2xl active:scale-95"
+        >
+          <i className="fa-solid fa-pause text-[11px]" />
+          Pause Auto Scroll
+        </button>
       ) : null}
 
       <div className="fixed left-0 right-0 top-0 z-[70] h-1 bg-black/5">
@@ -799,6 +1089,19 @@ export default function ReaderPage() {
         }}
       />
 
+      <ResetSettingsModal
+        open={resetOpen}
+        onCancel={() => setResetOpen(false)}
+        onConfirm={handleResetSettings}
+      />
+
+      <FontSelectDrawer
+        open={fontSelectOpen}
+        onClose={() => setFontSelectOpen(false)}
+        selectedFontKey={fontKey}
+        onSelect={setFontKey}
+      />
+
       <ReaderSettingsDrawer
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -808,15 +1111,17 @@ export default function ReaderPage() {
         setFontSizeIndex={setFontSizeIndex}
         fontKey={fontKey}
         setFontKey={setFontKey}
+        selectedFont={activeFont}
         brightness={brightness}
         setBrightness={setBrightness}
         lineSpacing={lineSpacing}
         setLineSpacing={setLineSpacing}
-        wideMode={wideMode}
-        setWideMode={setWideMode}
-        readingMode={readingMode}
-        setReadingMode={setReadingMode}
-        onReset={handleResetSettings}
+        autoScrollEnabled={autoScrollEnabled}
+        setAutoScrollEnabled={setAutoScrollEnabled}
+        autoScrollSpeed={autoScrollSpeed}
+        setAutoScrollSpeed={setAutoScrollSpeed}
+        onOpenFontList={() => setFontSelectOpen(true)}
+        onOpenReset={() => setResetOpen(true)}
       />
 
       <EpisodeListDrawer
@@ -830,7 +1135,7 @@ export default function ReaderPage() {
       />
 
       <header className={`sticky top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur`}>
-        <div className={`mx-auto flex ${wideMode ? 'max-w-5xl' : 'max-w-3xl'} items-center justify-between`}>
+        <div className="mx-auto flex max-w-3xl items-center justify-between">
           <ReaderIconButton
             icon="fa-solid fa-chevron-left"
             label="Back to story"
@@ -868,7 +1173,7 @@ export default function ReaderPage() {
         </div>
       </header>
 
-      <main className={`mx-auto px-4 pt-4 ${wideMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
+      <main className="mx-auto max-w-3xl px-4 pt-4">
         {loading ? <LoadingCard /> : null}
 
         {message ? (
