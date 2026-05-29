@@ -28,8 +28,8 @@ const fallbackGenreTabs = [
 ]
 
 const slideBadgeColors = {
-  HOT: 'bg-[#ff2f55] text-white',
   NEW: 'bg-[#ff2f55] text-white',
+  HOT: 'bg-[#ff7a00] text-white',
   TOP: 'bg-[#f6b800] text-[#111827]',
 }
 
