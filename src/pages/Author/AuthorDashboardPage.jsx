@@ -318,19 +318,48 @@ export default function AuthorDashboardPage() {
   const [message, setMessage] = useState('')
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
-const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
+  const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
 
-const [authorPage, setAuthorPage] = useState(storedAuthorPage)
+  const [authorPage, setAuthorPage] = useState(storedAuthorPage)
 
-const author = {
-  name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
-  username: authorPage?.page_username || '',
-  avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
-}
+  const author = {
+    name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
+    username: authorPage?.page_username || '',
+    avatarLetter: (authorPage?.page_name || storedUser?.name || storedUser?.username || 'A').charAt(0).toUpperCase(),
+  }
 
-const authorPagePath = author.username
-  ? `/author/page/${encodeURIComponent(author.username)}`
-  : '/author/page'
+  const authorPagePath = author.username
+    ? `/author/page/${encodeURIComponent(author.username)}`
+    : '/author/page'
+
+  async function fetchMyAuthorPage() {
+    const token = getAuthToken()
+
+    if (!token) {
+      return null
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false || !data.author_page) {
+        return null
+      }
+
+      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+      setAuthorPage(data.author_page)
+
+      return data.author_page
+    } catch {
+      return null
+    }
+  }
 
   async function fetchMyStories() {
     const token = getAuthToken()
@@ -370,6 +399,7 @@ const authorPagePath = author.username
   }
 
   useEffect(() => {
+    fetchMyAuthorPage()
     fetchMyStories()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -394,16 +424,23 @@ const authorPagePath = author.username
     return [...stories].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))[0] || null
   }, [stories])
 
-  const handleMenuSelect = (path) => {
-  setMenuOpen(false)
+  const handleMenuSelect = async (path) => {
+    setMenuOpen(false)
 
-  if (path === '/author/page') {
-    navigate(authorPagePath)
-    return
+    if (path === '/author/page') {
+      const latestAuthorPage = authorPage || await fetchMyAuthorPage()
+
+      if (!latestAuthorPage?.page_username) {
+        setMessage('Author page data is missing. Please refresh and try again.')
+        return
+      }
+
+      navigate(`/author/page/${encodeURIComponent(latestAuthorPage.page_username)}`)
+      return
+    }
+
+    navigate(path)
   }
-
-  navigate(path)
-}
 
   const handleCreateStory = (type) => {
     navigate(`/author/create-story?type=${encodeURIComponent(type)}`)
@@ -472,7 +509,16 @@ const authorPagePath = author.username
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => navigate(authorPagePath)}
+                  onClick={async () => {
+                    const latestAuthorPage = authorPage || await fetchMyAuthorPage()
+
+                    if (!latestAuthorPage?.page_username) {
+                      setMessage('Author page data is missing. Please refresh and try again.')
+                      return
+                    }
+
+                    navigate(`/author/page/${encodeURIComponent(latestAuthorPage.page_username)}`)
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
                 >
                   View Page
