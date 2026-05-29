@@ -279,6 +279,7 @@ function AppShell() {
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
         <Route path="/author/page/:pageUsername" element={<AuthorPublicPage />} />
+        <Route path="/author/page" element={<AuthorPublicPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
