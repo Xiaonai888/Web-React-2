@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -14,6 +15,99 @@ function getAuthToken() {
     sessionStorage.getItem('shadow_reader_token') ||
     ''
   )
+}
+
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = dataUrl.split(',')
+  const mimeMatch = header.match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const binary = atob(base64)
+  const array = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    array[index] = binary.charCodeAt(index)
+  }
+
+  return new File([array], fileName, { type: mime })
+}
+
+function createImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.setAttribute('crossOrigin', 'anonymous')
+    image.src = url
+  })
+}
+
+async function getCroppedImage(imageSrc, pixelCrop) {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  if (!ctx) return imageSrc
+
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
+
+async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
+  const file = dataUrlToFile(imageDataUrl, fileName)
+  const formData = new FormData()
+
+  formData.append('image', file)
+  formData.append('folder', folder)
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload image')
+  }
+
+  return data.image_url || data.imageUrl
+}
+
+async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '' }) {
+  const response = await fetch(`${API_BASE_URL}/api/authors/profile-images`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      avatar_url: avatarUrl,
+      cover_url: coverUrl,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save author profile image')
+  }
+
+  return data.author_page || null
 }
 
 function formatCompactNumber(value) {
@@ -128,61 +222,163 @@ function AuthorNotFound({ onBack }) {
   )
 }
 
+function CropImageModal({
+  open,
+  image,
+  mode,
+  crop,
+  zoom,
+  croppedAreaPixels,
+  saving,
+  message,
+  onCropChange,
+  onZoomChange,
+  onCropComplete,
+  onClose,
+  onSave,
+}) {
+  if (!open) return null
+
+  const isAvatar = mode === 'avatar'
+
+  return (
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/55 px-4 pb-[150px] pt-4">
+      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-start justify-center">
+        <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-extrabold text-[#111827]">
+                {isAvatar ? 'Crop Profile Photo' : 'Crop Cover Photo'}
+              </h2>
+              <p className="mt-1 text-[11.5px] leading-4 text-[#8d94a1]">
+                Drag and zoom to fit your author page image.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+              aria-label="Close crop editor"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+
+          {message ? (
+            <div className="mb-3 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+              {message}
+            </div>
+          ) : null}
+
+          <div className={`${isAvatar ? 'h-[min(78vw,360px)] max-h-[360px] min-h-[260px]' : 'h-[min(58vw,300px)] max-h-[300px] min-h-[220px]'} relative mx-auto w-full overflow-hidden rounded-[22px] bg-[#111827]`}>
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={isAvatar ? 1 : 16 / 7}
+              cropShape={isAvatar ? 'round' : 'rect'}
+              showGrid={false}
+              restrictPosition={false}
+              objectFit="contain"
+              onCropChange={onCropChange}
+              onZoomChange={onZoomChange}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between text-[12px] font-bold text-[#555b66]">
+              <span>Zoom</span>
+              <span>{zoom.toFixed(1)}x</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={zoom}
+              onChange={(event) => onZoomChange(Number(event.target.value))}
+              className="w-full accent-[#111827]"
+            />
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(croppedAreaPixels)}
+              disabled={saving}
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Save Crop'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState('Posts')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [pageError, setPageError] = useState('')
+  const [message, setMessage] = useState('')
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [cropMode, setCropMode] = useState('avatar')
+  const [rawImage, setRawImage] = useState('')
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
+  const [savingImage, setSavingImage] = useState(false)
+
+  const handleCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels)
+  }, [])
+
+  async function loadAuthor() {
+    try {
+      setLoading(true)
+      setPageError('')
+
+      if (!pageUsername) {
+        const myPage = await fetchMyAuthorPage()
+
+        if (!myPage) {
+          throw new Error('Author page not found')
+        }
+
+        setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
+        localStorage.setItem('shadow_author_page', JSON.stringify(myPage))
+        return
+      }
+
+      const [publicPage, myPage] = await Promise.all([
+        fetchPublicAuthorPage(pageUsername),
+        fetchMyAuthorPage().catch(() => null),
+      ])
+
+      setAuthor(normalizeAuthor(publicPage, pageUsername, myPage))
+    } catch (loadError) {
+      setAuthor(null)
+      setPageError(loadError.message || 'Author page not found')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let ignore = false
-
-    async function loadAuthor() {
-      try {
-        setLoading(true)
-        setError('')
-
-        if (!pageUsername) {
-          const myPage = await fetchMyAuthorPage()
-
-          if (!myPage) {
-            throw new Error('Author page not found')
-          }
-
-          if (!ignore) {
-            setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
-          }
-
-          return
-        }
-
-        const [publicPage, myPage] = await Promise.all([
-          fetchPublicAuthorPage(pageUsername),
-          fetchMyAuthorPage().catch(() => null),
-        ])
-
-        if (!ignore) {
-          setAuthor(normalizeAuthor(publicPage, pageUsername, myPage))
-        }
-      } catch (loadError) {
-        if (!ignore) {
-          setAuthor(null)
-          setError(loadError.message || 'Author page not found')
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
-      }
-    }
-
     loadAuthor()
-
-    return () => {
-      ignore = true
-    }
   }, [pageUsername])
 
   const actionButtons = useMemo(() => {
@@ -199,7 +395,86 @@ export default function AuthorPublicPage() {
     ]
   }, [author?.is_owner, navigate])
 
-  if (!loading && error) {
+  function openCropEditor(mode) {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+
+    input.onchange = () => {
+      const file = input.files?.[0]
+
+      if (!file) return
+
+      if (!file.type.startsWith('image/')) {
+        setMessage('Please select an image file')
+        return
+      }
+
+      const reader = new FileReader()
+
+      reader.onload = () => {
+        setCropMode(mode)
+        setRawImage(String(reader.result || ''))
+        setCrop({ x: 0, y: 0 })
+        setZoom(1)
+        setCroppedAreaPixels(null)
+        setMessage('')
+        setCropModalOpen(true)
+      }
+
+      reader.readAsDataURL(file)
+    }
+
+    input.click()
+  }
+
+  async function handleSaveCrop(pixels) {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!rawImage || !pixels) {
+      setMessage('Please adjust the photo first')
+      return
+    }
+
+    try {
+      setSavingImage(true)
+      setMessage('')
+
+      const croppedImage = await getCroppedImage(rawImage, pixels)
+      const imageUrl = await uploadImageToStorage({
+        token,
+        imageDataUrl: croppedImage,
+        folder: cropMode === 'avatar' ? 'author_profile' : 'author_cover',
+        fileName: `author-${cropMode}-${Date.now()}.jpg`,
+      })
+
+      const updatedAuthorPage = await saveAuthorProfileImages({
+        token,
+        avatarUrl: cropMode === 'avatar' ? imageUrl : '',
+        coverUrl: cropMode === 'cover' ? imageUrl : '',
+      })
+
+      if (updatedAuthorPage) {
+        localStorage.setItem('shadow_author_page', JSON.stringify(updatedAuthorPage))
+        setAuthor((current) => normalizeAuthor(updatedAuthorPage, current?.page_username || pageUsername, updatedAuthorPage, true))
+      }
+
+      setCropModalOpen(false)
+      setRawImage('')
+      setCroppedAreaPixels(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to save image')
+    } finally {
+      setSavingImage(false)
+    }
+  }
+
+  if (!loading && pageError) {
     return <AuthorNotFound onBack={() => navigate(-1)} />
   }
 
@@ -218,6 +493,22 @@ export default function AuthorPublicPage() {
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
+      <CropImageModal
+        open={cropModalOpen}
+        image={rawImage}
+        mode={cropMode}
+        crop={crop}
+        zoom={zoom}
+        croppedAreaPixels={croppedAreaPixels}
+        saving={savingImage}
+        message={message}
+        onCropChange={setCrop}
+        onZoomChange={setZoom}
+        onCropComplete={handleCropComplete}
+        onClose={() => setCropModalOpen(false)}
+        onSave={handleSaveCrop}
+      />
+
       <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
@@ -244,6 +535,16 @@ export default function AuthorPublicPage() {
       </div>
 
       <main className="mx-auto max-w-[980px]">
+        {message && !cropModalOpen ? (
+          <button
+            type="button"
+            onClick={() => setMessage('')}
+            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+          >
+            {message}
+          </button>
+        ) : null}
+
         <section className="bg-white shadow-sm">
           <div className="relative h-[210px] bg-[#111827] sm:h-[280px]">
             {displayAuthor.cover_url ? (
@@ -259,6 +560,7 @@ export default function AuthorPublicPage() {
             {displayAuthor.is_owner ? (
               <button
                 type="button"
+                onClick={() => openCropEditor('cover')}
                 className="absolute bottom-4 right-4 rounded-full bg-white/95 px-4 py-2 text-[12px] font-black text-[#111827] shadow-sm"
               >
                 <i className="fa-solid fa-camera mr-2" />
@@ -285,6 +587,7 @@ export default function AuthorPublicPage() {
                 {displayAuthor.is_owner ? (
                   <button
                     type="button"
+                    onClick={() => openCropEditor('avatar')}
                     className="absolute left-[92px] top-[44px] flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm sm:left-[112px] sm:top-[58px]"
                   >
                     <i className="fa-solid fa-camera text-[13px]" />
