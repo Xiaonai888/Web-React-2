@@ -428,7 +428,7 @@ export default function AuthorDashboardPage() {
     setMenuOpen(false)
 
     if (path === '/author/page') {
-      const latestAuthorPage = authorPage || await fetchMyAuthorPage()
+      const latestAuthorPage = await fetchMyAuthorPage()
 
       if (!latestAuthorPage?.page_username) {
         setMessage('Author page data is missing. Please refresh and try again.')
@@ -510,7 +510,7 @@ export default function AuthorDashboardPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    const latestAuthorPage = authorPage || await fetchMyAuthorPage()
+                    const latestAuthorPage = await fetchMyAuthorPage()
 
                     if (!latestAuthorPage?.page_username) {
                       setMessage('Author page data is missing. Please refresh and try again.')
