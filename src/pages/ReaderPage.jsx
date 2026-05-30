@@ -1272,12 +1272,11 @@ export default function ReaderPage() {
       />
 
 
-      <CommentsModal
-        open={commentsOpen}
-        story={story}
-        onClose={() => setCommentsOpen(false)}
-        onCommentChanged={handleCommentChanged}
-      />
+      <EchoShareSheet
+  open={echoShareOpen}
+  story={story}
+  onClose={() => setEchoShareOpen(false)}
+/>
 
       <EchoShareSheet
   open={echoShareOpen}
