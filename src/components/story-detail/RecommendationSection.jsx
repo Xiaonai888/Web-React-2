@@ -49,16 +49,16 @@ function BookCard({ story, onClick }) {
       </div>
 
       <h3
-  className="mt-2 h-8 max-w-full overflow-hidden text-[13px] font-black leading-4 text-[#111827]"
-  style={{
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflowWrap: 'anywhere',
-  }}
->
-  {story.title || 'Untitled Story'}
-</h3>
+        className="mt-2 h-8 max-w-full overflow-hidden text-[13px] font-black leading-4 text-[#111827]"
+        style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflowWrap: 'anywhere',
+        }}
+      >
+        {story.title || 'Untitled Story'}
+      </h3>
 
       <p className="mt-0.5 line-clamp-1 text-[12px] font-semibold text-[#98a2b3]">
         {story.main_genre || 'Story'}
@@ -79,6 +79,10 @@ function StoryGrid({ stories, emptyTitle, emptyText, emptyIcon, onOpenStory }) {
       ))}
     </div>
   )
+}
+
+function getViewCount(story) {
+  return Number(story?.view_count || story?.views || story?.read_count || story?.total_views || 0)
 }
 
 export default function RecommendationSection({ story }) {
@@ -105,7 +109,7 @@ export default function RecommendationSection({ story }) {
 
       try {
         const authorUrl = story.author_id
-          ? `${API_BASE_URL}/api/public/stories?authorId=${encodeURIComponent(story.author_id)}&exclude=${encodeURIComponent(story.id)}&sort=popular&limit=3`
+          ? `${API_BASE_URL}/api/public/stories?authorId=${encodeURIComponent(story.author_id)}&exclude=${encodeURIComponent(story.id)}&sort=popular&limit=12`
           : ''
 
         const similarUrl = story.main_genre
@@ -124,13 +128,19 @@ export default function RecommendationSection({ story }) {
         const similarData = similarResponse ? await similarResponse.json().catch(() => ({})) : {}
         const topData = await topResponse.json().catch(() => ({}))
 
-        const nextAuthorStories = Array.isArray(authorData.stories) ? authorData.stories.slice(0, 3) : []
+        const nextAuthorStories = Array.isArray(authorData.stories)
+          ? uniqueStories(authorData.stories)
+              .filter((item) => item.id !== story.id)
+              .sort((a, b) => getViewCount(b) - getViewCount(a))
+              .slice(0, 3)
+          : []
+
         const nextTopStories = Array.isArray(topData.stories) ? topData.stories : []
         const sameGenreStories = Array.isArray(similarData.stories) ? similarData.stories : []
         const authorStoryIds = new Set(nextAuthorStories.map((item) => item.id))
         const filledSimilarStories = uniqueStories([...sameGenreStories, ...nextTopStories])
-  .filter((item) => !authorStoryIds.has(item.id))
-  .slice(0, 3)
+          .filter((item) => !authorStoryIds.has(item.id))
+          .slice(0, 3)
 
         if (ignore) return
 
@@ -156,39 +166,41 @@ export default function RecommendationSection({ story }) {
   }, [story?.author_id, story?.id, story?.main_genre])
 
   const authorSectionStories = useMemo(() => {
-  return authorStories
-}, [authorStories])
+    return authorStories
+  }, [authorStories])
 
   const handleOpenStory = (storyId) => {
     if (!storyId) return
     navigate(`/story/${storyId}`, {
-  state: { returnTo: `/story/${story.id}` },
-})
+      state: { returnTo: `/story/${story.id}` },
+    })
   }
 
   return (
     <section className="mt-2 space-y-0 sm:mt-4 sm:space-y-4">
-      <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
-        <div className="mb-3">
-          <h2 className="text-[18px] font-black text-[#111827]">More by {authorName}</h2>
-        </div>
+      {loading || authorSectionStories.length ? (
+        <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
+          <div className="mb-3">
+            <h2 className="text-[18px] font-black text-[#111827]">More by {authorName}</h2>
+          </div>
 
-        {loading ? (
-          <EmptyCard
-            icon="fa-solid fa-spinner fa-spin"
-            title="Loading stories..."
-            text="Please wait while recommendations are loading."
-          />
-        ) : (
-          <StoryGrid
-            stories={authorSectionStories}
-            emptyIcon="fa-solid fa-pen-nib"
-            emptyTitle="No other stories yet"
-            emptyText="This author does not have more published stories yet."
-            onOpenStory={handleOpenStory}
-          />
-        )}
-      </div>
+          {loading ? (
+            <EmptyCard
+              icon="fa-solid fa-spinner fa-spin"
+              title="Loading stories..."
+              text="Please wait while recommendations are loading."
+            />
+          ) : (
+            <StoryGrid
+              stories={authorSectionStories}
+              emptyIcon="fa-solid fa-pen-nib"
+              emptyTitle="No other stories yet"
+              emptyText="This author does not have more published stories yet."
+              onOpenStory={handleOpenStory}
+            />
+          )}
+        </div>
+      ) : null}
 
       <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
         <div className="mb-3">
