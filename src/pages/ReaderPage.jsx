@@ -1284,7 +1284,7 @@ export default function ReaderPage() {
         onOpenComments={() => setCommentsOpen(true)}
       />
 
-      <header className={`sticky top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur`}>
+      <header className={`${bottomActionsVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur transition-transform duration-300 ease-out`}>
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <ReaderIconButton
             icon="fa-solid fa-chevron-left"
@@ -1323,7 +1323,7 @@ export default function ReaderPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-4">
+      <main className="mx-auto max-w-3xl px-4 pt-[76px]">
         {loading ? <LoadingCard /> : null}
 
         {message ? (
