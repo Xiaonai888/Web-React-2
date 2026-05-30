@@ -1,5 +1,61 @@
 import { useMemo, useState } from 'react'
 
+const DESTINATIONS = [
+  {
+    key: 'feed',
+    title: 'Echo to Feed',
+    subtitle: 'Show this echo in your Shadow feed and profile.',
+    icon: 'fa-solid fa-newspaper',
+  },
+  {
+    key: 'shadow',
+    title: 'Add to My Shadow',
+    subtitle: 'Keep this echo on your own Shadow space.',
+    icon: 'fa-regular fa-circle-user',
+  },
+  {
+    key: 'reader',
+    title: 'Send to Reader',
+    subtitle: 'Share this story with selected readers.',
+    icon: 'fa-solid fa-user-group',
+  },
+  {
+    key: 'circle',
+    title: 'Echo to Circle',
+    subtitle: 'Share this echo with your reading circle.',
+    icon: 'fa-solid fa-users',
+  },
+]
+
+const AUDIENCES = [
+  {
+    key: 'public',
+    title: 'Public',
+    subtitle: 'Anyone on Shadow can view this echo.',
+    icon: 'fa-solid fa-earth-americas',
+  },
+  {
+    key: 'followers',
+    title: 'Followers',
+    subtitle: 'Only people who follow you can view this echo.',
+    icon: 'fa-solid fa-user-check',
+  },
+  {
+    key: 'close-readers',
+    title: 'Close readers',
+    subtitle: 'Only your selected close readers can view it.',
+    icon: 'fa-solid fa-star',
+  },
+  {
+    key: 'only-me',
+    title: 'Only me',
+    subtitle: 'Keep this echo private.',
+    icon: 'fa-solid fa-lock',
+  },
+]
+
+const QUICK_READERS = ['Pha Mey', 'Moon', 'Reader', 'Friend', 'Author']
+
 function getStoredUser() {
   try {
     return JSON.parse(
@@ -40,6 +96,11 @@ function getStoryLink(story) {
   return `${window.location.origin}/story/${story.id}`
 }
 
+function getId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 function ShareCircle({ icon, label, bg = 'bg-white', color = 'text-[#111827]', onClick }) {
   return (
     <button type="button" onClick={onClick} className="w-[82px] shrink-0 text-center active:scale-95">
@@ -51,20 +112,78 @@ function ShareCircle({ icon, label, bg = 'bg-white', color = 'text-[#111827]', o
   )
 }
 
-function DisabledReaderCircle({ name }) {
+function ReaderCircle({ name, active, onClick }) {
   return (
-    <button type="button" disabled className="w-[76px] shrink-0 cursor-not-allowed text-center opacity-55">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[17px] font-black text-white">
+    <button type="button" onClick={onClick} className="w-[76px] shrink-0 text-center active:scale-95">
+      <div
+        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[17px] font-black ring-2 ${
+          active
+            ? 'bg-[#111827] text-white ring-[#f6a800]'
+            : 'bg-[#e5e7eb] text-white ring-transparent'
+        }`}
+      >
         {name.slice(0, 1).toUpperCase()}
       </div>
-      <div className="mt-2 line-clamp-2 text-[11.5px] font-bold leading-4 text-[#111827]">{name}</div>
+      <div className={`mt-2 line-clamp-2 text-[11.5px] font-bold leading-4 ${active ? 'text-[#111827]' : 'text-[#667085]'}`}>
+        {name}
+      </div>
     </button>
+  )
+}
+
+function ChoiceSheet({ title, subtitle, options, value, onChoose, onBack }) {
+  return (
+    <div className="fixed inset-0 z-[190] bg-white text-[#111827]">
+      <div className="flex items-center gap-3 border-b border-[#eceaf2] px-4 py-4">
+        <button type="button" onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f3fa]">
+          <i className="fa-solid fa-chevron-left text-[18px]" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[22px] font-black leading-7">{title}</h2>
+          {subtitle ? <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">{subtitle}</p> : null}
+        </div>
+      </div>
+
+      <div className="px-4 py-3">
+        {options.map((item) => {
+          const active = item.key === value
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChoose(item.key)}
+              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[#f5f3fa]"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                <i className={`${item.icon} text-[18px]`} />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="text-[17px] font-black text-[#111827]">{item.title}</div>
+                <div className="mt-0.5 text-[12.5px] font-semibold leading-5 text-[#8d94a1]">{item.subtitle}</div>
+              </div>
+
+              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                active ? 'border-[#111827] bg-[#111827]' : 'border-[#98a2b3]'
+              }`}>
+                {active ? <i className="fa-solid fa-check text-[10px] text-white" /> : null}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
 export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
   const [postText, setPostText] = useState('')
   const [message, setMessage] = useState('')
+  const [destination, setDestination] = useState('feed')
+  const [audience, setAudience] = useState('public')
+  const [activePanel, setActivePanel] = useState('')
+  const [selectedReaders, setSelectedReaders] = useState([])
   const user = useMemo(() => getStoredUser(), [])
   const storyLink = useMemo(() => getStoryLink(story), [story])
   const authorName = getAuthorName(story)
@@ -73,6 +192,8 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
 
   const displayName = user?.name || user?.username || 'Reader'
   const avatarLetter = displayName.slice(0, 1).toUpperCase()
+  const destinationItem = DESTINATIONS.find((item) => item.key === destination) || DESTINATIONS[0]
+  const audienceItem = AUDIENCES.find((item) => item.key === audience) || AUDIENCES[0]
 
   const handleCopyLink = async () => {
     try {
@@ -99,6 +220,16 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
     )
   }
 
+  const handleReaderToggle = (name) => {
+    setSelectedReaders((current) =>
+      current.includes(name) ? current.filter((item) => item !== name) : [...current, name]
+    )
+  }
+
+  const handleTagClick = () => {
+    setMessage('Tag reader is selected for the next update.')
+  }
+
   const handleEchoNow = () => {
     if (!story?.id) {
       setMessage('Story is not ready yet.')
@@ -106,7 +237,7 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
     }
 
     const post = {
-      id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      id: getId(),
       type: 'echo',
       story_id: story.id,
       story_title: story.title || 'Untitled Story',
@@ -114,8 +245,11 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
       story_author_name: authorName,
       story_genre: story.main_genre || 'Story',
       echo_text: postText.trim(),
-      destination: 'Feed',
-      audience: 'Public',
+      destination,
+      destination_label: destinationItem.title,
+      audience,
+      audience_label: audienceItem.title,
+      selected_readers: selectedReaders,
       user_name: displayName,
       created_at: new Date().toISOString(),
     }
@@ -123,6 +257,7 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
     saveEchoPost(post)
     setPostText('')
     setMessage('')
+    setSelectedReaders([])
     onEchoed?.(post)
     onClose()
   }
@@ -150,28 +285,24 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  disabled
-                  className="flex h-8 cursor-not-allowed items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] opacity-75"
+                  onClick={() => setActivePanel('destination')}
+                  className="flex h-8 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] active:scale-95"
                 >
-                  <span>Echo to Feed</span>
+                  <span>{destinationItem.title}</span>
                   <i className="fa-solid fa-caret-down text-[11px]" />
                 </button>
 
                 <button
                   type="button"
-                  disabled
-                  className="flex h-8 cursor-not-allowed items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] opacity-75"
+                  onClick={() => setActivePanel('audience')}
+                  className="flex h-8 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] active:scale-95"
                 >
-                  <i className="fa-solid fa-earth-americas text-[12px]" />
-                  <span>Public</span>
+                  <i className={`${audienceItem.icon} text-[12px]`} />
+                  <span>{audienceItem.title}</span>
                   <i className="fa-solid fa-caret-down text-[11px]" />
                 </button>
               </div>
             </div>
-
-            <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95">
-              <i className="fa-solid fa-xmark text-[14px]" />
-            </button>
           </div>
 
           <textarea
@@ -184,7 +315,7 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
           />
 
           <div className="mt-2 flex items-center justify-between">
-            <button type="button" disabled className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full text-[#8d94a1] opacity-60">
+            <button type="button" onClick={handleTagClick} className="flex h-10 w-10 items-center justify-center rounded-full text-[#667085] active:scale-95 active:bg-[#f2f3f5]">
               <i className="fa-solid fa-user-tag text-[18px]" />
             </button>
 
@@ -207,11 +338,14 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
         <div className="mt-5">
           <div className="mb-3 text-[12px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">Readers</div>
           <div className="flex gap-4 overflow-x-auto pb-1">
-            <DisabledReaderCircle name="Pha Mey" />
-            <DisabledReaderCircle name="Moon" />
-            <DisabledReaderCircle name="Reader" />
-            <DisabledReaderCircle name="Friend" />
-            <DisabledReaderCircle name="Author" />
+            {QUICK_READERS.map((name) => (
+              <ReaderCircle
+                key={name}
+                name={name}
+                active={selectedReaders.includes(name)}
+                onClick={() => handleReaderToggle(name)}
+              />
+            ))}
           </div>
         </div>
 
@@ -224,6 +358,34 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
           </div>
         </div>
       </section>
+
+      {activePanel === 'destination' ? (
+        <ChoiceSheet
+          title="Echo destination"
+          subtitle="Choose where this echo should appear on Shadow."
+          options={DESTINATIONS}
+          value={destination}
+          onBack={() => setActivePanel('')}
+          onChoose={(value) => {
+            setDestination(value)
+            setActivePanel('')
+          }}
+        />
+      ) : null}
+
+      {activePanel === 'audience' ? (
+        <ChoiceSheet
+          title="Who can view this echo?"
+          subtitle="Choose who can see your echo on Shadow."
+          options={AUDIENCES}
+          value={audience}
+          onBack={() => setActivePanel('')}
+          onChoose={(value) => {
+            setAudience(value)
+            setActivePanel('')
+          }}
+        />
+      ) : null}
     </div>
   )
 }
