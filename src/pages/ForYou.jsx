@@ -69,6 +69,18 @@ function ComingSoonPanel({ title }) {
   )
 }
 
+function DeferredSectionsPlaceholder() {
+  return (
+    <div className="px-4 py-8">
+      <div className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-gray-100">
+        <div className="mx-auto mb-3 h-10 w-10 animate-pulse rounded-full bg-gray-100" />
+        <div className="mx-auto h-4 w-40 animate-pulse rounded-full bg-gray-100" />
+        <div className="mx-auto mt-3 h-3 w-64 max-w-full animate-pulse rounded-full bg-gray-100" />
+      </div>
+    </div>
+  )
+}
+
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -76,6 +88,7 @@ export default function ForYou() {
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
+  const [deferredSectionsReady, setDeferredSectionsReady] = useState(false)
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
@@ -108,6 +121,28 @@ export default function ForYou() {
       document.body.classList.remove('for-you-bars-hidden')
     }
   }, [])
+
+  useEffect(() => {
+    if (deferredSectionsReady) return undefined
+
+    const timer = window.setTimeout(() => {
+      setDeferredSectionsReady(true)
+    }, 1800)
+
+    function handleFirstScroll() {
+      window.clearTimeout(timer)
+      setDeferredSectionsReady(true)
+    }
+
+    window.addEventListener('scroll', handleFirstScroll, { passive: true, once: true })
+    window.addEventListener('touchstart', handleFirstScroll, { passive: true, once: true })
+
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('scroll', handleFirstScroll)
+      window.removeEventListener('touchstart', handleFirstScroll)
+    }
+  }, [deferredSectionsReady])
 
   useEffect(() => {
     async function fetchGenreTabs() {
@@ -170,7 +205,7 @@ export default function ForYou() {
   }, [])
 
   useEffect(() => {
-    if (!window.Swiper || slides.length === 0) return
+    if (!window.Swiper || slides.length === 0) return undefined
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -445,45 +480,51 @@ export default function ForYou() {
               <ShadowSpotlight />
             </div>
 
-            <div className="my-6">
-              <ShadowExclusiveSection />
-            </div>
+            {deferredSectionsReady ? (
+              <>
+                <div className="my-6">
+                  <ShadowExclusiveSection />
+                </div>
 
-            <div className="my-6">
-              <TrendingNowSection />
-            </div>
+                <div className="my-6">
+                  <TrendingNowSection />
+                </div>
 
-            <div className="my-6">
-              <UpdateTodaySection />
-            </div>
+                <div className="my-6">
+                  <UpdateTodaySection />
+                </div>
 
-            <div className="my-6">
-              <EditorWeeklyPicksSection />
-            </div>
+                <div className="my-6">
+                  <EditorWeeklyPicksSection />
+                </div>
 
-            <div className="my-6">
-              <TopNovelSection />
-            </div>
+                <div className="my-6">
+                  <TopNovelSection />
+                </div>
 
-            <div className="my-6">
-              <YouMightLikeSection />
-            </div>
+                <div className="my-6">
+                  <YouMightLikeSection />
+                </div>
 
-            <div className="my-6">
-              <EventPerksHubSection />
-            </div>
+                <div className="my-6">
+                  <EventPerksHubSection />
+                </div>
 
-            <div className="my-6">
-              <NewArrivalsSection />
-            </div>
+                <div className="my-6">
+                  <NewArrivalsSection />
+                </div>
 
-            <div className="my-6">
-              <CompletedSection />
-            </div>
+                <div className="my-6">
+                  <CompletedSection />
+                </div>
 
-            <div className="my-6">
-              <FanPicksSection />
-            </div>
+                <div className="my-6">
+                  <FanPicksSection />
+                </div>
+              </>
+            ) : (
+              <DeferredSectionsPlaceholder />
+            )}
           </div>
         )}
       </div>
