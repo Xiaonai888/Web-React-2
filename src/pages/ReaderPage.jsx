@@ -464,7 +464,7 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
 
 function SettingSection({ title, children }) {
   return (
-    <section className="border-t border-[#f0eef6] px-4 py-4 first:border-t-0">
+    <section className="border-t border-[#f0eef6] px-4 py-3 first:border-t-0">
       <h3 className="mb-3 text-[14px] font-black text-[#111827]">{title}</h3>
       {children}
     </section>
@@ -655,9 +655,9 @@ function ReaderSettingsDrawer({
         className="absolute inset-0 bg-black/35"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
+     <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
 
-        <div className="max-h-[72vh] overflow-y-auto px-4 pt-4 pb-4">
+        <div className="px-4 pt-3 pb-8">
           <SettingSection title="Font & Spacing">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-[20px] bg-[#fafafe] p-2.5">
