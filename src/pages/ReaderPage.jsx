@@ -806,16 +806,15 @@ const handleDragEnd = () => {
             </button>
           </SettingSection>
 
-          <section className="px-2 py-3">
-            <button
-              type="button"
-              onClick={() => setMoreSettingsOpen((current) => !current)}
-              className="flex h-12 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-[13px] font-black text-[#111827] active:scale-[0.995]"
-            >
-              <span>More Setting</span>
-              <i className={`fa-solid ${moreSettingsOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px] text-[#8d94a1]`} />
-            </button>
-          </section>
+         <section className="px-2 py-3 text-center">
+  <button
+    type="button"
+    onClick={() => setMoreSettingsOpen(true)}
+    className="text-[13px] font-black text-[#8d94a1] active:scale-[0.98]"
+  >
+    More Setting
+  </button>
+</section>
 
           {moreSettingsOpen ? (
             <>
