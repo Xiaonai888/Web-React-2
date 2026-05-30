@@ -718,13 +718,18 @@ export default function EpisodeEditorPage() {
   }
 
   const handleBack = () => {
-    if (hasUnsavedChanges) {
-      setShowExitModal(true)
-      return
-    }
-
-    navigate(`/author/story/${storyId}/manage`, { replace: true })
+  if (hasUnsavedChanges) {
+    setShowExitModal(true)
+    return
   }
+
+  if (searchParams.get('fromPublishSuccess') === '1') {
+    navigate('/author/dashboard', { replace: true })
+    return
+  }
+
+  navigate(`/author/story/${storyId}/manage`, { replace: true })
+}
 
   const handleDiscard = () => {
     setShowExitModal(false)
