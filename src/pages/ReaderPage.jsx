@@ -803,38 +803,43 @@ function ReaderSettingsDrawer({
             </div>
 
             {readingMode === 'scroll' ? (
-              <div className="mt-5">
-                <h4 className="mb-3 text-[13px] font-black text-[#111827]">Auto Scroll</h4>
-
-                <button
-                  type="button"
-                  onClick={handleAutoScrollToggle}
-                  className={`h-12 w-full rounded-[18px] text-[13px] font-black active:scale-[0.995] ${
-                    autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
-                  }`}
-                >
-                  {autoScrollEnabled ? 'Turn Off Auto Scroll' : 'Turn On Auto Scroll'}
-                </button>
-
-                {autoScrollEnabled ? (
-                  <div className="mt-4">
-                    <div className="mb-2 flex items-center justify-between text-[24px] font-black text-[#111827]">
-                      <span>🐢</span>
-                      <span className="text-[12px] text-[#667085]">{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
-                      <span>🐇</span>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max={AUTO_SCROLL_SPEEDS.length - 1}
-                      step="1"
-                      value={autoScrollSpeed}
-                      onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
-                      className="w-full accent-[#111827]"
-                    />
+              <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
+                    <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
+                      Available only in Scrolling mode
+                    </p>
                   </div>
-                ) : null}
+
+                  <button
+                    type="button"
+                    onClick={handleAutoScrollToggle}
+                    className={`h-9 rounded-full px-4 text-[11px] font-black active:scale-[0.995] ${
+                      autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+                    }`}
+                  >
+                    {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                  </button>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between text-[24px] font-black text-[#111827]">
+                    <span>🐢</span>
+                    <span className="text-[12px] text-[#667085]">{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
+                    <span>🐇</span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max={AUTO_SCROLL_SPEEDS.length - 1}
+                    step="1"
+                    value={autoScrollSpeed}
+                    onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
+                    className="w-full accent-[#111827]"
+                  />
+                </div>
               </div>
             ) : null}
           </SettingSection>
