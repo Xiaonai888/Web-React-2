@@ -341,12 +341,12 @@ export default function PublishEpisodePage() {
       <Toast message={toast} onClose={() => setToast('')} />
 
       <SuccessModal
-        open={successOpen}
-        isFirstEpisode={isFirstEpisode}
-        releaseOption={releaseOption}
-        onStoryManager={() => navigate(`/author/story/${storyId}/manage`)}
-        onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create?first=0`)}
-      />
+  open={successOpen}
+  isFirstEpisode={isFirstEpisode}
+  releaseOption={releaseOption}
+  onStoryManager={() => navigate(`/author/story/${storyId}/manage`, { replace: true })}
+  onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create?first=0`, { replace: true })}
+/>
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
