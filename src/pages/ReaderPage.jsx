@@ -17,27 +17,6 @@ function readerAuthHeaders() {
 
 const REVIEW_READ_PROGRESS_PERCENT = 85
 
-const dragStartYRef = useRef(0)
-const dragCurrentYRef = useRef(0)
-
-const handleDragStart = (event) => {
-  dragStartYRef.current = event.touches?.[0]?.clientY || event.clientY || 0
-  dragCurrentYRef.current = dragStartYRef.current
-}
-
-const handleDragMove = (event) => {
-  dragCurrentYRef.current = event.touches?.[0]?.clientY || event.clientY || dragCurrentYRef.current
-}
-
-const handleDragEnd = () => {
-  if (dragCurrentYRef.current - dragStartYRef.current > 70) {
-    onClose()
-  }
-
-  dragStartYRef.current = 0
-  dragCurrentYRef.current = 0
-}
-const handleAutoScrollToggle = () => {
 const READER_THEMES = {
   light: {
     name: 'White',
@@ -658,6 +637,27 @@ function ReaderSettingsDrawer({
   const increaseLineSpacing = () => {
     setLineSpacing(lineSpacingOrder[Math.min(lineSpacingOrder.length - 1, lineSpacingIndex + 1)] || 'comfort')
   }
+
+  const dragStartYRef = useRef(0)
+const dragCurrentYRef = useRef(0)
+
+const handleDragStart = (event) => {
+  dragStartYRef.current = event.touches?.[0]?.clientY || event.clientY || 0
+  dragCurrentYRef.current = dragStartYRef.current
+}
+
+const handleDragMove = (event) => {
+  dragCurrentYRef.current = event.touches?.[0]?.clientY || event.clientY || dragCurrentYRef.current
+}
+
+const handleDragEnd = () => {
+  if (dragCurrentYRef.current - dragStartYRef.current > 70) {
+    onClose()
+  }
+
+  dragStartYRef.current = 0
+  dragCurrentYRef.current = 0
+}
 
   const handleAutoScrollToggle = () => {
     setAutoScrollEnabled((current) => {
