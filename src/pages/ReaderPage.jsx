@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -394,7 +395,15 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
 }
 
 function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId, navigate, theme }) {
+  const [newestFirst, setNewestFirst] = useState(false)
+
   if (!open) return null
+
+  const sortedEpisodes = [...episodes].sort((a, b) => {
+    const first = Number(a.episode_number || 0)
+    const second = Number(b.episode_number || 0)
+    return newestFirst ? second - first : first - second
+  })
 
   return (
     <div className="fixed inset-0 z-[140]">
@@ -407,8 +416,6 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
 
       <section className={`absolute bottom-0 left-0 right-0 max-h-[78vh] overflow-hidden rounded-t-[30px] ${theme.card} shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[380px] md:rounded-[26px]`}>
         <div className={`sticky top-0 z-10 border-b ${theme.border} ${theme.card} px-4 py-4`}>
-          <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-black/15 md:hidden" />
-
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className={`text-[17px] font-extrabold ${theme.text}`}>Episode List</h3>
@@ -419,17 +426,17 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => setNewestFirst((current) => !current)}
               className={`flex h-9 w-9 items-center justify-center rounded-full ${theme.soft} ${theme.text}`}
-              aria-label="Close"
+              aria-label="Reverse episode order"
             >
-              <i className="fa-solid fa-xmark text-[14px]" />
+              <i className="fa-solid fa-arrow-up-arrow-down text-[14px]" />
             </button>
           </div>
         </div>
 
         <div className="max-h-[62vh] space-y-2 overflow-y-auto p-4">
-          {episodes.map((item) => {
+          {sortedEpisodes.map((item) => {
             const active = item.id === currentEpisodeId
 
             return (
@@ -440,16 +447,10 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
                   onClose()
                   navigate(`/story/${storyId}/episode/${item.id}`)
                 }}
-                className={`flex w-full items-center gap-3 rounded-[18px] px-3 py-3 text-left transition active:scale-[0.995] ${
+                className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left transition active:scale-[0.995] ${
                   active ? theme.button : `${theme.soft} ${theme.text}`
                 }`}
               >
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-extrabold ${
-                  active ? 'bg-white/15 text-white' : 'bg-white/70 text-[#667085]'
-                }`}>
-                  EP {item.episode_number || 1}
-                </span>
-
                 <span className="line-clamp-1 flex-1 text-[13px] font-extrabold">
                   {item.title || 'Untitled Episode'}
                 </span>
