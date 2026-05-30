@@ -464,7 +464,7 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
 
 function SettingSection({ title, children }) {
   return (
-    <section className="border-t border-[#f0eef6] px-4 py-3 first:border-t-0">
+    <section className="border-t border-[#f0eef6] px-2 py-3 first:border-t-0">
       <h3 className="mb-3 text-[14px] font-black text-[#111827]">{title}</h3>
       {children}
     </section>
@@ -657,7 +657,7 @@ function ReaderSettingsDrawer({
 
      <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
 
-        <div className="px-4 pt-3 pb-8">
+        <div className="px-3 pt-2 pb-6">
           <SettingSection title="Font & Spacing">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-[20px] bg-[#fafafe] p-2.5">
@@ -848,7 +848,7 @@ function ReaderSettingsDrawer({
             ) : null}
           </SettingSection>
 
-          <section className="px-4 pt-2">
+          <section className="px-2 pt-1">
             <button
               type="button"
               onClick={onOpenReset}
