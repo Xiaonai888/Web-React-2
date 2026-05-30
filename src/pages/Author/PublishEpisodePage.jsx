@@ -361,7 +361,7 @@ export default function PublishEpisodePage() {
   onAddEpisode={() => {
     navigate('/author/dashboard', { replace: true })
     setTimeout(() => {
-      navigate(`/author/story/${storyId}/episode/create?first=0`)
+      navigate(`/author/story/${storyId}/episode/create?first=0&fromPublishSuccess=1`)
     }, 0)
   }}
 />
