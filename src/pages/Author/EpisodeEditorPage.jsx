@@ -60,6 +60,61 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   return data.image_url || data.imageUrl
 }
 
+function isDialogueOrSpecialLine(line) {
+  const text = String(line || '').trim()
+
+  if (!text) return false
+
+  return /^[“"‘'«—–-]/.test(text) || /^(\d+[\.)]|[•*])\s+/.test(text)
+}
+
+function endsWithSentencePunctuation(line) {
+  return /[។.!?…]"?$/.test(String(line || '').trim())
+}
+
+function cleanBrokenParagraphs(value) {
+  const lines = String(value || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00A0/g, ' ')
+    .split('\n')
+
+  const output = []
+  let buffer = []
+
+  const flushBuffer = () => {
+    if (!buffer.length) return
+
+    output.push(buffer.join(' ').replace(/\s+/g, ' ').trim())
+    buffer = []
+  }
+
+  lines.forEach((line) => {
+    const text = line.trim()
+
+    if (!text) {
+      flushBuffer()
+      if (output[output.length - 1] !== '') output.push('')
+      return
+    }
+
+    if (isDialogueOrSpecialLine(text)) {
+      flushBuffer()
+      output.push(text)
+      return
+    }
+
+    if (buffer.length && endsWithSentencePunctuation(buffer[buffer.length - 1])) {
+      flushBuffer()
+    }
+
+    buffer.push(text)
+  })
+
+  flushBuffer()
+
+  return output.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -140,6 +195,46 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
             className="rounded-full bg-[#111827] px-3 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
           >
             Save Draft
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CleanParagraphsModal({ open, onCancel, onClean }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[155] flex items-center justify-center bg-black/35 px-4">
+      <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+          <i className="fa-solid fa-wand-magic-sparkles text-[22px]" />
+        </div>
+
+        <h2 className="mt-4 text-[18px] font-extrabold text-[#111827]">
+          Clean paragraph spacing?
+        </h2>
+
+        <p className="mt-3 text-[13px] leading-6 text-[#555b66]">
+          This will fix broken pasted lines while keeping dialogue, special lines, and paragraph breaks.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-95"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onClean}
+            className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-95"
+          >
+            Clean
           </button>
         </div>
       </div>
@@ -354,6 +449,7 @@ export default function EpisodeEditorPage() {
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
+  const [cleanModalOpen, setCleanModalOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -398,6 +494,21 @@ export default function EpisodeEditorPage() {
   const handleContentChange = (event) => {
     setContent(event.target.value)
     markUnsaved()
+  }
+
+  const handleConfirmCleanParagraphs = () => {
+    const cleanedContent = cleanBrokenParagraphs(content)
+
+    setCleanModalOpen(false)
+
+    if (cleanedContent === content.trim()) {
+      showToast('No broken paragraph spacing found.')
+      return
+    }
+
+    setContent(cleanedContent)
+    markUnsaved()
+    showToast('Paragraphs cleaned. Please review before saving.')
   }
 
   const handleTitleChange = (event) => {
@@ -668,6 +779,12 @@ export default function EpisodeEditorPage() {
         onSaveDraft={handleSaveDraftAndLeave}
       />
 
+      <CleanParagraphsModal
+        open={cleanModalOpen}
+        onCancel={() => setCleanModalOpen(false)}
+        onClean={handleConfirmCleanParagraphs}
+      />
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -822,10 +939,15 @@ export default function EpisodeEditorPage() {
               </div>
 
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[18px] bg-[#fafafe] p-2">
-                <ToolButton icon="fa-solid fa-bold" label="Bold" />
+               <ToolButton icon="fa-solid fa-bold" label="Bold" />
                 <ToolButton icon="fa-solid fa-italic" label="Italic" />
                 <ToolButton icon="fa-solid fa-minus" label="Divider" />
                 <ToolButton icon="fa-regular fa-image" label="Insert image" />
+                <ToolButton
+                  icon="fa-solid fa-wand-magic-sparkles"
+                  label="Clean Paragraphs"
+                  onClick={() => setCleanModalOpen(true)}
+                />
                 <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
                 <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
                 <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
