@@ -446,13 +446,13 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
                   onClose()
                   navigate(`/story/${storyId}/episode/${item.id}`)
                 }}
-                className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left transition active:scale-[0.995] ${
-                  active ? theme.button : `${theme.soft} ${theme.text}`
-                }`}
+                className="flex w-full items-center gap-3 px-1 py-3 text-left transition active:scale-[0.995]"
               >
-                <span className="line-clamp-1 flex-1 text-[13px] font-extrabold">
-                  {item.title || 'Untitled Episode'}
-                </span>
+                <span className={`line-clamp-1 flex-1 text-[14px] font-extrabold ${
+  active ? 'text-[#f6a800]' : theme.text
+}`}>
+  {item.title || 'Untitled Episode'}
+</span>
 
                 {item.is_adult ? (
                   <span className="rounded-full bg-[#fff1f1] px-2 py-1 text-[10px] font-extrabold text-[#e5484d]">
