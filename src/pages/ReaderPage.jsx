@@ -20,15 +20,15 @@ const REVIEW_READ_PROGRESS_PERCENT = 85
 const READER_THEMES = {
   light: {
     name: 'White',
-    page: 'bg-[#f6f4ee]',
-    card: 'bg-[#fffdf8]',
+    page: 'bg-white',
+    card: 'bg-white',
     text: 'text-[#24201b]',
     muted: 'text-[#8a8175]',
     soft: 'bg-[#f0ebe2]',
     border: 'border-[#eee5d9]',
     button: 'bg-[#111827] text-white',
     ghost: 'bg-white/85 text-[#111827] ring-1 ring-black/5',
-    swatch: 'bg-[#fffdf8]',
+    swatch: 'bg-white',
   },
   paper: {
     name: 'Paper',
@@ -1113,7 +1113,7 @@ export default function ReaderPage() {
   const handleResetSettings = () => {
     setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
     setFontKey('noto-sans-khmer')
-    setThemeName('paper')
+    setThemeName('light')
     setBrightness(100)
     setLineSpacing('comfort')
     setReadingMode('scroll')
