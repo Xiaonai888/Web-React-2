@@ -32,7 +32,7 @@ export default function ReaderBottomActionBar({ visible, story, episode, onOpenC
           </div>
         </div>
 
-        <div className="grid grid-cols-3 px-2 py-1.5 text-[12px] font-bold text-[#65676b]">
+       <div className="grid grid-cols-3 px-2 py-1.5 text-[12px] font-bold text-[#65676b]">
   <button type="button" className="flex h-9 items-center justify-center gap-2 rounded-[12px] active:scale-95 active:bg-[#f2f3f5]">
     <i className="fa-regular fa-heart text-[15px]" />
     <span>Like</span>
