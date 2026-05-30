@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import CommentsModal from '../components/story-detail/CommentsModal'
+import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -233,6 +235,8 @@ const AUTO_SCROLL_SPEEDS = [
 ]
 
 function formatDate(value) {
+
+
   if (!value) return ''
 
   const date = new Date(value)
@@ -327,6 +331,8 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
 }
 
 function ReaderIconButton({ icon, label, onClick, className = '', disabled = false }) {
+
+  
   return (
     <button
       type="button"
@@ -933,6 +939,10 @@ export default function ReaderPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [commentRefreshKey, setCommentRefreshKey] = useState(0)
+  const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
+  const lastScrollYRef = useRef(0)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
@@ -1071,6 +1081,32 @@ export default function ReaderPage() {
   }, [episodeId])
 
   useEffect(() => {
+    const handleActionBarVisibility = () => {
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop
+      const previousScrollY = lastScrollYRef.current
+      const difference = currentScrollY - previousScrollY
+
+      if (Math.abs(difference) < 8) return
+
+      if (currentScrollY < 80 || difference < 0) {
+        setBottomActionsVisible(true)
+      } else {
+        setBottomActionsVisible(false)
+      }
+
+      lastScrollYRef.current = Math.max(0, currentScrollY)
+    }
+
+    lastScrollYRef.current = window.scrollY || document.documentElement.scrollTop
+    window.addEventListener('scroll', handleActionBarVisibility, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleActionBarVisibility)
+    }
+  }, [episodeId])
+
+
+  useEffect(() => {
     if (!storyId || !episodeId || reviewProgressSaved) return
 
     if (readingProgress >= REVIEW_READ_PROGRESS_PERCENT) {
@@ -1143,6 +1179,11 @@ export default function ReaderPage() {
     setAutoScrollEnabled(false)
     setAutoScrollSpeed(1)
     setResetOpen(false)
+  }
+
+
+  const handleCommentChanged = () => {
+    setCommentRefreshKey((value) => value + 1)
   }
 
   return (
@@ -1226,6 +1267,21 @@ export default function ReaderPage() {
         storyId={storyId}
         navigate={navigate}
         theme={theme}
+      />
+
+
+      <CommentsModal
+        open={commentsOpen}
+        story={story}
+        onClose={() => setCommentsOpen(false)}
+        onCommentChanged={handleCommentChanged}
+      />
+
+      <ReaderBottomActionBar
+        visible={bottomActionsVisible && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
+        story={story}
+        episode={episode}
+        onOpenComments={() => setCommentsOpen(true)}
       />
 
       <header className={`sticky top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur`}>
