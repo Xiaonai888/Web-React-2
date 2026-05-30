@@ -656,27 +656,6 @@ function ReaderSettingsDrawer({
       />
 
       <section className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
-        <div className="sticky top-0 z-10 border-b border-[#f0eef6] bg-white px-4 py-4">
-  <div className="mx-auto mb-3 h-1.5 w-11 rounded-full bg-black/15 md:hidden" />
-
-  <div className="flex items-center justify-between gap-3">
-    <div>
-      <h2 className="text-[18px] font-black text-[#111827]">Aa Reading Settings</h2>
-      <p className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">
-        Font, color, brightness, and auto scroll
-      </p>
-    </div>
-
-    <button
-      type="button"
-      onClick={onClose}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-      aria-label="Close"
-    >
-      <i className="fa-solid fa-xmark text-[14px]" />
-    </button>
-  </div>
-</div>
 
         <div className="max-h-[72vh] overflow-y-auto px-4 pt-4 pb-4">
           <SettingSection title="Font & Spacing">
