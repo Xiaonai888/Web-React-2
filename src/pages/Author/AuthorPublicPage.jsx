@@ -158,7 +158,11 @@ async function fetchPublicAuthorPage(pageUsername) {
     throw new Error(data.message || 'Author page not found')
   }
 
-  return data.author_page || data.author || data.page || null
+  const authorPage = data.author_page || data.author || data.page || null
+
+return authorPage
+  ? { ...authorPage, is_following: Boolean(data.is_following), total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0) }
+  : null
 }
 
 async function fetchMyAuthorPage() {
