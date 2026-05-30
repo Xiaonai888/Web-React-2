@@ -207,7 +207,7 @@ function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onA
             onClick={onStoryManager}
             className="h-12 rounded-full bg-[#111827] px-4 text-[13px] font-extrabold text-white transition hover:scale-[1.02] active:scale-[0.97]"
           >
-            Story Manager
+            Author Dashboard
           </button>
 
           <button
@@ -349,22 +349,12 @@ export default function PublishEpisodePage() {
       <Toast message={toast} onClose={() => setToast('')} />
 
       <SuccessModal
-  open={successOpen}
-  isFirstEpisode={isFirstEpisode}
-  releaseOption={releaseOption}
-  onStoryManager={() => {
-    navigate('/author/dashboard', { replace: true })
-    setTimeout(() => {
-      navigate(`/author/story/${storyId}/manage`)
-    }, 0)
-  }}
-  onAddEpisode={() => {
-    navigate('/author/dashboard', { replace: true })
-    setTimeout(() => {
-      navigate(`/author/story/${storyId}/episode/create?first=0`)
-    }, 0)
-  }}
-/>
+        open={successOpen}
+        isFirstEpisode={isFirstEpisode}
+        releaseOption={releaseOption}
+        onStoryManager={() => navigate('/author/dashboard', { replace: true })}
+        onAddEpisode={() => navigateAfterSuccess(`/author/story/${storyId}/episode/create?first=0`)}
+      />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
