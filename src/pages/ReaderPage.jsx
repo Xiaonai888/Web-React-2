@@ -825,9 +825,9 @@ function ReaderSettingsDrawer({
 
                 <div>
                   <div className="mb-2 flex items-center justify-between text-[24px] font-black text-[#111827]">
-                    <span>🐢</span>
+                    <i className="fa-solid fa-gauge-simple text-[18px] text-[#111827]" />
                     <span className="text-[12px] text-[#667085]">{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
-                    <span>🐇</span>
+                    <i className="fa-solid fa-gauge-high text-[18px] text-[#111827]" />
                   </div>
 
                   <input
