@@ -185,7 +185,7 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
             <button
               type="button"
               onClick={handleEchoNow}
-              className="h-11 rounded-[13px] bg-[#1877f2] px-5 text-[17px] font-black text-white active:scale-95"
+              className="h-11 rounded-[13px] bg-[#111827] px-5 text-[17px] font-black text-white active:scale-95"
             >
               Echo now
             </button>
