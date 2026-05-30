@@ -1,16 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
-import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
-import TrendingNowSection from '../components/TrendingNowSection'
-import UpdateTodaySection from '../components/UpdateTodaySection'
-import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
-import TopNovelSection from '../components/TopNovelSection'
-import YouMightLikeSection from '../components/YouMightLikeSection'
-import EventPerksHubSection from '../components/EventPerksHubSection'
-import NewArrivalsSection from '../components/NewArrivalsSection'
-import CompletedSection from '../components/CompletedSection'
-import FanPicksSection from '../components/FanPicksSection'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -69,18 +59,6 @@ function ComingSoonPanel({ title }) {
   )
 }
 
-function DeferredSectionsPlaceholder() {
-  return (
-    <div className="px-4 py-8">
-      <div className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-gray-100">
-        <div className="mx-auto mb-3 h-10 w-10 animate-pulse rounded-full bg-gray-100" />
-        <div className="mx-auto h-4 w-40 animate-pulse rounded-full bg-gray-100" />
-        <div className="mx-auto mt-3 h-3 w-64 max-w-full animate-pulse rounded-full bg-gray-100" />
-      </div>
-    </div>
-  )
-}
-
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -88,7 +66,6 @@ export default function ForYou() {
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
-  const [deferredSectionsReady, setDeferredSectionsReady] = useState(false)
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
@@ -121,28 +98,6 @@ export default function ForYou() {
       document.body.classList.remove('for-you-bars-hidden')
     }
   }, [])
-
-  useEffect(() => {
-    if (deferredSectionsReady) return undefined
-
-    const timer = window.setTimeout(() => {
-      setDeferredSectionsReady(true)
-    }, 1800)
-
-    function handleFirstScroll() {
-      window.clearTimeout(timer)
-      setDeferredSectionsReady(true)
-    }
-
-    window.addEventListener('scroll', handleFirstScroll, { passive: true, once: true })
-    window.addEventListener('touchstart', handleFirstScroll, { passive: true, once: true })
-
-    return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('scroll', handleFirstScroll)
-      window.removeEventListener('touchstart', handleFirstScroll)
-    }
-  }, [deferredSectionsReady])
 
   useEffect(() => {
     async function fetchGenreTabs() {
@@ -192,7 +147,7 @@ export default function ForYou() {
           throw new Error(data.message || 'Failed to fetch slides')
         }
 
-        setSlides(data.slides || [])
+        setSlides((data.slides || []).slice(0, 3))
       } catch (error) {
         console.error('Fetch home slides error:', error)
         setSlides([])
@@ -205,7 +160,7 @@ export default function ForYou() {
   }, [])
 
   useEffect(() => {
-    if (!window.Swiper || slides.length === 0) return undefined
+    if (!window.Swiper || slides.length === 0) return
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -338,6 +293,8 @@ export default function ForYou() {
                   src="/assets/Icons/Shadow%20Logo.svg"
                   alt="Shadow"
                   className="h-full w-full object-cover"
+                  loading="eager"
+                  decoding="async"
                 />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
@@ -407,7 +364,7 @@ export default function ForYou() {
                   </div>
                 )}
 
-                {!slidesLoading && slides.map((slide) => {
+                {!slidesLoading && slides.map((slide, index) => {
                   const slideBadge = getSlideBadge(slide)
                   const slideTitle = getSlideTitle(slide)
                   const slideSubtitle = getSlideSubtitle(slide)
@@ -424,6 +381,9 @@ export default function ForYou() {
                         src={slide.image_url}
                         className="h-full w-full object-cover"
                         alt={slideTitle || `Slide ${slide.order_index}`}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
                       />
 
                       {(slideBadge || slideTitle || slideSubtitle) ? (
@@ -480,51 +440,12 @@ export default function ForYou() {
               <ShadowSpotlight />
             </div>
 
-            {deferredSectionsReady ? (
-              <>
-                <div className="my-6">
-                  <ShadowExclusiveSection />
-                </div>
-
-                <div className="my-6">
-                  <TrendingNowSection />
-                </div>
-
-                <div className="my-6">
-                  <UpdateTodaySection />
-                </div>
-
-                <div className="my-6">
-                  <EditorWeeklyPicksSection />
-                </div>
-
-                <div className="my-6">
-                  <TopNovelSection />
-                </div>
-
-                <div className="my-6">
-                  <YouMightLikeSection />
-                </div>
-
-                <div className="my-6">
-                  <EventPerksHubSection />
-                </div>
-
-                <div className="my-6">
-                  <NewArrivalsSection />
-                </div>
-
-                <div className="my-6">
-                  <CompletedSection />
-                </div>
-
-                <div className="my-6">
-                  <FanPicksSection />
-                </div>
-              </>
-            ) : (
-              <DeferredSectionsPlaceholder />
-            )}
+            <div className="mx-4 my-8 rounded-3xl border border-dashed border-gray-200 bg-gray-50 px-5 py-8 text-center">
+              <div className="text-sm font-extrabold text-gray-900">More sections are temporarily paused</div>
+              <p className="mt-2 text-xs font-semibold leading-5 text-gray-500">
+                Homepage media is in safe mode while image traffic is being optimized.
+              </p>
+            </div>
           </div>
         )}
       </div>
