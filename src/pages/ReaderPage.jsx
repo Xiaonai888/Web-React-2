@@ -17,6 +17,27 @@ function readerAuthHeaders() {
 
 const REVIEW_READ_PROGRESS_PERCENT = 85
 
+const dragStartYRef = useRef(0)
+const dragCurrentYRef = useRef(0)
+
+const handleDragStart = (event) => {
+  dragStartYRef.current = event.touches?.[0]?.clientY || event.clientY || 0
+  dragCurrentYRef.current = dragStartYRef.current
+}
+
+const handleDragMove = (event) => {
+  dragCurrentYRef.current = event.touches?.[0]?.clientY || event.clientY || dragCurrentYRef.current
+}
+
+const handleDragEnd = () => {
+  if (dragCurrentYRef.current - dragStartYRef.current > 70) {
+    onClose()
+  }
+
+  dragStartYRef.current = 0
+  dragCurrentYRef.current = 0
+}
+const handleAutoScrollToggle = () => {
 const READER_THEMES = {
   light: {
     name: 'White',
@@ -655,7 +676,15 @@ function ReaderSettingsDrawer({
         className="absolute inset-0 bg-black/35"
       />
 
-     <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
+     <section
+  className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]"
+  onTouchStart={handleDragStart}
+  onTouchMove={handleDragMove}
+  onTouchEnd={handleDragEnd}
+  onMouseDown={handleDragStart}
+  onMouseMove={handleDragMove}
+  onMouseUp={handleDragEnd}
+>
 
         <div className="px-3 pt-2 pb-6">
           <SettingSection title="Font & Spacing">
