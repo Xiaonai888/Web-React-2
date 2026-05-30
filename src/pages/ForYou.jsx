@@ -1,5 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import ShadowSpotlight from '../components/ShadowSpotlight'
+import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
+import TrendingNowSection from '../components/TrendingNowSection'
+import UpdateTodaySection from '../components/UpdateTodaySection'
+import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
+import YouMightLikeSection from '../components/YouMightLikeSection'
+import EventPerksHubSection from '../components/EventPerksHubSection'
+import NewArrivalsSection from '../components/NewArrivalsSection'
+import CompletedSection from '../components/CompletedSection'
+import FanPicksSection from '../components/FanPicksSection'
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const fallbackGenreTabs = [
   { label: 'Today', slug: 'today', is_locked: true },
@@ -9,6 +25,32 @@ const fallbackGenreTabs = [
   { label: 'Comedy', slug: 'comedy' },
   { label: 'Drama', slug: 'drama' },
 ]
+
+const slideBadgeColors = {
+  NEW: 'bg-[#ff2f55] text-white',
+  HOT: 'bg-[#ff7a00] text-white',
+  TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+function getSlideBadge(slide) {
+  const directBadge = String(slide.badge || slide.badge_label || slide.tag || '').trim().toUpperCase()
+  const titleBadge = String(slide.title || '').match(/^\s*\[(HOT|NEW|TOP)\]\s*/i)?.[1]?.toUpperCase() || ''
+  const badge = directBadge || titleBadge
+
+  return ['HOT', 'NEW', 'TOP'].includes(badge) ? badge : ''
+}
+
+function getSlideTitle(slide) {
+  return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
+}
+
+function getSlideSubtitle(slide) {
+  return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
+}
+
+function getSlideBadgeClass(badge) {
+  return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
+}
 
 function ComingSoonPanel({ title }) {
   return (
@@ -26,29 +68,16 @@ function ComingSoonPanel({ title }) {
   )
 }
 
-function SafeModePanel() {
-  return (
-    <div className="px-4 py-8">
-      <div className="rounded-[24px] border border-dashed border-gray-200 bg-white p-7 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-          <i className="fa-solid fa-shield-halved text-xl" />
-        </div>
-        <h2 className="text-lg font-extrabold text-gray-900">For You Safe Mode</h2>
-        <p className="mx-auto mt-2 max-w-[420px] text-sm font-medium leading-6 text-gray-500">
-          Heavy image sections are temporarily paused while we reduce storage traffic.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
-  const [genreTabs] = useState(fallbackGenreTabs)
+  const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
+  const [slides, setSlides] = useState([])
+  const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
 
   const navigate = useNavigate()
+  const swiperRef = useRef(null)
   const lastScrollYRef = useRef(0)
 
   useEffect(() => {
@@ -79,6 +108,105 @@ export default function ForYou() {
     }
   }, [])
 
+  useEffect(() => {
+    async function fetchGenreTabs() {
+      try {
+        const res = await fetch(`${API_URL}/api/genres/featured-tabs`)
+        const data = await res.json()
+
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to fetch genre tabs')
+        }
+
+        const tabs = (data.tabs || [])
+          .map((tab) => ({
+            label: tab.label || tab.genre?.name || 'Genre',
+            slug: tab.slug || tab.genre?.slug || String(tab.label || '').toLowerCase(),
+            is_locked: Boolean(tab.is_locked),
+          }))
+          .filter((tab) => tab.label && tab.slug)
+          .slice(0, 12)
+
+        if (tabs.length) {
+          const today = tabs.find((tab) => tab.slug === 'today')
+          const others = tabs.filter((tab) => tab.slug !== 'today')
+          const finalTabs = today
+            ? [today, ...others]
+            : [{ label: 'Today', slug: 'today', is_locked: true }, ...others].slice(0, 12)
+
+          setGenreTabs(finalTabs)
+          setActiveGenre((current) => (finalTabs.some((tab) => tab.slug === current) ? current : 'today'))
+        }
+      } catch (error) {
+        console.error('Fetch genre tabs error:', error)
+        setGenreTabs(fallbackGenreTabs)
+      }
+    }
+
+    fetchGenreTabs()
+  }, [])
+
+  useEffect(() => {
+    async function fetchSlides() {
+      try {
+        const res = await fetch(`${API_URL}/api/slides?section_key=home_top_slider`)
+        const data = await res.json()
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.message || 'Failed to fetch slides')
+        }
+
+        setSlides(data.slides || [])
+      } catch (error) {
+        console.error('Fetch home slides error:', error)
+        setSlides([])
+      } finally {
+        setSlidesLoading(false)
+      }
+    }
+
+    fetchSlides()
+  }, [])
+
+  useEffect(() => {
+    if (!window.Swiper || slides.length === 0) return
+
+    if (swiperRef.current) {
+      swiperRef.current.destroy(true, true)
+      swiperRef.current = null
+    }
+
+    swiperRef.current = new window.Swiper('.mySwiper', {
+      effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: true,
+      slidesPerView: 'auto',
+      coverflowEffect: {
+        rotate: 0,
+        stretch: 0,
+        depth: 80,
+        modifier: 2,
+        slideShadows: false,
+      },
+      loop: slides.length > 1,
+      autoplay: {
+        delay: 4500,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+    })
+
+    return () => {
+      if (swiperRef.current) {
+        swiperRef.current.destroy(true, true)
+        swiperRef.current = null
+      }
+    }
+  }, [slides])
+
   return (
     <>
       <style>{`
@@ -107,6 +235,36 @@ export default function ForYou() {
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .swiper-container {
+          width: 100%;
+          padding-top: 10px;
+          padding-bottom: 30px;
+        }
+
+        .swiper-slide {
+          width: 85%;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+        }
+
+        .swiper-slide-next,
+        .swiper-slide-prev {
+          opacity: 0.4;
+          transform: scale(0.9);
+        }
+
+        .swiper-pagination-bullet-active {
+          background: #111827;
+          width: 20px;
+          border-radius: 5px;
+        }
+
+        @media (min-width: 768px) {
+          .swiper-slide { width: 58%; }
+        }
 
         .tab-item {
           transition: all 0.3s ease;
@@ -201,6 +359,71 @@ export default function ForYou() {
               })}
             </div>
 
+            <div className="swiper-container mySwiper">
+              <div className="swiper-wrapper">
+                {slidesLoading && (
+                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-gray-400">Loading slides...</span>
+                  </div>
+                )}
+
+                {!slidesLoading && slides.length === 0 && (
+                  <div className="swiper-slide aspect-[16/9] bg-gray-100 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-gray-400">No slides yet</span>
+                  </div>
+                )}
+
+                {!slidesLoading && slides.map((slide) => {
+                  const slideBadge = getSlideBadge(slide)
+                  const slideTitle = getSlideTitle(slide)
+                  const slideSubtitle = getSlideSubtitle(slide)
+
+                  return (
+                    <div
+                      key={slide.id}
+                      className="swiper-slide relative aspect-[16/9] cursor-pointer"
+                      onClick={() => {
+                        if (slide.link_url) navigate(slide.link_url)
+                      }}
+                    >
+                      <img
+                        src={slide.image_url}
+                        className="h-full w-full object-cover"
+                        alt={slideTitle || `Slide ${slide.order_index}`}
+                        loading="lazy"
+                        decoding="async"
+                      />
+
+                      {(slideBadge || slideTitle || slideSubtitle) ? (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {slideBadge ? (
+                              <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getSlideBadgeClass(slideBadge)}`}>
+                                {slideBadge}
+                              </span>
+                            ) : null}
+
+                            {slideTitle ? (
+                              <h2 className="min-w-0 truncate text-[16px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+                                {slideTitle}
+                              </h2>
+                            ) : null}
+                          </div>
+
+                          {slideSubtitle ? (
+                            <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
+                              {slideSubtitle}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="swiper-pagination" />
+            </div>
+
             <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
               {[
                 { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
@@ -214,14 +437,52 @@ export default function ForYou() {
                   onClick={() => item.path && navigate(item.path)}
                 >
                   <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-[#f8fafc]">
-                    <i className={`fas ${item.icon}`} />
+                    <i className={`fas ${item.icon} ${item.color}`} />
                   </div>
                   <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
                 </div>
               ))}
             </div>
 
-            <SafeModePanel />
+            <div className="my-6">
+              <ShadowSpotlight />
+            </div>
+
+            <div className="my-6">
+              <ShadowExclusiveSection />
+            </div>
+
+            <div className="my-6">
+              <TrendingNowSection />
+            </div>
+
+            <div className="my-6">
+              <UpdateTodaySection />
+            </div>
+
+            <div className="my-6">
+              <EditorWeeklyPicksSection />
+            </div>
+
+            <div className="my-6">
+              <YouMightLikeSection />
+            </div>
+
+            <div className="my-6">
+              <EventPerksHubSection />
+            </div>
+
+            <div className="my-6">
+              <NewArrivalsSection />
+            </div>
+
+            <div className="my-6">
+              <CompletedSection />
+            </div>
+
+            <div className="my-6">
+              <FanPicksSection />
+            </div>
           </div>
         )}
       </div>
