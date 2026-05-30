@@ -11,6 +11,7 @@ import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import RatingPage from './pages/RatingPage'
+import EchoPage from './pages/EchoPage'
 import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
@@ -36,6 +37,7 @@ import RankingPage from './pages/RankingPage'
 import TaskCenterPage from './pages/TaskCenterPage'
 import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
+
 
 
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
@@ -258,6 +260,7 @@ function AppShell() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
+        <Route path="/story/:storyId/echo" element={<EchoPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
 
         <Route path="/login" element={<LoginPage />} />
