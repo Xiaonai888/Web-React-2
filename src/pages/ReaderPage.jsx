@@ -638,6 +638,14 @@ function ReaderSettingsDrawer({
   if (!open) return null
 
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
+  const lineSpacingOrder = ['compact', 'normal', 'comfort']
+  const lineSpacingValues = {
+    compact: '1.3',
+    normal: '1.5',
+    comfort: '1.8',
+  }
+  const lineSpacingIndex = Math.max(0, lineSpacingOrder.indexOf(lineSpacing))
+  const lineSpacingValue = lineSpacingValues[lineSpacing] || lineSpacingValues.comfort
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -645,6 +653,14 @@ function ReaderSettingsDrawer({
 
   const increaseFont = () => {
     setFontSizeIndex((current) => Math.min(FONT_SIZE_LEVELS.length - 1, current + 1))
+  }
+
+  const decreaseLineSpacing = () => {
+    setLineSpacing(lineSpacingOrder[Math.max(0, lineSpacingIndex - 1)] || 'compact')
+  }
+
+  const increaseLineSpacing = () => {
+    setLineSpacing(lineSpacingOrder[Math.min(lineSpacingOrder.length - 1, lineSpacingIndex + 1)] || 'comfort')
   }
 
   const handleAutoScrollToggle = () => {
@@ -688,29 +704,69 @@ function ReaderSettingsDrawer({
         </div>
 
         <div className="max-h-[72vh] overflow-y-auto pb-4">
-          <SettingSection title="Font Size">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <button
-                type="button"
-                onClick={decreaseFont}
-                disabled={fontSizeIndex <= 0}
-                className="h-12 rounded-[16px] bg-[#f5f3fa] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
-              >
-                Aa-
-              </button>
+          <SettingSection title="Font & Spacing">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[20px] bg-[#fafafe] p-2.5">
+                <div className="mb-2 text-[11px] font-black text-[#8d94a1]">Font Size</div>
 
-              <div className="min-w-[72px] text-center text-[13px] font-black text-[#111827]">
-                {fontSizePx}px
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={decreaseFont}
+                    disabled={fontSizeIndex <= 0}
+                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
+                    aria-label="Decrease font size"
+                  >
+                    A<sup className="-mt-2 text-[10px]">−</sup>
+                  </button>
+
+                  <div className="min-w-[34px] text-center text-[13px] font-black text-[#8d94a1]">
+                    {fontSizePx}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={increaseFont}
+                    disabled={fontSizeIndex >= FONT_SIZE_LEVELS.length - 1}
+                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
+                    aria-label="Increase font size"
+                  >
+                    A<sup className="-mt-2 text-[10px]">+</sup>
+                  </button>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={increaseFont}
-                disabled={fontSizeIndex >= FONT_SIZE_LEVELS.length - 1}
-                className="h-12 rounded-[16px] bg-[#111827] text-[14px] font-black text-white active:scale-[0.98] disabled:opacity-40"
-              >
-                Aa+
-              </button>
+              <div className="rounded-[20px] bg-[#fafafe] p-2.5">
+                <div className="mb-2 text-[11px] font-black text-[#8d94a1]">Line Spacing</div>
+
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={decreaseLineSpacing}
+                    disabled={lineSpacingIndex <= 0}
+                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[#111827] active:scale-[0.98] disabled:opacity-40"
+                    aria-label="Decrease line spacing"
+                  >
+                    <i className="fa-solid fa-text-height text-[13px]" />
+                    <i className="fa-solid fa-minus ml-1 text-[9px]" />
+                  </button>
+
+                  <div className="min-w-[34px] text-center text-[13px] font-black text-[#8d94a1]">
+                    {lineSpacingValue}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={increaseLineSpacing}
+                    disabled={lineSpacingIndex >= lineSpacingOrder.length - 1}
+                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[#111827] active:scale-[0.98] disabled:opacity-40"
+                    aria-label="Increase line spacing"
+                  >
+                    <i className="fa-solid fa-text-height text-[13px]" />
+                    <i className="fa-solid fa-plus ml-1 text-[9px]" />
+                  </button>
+                </div>
+              </div>
             </div>
           </SettingSection>
 
@@ -763,16 +819,6 @@ function ReaderSettingsDrawer({
                 className="w-full accent-[#111827]"
               />
               <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
-            </div>
-          </SettingSection>
-
-          <SettingSection title="Line Spacing">
-            <div className="grid grid-cols-3 gap-2">
-              {Object.entries(LINE_SPACING_OPTIONS).map(([key, item]) => (
-                <ChoiceButton key={key} active={lineSpacing === key} onClick={() => setLineSpacing(key)}>
-                  {item.label}
-                </ChoiceButton>
-              ))}
             </div>
           </SettingSection>
 
