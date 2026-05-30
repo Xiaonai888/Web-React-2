@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
+import EchoShareSheet from '../components/reader/EchoShareSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -937,6 +938,7 @@ export default function ReaderPage() {
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
+  const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -1277,12 +1279,18 @@ export default function ReaderPage() {
         onCommentChanged={handleCommentChanged}
       />
 
+      <EchoShareSheet
+  open={echoShareOpen}
+  story={story}
+  onClose={() => setEchoShareOpen(false)}
+/>
+
       <ReaderBottomActionBar
-  visible={bottomActionsVisible && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
+  visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
   story={story}
   episode={episode}
   onOpenComments={() => setCommentsOpen(true)}
-  onOpenEcho={() => navigate(`/story/${storyId}/echo`)}
+  onOpenEcho={() => setEchoShareOpen(true)}
 />
 
       <header className={`${bottomActionsVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur transition-transform duration-300 ease-out`}>
