@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import RatingPage from './pages/RatingPage'
 import EchoPage from './pages/EchoPage'
+import ReactionPage from './pages/ReactionPage'
 import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
@@ -40,6 +41,7 @@ import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 
 
 
+
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
 const ShadowMallOrderHistoryPage = lazy(() => import('./pages/Shop/ShadowMallOrderHistoryPage'))
@@ -55,6 +57,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
+
 
 function ComingSoon({ title }) {
   return (
@@ -261,6 +264,7 @@ function AppShell() {
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
         <Route path="/story/:storyId/echo" element={<EchoPage />} />
+        <Route path="/story/:storyId/reaction" element={<ReactionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
 
         <Route path="/login" element={<LoginPage />} />
