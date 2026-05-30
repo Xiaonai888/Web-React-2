@@ -1376,7 +1376,7 @@ export default function ReaderPage() {
 
             {!nextEpisode ? (
               <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-                <h3 className="text-[20px] font-black tracking-wide text-[#1d4ed8]">
+                <h3 className="text-[20px] font-black tracking-wide text-[#111827]">
                   TO BE CONTINUED
                 </h3>
 
@@ -1386,7 +1386,7 @@ export default function ReaderPage() {
 
                 <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
                   <span className="h-px flex-1 bg-[#111827]/45" />
-                  <span className="text-[18px] leading-none text-[#d11f2f]">♥</span>
+                  <span className="text-[15px] leading-none text-[#e5484d]">♥</span>
                   <span className="h-px flex-1 bg-[#111827]/45" />
                 </div>
               </section>
