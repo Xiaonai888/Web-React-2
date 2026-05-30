@@ -136,6 +136,7 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
     followers_count: Number(author.total_followers || author.followers_count || 0),
     fans_count: Number(author.total_fans || author.fans_count || 0),
     likes_count: Number(author.total_likes || author.likes_count || 0),
+    is_following: Boolean(author.is_following),
     created_at: author.created_at || '',
     updated_at: author.updated_at || '',
     is_owner: forceOwner || Boolean(myPage?.id && author.id && myPage.id === author.id),
@@ -143,7 +144,14 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
 }
 
 async function fetchPublicAuthorPage(pageUsername) {
-  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}`)
+  const token = getAuthToken()
+  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}`, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {},
+  })
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -151,38 +159,6 @@ async function fetchPublicAuthorPage(pageUsername) {
   }
 
   return data.author_page || data.author || data.page || null
-}
-
-async function fetchMyAuthorPage() {
-  const token = getAuthToken()
-
-  if (!token) return null
-
-  const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    return null
-  }
-
-  return data.author_page || null
-}
-
-function StatItem({ value, label }) {
-  return (
-    <div className="min-w-0 text-center">
-      <div className="text-[18px] font-black leading-tight text-[#111827] sm:text-[20px]">
-        {formatCompactNumber(value)}
-      </div>
-      <div className="mt-0.5 text-[12px] font-semibold text-[#6b7280] sm:text-[13px]">
-        {label}
-      </div>
-    </div>
-  )
 }
 
 function EmptyPanel({ title, text }) {
@@ -341,6 +317,7 @@ export default function AuthorPublicPage() {
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [savingImage, setSavingImage] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -381,19 +358,74 @@ export default function AuthorPublicPage() {
     loadAuthor()
   }, [pageUsername])
 
-  const actionButtons = useMemo(() => {
-    if (author?.is_owner) {
-      return [
-        { label: 'Edit Page', icon: 'fa-pen', type: 'primary' },
-        { label: 'Add Story', icon: 'fa-plus', type: 'secondary', onClick: () => navigate('/author/create-story') },
-      ]
+
+async function handleToggleFollow() {
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!author?.page_username || author.is_owner || followLoading) return
+
+  const nextFollowing = !author.is_following
+  const previousAuthor = author
+
+  setFollowLoading(true)
+  setMessage('')
+  setAuthor((current) => ({
+    ...current,
+    is_following: nextFollowing,
+    followers_count: Math.max(0, Number(current.followers_count || 0) + (nextFollowing ? 1 : -1)),
+  }))
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(author.page_username)}/follow`, {
+      method: nextFollowing ? 'POST' : 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to update follow')
     }
 
+    setAuthor((current) => ({
+      ...current,
+      is_following: Boolean(data.is_following ?? nextFollowing),
+      followers_count: Number(data.total_followers ?? current.followers_count ?? 0),
+    }))
+  } catch (error) {
+    setAuthor(previousAuthor)
+    setMessage(error.message || 'Failed to update follow')
+  } finally {
+    setFollowLoading(false)
+  }
+}
+  
+  const actionButtons = useMemo(() => {
+  if (author?.is_owner) {
     return [
-      { label: 'Follow', icon: 'fa-user-plus', type: 'primary' },
-      { label: 'Message', icon: 'fa-comment', type: 'secondary' },
+      { label: 'Edit Page', icon: 'fa-pen', type: 'primary' },
+      { label: 'Add Story', icon: 'fa-plus', type: 'secondary', onClick: () => navigate('/author/create-story') },
     ]
-  }, [author?.is_owner, navigate])
+  }
+
+  return [
+    {
+      label: author?.is_following ? 'Following' : 'Follow',
+      icon: author?.is_following ? 'fa-user-check' : 'fa-user-plus',
+      type: author?.is_following ? 'secondary' : 'primary',
+      onClick: handleToggleFollow,
+      disabled: followLoading,
+    },
+    { label: 'Message', icon: 'fa-comment', type: 'secondary' },
+  ]
+}, [author?.is_owner, author?.is_following, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -626,19 +658,20 @@ export default function AuthorPublicPage() {
 
             <div className="mt-4 flex items-center gap-2">
               {actionButtons.map((button) => (
-                <button
-                  key={button.label}
-                  type="button"
-                  onClick={button.onClick}
-                  className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] ${
-                    button.type === 'primary'
-                      ? 'bg-[#111827] text-white'
-                      : 'bg-[#f3f4f6] text-[#111827]'
-                  }`}
-                >
-                  <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
-                  {button.label}
-                </button>
+               <button
+  key={button.label}
+  type="button"
+  onClick={button.onClick}
+  disabled={button.disabled}
+  className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+    button.type === 'primary'
+      ? 'bg-[#111827] text-white'
+      : 'bg-[#f3f4f6] text-[#111827]'
+  }`}
+>
+  <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
+  {button.disabled ? 'Loading...' : button.label}
+</button>
               ))}
 
               <button
