@@ -426,10 +426,10 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
             <button
               type="button"
               onClick={() => setNewestFirst((current) => !current)}
-              className={`flex h-9 w-9 items-center justify-center rounded-full ${theme.soft} ${theme.text}`}
+              className="flex h-9 w-9 items-center justify-center active:scale-95"
               aria-label="Reverse episode order"
             >
-              <img src="/assets/Icons/Revers.svg" alt="Reverse" className="h-5 w-5" />
+              <img src="/assets/Icons/Revers.svg" alt="Reverse" className="h-4 w-4" />
             </button>
           </div>
         </div>
