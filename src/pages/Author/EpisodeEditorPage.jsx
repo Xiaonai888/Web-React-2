@@ -732,9 +732,15 @@ export default function EpisodeEditorPage() {
 }
 
   const handleDiscard = () => {
-    setShowExitModal(false)
-    navigate(`/author/story/${storyId}/manage`, { replace: true })
+  setShowExitModal(false)
+
+  if (searchParams.get('fromPublishSuccess') === '1') {
+    navigate('/author/dashboard', { replace: true })
+    return
   }
+
+  navigate(`/author/story/${storyId}/manage`, { replace: true })
+}
 
   const handleSaveDraftAndLeave = async () => {
     setShowExitModal(false)
