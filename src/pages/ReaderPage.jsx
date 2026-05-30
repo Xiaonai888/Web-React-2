@@ -1298,11 +1298,7 @@ export default function ReaderPage() {
               {episode?.title || 'Reader'}
             </h1>
 
-            {episode ? (
-              <div className={`mt-0.5 text-[10.5px] font-bold ${theme.muted}`}>
-                EP {episode.episode_number || 1}
-              </div>
-            ) : null}
+           
           </div>
 
           <div className="flex items-center gap-2">
