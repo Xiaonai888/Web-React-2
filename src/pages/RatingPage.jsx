@@ -248,7 +248,8 @@ function ReviewBottomSheet({
 
 export default function RatingPage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { storyId } = useParams()
+  const id = storyId
 
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
