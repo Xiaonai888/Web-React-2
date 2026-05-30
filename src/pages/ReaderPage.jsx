@@ -429,7 +429,7 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
               className={`flex h-9 w-9 items-center justify-center rounded-full ${theme.soft} ${theme.text}`}
               aria-label="Reverse episode order"
             >
-              <i className="fa-solid fa-arrow-up-arrow-down text-[14px]" />
+              <img src="/assets/Icons/Revers.svg" alt="Reverse" className="h-5 w-5" />
             </button>
           </div>
         </div>
