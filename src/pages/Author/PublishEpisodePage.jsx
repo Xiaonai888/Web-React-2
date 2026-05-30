@@ -324,7 +324,7 @@ export default function PublishEpisodePage() {
       setLoading(true)
 
       await updateEpisodeStatus()
-      setSuccessOpen(true)
+navigate('/author/dashboard', { replace: true })
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
