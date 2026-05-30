@@ -323,8 +323,8 @@ export default function PublishEpisodePage() {
     try {
       setLoading(true)
 
-     await updateEpisodeStatus()
-setSuccessOpen(true)
+      await updateEpisodeStatus()
+      setSuccessOpen(true)
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
@@ -336,17 +336,25 @@ setSuccessOpen(true)
     }
   }
 
+  const navigateAfterSuccess = (targetPath) => {
+    navigate('/author/dashboard', { replace: true })
+
+    window.setTimeout(() => {
+      navigate(targetPath)
+    }, 0)
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <Toast message={toast} onClose={() => setToast('')} />
 
       <SuccessModal
-  open={successOpen}
-  isFirstEpisode={isFirstEpisode}
-  releaseOption={releaseOption}
-  onStoryManager={() => navigate(`/author/story/${storyId}/manage`, { replace: true })}
-  onAddEpisode={() => navigate(`/author/story/${storyId}/episode/create?first=0`, { replace: true })}
-/>
+        open={successOpen}
+        isFirstEpisode={isFirstEpisode}
+        releaseOption={releaseOption}
+        onStoryManager={() => navigateAfterSuccess(`/author/story/${storyId}/manage`)}
+        onAddEpisode={() => navigateAfterSuccess(`/author/story/${storyId}/episode/create?first=0`)}
+      />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
