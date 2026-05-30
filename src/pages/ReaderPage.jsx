@@ -610,7 +610,9 @@ function ReaderSettingsDrawer({
   onOpenFontList,
   onOpenReset,
 }) {
-  if (!open) return null
+  const [moreSettingsOpen, setMoreSettingsOpen] = useState(false)
+  const dragStartYRef = useRef(0)
+  const dragCurrentYRef = useRef(0)
 
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const lineSpacingOrder = ['compact', 'normal', 'comfort']
@@ -621,7 +623,6 @@ function ReaderSettingsDrawer({
   }
   const lineSpacingIndex = Math.max(0, lineSpacingOrder.indexOf(lineSpacing))
   const lineSpacingValue = lineSpacingValues[lineSpacing] || lineSpacingValues.comfort
-  const [moreSettingsOpen, setMoreSettingsOpen] = useState(false)
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -639,26 +640,23 @@ function ReaderSettingsDrawer({
     setLineSpacing(lineSpacingOrder[Math.min(lineSpacingOrder.length - 1, lineSpacingIndex + 1)] || 'comfort')
   }
 
-  const dragStartYRef = useRef(0)
-const dragCurrentYRef = useRef(0)
-
-const handleDragStart = (event) => {
-  dragStartYRef.current = event.touches?.[0]?.clientY || event.clientY || 0
-  dragCurrentYRef.current = dragStartYRef.current
-}
-
-const handleDragMove = (event) => {
-  dragCurrentYRef.current = event.touches?.[0]?.clientY || event.clientY || dragCurrentYRef.current
-}
-
-const handleDragEnd = () => {
-  if (dragCurrentYRef.current - dragStartYRef.current > 70) {
-    onClose()
+  const handleDragStart = (event) => {
+    dragStartYRef.current = event.touches?.[0]?.clientY || event.clientY || 0
+    dragCurrentYRef.current = dragStartYRef.current
   }
 
-  dragStartYRef.current = 0
-  dragCurrentYRef.current = 0
-}
+  const handleDragMove = (event) => {
+    dragCurrentYRef.current = event.touches?.[0]?.clientY || event.clientY || dragCurrentYRef.current
+  }
+
+  const handleDragEnd = () => {
+    if (dragCurrentYRef.current - dragStartYRef.current > 70) {
+      onClose()
+    }
+
+    dragStartYRef.current = 0
+    dragCurrentYRef.current = 0
+  }
 
   const handleAutoScrollToggle = () => {
     setAutoScrollEnabled((current) => {
@@ -667,6 +665,8 @@ const handleDragEnd = () => {
       return next
     })
   }
+
+  if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[145]">
@@ -677,16 +677,15 @@ const handleDragEnd = () => {
         className="absolute inset-0 bg-black/35"
       />
 
-     <section
-  className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]"
-  onTouchStart={handleDragStart}
-  onTouchMove={handleDragMove}
-  onTouchEnd={handleDragEnd}
-  onMouseDown={handleDragStart}
-  onMouseMove={handleDragMove}
-  onMouseUp={handleDragEnd}
->
-
+      <section
+        className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]"
+        onTouchStart={handleDragStart}
+        onTouchMove={handleDragMove}
+        onTouchEnd={handleDragEnd}
+        onMouseDown={handleDragStart}
+        onMouseMove={handleDragMove}
+        onMouseUp={handleDragEnd}
+      >
         <div className="px-3 pt-2 pb-6">
           <SettingSection title="Brightness">
             <div className="flex items-center gap-3">
@@ -806,103 +805,127 @@ const handleDragEnd = () => {
             </button>
           </SettingSection>
 
-         <section className="px-2 py-3 text-center">
-  <button
-    type="button"
-    onClick={() => setMoreSettingsOpen(true)}
-    className="text-[13px] font-black text-[#8d94a1] active:scale-[0.98]"
-  >
-    More Setting
-  </button>
-</section>
+          <section className="px-2 py-3 text-center">
+            <button
+              type="button"
+              onClick={() => setMoreSettingsOpen(true)}
+              className="text-[13px] font-black text-[#8d94a1] active:scale-[0.98]"
+            >
+              More Setting
+            </button>
+          </section>
+        </div>
+      </section>
 
-          {moreSettingsOpen ? (
-            <>
-              <SettingSection title="Reading Preferences">
-            <div className="grid grid-cols-2 gap-2">
+      {moreSettingsOpen ? (
+        <div className="fixed inset-0 z-[155]">
+          <button
+            type="button"
+            aria-label="Close more settings"
+            onClick={() => setMoreSettingsOpen(false)}
+            className="absolute inset-0 bg-black/35"
+          />
+
+          <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white px-3 pt-2 pb-6 shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[420px] md:rounded-[26px]">
+            <div className="flex items-center gap-3 px-2 py-3">
               <button
                 type="button"
-                onClick={() => {
-                  setReadingMode('paging')
-                  setAutoScrollEnabled(false)
-                }}
-                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
+                onClick={() => setMoreSettingsOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+                aria-label="Back to reader settings"
               >
-                Paging
+                <i className="fa-solid fa-chevron-left text-[13px]" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => setReadingMode('scroll')}
-                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
-              >
-                Scrolling
-              </button>
+              <h3 className="text-[15px] font-black text-[#111827]">More Setting</h3>
             </div>
 
-            {readingMode === 'scroll' ? (
-              <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
-                    <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-                      Available only in Scrolling mode
-                    </p>
-                  </div>
+            <div className="px-3 pt-1 pb-4">
+              <SettingSection title="Reading Preferences">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReadingMode('paging')
+                      setAutoScrollEnabled(false)
+                    }}
+                    className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                      readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                    }`}
+                  >
+                    Paging
+                  </button>
 
                   <button
                     type="button"
-                    onClick={handleAutoScrollToggle}
-                    className={`h-9 rounded-full px-4 text-[11px] font-black active:scale-[0.995] ${
-                      autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+                    onClick={() => setReadingMode('scroll')}
+                    className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                      readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
                     }`}
                   >
-                    {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                    Scrolling
                   </button>
                 </div>
 
-                <div>
-                  <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
-  {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
-</div>
+                {readingMode === 'scroll' ? (
+                  <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
+                        <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
+                          Available only in Scrolling mode
+                        </p>
+                      </div>
 
-<div className="flex items-center gap-3">
-  <img src="/assets/Icons/Turtle.svg" alt="Slow" className="h-6 w-6 shrink-0" />
+                      <button
+                        type="button"
+                        onClick={handleAutoScrollToggle}
+                        className={`h-9 rounded-full px-4 text-[11px] font-black active:scale-[0.995] ${
+                          autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+                        }`}
+                      >
+                        {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                      </button>
+                    </div>
 
-  <input
-    type="range"
-    min="0"
-    max={AUTO_SCROLL_SPEEDS.length - 1}
-    step="1"
-    value={autoScrollSpeed}
-    onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
-    className="w-full accent-[#111827]"
-  />
+                    <div>
+                      <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
+                        {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
+                      </div>
 
-  <img src="/assets/Icons/Rabbit.svg" alt="Fast" className="h-6 w-6 shrink-0" />
-</div>
-                </div>
-              </div>
-            ) : null}
-          </SettingSection>
+                      <div className="flex items-center gap-3">
+                        <img src="/assets/Icons/Turtle.svg" alt="Slow" className="h-6 w-6 shrink-0" />
+
+                        <input
+                          type="range"
+                          min="0"
+                          max={AUTO_SCROLL_SPEEDS.length - 1}
+                          step="1"
+                          value={autoScrollSpeed}
+                          onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
+                          className="w-full accent-[#111827]"
+                        />
+
+                        <img src="/assets/Icons/Rabbit.svg" alt="Fast" className="h-6 w-6 shrink-0" />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </SettingSection>
 
               <section className="px-2 pt-1">
-            <button
-              type="button"
-              onClick={onOpenReset}
-              className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
-            >
-              Reset Settings
-            </button>
+                <button
+                  type="button"
+                  onClick={onOpenReset}
+                  className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
+                >
+                  Reset Settings
+                </button>
+              </section>
+            </div>
           </section>
-            </>
-          ) : null}
         </div>
-      </section>
+      ) : null}
     </div>
   )
 }
