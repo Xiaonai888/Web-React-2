@@ -1360,7 +1360,7 @@ export default function ReaderPage() {
                 className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.ghost}`}
               >
                 <i className="fa-solid fa-chevron-left mr-2 text-[12px]" />
-                Previous2
+                Previous
               </button>
 
               <button
@@ -1373,40 +1373,28 @@ export default function ReaderPage() {
                 <i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
               </button>
             </section>
-{!nextEpisode ? (
-  <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-    <h3 className="text-[20px] font-black tracking-wide text-[#1d4ed8]">
-      TO BE CONTINUED
-    </h3>
 
-    <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.muted}`}>
-      The story ends here… but the adventure is just beginning.
-    </p>
+            <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
+                  <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
+                    {nextEpisode ? `Next: EP ${nextEpisode.episode_number || ''}` : 'You reached the latest episode'}
+                  </p>
+                </div>
 
-    <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
-      <span className="h-px flex-1 bg-[#111827]/45" />
-      <span className="text-[18px] leading-none text-[#d11f2f]">♥</span>
-      <span className="h-px flex-1 bg-[#111827]/45" />
+                <button
+                  type="button"
+                  onClick={() => setEpisodeListOpen(true)}
+                  className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
+                >
+                  Episodes
+                </button>
+              </div>
+            </section>
+          </>
+        ) : null}
+      </main>
     </div>
-  </section>
-) : (
-  <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
-        <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
-          Next: EP {nextEpisode.episode_number || ''}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setEpisodeListOpen(true)}
-        className={`rounded-full px-4 py-2 text-[12px] font-extrabold ${theme.ghost} active:scale-[0.99]`}
-      >
-        Episodes
-      </button>
-    </div>
-  </section>
-)}
-            
+  )
+}
