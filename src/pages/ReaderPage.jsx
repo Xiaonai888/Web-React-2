@@ -626,6 +626,8 @@ function ReaderSettingsDrawer({
   setBrightness,
   lineSpacing,
   setLineSpacing,
+  readingMode,
+  setReadingMode,
   autoScrollEnabled,
   setAutoScrollEnabled,
   autoScrollSpeed,
@@ -774,34 +776,65 @@ function ReaderSettingsDrawer({
             </div>
           </SettingSection>
 
-          <SettingSection title="Auto Scroll">
-            <button
-              type="button"
-              onClick={handleAutoScrollToggle}
-              className={`h-12 w-full rounded-[18px] text-[13px] font-black active:scale-[0.995] ${
-                autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
-              }`}
-            >
-              {autoScrollEnabled ? 'Turn Off Auto Scroll' : 'Turn On Auto Scroll'}
-            </button>
+          <SettingSection title="Reading Preferences">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setReadingMode('paging')
+                  setAutoScrollEnabled(false)
+                }}
+                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                Paging
+              </button>
 
-            {autoScrollEnabled ? (
-              <div className="mt-4">
-                <div className="mb-2 flex items-center justify-between text-[12px] font-black text-[#667085]">
-                  <span>🐢</span>
-                  <span>{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
-                  <span>🐇</span>
-                </div>
+              <button
+                type="button"
+                onClick={() => setReadingMode('scroll')}
+                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                Scrolling
+              </button>
+            </div>
 
-                <input
-                  type="range"
-                  min="0"
-                  max={AUTO_SCROLL_SPEEDS.length - 1}
-                  step="1"
-                  value={autoScrollSpeed}
-                  onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
-                  className="w-full accent-[#111827]"
-                />
+            {readingMode === 'scroll' ? (
+              <div className="mt-5">
+                <h4 className="mb-3 text-[13px] font-black text-[#111827]">Auto Scroll</h4>
+
+                <button
+                  type="button"
+                  onClick={handleAutoScrollToggle}
+                  className={`h-12 w-full rounded-[18px] text-[13px] font-black active:scale-[0.995] ${
+                    autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+                  }`}
+                >
+                  {autoScrollEnabled ? 'Turn Off Auto Scroll' : 'Turn On Auto Scroll'}
+                </button>
+
+                {autoScrollEnabled ? (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between text-[24px] font-black text-[#111827]">
+                      <span>🐢</span>
+                      <span className="text-[12px] text-[#667085]">{AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}</span>
+                      <span>🐇</span>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="0"
+                      max={AUTO_SCROLL_SPEEDS.length - 1}
+                      step="1"
+                      value={autoScrollSpeed}
+                      onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
+                      className="w-full accent-[#111827]"
+                    />
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </SettingSection>
@@ -836,6 +869,7 @@ export default function ReaderPage() {
   const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'paper')
   const [brightness, setBrightness] = useState(() => Number(localStorage.getItem('reader_brightness') || 100))
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
+  const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false)
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(() => Number(localStorage.getItem('reader_auto_scroll_speed') || 1))
   const [adultWarningOpen, setAdultWarningOpen] = useState(false)
@@ -872,6 +906,10 @@ export default function ReaderPage() {
   useEffect(() => {
     localStorage.setItem('reader_line_spacing', lineSpacing)
   }, [lineSpacing])
+
+  useEffect(() => {
+    localStorage.setItem('reader_reading_mode', readingMode)
+  }, [readingMode])
 
   useEffect(() => {
     localStorage.setItem('reader_auto_scroll_speed', String(autoScrollSpeed))
@@ -994,7 +1032,7 @@ export default function ReaderPage() {
       autoScrollFrameRef.current = null
     }
 
-    if (!autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
+    if (readingMode !== 'scroll' || !autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
       return undefined
     }
 
@@ -1022,7 +1060,7 @@ export default function ReaderPage() {
         autoScrollFrameRef.current = null
       }
     }
-  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
+  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, readingMode, resetOpen, settingsOpen])
 
   const currentIndex = episodes.findIndex((item) => item.id === episodeId)
   const previousEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null
@@ -1048,6 +1086,7 @@ export default function ReaderPage() {
     setThemeName('paper')
     setBrightness(100)
     setLineSpacing('comfort')
+    setReadingMode('scroll')
     setAutoScrollEnabled(false)
     setAutoScrollSpeed(1)
     setResetOpen(false)
@@ -1062,7 +1101,7 @@ export default function ReaderPage() {
         />
       ) : null}
 
-      {autoScrollEnabled ? (
+      {readingMode === 'scroll' && autoScrollEnabled ? (
         <button
           type="button"
           onClick={() => setAutoScrollEnabled(false)}
@@ -1116,6 +1155,8 @@ export default function ReaderPage() {
         setBrightness={setBrightness}
         lineSpacing={lineSpacing}
         setLineSpacing={setLineSpacing}
+        readingMode={readingMode}
+        setReadingMode={setReadingMode}
         autoScrollEnabled={autoScrollEnabled}
         setAutoScrollEnabled={setAutoScrollEnabled}
         autoScrollSpeed={autoScrollSpeed}
