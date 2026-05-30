@@ -161,6 +161,39 @@ async function fetchPublicAuthorPage(pageUsername) {
   return data.author_page || data.author || data.page || null
 }
 
+async function fetchMyAuthorPage() {
+  const token = getAuthToken()
+
+  if (!token) return null
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    return null
+  }
+
+  return data.author_page || null
+}
+
+function StatItem({ value, label }) {
+  return (
+    <div className="min-w-0 text-center">
+      <div className="text-[18px] font-black leading-tight text-[#111827] sm:text-[20px]">
+        {formatCompactNumber(value)}
+      </div>
+      <div className="mt-0.5 text-[12px] font-semibold text-[#6b7280] sm:text-[13px]">
+        {label}
+      </div>
+    </div>
+  )
+}
+
+
 function EmptyPanel({ title, text }) {
   return (
     <div className="rounded-[24px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
