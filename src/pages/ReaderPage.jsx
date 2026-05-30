@@ -621,6 +621,7 @@ function ReaderSettingsDrawer({
   }
   const lineSpacingIndex = Math.max(0, lineSpacingOrder.indexOf(lineSpacing))
   const lineSpacingValue = lineSpacingValues[lineSpacing] || lineSpacingValues.comfort
+  const [moreSettingsOpen, setMoreSettingsOpen] = useState(false)
 
   const decreaseFont = () => {
     setFontSizeIndex((current) => Math.max(0, current - 1))
@@ -687,6 +688,22 @@ const handleDragEnd = () => {
 >
 
         <div className="px-3 pt-2 pb-6">
+          <SettingSection title="Brightness">
+            <div className="flex items-center gap-3">
+              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
+              <input
+                type="range"
+                min="60"
+                max="100"
+                step="5"
+                value={brightness}
+                onChange={(event) => setBrightness(Number(event.target.value))}
+                className="w-full accent-[#111827]"
+              />
+              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
+            </div>
+          </SettingSection>
+
           <SettingSection title="Font & Spacing">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-[20px] bg-[#fafafe] p-2.5">
@@ -753,19 +770,6 @@ const handleDragEnd = () => {
             </div>
           </SettingSection>
 
-          <SettingSection title="Font Style">
-            <button
-              type="button"
-              onClick={onOpenFontList}
-              className="flex h-14 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-left active:scale-[0.995]"
-            >
-              <span className="line-clamp-1 text-[14px] font-black text-[#111827]" style={{ fontFamily: selectedFont.family }}>
-                {selectedFont.label}
-              </span>
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#8d94a1]" />
-            </button>
-          </SettingSection>
-
           <SettingSection title="Page Color">
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(READER_THEMES).map(([key, item]) => (
@@ -789,23 +793,33 @@ const handleDragEnd = () => {
             </div>
           </SettingSection>
 
-          <SettingSection title="Brightness">
-            <div className="flex items-center gap-3">
-              <i className="fa-regular fa-sun text-[18px] text-[#111827]" />
-              <input
-                type="range"
-                min="60"
-                max="100"
-                step="5"
-                value={brightness}
-                onChange={(event) => setBrightness(Number(event.target.value))}
-                className="w-full accent-[#111827]"
-              />
-              <span className="w-10 text-right text-[12px] font-extrabold text-[#667085]">{brightness}%</span>
-            </div>
+          <SettingSection title="Font Style">
+            <button
+              type="button"
+              onClick={onOpenFontList}
+              className="flex h-14 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-left active:scale-[0.995]"
+            >
+              <span className="line-clamp-1 text-[14px] font-black text-[#111827]" style={{ fontFamily: selectedFont.family }}>
+                {selectedFont.label}
+              </span>
+              <i className="fa-solid fa-chevron-right text-[12px] text-[#8d94a1]" />
+            </button>
           </SettingSection>
 
-          <SettingSection title="Reading Preferences">
+          <section className="px-2 py-3">
+            <button
+              type="button"
+              onClick={() => setMoreSettingsOpen((current) => !current)}
+              className="flex h-12 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-[13px] font-black text-[#111827] active:scale-[0.995]"
+            >
+              <span>More Setting</span>
+              <i className={`fa-solid ${moreSettingsOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px] text-[#8d94a1]`} />
+            </button>
+          </section>
+
+          {moreSettingsOpen ? (
+            <>
+              <SettingSection title="Reading Preferences">
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -877,7 +891,7 @@ const handleDragEnd = () => {
             ) : null}
           </SettingSection>
 
-          <section className="px-2 pt-1">
+              <section className="px-2 pt-1">
             <button
               type="button"
               onClick={onOpenReset}
@@ -886,6 +900,8 @@ const handleDragEnd = () => {
               Reset Settings
             </button>
           </section>
+            </>
+          ) : null}
         </div>
       </section>
     </div>
@@ -1374,42 +1390,24 @@ export default function ReaderPage() {
               </button>
             </section>
 
-            {!nextEpisode ? (
-              <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-                <h3 className="text-[20px] font-black tracking-wide text-[#111827]">
-                  TO BE CONTINUED
-                </h3>
-
-                <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.muted}`}>
-                  The story ends here… but the adventure is just beginning.
-                </p>
-
-                <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
-                  <span className="h-px flex-1 bg-[#111827]/45" />
-                  <span className="text-[15px] leading-none text-[#e5484d]">♥</span>
-                  <span className="h-px flex-1 bg-[#111827]/45" />
+            <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
+                  <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
+                    {nextEpisode ? `Next: EP ${nextEpisode.episode_number || ''}` : 'You reached the latest episode'}
+                  </p>
                 </div>
-              </section>
-            ) : (
-              <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
-                    <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
-                      Next: EP {nextEpisode.episode_number || ''}
-                    </p>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setEpisodeListOpen(true)}
-                    className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
-                  >
-                    Episodes
-                  </button>
-                </div>
-              </section>
-            )}
+                <button
+                  type="button"
+                  onClick={() => setEpisodeListOpen(true)}
+                  className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
+                >
+                  Episodes
+                </button>
+              </div>
+            </section>
           </>
         ) : null}
       </main>
