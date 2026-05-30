@@ -247,17 +247,12 @@ function splitParagraphs(content) {
 
   if (!text) return []
 
-  const doubleBreakParagraphs = text
-    .split(/\n{2,}/)
+  const paragraphs = text
+    .split(/\n\s*\n+/)
     .map((item) => item.trim())
     .filter(Boolean)
 
-  if (doubleBreakParagraphs.length > 1) return doubleBreakParagraphs
-
-  return text
-    .split(/\n/)
-    .map((item) => item.trim())
-    .filter(Boolean)
+  return paragraphs.length ? paragraphs : [text]
 }
 
 function getReviewReadKey(storyId) {
