@@ -15,8 +15,8 @@ export default function ReaderBottomActionBar({ visible, story, episode, onOpenC
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-0 left-0 right-0 z-[80] px-0 pb-[env(safe-area-inset-bottom)] transition-transform duration-300 md:bottom-4 md:px-4 ${
-        visible ? 'translate-y-0' : 'translate-y-[120%]'
+      className={`pointer-events-none fixed bottom-0 left-0 right-0 z-[95] px-0 pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-out md:bottom-4 md:px-4 ${
+        visible ? 'translate-y-0' : 'translate-y-[calc(100%+16px)]'
       }`}
     >
       <div className="pointer-events-auto mx-auto max-w-3xl border-t border-[#e5e7eb] bg-white/95 shadow-[0_-10px_28px_rgba(17,24,39,0.06)] backdrop-blur md:rounded-[18px] md:border md:shadow-[0_14px_34px_rgba(17,24,39,0.10)]">
