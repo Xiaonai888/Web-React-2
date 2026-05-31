@@ -8,7 +8,7 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-export default function ReaderBottomActionBar({ visible, story, episode, onOpenComments, onOpenEcho }) {
+export default function ReaderBottomActionBar({ visible, story, episode, onOpenComments, onOpenEcho, onOpenReaction }) {
   const likeCount = formatCompactNumber(episode?.like_count || episode?.likes_count || story?.like_count || story?.likes_count || 0)
   const commentCount = formatCompactNumber(episode?.comment_count || episode?.comments_count || story?.comment_count || story?.comments_count || 0)
   const echoCount = formatCompactNumber(episode?.echo_count || episode?.echoes_count || story?.echo_count || story?.echoes_count || 0)
@@ -33,7 +33,7 @@ export default function ReaderBottomActionBar({ visible, story, episode, onOpenC
         </div>
 
         <div className="grid grid-cols-3 px-2 py-1.5 text-[12px] font-bold text-[#65676b]">
-          <button type="button" className="flex h-9 items-center justify-center gap-2 rounded-[12px] active:scale-95 active:bg-[#f2f3f5]">
+          <button type="button" onClick={onOpenReaction} className="flex h-9 items-center justify-center gap-2 rounded-[12px] active:scale-95 active:bg-[#f2f3f5]">
             <i className="fa-regular fa-heart text-[15px]" />
             <span>Like</span>
           </button>
