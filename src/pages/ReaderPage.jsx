@@ -675,6 +675,119 @@ const handleDragEnd = () => {
     })
   }
 
+
+  if (moreSettingsOpen) {
+    return (
+      <div className="fixed inset-0 z-[146] bg-white">
+        <div className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-[#f0eef6] bg-white px-4">
+          <button
+            type="button"
+            onClick={() => setMoreSettingsOpen(false)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Back to reader settings"
+          >
+            <i className="fa-solid fa-chevron-left text-[14px]" />
+          </button>
+
+          <h2 className="text-[15px] font-black text-[#111827]">More Setting</h2>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Close reader settings"
+          >
+            <i className="fa-solid fa-xmark text-[15px]" />
+          </button>
+        </div>
+
+        <div className="mx-auto max-w-[520px] px-4 py-5">
+          <SettingSection title="Reading Preferences">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setReadingMode('paging')
+                  setAutoScrollEnabled(false)
+                }}
+                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                Paging
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReadingMode('scroll')}
+                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
+                  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                Scrolling
+              </button>
+            </div>
+
+            {readingMode === 'scroll' ? (
+              <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
+                    <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
+                      Available only in Scrolling mode
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAutoScrollToggle}
+                    className={`h-9 rounded-full px-4 text-[11px] font-black active:scale-[0.995] ${
+                      autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+                    }`}
+                  >
+                    {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                  </button>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
+                    {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <img src="/assets/Icons/Turtle.svg" alt="Slow" className="h-6 w-6 shrink-0" />
+
+                    <input
+                      type="range"
+                      min="0"
+                      max={AUTO_SCROLL_SPEEDS.length - 1}
+                      step="1"
+                      value={autoScrollSpeed}
+                      onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
+                      className="w-full accent-[#111827]"
+                    />
+
+                    <img src="/assets/Icons/Rabbit.svg" alt="Fast" className="h-6 w-6 shrink-0" />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </SettingSection>
+
+          <section className="px-2 pt-1">
+            <button
+              type="button"
+              onClick={onOpenReset}
+              className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
+            >
+              Reset Settings
+            </button>
+          </section>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[145]">
       <button
