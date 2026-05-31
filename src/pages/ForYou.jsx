@@ -439,11 +439,16 @@ if (tab.slug === 'martial-arts') {
   return
 }           
 
-                      if (tab.slug === 'revenge') {
+if (tab.slug === 'revenge') {
   navigate('/genre/revenge')
   return
 }
-                      
+
+
+if (tab.slug === 'ceo') {
+  navigate('/genre/ceo')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
