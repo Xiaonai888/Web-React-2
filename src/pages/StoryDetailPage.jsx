@@ -32,9 +32,9 @@ function authHeaders() {
 
 function LoadingBlock() {
   return (
-    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto mb-4 h-9 w-9 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-      <div className="text-[14px] font-extrabold text-[#667085]">Loading story...</div>
+    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#eef1f5] border-t-[#111827]" />
+      <div className="text-[13px] font-black text-[#667085]">Opening story...</div>
     </div>
   )
 }
