@@ -454,7 +454,12 @@ if (tab.slug === 'ceo') {
 if (tab.slug === 'slow-burn') {
   navigate('/genre/slow-burn')
   return
-}                      
+}         
+
+if (tab.slug === 'enemies-to-lovers') {
+  navigate('/genre/enemies-to-lovers')
+  return
+}                     
                       
   setActiveGenre(tab.slug)
 }}
