@@ -33,13 +33,14 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   }
 
   const handleDragMove = (event) => {
-    if (!draggingRef.current) return
+  if (!draggingRef.current) return
+  if (event.cancelable) event.preventDefault()
 
-    currentYRef.current = getPointerY(event)
-    const nextOffset = Math.max(0, currentYRef.current - startYRef.current)
+  currentYRef.current = getPointerY(event)
+  const nextOffset = Math.max(0, currentYRef.current - startYRef.current)
 
-    setDragOffset(nextOffset)
-  }
+  setDragOffset(nextOffset)
+}
 
   const handleDragEnd = () => {
   if (!draggingRef.current) return
@@ -47,7 +48,7 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   const distance = Math.max(0, currentYRef.current - startYRef.current)
   draggingRef.current = false
 
-  if (distance > 120) {
+  if (distance > 70) {
     onClose()
     return
   }
@@ -74,10 +75,12 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   onTouchStart={handleDragStart}
   onTouchMove={handleDragMove}
   onTouchEnd={handleDragEnd}
+  onTouchCancel={handleDragEnd}
   onMouseDown={handleDragStart}
   onMouseMove={handleDragMove}
   onMouseUp={handleDragEnd}
   className="shrink-0 cursor-grab bg-white px-4 pb-2 pt-3"
+  style={{ touchAction: 'none' }}
 >
           <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
         </div>
