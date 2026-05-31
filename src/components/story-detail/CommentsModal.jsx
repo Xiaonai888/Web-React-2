@@ -73,7 +73,7 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
       <section
         ref={sheetRef}
         className="relative flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl transition-transform duration-200 sm:h-[82vh] sm:rounded-[28px]"
-        style={{ transform: `translateY(${dragOffset}px)` }}
+        style={{ transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : 'translateY(0)' }}
       >
         <div
           role="button"
@@ -87,14 +87,7 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
 
         <header className="shrink-0 border-b border-[#eef1f5] bg-white px-4 pb-3">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-              aria-label="Close"
-            >
-              <i className="fa-solid fa-xmark text-[15px]" />
-            </button>
+            <div className="h-10 w-10" />
 
             <div className="min-w-0 flex-1 px-2 text-center">
               <h2 className="text-[17px] font-black text-[#111827]">Comments</h2>
