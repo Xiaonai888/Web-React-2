@@ -71,13 +71,10 @@ const handleDragEnd = () => {
       >
         <div
   role="presentation"
-  onTouchStart={handleDragStart}
-  onTouchMove={handleDragMove}
-  onTouchEnd={handleDragEnd}
-  onTouchCancel={handleDragEnd}
-  onMouseDown={handleDragStart}
-  onMouseMove={handleDragMove}
-  onMouseUp={handleDragEnd}
+  onPointerDown={handleDragStart}
+  onPointerMove={handleDragMove}
+  onPointerUp={handleDragEnd}
+  onPointerCancel={handleDragEnd}
   className="shrink-0 cursor-grab bg-white px-4 pb-2 pt-3"
   style={{ touchAction: 'none' }}
 >
