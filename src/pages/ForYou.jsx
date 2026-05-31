@@ -412,7 +412,12 @@ if (tab.slug === 'sci-fi' || tab.slug === 'scifi') {
 if (tab.slug === 'drama') {
   navigate('/genre/drama')
   return
-}                      
+}       
+
+if (tab.slug === 'thriller') {
+  navigate('/genre/thriller')
+  return
+}                     
                       
   setActiveGenre(tab.slug)
 }}
