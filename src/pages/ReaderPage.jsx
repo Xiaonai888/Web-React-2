@@ -1290,6 +1290,7 @@ export default function ReaderPage() {
   episode={episode}
   onOpenComments={() => setCommentsOpen(true)}
   onOpenEcho={() => setEchoShareOpen(true)}
+  onOpenReaction={() => navigate(`/story/${storyId}/reaction`)}
 />
 
       <header className={`${bottomActionsVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur transition-transform duration-300 ease-out`}>
