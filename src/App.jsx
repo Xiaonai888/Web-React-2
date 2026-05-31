@@ -87,7 +87,7 @@ const StrongFemaleLeadGenrePage = lazy(() => import('./pages/Genre/StrongFemaleL
 const HiddenIdentityGenrePage = lazy(() => import('./pages/Genre/HiddenIdentityGenrePage'))
 const RoyaltyGenrePage = lazy(() => import('./pages/Genre/RoyaltyGenrePage'))
 const MagicGenrePage = lazy(() => import('./pages/Genre/MagicGenrePage'))
-
+const SecondChanceGenrePage = lazy(() => import('./pages/Genre/SecondChanceGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -516,6 +516,15 @@ function AppShell() {
   element={
     <LazyPage>
       <MagicGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/second-chance"
+  element={
+    <LazyPage>
+      <SecondChanceGenrePage />
     </LazyPage>
   }
 />
