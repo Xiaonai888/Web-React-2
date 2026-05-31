@@ -417,7 +417,12 @@ if (tab.slug === 'drama') {
 if (tab.slug === 'thriller') {
   navigate('/genre/thriller')
   return
-}                     
+}          
+
+if (tab.slug === 'system') {
+  navigate('/genre/system')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
