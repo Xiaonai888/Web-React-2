@@ -373,6 +373,12 @@ export default function ForYou() {
   return
 }
 
+  if (tab.slug === 'adventure') {
+  navigate('/genre/adventure')
+  return
+}
+
+                      
   setActiveGenre(tab.slug)
 }}
                     className={
