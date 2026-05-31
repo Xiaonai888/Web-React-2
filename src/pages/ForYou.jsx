@@ -448,6 +448,12 @@ if (tab.slug === 'revenge') {
 if (tab.slug === 'ceo') {
   navigate('/genre/ceo')
   return
+}       
+
+
+if (tab.slug === 'slow-burn') {
+  navigate('/genre/slow-burn')
+  return
 }                      
                       
   setActiveGenre(tab.slug)
