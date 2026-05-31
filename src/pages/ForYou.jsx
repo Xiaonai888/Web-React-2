@@ -387,7 +387,12 @@ if (tab.slug === 'school-life') {
 if (tab.slug === 'historical') {
   navigate('/genre/historical')
   return
-}                      
+}    
+
+if (tab.slug === 'mystery') {
+  navigate('/genre/mystery')
+  return
+}                    
                       
   setActiveGenre(tab.slug)
 }}
