@@ -188,42 +188,65 @@ export default function RankingPage() {
   const activeConfig = rankingTabs.find((tab) => tab.key === activeTab) || rankingTabs[0]
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchRankingStories() {
-      try {
-        setLoading(true)
+  async function fetchRankingStories() {
+    try {
+      setLoading(true)
 
-        const response = await fetch(`${API_URL}/api/public/stories?limit=24&sort=${activeConfig.sort}`)
+      const publicUrl = `${API_URL}/api/public/stories?limit=24&sort=${activeConfig.sort}`
+      const exclusiveUrl = `${API_URL}/api/public/shadow-exclusive/stories?limit=24&sort=${activeConfig.sort}`
+
+      const [publicResult, exclusiveResult] = await Promise.allSettled([
+        fetch(publicUrl),
+        fetch(exclusiveUrl),
+      ])
+
+      async function readStories(result) {
+        if (result.status !== 'fulfilled') return []
+
+        const response = result.value
         const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load ranking')
-        }
+        if (!response.ok || data.ok === false) return []
 
-        let nextStories = (data.stories || []).map(normalizeStory)
-
-        if (activeTab === 'completed') {
-          nextStories = nextStories.filter((story) => story.status === 'Completed')
-        }
-
-        if (!ignore) {
-          setStories(nextStories)
-        }
-      } catch (error) {
-        console.error('Fetch ranking error:', error)
-        if (!ignore) setStories([])
-      } finally {
-        if (!ignore) setLoading(false)
+        return Array.isArray(data.stories) ? data.stories : []
       }
-    }
 
-    fetchRankingStories()
+      const publicStories = await readStories(publicResult)
+      const exclusiveStories = await readStories(exclusiveResult)
 
-    return () => {
-      ignore = true
+      const storyMap = new Map()
+
+      ;[...publicStories, ...exclusiveStories].forEach((story) => {
+        if (story?.id && !storyMap.has(story.id)) {
+          storyMap.set(story.id, story)
+        }
+      })
+
+      let nextStories = Array.from(storyMap.values()).map(normalizeStory)
+
+      if (activeTab === 'completed') {
+        nextStories = nextStories.filter((story) => story.status === 'Completed')
+      }
+
+      if (!ignore) {
+        setStories(nextStories)
+      }
+    } catch (error) {
+      console.error('Fetch ranking error:', error)
+      if (!ignore) setStories([])
+    } finally {
+      if (!ignore) setLoading(false)
     }
-  }, [activeTab, activeConfig.sort])
+  }
+
+  fetchRankingStories()
+
+  return () => {
+    ignore = true
+  }
+}, [activeTab, activeConfig.sort])
 
   const topStories = useMemo(() => stories.slice(0, 3), [stories])
   const listStories = useMemo(() => stories.slice(3), [stories])
