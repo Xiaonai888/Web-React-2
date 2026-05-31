@@ -358,6 +358,11 @@ export default function ForYou() {
     return
   }
 
+  if (tab.slug === 'fantasy') {
+    navigate('/genre/fantasy')
+    return
+  }
+
   setActiveGenre(tab.slug)
 }}
                     className={
