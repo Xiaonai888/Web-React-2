@@ -347,7 +347,19 @@ export default function ForYou() {
                   <button
                     key={tab.slug}
                     type="button"
-                    onClick={() => setActiveGenre(tab.slug)}
+                    onClick={() => {
+  if (tab.slug === 'today') {
+    setActiveGenre(tab.slug)
+    return
+  }
+
+  if (tab.slug === 'romance') {
+    navigate('/genre/romance')
+    return
+  }
+
+  setActiveGenre(tab.slug)
+}}
                     className={
                       active
                         ? 'bg-[#111827] text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold'
