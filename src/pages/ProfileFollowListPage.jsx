@@ -27,11 +27,11 @@ function getStoredUser() {
   }
 }
 
-function Avatar({ user, size = 'h-12 w-12' }) {
+function Avatar({ user }) {
   const letter = String(user?.name || user?.username || 'U').slice(0, 1).toUpperCase()
 
   return (
-    <div className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[16px] font-black text-white`}>
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[16px] font-black text-white ring-1 ring-black/5">
       {user?.avatar_url ? (
         <img src={user.avatar_url} alt={user.name || user.username} className="h-full w-full object-cover" />
       ) : (
@@ -41,16 +41,18 @@ function Avatar({ user, size = 'h-12 w-12' }) {
   )
 }
 
-function FollowButton({ label, active, loading, onClick }) {
+function FollowButton({ label, active, followBack, loading, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={loading}
-      className={`h-9 min-w-[94px] shrink-0 rounded-[12px] px-4 text-[12px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`h-9 min-w-[96px] shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
         active
           ? 'bg-[#f3f4f6] text-[#111827]'
-          : 'bg-[#111827] text-white'
+          : followBack
+            ? 'bg-[#fff8df] text-[#9a6b00] ring-1 ring-[#f6b800]/45'
+            : 'bg-[#111827] text-white'
       }`}
     >
       {loading ? '...' : label}
@@ -58,24 +60,34 @@ function FollowButton({ label, active, loading, onClick }) {
   )
 }
 
-function EmptyState({ type }) {
+function EmptyState({ type, onFindReaders }) {
   const isFollowers = type === 'followers'
 
   return (
-    <section className="px-6 py-12 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/40">
-        <i className="fa-regular fa-user text-[24px]" />
+    <section className="px-4 py-6">
+      <div className="rounded-[24px] bg-white px-5 py-8 text-center ring-1 ring-[#f0eef6]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/50">
+          <i className="fa-regular fa-user text-[24px]" />
+        </div>
+
+        <h2 className="mt-4 text-[17px] font-black text-[#111827]">
+          {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
+        </h2>
+
+        <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+          {isFollowers
+            ? 'When people follow this reader, they will appear here.'
+            : 'Accounts this reader follows will appear here.'}
+        </p>
+
+        <button
+          type="button"
+          onClick={onFindReaders}
+          className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-black text-white active:scale-[0.98]"
+        >
+          Find readers
+        </button>
       </div>
-
-      <h2 className="mt-4 text-[17px] font-black text-[#111827]">
-        {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
-      </h2>
-
-      <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        {isFollowers
-          ? 'When people follow this account, they will appear here.'
-          : 'Accounts this user follows will appear here.'}
-      </p>
     </section>
   )
 }
@@ -122,6 +134,7 @@ function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
       <FollowButton
         label={buttonLabel}
         active={isFollowing}
+        followBack={isFollowBack}
         loading={loading}
         onClick={handleToggle}
       />
@@ -165,7 +178,7 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
         </div>
       </div>
 
-      <FollowButton label="Follow" active={false} loading={loading} onClick={handleFollow} />
+      <FollowButton label="Follow" active={false} followBack={false} loading={loading} onClick={handleFollow} />
 
       <button
         type="button"
@@ -179,6 +192,24 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
         <i className="fa-solid fa-xmark text-[13px]" />
       </button>
     </button>
+  )
+}
+
+function SuggestedEmptyCard() {
+  return (
+    <div className="mx-4 rounded-[22px] bg-[#fbfaf7] px-5 py-5 text-center ring-1 ring-[#f1ead8]">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#d49a00] ring-1 ring-[#f6d56b]/50">
+        <i className="fa-solid fa-users text-[18px]" />
+      </div>
+
+      <h3 className="mt-3 text-[14px] font-black text-[#111827]">
+        Suggestions will appear here soon
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        When real suggested readers are connected, this area will show people from the Shadow community.
+      </p>
+    </div>
   )
 }
 
@@ -318,6 +349,10 @@ export default function ProfileFollowListPage() {
     navigate('/profile', { replace: true })
   }
 
+  const handleFindReaders = () => {
+    navigate('/search')
+  }
+
   const handleOpenUser = (user) => {
     if (!user?.username) return
 
@@ -391,32 +426,35 @@ export default function ProfileFollowListPage() {
 
             <div className="min-w-0 flex-1">
               <h1 className="line-clamp-1 text-[17px] font-black text-[#111827]">@{username}</h1>
+              <p className="mt-0.5 text-[11px] font-bold text-[#9ca3af]">Reader connections</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 border-t border-[#f7f7fb] text-center text-[13px] font-black text-[#111827]">
+          <div className="mx-4 mb-3 grid grid-cols-2 rounded-[18px] bg-[#f8f7fb] p-1 text-center text-[13px] font-black text-[#111827]">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => handleTabChange(tab.key)}
-                className="relative py-3"
+                className={`relative rounded-[14px] py-3 transition ${
+                  safeType === tab.key ? 'bg-white shadow-sm ring-1 ring-black/5' : ''
+                }`}
               >
                 {tab.label}
                 {safeType === tab.key ? (
-                  <span className="absolute bottom-0 left-1/2 h-[3px] w-16 -translate-x-1/2 rounded-full bg-[#f6b800]" />
+                  <span className="absolute bottom-1 left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full bg-[#f6b800]" />
                 ) : null}
               </button>
             ))}
           </div>
 
-          <div className="px-4 py-3">
+          <div className="px-4 pb-3">
             <div className="flex h-11 items-center gap-2 rounded-full bg-[#f5f3fa] px-4">
               <i className="fas fa-search text-[13px] text-[#8b93a1]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search accounts"
+                placeholder="Search readers"
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
               />
             </div>
@@ -429,14 +467,14 @@ export default function ProfileFollowListPage() {
               {order === 'desc' ? 'Recent' : 'Oldest'}
             </div>
             <div className="text-[11px] font-bold text-[#9ca3af]">
-              {visibleUsers.length} accounts
+              {visibleUsers.length} readers
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleToggleOrder}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Reverse order"
           >
             <i className="fa-solid fa-arrow-down-wide-short text-[14px]" />
@@ -481,15 +519,18 @@ export default function ProfileFollowListPage() {
                 ))}
               </div>
             ) : (
-              <EmptyState type={safeType} />
+              <EmptyState type={safeType} onFindReaders={handleFindReaders} />
             )}
 
-            {visibleSuggestions.length ? (
-              <section className="border-t border-[#f0eef6] py-3">
-                <div className="px-4 pb-2 text-[15px] font-black text-[#111827]">
-                  Suggested accounts
-                </div>
+            <section className="border-t border-[#f0eef6] py-5">
+              <div className="px-4 pb-3">
+                <div className="text-[15px] font-black text-[#111827]">Readers you may know</div>
+                <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                  Discover readers and authors from the Shadow community.
+                </p>
+              </div>
 
+              {visibleSuggestions.length ? (
                 <div className="divide-y divide-[#f0eef6]">
                   {visibleSuggestions.map((user) => (
                     <SuggestedRow
@@ -501,15 +542,10 @@ export default function ProfileFollowListPage() {
                     />
                   ))}
                 </div>
-              </section>
-            ) : (
-              <section className="border-t border-[#f0eef6] px-6 py-8 text-center">
-                <div className="text-[14px] font-black text-[#111827]">Suggested accounts</div>
-                <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                  More suggested readers will appear here when there is enough follow data.
-                </p>
-              </section>
-            )}
+              ) : (
+                <SuggestedEmptyCard />
+              )}
+            </section>
           </>
         )}
       </main>
