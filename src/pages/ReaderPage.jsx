@@ -1271,19 +1271,20 @@ export default function ReaderPage() {
         theme={theme}
       />
 
-
       <EchoShareSheet
   open={echoShareOpen}
   story={story}
   onClose={() => setEchoShareOpen(false)}
 />
 
-      <EchoShareSheet
-  open={echoShareOpen}
+      <CommentsModal
+  open={commentsOpen}
   story={story}
-  onClose={() => setEchoShareOpen(false)}
+  onClose={() => setCommentsOpen(false)}
+  onCommentChanged={handleCommentChanged}
+  key={`${storyId}-${commentRefreshKey}`}
 />
-
+      
       <ReaderBottomActionBar
   visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
   story={story}
