@@ -43,6 +43,7 @@ import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 
 
 
+
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
 const ShadowMallOrderHistoryPage = lazy(() => import('./pages/Shop/ShadowMallOrderHistoryPage'))
@@ -65,6 +66,7 @@ const ComedyGenrePage = lazy(() => import('./pages/Genre/ComedyGenrePage'))
 const AdventureGenrePage = lazy(() => import('./pages/Genre/AdventureGenrePage'))
 const SchoolLifeGenrePage = lazy(() => import('./pages/Genre/SchoolLifeGenrePage'))
 const HistoricalGenrePage = lazy(() => import('./pages/Genre/HistoricalGenrePage'))
+const MysteryGenrePage = lazy(() => import('./pages/Genre/MysteryGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -322,6 +324,15 @@ function AppShell() {
   element={
     <LazyPage>
       <HistoricalGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/mystery"
+  element={
+    <LazyPage>
+      <MysteryGenrePage />
     </LazyPage>
   }
 />
