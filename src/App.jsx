@@ -70,6 +70,7 @@ const MysteryGenrePage = lazy(() => import('./pages/Genre/MysteryGenrePage'))
 const HorrorGenrePage = lazy(() => import('./pages/Genre/HorrorGenrePage'))
 const LGBTQGenrePage = lazy(() => import('./pages/Genre/LGBTQGenrePage'))
 const SciFiGenrePage = lazy(() => import('./pages/Genre/SciFiGenrePage'))
+const DramaGenrePage = lazy(() => import('./pages/Genre/DramaGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -366,7 +367,15 @@ function AppShell() {
     </LazyPage>
   }
 />
-        
+
+        <Route
+  path="/genre/drama"
+  element={
+    <LazyPage>
+      <DramaGenrePage />
+    </LazyPage>
+  }
+/>
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
