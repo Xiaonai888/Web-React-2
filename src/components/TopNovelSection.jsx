@@ -66,7 +66,7 @@ function getTopNovelEndpoint(category) {
 }
 
 function getTopNovelBadge(rank) {
-  return `/assets/Top%20Novel%20Badge/Top%20Novel%20Badge%20${rank}.png?v=2`
+  return `/assets/Top%20Novel%20Badge/Top%20Novel%20Badge%20${rank}.svg?v=3`
 }
 
 function createFallbackBooks(category) {
