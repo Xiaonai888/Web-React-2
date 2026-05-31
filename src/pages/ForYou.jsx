@@ -427,7 +427,13 @@ if (tab.slug === 'system') {
 if (tab.slug === 'isekai') {
   navigate('/genre/isekai')
   return
-}                     
+}                   
+
+if (tab.slug === 'supernatural') {
+  navigate('/genre/supernatural')
+  return
+}
+                      
                       
   setActiveGenre(tab.slug)
 }}
