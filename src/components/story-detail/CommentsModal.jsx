@@ -55,14 +55,7 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4"
-      onMouseMove={handleDragMove}
-      onMouseUp={handleDragEnd}
-      onMouseLeave={handleDragEnd}
-      onTouchMove={handleDragMove}
-      onTouchEnd={handleDragEnd}
-    >
+    <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4">
       <button
         type="button"
         onClick={onClose}
@@ -72,15 +65,12 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
 
       <section
         ref={sheetRef}
-        className="relative flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl transition-transform duration-200 sm:h-[82vh] sm:rounded-[28px]"
-        style={{ transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : 'translateY(0)' }}
+        className="relative flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[82vh] sm:rounded-[28px]"
+        style={{ transform: 'translateY(0)' }}
       >
         <div
-          role="button"
-          tabIndex={0}
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
-          className="shrink-0 cursor-grab bg-white px-4 pb-2 pt-3 active:cursor-grabbing"
+          role="presentation"
+          className="shrink-0 bg-white px-4 pb-2 pt-3"
         >
           <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
         </div>
