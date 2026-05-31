@@ -382,6 +382,11 @@ export default function ForYou() {
 if (tab.slug === 'school-life') {
   navigate('/genre/school-life')
   return
+}       
+
+if (tab.slug === 'historical') {
+  navigate('/genre/historical')
+  return
 }                      
                       
   setActiveGenre(tab.slug)
