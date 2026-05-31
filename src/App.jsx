@@ -89,6 +89,7 @@ const RoyaltyGenrePage = lazy(() => import('./pages/Genre/RoyaltyGenrePage'))
 const MagicGenrePage = lazy(() => import('./pages/Genre/MagicGenrePage'))
 const SecondChanceGenrePage = lazy(() => import('./pages/Genre/SecondChanceGenrePage'))
 const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenrePage'))
+const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -534,6 +535,15 @@ function AppShell() {
   element={
     <LazyPage>
       <ColdMaleLeadGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/bl"
+  element={
+    <LazyPage>
+      <BLGenrePage />
     </LazyPage>
   }
 />
