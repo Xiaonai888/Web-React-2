@@ -312,7 +312,7 @@ export default function ProfileFollowListPage() {
       if (!token) return
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(username || '')}/followers?page=1&limit=50`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/suggestions?page=1&limit=20`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -324,12 +324,11 @@ export default function ProfileFollowListPage() {
 
         if (!ignore) {
           const alreadyShown = new Set(users.map((user) => user.id))
-          const suggestions = (Array.isArray(data.users) ? data.users : [])
-            .filter((user) => user.id !== storedUser?.id)
-            .filter((user) => !alreadyShown.has(user.id))
-            .filter((user) => !user.is_following)
+const suggestions = (Array.isArray(data.users) ? data.users : [])
+  .filter((user) => user.id !== storedUser?.id)
+  .filter((user) => !alreadyShown.has(user.id))
 
-          setSuggestedUsers(suggestions)
+setSuggestedUsers(suggestions)
         }
       } catch {
         if (!ignore) {
