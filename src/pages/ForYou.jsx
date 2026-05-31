@@ -476,6 +476,10 @@ if (tab.slug === 'hidden-identity') {
   return
 }                      
 
+if (tab.slug === 'royalty') {
+  navigate('/genre/royalty')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
