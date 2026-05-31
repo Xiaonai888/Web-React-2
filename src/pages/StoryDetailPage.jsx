@@ -369,6 +369,11 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
           onOpenAll={() => setEpisodeListOpen(true)}
         />
 
+        <StoryAuthorMiniCard
+  authorPage={story.author_page}
+  onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
+/>
+
         <LatestCommentSection
           story={story}
           refreshKey={commentRefreshKey}
