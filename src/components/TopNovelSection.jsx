@@ -55,12 +55,12 @@ function getWeeklyRandomGenres(genres) {
 
 function getTopNovelEndpoint(category) {
   if (category === 'Completed') {
-    return '/api/public/stories?limit=3&sort=popular'
-  }
+  return '/api/public/stories?limit=3&sort=popular&story_status=Completed'
+}
 
-  if (category === 'Recently Completed') {
-    return '/api/public/stories?limit=3&sort=updated'
-  }
+if (category === 'Recently Completed') {
+  return '/api/public/stories?limit=3&sort=updated&story_status=Completed'
+}
 
   return `/api/public/stories?limit=3&sort=likes&genre=${encodeURIComponent(category)}`
 }
