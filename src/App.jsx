@@ -76,6 +76,7 @@ const DramaGenrePage = lazy(() => import('./pages/Genre/DramaGenrePage'))
 const ThrillerGenrePage = lazy(() => import('./pages/Genre/ThrillerGenrePage'))
 const SystemGenrePage = lazy(() => import('./pages/Genre/SystemGenrePage'))
 const IsekaiGenrePage = lazy(() => import('./pages/Genre/IsekaiGenrePage'))
+const SupernaturalGenrePage = lazy(() => import('./pages/Genre/SupernaturalGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -406,6 +407,15 @@ function AppShell() {
   element={
     <LazyPage>
       <IsekaiGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/supernatural"
+  element={
+    <LazyPage>
+      <SupernaturalGenrePage />
     </LazyPage>
   }
 />
