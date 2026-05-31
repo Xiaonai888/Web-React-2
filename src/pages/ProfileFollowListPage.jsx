@@ -318,7 +318,11 @@ export default function ProfileFollowListPage() {
 
   const handleTabChange = (nextType) => {
     if (nextType === safeType) return
-    navigate(`/profile/${username}/${nextType}`)
+    navigate(`/profile/${username}/${nextType}`, { replace: true })
+  }
+
+  const handleBackToProfile = () => {
+    navigate(`/profile/${username}`, { replace: true })
   }
 
   const handleToggleOrder = () => {
@@ -368,7 +372,7 @@ export default function ProfileFollowListPage() {
           <div className="flex items-center gap-3 px-4 py-3">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={handleBackToProfile}
               className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:scale-95"
               aria-label="Go back"
             >
