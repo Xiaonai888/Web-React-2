@@ -459,7 +459,12 @@ if (tab.slug === 'slow-burn') {
 if (tab.slug === 'enemies-to-lovers') {
   navigate('/genre/enemies-to-lovers')
   return
-}                     
+}    
+
+if (tab.slug === 'time-travel') {
+  navigate('/genre/time-travel')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
