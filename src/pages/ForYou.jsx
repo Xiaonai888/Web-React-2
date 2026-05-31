@@ -392,7 +392,12 @@ if (tab.slug === 'historical') {
 if (tab.slug === 'mystery') {
   navigate('/genre/mystery')
   return
-}                    
+}        
+
+if (tab.slug === 'horror') {
+  navigate('/genre/horror')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
