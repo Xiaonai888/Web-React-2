@@ -42,17 +42,18 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   }
 
   const handleDragEnd = () => {
-    if (!draggingRef.current) return
+  if (!draggingRef.current) return
 
-    draggingRef.current = false
+  const distance = Math.max(0, currentYRef.current - startYRef.current)
+  draggingRef.current = false
 
-    if (dragOffset > 120) {
-      onClose()
-      return
-    }
-
-    setDragOffset(0)
+  if (distance > 120) {
+    onClose()
+    return
   }
+
+  setDragOffset(0)
+}
 
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4">
