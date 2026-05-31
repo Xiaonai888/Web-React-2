@@ -500,6 +500,12 @@ if (tab.slug === 'cold-male-lead') {
 if (tab.slug === 'bl') {
   navigate('/genre/bl')
   return
+} 
+
+
+if (tab.slug === 'gl') {
+  navigate('/genre/gl')
+  return
 }                      
                       
                       
