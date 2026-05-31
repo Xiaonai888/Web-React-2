@@ -479,7 +479,12 @@ if (tab.slug === 'hidden-identity') {
 if (tab.slug === 'royalty') {
   navigate('/genre/royalty')
   return
-}                      
+}              
+
+if (tab.slug === 'magic') {
+  navigate('/genre/magic')
+  return
+}                     
                       
   setActiveGenre(tab.slug)
 }}
