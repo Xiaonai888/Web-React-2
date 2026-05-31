@@ -70,9 +70,9 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
       : `${followerCount} followers`
 
   return (
-    <section className="mx-3 mb-4 rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5 sm:mx-0">
+    <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
       <div className="flex items-center gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[20px] font-black text-[#111827] ring-1 ring-black/10">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[18px] font-black text-[#111827] ring-1 ring-black/10 sm:h-14 sm:w-14 sm:text-[20px]">
           {authorPage.avatar_url ? (
             <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
           ) : (
