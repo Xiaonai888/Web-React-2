@@ -863,10 +863,22 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-1">
-                  <StatItem value={profile.posts} label="Posts" />
-                  <StatItem value={profile.followers} label="Followers" />
-                  <StatItem value={profile.following} label="Following" />
-                </div>
+  <StatItem value={profile.posts} label="Posts" />
+  <button
+    type="button"
+    onClick={() => navigate(`/profile/${profile.username}/followers`)}
+    className="rounded-[12px] active:scale-[0.98]"
+  >
+    <StatItem value={profile.followers} label="Followers" />
+  </button>
+  <button
+    type="button"
+    onClick={() => navigate(`/profile/${profile.username}/following`)}
+    className="rounded-[12px] active:scale-[0.98]"
+  >
+    <StatItem value={profile.following} label="Following" />
+  </button>
+</div>
               </div>
             </div>
 
