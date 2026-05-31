@@ -402,6 +402,11 @@ if (tab.slug === 'horror') {
 if (tab.slug === 'lgbtq' || tab.slug === 'lgbtq+') {
   navigate('/genre/lgbtq')
   return
+}       
+
+if (tab.slug === 'sci-fi' || tab.slug === 'scifi') {
+  navigate('/genre/sci-fi')
+  return
 }                      
                       
   setActiveGenre(tab.slug)
