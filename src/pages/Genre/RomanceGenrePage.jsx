@@ -99,7 +99,7 @@ export default function RomanceGenrePage() {
       setMessage('')
 
       try {
-        const response = await fetch(`${API_URL}/api/public/stories?genre=romance&limit=80`)
+        const response = await fetch(`${API_URL}/api/public/stories?genre=Romance&limit=80`)
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
