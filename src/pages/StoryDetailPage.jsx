@@ -60,10 +60,9 @@ function ErrorBlock({ message, onBack }) {
   )
 }
 
-function StoryAuthorMiniCard({ authorPage, subscribed, savingCollection, onViewPage, onFollow }) {
+function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoading, onViewPage, onFollow }) {
   if (!authorPage) return null
 
-  const followerCount = Number(authorPage.total_followers || 0) + (subscribed ? 1 : 0)
   const followerText =
     followerCount >= 1000
       ? `${(followerCount / 1000).toFixed(followerCount >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
@@ -114,12 +113,12 @@ function StoryAuthorMiniCard({ authorPage, subscribed, savingCollection, onViewP
             <button
               type="button"
               onClick={handleFollowClick}
-              disabled={savingCollection}
+              disabled={followLoading}
               className={`h-8 rounded-full px-5 text-[12px] font-black active:scale-95 disabled:opacity-60 ${
-                subscribed ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
+                following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
               }`}
             >
-              {subscribed ? 'Following' : 'Follow'}
+              {following ? 'Following' : 'Follow'}
             </button>
 
             <span className="text-[12px] font-black text-[#8d94a1]">
@@ -162,6 +161,9 @@ export default function StoryDetailPage() {
   const [bookmarked, setBookmarked] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [savingCollection, setSavingCollection] = useState(false)
+  const [authorFollowing, setAuthorFollowing] = useState(false)
+  const [authorFollowerCount, setAuthorFollowerCount] = useState(0)
+  const [authorFollowLoading, setAuthorFollowLoading] = useState(false)
   const location = useLocation()
 
   useEffect(() => {
