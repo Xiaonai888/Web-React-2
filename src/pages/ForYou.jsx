@@ -362,6 +362,12 @@ export default function ForYou() {
     navigate('/genre/fantasy')
     return
   }
+                      
+  if (tab.slug === 'action') {
+  navigate('/genre/action')
+  return
+}
+                      
 
   setActiveGenre(tab.slug)
 }}
