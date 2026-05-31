@@ -82,6 +82,7 @@ const RevengeGenrePage = lazy(() => import('./pages/Genre/RevengeGenrePage'))
 const CEOGenrePage = lazy(() => import('./pages/Genre/CEOGenrePage'))
 const SlowBurnGenrePage = lazy(() => import('./pages/Genre/SlowBurnGenrePage'))
 const EnemiesToLoversGenrePage = lazy(() => import('./pages/Genre/EnemiesToLoversGenrePage'))
+const TimeTravelGenrePage = lazy(() => import('./pages/Genre/TimeTravelGenrePage'))
 
 
 
@@ -467,6 +468,15 @@ function AppShell() {
   element={
     <LazyPage>
       <EnemiesToLoversGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/time-travel"
+  element={
+    <LazyPage>
+      <TimeTravelGenrePage />
     </LazyPage>
   }
 />
