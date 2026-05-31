@@ -74,10 +74,8 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
   }
 
   const handleFollowClick = (event) => {
-    event.stopPropagation()
-
-    if (typeof onViewPage === 'function') onViewPage()
-  }
+  event.stopPropagation()
+}
 
   return (
     <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
