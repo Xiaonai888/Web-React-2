@@ -1,4 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+function getReaderToken() {
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+}
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -10,66 +21,102 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function getReactionKey(story, episode) {
-  const storyId = story?.id || story?.story_id || 'story'
-  const episodeId = episode?.id || episode?.episode_id || 'episode'
-  return `shadow_reader_basic_reaction_${storyId}_${episodeId}`
-}
-
-function readReaction(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || 'null')
-  } catch {
-    return null
-  }
-}
-
-function saveReaction(key, data) {
-  localStorage.setItem(key, JSON.stringify(data))
-}
-
-function removeReaction(key) {
-  localStorage.removeItem(key)
-}
-
 export default function ReaderBottomActionBar({ visible, story, episode, onOpenComments, onOpenEcho }) {
-  const reactionKey = getReactionKey(story, episode)
-  const baseLikeCount = Number(episode?.like_count || episode?.likes_count || story?.like_count || story?.likes_count || 0)
+  const navigate = useNavigate()
+  const storyId = story?.id || story?.story_id || ''
+  const episodeId = episode?.id || episode?.episode_id || ''
   const [liked, setLiked] = useState(false)
-  const [localLikeCount, setLocalLikeCount] = useState(0)
-  const likeCount = formatCompactNumber(baseLikeCount + localLikeCount)
-  const commentCount = formatCompactNumber(episode?.comment_count || episode?.comments_count || story?.comment_count || story?.comments_count || 0)
+  const [likeTotal, setLikeTotal] = useState(
+    Number(story?.total_likes || story?.like_count || story?.likes_count || 0)
+  )
+  const [savingLike, setSavingLike] = useState(false)
+
+  const commentCount = formatCompactNumber(episode?.comment_count || episode?.comments_count || story?.total_comments || story?.comment_count || story?.comments_count || 0)
   const echoCount = formatCompactNumber(episode?.echo_count || episode?.echoes_count || story?.echo_count || story?.echoes_count || 0)
 
   useEffect(() => {
-    const saved = readReaction(reactionKey)
+    setLikeTotal(Number(story?.total_likes || story?.like_count || story?.likes_count || 0))
+  }, [story?.total_likes, story?.like_count, story?.likes_count])
 
-    if (saved?.reaction_type === 'love') {
-      setLiked(true)
-      setLocalLikeCount(1)
-    } else {
-      setLiked(false)
-      setLocalLikeCount(0)
+  useEffect(() => {
+    let ignore = false
+
+    async function loadReactionStatus() {
+      if (!storyId) return
+
+      try {
+        const token = getReaderToken()
+        const response = await fetch(`${API_BASE_URL}/api/reactions/story/${storyId}`, {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {},
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) return
+        if (ignore) return
+
+        setLiked(Boolean(data.liked))
+        setLikeTotal(Number(data.total_likes || 0))
+      } catch {
+        if (!ignore) {
+          setLiked(false)
+        }
+      }
     }
-  }, [reactionKey])
 
-  const handleLike = () => {
-    if (liked) {
-      removeReaction(reactionKey)
-      setLiked(false)
-      setLocalLikeCount(0)
+    loadReactionStatus()
+
+    return () => {
+      ignore = true
+    }
+  }, [storyId])
+
+  const handleLike = async () => {
+    if (!storyId || savingLike) return
+
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
       return
     }
 
-    saveReaction(reactionKey, {
-      reaction_type: 'love',
-      story_id: story?.id || story?.story_id || null,
-      episode_id: episode?.id || episode?.episode_id || null,
-      created_at: new Date().toISOString(),
-    })
+    const previousLiked = liked
+    const previousTotal = likeTotal
 
-    setLiked(true)
-    setLocalLikeCount(1)
+    setSavingLike(true)
+    setLiked(!previousLiked)
+    setLikeTotal(Math.max(0, previousTotal + (previousLiked ? -1 : 1)))
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reactions/story/${storyId}/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reaction_type: 'love',
+          episode_id: episodeId || null,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update like')
+      }
+
+      setLiked(Boolean(data.liked))
+      setLikeTotal(Number(data.total_likes || 0))
+    } catch {
+      setLiked(previousLiked)
+      setLikeTotal(previousTotal)
+    } finally {
+      setSavingLike(false)
+    }
   }
 
   return (
@@ -82,7 +129,7 @@ export default function ReaderBottomActionBar({ visible, story, episode, onOpenC
         <div className="flex items-center justify-between border-b border-[#eef0f4] px-4 py-2 text-[11px] font-semibold text-[#65676b]">
           <div className={`flex items-center gap-1.5 ${liked ? 'text-[#ff2f5f]' : ''}`}>
             <i className={`${liked ? 'fa-solid' : 'fa-regular'} fa-heart text-[13px]`} />
-            <span>{likeCount}</span>
+            <span>{formatCompactNumber(likeTotal)}</span>
           </div>
 
           <div className="flex items-center gap-4 text-[10.5px] text-[#65676b]">
@@ -95,7 +142,8 @@ export default function ReaderBottomActionBar({ visible, story, episode, onOpenC
           <button
             type="button"
             onClick={handleLike}
-            className={`flex h-9 items-center justify-center gap-2 rounded-[12px] active:scale-95 active:bg-[#f2f3f5] ${
+            disabled={savingLike}
+            className={`flex h-9 items-center justify-center gap-2 rounded-[12px] active:scale-95 active:bg-[#f2f3f5] disabled:opacity-60 ${
               liked ? 'text-[#ff2f5f]' : ''
             }`}
           >
