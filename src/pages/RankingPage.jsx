@@ -43,6 +43,11 @@ function getRankStyle(rank) {
   return 'bg-[#111827] text-white'
 }
 
+function getTopBadgeSrc(rank) {
+  if (![1, 2, 3].includes(Number(rank))) return ''
+  return `/assets/Top Novel Badge/Top Novel Badge ${rank}.svg`
+}
+
 function normalizeStory(story) {
   return {
     id: story.id,
@@ -104,9 +109,17 @@ function TopStoryCard({ story, rank, onOpen }) {
           </div>
         )}
 
-        <div className={`absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-[17px] font-black ${getRankStyle(rank)}`}>
-          {rank}
-        </div>
+        {getTopBadgeSrc(rank) ? (
+  <img
+    src={getTopBadgeSrc(rank)}
+    alt={`Top ${rank}`}
+    className="absolute left-3 top-3 h-12 w-12 object-contain"
+  />
+) : (
+  <div className={`absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-[17px] font-black ${getRankStyle(rank)}`}>
+    {rank}
+  </div>
+)}
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3">
           <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-black text-[#111827]">
