@@ -137,6 +137,7 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
     fans_count: Number(author.total_fans || author.fans_count || 0),
     likes_count: Number(author.total_likes || author.likes_count || 0),
     is_following: Boolean(author.is_following),
+    works: Array.isArray(author.works) ? author.works : [],
     created_at: author.created_at || '',
     updated_at: author.updated_at || '',
     is_owner: forceOwner || Boolean(myPage?.id && author.id && myPage.id === author.id),
@@ -160,14 +161,15 @@ async function fetchPublicAuthorPage(pageUsername) {
 
   const authorPage = data.author_page || data.author || data.page || null
 
-return authorPage
-  ? {
-      ...authorPage,
-      is_following: Boolean(data.is_following),
-      total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0),
-      works: Array.isArray(data.works) ? data.works : [],
-    }
-  : null
+  return authorPage
+    ? {
+        ...authorPage,
+        is_following: Boolean(data.is_following),
+        total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0),
+        works: Array.isArray(data.works) ? data.works : [],
+      }
+    : null
+}
 
 async function fetchMyAuthorPage() {
   const token = getAuthToken()
@@ -450,7 +452,7 @@ export default function AuthorPublicPage() {
   }, [pageUsername])
 
 
-async function handleToggleFollow() {
+  async function handleToggleFollow() {
   const token = getAuthToken()
 
   if (!token) {
@@ -506,17 +508,17 @@ async function handleToggleFollow() {
     ]
   }
 
-  return [
-    {
-      label: author?.is_following ? 'Following' : 'Follow',
+    return [
+      {
+        label: author?.is_following ? 'Following' : 'Follow',
       icon: author?.is_following ? 'fa-user-check' : 'fa-user-plus',
       type: author?.is_following ? 'secondary' : 'primary',
       onClick: handleToggleFollow,
       disabled: followLoading,
-    },
-    { label: 'Message', icon: 'fa-comment', type: 'secondary' },
-  ]
-}, [author?.is_owner, author?.is_following, followLoading, navigate])
+      },
+      { label: 'Message', icon: 'fa-comment', type: 'secondary' },
+    ]
+  }, [author?.is_owner, author?.is_following, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -751,20 +753,20 @@ async function handleToggleFollow() {
 
             <div className="mt-4 flex items-center gap-2">
               {actionButtons.map((button) => (
-               <button
-  key={button.label}
-  type="button"
-  onClick={button.onClick}
-  disabled={button.disabled}
-  className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-    button.type === 'primary'
-      ? 'bg-[#111827] text-white'
-      : 'bg-[#f3f4f6] text-[#111827]'
-  }`}
->
-  <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
-  {button.disabled ? 'Loading...' : button.label}
-</button>
+                <button
+                  key={button.label}
+                  type="button"
+                  onClick={button.onClick}
+                  disabled={button.disabled}
+                  className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                    button.type === 'primary'
+                      ? 'bg-[#111827] text-white'
+                      : 'bg-[#f3f4f6] text-[#111827]'
+                  }`}
+                >
+                  <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
+                  {button.disabled ? 'Loading...' : button.label}
+                </button>
               ))}
 
               <button
@@ -810,23 +812,23 @@ async function handleToggleFollow() {
           ) : null}
 
           {activeTab === 'Works' ? (
-  authorWorks.length ? (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {authorWorks.map((work) => (
-        <AuthorWorkCard
-          key={work.id}
-          work={work}
-          onOpen={() => navigate(`/story/${work.id}`)}
-        />
-      ))}
-    </div>
-  ) : (
-    <EmptyPanel
-      title="No works yet"
-      text="Published novels, chat stories, and manga will appear here."
-    />
-  )
-) : null}
+            authorWorks.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {authorWorks.map((work) => (
+                  <AuthorWorkCard
+                    key={work.id}
+                    work={work}
+                    onOpen={() => navigate(`/story/${work.id}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyPanel
+                title="No works yet"
+                text="Published novels, chat stories, and manga will appear here."
+              />
+            )
+          ) : null}
 
           {activeTab === 'About' ? (
             <div className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
