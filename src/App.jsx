@@ -138,12 +138,11 @@ function AppShell() {
   ]
 
   const shouldHideFooter =
-    hideFooterPaths.includes(location.pathname) ||
-    location.pathname.startsWith('/story/') ||
-    location.pathname.startsWith('/author/story/') ||
-    location.pathname.startsWith('/shop/mall/')
-    location.pathname.startsWith('/profile/')
-
+  hideFooterPaths.includes(location.pathname) ||
+  location.pathname.startsWith('/story/') ||
+  location.pathname.startsWith('/author/story/') ||
+  location.pathname.startsWith('/shop/mall/') ||
+  location.pathname.startsWith('/profile/')
   return (
     <>
       <Routes>
