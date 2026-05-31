@@ -36,6 +36,19 @@ function isRomanceStory(item) {
   return values.some((value) => String(value || '').toLowerCase().includes('romance'))
 }
 
+
+function isEmotionalStory(story) {
+  const text = `${story.title || ''} ${story.description || ''} ${story.status || ''}`.toLowerCase()
+
+  return ['emotional', 'sad', 'heart', 'heartbreak', 'love', 'pain', 'tears', 'cry', 'second chance'].some((word) => text.includes(word))
+}
+
+function isCompletedStory(story) {
+  const status = String(story.status || '').toLowerCase()
+
+  return status.includes('complete') || status.includes('completed') || status.includes('end') || status.includes('finished')
+}
+
 function StoryCard({ story, onOpen }) {
   return (
     <button
@@ -85,11 +98,22 @@ function SectionTitle({ title, subtitle }) {
   )
 }
 
+
+const filterOptions = [
+  { label: 'All Romance', value: 'all' },
+  { label: 'Latest', value: 'latest' },
+  { label: 'Popular', value: 'popular' },
+  { label: 'Emotional', value: 'emotional' },
+  { label: 'Completed', value: 'completed' },
+]
+
 export default function RomanceGenrePage() {
   const navigate = useNavigate()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [activeFilter, setActiveFilter] = useState('all')
+
 
   useEffect(() => {
     let ignore = false
@@ -138,6 +162,28 @@ export default function RomanceGenrePage() {
       .sort((a, b) => (b.views + b.likes * 3 + b.rating * 20) - (a.views + a.likes * 3 + a.rating * 20))
       .slice(0, 6)
   }, [stories])
+
+  const filteredStories = useMemo(() => {
+    if (activeFilter === 'latest') return latestStories
+    if (activeFilter === 'popular') return popularStories
+    if (activeFilter === 'emotional') return stories.filter(isEmotionalStory)
+    if (activeFilter === 'completed') return stories.filter(isCompletedStory)
+
+    return stories
+  }, [activeFilter, latestStories, popularStories, stories])
+
+  const filteredTitle = useMemo(() => {
+    if (activeFilter === 'latest') return 'Latest Romance'
+    if (activeFilter === 'popular') return 'Popular Romance'
+    if (activeFilter === 'emotional') return 'Emotional Romance'
+    if (activeFilter === 'completed') return 'Completed Romance'
+
+    return 'All Romance Stories'
+  }, [activeFilter])
+
+  const filteredSubtitle = useMemo(() => {
+    return `${filteredStories.length} stories`
+  }, [filteredStories.length])
 
   const openStory = (story) => {
     if (story?.id) navigate(`/story/${story.id}`)
@@ -189,16 +235,22 @@ export default function RomanceGenrePage() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {['All Romance', 'Latest', 'Popular', 'Emotional', 'Completed'].map((item, index) => (
-              <span
-                key={item}
-                className={`rounded-full px-4 py-2 text-[12px] font-black ${
-                  index === 0 ? 'bg-[#111827] text-white' : 'bg-white text-[#d6336c] ring-1 ring-[#f7dce6]'
-                }`}
-              >
-                {item}
-              </span>
-            ))}
+            {filterOptions.map((item) => {
+              const active = activeFilter === item.value
+
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setActiveFilter(item.value)}
+                  className={`rounded-full px-4 py-2 text-[12px] font-black active:scale-95 ${
+                    active ? 'bg-[#111827] text-white' : 'bg-white text-[#d6336c] ring-1 ring-[#f7dce6]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
           </div>
         </section>
 
@@ -217,30 +269,34 @@ export default function RomanceGenrePage() {
 
         {!loading && !message ? (
           <>
-            <section className="mt-6">
-              <SectionTitle title="Latest Romance" subtitle="Recently updated romance stories" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                {latestStories.map((story) => (
-                  <StoryCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
-                ))}
-              </div>
-            </section>
+            {activeFilter === 'all' ? (
+              <>
+                <section className="mt-6">
+                  <SectionTitle title="Latest Romance" subtitle="Recently updated romance stories" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {latestStories.map((story) => (
+                      <StoryCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
+                    ))}
+                  </div>
+                </section>
+
+                <section className="mt-7">
+                  <SectionTitle title="Popular Romance" subtitle="Stories readers are watching now" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {popularStories.map((story) => (
+                      <StoryCard key={`popular-${story.id}`} story={story} onOpen={openStory} />
+                    ))}
+                  </div>
+                </section>
+              </>
+            ) : null}
 
             <section className="mt-7">
-              <SectionTitle title="Popular Romance" subtitle="Stories readers are watching now" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                {popularStories.map((story) => (
-                  <StoryCard key={`popular-${story.id}`} story={story} onOpen={openStory} />
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-7">
-              <SectionTitle title="All Romance Stories" subtitle={`${stories.length} stories`} />
-              {stories.length ? (
+              <SectionTitle title={filteredTitle} subtitle={filteredSubtitle} />
+              {filteredStories.length ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {stories.map((story) => (
-                    <StoryCard key={story.id} story={story} onOpen={openStory} />
+                  {filteredStories.map((story) => (
+                    <StoryCard key={`${activeFilter}-${story.id}`} story={story} onOpen={openStory} />
                   ))}
                 </div>
               ) : (
@@ -248,8 +304,8 @@ export default function RomanceGenrePage() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f6] text-[#d6336c]">
                     <i className="fa-regular fa-heart text-[22px]" />
                   </div>
-                  <h3 className="mt-4 text-[17px] font-black text-[#111827]">No romance stories yet</h3>
-                  <p className="mt-2 text-[13px] font-semibold text-[#98a2b3]">Romance stories will appear here when available.</p>
+                  <h3 className="mt-4 text-[17px] font-black text-[#111827]">No stories found</h3>
+                  <p className="mt-2 text-[13px] font-semibold text-[#98a2b3]">Try another romance filter.</p>
                 </div>
               )}
             </section>
