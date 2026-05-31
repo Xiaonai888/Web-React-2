@@ -398,6 +398,11 @@ if (tab.slug === 'horror') {
   navigate('/genre/horror')
   return
 }                      
+
+if (tab.slug === 'lgbtq' || tab.slug === 'lgbtq+') {
+  navigate('/genre/lgbtq')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
