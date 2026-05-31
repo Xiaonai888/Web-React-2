@@ -484,7 +484,13 @@ if (tab.slug === 'royalty') {
 if (tab.slug === 'magic') {
   navigate('/genre/magic')
   return
-}                     
+}                
+
+
+if (tab.slug === 'second-chance') {
+  navigate('/genre/second-chance')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
