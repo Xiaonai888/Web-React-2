@@ -9,6 +9,7 @@ import WalletPage from './pages/WalletPage'
 import WalletOrderHistoryPage from './pages/WalletOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
+import ProfileFollowListPage from './pages/ProfileFollowListPage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import RatingPage from './pages/RatingPage'
 import EchoPage from './pages/EchoPage'
@@ -119,6 +120,7 @@ function AppShell() {
     location.pathname.startsWith('/story/') ||
     location.pathname.startsWith('/author/story/') ||
     location.pathname.startsWith('/shop/mall/')
+    location.pathname.startsWith('/profile/')
 
   return (
     <>
@@ -272,6 +274,7 @@ function AppShell() {
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
         <Route path="/story/:storyId/echo" element={<EchoPage />} />
