@@ -29,8 +29,17 @@ function getStoredUser() {
 }
 
 function saveStoredUser(user) {
+  if (!user) return
 
-  async function fetchPublicUserProfile(username) {
+  if (localStorage.getItem('shadow_reader_token')) {
+    localStorage.setItem('shadow_reader_user', JSON.stringify(user))
+    return
+  }
+
+  sessionStorage.setItem('shadow_reader_user', JSON.stringify(user))
+}
+
+async function fetchPublicUserProfile(username) {
   const token = getAuthToken()
 
   if (!token || !username) return null
@@ -48,53 +57,6 @@ function saveStoredUser(user) {
   }
 
   return data.user || null
-}
-  if (!user) return
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_user', JSON.stringify(user))
-    return
-  }
-
-  sessionStorage.setItem('shadow_reader_user', JSON.stringify(user))
-}
-
-function dataUrlToFile(dataUrl, fileName) {
-  const [header, base64] = dataUrl.split(',')
-  const mimeMatch = header.match(/:(.*?);/)
-  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
-  const binary = atob(base64)
-  const array = new Uint8Array(binary.length)
-
-  for (let index = 0; index < binary.length; index += 1) {
-    array[index] = binary.charCodeAt(index)
-  }
-
-  return new File([array], fileName, { type: mime })
-}
-
-async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
-  const file = dataUrlToFile(imageDataUrl, fileName)
-  const formData = new FormData()
-
-  formData.append('image', file)
-  formData.append('folder', folder)
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload image')
-  }
-
-  return data.image_url || data.imageUrl
 }
 
 function createImage(url) {
