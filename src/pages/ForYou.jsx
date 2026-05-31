@@ -378,6 +378,11 @@ export default function ForYou() {
   return
 }
 
+
+if (tab.slug === 'school-life') {
+  navigate('/genre/school-life')
+  return
+}                      
                       
   setActiveGenre(tab.slug)
 }}
