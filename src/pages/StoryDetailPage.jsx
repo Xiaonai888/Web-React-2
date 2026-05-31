@@ -447,10 +447,11 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
 
       <main className="mx-auto max-w-5xl px-0 sm:px-4">
         <StoryStatsSection
-          story={story}
-          episodes={episodes}
-          onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
-        />
+  story={story}
+  episodes={episodes}
+  onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
+  onOpenRanking={() => navigate('/ranking')}
+/>
 
         <StoryInfoSection story={story} />
 
