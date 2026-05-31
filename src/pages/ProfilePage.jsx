@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 
@@ -29,6 +29,26 @@ function getStoredUser() {
 }
 
 function saveStoredUser(user) {
+
+  async function fetchPublicUserProfile(username) {
+  const token = getAuthToken()
+
+  if (!token || !username) return null
+
+  const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(username)}/profile`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to fetch profile')
+  }
+
+  return data.user || null
+}
   if (!user) return
 
   if (localStorage.getItem('shadow_reader_token')) {
@@ -519,15 +539,42 @@ export default function ProfilePage() {
 
   const isOwnProfile = true
 
+  useEffect(() => {
+  let ignore = false
+
+  async function loadProfileStats() {
+    try {
+      const currentUsername = user?.username
+
+      if (!currentUsername) return
+
+      const freshUser = await fetchPublicUserProfile(currentUsername)
+
+      if (!ignore && freshUser) {
+        saveStoredUser(freshUser)
+        setUser(freshUser)
+      }
+    } catch (error) {
+      console.error('Fetch reader profile stats error:', error)
+    }
+  }
+
+  loadProfileStats()
+
+  return () => {
+    ignore = true
+  }
+}, [user?.username])
+
   const profile = useMemo(() => {
     return {
       name: user?.name || 'Reader Name',
       username: user?.username || 'username',
       avatarLetter: (user?.name || 'R').charAt(0).toUpperCase(),
       avatarUrl: avatarPreview || user?.avatar_url || '',
-      posts: '03',
-      followers: '500',
-      following: '100',
+      posts: '0',
+‌      followers: String(user?.followers_count || 0),
+      following: String(user?.following_count || 0),
       bioTitle: user?.work || 'Add your work / job',
       bio: user?.bio || 'Add your bio',
       location: user?.location || 'Add your location',
