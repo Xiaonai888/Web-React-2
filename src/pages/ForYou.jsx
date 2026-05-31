@@ -464,7 +464,14 @@ if (tab.slug === 'enemies-to-lovers') {
 if (tab.slug === 'time-travel') {
   navigate('/genre/time-travel')
   return
-}                      
+}      
+                      
+if (tab.slug === 'strong-female-lead') {
+  navigate('/genre/strong-female-lead')
+  return
+}      
+
+
                       
   setActiveGenre(tab.slug)
 }}
