@@ -515,7 +515,7 @@ function CommentComposer({
   const currentUser = getCurrentUser()
 
   return (
-    <div className={`${isModal ? 'absolute' : 'fixed'} bottom-0 left-0 right-0 z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}>
+    <div className={`${isModal ? 'shrink-0' : 'fixed bottom-0 left-0 right-0'} z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}>
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <Avatar user={currentUser} />
 
@@ -946,7 +946,7 @@ export default function CommentSection({
         </div>
       </div>
 
-      <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto pb-[86px]' : 'mx-auto max-w-3xl divide-y divide-[#eef1f5]'}`}>
+      <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto' : 'mx-auto max-w-3xl divide-y divide-[#eef1f5]'}`}>
         <div className="mx-auto max-w-3xl divide-y divide-[#eef1f5]">
           {sortedComments.length ? (
             sortedComments.map((comment) => (
