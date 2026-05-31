@@ -496,6 +496,11 @@ if (tab.slug === 'cold-male-lead') {
   navigate('/genre/cold-male-lead')
   return
 }
+
+if (tab.slug === 'bl') {
+  navigate('/genre/bl')
+  return
+}                      
                       
                       
   setActiveGenre(tab.slug)
