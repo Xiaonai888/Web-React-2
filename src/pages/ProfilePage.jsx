@@ -59,6 +59,7 @@ async function fetchPublicUserProfile(username) {
   return data.user || null
 }
 
+
 function createImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image()
