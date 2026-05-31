@@ -345,15 +345,15 @@ function AppShell() {
     <LazyPage>
       <HorrorGenrePage />
     </LazyPage>
+  }
+/>
 
-    <Route
+<Route
   path="/genre/lgbtq"
   element={
     <LazyPage>
       <LGBTQGenrePage />
     </LazyPage>
-  }
-/>
   }
 />
         
