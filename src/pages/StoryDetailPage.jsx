@@ -60,6 +60,54 @@ function ErrorBlock({ message, onBack }) {
   )
 }
 
+function StoryAuthorMiniCard({ authorPage, onViewPage }) {
+  if (!authorPage) return null
+
+  const followerCount = Number(authorPage.total_followers || 0)
+  const followerText = followerCount >= 1000 ? `${(followerCount / 1000).toFixed(followerCount >= 10000 ? 0 : 1)}k followers` : `${followerCount} followers`
+
+  return (
+    <section className="mx-3 mb-4 overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5 sm:mx-0">
+      <div className="relative min-h-[112px] overflow-hidden">
+        {authorPage.cover_url ? (
+          <img src={authorPage.cover_url} alt={authorPage.page_name} className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#111827] via-[#1f2937] to-[#374151]" />
+        )}
+
+        <div className="absolute inset-0 bg-black/55 backdrop-blur-[1px]" />
+
+        <div className="relative flex min-h-[112px] items-center gap-3 px-4 py-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-white text-[20px] font-black text-[#111827] shadow-sm">
+            {authorPage.avatar_url ? (
+              <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
+            ) : (
+              String(authorPage.page_name || 'A').slice(0, 1).toUpperCase()
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 text-[15px] font-black text-white">{authorPage.page_name || 'Author Page'}</div>
+            <div className="mt-1 line-clamp-1 text-[12px] font-bold text-white/80">
+              @{authorPage.page_username || 'author'} · {followerText}
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <button type="button" className="h-8 rounded-full bg-white px-4 text-[12px] font-black text-[#111827] active:scale-95">
+                Follow
+              </button>
+              <button type="button" onClick={onViewPage} className="h-8 rounded-full bg-white/15 px-4 text-[12px] font-black text-white ring-1 ring-white/40 active:scale-95">
+                View Page
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+
 function getStoredProgress(storyId, episodes) {
   try {
     const raw = localStorage.getItem(`shadow_story_progress_${storyId}`)
