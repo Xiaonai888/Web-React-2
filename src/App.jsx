@@ -84,6 +84,7 @@ const SlowBurnGenrePage = lazy(() => import('./pages/Genre/SlowBurnGenrePage'))
 const EnemiesToLoversGenrePage = lazy(() => import('./pages/Genre/EnemiesToLoversGenrePage'))
 const TimeTravelGenrePage = lazy(() => import('./pages/Genre/TimeTravelGenrePage'))
 const StrongFemaleLeadGenrePage = lazy(() => import('./pages/Genre/StrongFemaleLeadGenrePage'))
+const HiddenIdentityGenrePage = lazy(() => import('./pages/Genre/HiddenIdentityGenrePage'))
 
 
 
@@ -487,6 +488,14 @@ function AppShell() {
   element={
     <LazyPage>
       <StrongFemaleLeadGenrePage />
+    </LazyPage>
+  }
+/>
+        <Route
+  path="/genre/hidden-identity"
+  element={
+    <LazyPage>
+      <HiddenIdentityGenrePage />
     </LazyPage>
   }
 />
