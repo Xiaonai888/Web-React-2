@@ -161,9 +161,13 @@ async function fetchPublicAuthorPage(pageUsername) {
   const authorPage = data.author_page || data.author || data.page || null
 
 return authorPage
-  ? { ...authorPage, is_following: Boolean(data.is_following), total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0) }
+  ? {
+      ...authorPage,
+      is_following: Boolean(data.is_following),
+      total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0),
+      works: Array.isArray(data.works) ? data.works : [],
+    }
   : null
-}
 
 async function fetchMyAuthorPage() {
   const token = getAuthToken()
@@ -197,7 +201,57 @@ function StatItem({ value, label }) {
   )
 }
 
+function AuthorWorkCard({ work, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+    >
+      <div className="h-[108px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[#e5e7eb]">
+        {work.cover_url ? (
+          <img
+            src={work.cover_url}
+            alt={work.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+            <i className="fa-regular fa-bookmark text-[22px]" />
+          </div>
+        )}
+      </div>
 
+      <div className="min-w-0 flex-1 py-1">
+        <h3 className="line-clamp-2 text-[15px] font-black leading-5 text-[#111827]">
+          {work.title || 'Untitled Story'}
+        </h3>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#8b93a1]">
+          <span>{work.main_genre || 'Story'}</span>
+          <span>•</span>
+          <span>{Number(work.total_episodes || 0)} eps</span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-[#9ca3af]">
+          <span>
+            <i className="fa-regular fa-eye mr-1" />
+            {formatCompactNumber(work.total_views)}
+          </span>
+          <span>
+            <i className="fa-regular fa-heart mr-1" />
+            {formatCompactNumber(work.total_likes)}
+          </span>
+          <span>
+            <i className="fa-regular fa-comment mr-1" />
+            {formatCompactNumber(work.total_comments)}
+          </span>
+        </div>
+      </div>
+    </button>
+  )
+}
+  
 function EmptyPanel({ title, text }) {
   return (
     <div className="rounded-[24px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
@@ -560,6 +614,8 @@ async function handleToggleFollow() {
     is_owner: false,
   }
 
+  const authorWorks = Array.isArray(author?.works) ? author.works : []
+
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
       <CropImageModal
@@ -754,11 +810,23 @@ async function handleToggleFollow() {
           ) : null}
 
           {activeTab === 'Works' ? (
-            <EmptyPanel
-              title="No works yet"
-              text="Published novels, chat stories, and manga will appear here."
-            />
-          ) : null}
+  authorWorks.length ? (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {authorWorks.map((work) => (
+        <AuthorWorkCard
+          key={work.id}
+          work={work}
+          onOpen={() => navigate(`/story/${work.id}`)}
+        />
+      ))}
+    </div>
+  ) : (
+    <EmptyPanel
+      title="No works yet"
+      text="Published novels, chat stories, and manga will appear here."
+    />
+  )
+) : null}
 
           {activeTab === 'About' ? (
             <div className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
