@@ -1297,9 +1297,7 @@ export default function ReaderPage() {
   }
 
 
-  const handleCommentChanged = () => {
-    setCommentRefreshKey((value) => value + 1)
-  }
+  const handleCommentChanged = () => {}
 
   return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
@@ -1395,7 +1393,7 @@ export default function ReaderPage() {
   story={story}
   onClose={() => setCommentsOpen(false)}
   onCommentChanged={handleCommentChanged}
-  key={`${storyId}-${commentRefreshKey}`}
+  key={storyId}
 />
       
       <ReaderBottomActionBar
