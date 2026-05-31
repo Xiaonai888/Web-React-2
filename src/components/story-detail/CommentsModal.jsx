@@ -27,22 +27,22 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
   if (!open) return null
 
   const handleDragStart = (event) => {
-    draggingRef.current = true
-    startYRef.current = getPointerY(event)
-    currentYRef.current = startYRef.current
-  }
+  draggingRef.current = true
+  startYRef.current = event.clientY
+  currentYRef.current = event.clientY
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
 
-  const handleDragMove = (event) => {
+const handleDragMove = (event) => {
   if (!draggingRef.current) return
-  if (event.cancelable) event.preventDefault()
 
-  currentYRef.current = getPointerY(event)
+  currentYRef.current = event.clientY
   const nextOffset = Math.max(0, currentYRef.current - startYRef.current)
 
   setDragOffset(nextOffset)
 }
 
-  const handleDragEnd = () => {
+const handleDragEnd = () => {
   if (!draggingRef.current) return
 
   const distance = Math.max(0, currentYRef.current - startYRef.current)
@@ -55,7 +55,6 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
 
   setDragOffset(0)
 }
-
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4">
       <button
