@@ -437,7 +437,12 @@ if (tab.slug === 'supernatural') {
 if (tab.slug === 'martial-arts') {
   navigate('/genre/martial-arts')
   return
-}                      
+}           
+
+                      if (tab.slug === 'revenge') {
+  navigate('/genre/revenge')
+  return
+}
                       
                       
   setActiveGenre(tab.slug)
