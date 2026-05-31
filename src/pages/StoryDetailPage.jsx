@@ -192,8 +192,32 @@ export default function StoryDetailPage() {
 
         if (ignore) return
 
-        setStory(storyData.story || null)
+        const loadedStory = storyData.story || null
+        const loadedAuthorPage = loadedStory?.author_page || null
+
+        setStory(loadedStory)
         setEpisodes(episodesData.episodes || [])
+        setAuthorFollowing(Boolean(loadedAuthorPage?.is_following))
+        setAuthorFollowerCount(Number(loadedAuthorPage?.total_followers || 0))
+
+        const token = getReaderToken()
+
+        if (loadedAuthorPage?.page_username && token) {
+          try {
+            const authorResponse = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(loadedAuthorPage.page_username)}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            const authorData = await authorResponse.json().catch(() => ({}))
+
+            if (!ignore && authorResponse.ok && authorData.ok !== false) {
+              setAuthorFollowing(Boolean(authorData.is_following))
+              setAuthorFollowerCount(Number(authorData.total_followers ?? authorData.author_page?.total_followers ?? loadedAuthorPage.total_followers ?? 0))
+            }
+          } catch {
+          }
+        }
       } catch (error) {
         if (ignore) return
         setMessage(
@@ -349,6 +373,49 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
     }
   }
 
+  const handleToggleAuthorFollow = async () => {
+    const token = getReaderToken()
+    const pageUsername = story?.author_page?.page_username
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!pageUsername || authorFollowLoading) return
+
+    const nextFollowing = !authorFollowing
+    const previousFollowing = authorFollowing
+    const previousCount = authorFollowerCount
+
+    setAuthorFollowLoading(true)
+    setAuthorFollowing(nextFollowing)
+    setAuthorFollowerCount(Math.max(0, previousCount + (nextFollowing ? 1 : -1)))
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/follow`, {
+        method: nextFollowing ? 'POST' : 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to update follow')
+      }
+
+      setAuthorFollowing(Boolean(data.is_following))
+      setAuthorFollowerCount(Number(data.total_followers || 0))
+    } catch {
+      setAuthorFollowing(previousFollowing)
+      setAuthorFollowerCount(previousCount)
+    } finally {
+      setAuthorFollowLoading(false)
+    }
+  }
+
   const handleCommentChanged = () => {
     setCommentRefreshKey((value) => value + 1)
   }
@@ -395,12 +462,13 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
           onOpenAll={() => setEpisodeListOpen(true)}
         />
 
-        <StoryAuthorMiniCard
+       <StoryAuthorMiniCard
   authorPage={story.author_page}
-  subscribed={subscribed}
-  savingCollection={savingCollection}
+  following={authorFollowing}
+  followerCount={authorFollowerCount}
+  followLoading={authorFollowLoading}
   onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
-  onFollow={handleToggleSubscribe}
+  onFollow={handleToggleAuthorFollow}
 />
         <LatestCommentSection
           story={story}
