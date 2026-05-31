@@ -471,6 +471,10 @@ if (tab.slug === 'strong-female-lead') {
   return
 }      
 
+if (tab.slug === 'hidden-identity') {
+  navigate('/genre/hidden-identity')
+  return
+}                      
 
                       
   setActiveGenre(tab.slug)
