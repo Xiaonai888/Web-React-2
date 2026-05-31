@@ -41,26 +41,6 @@ function Avatar({ user, size = 'h-12 w-12' }) {
   )
 }
 
-function EmptyState({ type }) {
-  const isFollowers = type === 'followers'
-
-  return (
-    <div className="px-6 py-12 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#8b93a1]">
-        <i className="fa-regular fa-user text-[24px]" />
-      </div>
-      <h2 className="mt-4 text-[16px] font-black text-[#111827]">
-        {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
-      </h2>
-      <p className="mx-auto mt-2 max-w-[280px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        {isFollowers
-          ? 'When people follow this account, they’ll appear here.'
-          : 'Accounts this user follows will appear here.'}
-      </p>
-    </div>
-  )
-}
-
 function FollowButton({ label, active, loading, onClick }) {
   return (
     <button
@@ -78,10 +58,32 @@ function FollowButton({ label, active, loading, onClick }) {
   )
 }
 
+function EmptyState({ type }) {
+  const isFollowers = type === 'followers'
+
+  return (
+    <section className="px-6 py-12 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/40">
+        <i className="fa-regular fa-user text-[24px]" />
+      </div>
+
+      <h2 className="mt-4 text-[17px] font-black text-[#111827]">
+        {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
+      </h2>
+
+      <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+        {isFollowers
+          ? 'When people follow this account, they will appear here.'
+          : 'Accounts this user follows will appear here.'}
+      </p>
+    </section>
+  )
+}
+
 function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
   const [loading, setLoading] = useState(false)
   const isFollowing = Boolean(user.is_following)
-  const isFollowBack = isOwnList && type === 'followers' && !isFollowing
+  const isFollowBack = isOwnList && type === 'followers' && Boolean(user.is_followed_by) && !isFollowing
   const buttonLabel = isFollowing ? 'Following' : isFollowBack ? 'Follow back' : 'Follow'
 
   const handleToggle = async (event) => {
@@ -159,7 +161,7 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
           @{user.username}
         </div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">
-          Suggested account
+          {user.is_author ? 'Suggested author' : 'Suggested reader'}
         </div>
       </div>
 
@@ -206,7 +208,8 @@ export default function ProfileFollowListPage() {
       ? users.filter((user) => {
           return (
             String(user.name || '').toLowerCase().includes(keyword) ||
-            String(user.username || '').toLowerCase().includes(keyword)
+            String(user.username || '').toLowerCase().includes(keyword) ||
+            String(user.bio || '').toLowerCase().includes(keyword)
           )
         })
       : users
@@ -217,7 +220,7 @@ export default function ProfileFollowListPage() {
   const visibleSuggestions = useMemo(() => {
     const hidden = new Set(hiddenSuggestionIds)
 
-    return suggestedUsers.filter((user) => !hidden.has(user.id)).slice(0, 5)
+    return suggestedUsers.filter((user) => !hidden.has(user.id)).slice(0, 8)
   }, [hiddenSuggestionIds, suggestedUsers])
 
   useEffect(() => {
@@ -278,7 +281,7 @@ export default function ProfileFollowListPage() {
       if (!token) return
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(username || '')}/followers?page=1&limit=20`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(username || '')}/followers?page=1&limit=50`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -311,18 +314,24 @@ export default function ProfileFollowListPage() {
     }
   }, [storedUser?.id, username, users])
 
+  const handleBackToProfile = () => {
+    navigate('/profile', { replace: true })
+  }
+
   const handleOpenUser = (user) => {
     if (!user?.username) return
-    navigate(`/profile/${user.username}`)
+
+    if (String(user.username).toLowerCase() === String(storedUser?.username || '').toLowerCase()) {
+      navigate('/profile')
+      return
+    }
+
+    navigate(`/profile/${user.username}/followers`)
   }
 
   const handleTabChange = (nextType) => {
     if (nextType === safeType) return
     navigate(`/profile/${username}/${nextType}`, { replace: true })
-  }
-
-  const handleBackToProfile = () => {
-    navigate(`/profile/${username}`, { replace: true })
   }
 
   const handleToggleOrder = () => {
@@ -358,6 +367,7 @@ export default function ProfileFollowListPage() {
         ? {
             ...user,
             is_following: !currentlyFollowing,
+            can_follow_back: false,
           }
         : user
 
@@ -492,7 +502,14 @@ export default function ProfileFollowListPage() {
                   ))}
                 </div>
               </section>
-            ) : null}
+            ) : (
+              <section className="border-t border-[#f0eef6] px-6 py-8 text-center">
+                <div className="text-[14px] font-black text-[#111827]">Suggested accounts</div>
+                <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                  More suggested readers will appear here when there is enough follow data.
+                </p>
+              </section>
+            )}
           </>
         )}
       </main>
