@@ -59,6 +59,7 @@ const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMall
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
+const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 
 
 function ComingSoon({ title }) {
@@ -265,6 +266,15 @@ function AppShell() {
   element={
     <LazyPage>
       <RomanceGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genre/fantasy"
+  element={
+    <LazyPage>
+      <FantasyGenrePage />
     </LazyPage>
   }
 />
