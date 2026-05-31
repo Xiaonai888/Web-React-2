@@ -367,7 +367,11 @@ export default function ForYou() {
   navigate('/genre/action')
   return
 }
-                      
+
+  if (tab.slug === 'comedy') {
+  navigate('/genre/comedy')
+  return
+}
 
   setActiveGenre(tab.slug)
 }}
