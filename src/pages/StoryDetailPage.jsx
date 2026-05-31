@@ -69,9 +69,17 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
       ? `${(followerCount / 1000).toFixed(followerCount >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
       : `${followerCount} followers`
 
+  const handleOpenPage = () => {
+    if (typeof onViewPage === 'function') onViewPage()
+  }
+
   return (
     <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
-      <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={handleOpenPage}
+        className="flex w-full items-center gap-3 text-left active:scale-[0.995]"
+      >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[18px] font-black text-[#111827] ring-1 ring-black/10 sm:h-14 sm:w-14 sm:text-[20px]">
           {authorPage.avatar_url ? (
             <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
@@ -90,23 +98,16 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
           </div>
 
           <div className="mt-3 flex items-center gap-4">
-            <button
-              type="button"
-              className="h-8 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-95"
-            >
+            <span className="flex h-8 items-center rounded-full bg-[#111827] px-5 text-[12px] font-black text-white">
               Follow
-            </button>
+            </span>
 
-            <button
-              type="button"
-              onClick={onViewPage}
-              className="text-[12px] font-black text-[#8d94a1] active:scale-95 active:text-[#111827]"
-            >
+            <span className="text-[12px] font-black text-[#8d94a1]">
               View Page
-            </button>
+            </span>
           </div>
         </div>
-      </div>
+      </button>
     </section>
   )
 }
