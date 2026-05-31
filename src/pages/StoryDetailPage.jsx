@@ -60,10 +60,10 @@ function ErrorBlock({ message, onBack }) {
   )
 }
 
-function StoryAuthorMiniCard({ authorPage, onViewPage }) {
+function StoryAuthorMiniCard({ authorPage, subscribed, savingCollection, onViewPage, onFollow }) {
   if (!authorPage) return null
 
-  const followerCount = Number(authorPage.total_followers || 0)
+  const followerCount = Number(authorPage.total_followers || 0) + (subscribed ? 1 : 0)
   const followerText =
     followerCount >= 1000
       ? `${(followerCount / 1000).toFixed(followerCount >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
@@ -74,8 +74,10 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
   }
 
   const handleFollowClick = (event) => {
-  event.stopPropagation()
-}
+    event.stopPropagation()
+
+    if (typeof onFollow === 'function') onFollow()
+  }
 
   return (
     <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
@@ -112,9 +114,12 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
             <button
               type="button"
               onClick={handleFollowClick}
-              className="h-8 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-95"
+              disabled={savingCollection}
+              className={`h-8 rounded-full px-5 text-[12px] font-black active:scale-95 disabled:opacity-60 ${
+                subscribed ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
+              }`}
             >
-              Follow
+              {subscribed ? 'Following' : 'Follow'}
             </button>
 
             <span className="text-[12px] font-black text-[#8d94a1]">
@@ -126,7 +131,6 @@ function StoryAuthorMiniCard({ authorPage, onViewPage }) {
     </section>
   )
 }
-
 
 function getStoredProgress(storyId, episodes) {
   try {
@@ -391,9 +395,11 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
 
         <StoryAuthorMiniCard
   authorPage={story.author_page}
+  subscribed={subscribed}
+  savingCollection={savingCollection}
   onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
+  onFollow={handleToggleSubscribe}
 />
-
         <LatestCommentSection
           story={story}
           refreshKey={commentRefreshKey}
