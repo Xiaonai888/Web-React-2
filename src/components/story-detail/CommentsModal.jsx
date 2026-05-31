@@ -66,12 +66,18 @@ export default function CommentsModal({ open, story, onClose, onCommentChanged }
       <section
         ref={sheetRef}
         className="relative flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[82vh] sm:rounded-[28px]"
-        style={{ transform: 'translateY(0)' }}
+        style={{ transform: `translateY(${dragOffset}px)` }}
       >
         <div
-          role="presentation"
-          className="shrink-0 bg-white px-4 pb-2 pt-3"
-        >
+  role="presentation"
+  onTouchStart={handleDragStart}
+  onTouchMove={handleDragMove}
+  onTouchEnd={handleDragEnd}
+  onMouseDown={handleDragStart}
+  onMouseMove={handleDragMove}
+  onMouseUp={handleDragEnd}
+  className="shrink-0 cursor-grab bg-white px-4 pb-2 pt-3"
+>
           <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
         </div>
 
