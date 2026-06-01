@@ -1212,6 +1212,8 @@ export default function ReaderPage() {
     let activeSeconds = 0
 
     async function sendQualifiedView() {
+        console.log('QUALIFIED VIEW TRIGGERED')
+
       if (qualifiedViewSentRef.current) return
 
       qualifiedViewSentRef.current = true
