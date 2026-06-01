@@ -43,31 +43,6 @@ function parseBannerTitle(value = '') {
   }
 }
 
-function AuthorCard({ name, fans, work, time, mode = 'recent' }) {
-  return (
-    <div className="min-w-[110px] rounded-[14px] border border-[#e5e7eb] bg-white px-2.5 py-3 text-center shadow-sm">
-      <div className="mx-auto mb-2.5 h-14 w-14 rounded-full bg-[#1f1f1f]" />
-      <div className="line-clamp-1 text-[10px] font-bold text-[#111827]">{name}</div>
-      <div className="mt-1 text-[11px] font-extrabold text-[#111827]">{fans}</div>
-      <div className="mt-1 text-[10px] text-[#444]">{work}</div>
-
-      {mode === 'top' ? (
-        <button
-          type="button"
-          className="mt-3 h-7 w-full rounded-full bg-black text-[10px] font-bold text-white active:scale-95"
-        >
-          Follow
-        </button>
-      ) : (
-        <div className="mt-3 text-[9px] font-semibold text-[#a0a6b2]">
-          <i className="far fa-clock mr-1" />
-          {time}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
@@ -125,6 +100,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow }) {
     </button>
   )
 }
+
 function SectionHeader({ title, onMore }) {
   return (
     <div className="mt-8 flex items-center justify-between">
@@ -388,9 +364,41 @@ function AuthorCenterBannerSlider() {
 export default function EventPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('author')
-  const [followingFilter, setFollowingFilter] = useState('recent')
   const [loading, setLoading] = useState(false)
+  const [topAuthorsLoading, setTopAuthorsLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [topAuthors, setTopAuthors] = useState([])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchTopAuthors() {
+      try {
+        setTopAuthorsLoading(true)
+
+        const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`)
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load top authors')
+        }
+
+        if (!ignore) {
+          setTopAuthors(Array.isArray(data.author_pages) ? data.author_pages : [])
+        }
+      } catch {
+        if (!ignore) setTopAuthors([])
+      } finally {
+        if (!ignore) setTopAuthorsLoading(false)
+      }
+    }
+
+    fetchTopAuthors()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const handleStartYourWork = async () => {
     if (loading) return
@@ -434,6 +442,47 @@ export default function EventPage() {
   const handleShortcut = (label) => {
     if (label === 'Write') {
       handleStartYourWork()
+    }
+  }
+
+  const handleOpenAuthor = (author) => {
+    if (!author?.page_username) return
+    navigate(`/author/page/${author.page_username}`)
+  }
+
+  const handleFollowTopAuthor = async (author) => {
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (!author?.page_username) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(author.page_username)}/follow`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) return
+
+      setTopAuthors((current) =>
+        current.map((item) =>
+          item.id === author.id
+            ? {
+                ...item,
+                total_followers: Number(item.total_followers || 0) + 1,
+              }
+            : item
+        )
+      )
+    } catch {
     }
   }
 
@@ -610,24 +659,50 @@ export default function EventPage() {
 
               <AuthorCenterBannerSlider />
 
-             
+              <SectionHeader title="Top Authors This Week" onMore={() => navigate('/authors/top')} />
 
-             <SectionHeader title="Top Authors This Week" onMore={() => navigate('/authors/top')} />
+              <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                Popular authors readers are following now.
+              </p>
 
-<p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-  Popular authors readers are following now.
-</p>
+              {topAuthorsLoading ? (
+                <div className="mt-5 flex gap-3 overflow-hidden pb-2">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="min-w-[132px] rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-3 py-4 text-center"
+                    >
+                      <div className="mx-auto mb-3 h-16 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="mx-auto mt-2 h-3 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="mt-3 h-8 animate-pulse rounded-full bg-[#f3f4f6]" />
+                    </div>
+                  ))}
+                </div>
+              ) : topAuthors.length ? (
+                <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
+                  {topAuthors.slice(0, 5).map((author, index) => (
+                    <TopAuthorCard
+                      key={author.id}
+                      rank={index + 1}
+                      author={author}
+                      onOpen={handleOpenAuthor}
+                      onFollow={handleFollowTopAuthor}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-4 py-6 text-center">
+                  <div className="text-[14px] font-black text-[#111827]">No top authors yet</div>
+                  <p className="mt-2 text-[12px] font-semibold text-[#8b93a1]">
+                    Authors will appear here when ranking data is available.
+                  </p>
+                </div>
+              )}
 
-<div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
-  <TopAuthorCard rank={1} name="Author Name" username="authorname" followers="2.1k" works="3" />
-  <TopAuthorCard rank={2} name="Author Name" username="authorname" followers="1.8k" works="5" />
-  <TopAuthorCard rank={3} name="Author Name" username="authorname" followers="1.2k" works="2" />
-  <TopAuthorCard rank={4} name="Author Name" username="authorname" followers="980" works="4" />
-</div>
-
-<p className="mt-6 text-center text-[12px] font-semibold text-[#a0a6b2]">
-  More author programs are coming soon.
-</p>
+              <p className="mt-6 text-center text-[12px] font-semibold text-[#a0a6b2]">
+                More author programs are coming soon.
+              </p>
             </section>
           </>
         ) : (
