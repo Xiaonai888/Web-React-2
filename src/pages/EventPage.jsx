@@ -90,22 +90,24 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{worksLabel}</div>
 
       <button
-        type="button"
-        disabled={loading}
-        onClick={(event) => {
-          event.stopPropagation()
-          if (author?.is_owner) {
-            onOpen(author)
-            return
-          }
-          onFollow(author)
-        }}
-        className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
-          author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
-        }`}
-      >
-        {loading ? '...' : buttonLabel}
-      </button>
+  type="button"
+  disabled={loading}
+  onClick={(event) => {
+    event.stopPropagation()
+
+    if (author?.is_owner || author?.is_following) {
+      onOpen(author)
+      return
+    }
+
+    onFollow(author)
+  }}
+  className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
+    author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
+  }`}
+>
+  {loading ? '...' : buttonLabel}
+</button>
     </button>
   )
 }
