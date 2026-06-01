@@ -496,14 +496,23 @@ export default function ProfileFollowListPage() {
               <p className="mt-0.5 text-[11px] font-bold text-[#9ca3af]">Reader connections</p>
             </div>
           </div>
-          <div className="mx-4 mb-3 grid grid-cols-3 rounded-[18px] bg-[#f8f7fb] p-1 text-center text-[12px] font-black text-[#111827]">
-            {tabs.map((tab) => (
-              <button key={tab.key} type="button" onClick={() => handleTabChange(tab.key)} className={`relative rounded-[14px] px-1 py-3 transition ${safeType === tab.key ? 'bg-white shadow-sm ring-1 ring-black/5' : ''}`}>
-                <span className="line-clamp-1">{tab.label}</span>
-                {safeType === tab.key ? <span className="absolute bottom-1 left-1/2 h-[3px] w-12 -translate-x-1/2 rounded-full bg-[#f6b800]" /> : null}
-              </button>
-            ))}
-          </div>
+          <div className="grid grid-cols-3 border-t border-[#f7f7fb] text-center text-[12px] font-black text-[#111827]">
+  {tabs.map((tab) => (
+    <button
+      key={tab.key}
+      type="button"
+      onClick={() => handleTabChange(tab.key)}
+      className={`relative py-3 transition ${
+        safeType === tab.key ? 'text-[#111827]' : 'text-[#9ca3af]'
+      }`}
+    >
+      <span className="line-clamp-1">{tab.label}</span>
+      {safeType === tab.key ? (
+        <span className="absolute bottom-0 left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full bg-[#f6b800]" />
+      ) : null}
+    </button>
+  ))}
+</div>
           <div className="px-4 pb-3">
             <div className="flex h-11 items-center gap-2 rounded-full bg-[#f5f3fa] px-4">
               <i className="fas fa-search text-[13px] text-[#8b93a1]" />
