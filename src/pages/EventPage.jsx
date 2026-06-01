@@ -68,12 +68,27 @@ function AuthorCard({ name, fans, work, time, mode = 'recent' }) {
   )
 }
 
-function TopAuthorCard({ rank, name, username, followers, works }) {
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function TopAuthorCard({ rank, author, onOpen, onFollow }) {
   const isFirst = rank === 1
+  const name = author?.page_name || 'Author'
+  const username = author?.page_username || 'author'
+  const avatarUrl = author?.avatar_url || ''
+  const followers = formatCompactNumber(author?.total_followers)
+  const works = formatCompactNumber(author?.total_stories)
 
   return (
     <button
       type="button"
+      onClick={() => onOpen(author)}
       className={`relative min-w-[132px] overflow-hidden rounded-[18px] border px-3 py-4 text-center shadow-sm active:scale-[0.98] ${
         isFirst
           ? 'border-[#f6b800] bg-gradient-to-b from-[#fff8df] to-white shadow-[0_10px_24px_rgba(246,184,0,0.18)]'
@@ -84,8 +99,12 @@ function TopAuthorCard({ rank, name, username, followers, works }) {
         #{rank}
       </div>
 
-      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-[18px] font-black text-white ring-2 ring-[#f6b800]/70">
-        {String(name || 'A').slice(0, 1).toUpperCase()}
+      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-black text-white ring-2 ring-[#f6b800]/70">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          String(name || 'A').slice(0, 1).toUpperCase()
+        )}
       </div>
 
       <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{name}</div>
@@ -93,13 +112,19 @@ function TopAuthorCard({ rank, name, username, followers, works }) {
       <div className="mt-2 text-[10px] font-extrabold text-[#111827]">{followers} followers</div>
       <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{works} works</div>
 
-      <div className="mt-3 rounded-full bg-black py-2 text-[10px] font-black text-white">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onFollow(author)
+        }}
+        className="mt-3 w-full rounded-full bg-black py-2 text-[10px] font-black text-white active:scale-95"
+      >
         Follow
-      </div>
+      </button>
     </button>
   )
 }
-
 function SectionHeader({ title, onMore }) {
   return (
     <div className="mt-8 flex items-center justify-between">
