@@ -26,7 +26,6 @@ import PublishEpisodePage from './pages/Author/PublishEpisodePage'
 import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
-import FollowingAuthorsPage from './pages/Author/FollowingAuthorsPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
@@ -138,7 +137,6 @@ function AppShell() {
     '/author/benefits',
     '/author/quest',
     '/author/create-story',
-    '/authors/following',
     '/authors/top',
     '/search',
     '/update-today',
@@ -589,7 +587,6 @@ function AppShell() {
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/authors/following" element={<FollowingAuthorsPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
