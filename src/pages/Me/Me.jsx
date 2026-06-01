@@ -104,13 +104,19 @@ function HeaderIcon({ icon, label, to, onClick }) {
   return to ? <Link to={to}>{content}</Link> : content
 }
 
-function BalanceItem({ value, label }) {
-  return (
+function BalanceItem({ value, label, to, state }) {
+  const content = (
     <div className="text-center">
       <div className="text-[15px] font-extrabold text-[#111827] dark:text-white">{value}</div>
       <div className="mt-1 text-[10.5px] font-semibold text-[#8d94a1] dark:text-white/50">{label}</div>
     </div>
   )
+
+  return to ? (
+    <Link to={to} state={state} className="block active:scale-[0.98]">
+      {content}
+    </Link>
+  ) : content
 }
 
 function QuickAction({ icon, title, subtitle, to, onClick }) {
@@ -706,19 +712,10 @@ useEffect(() => {
           </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
-            <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} />
+            <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase' }} />
             <BalanceItem value={walletBalance.gems} label={tx('gem')} />
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
-
-         <Link
-  to="/shop"
-  state={{ activeTab: 'Purchase' }}
-  className="mx-auto mt-3 flex h-9 w-[150px] items-center justify-center gap-2 rounded-full border border-[#f6b800]/45 bg-[#fff8df] text-[12.5px] font-extrabold text-[#111827] active:scale-[0.98] dark:bg-[#2a2414] dark:text-white"
->
-  <i className="fa-solid fa-gem text-[12px] text-[#d99a00]" />
-  <span>Top Up</span>
-</Link>
           
         </section>
 
