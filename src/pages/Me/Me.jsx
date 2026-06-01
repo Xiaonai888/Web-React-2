@@ -711,12 +711,13 @@ useEffect(() => {
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
 
-          <Link
+         <Link
   to="/shop"
-  className="mx-auto mt-3 flex h-10 w-[78%] max-w-[250px] items-center justify-center gap-2 rounded-full bg-[#f6b800] text-[13px] font-extrabold text-[#111827] shadow-[0_10px_24px_rgba(246,184,0,0.25)] active:scale-[0.98]"
+  state={{ activeTab: 'Purchase' }}
+  className="mx-auto mt-3 flex h-9 w-[150px] items-center justify-center gap-2 rounded-full border border-[#f6b800]/45 bg-[#fff8df] text-[12.5px] font-extrabold text-[#111827] active:scale-[0.98] dark:bg-[#2a2414] dark:text-white"
 >
-  <i className="fa-solid fa-gem text-[13px]" />
-  <span>Top Up Diamonds</span>
+  <i className="fa-solid fa-gem text-[12px] text-[#d99a00]" />
+  <span>Top Up</span>
 </Link>
           
         </section>
