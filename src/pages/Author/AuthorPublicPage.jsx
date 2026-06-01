@@ -311,7 +311,7 @@ function CropImageModal({
   const isAvatar = mode === 'avatar'
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/55 px-4 pb-[150px] pt-4">
+   <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-0 pb-0 md:items-center md:px-4 md:pb-0">
       <div className="mx-auto flex min-h-full w-full max-w-[560px] items-start justify-center">
         <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -407,7 +407,7 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         aria-label="Close follow settings"
       />
 
-      <div className="relative mb-[72px] w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:mb-0 md:max-w-[560px]">
+      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <div className="px-5 py-4">
@@ -474,6 +474,14 @@ export default function AuthorPublicPage() {
   const [savingImage, setSavingImage] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
+
+  useEffect(() => {
+  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
+
+  return () => {
+    document.body.classList.remove('mobile-popup-open')
+  }
+}, [followSettingsOpen])
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
