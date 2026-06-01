@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
 import PlanSection from '../components/Shop/PlanSection'
@@ -10,10 +10,17 @@ const tabs = ['Shadow Mall', 'Plans']
 
 export default function ShopPage() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Shadow Mall')
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
+
+  useEffect(() => {
+  if (location.state?.activeTab) {
+    setActiveTab(location.state.activeTab)
+  }
+}, [location.state])
 
   useEffect(() => {
     const refreshCartCount = () => {
