@@ -377,6 +377,7 @@ export default function EventPage() {
   const [topAuthorsLoading, setTopAuthorsLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [topAuthors, setTopAuthors] = useState([])
+  const [followLoadingId, setFollowLoadingId] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -385,7 +386,15 @@ export default function EventPage() {
       try {
         setTopAuthorsLoading(true)
 
-        const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`)
+        const token = getReaderToken()
+
+const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
+  headers: token
+    ? {
+        Authorization: `Bearer ${token}`,
+      }
+    : {},
+})
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
@@ -459,42 +468,47 @@ export default function EventPage() {
     navigate(`/author/page/${author.page_username}`)
   }
 
-  const handleFollowTopAuthor = async (author) => {
-    const token = getReaderToken()
+ const handleFollowTopAuthor = async (author) => {
+  const token = getReaderToken()
 
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    if (!author?.page_username) return
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(author.page_username)}/follow`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) return
-
-      setTopAuthors((current) =>
-        current.map((item) =>
-          item.id === author.id
-            ? {
-                ...item,
-                total_followers: Number(item.total_followers || 0) + 1,
-              }
-            : item
-        )
-      )
-    } catch {
-    }
+  if (!token) {
+    navigate('/login')
+    return
   }
 
+  if (!author?.page_username || author?.is_owner || author?.is_following || followLoadingId) return
+
+  try {
+    setFollowLoadingId(author.id)
+
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(author.page_username)}/follow`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) return
+
+    setTopAuthors((current) =>
+      current.map((item) =>
+        item.id === author.id
+          ? {
+              ...item,
+              is_following: true,
+              total_followers: Number(data.total_followers ?? item.total_followers ?? 0),
+            }
+          : item
+      )
+    )
+  } catch {
+  } finally {
+    setFollowLoadingId('')
+  }
+}
+  
   return (
     <div className="min-h-screen bg-white pb-[92px]">
       <style>{`
@@ -671,7 +685,7 @@ export default function EventPage() {
               <SectionHeader title="Top Authors This Week" onMore={() => navigate('/authors/top')} />
 
               <p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                Popular authors readers are following now.
+                Discover popular authors readers are following now.
               </p>
 
               {topAuthorsLoading ? (
@@ -692,12 +706,13 @@ export default function EventPage() {
                 <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
                   {topAuthors.slice(0, 5).map((author, index) => (
                     <TopAuthorCard
-                      key={author.id}
-                      rank={index + 1}
-                      author={author}
-                      onOpen={handleOpenAuthor}
-                      onFollow={handleFollowTopAuthor}
-                    />
+  key={author.id}
+  rank={index + 1}
+  author={author}
+  onOpen={handleOpenAuthor}
+  onFollow={handleFollowTopAuthor}
+  loading={followLoadingId === author.id}
+/>
                   ))}
                 </div>
               ) : (
