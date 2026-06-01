@@ -12,6 +12,7 @@ export default function ShopPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
+  const isPurchaseFromMe = activeTab === 'Purchase' && location.state?.from === '/me'
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
@@ -55,16 +56,17 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => {
-              if (activeTab !== 'Shadow Mall') {
-  if (location.state?.from) {
-    navigate(location.state.from, { replace: true })
-    return
-  }
+              if (isPurchaseFromMe) {
+  navigate('/me', { replace: true })
+  return
+}
 
+if (activeTab !== 'Shadow Mall') {
   setActiveTab('Shadow Mall')
   return
 }
-              navigate('/')
+
+navigate('/')
             }}
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
             aria-label="Go back"
@@ -73,7 +75,7 @@ export default function ShopPage() {
           </button>
 
           <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-            Shadow Mall
+            {isPurchaseFromMe ? 'Purchase' : 'Shadow Mall'}
           </h1>
 
           <button
