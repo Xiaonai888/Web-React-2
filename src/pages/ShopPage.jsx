@@ -52,73 +52,74 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-white pb-24">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <button
-            type="button"
-            onClick={() => {
-              if (isPurchaseFromMe) {
-  navigate('/me', { replace: true })
-  return
-}
+  <div className="flex h-14 items-center gap-3 px-4">
+    <button
+      type="button"
+      onClick={() => {
+        if (isPurchaseFromMe) {
+          navigate('/me', { replace: true })
+          return
+        }
 
-if (activeTab !== 'Shadow Mall') {
-  setActiveTab('Shadow Mall')
-  return
-}
+        if (activeTab !== 'Shadow Mall') {
+          setActiveTab('Shadow Mall')
+          return
+        }
 
-navigate('/')
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
-          </button>
+        navigate('/')
+      }}
+      className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+      aria-label="Go back"
+    >
+      <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+    </button>
 
-          <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-            {isPurchaseFromMe ? 'Purchase' : 'Shadow Mall'}
-          </h1>
+    <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+      {isPurchaseFromMe ? 'Purchase' : 'Shadow Mall'}
+    </h1>
 
-          {!isPurchaseFromMe ? (
-  <button
-    type="button"
-    onClick={() => setMallSearchOpen((value) => !value)}
-    className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
-    aria-label="Search books"
-  >
-    <i className="fa-solid fa-magnifying-glass text-[15px]" />
-  </button>
-) : null}
+    {!isPurchaseFromMe ? (
+      <>
+        <button
+          type="button"
+          onClick={() => setMallSearchOpen((value) => !value)}
+          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+          aria-label="Search books"
+        >
+          <i className="fa-solid fa-magnifying-glass text-[15px]" />
+        </button>
 
-         
- {!isPurchaseFromMe ? (
-  <button
-    type="button"
-    onClick={() => navigate('/shop/mall/cart')}
-    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
-    aria-label="Open cart"
-  >
-    <i className="fa-solid fa-cart-shopping text-[20px]" />
-    {cartCount > 0 ? (
-      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-        {cartCount}
-      </span>
+        <button
+          type="button"
+          onClick={() => navigate('/shop/mall/wishlist')}
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
+          aria-label="Open wishlist"
+        >
+          <i className="fa-regular fa-heart text-[20px]" />
+          {wishlistCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
+              {wishlistCount}
+            </span>
+          ) : null}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/shop/mall/cart')}
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
+          aria-label="Open cart"
+        >
+          <i className="fa-solid fa-cart-shopping text-[20px]" />
+          {cartCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
+              {cartCount}
+            </span>
+          ) : null}
+        </button>
+      </>
     ) : null}
-  </button>
-) : null}
-            type="button"
-            onClick={() => navigate('/shop/mall/cart')}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-[#111827] active:scale-95"
-            aria-label="Open cart"
-          >
-            <i className="fa-solid fa-cart-shopping text-[20px]" />
-            {cartCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6b800] px-1 text-[10px] font-extrabold text-[#111827]">
-                {cartCount}
-              </span>
-            ) : null}
-          </button>
-        </div>
-      </header>
+  </div>
+</header>
 
       <main className="px-4 pt-4">
         {activeTab === 'Plans' && <PlanSection />}
