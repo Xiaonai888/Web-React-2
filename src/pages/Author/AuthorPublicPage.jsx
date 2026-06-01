@@ -407,7 +407,7 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         aria-label="Close follow settings"
       />
 
-      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-2xl md:max-w-[560px]">
+      <div className="relative mb-[72px] w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:mb-0 md:max-w-[560px]">
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <div className="px-5 py-4">
@@ -421,10 +421,10 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
             onClick={onSeeFirst}
             className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff8df] text-[#9a6b00]">
-              <i className="fa-solid fa-star text-[14px]" />
-            </span>
-            <span className="text-[15px] font-bold text-[#111827]">See first</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+  <i className="fa-regular fa-star text-[15px]" />
+</span>
+<span className="text-[15px] font-bold text-[#111827]">See first</span>
           </button>
 
           <button
