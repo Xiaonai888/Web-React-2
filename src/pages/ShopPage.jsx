@@ -56,10 +56,14 @@ export default function ShopPage() {
             type="button"
             onClick={() => {
               if (activeTab !== 'Shadow Mall') {
-                setActiveTab('Shadow Mall')
-                return
-              }
+  if (location.state?.from) {
+    navigate(location.state.from, { replace: true })
+    return
+  }
 
+  setActiveTab('Shadow Mall')
+  return
+}
               navigate('/')
             }}
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
