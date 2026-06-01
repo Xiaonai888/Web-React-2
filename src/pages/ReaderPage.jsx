@@ -1031,6 +1031,7 @@ export default function ReaderPage() {
   const navigate = useNavigate()
   const { storyId, episodeId } = useParams()
   const autoScrollFrameRef = useRef(null)
+  const qualifiedViewSentRef = useRef(false)
 
   const [story, setStory] = useState(null)
   const [episode, setEpisode] = useState(null)
@@ -1129,6 +1130,7 @@ export default function ReaderPage() {
           setEpisodes(episodesData.episodes || [])
           setReadingProgress(0)
           setReviewProgressSaved(false)
+          qualifiedViewSentRef.current = false
           setAdultAccepted(true)
           setAdultWarningOpen(false)
           setMessage('This episode is locked. Please unlock it from the story page.')
@@ -1147,6 +1149,7 @@ export default function ReaderPage() {
         setEpisodes(episodesData.episodes || [])
         setReadingProgress(0)
         setReviewProgressSaved(false)
+        qualifiedViewSentRef.current = false
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
         if (episodeData.episode?.is_adult) {
@@ -1180,7 +1183,7 @@ export default function ReaderPage() {
     const updateProgress = () => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
-      const progress = scrollHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100)) : 0
+      const progress = scrollHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100)) : 100
 
       setReadingProgress(progress)
     }
@@ -1194,6 +1197,44 @@ export default function ReaderPage() {
       window.removeEventListener('resize', updateProgress)
     }
   }, [episodeId])
+
+  useEffect(() => {
+  if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) {
+    return undefined
+  }
+
+  const characterCount = Number(episode.character_count || episode.content?.length || 0)
+  const isShortEpisode = characterCount > 0 && characterCount < 3000
+  const requiredSeconds = isShortEpisode ? 30 : 60
+  const requiredProgress = isShortEpisode ? 60 : 20
+  let activeSeconds = 0
+
+  async function sendQualifiedView() {
+    if (qualifiedViewSentRef.current) return
+
+    qualifiedViewSentRef.current = true
+
+    await fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`, {
+      method: 'POST',
+      headers: readerAuthHeaders(),
+    }).catch(() => {})
+  }
+
+  const timer = window.setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+
+    activeSeconds += 1
+
+    if (activeSeconds >= requiredSeconds && readingProgress >= requiredProgress) {
+      window.clearInterval(timer)
+      sendQualifiedView()
+    }
+  }, 1000)
+
+  return () => {
+    window.clearInterval(timer)
+  }
+}, [adultAccepted, episode, episodeId, loading, readingProgress, storyId])
 
   useEffect(() => {
     const handleActionBarVisibility = () => {
