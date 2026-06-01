@@ -8,20 +8,12 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
 function getStoredUser() {
   try {
-    return JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-        sessionStorage.getItem('shadow_reader_user') ||
-        'null'
-    )
+    return JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
   } catch {
     return null
   }
@@ -32,11 +24,7 @@ function Avatar({ user }) {
 
   return (
     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[16px] font-black text-white ring-1 ring-black/5">
-      {user?.avatar_url ? (
-        <img src={user.avatar_url} alt={user.name || user.username} className="h-full w-full object-cover" />
-      ) : (
-        letter
-      )}
+      {user?.avatar_url ? <img src={user.avatar_url} alt={user.name || user.username} className="h-full w-full object-cover" /> : letter}
     </div>
   )
 }
@@ -47,12 +35,8 @@ function FollowButton({ label, active, followBack, loading, onClick }) {
       type="button"
       onClick={onClick}
       disabled={loading}
-      className={`h-9 min-w-[96px] shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-        active
-          ? 'bg-[#f3f4f6] text-[#111827]'
-          : followBack
-            ? 'bg-[#fff8df] text-[#9a6b00] ring-1 ring-[#f6b800]/45'
-            : 'bg-[#111827] text-white'
+      className={`h-9 min-w-[96px] shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-[0.98] disabled:opacity-60 ${
+        active ? 'bg-[#f3f4f6] text-[#111827]' : followBack ? 'bg-[#fff8df] text-[#9a6b00] ring-1 ring-[#f6b800]/45' : 'bg-[#111827] text-white'
       }`}
     >
       {loading ? '...' : label}
@@ -69,17 +53,12 @@ function EmptyState({ type, onFindReaders }) {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff8df] text-[#d49a00] ring-1 ring-[#f6d56b]/50">
           <i className="fa-regular fa-user text-[24px]" />
         </div>
-
         <h2 className="mt-4 text-[17px] font-black text-[#111827]">
           {isFollowers ? 'No followers yet' : 'Not following anyone yet'}
         </h2>
-
         <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-          {isFollowers
-            ? 'When people follow this reader, they will appear here.'
-            : 'Accounts this reader follows will appear here.'}
+          {isFollowers ? 'When people follow this reader, they will appear here.' : 'Accounts this reader follows will appear here.'}
         </p>
-
         <button
           type="button"
           onClick={onFindReaders}
@@ -100,7 +79,6 @@ function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
 
   const handleToggle = async (event) => {
     event.stopPropagation()
-
     if (loading) return
 
     try {
@@ -112,32 +90,16 @@ function UserRow({ user, type, isOwnList, onOpen, onToggleFollow }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(user)}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[#f7f7fb]"
-    >
+    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[#f7f7fb]">
       <Avatar user={user} />
-
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">
-          {user.name || user.username}
-        </div>
-        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">
-          @{user.username}
-        </div>
+        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{user.name || user.username}</div>
+        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">@{user.username}</div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">
           {user.bio || (user.is_author ? 'Author account' : 'Reader account')}
         </div>
       </div>
-
-      <FollowButton
-        label={buttonLabel}
-        active={isFollowing}
-        followBack={isFollowBack}
-        loading={loading}
-        onClick={handleToggle}
-      />
+      <FollowButton label={buttonLabel} active={isFollowing} followBack={isFollowBack} loading={loading} onClick={handleToggle} />
     </button>
   )
 }
@@ -147,7 +109,6 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
 
   const handleFollow = async (event) => {
     event.stopPropagation()
-
     if (loading) return
 
     try {
@@ -159,27 +120,16 @@ function SuggestedRow({ user, onHide, onOpen, onToggleFollow }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(user)}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[#f7f7fb]"
-    >
+    <button type="button" onClick={() => onOpen(user)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-[#f7f7fb]">
       <Avatar user={user} />
-
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">
-          {user.name || user.username}
-        </div>
-        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">
-          @{user.username}
-        </div>
+        <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{user.name || user.username}</div>
+        <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">@{user.username}</div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">
           {user.is_author ? 'Suggested author' : 'Suggested reader'}
         </div>
       </div>
-
       <FollowButton label="Follow" active={false} followBack={false} loading={loading} onClick={handleFollow} />
-
       <button
         type="button"
         onClick={(event) => {
@@ -201,15 +151,66 @@ function SuggestedEmptyCard() {
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#d49a00] ring-1 ring-[#f6d56b]/50">
         <i className="fa-solid fa-users text-[18px]" />
       </div>
-
-      <h3 className="mt-3 text-[14px] font-black text-[#111827]">
-        Suggestions will appear here soon
-      </h3>
-
+      <h3 className="mt-3 text-[14px] font-black text-[#111827]">Suggestions will appear here soon</h3>
       <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
         When real suggested readers are connected, this area will show people from the Shadow community.
       </p>
     </div>
+  )
+}
+
+function AuthorMiniCard({ name, fans, work, time }) {
+  return (
+    <button
+      type="button"
+      className="min-w-[110px] rounded-[14px] border border-[#e5e7eb] bg-white px-2.5 py-3 text-center shadow-sm active:scale-[0.98]"
+    >
+      <div className="mx-auto mb-2.5 h-14 w-14 rounded-full bg-[#1f1f1f]" />
+      <div className="line-clamp-1 text-[10px] font-bold text-[#111827]">{name}</div>
+      <div className="mt-1 text-[11px] font-extrabold text-[#111827]">{fans}</div>
+      <div className="mt-1 text-[10px] text-[#444]">{work}</div>
+      <div className="mt-3 text-[9px] font-semibold text-[#a0a6b2]">
+        <i className="far fa-clock mr-1" />
+        {time}
+      </div>
+    </button>
+  )
+}
+
+function FollowedAuthorsTab({ activeFilter, onFilterChange }) {
+  const filters = ['recent', 'popular', 'updated']
+
+  return (
+    <section className="px-4 py-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[19px] font-extrabold text-[#111827]">My Following</h2>
+        <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-[#9ca3af] active:scale-95">
+          <i className="fas fa-chevron-right text-[15px]" />
+        </button>
+      </div>
+
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        {filters.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => onFilterChange(item)}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold ${
+              activeFilter === item ? 'bg-black text-white' : 'border border-[#d8dbe3] bg-white text-[#111827]'
+            }`}
+          >
+            {item === 'recent' ? 'Recent' : item === 'popular' ? 'Popular' : 'Most Updated'}
+          </button>
+        ))}
+      </div>
+
+      <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
+        <AuthorMiniCard name="Author Name" fans="2.1k Fans" work="work 03" time="1 days ago" />
+        <AuthorMiniCard name="Author Name" fans="2.1k Fans" work="work 03" time="2 days ago" />
+        <AuthorMiniCard name="Author Name" fans="2.1k Fans" work="work 03" time="3 days ago" />
+        <AuthorMiniCard name="Author Name" fans="2.1k Fans" work="work 03" time="5 days ago" />
+      </div>
+    </section>
   )
 }
 
@@ -222,15 +223,18 @@ export default function ProfileFollowListPage() {
   const [hiddenSuggestionIds, setHiddenSuggestionIds] = useState([])
   const [query, setQuery] = useState('')
   const [order, setOrder] = useState('desc')
+  const [authorFilter, setAuthorFilter] = useState('recent')
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  const safeType = listType === 'following' ? 'following' : 'followers'
+  const safeType = listType === 'following' ? 'following' : listType === 'followed-authors' ? 'followed-authors' : 'followers'
+  const isAuthorTab = safeType === 'followed-authors'
   const isOwnList = String(storedUser?.username || '').toLowerCase() === String(username || '').toLowerCase()
 
   const tabs = [
     { key: 'followers', label: 'Followers' },
     { key: 'following', label: 'Following' },
+    { key: 'followed-authors', label: 'Followed Authors' },
   ]
 
   const visibleUsers = useMemo(() => {
@@ -250,7 +254,6 @@ export default function ProfileFollowListPage() {
 
   const visibleSuggestions = useMemo(() => {
     const hidden = new Set(hiddenSuggestionIds)
-
     return suggestedUsers.filter((user) => !hidden.has(user.id)).slice(0, 8)
   }, [hiddenSuggestionIds, suggestedUsers])
 
@@ -262,6 +265,13 @@ export default function ProfileFollowListPage() {
 
       if (!token) {
         navigate('/login')
+        return
+      }
+
+      if (safeType === 'followed-authors') {
+        setUsers([])
+        setMessage('')
+        setLoading(false)
         return
       }
 
@@ -281,18 +291,14 @@ export default function ProfileFollowListPage() {
           throw new Error(data.message || `Failed to load ${safeType}`)
         }
 
-        if (!ignore) {
-          setUsers(Array.isArray(data.users) ? data.users : [])
-        }
+        if (!ignore) setUsers(Array.isArray(data.users) ? data.users : [])
       } catch (error) {
         if (!ignore) {
           setUsers([])
           setMessage(error.message || `Failed to load ${safeType}`)
         }
       } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+        if (!ignore) setLoading(false)
       }
     }
 
@@ -309,7 +315,7 @@ export default function ProfileFollowListPage() {
     async function loadSuggestions() {
       const token = getAuthToken()
 
-      if (!token) return
+      if (!token || safeType === 'followed-authors') return
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/users/suggestions?page=1&limit=20`, {
@@ -324,16 +330,14 @@ export default function ProfileFollowListPage() {
 
         if (!ignore) {
           const alreadyShown = new Set(users.map((user) => user.id))
-const suggestions = (Array.isArray(data.users) ? data.users : [])
-  .filter((user) => user.id !== storedUser?.id)
-  .filter((user) => !alreadyShown.has(user.id))
+          const suggestions = (Array.isArray(data.users) ? data.users : [])
+            .filter((user) => user.id !== storedUser?.id)
+            .filter((user) => !alreadyShown.has(user.id))
 
-setSuggestedUsers(suggestions)
+          setSuggestedUsers(suggestions)
         }
       } catch {
-        if (!ignore) {
-          setSuggestedUsers([])
-        }
+        if (!ignore) setSuggestedUsers([])
       }
     }
 
@@ -342,7 +346,7 @@ setSuggestedUsers(suggestions)
     return () => {
       ignore = true
     }
-  }, [storedUser?.id, username, users])
+  }, [safeType, storedUser?.id, users])
 
   const handleBackToProfile = () => {
     navigate('/profile', { replace: true })
@@ -411,6 +415,11 @@ setSuggestedUsers(suggestions)
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[92px]">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
       <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:border-x md:border-[#eceaf2]">
         <header className="sticky top-0 z-30 border-b border-[#f0eef6] bg-white/95 backdrop-blur">
           <div className="flex items-center gap-3 px-4 py-3">
@@ -429,19 +438,19 @@ setSuggestedUsers(suggestions)
             </div>
           </div>
 
-          <div className="mx-4 mb-3 grid grid-cols-2 rounded-[18px] bg-[#f8f7fb] p-1 text-center text-[13px] font-black text-[#111827]">
+          <div className="mx-4 mb-3 grid grid-cols-3 rounded-[18px] bg-[#f8f7fb] p-1 text-center text-[12px] font-black text-[#111827]">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => handleTabChange(tab.key)}
-                className={`relative rounded-[14px] py-3 transition ${
+                className={`relative rounded-[14px] px-1 py-3 transition ${
                   safeType === tab.key ? 'bg-white shadow-sm ring-1 ring-black/5' : ''
                 }`}
               >
-                {tab.label}
+                <span className="line-clamp-1">{tab.label}</span>
                 {safeType === tab.key ? (
-                  <span className="absolute bottom-1 left-1/2 h-[3px] w-14 -translate-x-1/2 rounded-full bg-[#f6b800]" />
+                  <span className="absolute bottom-1 left-1/2 h-[3px] w-12 -translate-x-1/2 rounded-full bg-[#f6b800]" />
                 ) : null}
               </button>
             ))}
@@ -453,98 +462,100 @@ setSuggestedUsers(suggestions)
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search readers"
+                placeholder={isAuthorTab ? 'Search authors' : 'Search readers'}
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af]"
               />
             </div>
           </div>
         </header>
 
-        <div className="flex items-center justify-between border-b border-[#f0eef6] px-4 py-3">
-          <div>
-            <div className="text-[13px] font-black text-[#111827]">
-              {order === 'desc' ? 'Recent' : 'Oldest'}
-            </div>
-            <div className="text-[11px] font-bold text-[#9ca3af]">
-              {visibleUsers.length} readers
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleToggleOrder}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Reverse order"
-          >
-            <i className="fa-solid fa-arrow-down-wide-short text-[14px]" />
-          </button>
-        </div>
-
-        {message ? (
-          <button
-            type="button"
-            onClick={() => setMessage('')}
-            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
-          >
-            {message}
-          </button>
-        ) : null}
-
-        {loading ? (
-          <div className="space-y-3 px-4 py-5">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className="h-12 w-12 animate-pulse rounded-full bg-[#f3f4f6]" />
-                <div className="min-w-0 flex-1">
-                  <div className="h-4 w-32 animate-pulse rounded-full bg-[#f3f4f6]" />
-                  <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[#f3f4f6]" />
-                </div>
-              </div>
-            ))}
-          </div>
+        {isAuthorTab ? (
+          <FollowedAuthorsTab activeFilter={authorFilter} onFilterChange={setAuthorFilter} />
         ) : (
           <>
-            {visibleUsers.length ? (
-              <div className="divide-y divide-[#f0eef6]">
-                {visibleUsers.map((user) => (
-                  <UserRow
-                    key={user.id}
-                    user={user}
-                    type={safeType}
-                    isOwnList={isOwnList}
-                    onOpen={handleOpenUser}
-                    onToggleFollow={handleToggleFollow}
-                  />
+            <div className="flex items-center justify-between border-b border-[#f0eef6] px-4 py-3">
+              <div>
+                <div className="text-[13px] font-black text-[#111827]">{order === 'desc' ? 'Recent' : 'Oldest'}</div>
+                <div className="text-[11px] font-bold text-[#9ca3af]">{visibleUsers.length} readers</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleToggleOrder}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+                aria-label="Reverse order"
+              >
+                <i className="fa-solid fa-arrow-down-wide-short text-[14px]" />
+              </button>
+            </div>
+
+            {message ? (
+              <button
+                type="button"
+                onClick={() => setMessage('')}
+                className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+              >
+                {message}
+              </button>
+            ) : null}
+
+            {loading ? (
+              <div className="space-y-3 px-4 py-5">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="h-12 w-12 animate-pulse rounded-full bg-[#f3f4f6]" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-4 w-32 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      <div className="mt-2 h-3 w-24 animate-pulse rounded-full bg-[#f3f4f6]" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
-              <EmptyState type={safeType} onFindReaders={handleFindReaders} />
+              <>
+                {visibleUsers.length ? (
+                  <div className="divide-y divide-[#f0eef6]">
+                    {visibleUsers.map((user) => (
+                      <UserRow
+                        key={user.id}
+                        user={user}
+                        type={safeType}
+                        isOwnList={isOwnList}
+                        onOpen={handleOpenUser}
+                        onToggleFollow={handleToggleFollow}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState type={safeType} onFindReaders={handleFindReaders} />
+                )}
+
+                <section className="border-t border-[#f0eef6] py-5">
+                  <div className="px-4 pb-3">
+                    <div className="text-[15px] font-black text-[#111827]">Readers you may know</div>
+                    <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                      Discover readers and authors from the Shadow community.
+                    </p>
+                  </div>
+
+                  {visibleSuggestions.length ? (
+                    <div className="divide-y divide-[#f0eef6]">
+                      {visibleSuggestions.map((user) => (
+                        <SuggestedRow
+                          key={user.id}
+                          user={user}
+                          onOpen={handleOpenUser}
+                          onToggleFollow={handleToggleFollow}
+                          onHide={(id) => setHiddenSuggestionIds((current) => [...current, id])}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <SuggestedEmptyCard />
+                  )}
+                </section>
+              </>
             )}
-
-            <section className="border-t border-[#f0eef6] py-5">
-              <div className="px-4 pb-3">
-                <div className="text-[15px] font-black text-[#111827]">Readers you may know</div>
-                <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                  Discover readers and authors from the Shadow community.
-                </p>
-              </div>
-
-              {visibleSuggestions.length ? (
-                <div className="divide-y divide-[#f0eef6]">
-                  {visibleSuggestions.map((user) => (
-                    <SuggestedRow
-                      key={user.id}
-                      user={user}
-                      onOpen={handleOpenUser}
-                      onToggleFollow={handleToggleFollow}
-                      onHide={(id) => setHiddenSuggestionIds((current) => [...current, id])}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <SuggestedEmptyCard />
-              )}
-            </section>
           </>
         )}
       </main>
