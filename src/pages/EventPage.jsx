@@ -553,31 +553,7 @@ export default function EventPage() {
 
               <AuthorCenterBannerSlider />
 
-              <SectionHeader title="My Following" onMore={() => navigate('/authors/following')} />
-
-              <div className="mt-4 flex gap-2">
-                {['recent', 'popular', 'updated'].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setFollowingFilter(item)}
-                    className={`rounded-full px-4 py-1.5 text-[12px] font-bold ${
-                      followingFilter === item
-                        ? 'bg-black text-white'
-                        : 'border border-[#d8dbe3] bg-white text-[#111827]'
-                    }`}
-                  >
-                    {item === 'recent' ? 'Recent' : item === 'popular' ? 'Popular' : 'Most Updated'}
-                  </button>
-                ))}
-              </div>
-
-              <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="1 days ago" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="2 days ago" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="3 days ago" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" time="5 days ago" />
-              </div>
+             
 
               <SectionHeader title="Top Author" onMore={() => navigate('/authors/top')} />
 
