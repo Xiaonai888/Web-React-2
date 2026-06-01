@@ -51,7 +51,7 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
+<header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
   <div className="flex h-14 items-center gap-3 px-4">
     <button
       type="button"
