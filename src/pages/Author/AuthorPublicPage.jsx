@@ -399,7 +399,7 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
   if (!open || !author) return null
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35">
+    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35 md:items-center">
       <button
         type="button"
         className="absolute inset-0 h-full w-full cursor-default"
@@ -474,6 +474,14 @@ export default function AuthorPublicPage() {
   const [savingImage, setSavingImage] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
+
+  useEffect(() => {
+  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
+
+  return () => {
+    document.body.classList.remove('mobile-popup-open')
+  }
+}, [followSettingsOpen])
 
   useEffect(() => {
   document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
