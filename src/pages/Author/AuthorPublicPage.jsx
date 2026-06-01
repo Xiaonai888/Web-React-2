@@ -395,6 +395,68 @@ function CropImageModal({
   )
 }
 
+function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMute, onUnfollow }) {
+  if (!open || !author) return null
+
+  return (
+    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35">
+      <button
+        type="button"
+        className="absolute inset-0 h-full w-full cursor-default"
+        onClick={onClose}
+        aria-label="Close follow settings"
+      />
+
+      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-2xl md:max-w-[560px]">
+        <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <div className="px-5 py-4">
+          <div className="text-[15px] font-black text-[#111827]">{author.page_name}</div>
+          <div className="mt-1 text-[12px] font-bold text-[#8b93a1]">@{author.page_username}</div>
+        </div>
+
+        <div className="border-t border-[#f0eef6]">
+          <button
+            type="button"
+            onClick={onSeeFirst}
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff8df] text-[#9a6b00]">
+              <i className="fa-solid fa-star text-[14px]" />
+            </span>
+            <span className="text-[15px] font-bold text-[#111827]">See first</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onMute}
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+              <i className="fa-regular fa-bell-slash text-[15px]" />
+            </span>
+            <span className="text-[15px] font-bold text-[#111827]">Mute updates</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onUnfollow}
+            disabled={loading}
+            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#fff1f1] disabled:opacity-60"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+              <i className="fa-solid fa-user-minus text-[14px]" />
+            </span>
+            <span className="text-[15px] font-bold text-[#e5484d]">
+              {loading ? 'Unfollowing...' : `Unfollow ${author.page_name}`}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
@@ -411,6 +473,7 @@ export default function AuthorPublicPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [savingImage, setSavingImage] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+  const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -499,6 +562,26 @@ export default function AuthorPublicPage() {
     setFollowLoading(false)
   }
 }
+
+  function handleOpenFollowSettings() {
+  if (!author?.is_following || author?.is_owner) return
+  setFollowSettingsOpen(true)
+}
+
+function handleSeeFirst() {
+  setFollowSettingsOpen(false)
+  setMessage('See first is not available yet.')
+}
+
+function handleMuteUpdates() {
+  setFollowSettingsOpen(false)
+  setMessage('Mute updates is not available yet.')
+}
+
+async function handleUnfollowFromSettings() {
+  setFollowSettingsOpen(false)
+  await handleToggleFollow()
+}
   
   const actionButtons = useMemo(() => {
   if (author?.is_owner) {
@@ -510,12 +593,12 @@ export default function AuthorPublicPage() {
 
     return [
       {
-        label: author?.is_following ? 'Following' : 'Follow',
-      icon: author?.is_following ? 'fa-user-check' : 'fa-user-plus',
-      type: author?.is_following ? 'secondary' : 'primary',
-      onClick: handleToggleFollow,
-      disabled: followLoading,
-      },
+  label: author?.is_following ? 'Following' : 'Follow',
+  icon: author?.is_following ? 'fa-user-check' : 'fa-user-plus',
+  type: author?.is_following ? 'secondary' : 'primary',
+  onClick: author?.is_following ? handleOpenFollowSettings : handleToggleFollow,
+  disabled: followLoading,
+},
       { label: 'Message', icon: 'fa-comment', type: 'secondary' },
     ]
   }, [author?.is_owner, author?.is_following, followLoading, navigate])
@@ -635,6 +718,16 @@ export default function AuthorPublicPage() {
         onClose={() => setCropModalOpen(false)}
         onSave={handleSaveCrop}
       />
+
+      <FollowSettingsSheet
+  open={followSettingsOpen}
+  author={displayAuthor}
+  loading={followLoading}
+  onClose={() => setFollowSettingsOpen(false)}
+  onSeeFirst={handleSeeFirst}
+  onMute={handleMuteUpdates}
+  onUnfollow={handleUnfollowFromSettings}
+/>
 
       <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
