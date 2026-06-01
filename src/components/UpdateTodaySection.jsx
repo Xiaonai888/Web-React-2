@@ -57,6 +57,15 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
+function getRealBadgeFromStoryStatus(status) {
+  const value = String(status || '').trim().toLowerCase()
+
+  if (value === 'completed') return 'red'
+  if (value === 'ongoing') return 'yellow'
+
+  return 'green'
+}
+
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
@@ -68,7 +77,7 @@ function normalizeStory(story, index = 0) {
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
     genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
     description: story.description || 'No description yet.',
-    badge: index === 0 ? 'green' : index % 3 === 0 ? 'red' : index % 3 === 1 ? 'yellow' : 'green',
+    badge: getRealBadgeFromStoryStatus(story.story_status),
     isReal: true,
   }
 }
