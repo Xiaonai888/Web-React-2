@@ -68,6 +68,38 @@ function AuthorCard({ name, fans, work, time, mode = 'recent' }) {
   )
 }
 
+function TopAuthorCard({ rank, name, username, followers, works }) {
+  const isFirst = rank === 1
+
+  return (
+    <button
+      type="button"
+      className={`relative min-w-[132px] overflow-hidden rounded-[18px] border px-3 py-4 text-center shadow-sm active:scale-[0.98] ${
+        isFirst
+          ? 'border-[#f6b800] bg-gradient-to-b from-[#fff8df] to-white shadow-[0_10px_24px_rgba(246,184,0,0.18)]'
+          : 'border-[#f3df9a] bg-[#fffdf7]'
+      }`}
+    >
+      <div className="absolute left-2 top-2 rounded-full bg-[#111827] px-2 py-0.5 text-[10px] font-black text-[#f6b800]">
+        #{rank}
+      </div>
+
+      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#111827] text-[18px] font-black text-white ring-2 ring-[#f6b800]/70">
+        {String(name || 'A').slice(0, 1).toUpperCase()}
+      </div>
+
+      <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{name}</div>
+      <div className="mt-1 line-clamp-1 text-[10px] font-bold text-[#8b93a1]">@{username}</div>
+      <div className="mt-2 text-[10px] font-extrabold text-[#111827]">{followers} followers</div>
+      <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{works} works</div>
+
+      <div className="mt-3 rounded-full bg-black py-2 text-[10px] font-black text-white">
+        Follow
+      </div>
+    </button>
+  )
+}
+
 function SectionHeader({ title, onMore }) {
   return (
     <div className="mt-8 flex items-center justify-between">
@@ -555,14 +587,22 @@ export default function EventPage() {
 
              
 
-              <SectionHeader title="Top Author" onMore={() => navigate('/authors/top')} />
+             <SectionHeader title="Top Authors This Week" onMore={() => navigate('/authors/top')} />
 
-              <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
-                <AuthorCard name="Author Name" fans="2.1k Fans" work="work 03" mode="top" />
-              </div>
+<p className="mt-2 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+  Popular authors readers are following now.
+</p>
+
+<div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
+  <TopAuthorCard rank={1} name="Author Name" username="authorname" followers="2.1k" works="3" />
+  <TopAuthorCard rank={2} name="Author Name" username="authorname" followers="1.8k" works="5" />
+  <TopAuthorCard rank={3} name="Author Name" username="authorname" followers="1.2k" works="2" />
+  <TopAuthorCard rank={4} name="Author Name" username="authorname" followers="980" works="4" />
+</div>
+
+<p className="mt-6 text-center text-[12px] font-semibold text-[#a0a6b2]">
+  More author programs are coming soon.
+</p>
             </section>
           </>
         ) : (
