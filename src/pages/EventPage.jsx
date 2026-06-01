@@ -52,13 +52,15 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function TopAuthorCard({ rank, author, onOpen, onFollow }) {
+function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
   const isFirst = rank === 1
   const name = author?.page_name || 'Author'
   const username = author?.page_username || 'author'
   const avatarUrl = author?.avatar_url || ''
   const followers = formatCompactNumber(author?.total_followers)
-  const works = formatCompactNumber(author?.total_stories)
+  const worksCount = Number(author?.total_stories || 0)
+  const worksLabel = worksCount === 0 ? 'No works yet' : worksCount === 1 ? '1 work' : `${formatCompactNumber(worksCount)} works`
+  const buttonLabel = author?.is_owner ? 'View' : author?.is_following ? 'Following' : 'Follow'
 
   return (
     <button
@@ -85,17 +87,24 @@ function TopAuthorCard({ rank, author, onOpen, onFollow }) {
       <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{name}</div>
       <div className="mt-1 line-clamp-1 text-[10px] font-bold text-[#8b93a1]">@{username}</div>
       <div className="mt-2 text-[10px] font-extrabold text-[#111827]">{followers} followers</div>
-      <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{works} works</div>
+      <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{worksLabel}</div>
 
       <button
         type="button"
+        disabled={loading}
         onClick={(event) => {
           event.stopPropagation()
+          if (author?.is_owner) {
+            onOpen(author)
+            return
+          }
           onFollow(author)
         }}
-        className="mt-3 w-full rounded-full bg-black py-2 text-[10px] font-black text-white active:scale-95"
+        className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
+          author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
+        }`}
       >
-        Follow
+        {loading ? '...' : buttonLabel}
       </button>
     </button>
   )
