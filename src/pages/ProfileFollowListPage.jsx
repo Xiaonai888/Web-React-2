@@ -140,9 +140,9 @@ function AuthorActionSheet({ author, loading, onClose, onMessage, onMute, onUnfo
   if (!author) return null
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35 px-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/35">
       <button type="button" className="absolute inset-0 h-full w-full cursor-default" onClick={onClose} aria-label="Close author menu" />
-      <div className="relative w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-white pb-3 shadow-2xl">
+      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-2xl md:max-w-[560px]">
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
         <div className="flex items-center gap-3 px-5 py-4">
           <Avatar item={author} />
@@ -195,7 +195,7 @@ function FollowedAuthorRow({ author, onOpen, onMenu }) {
       <div className="min-w-0 flex-1">
         <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{author.page_name}</div>
         <div className="line-clamp-1 text-[12px] font-bold text-[#8b93a1]">
-          @{author.page_username} · {Number(author.total_followers || 0).toLocaleString()} fans
+          @{author.page_username} · {Number(author.total_followers || 0).toLocaleString()} {Number(author.total_followers || 0) === 1 ? 'follower' : 'followers'}
         </div>
         <div className="mt-1 line-clamp-1 text-[12px] font-semibold text-[#6b7280]">{Number(author.total_stories || 0).toLocaleString()} works</div>
       </div>
