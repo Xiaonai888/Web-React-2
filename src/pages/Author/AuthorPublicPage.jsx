@@ -311,8 +311,8 @@ function CropImageModal({
   const isAvatar = mode === 'avatar'
 
   return (
-   <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-0 pb-0 md:items-center md:px-4 md:pb-0">
-      <div className="mx-auto flex min-h-full w-full max-w-[560px] items-start justify-center">
+   <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-0 pb-[72px] md:items-center md:px-4 md:pb-0">
+      <div className="mx-auto flex min-h-0 w-full max-w-[560px] items-end justify-center md:items-center">
         <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
