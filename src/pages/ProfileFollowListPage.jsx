@@ -552,7 +552,11 @@ export default function ProfileFollowListPage() {
                 <div className="text-[11px] font-bold text-[#9ca3af]">{visibleUsers.length} readers</div>
               </div>
               <button type="button" onClick={() => setOrder((current) => (current === 'desc' ? 'asc' : 'desc'))} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95" aria-label="Reverse order">
-                <i className="fa-solid fa-arrow-down-wide-short text-[14px]" />
+                <img
+  src="/assets/Icons/Revers.svg"
+  alt="Reverse"
+  className="h-4 w-4"
+/>
               </button>
             </div>
             {message ? <button type="button" onClick={() => setMessage('')} className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]">{message}</button> : null}
