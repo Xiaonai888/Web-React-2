@@ -112,3 +112,11 @@ body::-webkit-scrollbar,
   width: 0;
   height: 0;
 }
+
+@media (max-width: 767px) {
+  body.mobile-popup-open footer,
+  body.mobile-popup-open nav.fixed,
+  body.mobile-popup-open .fixed.bottom-0 {
+    display: none !important;
+  }
+}
