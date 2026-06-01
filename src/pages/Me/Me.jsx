@@ -710,6 +710,15 @@ useEffect(() => {
             <BalanceItem value={walletBalance.gems} label={tx('gem')} />
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
+
+          <Link
+  to="/shop"
+  className="mx-auto mt-3 flex h-10 w-[78%] max-w-[250px] items-center justify-center gap-2 rounded-full bg-[#f6b800] text-[13px] font-extrabold text-[#111827] shadow-[0_10px_24px_rgba(246,184,0,0.25)] active:scale-[0.98]"
+>
+  <i className="fa-solid fa-gem text-[13px]" />
+  <span>Top Up Diamonds</span>
+</Link>
+          
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
