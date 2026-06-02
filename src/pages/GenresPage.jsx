@@ -35,9 +35,154 @@ const genres = [
   { label: 'LGBTQ+', slug: 'lgbtq' },
 ]
 
+const quickFilters = [
+  { label: 'Wait Until Free', value: 'wait_free' },
+  { label: 'Free', value: 'free' },
+  { label: 'Completed', value: 'completed' },
+]
+
+const accessFilters = [
+  { label: 'All', value: 'all' },
+  { label: 'Wait Until Free', value: 'wait_free' },
+  { label: 'Free', value: 'free' },
+  { label: 'Paid', value: 'paid' },
+  { label: 'Premium Early Access', value: 'premium' },
+]
+
+const typeFilters = [
+  { label: 'All', value: 'all' },
+  { label: 'Original', value: 'original' },
+  { label: 'Translated', value: 'translated' },
+  { label: 'Fan Contribution', value: 'fan' },
+]
+
+const progressFilters = [
+  { label: 'All', value: 'all' },
+  { label: 'Ongoing', value: 'ongoing' },
+  { label: 'Completed', value: 'completed' },
+]
+
+function FilterChip({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
+        active ? 'bg-[#facc15] text-[#111827]' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function FilterSheet({
+  open,
+  onClose,
+  access,
+  setAccess,
+  type,
+  setType,
+  progress,
+  setProgress,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[120]">
+      <button
+        type="button"
+        aria-label="Close filters"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white p-5 shadow-2xl">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h2 className="text-[22px] font-black text-[#111827]">Refine Stories</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+              aria-label="Close filters"
+            >
+              <i className="fa-solid fa-xmark text-[15px]" />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <section>
+              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Story Access</h3>
+              <div className="flex flex-wrap gap-2.5">
+                {accessFilters.map((item) => (
+                  <FilterChip key={item.value} active={access === item.value} onClick={() => setAccess(item.value)}>
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Story Type</h3>
+              <div className="flex flex-wrap gap-2.5">
+                {typeFilters.map((item) => (
+                  <FilterChip key={item.value} active={type === item.value} onClick={() => setType(item.value)}>
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Progress</h3>
+              <div className="flex flex-wrap gap-2.5">
+                {progressFilters.map((item) => (
+                  <FilterChip key={item.value} active={progress === item.value} onClick={() => setProgress(item.value)}>
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <div className="mt-7 grid grid-cols-[0.8fr_1.2fr] gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setAccess('all')
+                setType('all')
+                setProgress('all')
+              }}
+              className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-black text-[#111827] active:scale-[0.99]"
+            >
+              Clear
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 rounded-full bg-[#facc15] text-[13px] font-black text-[#111827] active:scale-[0.99]"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function GenresPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [activeGenre, setActiveGenre] = useState('All')
+  const [activeQuickFilter, setActiveQuickFilter] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [access, setAccess] = useState('all')
+  const [type, setType] = useState('all')
+  const [progress, setProgress] = useState('all')
 
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -48,17 +193,16 @@ export default function GenresPage() {
   }, [query])
 
   const openGenre = (genre) => {
-    if (!genre.slug) {
-      navigate('/')
-      return
-    }
+    setActiveGenre(genre.label)
+
+    if (!genre.slug) return
 
     navigate(`/genre/${genre.slug}`)
   }
 
   return (
     <div className="min-h-screen bg-white pb-[110px]">
-      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 px-4 py-4 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
@@ -69,59 +213,52 @@ export default function GenresPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <div className="text-center">
-            <h1 className="text-[22px] font-black tracking-tight text-[#111827]">Genres</h1>
-            <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">Browse all Shadow novel genres</p>
-          </div>
+          {searchOpen ? (
+            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-[#f5f3fa] px-4">
+              <i className="fa-solid fa-magnifying-glass text-[13px] text-[#8d94a1]" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search genres"
+                className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold text-[#111827] outline-none placeholder:text-[#8d94a1]"
+              />
+            </div>
+          ) : (
+            <h1 className="text-[20px] font-black tracking-tight text-[#111827]">Genres</h1>
+          )}
 
           <button
             type="button"
-            onClick={() => navigate('/search')}
+            onClick={() => {
+              if (searchOpen) setQuery('')
+              setSearchOpen((current) => !current)
+            }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Search"
+            aria-label="Search genres"
           >
-            <i className="fa-solid fa-magnifying-glass text-[14px]" />
+            <i className={`fa-solid ${searchOpen ? 'fa-xmark' : 'fa-magnifying-glass'} text-[14px]`} />
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-5">
-        <section className="rounded-[28px] bg-[#111827] p-5 text-white shadow-sm">
+      <main className="mx-auto max-w-5xl px-4 pt-4">
+        <section className="rounded-[28px] bg-gradient-to-br from-[#111827] via-[#4338ca] to-[#facc15] p-5 text-white shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white text-[#111827]">
               <i className="fa-solid fa-layer-group text-[24px]" />
             </div>
 
             <div className="min-w-0">
-              <h2 className="text-[24px] font-black leading-7">All Genres</h2>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-white/70">
-                Choose a genre to open its own page.
+              <h2 className="text-[24px] font-black leading-7">Genres</h2>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-white/75">
+                Explore stories by theme, mood, and relationship type.
               </p>
             </div>
           </div>
-
-          <div className="mt-5 flex h-12 items-center gap-3 rounded-full bg-white px-4 text-[#111827]">
-            <i className="fa-solid fa-magnifying-glass text-[13px] text-[#8d94a1]" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search genre"
-              className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold outline-none placeholder:text-[#8d94a1]"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-                aria-label="Clear search"
-              >
-                <i className="fa-solid fa-xmark text-[12px]" />
-              </button>
-            ) : null}
-          </div>
         </section>
 
-        <section className="mt-5 rounded-[28px] bg-[#f8f8fb] p-4 shadow-sm ring-1 ring-black/5">
+        <section className="mt-4 rounded-[28px] bg-[#f8f8fb] p-4 shadow-sm ring-1 ring-black/5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-[15px] font-black text-[#111827]">Novel Genres</h3>
             <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#667085] ring-1 ring-black/5">
@@ -130,26 +267,20 @@ export default function GenresPage() {
           </div>
 
           <div className="flex flex-wrap gap-2.5">
-            {filteredGenres.map((genre, index) => {
-              const isAll = genre.label === 'All'
-
-              return (
-                <button
-                  key={genre.label}
-                  type="button"
-                  onClick={() => openGenre(genre)}
-                  className={`rounded-full px-4 py-2.5 text-[12px] font-black shadow-sm active:scale-[0.98] ${
-                    isAll
-                      ? 'bg-[#facc15] text-[#111827]'
-                      : index % 5 === 0
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
-                  }`}
-                >
-                  {genre.label}
-                </button>
-              )
-            })}
+            {filteredGenres.map((genre) => (
+              <button
+                key={genre.label}
+                type="button"
+                onClick={() => openGenre(genre)}
+                className={`rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
+                  activeGenre === genre.label
+                    ? 'bg-[#facc15] text-[#111827]'
+                    : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+                }`}
+              >
+                {genre.label}
+              </button>
+            ))}
           </div>
 
           {!filteredGenres.length ? (
@@ -162,7 +293,48 @@ export default function GenresPage() {
             </div>
           ) : null}
         </section>
+
+        <section className="sticky top-[65px] z-30 mt-4 border-y border-[#eef0f4] bg-white/95 py-3 backdrop-blur">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {quickFilters.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setActiveQuickFilter((current) => (current === item.value ? '' : item.value))}
+                className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
+                  activeQuickFilter === item.value
+                    ? 'bg-[#facc15] text-[#111827]'
+                    : 'bg-[#f5f3fa] text-[#111827]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+
+            <span className="mx-1 h-7 w-px shrink-0 bg-[#e4e7ec]" />
+
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="shrink-0 rounded-full bg-[#f5f3fa] px-4 py-2.5 text-[12px] font-black text-[#111827] active:scale-[0.98]"
+            >
+              Filters
+              <i className="fa-solid fa-chevron-down ml-2 text-[10px]" />
+            </button>
+          </div>
+        </section>
       </main>
+
+      <FilterSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        access={access}
+        setAccess={setAccess}
+        type={type}
+        setType={setType}
+        progress={progress}
+        setProgress={setProgress}
+      />
     </div>
   )
 }
