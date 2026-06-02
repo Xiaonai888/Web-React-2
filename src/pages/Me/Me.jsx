@@ -713,7 +713,7 @@ useEffect(() => {
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
             <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
-            <BalanceItem value={walletBalance.gems} label={tx('gem')} to="/tasks" />
+            <BalanceItem value={walletBalance.gems} label="Coins" to="/tasks" />
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
           </div>
           
