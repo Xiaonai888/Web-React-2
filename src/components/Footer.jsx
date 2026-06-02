@@ -47,7 +47,7 @@ export default function Footer() {
               width: '52px',
               textDecoration: 'none',
               gap: '3px',
-              color: isActive ? '#1d4ed8' : '#9ca3af',
+              color: isActive ? '#111827' : '#9ca3af',
             })}
           >
             <i className={`fa-solid ${item.icon}`} style={{ fontSize: '20px' }} />
