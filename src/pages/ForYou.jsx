@@ -312,17 +312,18 @@ export default function ForYou() {
 
             <div className="flex space-x-5 text-gray-400 text-xl">
   <Link to="/genres" className="transition-transform active:scale-95" aria-label="Genres">
-  <img
-  src="/assets/Icons/Genre.svg?v=2"
-  alt="Genres"
-  className="h-5 w-5 object-contain"
-/>
+    <img
+      src="/assets/Icons/Genre.svg?v=2"
+      alt="Genres"
+      className="h-5 w-5 object-contain"
+    />
+  </Link>
 
   <Link to="/search" className="hover:text-[#111827] transition-colors" aria-label="Search">
     <i className="fas fa-search" />
   </Link>
 
-  <button className="hover:text-blue-600 transition-colors" aria-label="Notifications">
+  <button className="hover:text-[#111827] transition-colors" aria-label="Notifications">
     <i className="fas fa-bell" />
   </button>
 </div>
