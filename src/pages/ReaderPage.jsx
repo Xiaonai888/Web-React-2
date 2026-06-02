@@ -456,6 +456,8 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
   const currentParagraphs = normalizePagingParagraphs(currentPage)
   const canGoPrevious = safePageIndex > 0
   const canGoNext = safePageIndex < totalPages - 1
+  const pointerStartXRef = useRef(0)
+  const pointerEndXRef = useRef(0)
 
   const showFlash = (direction) => {
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current)
@@ -469,6 +471,30 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
     setPageIndex((current) => Math.max(0, current - 1))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  const handlePointerStart = (event) => {
+  pointerStartXRef.current = event.clientX || event.touches?.[0]?.clientX || 0
+  pointerEndXRef.current = pointerStartXRef.current
+}
+
+const handlePointerMove = (event) => {
+  pointerEndXRef.current = event.clientX || event.touches?.[0]?.clientX || pointerEndXRef.current
+}
+
+const handlePointerEnd = () => {
+  const distance = pointerEndXRef.current - pointerStartXRef.current
+
+  if (Math.abs(distance) > 55) {
+    if (distance < 0) {
+      goNext()
+    } else {
+      goPrevious()
+    }
+  }
+
+  pointerStartXRef.current = 0
+  pointerEndXRef.current = 0
+}
 
   const goNext = () => {
     if (!canGoNext) return
@@ -517,17 +543,14 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
       </div>
 
       <div
-        role="button"
-        tabIndex={0}
-        className="relative min-h-[68vh]"
-        onClick={handleTap}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onKeyDown={(event) => {
-          if (event.key === 'ArrowLeft') goPrevious()
-          if (event.key === 'ArrowRight') goNext()
-        }}
-      >
+  className="relative min-h-[68vh] select-none"
+  onMouseDown={handlePointerStart}
+  onMouseMove={handlePointerMove}
+  onMouseUp={handlePointerEnd}
+  onTouchStart={handlePointerStart}
+  onTouchMove={handlePointerMove}
+  onTouchEnd={handlePointerEnd}
+>
         {flashDirection ? (
           <div
             className={`pointer-events-none absolute bottom-0 top-0 z-20 flex w-[34%] items-center justify-center bg-white/45 backdrop-blur-[1px] transition-opacity duration-300 ${
