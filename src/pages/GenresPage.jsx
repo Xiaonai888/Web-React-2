@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const genres = [
@@ -68,7 +68,7 @@ function FilterChip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
-        active ? 'bg-[#facc15] text-[#111827]' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+        active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
       }`}
     >
       {children}
@@ -89,7 +89,7 @@ function FilterSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[120]">
+    <div className="fixed inset-0 z-[1000000]">
       <button
         type="button"
         aria-label="Close filters"
@@ -97,8 +97,8 @@ function FilterSheet({
         className="absolute inset-0 bg-black/45"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white p-5 shadow-2xl">
-        <div className="mx-auto max-w-5xl">
+      <section className="absolute bottom-5 left-3 right-3 max-h-[calc(100vh-96px)] overflow-hidden rounded-[30px] bg-white shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2">
+        <div className="max-h-[calc(100vh-96px)] overflow-y-auto px-5 pb-7 pt-5">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-[22px] font-black text-[#111827]">Refine Stories</h2>
             <button
@@ -162,7 +162,7 @@ function FilterSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-full bg-[#facc15] text-[13px] font-black text-[#111827] active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-[0.99]"
             >
               Apply Filters
             </button>
@@ -177,12 +177,25 @@ export default function GenresPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [genresExpanded, setGenresExpanded] = useState(false)
   const [activeGenre, setActiveGenre] = useState('All')
   const [activeQuickFilter, setActiveQuickFilter] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [access, setAccess] = useState('all')
   const [type, setType] = useState('all')
   const [progress, setProgress] = useState('all')
+
+  useEffect(() => {
+    if (filtersOpen) {
+      document.body.classList.add('genres-filter-open')
+    } else {
+      document.body.classList.remove('genres-filter-open')
+    }
+
+    return () => {
+      document.body.classList.remove('genres-filter-open')
+    }
+  }, [filtersOpen])
 
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -202,6 +215,12 @@ export default function GenresPage() {
 
   return (
     <div className="min-h-screen bg-white pb-[110px]">
+      <style>{`
+        body.genres-filter-open footer {
+          display: none !important;
+        }
+      `}</style>
+
       <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
@@ -219,7 +238,10 @@ export default function GenresPage() {
               <input
                 autoFocus
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setQuery(event.target.value)
+                  setGenresExpanded(true)
+                }}
                 placeholder="Search genres"
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-bold text-[#111827] outline-none placeholder:text-[#8d94a1]"
               />
@@ -231,7 +253,11 @@ export default function GenresPage() {
           <button
             type="button"
             onClick={() => {
-              if (searchOpen) setQuery('')
+              if (searchOpen) {
+                setQuery('')
+                setGenresExpanded(false)
+              }
+
               setSearchOpen((current) => !current)
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
@@ -261,26 +287,44 @@ export default function GenresPage() {
         <section className="mt-4 rounded-[28px] bg-[#f8f8fb] p-4 shadow-sm ring-1 ring-black/5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-[15px] font-black text-[#111827]">Novel Genres</h3>
-            <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#667085] ring-1 ring-black/5">
-              {filteredGenres.length} Genres
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#667085] ring-1 ring-black/5">
+                {filteredGenres.length} Genres
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setGenresExpanded((current) => !current)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#111827] ring-1 ring-black/5 active:scale-95"
+                aria-label={genresExpanded ? 'Show fewer genres' : 'Show more genres'}
+              >
+                <i className={`fa-solid ${genresExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px]`} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            {filteredGenres.map((genre) => (
-              <button
-                key={genre.label}
-                type="button"
-                onClick={() => openGenre(genre)}
-                className={`rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
-                  activeGenre === genre.label
-                    ? 'bg-[#facc15] text-[#111827]'
-                    : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
-                }`}
-              >
-                {genre.label}
-              </button>
-            ))}
+          <div className={`relative ${genresExpanded || query ? '' : 'max-h-[154px] overflow-hidden'}`}>
+            <div className="flex flex-wrap gap-2.5">
+              {filteredGenres.map((genre) => (
+                <button
+                  key={genre.label}
+                  type="button"
+                  onClick={() => openGenre(genre)}
+                  className={`rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
+                    activeGenre === genre.label
+                      ? 'bg-[#facc15] text-[#111827]'
+                      : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+                  }`}
+                >
+                  {genre.label}
+                </button>
+              ))}
+            </div>
+
+            {!genresExpanded && !query ? (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#f8f8fb] to-transparent" />
+            ) : null}
           </div>
 
           {!filteredGenres.length ? (
@@ -303,7 +347,7 @@ export default function GenresPage() {
                 onClick={() => setActiveQuickFilter((current) => (current === item.value ? '' : item.value))}
                 className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
                   activeQuickFilter === item.value
-                    ? 'bg-[#facc15] text-[#111827]'
+                    ? 'bg-[#111827] text-white'
                     : 'bg-[#f5f3fa] text-[#111827]'
                 }`}
               >
