@@ -75,15 +75,16 @@ function normalizeBook(story, index = 0) {
     cover: story.cover_url || story.coverUrl || story.image_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     genre: story.main_genre || story.genre || story.category || '',
     status: story.status || story.story_status || '',
-    isFree: Boolean(story.is_free || story.free || story.price === 0),
-    isWaitFree: Boolean(story.wait_until_free || story.is_wait_until_free || story.wait_free),
+    hasFreeEpisode: Boolean(story.has_free_episode),
+    hasWaitFreeEpisode: Boolean(story.has_wait_free_episode),
+    isCompleted: Boolean(story.is_completed),
     isPremium: Boolean(story.is_subscription || story.subscription_only || story.requires_subscription || story.premium_early_access),
     type: story.story_type || story.type || story.work_type || '',
   }
 }
 
 function isCompletedBook(book) {
-  return String(book.status || '').toLowerCase().includes('complete')
+  return Boolean(book.isCompleted)
 }
 
 function isSameGenre(bookGenre, selectedGenre) {
@@ -94,18 +95,18 @@ function isSameGenre(bookGenre, selectedGenre) {
 
 function isBookMatchedQuickFilter(book, activeQuickFilter) {
   if (!activeQuickFilter) return true
-  if (activeQuickFilter === 'completed') return isCompletedBook(book)
-  if (activeQuickFilter === 'free') return book.isFree
-  if (activeQuickFilter === 'wait_free') return book.isWaitFree
+  if (activeQuickFilter === 'completed') return book.isCompleted
+  if (activeQuickFilter === 'free') return book.hasFreeEpisode
+  if (activeQuickFilter === 'wait_free') return book.hasWaitFreeEpisode
 
   return true
 }
 
 function isBookMatchedAdvancedFilters(book, access, type, progress) {
-  if (access === 'wait_free' && !book.isWaitFree) return false
-  if (access === 'free' && !book.isFree) return false
+  if (access === 'wait_free' && !book.hasWaitFreeEpisode) return false
+  if (access === 'free' && !book.hasFreeEpisode) return false
   if (access === 'premium' && !book.isPremium) return false
-  if (access === 'paid' && (book.isFree || book.isWaitFree)) return false
+  if (access === 'paid' && (book.hasFreeEpisode || book.hasWaitFreeEpisode)) return false
 
   if (type !== 'all') {
     const bookType = String(book.type || '').toLowerCase()
@@ -115,8 +116,8 @@ function isBookMatchedAdvancedFilters(book, access, type, progress) {
     if (type === 'fan' && !bookType.includes('fan')) return false
   }
 
-  if (progress === 'completed' && !isCompletedBook(book)) return false
-  if (progress === 'ongoing' && isCompletedBook(book)) return false
+  if (progress === 'completed' && !book.isCompleted) return false
+  if (progress === 'ongoing' && book.isCompleted) return false
 
   return true
 }
