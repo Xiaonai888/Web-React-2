@@ -311,13 +311,18 @@ export default function ForYou() {
             </div>
 
             <div className="flex space-x-5 text-gray-400 text-xl">
-              <Link to="/search" className="hover:text-[#111827] transition-colors">
-                <i className="fas fa-search" />
-              </Link>
-              <button className="hover:text-blue-600 transition-colors">
-                <i className="fas fa-bell" />
-              </button>
-            </div>
+  <Link to="/genres" className="hover:text-[#111827] transition-colors" aria-label="Genres">
+    <i className="fa-solid fa-layer-group" />
+  </Link>
+
+  <Link to="/search" className="hover:text-[#111827] transition-colors" aria-label="Search">
+    <i className="fas fa-search" />
+  </Link>
+
+  <button className="hover:text-blue-600 transition-colors" aria-label="Notifications">
+    <i className="fas fa-bell" />
+  </button>
+</div>
           </header>
 
           <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2">
