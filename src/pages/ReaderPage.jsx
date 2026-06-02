@@ -291,14 +291,61 @@ function getSegmentLength(value) {
   return Array.from(String(value || '')).length
 }
 
-function createPagingPages(content) {
+function createPagingPages(content, lineSpacing, fontSizePx) {
   const paragraphs = splitParagraphs(content)
-  const paragraphsPerPage = 3
+  const baseCharactersPerLine = PAGING_CHARACTERS_PER_LINE[lineSpacing] || PAGING_CHARACTERS_PER_LINE.comfort
+  const charactersPerLine = Math.max(18, Math.floor((baseCharactersPerLine * 17) / Math.max(15, Number(fontSizePx || 17))))
   const pages = []
+  let currentPage = []
+  let currentLine = ''
 
-  for (let index = 0; index < paragraphs.length; index += paragraphsPerPage) {
-    pages.push(paragraphs.slice(index, index + paragraphsPerPage))
+  const pushPage = () => {
+    if (!currentPage.length) return
+    pages.push(currentPage)
+    currentPage = []
   }
+
+  const pushLine = () => {
+    currentPage.push(currentLine.trimEnd())
+    currentLine = ''
+
+    if (currentPage.length >= PAGING_LINES_PER_PAGE) {
+      pushPage()
+    }
+  }
+
+  paragraphs.forEach((paragraph, paragraphIndex) => {
+    const segments = getTextSegments(paragraph)
+
+    segments.forEach((segment) => {
+      const isSpace = /^\s+$/u.test(segment)
+      const nextSegment = isSpace ? ' ' : segment
+      const nextLine = currentLine ? `${currentLine}${nextSegment}` : nextSegment.trimStart()
+
+      if (!currentLine) {
+        currentLine = nextLine
+        return
+      }
+
+      if (getSegmentLength(nextLine) > charactersPerLine) {
+        pushLine()
+        currentLine = nextSegment.trimStart()
+        return
+      }
+
+      currentLine = nextLine
+    })
+
+    if (currentLine) pushLine()
+
+    if (paragraphIndex < paragraphs.length - 1) {
+      currentPage.push('')
+      if (currentPage.length >= PAGING_LINES_PER_PAGE) pushPage()
+    }
+  })
+
+  if (currentLine) pushLine()
+  if (currentPage.length) pushPage()
 
   return pages.length ? pages : [[]]
 }
@@ -376,6 +423,7 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
 
 function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFamily, lineSpacing, theme }) {
   const [flashDirection, setFlashDirection] = useState('')
+  const flashTimerRef = useRef(null)
   const touchStartXRef = useRef(0)
   const touchStartYRef = useRef(0)
   const lineHeightClass = LINE_SPACING_OPTIONS[lineSpacing]?.className || LINE_SPACING_OPTIONS.comfort.className
@@ -386,8 +434,9 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
   const canGoNext = safePageIndex < totalPages - 1
 
   const showFlash = (direction) => {
+    if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current)
     setFlashDirection(direction)
-    window.setTimeout(() => setFlashDirection(''), 280)
+    flashTimerRef.current = window.setTimeout(() => setFlashDirection(''), 260)
   }
 
   const goPrevious = () => {
@@ -404,6 +453,20 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleTap = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = event.clientX - rect.left
+
+    if (x < rect.width * 0.42) {
+      goPrevious()
+      return
+    }
+
+    if (x > rect.width * 0.58) {
+      goNext()
+    }
+  }
+
   const handleTouchStart = (event) => {
     touchStartXRef.current = event.touches?.[0]?.clientX || 0
     touchStartYRef.current = event.touches?.[0]?.clientY || 0
@@ -415,7 +478,7 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
     const diffX = endX - touchStartXRef.current
     const diffY = endY - touchStartYRef.current
 
-    if (Math.abs(diffX) < 55 || Math.abs(diffX) < Math.abs(diffY)) return
+    if (Math.abs(diffX) < 45 || Math.abs(diffX) < Math.abs(diffY) * 1.25) return
 
     if (diffX < 0) goNext()
     if (diffX > 0) goPrevious()
@@ -430,26 +493,17 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
       </div>
 
       <div
-        className="relative min-h-[68vh] overflow-hidden"
+        role="button"
+        tabIndex={0}
+        className="relative min-h-[68vh]"
+        onClick={handleTap}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') goPrevious()
+          if (event.key === 'ArrowRight') goNext()
+        }}
       >
-        <button
-          type="button"
-          onClick={goPrevious}
-          disabled={!canGoPrevious}
-          aria-label="Previous page"
-          className="absolute bottom-0 left-0 top-0 z-10 w-[30%] disabled:pointer-events-none"
-        />
-
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={!canGoNext}
-          aria-label="Next page"
-          className="absolute bottom-0 right-0 top-0 z-10 w-[30%] disabled:pointer-events-none"
-        />
-
         {flashDirection ? (
           <div
             className={`pointer-events-none absolute bottom-0 top-0 z-20 flex w-[34%] items-center justify-center bg-white/45 backdrop-blur-[1px] transition-opacity duration-300 ${
@@ -461,20 +515,23 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
         ) : null}
 
         <div className="relative z-0">
-          <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
-            {currentPage.map((paragraph, index) => (
+          {currentPage.map((line, index) =>
+            line ? (
               <p
-                key={`${safePageIndex}-${index}-${paragraph.slice(0, 16)}`}
-                className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
+                key={`${safePageIndex}-${index}-${line.slice(0, 16)}`}
+                className={`${theme.text} ${lineHeightClass} whitespace-pre-wrap tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
                 style={{
                   fontFamily,
                   fontSize: `${fontSizePx}px`,
+                  lineBreak: 'auto',
                 }}
               >
-                {paragraph}
+                {line}
               </p>
-            ))}
-          </div>
+            ) : (
+              <div key={`${safePageIndex}-${index}-blank`} className="h-5" />
+            )
+          )}
         </div>
       </div>
     </div>
