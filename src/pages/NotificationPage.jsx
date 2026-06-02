@@ -105,9 +105,14 @@ export default function NotificationPage() {
             <p className="mt-0.5 text-[12px] font-bold text-[#8A8F98]">All updates in one place</p>
           </div>
 
-          <button type="button" onClick={markAllAsRead} className="rounded-full bg-[#111111] px-4 py-2 text-[12px] font-black text-white active:scale-95">
-            Read all
-          </button>
+          <button
+  type="button"
+  onClick={markAllAsRead}
+  aria-label="Mark all as read"
+  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+>
+  <i className="fa-solid fa-check-double text-[14px]" />
+</button>
         </div>
 
         <div className="mx-auto mt-4 flex max-w-[560px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -121,14 +126,16 @@ export default function NotificationPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-black transition active:scale-95 ${
-                  isActive ? 'bg-[#06B6D4] text-white shadow-sm' : 'bg-[#EEF0F4] text-[#606773]'
-                }`}
+              className={`relative flex shrink-0 items-center rounded-full px-4 py-2.5 text-[13px] font-black transition active:scale-95 ${
+                isActive ? 'bg-[#111111] text-white shadow-sm' : 'bg-[#EEF0F4] text-[#606773]'
+              }`}
               >
                 <span>{tab.label}</span>
-                {showCount ? <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isActive ? 'bg-white/20 text-white' : 'bg-white text-[#111111]'}`}>{formatCount(count)}</span> : null}
-              </button>
-            )
+{showCount ? (
+  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black text-[#111111] shadow-sm">
+    {formatCount(count)}
+  </span>
+) : null}
           })}
         </div>
       </div>
@@ -141,7 +148,7 @@ export default function NotificationPage() {
                 key={notification.id}
                 type="button"
                 onClick={() => openNotification(notification)}
-                className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#BAE6FD] bg-[#F0FDFF]'}`}
+                className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
               >
                 <div className="flex gap-3">
                   <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
@@ -151,7 +158,7 @@ export default function NotificationPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="text-[14px] font-black text-[#111111]">{notification.title}</h2>
-                      {!notification.isRead ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#06B6D4]" /> : null}
+                      {!notification.isRead ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F6B800]" /> : null}
                     </div>
                     <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
                     <div className="mt-3 flex items-center justify-between gap-3">
