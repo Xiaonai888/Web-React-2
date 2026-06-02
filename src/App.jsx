@@ -38,6 +38,7 @@ import RankingPage from './pages/RankingPage'
 import TaskCenterPage from './pages/TaskCenterPage'
 import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
+const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 
 
 
@@ -562,6 +563,15 @@ function AppShell() {
   element={
     <LazyPage>
       <GenresPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/top-novel"
+  element={
+    <LazyPage>
+      <TopNovelPage />
     </LazyPage>
   }
 />
