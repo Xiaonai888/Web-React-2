@@ -1867,7 +1867,7 @@ export default function ReaderPage() {
                     className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.ghost}`}
                   >
                     <i className="fa-solid fa-chevron-left mr-2 text-[12px]" />
-                    Previous
+{previousEpisode ? `Previous: EP ${previousEpisode.episode_number || ''}` : 'Previous'}
                   </button>
 
                   <button
@@ -1876,31 +1876,10 @@ export default function ReaderPage() {
                     disabled={!nextEpisode}
                     className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-[0_14px_30px_rgba(17,24,39,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.button}`}
                   >
-                    Next
-                    <i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
+                    {nextEpisode ? `Next: EP ${nextEpisode.episode_number || ''}` : 'Next'}
+<i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
                   </button>
                 </section>
-
-                {readingMode === 'scroll' && nextEpisode ? (
-                  <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
-                        <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
-                          Next: EP {nextEpisode.episode_number || ''}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setEpisodeListOpen(true)}
-                        className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
-                      >
-                        Episodes
-                      </button>
-                    </div>
-                  </section>
-                ) : null}
 
                 {!nextEpisode ? (
                   <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
