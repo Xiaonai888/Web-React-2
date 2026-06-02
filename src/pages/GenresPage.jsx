@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
 const genres = [
   { label: 'All', slug: '' },
@@ -62,20 +68,58 @@ const progressFilters = [
   { label: 'Completed', value: 'completed' },
 ]
 
-const demoBooks = [
-  { id: 1, title: 'Whispers of Telepathy', cover: '/assets/Update Today/Update Today 1.jpg' },
-  { id: 2, title: 'Leveling Up into the Future', cover: '/assets/Update Today/Update Today 2.jpg' },
-  { id: 3, title: 'My Charm, Your Karma', cover: '/assets/Update Today/Update Today 3.jpg' },
-  { id: 4, title: 'The Crown Between Us', cover: '/assets/Update Today/Update Today 4.jpg' },
-  { id: 5, title: 'Love Under Shadow', cover: '/assets/Update Today/Update Today 5.jpg' },
-  { id: 6, title: 'Cold Prince and the Lost Girl', cover: '/assets/Update Today/Update Today 6.jpg' },
-  { id: 7, title: 'Second Chance Moonlight', cover: '/assets/Update Today/Update Today 7.jpg' },
-  { id: 8, title: 'Hidden Name', cover: '/assets/Update Today/Update Today 1.jpg' },
-  { id: 9, title: 'Magic Bloodline', cover: '/assets/Update Today/Update Today 2.jpg' },
-  { id: 10, title: 'Romance After Goodbye', cover: '/assets/Update Today/Update Today 3.jpg' },
-  { id: 11, title: 'CEO Secret Contract', cover: '/assets/Update Today/Update Today 4.jpg' },
-  { id: 12, title: 'The Girl Who Returned', cover: '/assets/Update Today/Update Today 5.jpg' },
-]
+function normalizeBook(story, index = 0) {
+  return {
+    id: story.id || story.story_id,
+    title: story.title || 'Untitled Story',
+    cover: story.cover_url || story.coverUrl || story.image_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
+    genre: story.main_genre || story.genre || story.category || '',
+    status: story.status || story.story_status || '',
+    isFree: Boolean(story.is_free || story.free || story.price === 0),
+    isWaitFree: Boolean(story.wait_until_free || story.is_wait_until_free || story.wait_free),
+    isPremium: Boolean(story.is_subscription || story.subscription_only || story.requires_subscription || story.premium_early_access),
+    type: story.story_type || story.type || story.work_type || '',
+  }
+}
+
+function isCompletedBook(book) {
+  return String(book.status || '').toLowerCase().includes('complete')
+}
+
+function isSameGenre(bookGenre, selectedGenre) {
+  if (!selectedGenre || selectedGenre === 'All') return true
+
+  return String(bookGenre || '').toLowerCase().replace(/\s+/g, '-') === selectedGenre.toLowerCase().replace(/\s+/g, '-')
+}
+
+function isBookMatchedQuickFilter(book, activeQuickFilter) {
+  if (!activeQuickFilter) return true
+  if (activeQuickFilter === 'completed') return isCompletedBook(book)
+  if (activeQuickFilter === 'free') return book.isFree
+  if (activeQuickFilter === 'wait_free') return book.isWaitFree
+
+  return true
+}
+
+function isBookMatchedAdvancedFilters(book, access, type, progress) {
+  if (access === 'wait_free' && !book.isWaitFree) return false
+  if (access === 'free' && !book.isFree) return false
+  if (access === 'premium' && !book.isPremium) return false
+  if (access === 'paid' && (book.isFree || book.isWaitFree)) return false
+
+  if (type !== 'all') {
+    const bookType = String(book.type || '').toLowerCase()
+
+    if (type === 'original' && !bookType.includes('original')) return false
+    if (type === 'translated' && !bookType.includes('translated')) return false
+    if (type === 'fan' && !bookType.includes('fan')) return false
+  }
+
+  if (progress === 'completed' && !isCompletedBook(book)) return false
+  if (progress === 'ongoing' && isCompletedBook(book)) return false
+
+  return true
+}
 
 function FilterChip({ active, children, onClick }) {
   return (
@@ -113,7 +157,7 @@ function FilterSheet({
       />
 
       <section className="absolute bottom-0 left-0 right-0 max-h-[calc(100vh-72px)] overflow-hidden rounded-t-[30px] bg-white shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[520px] sm:-translate-x-1/2 sm:rounded-[30px]">
-       <div className="max-h-[calc(100vh-72px)] overflow-y-auto px-5 pb-5 pt-5">
+        <div className="max-h-[calc(100vh-72px)] overflow-y-auto px-5 pb-5 pt-5">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-[22px] font-black text-[#111827]">Refine Stories</h2>
             <button
@@ -188,9 +232,9 @@ function FilterSheet({
   )
 }
 
-function BookCard({ book }) {
+function BookCard({ book, onOpen }) {
   return (
-    <button type="button" className="block min-w-0 text-left active:scale-[0.99]">
+    <button type="button" onClick={() => onOpen(book)} className="block min-w-0 text-left active:scale-[0.99]">
       <div className="overflow-hidden rounded-[16px] bg-[#202124] shadow-sm">
         <div className="aspect-[2/3] overflow-hidden">
           <img
@@ -222,6 +266,9 @@ export default function GenresPage() {
   const [access, setAccess] = useState('all')
   const [type, setType] = useState('all')
   const [progress, setProgress] = useState('all')
+  const [books, setBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (filtersOpen) {
@@ -235,6 +282,41 @@ export default function GenresPage() {
     }
   }, [filtersOpen])
 
+  useEffect(() => {
+    let ignore = false
+
+    async function loadBooks() {
+      try {
+        setLoading(true)
+        setMessage('')
+
+        const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=120&sort=updated`))
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load stories')
+        }
+
+        if (!ignore) {
+          setBooks((data.stories || []).map(normalizeBook).filter((book) => book.id))
+        }
+      } catch (error) {
+        if (!ignore) {
+          setBooks([])
+          setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to server.' : error.message || 'Failed to load stories')
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadBooks()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
 
@@ -243,12 +325,23 @@ export default function GenresPage() {
     return genres.filter((genre) => genre.label.toLowerCase().includes(keyword))
   }, [query])
 
+  const selectedGenreSlug = useMemo(() => {
+    return genres.find((genre) => genre.label === activeGenre)?.slug || ''
+  }, [activeGenre])
+
+  const filteredBooks = useMemo(() => {
+    return books
+      .filter((book) => isSameGenre(book.genre, selectedGenreSlug))
+      .filter((book) => isBookMatchedQuickFilter(book, activeQuickFilter))
+      .filter((book) => isBookMatchedAdvancedFilters(book, access, type, progress))
+  }, [access, activeQuickFilter, books, progress, selectedGenreSlug, type])
+
   const openGenre = (genre) => {
     setActiveGenre(genre.label)
+  }
 
-    if (!genre.slug) return
-
-    navigate(`/genre/${genre.slug}`)
+  const openBook = (book) => {
+    if (book.id) navigate(`/story/${book.id}`)
   }
 
   return (
@@ -386,11 +479,41 @@ export default function GenresPage() {
         </section>
 
         <section className="pt-4">
-          <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
-            {demoBooks.map((book) => (
-              <BookCard key={book.id} book={book} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <div key={index}>
+                  <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#eef0f4]" />
+                  <div className="mt-2 h-4 animate-pulse rounded-full bg-[#eef0f4]" />
+                  <div className="mt-1 h-4 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {!loading && message ? (
+            <div className="rounded-[20px] bg-[#fff1f1] px-4 py-4 text-center text-[13px] font-black text-[#e5484d]">
+              {message}
+            </div>
+          ) : null}
+
+          {!loading && !message && filteredBooks.length ? (
+            <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+              {filteredBooks.map((book) => (
+                <BookCard key={book.id} book={book} onOpen={openBook} />
+              ))}
+            </div>
+          ) : null}
+
+          {!loading && !message && !filteredBooks.length ? (
+            <div className="py-14 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
+                <i className="fa-solid fa-book-open text-[22px]" />
+              </div>
+              <h3 className="mt-4 text-[16px] font-black text-[#111827]">No stories found</h3>
+              <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Try another genre or filter.</p>
+            </div>
+          ) : null}
         </section>
       </main>
 
