@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -216,6 +217,7 @@ function FreeAccessRow({ iconType, title, subtitle, disabled, buttonText = 'Acce
 }
 
 export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlocked, onLogin, onTopUp }) {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('instant')
   const [selectedPackage, setSelectedPackage] = useState('single')
   const [loading, setLoading] = useState(false)
@@ -397,8 +399,9 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
   }
 
   const handleComingSoon = () => {
-    setMessage('Tasks page is coming soon.')
-  }
+  onClose?.()
+  navigate('/tasks')
+}
 
   return (
     <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 px-0 pb-0 sm:items-center sm:px-6 sm:pb-0">
