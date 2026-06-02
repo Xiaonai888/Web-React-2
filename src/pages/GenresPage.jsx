@@ -62,6 +62,21 @@ const progressFilters = [
   { label: 'Completed', value: 'completed' },
 ]
 
+const demoBooks = [
+  { id: 1, title: 'Whispers of Telepathy', cover: '/assets/Update Today/Update Today 1.jpg' },
+  { id: 2, title: 'Leveling Up into the Future', cover: '/assets/Update Today/Update Today 2.jpg' },
+  { id: 3, title: 'My Charm, Your Karma', cover: '/assets/Update Today/Update Today 3.jpg' },
+  { id: 4, title: 'The Crown Between Us', cover: '/assets/Update Today/Update Today 4.jpg' },
+  { id: 5, title: 'Love Under Shadow', cover: '/assets/Update Today/Update Today 5.jpg' },
+  { id: 6, title: 'Cold Prince and the Lost Girl', cover: '/assets/Update Today/Update Today 6.jpg' },
+  { id: 7, title: 'Second Chance Moonlight', cover: '/assets/Update Today/Update Today 7.jpg' },
+  { id: 8, title: 'Hidden Name', cover: '/assets/Update Today/Update Today 1.jpg' },
+  { id: 9, title: 'Magic Bloodline', cover: '/assets/Update Today/Update Today 2.jpg' },
+  { id: 10, title: 'Romance After Goodbye', cover: '/assets/Update Today/Update Today 3.jpg' },
+  { id: 11, title: 'CEO Secret Contract', cover: '/assets/Update Today/Update Today 4.jpg' },
+  { id: 12, title: 'The Girl Who Returned', cover: '/assets/Update Today/Update Today 5.jpg' },
+]
+
 function FilterChip({ active, children, onClick }) {
   return (
     <button
@@ -173,6 +188,29 @@ function FilterSheet({
   )
 }
 
+function BookCard({ book }) {
+  return (
+    <button type="button" className="block min-w-0 text-left active:scale-[0.99]">
+      <div className="overflow-hidden rounded-[16px] bg-[#202124] shadow-sm">
+        <div className="aspect-[2/3] overflow-hidden">
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
+            }}
+          />
+        </div>
+      </div>
+
+      <h3 className="mt-2 line-clamp-2 text-[12px] font-black leading-4 text-[#111827] sm:text-[14px] sm:leading-5">
+        {book.title}
+      </h3>
+    </button>
+  )
+}
+
 export default function GenresPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -247,7 +285,7 @@ export default function GenresPage() {
               />
             </div>
           ) : (
-            <h1 className="text-[20px] font-black tracking-tight text-[#111827]">Genres</h1>
+            <h1 className="text-[22px] font-black tracking-tight text-[#111827]">Genres</h1>
           )}
 
           <button
@@ -269,42 +307,8 @@ export default function GenresPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[28px] bg-gradient-to-br from-[#111827] via-[#4338ca] to-[#facc15] p-5 text-white shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white text-[#111827]">
-              <i className="fa-solid fa-layer-group text-[24px]" />
-            </div>
-
-            <div className="min-w-0">
-              <h2 className="text-[24px] font-black leading-7">Genres</h2>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-white/75">
-                Explore stories by theme, mood, and relationship type.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-[28px] bg-[#f8f8fb] p-4 shadow-sm ring-1 ring-black/5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-[15px] font-black text-[#111827]">Novel Genres</h3>
-
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#667085] ring-1 ring-black/5">
-                {filteredGenres.length} Genres
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setGenresExpanded((current) => !current)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#111827] ring-1 ring-black/5 active:scale-95"
-                aria-label={genresExpanded ? 'Show fewer genres' : 'Show more genres'}
-              >
-                <i className={`fa-solid ${genresExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px]`} />
-              </button>
-            </div>
-          </div>
-
-          <div className={`relative ${genresExpanded || query ? '' : 'max-h-[154px] overflow-hidden'}`}>
+        <section>
+          <div className={`relative ${genresExpanded || query ? '' : 'max-h-[128px] overflow-hidden'}`}>
             <div className="flex flex-wrap gap-2.5">
               {filteredGenres.map((genre) => (
                 <button
@@ -323,22 +327,35 @@ export default function GenresPage() {
             </div>
 
             {!genresExpanded && !query ? (
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#f8f8fb] to-transparent" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent" />
             ) : null}
           </div>
 
           {!filteredGenres.length ? (
-            <div className="py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#8d94a1]">
+            <div className="py-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1]">
                 <i className="fa-solid fa-layer-group text-[22px]" />
               </div>
               <h3 className="mt-4 text-[16px] font-black text-[#111827]">No genre found</h3>
               <p className="mt-1 text-[12px] font-semibold text-[#8d94a1]">Try another keyword.</p>
             </div>
           ) : null}
+
+          {filteredGenres.length && !query ? (
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setGenresExpanded((current) => !current)}
+                className="flex h-8 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+                aria-label={genresExpanded ? 'Show fewer genres' : 'Show more genres'}
+              >
+                <i className={`fa-solid ${genresExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px]`} />
+              </button>
+            </div>
+          ) : null}
         </section>
 
-        <section className="sticky top-[65px] z-30 mt-4 border-y border-[#eef0f4] bg-white/95 py-3 backdrop-blur">
+        <section className="sticky top-[65px] z-30 mt-3 border-y border-[#eef0f4] bg-white/95 py-3 backdrop-blur">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {quickFilters.map((item) => (
               <button
@@ -365,6 +382,14 @@ export default function GenresPage() {
               Filters
               <i className="fa-solid fa-chevron-down ml-2 text-[10px]" />
             </button>
+          </div>
+        </section>
+
+        <section className="pt-4">
+          <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+            {demoBooks.map((book) => (
+              <BookCard key={book.id} book={book} />
+            ))}
           </div>
         </section>
       </main>
