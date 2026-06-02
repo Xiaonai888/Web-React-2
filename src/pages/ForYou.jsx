@@ -331,12 +331,13 @@ export default function ForYou() {
     <i className="fas fa-search" />
   </Link>
 
-  <button
-    className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
-    aria-label="Notifications"
-  >
-    <i className="fas fa-bell" />
-  </button>
+ <Link
+  to="/notifications"
+  className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
+  aria-label="Notifications"
+>
+  <i className="fas fa-bell" />
+</Link>
 </div>
           </header>
 
