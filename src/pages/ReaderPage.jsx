@@ -291,61 +291,14 @@ function getSegmentLength(value) {
   return Array.from(String(value || '')).length
 }
 
-function createPagingPages(content, lineSpacing, fontSizePx) {
+function createPagingPages(content) {
   const paragraphs = splitParagraphs(content)
-  const baseCharactersPerLine = PAGING_CHARACTERS_PER_LINE[lineSpacing] || PAGING_CHARACTERS_PER_LINE.comfort
-  const charactersPerLine = Math.max(18, Math.floor((baseCharactersPerLine * 17) / Math.max(15, Number(fontSizePx || 17))))
+  const paragraphsPerPage = 3
   const pages = []
-  let currentPage = []
-  let currentLine = ''
 
-  const pushPage = () => {
-    if (!currentPage.length) return
-    pages.push(currentPage)
-    currentPage = []
+  for (let index = 0; index < paragraphs.length; index += paragraphsPerPage) {
+    pages.push(paragraphs.slice(index, index + paragraphsPerPage))
   }
-
-  const pushLine = () => {
-    currentPage.push(currentLine.trimEnd())
-    currentLine = ''
-
-    if (currentPage.length >= PAGING_LINES_PER_PAGE) {
-      pushPage()
-    }
-  }
-
-  paragraphs.forEach((paragraph, paragraphIndex) => {
-    const segments = getTextSegments(paragraph)
-
-    segments.forEach((segment) => {
-      const isSpace = /^\s+$/u.test(segment)
-      const nextSegment = isSpace ? ' ' : segment
-      const nextLine = currentLine ? `${currentLine}${nextSegment}` : nextSegment.trimStart()
-
-      if (!currentLine) {
-        currentLine = nextLine
-        return
-      }
-
-      if (getSegmentLength(nextLine) > charactersPerLine) {
-        pushLine()
-        currentLine = nextSegment.trimStart()
-        return
-      }
-
-      currentLine = nextLine
-    })
-
-    if (currentLine) pushLine()
-
-    if (paragraphIndex < paragraphs.length - 1) {
-      currentPage.push('')
-      if (currentPage.length >= PAGING_LINES_PER_PAGE) pushPage()
-    }
-  })
-
-  if (currentLine) pushLine()
-  if (currentPage.length) pushPage()
 
   return pages.length ? pages : [[]]
 }
@@ -508,28 +461,21 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
         ) : null}
 
         <div className="relative z-0">
-          {currentPage.map((line, index) =>
-            line ? (
-              <p
-                key={`${safePageIndex}-${index}-${line.slice(0, 16)}`}
-                className={`${theme.text} ${lineHeightClass} whitespace-pre-wrap tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
-                style={{
-                  fontFamily,
-                  fontSize: `${fontSizePx}px`,
-                  lineBreak: 'auto',
-                }}
-              >
-                {line}
-              </p>
-            ) : (
-              <div key={`${safePageIndex}-${index}-blank`} className="h-5" />
-            )
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
+  <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
+    {currentPage.map((paragraph, index) => (
+      <p
+        key={`${safePageIndex}-${index}-${paragraph.slice(0, 16)}`}
+        className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
+        style={{
+          fontFamily,
+          fontSize: `${fontSizePx}px`,
+        }}
+      >
+        {paragraph}
+      </p>
+    ))}
+  </div>
+</div>
 
 function ReaderIconButton({ icon, label, onClick, className = '', disabled = false }) {
 
