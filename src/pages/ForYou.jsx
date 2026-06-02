@@ -311,9 +311,13 @@ export default function ForYou() {
             </div>
 
             <div className="flex space-x-5 text-gray-400 text-xl">
-  <Link to="/genres" className="hover:text-[#111827] transition-colors" aria-label="Genres">
-    <i className="fa-solid fa-layer-group" />
-  </Link>
+  <Link to="/genres" className="transition-transform active:scale-95" aria-label="Genres">
+  <img
+    src="/assets/Icons/Genre.svg"
+    alt="Genres"
+    className="h-6 w-6 object-contain"
+  />
+</Link>
 
   <Link to="/search" className="hover:text-[#111827] transition-colors" aria-label="Search">
     <i className="fas fa-search" />
