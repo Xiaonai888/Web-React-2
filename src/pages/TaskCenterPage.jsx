@@ -56,16 +56,10 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
-function CrystalShardIcon({ className = 'h-6 w-6' }) {
+function CoinIcon({ className = 'h-6 w-6' }) {
   return (
     <span className={`inline-flex shrink-0 items-center justify-center ${className}`}>
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-full w-full">
-        <path d="M12 2.6 19.2 7 17.4 17.2 12 21.4 6.6 17.2 4.8 7 12 2.6Z" fill="#F59E0B" />
-        <path d="M12 2.6 9.1 8.2 12 21.4 14.9 8.2 12 2.6Z" fill="#FDBA74" />
-        <path d="M4.8 7 9.1 8.2 6.6 17.2 4.8 7Z" fill="#D97706" />
-        <path d="M19.2 7 14.9 8.2 17.4 17.2 19.2 7Z" fill="#B45309" />
-        <path d="M9.1 8.2h5.8L12 21.4 9.1 8.2Z" fill="#FDE68A" opacity=".8" />
-      </svg>
+      <i className="fa-solid fa-coins text-[#D99A00]" />
     </span>
   )
 }
@@ -116,7 +110,7 @@ function RewardCard({ reward, currentDay, claimedToday }) {
           <div className="text-[28px] leading-none">🎁</div>
         ) : (
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#fff7ed]">
-            <CrystalShardIcon className="h-6 w-6" />
+            <CoinIcon className="h-6 w-6" />
           </div>
         )}
 
@@ -194,7 +188,7 @@ function MissionCard({ mission }) {
               </h3>
 
               <div className="mt-1 flex items-center gap-1 text-[13px] font-black text-[#d97706]">
-                <CrystalShardIcon className="h-4 w-4" />
+                <CoinIcon className="h-4 w-4" />
                 <span>+{mission.reward}</span>
               </div>
             </div>
@@ -348,10 +342,10 @@ export default function TaskCenterPage() {
         <section className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[12px] font-bold text-[#8b93a1]">My Gems</div>
+              <div className="text-[12px] font-bold text-[#8b93a1]">My Coins</div>
               <div className="mt-2 flex items-center gap-2">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#F4D58D] bg-[#FFF7ED]">
-                  <CrystalShardIcon className="h-6 w-6" />
+                  <CoinIcon className="h-6 w-6" />
                 </div>
                 <div className="text-[30px] font-black text-[#111827]">{formatNumber(wallet.gems)}</div>
               </div>
