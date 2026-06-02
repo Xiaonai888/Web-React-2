@@ -461,21 +461,25 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
         ) : null}
 
         <div className="relative z-0">
-  <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
-    {currentPage.map((paragraph, index) => (
-      <p
-        key={`${safePageIndex}-${index}-${paragraph.slice(0, 16)}`}
-        className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
-        style={{
-          fontFamily,
-          fontSize: `${fontSizePx}px`,
-        }}
-      >
-        {paragraph}
-      </p>
-    ))}
-  </div>
-</div>
+          <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
+            {currentPage.map((paragraph, index) => (
+              <p
+                key={`${safePageIndex}-${index}-${paragraph.slice(0, 16)}`}
+                className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
+                style={{
+                  fontFamily,
+                  fontSize: `${fontSizePx}px`,
+                }}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ReaderIconButton({ icon, label, onClick, className = '', disabled = false }) {
 
