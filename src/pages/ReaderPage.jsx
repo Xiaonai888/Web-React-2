@@ -602,106 +602,112 @@ function LockedEpisodeCard({
   const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
 
   return (
-    <section className={`mt-4 rounded-[28px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-      <h2 className={`text-[22px] font-black ${theme.text}`}>Continue reading?</h2>
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[#F3F4F6]/85 px-3 pb-0 pt-[76px]">
+      <section className="w-full max-w-3xl rounded-t-[30px] bg-white px-5 pb-6 pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
 
-      {episode?.title ? (
-        <p className={`mt-2 text-[13px] font-semibold ${theme.muted}`}>
-          {episode.title}
-        </p>
-      ) : null}
+        <div className="text-center">
+          <h2 className="text-[22px] font-black text-[#111827]">Continue reading?</h2>
 
-      <div className="mt-6 space-y-3 text-left">
-        {singleOption ? (
-          <button
-            type="button"
-            onClick={() => onUnlock('single')}
-            disabled={unlocking || !singleOption.enabled}
-            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 active:scale-[0.99] disabled:opacity-60"
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black text-[#111111]">
-              <i className="fa-solid fa-gem text-[#111111]" />
-              {formatNumber(singleOption.price)} to unlock this Ep.
-            </span>
-            <i className="fa-solid fa-chevron-right text-[12px] text-[#C1C5CC]" />
-          </button>
-        ) : null}
-
-        <button
-          type="button"
-          disabled
-          className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
-        >
-          <span className="flex items-center gap-3 text-[14px] font-black">
-            <i className="fa-solid fa-play" />
-            Watch Ad
-          </span>
-          <span className="text-[11px] font-black">Coming soon</span>
-        </button>
-
-        {next30Option ? (
-          <button
-            type="button"
-            onClick={() => onUnlock('next30')}
-            disabled={unlocking}
-            className="flex min-h-[64px] w-full items-center justify-between rounded-[18px] border border-[#F5C542] bg-[#FFF9E8] px-4 py-3 active:scale-[0.99]"
-          >
-            <span>
-              <span className="flex items-center gap-3 text-[14px] font-black text-[#111111]">
-                <i className="fa-solid fa-gem text-[#111111]" />
-                {formatNumber(next30Option.price)} to unlock 30 Ep.
-              </span>
-              <span className="mt-1 block text-[11px] font-black text-[#C59B2D]">
-                Discount {next30Option.discount_percent || 20}%
-              </span>
-            </span>
-            <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
-          </button>
-        ) : null}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between gap-4 text-left">
-        <div className={`text-[13px] font-black ${theme.muted}`}>
-          My Diamonds: {formatNumber(diamondBalance)}
+          {episode?.title ? (
+            <p className="mt-2 line-clamp-1 text-[13px] font-semibold text-[#8D94A1]">
+              {episode.title}
+            </p>
+          ) : null}
         </div>
 
-        <div className="relative flex items-center gap-2 text-[13px] font-black text-[#8D94A1]">
-          <button
-            type="button"
-            onClick={() => setShowAutoHint((value) => !value)}
-            className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
-            aria-label="Auto unlock info"
-          >
-            ?
-          </button>
-
-          {showAutoHint ? (
+        <div className="mt-6 space-y-3">
+          {singleOption ? (
             <button
               type="button"
-              onClick={() => setShowAutoHint(false)}
-              className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111111] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+              onClick={() => onUnlock('single')}
+              disabled={unlocking || !singleOption.enabled}
+              className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:opacity-60"
             >
-              Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
+              <span className="flex items-center gap-3 text-[14px] font-black text-[#111827]">
+                <i className="fa-solid fa-gem text-[#111827]" />
+                {formatNumber(singleOption.price)} to unlock this Ep.
+              </span>
+              <i className="fa-solid fa-chevron-right text-[12px] text-[#C1C5CC]" />
             </button>
           ) : null}
 
           <button
             type="button"
-            onClick={() => setAutoUnlock((value) => !value)}
-            className="flex items-center gap-2"
+            disabled
+            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
           >
-            Auto unlock
-            <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111111]' : 'bg-[#D0D5DD]'}`}>
-              <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+            <span className="flex items-center gap-3 text-[14px] font-black">
+              <i className="fa-solid fa-play" />
+              Watch Ad
             </span>
+            <span className="text-[11px] font-black">Coming soon</span>
           </button>
-        </div>
-      </div>
 
-      {unlocking ? (
-        <div className="mt-5 text-[12px] font-black text-[#8D94A1]">Unlocking...</div>
-      ) : null}
-    </section>
+          {next30Option ? (
+            <button
+              type="button"
+              onClick={() => onUnlock('next30')}
+              disabled={unlocking}
+              className="flex min-h-[64px] w-full items-center justify-between rounded-[18px] border border-[#F5C542] bg-[#FFF9E8] px-4 py-3 text-left shadow-sm active:scale-[0.99]"
+            >
+              <span>
+                <span className="flex items-center gap-3 text-[14px] font-black text-[#111827]">
+                  <i className="fa-solid fa-gem text-[#111827]" />
+                  {formatNumber(next30Option.price)} to unlock 30 Ep.
+                </span>
+                <span className="mt-1 block text-[11px] font-black text-[#C59B2D]">
+                  Discount {next30Option.discount_percent || 20}%
+                </span>
+              </span>
+              <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <div className="text-[13px] font-black text-[#8D94A1]">
+            My Diamonds: {formatNumber(diamondBalance)}
+          </div>
+
+          <div className="relative flex items-center gap-2 text-[13px] font-black text-[#8D94A1]">
+            <button
+              type="button"
+              onClick={() => setShowAutoHint((value) => !value)}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
+              aria-label="Auto unlock info"
+            >
+              ?
+            </button>
+
+            {showAutoHint ? (
+              <button
+                type="button"
+                onClick={() => setShowAutoHint(false)}
+                className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+              >
+                Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setAutoUnlock((value) => !value)}
+              className="flex items-center gap-2"
+            >
+              Auto unlock
+              <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
+                <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {unlocking ? (
+          <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">Unlocking...</div>
+        ) : null}
+      </section>
+    </div>
   )
 }
 
