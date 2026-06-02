@@ -19,6 +19,13 @@ function readerAuthHeaders() {
 }
 
 const REVIEW_READ_PROGRESS_PERCENT = 85
+const PAGING_LINES_PER_PAGE = 20
+
+const PAGING_CHARACTERS_PER_LINE = {
+  compact: 42,
+  normal: 39,
+  comfort: 36,
+}
 
 const READER_THEMES = {
   light: {
@@ -260,6 +267,89 @@ function splitParagraphs(content) {
   return paragraphs.length ? paragraphs : [text]
 }
 
+function getPagingKey(storyId, episodeId) {
+  return `shadow_reader_page_${storyId}_${episodeId}`
+}
+
+function getTextSegments(text) {
+  const value = String(text || '')
+
+  if (!value) return []
+
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    try {
+      const segmenter = new Intl.Segmenter('km', { granularity: 'word' })
+      return Array.from(segmenter.segment(value), (item) => item.segment).filter(Boolean)
+    } catch {
+    }
+  }
+
+  return value.match(/\s+|[^\s]+/gu) || []
+}
+
+function getSegmentLength(value) {
+  return Array.from(String(value || '')).length
+}
+
+function createPagingPages(content, lineSpacing, fontSizePx) {
+  const paragraphs = splitParagraphs(content)
+  const baseCharactersPerLine = PAGING_CHARACTERS_PER_LINE[lineSpacing] || PAGING_CHARACTERS_PER_LINE.comfort
+  const charactersPerLine = Math.max(18, Math.floor((baseCharactersPerLine * 17) / Math.max(15, Number(fontSizePx || 17))))
+  const pages = []
+  let currentPage = []
+  let currentLine = ''
+
+  const pushPage = () => {
+    if (!currentPage.length) return
+    pages.push(currentPage)
+    currentPage = []
+  }
+
+  const pushLine = () => {
+    currentPage.push(currentLine.trimEnd())
+    currentLine = ''
+
+    if (currentPage.length >= PAGING_LINES_PER_PAGE) {
+      pushPage()
+    }
+  }
+
+  paragraphs.forEach((paragraph, paragraphIndex) => {
+    const segments = getTextSegments(paragraph)
+
+    segments.forEach((segment) => {
+      const isSpace = /^\s+$/u.test(segment)
+      const nextSegment = isSpace ? ' ' : segment
+      const nextLine = currentLine ? `${currentLine}${nextSegment}` : nextSegment.trimStart()
+
+      if (!currentLine) {
+        currentLine = nextLine
+        return
+      }
+
+      if (getSegmentLength(nextLine) > charactersPerLine) {
+        pushLine()
+        currentLine = nextSegment.trimStart()
+        return
+      }
+
+      currentLine = nextLine
+    })
+
+    if (currentLine) pushLine()
+
+    if (paragraphIndex < paragraphs.length - 1) {
+      currentPage.push('')
+      if (currentPage.length >= PAGING_LINES_PER_PAGE) pushPage()
+    }
+  })
+
+  if (currentLine) pushLine()
+  if (currentPage.length) pushPage()
+
+  return pages.length ? pages : [[]]
+}
+
 function getReviewReadKey(storyId) {
   return `shadow_review_read_episodes_${storyId}`
 }
@@ -318,7 +408,7 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
       {paragraphs.map((paragraph, index) => (
         <p
           key={`${paragraph.slice(0, 20)}-${index}`}
-          className={`${theme.text} ${lineHeightClass} whitespace-pre-line break-words tracking-[0.003em]`}
+          className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
           style={{
             fontFamily,
             fontSize: `${fontSizePx}px`,
@@ -327,6 +417,95 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
           {paragraph}
         </p>
       ))}
+    </div>
+  )
+}
+
+function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFamily, lineSpacing, theme }) {
+  const lineHeightClass = LINE_SPACING_OPTIONS[lineSpacing]?.className || LINE_SPACING_OPTIONS.comfort.className
+  const totalPages = Math.max(1, pages.length)
+  const safePageIndex = Math.min(Math.max(0, pageIndex), totalPages - 1)
+  const currentPage = pages[safePageIndex] || []
+  const canGoPrevious = safePageIndex > 0
+  const canGoNext = safePageIndex < totalPages - 1
+
+  const goPrevious = () => {
+    if (!canGoPrevious) return
+    setPageIndex((current) => Math.max(0, current - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const goNext = () => {
+    if (!canGoNext) return
+    setPageIndex((current) => Math.min(totalPages - 1, current + 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-center">
+        <span className={`${theme.soft} ${theme.muted} rounded-full px-4 py-2 text-[12px] font-black`}>
+          Page {safePageIndex + 1} / {totalPages}
+        </span>
+      </div>
+
+      <div className="relative min-h-[68vh]">
+        <button
+          type="button"
+          onClick={goPrevious}
+          disabled={!canGoPrevious}
+          aria-label="Previous page"
+          className="absolute bottom-0 left-0 top-0 z-10 w-[24%] disabled:pointer-events-none"
+        />
+
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={!canGoNext}
+          aria-label="Next page"
+          className="absolute bottom-0 right-0 top-0 z-10 w-[24%] disabled:pointer-events-none"
+        />
+
+        <div className="relative z-0">
+          {currentPage.map((line, index) =>
+            line ? (
+              <p
+                key={`${safePageIndex}-${index}-${line.slice(0, 16)}`}
+                className={`${theme.text} ${lineHeightClass} whitespace-pre-wrap tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
+                style={{
+                  fontFamily,
+                  fontSize: `${fontSizePx}px`,
+                  lineBreak: 'auto',
+                }}
+              >
+                {line}
+              </p>
+            ) : (
+              <div key={`${safePageIndex}-${index}-blank`} className="h-5" />
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="mt-7 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={goPrevious}
+          disabled={!canGoPrevious}
+          className={`h-12 rounded-full text-[13px] font-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${theme.ghost}`}
+        >
+          Previous Page
+        </button>
+
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={!canGoNext}
+          className={`h-12 rounded-full text-[13px] font-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${theme.button}`}
+        >
+          Next Page
+        </button>
+      </div>
     </div>
   )
 }
@@ -1055,6 +1234,7 @@ export default function ReaderPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
+  const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
@@ -1065,6 +1245,9 @@ export default function ReaderPage() {
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const brightnessOpacity = Math.max(0, Math.min(0.35, (100 - brightness) / 125))
+  const pagingPages = useMemo(() => {
+    return createPagingPages(episode?.content || '', lineSpacing, fontSizePx)
+  }, [episode?.content, fontSizePx, lineSpacing])
 
   useEffect(() => {
     localStorage.setItem('reader_font_size_index', String(fontSizeIndex))
@@ -1094,6 +1277,32 @@ export default function ReaderPage() {
   useEffect(() => {
     localStorage.setItem('reader_auto_scroll_speed', String(autoScrollSpeed))
   }, [autoScrollSpeed])
+
+  useEffect(() => {
+    if (readingMode !== 'paging') return
+
+    const savedPage = Number(localStorage.getItem(getPagingKey(storyId, episodeId)) || 0)
+    setCurrentPageIndex(Number.isFinite(savedPage) && savedPage >= 0 ? savedPage : 0)
+  }, [episodeId, readingMode, storyId])
+
+  useEffect(() => {
+    if (readingMode !== 'paging') return
+
+    const maxPageIndex = Math.max(0, pagingPages.length - 1)
+    setCurrentPageIndex((current) => Math.min(Math.max(0, current), maxPageIndex))
+  }, [pagingPages.length, readingMode])
+
+  useEffect(() => {
+    if (readingMode !== 'paging') return
+
+    localStorage.setItem(getPagingKey(storyId, episodeId), String(currentPageIndex))
+
+    const totalPages = Math.max(1, pagingPages.length)
+    const progress = Math.min(100, Math.max(0, ((currentPageIndex + 1) / totalPages) * 100))
+
+    setReadingProgress(progress)
+    readingProgressRef.current = progress
+  }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
 
   useEffect(() => {
     let ignore = false
@@ -1181,6 +1390,8 @@ export default function ReaderPage() {
   }, [episodeId, navigate, storyId])
 
   useEffect(() => {
+    if (readingMode === 'paging') return undefined
+
     const updateProgress = () => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
@@ -1198,7 +1409,7 @@ export default function ReaderPage() {
       window.removeEventListener('scroll', updateProgress)
       window.removeEventListener('resize', updateProgress)
     }
-  }, [episodeId])
+  }, [episodeId, readingMode])
 
   useEffect(() => {
     if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) {
@@ -1574,13 +1785,25 @@ export default function ReaderPage() {
                 </div>
 
                 <article>
-                  <ReadingText
-                    content={episode.content}
-                    fontSizePx={fontSizePx}
-                    fontFamily={activeFont.family}
-                    lineSpacing={lineSpacing}
-                    theme={theme}
-                  />
+                  {readingMode === 'paging' ? (
+  <PagingReadingText
+    pages={pagingPages}
+    pageIndex={currentPageIndex}
+    setPageIndex={setCurrentPageIndex}
+    fontSizePx={fontSizePx}
+    fontFamily={activeFont.family}
+    lineSpacing={lineSpacing}
+    theme={theme}
+  />
+) : (
+  <ReadingText
+    content={episode.content}
+    fontSizePx={fontSizePx}
+    fontFamily={activeFont.family}
+    lineSpacing={lineSpacing}
+    theme={theme}
+  />
+)}
                 </article>
               </div>
             </section>
