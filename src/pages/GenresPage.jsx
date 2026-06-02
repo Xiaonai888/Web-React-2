@@ -42,15 +42,15 @@ const genres = [
 ]
 
 const quickFilters = [
-  { label: 'Wait Until Free', value: 'wait_free' },
-  { label: 'Free', value: 'free' },
+    { label: 'Wait Free', value: 'wait_free' },
+  { label: 'Free Ep', value: 'free' },
   { label: 'Completed', value: 'completed' },
 ]
 
 const accessFilters = [
   { label: 'All', value: 'all' },
-  { label: 'Wait Until Free', value: 'wait_free' },
-  { label: 'Free', value: 'free' },
+  { label: 'Wait Free', value: 'wait_free' },
+  { label: 'Free Ep', value: 'free' },
   { label: 'Paid', value: 'paid' },
   { label: 'Premium Early Access', value: 'premium' },
 ]
