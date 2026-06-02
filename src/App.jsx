@@ -38,14 +38,10 @@ import RankingPage from './pages/RankingPage'
 import TaskCenterPage from './pages/TaskCenterPage'
 import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
+import NotificationPage from './pages/NotificationPage'
+
+
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
-
-
-
-
-
-
-
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
 const ShadowMallOrderHistoryPage = lazy(() => import('./pages/Shop/ShadowMallOrderHistoryPage'))
@@ -601,6 +597,7 @@ function AppShell() {
         <Route path="/premium" element={<ComingSoon title="Premium" />} />
         <Route path="/inbox" element={<ComingSoon title="Inbox" />} />
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
+        <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
         <Route path="/help" element={<ComingSoon title="Help Center" />} />
         <Route path="/about" element={<ComingSoon title="About Us" />} />
