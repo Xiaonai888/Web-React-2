@@ -602,8 +602,8 @@ function LockedEpisodeCard({
   const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[#F3F4F6]/85 px-3 pb-0 pt-[76px]">
-      <section className="w-full max-w-3xl rounded-t-[30px] bg-white px-5 pb-6 pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-[#F3F4F6]/85 px-0 pb-0">
+      <section className="max-h-[82vh] min-h-[360px] w-screen overflow-y-auto rounded-t-[30px] bg-white px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
 
         <div className="text-center">
