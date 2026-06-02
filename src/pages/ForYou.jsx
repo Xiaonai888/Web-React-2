@@ -298,15 +298,15 @@ export default function ForYou() {
         >
           <header className="flex justify-between items-center px-4 py-4 bg-white shadow-sm">
             <div className="flex items-center space-x-2">
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-1 ring-black/5">
-                <img
-                  src="/assets/Icons/Shadow%20Logo.svg"
-                  alt="Shadow"
-                  className="h-full w-full object-cover"
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
+              <div className="flex h-9 w-9 items-center justify-center overflow-visible">
+  <img
+    src="/assets/Icons/Shadow%20Logo.svg"
+    alt="Shadow"
+    className="h-full w-full object-contain"
+    loading="eager"
+    decoding="async"
+  />
+</div>
               <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
             </div>
 
