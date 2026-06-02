@@ -1,16 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import ShadowSpotlight from '../components/ShadowSpotlight'
-import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
-import TrendingNowSection from '../components/TrendingNowSection'
-import UpdateTodaySection from '../components/UpdateTodaySection'
-import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
-import TopNovelSection from '../components/TopNovelSection'
-import YouMightLikeSection from '../components/YouMightLikeSection'
-import EventPerksHubSection from '../components/EventPerksHubSection'
-import NewArrivalsSection from '../components/NewArrivalsSection'
-import CompletedSection from '../components/CompletedSection'
-import FanPicksSection from '../components/FanPicksSection'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -26,6 +16,41 @@ const fallbackGenreTabs = [
   { label: 'Comedy', slug: 'comedy' },
   { label: 'Drama', slug: 'drama' },
 ]
+
+const genreRoutes = {
+  romance: '/genre/romance',
+  fantasy: '/genre/fantasy',
+  action: '/genre/action',
+  comedy: '/genre/comedy',
+  adventure: '/genre/adventure',
+  'school-life': '/genre/school-life',
+  historical: '/genre/historical',
+  mystery: '/genre/mystery',
+  horror: '/genre/horror',
+  lgbtq: '/genre/lgbtq',
+  'lgbtq+': '/genre/lgbtq',
+  'sci-fi': '/genre/sci-fi',
+  scifi: '/genre/sci-fi',
+  drama: '/genre/drama',
+  thriller: '/genre/thriller',
+  system: '/genre/system',
+  isekai: '/genre/isekai',
+  supernatural: '/genre/supernatural',
+  'martial-arts': '/genre/martial-arts',
+  revenge: '/genre/revenge',
+  ceo: '/genre/ceo',
+  'slow-burn': '/genre/slow-burn',
+  'enemies-to-lovers': '/genre/enemies-to-lovers',
+  'time-travel': '/genre/time-travel',
+  'strong-female-lead': '/genre/strong-female-lead',
+  'hidden-identity': '/genre/hidden-identity',
+  royalty: '/genre/royalty',
+  magic: '/genre/magic',
+  'second-chance': '/genre/second-chance',
+  'cold-male-lead': '/genre/cold-male-lead',
+  bl: '/genre/bl',
+  gl: '/genre/gl',
+}
 
 const slideBadgeColors = {
   NEW: 'bg-[#ff2f55] text-white',
@@ -53,6 +78,37 @@ function getSlideBadgeClass(badge) {
   return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
 }
 
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) {
+    const result = number / 1000000
+    return `${Number.isInteger(result) ? result : result.toFixed(1)}M`
+  }
+  if (number >= 1000) {
+    const result = number / 1000
+    return `${Number.isInteger(result) ? result : result.toFixed(0)}k`
+  }
+
+  return String(number)
+}
+
+function normalizeStory(story) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    author: story.author_page?.page_name || story.author_name || 'Shadow Author',
+    cover: story.cover_url || '',
+    genre: story.main_genre || '',
+    description: story.description || '',
+    views: formatCompactNumber(story.total_views),
+    likes: formatCompactNumber(story.total_likes),
+    episodes: Number(story.total_episodes || 0),
+    isAdult: Boolean(story.is_adult),
+  }
+}
+
 function ComingSoonPanel({ title }) {
   return (
     <div className="px-4 py-8">
@@ -69,12 +125,130 @@ function ComingSoonPanel({ title }) {
   )
 }
 
+function RealStoryCard({ story }) {
+  return (
+    <Link to={`/story/${story.id}`} className="group block min-w-0">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#202124] shadow-sm">
+        {story.cover ? (
+          <img
+            src={story.cover}
+            alt={story.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.045]"
+            loading="lazy"
+            decoding="async"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
+          />
+        ) : null}
+
+        {story.isAdult ? (
+          <div className="absolute left-2 top-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+            18+
+          </div>
+        ) : null}
+
+        {story.genre ? (
+          <div className="absolute bottom-2 left-2 max-w-[calc(100%-16px)] rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+            <span className="line-clamp-1">{story.genre}</span>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-2.5 min-w-0">
+        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-tight tracking-tight text-[#111] sm:text-[15px]">
+          {story.title}
+        </h3>
+
+        <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-gray-500">
+          {story.author}
+        </p>
+
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-[#222]">
+          <span className="inline-flex items-center gap-1 leading-none">
+            <i className="fas fa-eye text-[11px] text-[#111827]" />
+            <span>{story.views}</span>
+          </span>
+
+          <span className="inline-flex items-center gap-1 leading-none">
+            <i className="fas fa-heart text-[11px] text-[#ef4444]" />
+            <span>{story.likes}</span>
+          </span>
+
+          <span className="inline-flex items-center gap-1 leading-none">
+            <i className="fas fa-list text-[11px] text-[#111827]" />
+            <span>{story.episodes}</span>
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function RealStoriesSection({ stories, loading }) {
+  if (loading) {
+    return (
+      <section className="px-4 pb-8 pt-8">
+        <div className="mb-5 h-6 w-36 animate-pulse rounded-full bg-gray-100" />
+        <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-5">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <div key={index}>
+              <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
+              <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
+              <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (!stories.length) {
+    return (
+      <section className="px-4 pb-8 pt-8">
+        <div className="rounded-[24px] border border-dashed border-gray-200 bg-gray-50 px-5 py-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm">
+            <i className="fa-solid fa-book-open text-lg" />
+          </div>
+          <h2 className="text-[16px] font-extrabold text-gray-900">No real stories yet</h2>
+          <p className="mt-2 text-[12px] font-medium text-gray-500">
+            Deleted, draft, and demo stories are hidden from For You.
+          </p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="px-4 pb-8 pt-8">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-[20px] font-black uppercase tracking-tight text-[#111827]">
+            FOR YOU
+          </h2>
+          <p className="mt-1 text-[12px] font-semibold text-gray-500">
+            Real published stories only
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-x-3 gap-y-7 md:grid-cols-6 md:gap-x-5">
+        {stories.map((story) => (
+          <RealStoryCard key={story.id} story={story} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
   const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
+  const [stories, setStories] = useState([])
+  const [storiesLoading, setStoriesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
 
   const navigate = useNavigate()
@@ -170,6 +344,43 @@ export default function ForYou() {
   }, [])
 
   useEffect(() => {
+    let ignore = false
+
+    async function fetchRealStories() {
+      try {
+        setStoriesLoading(true)
+
+        const response = await fetch(addStoryLanguageParam(`${API_URL}/api/public/stories?limit=48&sort=updated`))
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load real stories')
+        }
+
+        if (ignore) return
+
+        setStories((data.stories || []).map(normalizeStory))
+      } catch (error) {
+        console.error('ForYou real stories error:', error)
+
+        if (!ignore) {
+          setStories([])
+        }
+      } finally {
+        if (!ignore) {
+          setStoriesLoading(false)
+        }
+      }
+    }
+
+    fetchRealStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
     if (!window.Swiper || slides.length === 0) return
 
     if (swiperRef.current) {
@@ -207,6 +418,8 @@ export default function ForYou() {
       }
     }
   }, [slides])
+
+  const visibleStories = useMemo(() => stories, [stories])
 
   return (
     <>
@@ -258,7 +471,7 @@ export default function ForYou() {
         }
 
         .swiper-pagination-bullet-active {
-          background: #111827;
+          background: #111827 !important;
           width: 20px;
           border-radius: 5px;
         }
@@ -348,169 +561,18 @@ export default function ForYou() {
                     key={tab.slug}
                     type="button"
                     onClick={() => {
-  if (tab.slug === 'today') {
-    setActiveGenre(tab.slug)
-    return
-  }
+                      if (tab.slug === 'today') {
+                        setActiveGenre(tab.slug)
+                        return
+                      }
 
-  if (tab.slug === 'romance') {
-    navigate('/genre/romance')
-    return
-  }
+                      if (genreRoutes[tab.slug]) {
+                        navigate(genreRoutes[tab.slug])
+                        return
+                      }
 
-  if (tab.slug === 'fantasy') {
-    navigate('/genre/fantasy')
-    return
-  }
-                      
-  if (tab.slug === 'action') {
-  navigate('/genre/action')
-  return
-}
-
-  if (tab.slug === 'comedy') {
-  navigate('/genre/comedy')
-  return
-}
-
-  if (tab.slug === 'adventure') {
-  navigate('/genre/adventure')
-  return
-}
-
-
-if (tab.slug === 'school-life') {
-  navigate('/genre/school-life')
-  return
-}       
-
-if (tab.slug === 'historical') {
-  navigate('/genre/historical')
-  return
-}    
-
-if (tab.slug === 'mystery') {
-  navigate('/genre/mystery')
-  return
-}        
-
-if (tab.slug === 'horror') {
-  navigate('/genre/horror')
-  return
-}                      
-
-if (tab.slug === 'lgbtq' || tab.slug === 'lgbtq+') {
-  navigate('/genre/lgbtq')
-  return
-}       
-
-if (tab.slug === 'sci-fi' || tab.slug === 'scifi') {
-  navigate('/genre/sci-fi')
-  return
-}        
-
-if (tab.slug === 'drama') {
-  navigate('/genre/drama')
-  return
-}       
-
-if (tab.slug === 'thriller') {
-  navigate('/genre/thriller')
-  return
-}          
-
-if (tab.slug === 'system') {
-  navigate('/genre/system')
-  return
-}       
-
-if (tab.slug === 'isekai') {
-  navigate('/genre/isekai')
-  return
-}                   
-
-if (tab.slug === 'supernatural') {
-  navigate('/genre/supernatural')
-  return
-}
-
-if (tab.slug === 'martial-arts') {
-  navigate('/genre/martial-arts')
-  return
-}           
-
-if (tab.slug === 'revenge') {
-  navigate('/genre/revenge')
-  return
-}
-
-
-if (tab.slug === 'ceo') {
-  navigate('/genre/ceo')
-  return
-}       
-
-
-if (tab.slug === 'slow-burn') {
-  navigate('/genre/slow-burn')
-  return
-}         
-
-if (tab.slug === 'enemies-to-lovers') {
-  navigate('/genre/enemies-to-lovers')
-  return
-}    
-
-if (tab.slug === 'time-travel') {
-  navigate('/genre/time-travel')
-  return
-}      
-                      
-if (tab.slug === 'strong-female-lead') {
-  navigate('/genre/strong-female-lead')
-  return
-}      
-
-if (tab.slug === 'hidden-identity') {
-  navigate('/genre/hidden-identity')
-  return
-}                      
-
-if (tab.slug === 'royalty') {
-  navigate('/genre/royalty')
-  return
-}              
-
-if (tab.slug === 'magic') {
-  navigate('/genre/magic')
-  return
-}                
-
-
-if (tab.slug === 'second-chance') {
-  navigate('/genre/second-chance')
-  return
-}    
-
-if (tab.slug === 'cold-male-lead') {
-  navigate('/genre/cold-male-lead')
-  return
-}
-
-if (tab.slug === 'bl') {
-  navigate('/genre/bl')
-  return
-} 
-
-
-if (tab.slug === 'gl') {
-  navigate('/genre/gl')
-  return
-}                      
-                      
-                      
-  setActiveGenre(tab.slug)
-}}
+                      setActiveGenre(tab.slug)
+                    }}
                     className={
                       active
                         ? 'bg-[#111827] text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold'
@@ -601,56 +663,14 @@ if (tab.slug === 'gl') {
                   onClick={() => item.path && navigate(item.path)}
                 >
                   <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-[#f8fafc]">
-                    <i className={`fas ${item.icon} ${item.color}`} />
+                    <i className={`fas ${item.icon}`} />
                   </div>
                   <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
                 </div>
               ))}
             </div>
 
-            <div className="my-6">
-              <ShadowSpotlight />
-            </div>
-
-            <div className="my-6">
-              <ShadowExclusiveSection />
-            </div>
-
-            <div className="my-6">
-              <TrendingNowSection />
-            </div>
-
-            <div className="my-6">
-              <UpdateTodaySection />
-            </div>
-
-            <div className="my-6">
-              <EditorWeeklyPicksSection />
-            </div>
-
-            <div className="my-6">
-              <TopNovelSection />
-            </div>
-
-            <div className="my-6">
-              <YouMightLikeSection />
-            </div>
-
-            <div className="my-6">
-              <EventPerksHubSection />
-            </div>
-
-            <div className="my-6">
-              <NewArrivalsSection />
-            </div>
-
-            <div className="my-6">
-              <CompletedSection />
-            </div>
-
-            <div className="my-6">
-              <FanPicksSection />
-            </div>
+            <RealStoriesSection stories={visibleStories} loading={storiesLoading} />
           </div>
         )}
       </div>
