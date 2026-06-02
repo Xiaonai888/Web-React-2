@@ -60,6 +60,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
+const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./pages/Genre/ActionGenrePage'))
@@ -552,6 +553,15 @@ function AppShell() {
   element={
     <LazyPage>
       <GLGenrePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/genres"
+  element={
+    <LazyPage>
+      <GenresPage />
     </LazyPage>
   }
 />
