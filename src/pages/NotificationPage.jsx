@@ -123,19 +123,22 @@ export default function NotificationPage() {
 
             return (
               <button
+                           <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-              className={`relative flex shrink-0 items-center rounded-full px-4 py-2.5 text-[13px] font-black transition active:scale-95 ${
-                isActive ? 'bg-[#111111] text-white shadow-sm' : 'bg-[#EEF0F4] text-[#606773]'
-              }`}
+                className={`relative flex shrink-0 items-center rounded-full px-4 py-2.5 text-[13px] font-black transition active:scale-95 ${
+                  isActive ? 'bg-[#111111] text-white shadow-sm' : 'bg-[#EEF0F4] text-[#606773]'
+                }`}
               >
                 <span>{tab.label}</span>
-{showCount ? (
-  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black text-[#111111] shadow-sm">
-    {formatCount(count)}
-  </span>
-) : null}
+                {showCount ? (
+                  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black text-[#111111] shadow-sm">
+                    {formatCount(count)}
+                  </span>
+                ) : null}
+              </button>
+            )
           })}
         </div>
       </div>
