@@ -254,6 +254,10 @@ function formatDate(value) {
   return date.toLocaleDateString('en-GB')
 }
 
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString()
+}
+
 function splitParagraphs(content) {
   const text = String(content || '').trim()
 
@@ -578,6 +582,126 @@ const handlePointerEnd = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+function LockedEpisodeCard({
+  theme,
+  episode,
+  wallet,
+  packageOptions,
+  autoUnlock,
+  setAutoUnlock,
+  showAutoHint,
+  setShowAutoHint,
+  unlocking,
+  onUnlock,
+}) {
+  const diamondBalance = Number(wallet?.diamond_balance || 0)
+  const singleOption = packageOptions.find((option) => option.key === 'single')
+  const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
+
+  return (
+    <section className={`mt-4 rounded-[28px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
+      <h2 className={`text-[22px] font-black ${theme.text}`}>Continue reading?</h2>
+
+      {episode?.title ? (
+        <p className={`mt-2 text-[13px] font-semibold ${theme.muted}`}>
+          {episode.title}
+        </p>
+      ) : null}
+
+      <div className="mt-6 space-y-3 text-left">
+        {singleOption ? (
+          <button
+            type="button"
+            onClick={() => onUnlock('single')}
+            disabled={unlocking || !singleOption.enabled}
+            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 active:scale-[0.99] disabled:opacity-60"
+          >
+            <span className="flex items-center gap-3 text-[14px] font-black text-[#111111]">
+              <i className="fa-solid fa-gem text-[#111111]" />
+              {formatNumber(singleOption.price)} to unlock this Ep.
+            </span>
+            <i className="fa-solid fa-chevron-right text-[12px] text-[#C1C5CC]" />
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          disabled
+          className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
+        >
+          <span className="flex items-center gap-3 text-[14px] font-black">
+            <i className="fa-solid fa-play" />
+            Watch Ad
+          </span>
+          <span className="text-[11px] font-black">Coming soon</span>
+        </button>
+
+        {next30Option ? (
+          <button
+            type="button"
+            onClick={() => onUnlock('next30')}
+            disabled={unlocking}
+            className="flex min-h-[64px] w-full items-center justify-between rounded-[18px] border border-[#F5C542] bg-[#FFF9E8] px-4 py-3 active:scale-[0.99]"
+          >
+            <span>
+              <span className="flex items-center gap-3 text-[14px] font-black text-[#111111]">
+                <i className="fa-solid fa-gem text-[#111111]" />
+                {formatNumber(next30Option.price)} to unlock 30 Ep.
+              </span>
+              <span className="mt-1 block text-[11px] font-black text-[#C59B2D]">
+                Discount {next30Option.discount_percent || 20}%
+              </span>
+            </span>
+            <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-4 text-left">
+        <div className={`text-[13px] font-black ${theme.muted}`}>
+          My Diamonds: {formatNumber(diamondBalance)}
+        </div>
+
+        <div className="relative flex items-center gap-2 text-[13px] font-black text-[#8D94A1]">
+          <button
+            type="button"
+            onClick={() => setShowAutoHint((value) => !value)}
+            className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
+            aria-label="Auto unlock info"
+          >
+            ?
+          </button>
+
+          {showAutoHint ? (
+            <button
+              type="button"
+              onClick={() => setShowAutoHint(false)}
+              className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111111] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+            >
+              Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setAutoUnlock((value) => !value)}
+            className="flex items-center gap-2"
+          >
+            Auto unlock
+            <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111111]' : 'bg-[#D0D5DD]'}`}>
+              <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {unlocking ? (
+        <div className="mt-5 text-[12px] font-black text-[#8D94A1]">Unlocking...</div>
+      ) : null}
+    </section>
   )
 }
 
@@ -1289,6 +1413,12 @@ export default function ReaderPage() {
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [lockedEpisode, setLockedEpisode] = useState(false)
+  const [unlockWallet, setUnlockWallet] = useState(null)
+  const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
+  const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
+  const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
+  const [unlockingEpisode, setUnlockingEpisode] = useState(false)
   const [fontSizeIndex, setFontSizeIndex] = useState(getInitialFontSizeIndex)
   const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-sans-khmer')
   const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'paper')
@@ -1404,20 +1534,29 @@ export default function ReaderPage() {
         }
 
         if (episodeResponse.status === 423 || episodeData.code === 'EPISODE_LOCKED') {
-          if (ignore) return
+  if (ignore) return
 
-          setStory(episodeData.story || null)
-          setEpisode(episodeData.episode || null)
-          setEpisodes(episodesData.episodes || [])
-          setReadingProgress(0)
-          setReviewProgressSaved(false)
-          qualifiedViewSentRef.current = false
-          setAdultAccepted(true)
-          setAdultWarningOpen(false)
-          setMessage('This episode is locked. Please unlock it from the story page.')
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-          return
-        }
+  setStory(episodeData.story || null)
+  setEpisode(episodeData.episode || null)
+  setEpisodes(episodesData.episodes || [])
+  setLockedEpisode(true)
+  setReadingProgress(0)
+  setReviewProgressSaved(false)
+  qualifiedViewSentRef.current = false
+  setAdultAccepted(false)
+  setAdultWarningOpen(false)
+  setMessage('')
+
+  try {
+    await loadLockedUnlockStatus()
+  } catch {
+    setUnlockWallet(null)
+    setUnlockPackageOptions([])
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  return
+}
 
         if (!episodeResponse.ok || episodeData.ok === false) {
           throw new Error(episodeData.message || 'Episode not found')
@@ -1428,6 +1567,7 @@ export default function ReaderPage() {
         setStory(episodeData.story || null)
         setEpisode(episodeData.episode || null)
         setEpisodes(episodesData.episodes || [])
+        setLockedEpisode(false)
         setReadingProgress(0)
         setReviewProgressSaved(false)
         qualifiedViewSentRef.current = false
@@ -1612,6 +1752,76 @@ export default function ReaderPage() {
     navigate(`/story/${storyId}/episode/${nextEpisode.id}`)
   }
 
+  async function loadLockedUnlockStatus() {
+  if (!storyId || !episodeId) return
+
+  const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
+    headers: readerAuthHeaders(),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to check unlock status')
+  }
+
+  setUnlockWallet(data.wallet || null)
+  setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
+  setUnlockPackageOptions(Array.isArray(data.package_options) ? data.package_options : [])
+}
+
+async function handleLockedDiamondUnlock(packageKey) {
+  const option = unlockPackageOptions.find((item) => item.key === packageKey)
+  const diamondBalance = Number(unlockWallet?.diamond_balance || 0)
+  const price = Number(option?.price || 0)
+
+  if (!option?.enabled) return
+
+  if (diamondBalance < price) {
+    navigate('/shop', {
+      state: {
+        activeTab: 'Purchase',
+        from: `/story/${storyId}/episode/${episodeId}`,
+      },
+    })
+    return
+  }
+
+  try {
+    setUnlockingEpisode(true)
+
+    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/package`, {
+      method: 'POST',
+      headers: readerAuthHeaders(),
+      body: JSON.stringify({
+        package_key: packageKey,
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      if (data.code === 'INSUFFICIENT_DIAMONDS') {
+        navigate('/shop', {
+          state: {
+            activeTab: 'Purchase',
+            from: `/story/${storyId}/episode/${episodeId}`,
+          },
+        })
+        return
+      }
+
+      throw new Error(data.message || 'Failed to unlock episode')
+    }
+
+    window.location.reload()
+  } catch (error) {
+    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
+  } finally {
+    setUnlockingEpisode(false)
+  }
+}
+
   const handleResetSettings = () => {
     setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
     setFontKey('noto-sans-khmer')
@@ -1777,7 +1987,22 @@ export default function ReaderPage() {
           </section>
         ) : null}
 
-        {!loading && episode && adultAccepted ? (
+        {!loading && lockedEpisode && episode ? (
+  <LockedEpisodeCard
+    theme={theme}
+    episode={episode}
+    wallet={unlockWallet}
+    packageOptions={unlockPackageOptions}
+    autoUnlock={unlockAutoUnlock}
+    setAutoUnlock={setUnlockAutoUnlock}
+    showAutoHint={unlockAutoHintOpen}
+    setShowAutoHint={setUnlockAutoHintOpen}
+    unlocking={unlockingEpisode}
+    onUnlock={handleLockedDiamondUnlock}
+  />
+) : null}
+
+        {!loading && episode && adultAccepted && !lockedEpisode ? (
           <>
             <section className={`overflow-hidden rounded-[28px] ${theme.card} shadow-sm ring-1 ring-black/5`}>
               {cover ? (
