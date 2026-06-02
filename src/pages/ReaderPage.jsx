@@ -365,6 +365,29 @@ function getReviewReadEpisodes(storyId) {
   }
 }
 
+function normalizePagingParagraphs(lines) {
+  const paragraphs = []
+  let current = ''
+
+  ;(lines || []).forEach((line) => {
+    const value = String(line || '').trim()
+
+    if (!value) {
+      if (current.trim()) {
+        paragraphs.push(current.trim())
+        current = ''
+      }
+      return
+    }
+
+    current = current ? `${current} ${value}` : value
+  })
+
+  if (current.trim()) paragraphs.push(current.trim())
+
+  return paragraphs
+}
+
 function saveReviewReadEpisode(storyId, episodeId) {
   if (!storyId || !episodeId) return
 
@@ -430,6 +453,7 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
   const totalPages = Math.max(1, pages.length)
   const safePageIndex = Math.min(Math.max(0, pageIndex), totalPages - 1)
   const currentPage = pages[safePageIndex] || []
+  const currentParagraphs = normalizePagingParagraphs(currentPage)
   const canGoPrevious = safePageIndex > 0
   const canGoNext = safePageIndex < totalPages - 1
 
@@ -515,23 +539,19 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
         ) : null}
 
         <div className="relative z-0">
-          {currentPage.map((line, index) =>
-            line ? (
-              <p
-                key={`${safePageIndex}-${index}-${line.slice(0, 16)}`}
-                className={`${theme.text} ${lineHeightClass} whitespace-pre-wrap tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
-                style={{
-                  fontFamily,
-                  fontSize: `${fontSizePx}px`,
-                  lineBreak: 'auto',
-                }}
-              >
-                {line}
-              </p>
-            ) : (
-              <div key={`${safePageIndex}-${index}-blank`} className="h-5" />
-            )
-          )}
+         {currentParagraphs.map((paragraph, index) => (
+  <p
+    key={`${safePageIndex}-${index}-${paragraph.slice(0, 16)}`}
+    className={`${theme.text} ${lineHeightClass} whitespace-pre-wrap tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
+    style={{
+      fontFamily,
+      fontSize: `${fontSizePx}px`,
+      lineBreak: 'auto',
+    }}
+  >
+    {paragraph}
+  </p>
+))}
         </div>
       </div>
     </div>
