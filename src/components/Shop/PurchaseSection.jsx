@@ -69,7 +69,7 @@ function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
   )
 }
 
-function CrystalShardIcon({ size = 'h-9 w-9' }) {
+function CoinIcon({ size = 'h-9 w-9' }) {
   return (
     <span className={`flex shrink-0 items-center justify-center rounded-full border border-[#F4D58D] bg-[#FFF7ED] ${size}`}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -128,7 +128,7 @@ function PackageCard({ item, selected, onSelect }) {
           </div>
           <p className="mt-2 text-[12px] font-extrabold text-[#6B7280]">{formatMoney(item.package_usd)}</p>
           <p className={`mt-2 text-[11px] font-extrabold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
-            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Gems` : 'No bonus gems'}
+            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Coins` : 'No bonus coins'}
           </p>
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function PurchaseSection() {
       <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
         <h2 className="text-[20px] font-black text-[#111111]">Purchase Diamonds</h2>
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-6 text-[#6B7280]">
-          Log in to buy Diamonds, receive bonus Gems, and unlock premium episodes.
+          Log in to buy Diamonds, receive bonus Coins, and unlock premium episodes.
         </p>
         <button type="button" onClick={() => navigate('/login')} className="mt-5 rounded-full bg-[#111111] px-6 py-3 text-[13px] font-extrabold text-white active:scale-95">
           Log In
@@ -507,9 +507,9 @@ export default function PurchaseSection() {
 
           <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
             <div className="flex items-center gap-3">
-              <CrystalShardIcon />
+              <CoinIcon />
               <div>
-                <p className="text-[12px] font-bold text-[#6B7280]">Gems</p>
+                <p className="text-[12px] font-bold text-[#6B7280]">Coins</p>
                 <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
               </div>
             </div>
