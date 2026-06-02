@@ -72,13 +72,7 @@ function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
 function CoinIcon({ size = 'h-9 w-9' }) {
   return (
     <span className={`flex shrink-0 items-center justify-center rounded-full border border-[#F4D58D] bg-[#FFF7ED] ${size}`}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 2.6 19.2 7 17.4 17.2 12 21.4 6.6 17.2 4.8 7 12 2.6Z" fill="#F59E0B" />
-        <path d="M12 2.6 9.1 8.2 12 21.4 14.9 8.2 12 2.6Z" fill="#FDBA74" />
-        <path d="M4.8 7 9.1 8.2 6.6 17.2 4.8 7Z" fill="#D97706" />
-        <path d="M19.2 7 14.9 8.2 17.4 17.2 19.2 7Z" fill="#B45309" />
-        <path d="M9.1 8.2h5.8L12 21.4 9.1 8.2Z" fill="#FDE68A" opacity=".8" />
-      </svg>
+      <i className="fa-solid fa-coins text-[15px] text-[#D99A00]" />
     </span>
   )
 }
