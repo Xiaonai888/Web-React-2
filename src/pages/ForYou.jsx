@@ -76,6 +76,7 @@ export default function ForYou() {
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
+  const notificationUnreadCount = 2
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
@@ -333,10 +334,15 @@ export default function ForYou() {
 
  <Link
   to="/notifications"
-  className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
+  className="relative flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
   aria-label="Notifications"
 >
   <i className="fas fa-bell" />
+  {notificationUnreadCount > 0 ? (
+    <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
+      {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+    </span>
+  ) : null}
 </Link>
 </div>
           </header>
