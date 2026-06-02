@@ -422,6 +422,9 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
 }
 
 function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFamily, lineSpacing, theme }) {
+  const [flashDirection, setFlashDirection] = useState('')
+  const touchStartXRef = useRef(0)
+  const touchStartYRef = useRef(0)
   const lineHeightClass = LINE_SPACING_OPTIONS[lineSpacing]?.className || LINE_SPACING_OPTIONS.comfort.className
   const totalPages = Math.max(1, pages.length)
   const safePageIndex = Math.min(Math.max(0, pageIndex), totalPages - 1)
@@ -429,16 +432,40 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
   const canGoPrevious = safePageIndex > 0
   const canGoNext = safePageIndex < totalPages - 1
 
+  const showFlash = (direction) => {
+    setFlashDirection(direction)
+    window.setTimeout(() => setFlashDirection(''), 280)
+  }
+
   const goPrevious = () => {
     if (!canGoPrevious) return
+    showFlash('left')
     setPageIndex((current) => Math.max(0, current - 1))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const goNext = () => {
     if (!canGoNext) return
+    showFlash('right')
     setPageIndex((current) => Math.min(totalPages - 1, current + 1))
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleTouchStart = (event) => {
+    touchStartXRef.current = event.touches?.[0]?.clientX || 0
+    touchStartYRef.current = event.touches?.[0]?.clientY || 0
+  }
+
+  const handleTouchEnd = (event) => {
+    const endX = event.changedTouches?.[0]?.clientX || 0
+    const endY = event.changedTouches?.[0]?.clientY || 0
+    const diffX = endX - touchStartXRef.current
+    const diffY = endY - touchStartYRef.current
+
+    if (Math.abs(diffX) < 55 || Math.abs(diffX) < Math.abs(diffY)) return
+
+    if (diffX < 0) goNext()
+    if (diffX > 0) goPrevious()
   }
 
   return (
@@ -449,13 +476,17 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
         </span>
       </div>
 
-      <div className="relative min-h-[68vh]">
+      <div
+        className="relative min-h-[68vh] overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <button
           type="button"
           onClick={goPrevious}
           disabled={!canGoPrevious}
           aria-label="Previous page"
-          className="absolute bottom-0 left-0 top-0 z-10 w-[24%] disabled:pointer-events-none"
+          className="absolute bottom-0 left-0 top-0 z-10 w-[30%] disabled:pointer-events-none"
         />
 
         <button
@@ -463,8 +494,18 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
           onClick={goNext}
           disabled={!canGoNext}
           aria-label="Next page"
-          className="absolute bottom-0 right-0 top-0 z-10 w-[24%] disabled:pointer-events-none"
+          className="absolute bottom-0 right-0 top-0 z-10 w-[30%] disabled:pointer-events-none"
         />
+
+        {flashDirection ? (
+          <div
+            className={`pointer-events-none absolute bottom-0 top-0 z-20 flex w-[34%] items-center justify-center bg-white/45 backdrop-blur-[1px] transition-opacity duration-300 ${
+              flashDirection === 'left' ? 'left-0' : 'right-0'
+            }`}
+          >
+            <i className={`fa-solid ${flashDirection === 'left' ? 'fa-chevron-left' : 'fa-chevron-right'} text-[28px] ${theme.muted}`} />
+          </div>
+        ) : null}
 
         <div className="relative z-0">
           {currentPage.map((line, index) =>
@@ -485,26 +526,6 @@ function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFam
             )
           )}
         </div>
-      </div>
-
-      <div className="mt-7 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={goPrevious}
-          disabled={!canGoPrevious}
-          className={`h-12 rounded-full text-[13px] font-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${theme.ghost}`}
-        >
-          Previous Page
-        </button>
-
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={!canGoNext}
-          className={`h-12 rounded-full text-[13px] font-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${theme.button}`}
-        >
-          Next Page
-        </button>
       </div>
     </div>
   )
@@ -1529,6 +1550,7 @@ export default function ReaderPage() {
   const cover = episode?.cover_url || story?.cover_url || ''
   const publishedDate = formatDate(episode?.published_at)
   const characterCount = Number(episode?.character_count || episode?.content?.length || 0)
+  const isLastReadingPage = readingMode !== 'paging' || currentPageIndex >= Math.max(0, pagingPages.length - 1)
 
   const handlePrevious = () => {
     if (!previousEpisode) return
@@ -1808,64 +1830,70 @@ export default function ReaderPage() {
               </div>
             </section>
 
-            <section className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={!previousEpisode}
-                className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.ghost}`}
-              >
-                <i className="fa-solid fa-chevron-left mr-2 text-[12px]" />
-                Previous
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!nextEpisode}
-                className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-[0_14px_30px_rgba(17,24,39,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.button}`}
-              >
-                Next
-                <i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
-              </button>
-            </section>
-
-            {nextEpisode ? (
-              <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
-                    <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
-                      Next: EP {nextEpisode.episode_number || ''}
-                    </p>
-                  </div>
+            {isLastReadingPage ? (
+              <>
+                <section className="mt-5 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    disabled={!previousEpisode}
+                    className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.ghost}`}
+                  >
+                    <i className="fa-solid fa-chevron-left mr-2 text-[12px]" />
+                    Previous
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => setEpisodeListOpen(true)}
-                    className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
+                    onClick={handleNext}
+                    disabled={!nextEpisode}
+                    className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-[0_14px_30px_rgba(17,24,39,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.button}`}
                   >
-                    Episodes
+                    Next
+                    <i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
                   </button>
-                </div>
-              </section>
-            ) : (
-              <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-                <h3 className={`text-[19px] font-black tracking-wide ${theme.text}`}>
-                  TO BE CONTINUED
-                </h3>
+                </section>
 
-                <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.muted}`}>
-                  The story ends here… but the adventure is just beginning.
-                </p>
+                {readingMode === 'scroll' && nextEpisode ? (
+                  <section className={`mt-4 rounded-[24px] ${theme.card} p-4 shadow-sm ring-1 ring-black/5`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className={`text-[15px] font-extrabold ${theme.text}`}>Continue Reading</h3>
+                        <p className={`mt-0.5 text-[11px] font-semibold ${theme.muted}`}>
+                          Next: EP {nextEpisode.episode_number || ''}
+                        </p>
+                      </div>
 
-                <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
-                  <span className="h-px flex-1 bg-[#111827]/45" />
-                  <span className="text-[15px] leading-none text-[#e5484d]">♥</span>
-                  <span className="h-px flex-1 bg-[#111827]/45" />
-                </div>
-              </section>
-            )}
+                      <button
+                        type="button"
+                        onClick={() => setEpisodeListOpen(true)}
+                        className={`rounded-full px-4 py-2 text-[12px] font-extrabold active:scale-95 ${theme.ghost}`}
+                      >
+                        Episodes
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+
+                {!nextEpisode ? (
+                  <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
+                    <h3 className={`text-[19px] font-black tracking-wide ${theme.text}`}>
+                      TO BE CONTINUED
+                    </h3>
+
+                    <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.muted}`}>
+                      The story ends here… but the adventure is just beginning.
+                    </p>
+
+                    <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
+                      <span className="h-px flex-1 bg-[#111827]/45" />
+                      <span className="text-[15px] leading-none text-[#e5484d]">♥</span>
+                      <span className="h-px flex-1 bg-[#111827]/45" />
+                    </div>
+                  </section>
+                ) : null}
+              </>
+            ) : null}
           </>
         ) : null}
       </main>
