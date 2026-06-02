@@ -659,7 +659,7 @@ useEffect(() => {
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
           <div className="flex justify-end gap-2">
-            <HeaderIcon to="/notifications" icon="far fa-bell" label="Notifications" />
+            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
             <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
           </div>
 
@@ -744,7 +744,7 @@ useEffect(() => {
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
           <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
             <MenuRow to="/premium" icon="fa-solid fa-crown" title={tx('premium')} subtitle={tx('premiumSub')} dark />
-            <MenuRow to="/notifications" icon="far fa-bell" title="Notifications" subtitle="All updates and announcements" />
+            <MenuRow to="/inbox" icon="far fa-envelope" title={tx('inbox')} subtitle={tx('inboxSub')} />
             <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} subtitle={tx('myCommentsSub')} />
             <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} subtitle={tx('feedbackSub')} />
             <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} subtitle={tx('helpCenterSub')} />
