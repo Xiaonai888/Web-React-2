@@ -310,8 +310,12 @@ export default function ForYou() {
               <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
             </div>
 
-            <div className="flex space-x-5 text-gray-400 text-xl">
-  <Link to="/genres" className="transition-transform active:scale-95" aria-label="Genres">
+            <div className="flex items-center space-x-5 text-gray-400 text-xl">
+  <Link
+    to="/genres"
+    className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+    aria-label="Genres"
+  >
     <img
       src="/assets/Icons/Genre.svg?v=2"
       alt="Genres"
@@ -319,11 +323,18 @@ export default function ForYou() {
     />
   </Link>
 
-  <Link to="/search" className="hover:text-[#111827] transition-colors" aria-label="Search">
+  <Link
+    to="/search"
+    className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
+    aria-label="Search"
+  >
     <i className="fas fa-search" />
   </Link>
 
-  <button className="hover:text-[#111827] transition-colors" aria-label="Notifications">
+  <button
+    className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
+    aria-label="Notifications"
+  >
     <i className="fas fa-bell" />
   </button>
 </div>
