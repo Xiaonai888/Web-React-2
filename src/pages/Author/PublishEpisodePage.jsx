@@ -311,8 +311,19 @@ export default function PublishEpisodePage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to update episode status')
-    }
+  if (data.code === 'BLOCKED_WORDS_FOUND') {
+    navigate(`/author/story/${storyId}/episode/publish-warning`, {
+      replace: true,
+      state: {
+        episodeId,
+        blockedWords: data.blocked_words_found || [],
+      },
+    })
+    return null
+  }
+
+  throw new Error(data.message || 'Failed to update episode status')
+}
 
     return data
   }
@@ -323,8 +334,9 @@ export default function PublishEpisodePage() {
     try {
       setLoading(true)
 
-      await updateEpisodeStatus()
-      setSuccessOpen(true)
+      const result = await updateEpisodeStatus()
+if (!result) return
+setSuccessOpen(true)
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
