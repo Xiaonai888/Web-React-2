@@ -1561,21 +1561,14 @@ async function loadReaderAdPolicy() {
         }
 
         if (episodeResponse.status === 423 || episodeData.code === 'EPISODE_LOCKED') {
-  const nextReaderAdPolicy = await loadReaderAdPolicy().catch(() => null)
+  if (ignore) return
 
-if (ignore) return
-
-setStory(episodeData.story || null)
-setEpisode(episodeData.episode || null)
-setEpisodes(episodesData.episodes || [])
-setLockedEpisode(false)
-setReaderAdPolicy(nextReaderAdPolicy)
-setReadingProgress(0)
-  setReviewProgressSaved(false)
-  qualifiedViewSentRef.current = false
-  setAdultAccepted(false)
-  setAdultWarningOpen(false)
-  setMessage('')
+  setStory(episodeData.story || null)
+  setEpisode(episodeData.episode || null)
+  setEpisodes(episodesData.episodes || [])
+  setLockedEpisode(true)
+  setReaderAdPolicy(null)
+  setReadingProgress(0)
 
   try {
     await loadLockedUnlockStatus()
@@ -1592,16 +1585,16 @@ setReadingProgress(0)
           throw new Error(episodeData.message || 'Episode not found')
         }
 
-        if (ignore) return
+        const nextReaderAdPolicy = await loadReaderAdPolicy().catch(() => null)
 
-        setStory(episodeData.story || null)
-        setEpisode(episodeData.episode || null)
-        setEpisodes(episodesData.episodes || [])
-        setLockedEpisode(false)
-        setReadingProgress(0)
-        setReviewProgressSaved(false)
-        qualifiedViewSentRef.current = false
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+if (ignore) return
+
+setStory(episodeData.story || null)
+setEpisode(episodeData.episode || null)
+setEpisodes(episodesData.episodes || [])
+setLockedEpisode(false)
+setReaderAdPolicy(nextReaderAdPolicy)
+setReadingProgress(0)
 
         if (episodeData.episode?.is_adult) {
           setAdultAccepted(false)
