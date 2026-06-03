@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
 import EchoShareSheet from '../components/reader/EchoShareSheet'
+import AdvertisementPopup from '../components/AdvertisementPopup'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -1453,6 +1454,7 @@ export default function ReaderPage() {
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
+  const [readerAdPolicy, setReaderAdPolicy] = useState(null)
   const lastScrollYRef = useRef(0)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
@@ -1518,6 +1520,18 @@ export default function ReaderPage() {
     readingProgressRef.current = progress
   }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
 
+async function loadReaderAdPolicy() {
+  const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
+    headers: readerAuthHeaders(),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) return null
+
+  return data.ad_policy || null
+}
+  
   useEffect(() => {
     let ignore = false
 
@@ -1547,13 +1561,16 @@ export default function ReaderPage() {
         }
 
         if (episodeResponse.status === 423 || episodeData.code === 'EPISODE_LOCKED') {
-  if (ignore) return
+  const nextReaderAdPolicy = await loadReaderAdPolicy().catch(() => null)
 
-  setStory(episodeData.story || null)
-  setEpisode(episodeData.episode || null)
-  setEpisodes(episodesData.episodes || [])
-  setLockedEpisode(true)
-  setReadingProgress(0)
+if (ignore) return
+
+setStory(episodeData.story || null)
+setEpisode(episodeData.episode || null)
+setEpisodes(episodesData.episodes || [])
+setLockedEpisode(false)
+setReaderAdPolicy(nextReaderAdPolicy)
+setReadingProgress(0)
   setReviewProgressSaved(false)
   qualifiedViewSentRef.current = false
   setAdultAccepted(false)
@@ -1946,6 +1963,10 @@ async function handleLockedDiamondUnlock(packageKey) {
   onCommentChanged={handleCommentChanged}
   key={storyId}
 />
+
+      {!loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad ? (
+  <AdvertisementPopup placement="freeUnlock" key={`freeUnlock-${storyId}-${episodeId}`} />
+) : null}
       
       <ReaderBottomActionBar
   visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
