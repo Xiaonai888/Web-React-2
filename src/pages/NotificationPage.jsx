@@ -192,6 +192,22 @@ export default function NotificationPage({ isOpen = true, onClose }) {
     loadNotifications()
   }, [])
 
+  useEffect(() => {
+  document.body.style.overflow = 'hidden'
+
+  return () => {
+    document.body.style.overflow = ''
+  }
+}, [])
+
+  useEffect(() => {
+  document.body.style.overflow = 'hidden'
+
+  return () => {
+    document.body.style.overflow = ''
+  }
+}, [])
+
   async function markAllAsRead() {
     setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
     setCounts((current) => ({
@@ -237,8 +253,14 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   }
 
   return (
-   <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45">
-      <div className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl">
+  <div
+    className="fixed inset-x-0 bottom-0 top-[81px] z-[99990] flex items-end justify-center bg-black/45"
+    onClick={onClose}
+  >
+    <div
+      className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+      onClick={(event) => event.stopPropagation()}
+    >
         <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
 
         <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
