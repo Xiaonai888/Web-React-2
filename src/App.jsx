@@ -39,7 +39,7 @@ import TaskCenterPage from './pages/TaskCenterPage'
 import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
-import NotificationDetailPage from './pages/NotificationDetailPage'
+
 
 
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -596,13 +596,11 @@ function AppShell() {
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
-
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<ComingSoon title="Premium" />} />
         <Route path="/inbox" element={<ComingSoon title="Inbox" />} />
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
-        <Route path="/notifications/:notificationId" element={<NotificationDetailPage />} />
         <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
         <Route path="/help" element={<ComingSoon title="Help Center" />} />
         <Route path="/about" element={<ComingSoon title="About Us" />} />
