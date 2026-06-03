@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -53,9 +53,15 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
 
-  function closeAd(event) {
-    event?.preventDefault()
-    event?.stopPropagation()
+  const durationSeconds = useMemo(() => {
+    return Math.max(1, Number(advertisement?.duration_seconds || 5))
+  }, [advertisement])
+
+  const closeAfterSeconds = useMemo(() => {
+    return Math.max(0, Number(advertisement?.close_after_seconds || 3))
+  }, [advertisement])
+
+  function closeAd() {
     if (!canSkip) return
     setVisible(false)
   }
@@ -68,15 +74,9 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
 
       try {
         const url = `${API_URL}/api/advertisements/public?placement=${placement}`
+        if (debug) setDebugMessage(`Loading: ${url}`)
 
-        if (debug) {
-          setDebugMessage(`Loading: ${url}`)
-        }
-
-        const response = await fetch(url, {
-          cache: 'no-store',
-        })
-
+        const response = await fetch(url, { cache: 'no-store' })
         const data = await response.json().catch(() => ({}))
 
         if (debug) {
@@ -98,10 +98,7 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
         markShown(data.advertisement)
       } catch (error) {
         console.error('Advertisement load error:', error)
-
-        if (debug) {
-          setDebugMessage(error.message || 'Advertisement load error')
-        }
+        if (debug) setDebugMessage(error.message || 'Advertisement load error')
       }
     }
 
@@ -115,42 +112,52 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   useEffect(() => {
     if (!visible || !advertisement) return
 
-    const waitSeconds = Math.max(0, Number(advertisement.close_after_seconds || 3))
+    const closeTimer = window.setTimeout(() => {
+      setVisible(false)
+    }, durationSeconds * 1000)
 
-    if (waitSeconds <= 0) {
+    return () => {
+      window.clearTimeout(closeTimer)
+    }
+  }, [visible, advertisement, durationSeconds])
+
+  useEffect(() => {
+    if (!visible || !advertisement) return
+
+    if (closeAfterSeconds <= 0) {
       setCanSkip(true)
       setSkipCountdown(0)
       return
     }
 
     setCanSkip(false)
-    setSkipCountdown(waitSeconds)
+    setSkipCountdown(closeAfterSeconds)
 
-    const timer = window.setInterval(() => {
-      setSkipCountdown((current) => {
-        if (current <= 1) {
-          window.clearInterval(timer)
+    const interval = window.setInterval(() => {
+      setSkipCountdown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(interval)
           setCanSkip(true)
           return 0
         }
 
-        return current - 1
+        return prev - 1
       })
     }, 1000)
 
     return () => {
-      window.clearInterval(timer)
+      window.clearInterval(interval)
     }
-  }, [visible, advertisement])
+  }, [visible, advertisement, closeAfterSeconds])
 
   useEffect(() => {
     if (!visible) return
 
-    const oldOverflow = document.body.style.overflow
+    const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = oldOverflow
+      document.body.style.overflow = originalOverflow
     }
   }, [visible])
 
@@ -165,18 +172,6 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
 
     return null
   }
-
-  const adImage = (
-    <img
-      src={advertisement.image_url}
-      alt="Advertisement"
-      className="h-full w-full object-cover"
-      onError={() => {
-        setVisible(false)
-        setDebugMessage('Advertisement image failed to load')
-      }}
-    />
-  )
 
   return (
     <div className="fixed inset-0 z-[2147483647] bg-black">
@@ -199,10 +194,26 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
 
       {advertisement.link_url ? (
         <a href={advertisement.link_url} target="_blank" rel="noreferrer" className="block h-full w-full">
-          {adImage}
+          <img
+            src={advertisement.image_url}
+            alt="Advertisement"
+            className="h-full w-full object-cover"
+            onError={() => {
+              setVisible(false)
+              setDebugMessage('Advertisement image failed to load')
+            }}
+          />
         </a>
       ) : (
-        adImage
+        <img
+          src={advertisement.image_url}
+          alt="Advertisement"
+          className="h-full w-full object-cover"
+          onError={() => {
+            setVisible(false)
+            setDebugMessage('Advertisement image failed to load')
+          }}
+        />
       )}
     </div>
   )
