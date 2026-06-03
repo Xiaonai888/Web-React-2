@@ -282,7 +282,7 @@ return (
       
     >
       <div
-        className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+        className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       
       >
