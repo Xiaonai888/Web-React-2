@@ -311,12 +311,14 @@ export default function PublishEpisodePage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-  if (data.code === 'BLOCKED_WORDS_FOUND') {
+  const blockedWords = data.blocked_words_found || data.blockedWordsFound || []
+
+  if (data.code === 'BLOCKED_WORDS_FOUND' || blockedWords.length) {
     navigate(`/author/story/${storyId}/episode/publish-warning`, {
       replace: true,
       state: {
         episodeId,
-        blockedWords: data.blocked_words_found || [],
+        blockedWords,
       },
     })
     return null
