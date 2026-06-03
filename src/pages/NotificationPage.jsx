@@ -309,7 +309,7 @@ return (
 
     <div
       className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
-      onClick={onClose}
+      onClick={() => setSelectedAnnouncement(null)}
       
     >
       <div
@@ -460,13 +460,13 @@ return (
   <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
     <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
       <button
-        type="button"
-        onClick={() => setSelectedAnnouncement(null)}
-        aria-label="Back to notifications"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
-      >
-        <i className="fas fa-arrow-left text-[14px]" />
-      </button>
+  type="button"
+  onClick={() => setSelectedAnnouncement(null)}
+  aria-label="Back to notifications"
+  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+>
+  <i className="fas fa-arrow-left text-[14px]" />
+</button>
 
       <div className="min-w-0">
         <div className="text-[12px] font-black uppercase tracking-wide text-[#6B7280]">{selectedAnnouncement.dateGroup}</div>
