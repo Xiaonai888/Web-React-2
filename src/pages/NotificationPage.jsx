@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-const [sheetDragY, setSheetDragY] = useState(0)
-const dragStartYRef = useRef(null)
-const sheetDragYRef = useRef(0)
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -141,6 +138,9 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
+  const [sheetDragY, setSheetDragY] = useState(0)
+  const dragStartYRef = useRef(null)
+  const sheetDragYRef = useRef(0)
 
   if (!isOpen) return null
 
