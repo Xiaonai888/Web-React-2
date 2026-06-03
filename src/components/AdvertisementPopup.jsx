@@ -42,42 +42,50 @@ function markShown(advertisement) {
     return
   }
 
- if (frequency !== 'every_visit' && frequency !== 'every_unlock') {
-  sessionStorage.setItem(key, '1')
+  if (frequency !== 'every_visit' && frequency !== 'every_unlock') {
+    sessionStorage.setItem(key, '1')
+  }
 }
-}
+
 export default function AdvertisementPopup({ placement = 'opening', onFinish = null }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [canSkip, setCanSkip] = useState(false)
   const [skipCountdown, setSkipCountdown] = useState(0)
-const [debugMessage, setDebugMessage] = useState('')
-const finishedRef = useRef(false)
+  const [debugMessage, setDebugMessage] = useState('')
+  const finishedRef = useRef(false)
 
   const durationSeconds = useMemo(() => {
-    return Math.max(1, Number(advertisement?.duration_seconds || 5))
+    return Math.max(1, Number(advertisement?.duration_seconds ?? 5))
   }, [advertisement])
 
   const closeAfterSeconds = useMemo(() => {
-    return Math.max(0, Number(advertisement?.close_after_seconds || 3))
+    return Math.max(0, Number(advertisement?.close_after_seconds ?? 3))
   }, [advertisement])
 
   function finishAd() {
-  if (finishedRef.current) return
-  finishedRef.current = true
-  setVisible(false)
-  if (typeof onFinish === 'function') onFinish()
-}
+    if (finishedRef.current) return
 
-function closeAd() {
-  if (!canSkip) return
-  finishAd()
-}
+    finishedRef.current = true
+    setVisible(false)
 
-useEffect(() => {
-  finishedRef.current = false
-}, [placement])
-  
+    if (typeof onFinish === 'function') onFinish()
+  }
+
+  function closeAd() {
+    if (!canSkip) return
+    finishAd()
+  }
+
+  useEffect(() => {
+    finishedRef.current = false
+    setAdvertisement(null)
+    setVisible(false)
+    setCanSkip(false)
+    setSkipCountdown(0)
+    setDebugMessage('')
+  }, [placement])
+
   useEffect(() => {
     let cancelled = false
 
@@ -86,6 +94,7 @@ useEffect(() => {
 
       try {
         const url = `${API_URL}/api/advertisements/public?placement=${placement}`
+
         if (debug) setDebugMessage(`Loading: ${url}`)
 
         const response = await fetch(url, { cache: 'no-store' })
@@ -97,20 +106,23 @@ useEffect(() => {
         }
 
         if (!response.ok || data.ok === false) {
-  finishAd()
-  return
-}
-if (!data.advertisement?.image_url) {
-  finishAd()
-  return
-}
-if (!shouldShowByFrequency(data.advertisement)) {
-  finishAd()
-  return
-}
+          finishAd()
+          return
+        }
+
+        if (!data.advertisement?.image_url) {
+          finishAd()
+          return
+        }
+
+        if (!shouldShowByFrequency(data.advertisement)) {
+          finishAd()
+          return
+        }
+
         if (cancelled) return
 
-        const waitSeconds = Math.max(0, Number(data.advertisement.close_after_seconds || 3))
+        const waitSeconds = Math.max(0, Number(data.advertisement.close_after_seconds ?? 3))
 
         setAdvertisement(data.advertisement)
         setVisible(true)
@@ -119,7 +131,9 @@ if (!shouldShowByFrequency(data.advertisement)) {
         markShown(data.advertisement)
       } catch (error) {
         console.error('Advertisement load error:', error)
+
         if (debug) setDebugMessage(error.message || 'Advertisement load error')
+        finishAd()
       }
     }
 
@@ -131,7 +145,7 @@ if (!shouldShowByFrequency(data.advertisement)) {
   }, [placement])
 
   useEffect(() => {
-    if (!visible || !advertisement) return
+    if (!visible || !advertisement) return undefined
 
     const closeTimer = window.setTimeout(() => {
       finishAd()
@@ -143,12 +157,12 @@ if (!shouldShowByFrequency(data.advertisement)) {
   }, [visible, advertisement, durationSeconds])
 
   useEffect(() => {
-    if (!visible || !advertisement) return
+    if (!visible || !advertisement) return undefined
 
     if (closeAfterSeconds <= 0) {
       setCanSkip(true)
       setSkipCountdown(0)
-      return
+      return undefined
     }
 
     setCanSkip(false)
@@ -172,7 +186,7 @@ if (!shouldShowByFrequency(data.advertisement)) {
   }, [visible, advertisement, closeAfterSeconds])
 
   useEffect(() => {
-    if (!visible) return
+    if (!visible) return undefined
 
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -221,7 +235,7 @@ if (!shouldShowByFrequency(data.advertisement)) {
             className="h-full w-full object-cover"
             onError={() => {
               setDebugMessage('Advertisement image failed to load')
-finishAd()
+              finishAd()
             }}
           />
         </a>
@@ -231,9 +245,9 @@ finishAd()
           alt="Advertisement"
           className="h-full w-full object-cover"
           onError={() => {
-  setDebugMessage('Advertisement image failed to load')
-  finishAd()
-}}
+            setDebugMessage('Advertisement image failed to load')
+            finishAd()
+          }}
         />
       )}
     </div>
