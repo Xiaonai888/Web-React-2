@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -53,10 +53,6 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
 
-  const closeAfterSeconds = useMemo(() => {
-    return Math.max(0, Number(advertisement?.close_after_seconds || 3))
-  }, [advertisement])
-
   function closeAd(event) {
     event?.preventDefault()
     event?.stopPropagation()
@@ -72,9 +68,15 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
 
       try {
         const url = `${API_URL}/api/advertisements/public?placement=${placement}`
-        if (debug) setDebugMessage(`Loading: ${url}`)
 
-        const response = await fetch(url, { cache: 'no-store' })
+        if (debug) {
+          setDebugMessage(`Loading: ${url}`)
+        }
+
+        const response = await fetch(url, {
+          cache: 'no-store',
+        })
+
         const data = await response.json().catch(() => ({}))
 
         if (debug) {
@@ -96,7 +98,10 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
         markShown(data.advertisement)
       } catch (error) {
         console.error('Advertisement load error:', error)
-        if (debug) setDebugMessage(error.message || 'Advertisement load error')
+
+        if (debug) {
+          setDebugMessage(error.message || 'Advertisement load error')
+        }
       }
     }
 
@@ -110,40 +115,42 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   useEffect(() => {
     if (!visible || !advertisement) return
 
-    if (closeAfterSeconds <= 0) {
+    const waitSeconds = Math.max(0, Number(advertisement.close_after_seconds || 3))
+
+    if (waitSeconds <= 0) {
       setCanSkip(true)
       setSkipCountdown(0)
       return
     }
 
     setCanSkip(false)
-    setSkipCountdown(closeAfterSeconds)
+    setSkipCountdown(waitSeconds)
 
-    const interval = window.setInterval(() => {
-      setSkipCountdown((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(interval)
+    const timer = window.setInterval(() => {
+      setSkipCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer)
           setCanSkip(true)
           return 0
         }
 
-        return prev - 1
+        return current - 1
       })
     }, 1000)
 
     return () => {
-      window.clearInterval(interval)
+      window.clearInterval(timer)
     }
-  }, [visible, advertisement, closeAfterSeconds])
+  }, [visible, advertisement])
 
   useEffect(() => {
     if (!visible) return
 
-    const originalOverflow = document.body.style.overflow
+    const oldOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = originalOverflow
+      document.body.style.overflow = oldOverflow
     }
   }, [visible])
 
