@@ -312,13 +312,13 @@ return (
       
     >
       <div
-        style={{
-  transform: `translateY(${sheetDragY}px)`,
-  transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
-}}
-        onClick={(event) => event.stopPropagation()}
-      
-      >
+  className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+  style={{
+    transform: `translateY(${sheetDragY}px)`,
+    transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
+  }}
+  onClick={(event) => event.stopPropagation()}
+>
         <button
   type="button"
   aria-label="Drag down to close notifications"
