@@ -194,13 +194,14 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 
   useEffect(() => {
   const previousOverflow = document.body.style.overflow
+  const previousTouchAction = document.body.style.touchAction
 
   document.body.style.overflow = 'hidden'
-  document.body.classList.add('shadow-notification-open')
+  document.body.style.touchAction = 'none'
 
   return () => {
     document.body.style.overflow = previousOverflow
-    document.body.classList.remove('shadow-notification-open')
+    document.body.style.touchAction = previousTouchAction
   }
 }, [])
 
@@ -268,17 +269,17 @@ return (
     <style>{freezeForYouHeaderStyle}</style>
 
     <div
-      className="fixed inset-0 z-[100010] flex items-end justify-center bg-black/45"
+      className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
       onClick={onClose}
+      onWheel={(event) => event.preventDefault()}
+      onTouchMove={(event) => event.preventDefault()}
     >
       <div
         className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
+        onWheel={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
       >
-    <div
-      className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
-      onClick={(event) => event.stopPropagation()}
-    >
         <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
 
         <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
