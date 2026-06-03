@@ -298,9 +298,9 @@ const freezeForYouHeaderStyle = `
   }
 
   body.shadow-notification-open footer {
-    pointer-events: none !important;
-  }
-`
+  display: none !important;
+  pointer-events: none !important;
+}
 
 return (
   <>
