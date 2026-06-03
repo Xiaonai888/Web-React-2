@@ -473,36 +473,35 @@ return (
   <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
     <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
       <button
-  type="button"
-  onClick={() => setSelectedAnnouncement(null)}
-  aria-label="Back to notifications"
-  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
->
-  <i className="fas fa-arrow-left text-[14px]" />
-</button>
+        type="button"
+        onClick={() => setSelectedAnnouncement(null)}
+        aria-label="Back to notifications"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+      >
+        <i className="fas fa-arrow-left text-[14px]" />
+      </button>
 
       <div className="min-w-0">
-  <div className="truncate text-[15px] font-black text-[#111111]">Notification</div>
-</div>
+        <div className="truncate text-[15px] font-black text-[#111111]">Notification</div>
+      </div>
+    </div>
 
     <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
-
-
       <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280]">
-  {getNotificationTypeLabel(selectedAnnouncement.type)} · {selectedAnnouncement.dateGroup} · {selectedAnnouncement.time}
-</div>
-      {selectedAnnouncement.imageUrl ? (
-  <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
-    <img
-      src={selectedAnnouncement.imageUrl}
-      alt=""
-      className="aspect-[16/9] w-full object-cover"
-    />
-  </div>
-) : null}
+        {getNotificationTypeLabel(selectedAnnouncement.type)} · {selectedAnnouncement.dateGroup} · {selectedAnnouncement.time}
+      </div>
 
-<div className="text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
-<h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
+      {selectedAnnouncement.imageUrl ? (
+        <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
+          <img
+            src={selectedAnnouncement.imageUrl}
+            alt=""
+            className="aspect-[16/9] w-full object-cover"
+          />
+        </div>
+      ) : null}
+
+      <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
 
       <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
         {selectedAnnouncement.message}
