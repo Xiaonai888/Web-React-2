@@ -136,18 +136,28 @@ setCounts(data.counts || {})
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[96px] dark:bg-[#0d0f16]">
       <header className="sticky top-0 z-30 border-b border-[#eceaf2] bg-white px-4 pb-3 pt-4 shadow-sm dark:border-white/10 dark:bg-[#171923]">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
-            aria-label="Back"
-          >
-            <i className="fa-solid fa-chevron-left text-[13px]" />
-          </button>
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+  <div className="flex min-w-0 items-center gap-3">
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
+      aria-label="Back"
+    >
+      <i className="fa-solid fa-chevron-left text-[13px]" />
+    </button>
 
-          <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">Comments</h1>
-        </div>
+    <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">Comments</h1>
+  </div>
+
+  <button
+    type="button"
+    className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
+    aria-label="Mark as read"
+  >
+    <i className="fa-solid fa-check-double text-[13px]" />
+  </button>
+</div>
 
         <div className="mx-auto mt-4 flex max-w-3xl gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => {
@@ -155,18 +165,17 @@ setCounts(data.counts || {})
 
             return (
               <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`shrink-0 rounded-full px-4 py-2 text-[12px] transition ${
-                  active
-                    ? 'bg-[#111827] font-extrabold text-white dark:bg-[#f6b800] dark:text-[#111827]'
-                    : 'bg-[#f8f8fb] font-semibold text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/65 dark:ring-white/10'
-                }`}
-              >
-                {tab.label}
-                {tabCounts[tab.key] ? <span className="ml-1.5 opacity-70">{tabCounts[tab.key]}</span> : null}
-              </button>
+  key={tab.key}
+  type="button"
+  onClick={() => setActiveTab(tab.key)}
+  className={`shrink-0 rounded-full px-4 py-2 text-[12px] transition ${
+    active
+      ? 'bg-[#111827] font-extrabold text-white dark:bg-[#f6b800] dark:text-[#111827]'
+      : 'bg-[#f8f8fb] font-medium text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/65 dark:ring-white/10'
+  }`}
+>
+  {tab.label}
+</button>
             )
           })}
         </div>
