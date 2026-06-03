@@ -488,8 +488,18 @@ return (
     </div>
 
     <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
-      <div className="text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
-      <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
+      {selectedAnnouncement.imageUrl ? (
+  <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
+    <img
+      src={selectedAnnouncement.imageUrl}
+      alt=""
+      className="aspect-[16/9] w-full object-cover"
+    />
+  </div>
+) : null}
+
+<div className="text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
+<h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
 
       <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
         {selectedAnnouncement.message}
