@@ -455,44 +455,44 @@ return (
         </main>
       </div>
 
-      {selectedAnnouncement ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35">
-          <div className="w-full max-w-[560px] rounded-t-[30px] bg-white p-5 shadow-2xl">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
+     {selectedAnnouncement ? (
+  <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white">
+    <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3">
+      <button
+        type="button"
+        onClick={() => setSelectedAnnouncement(null)}
+        aria-label="Back to notifications"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+      >
+        <i className="fas fa-arrow-left text-[14px]" />
+      </button>
 
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-[13px] font-black tracking-wide text-[#111827]">{selectedAnnouncement.dateGroup}</div>
-                <h2 className="mt-3 text-[22px] font-black leading-7 text-[#111111]">{selectedAnnouncement.title}</h2>
-                <div className="mt-1 text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
-              </div>
+      <div className="min-w-0">
+        <div className="text-[12px] font-black uppercase tracking-wide text-[#6B7280]">{selectedAnnouncement.dateGroup}</div>
+        <div className="truncate text-[15px] font-black text-[#111111]">Announcement</div>
+      </div>
+    </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedAnnouncement(null)}
-                aria-label="Close announcement"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
-              >
-                <i className="fas fa-xmark text-[14px]" />
-              </button>
-            </div>
+    <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
+      <div className="text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
+      <h1 className="mt-3 text-[28px] font-black leading-9 text-[#111111]">{selectedAnnouncement.title}</h1>
 
-            <p className="mt-5 max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-[15px] font-semibold leading-8 text-[#4B5563]">
-              {selectedAnnouncement.message}
-            </p>
+      <p className="mt-6 whitespace-pre-wrap text-[16px] font-semibold leading-8 text-[#4B5563]">
+        {selectedAnnouncement.message}
+      </p>
 
-            {selectedAnnouncement.link ? (
-              <button
-                type="button"
-                onClick={() => navigate(selectedAnnouncement.link)}
-                className="mt-6 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
-              >
-                Open link
-              </button>
-            ) : null}
-          </div>
-        </div>
-            ) : null}
+      {selectedAnnouncement.link ? (
+        <button
+          type="button"
+          onClick={() => navigate(selectedAnnouncement.link)}
+          className="mt-8 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
+        >
+          Open link
+        </button>
+      ) : null}
+    </article>
+  </div>
+) : null}
     </div>
   </>
   )
