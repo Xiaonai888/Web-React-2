@@ -130,7 +130,7 @@ function groupNotificationsByDate(items) {
   return groups
 }
 
-export default function NotificationPage() {
+export default function NotificationPage({ isOpen = true, onClose }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
   const [notifications, setNotifications] = useState([])
@@ -138,6 +138,8 @@ export default function NotificationPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
+
+  if (!isOpen) return null
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
