@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -46,12 +46,12 @@ function markShown(advertisement) {
   sessionStorage.setItem(key, '1')
 }
 
-export default function AdvertisementPopup({ placement = 'opening' }) {
+export default function AdvertisementPopup({ placement = 'opening', onFinish = null }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [canSkip, setCanSkip] = useState(false)
   const [skipCountdown, setSkipCountdown] = useState(0)
-  const [debugMessage, setDebugMessage] = useState('')
+  const finishedRef = useRef(false)
 
   const durationSeconds = useMemo(() => {
     return Math.max(1, Number(advertisement?.duration_seconds || 5))
@@ -61,11 +61,22 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     return Math.max(0, Number(advertisement?.close_after_seconds || 3))
   }, [advertisement])
 
-  function closeAd() {
-    if (!canSkip) return
-    setVisible(false)
-  }
+  function finishAd() {
+  if (finishedRef.current) return
+  finishedRef.current = true
+  setVisible(false)
+  if (typeof onFinish === 'function') onFinish()
+}
 
+function closeAd() {
+  if (!canSkip) return
+  finishAd()
+}
+
+useEffect(() => {
+  finishedRef.current = false
+}, [placement])
+  
   useEffect(() => {
     let cancelled = false
 
@@ -84,9 +95,18 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
           setDebugMessage(JSON.stringify(data))
         }
 
-        if (!response.ok || data.ok === false) return
-        if (!data.advertisement?.image_url) return
-        if (!shouldShowByFrequency(data.advertisement)) return
+        if (!response.ok || data.ok === false) {
+  finishAd()
+  return
+}
+if (!data.advertisement?.image_url) {
+  finishAd()
+  return
+}
+if (!shouldShowByFrequency(data.advertisement)) {
+  finishAd()
+  return
+}
         if (cancelled) return
 
         const waitSeconds = Math.max(0, Number(data.advertisement.close_after_seconds || 3))
@@ -113,7 +133,7 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     if (!visible || !advertisement) return
 
     const closeTimer = window.setTimeout(() => {
-      setVisible(false)
+      finishAd()
     }, durationSeconds * 1000)
 
     return () => {
@@ -199,8 +219,8 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
             alt="Advertisement"
             className="h-full w-full object-cover"
             onError={() => {
-              setVisible(false)
               setDebugMessage('Advertisement image failed to load')
+finishAd()
             }}
           />
         </a>
