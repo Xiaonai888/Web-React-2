@@ -189,12 +189,27 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   }
 
   useEffect(() => {
-    loadNotifications()
-  }, [])
-
-  useEffect(() => {
+  const scrollY = window.scrollY
+  const previousPosition = document.body.style.position
+  const previousTop = document.body.style.top
+  const previousWidth = document.body.style.width
   const previousOverflow = document.body.style.overflow
-  const previousTouchAction = document.body.style.touchAction
+
+  document.body.classList.add('shadow-notification-open')
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.width = '100%'
+  document.body.style.overflow = 'hidden'
+
+  return () => {
+    document.body.classList.remove('shadow-notification-open')
+    document.body.style.position = previousPosition
+    document.body.style.top = previousTop
+    document.body.style.width = previousWidth
+    document.body.style.overflow = previousOverflow
+    window.scrollTo(0, scrollY)
+  }
+}, [])
 
   document.body.style.overflow = 'hidden'
   document.body.style.touchAction = 'none'
@@ -260,6 +275,12 @@ export default function NotificationPage({ isOpen = true, onClose }) {
 const freezeForYouHeaderStyle = `
   body.shadow-notification-open .for-you-top-bars {
     transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+  }
+
+  body.shadow-notification-open footer {
     pointer-events: none !important;
   }
 `
@@ -271,14 +292,12 @@ return (
     <div
       className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
       onClick={onClose}
-      onWheel={(event) => event.preventDefault()}
-      onTouchMove={(event) => event.preventDefault()}
+      
     >
       <div
         className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
-        onWheel={(event) => event.stopPropagation()}
-        onTouchMove={(event) => event.stopPropagation()}
+      
       >
         <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
 
@@ -328,7 +347,7 @@ return (
           </div>
         </div>
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
           {loading ? (
             <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
               <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
