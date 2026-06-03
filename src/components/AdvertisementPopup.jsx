@@ -53,15 +53,13 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
 
-  const durationSeconds = useMemo(() => {
-    return Math.max(1, Number(advertisement?.duration_seconds || 5))
-  }, [advertisement])
-
   const closeAfterSeconds = useMemo(() => {
     return Math.max(0, Number(advertisement?.close_after_seconds || 3))
   }, [advertisement])
 
-  function closeAd() {
+  function closeAd(event) {
+    event?.preventDefault()
+    event?.stopPropagation()
     if (!canSkip) return
     setVisible(false)
   }
@@ -108,18 +106,6 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
       cancelled = true
     }
   }, [placement])
-
-  useEffect(() => {
-    if (!visible || !advertisement) return
-
-    const closeTimer = window.setTimeout(() => {
-      setVisible(false)
-    }, durationSeconds * 1000)
-
-    return () => {
-      window.clearTimeout(closeTimer)
-    }
-  }, [visible, advertisement, durationSeconds])
 
   useEffect(() => {
     if (!visible || !advertisement) return
@@ -173,6 +159,18 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     return null
   }
 
+  const adImage = (
+    <img
+      src={advertisement.image_url}
+      alt="Advertisement"
+      className="h-full w-full object-cover"
+      onError={() => {
+        setVisible(false)
+        setDebugMessage('Advertisement image failed to load')
+      }}
+    />
+  )
+
   return (
     <div className="fixed inset-0 z-[2147483647] bg-black">
       <div className="absolute right-5 top-8 z-20 flex items-center gap-3 text-[17px] font-black">
@@ -194,26 +192,10 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
 
       {advertisement.link_url ? (
         <a href={advertisement.link_url} target="_blank" rel="noreferrer" className="block h-full w-full">
-          <img
-            src={advertisement.image_url}
-            alt="Advertisement"
-            className="h-full w-full object-cover"
-            onError={() => {
-              setVisible(false)
-              setDebugMessage('Advertisement image failed to load')
-            }}
-          />
+          {adImage}
         </a>
       ) : (
-        <img
-          src={advertisement.image_url}
-          alt="Advertisement"
-          className="h-full w-full object-cover"
-          onError={() => {
-            setVisible(false)
-            setDebugMessage('Advertisement image failed to load')
-          }}
-        />
+        adImage
       )}
     </div>
   )
