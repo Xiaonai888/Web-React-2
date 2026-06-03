@@ -11,6 +11,7 @@ import EventPerksHubSection from '../components/EventPerksHubSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
+import NotificationPage from './NotificationPage'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -77,6 +78,7 @@ export default function ForYou() {
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0)
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false)
   async function refreshNotificationUnreadCount() {
   const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 
@@ -378,8 +380,9 @@ export default function ForYou() {
     <i className="fas fa-search" />
   </Link>
 
- <Link
-  to="/notifications"
+<button
+  type="button"
+  onClick={() => setShowNotificationPopup(true)}
   className="relative flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
   aria-label="Notifications"
 >
@@ -389,7 +392,7 @@ export default function ForYou() {
       {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
     </span>
   ) : null}
-</Link>
+</button>
 </div>
           </header>
 
@@ -727,6 +730,16 @@ if (tab.slug === 'gl') {
           </div>
         )}
       </div>
+
+      {showNotificationPopup ? (
+  <NotificationPage
+    isOpen={showNotificationPopup}
+    onClose={() => {
+      setShowNotificationPopup(false)
+      refreshNotificationUnreadCount()
+    }}
+  />
+) : null}
     </>
   )
 }
