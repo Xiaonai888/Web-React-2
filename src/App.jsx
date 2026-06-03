@@ -137,10 +137,12 @@ function AppShell() {
     '/author/create-story',
     '/authors/top',
     '/search',
+    '/notifications',
     '/update-today',
     '/tasks',
     '/tasks/history',
     '/author/trash',
+    
   ]
 
   const shouldHideFooter =
