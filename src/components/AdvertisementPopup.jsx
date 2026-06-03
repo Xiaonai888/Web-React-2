@@ -42,10 +42,10 @@ function markShown(advertisement) {
     return
   }
 
-  if (frequency !== 'every_visit' && frequency !== 'every_unlock') {
+ if (frequency !== 'every_visit' && frequency !== 'every_unlock') {
   sessionStorage.setItem(key, '1')
 }
-
+}
 export default function AdvertisementPopup({ placement = 'opening', onFinish = null }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
