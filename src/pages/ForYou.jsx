@@ -76,11 +76,31 @@ export default function ForYou() {
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
-  const notificationUnreadCount = 0
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0)
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
   const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+  const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+
+  if (!token) {
+    setNotificationUnreadCount(0)
+    return
+  }
+
+  fetch(`${API_URL}/api/notifications/unread-count`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data?.ok) setNotificationUnreadCount(Number(data.unread_count || 0))
+    })
+    .catch(() => setNotificationUnreadCount(0))
+}, [])
 
   useEffect(() => {
     function handleScroll() {
