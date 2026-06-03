@@ -193,10 +193,14 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   }, [])
 
   useEffect(() => {
+  const previousOverflow = document.body.style.overflow
+
   document.body.style.overflow = 'hidden'
+  document.body.classList.add('shadow-notification-open')
 
   return () => {
-    document.body.style.overflow = ''
+    document.body.style.overflow = previousOverflow
+    document.body.classList.remove('shadow-notification-open')
   }
 }, [])
 
@@ -239,24 +243,38 @@ export default function NotificationPage({ isOpen = true, onClose }) {
     }
   }
 
-  async function openNotification(notification) {
-    await markNotificationAsRead(notification)
+ async function openNotification(notification) {
+  await markNotificationAsRead(notification)
 
-    if (notification.type === 'announcements') {
-      setSelectedAnnouncement({ ...notification, isRead: true })
-      return
-    }
-
-    if (notification.link) {
-      navigate(notification.link)
-    }
+  if (notification.type === 'announcements') {
+    setSelectedAnnouncement({ ...notification, isRead: true })
+    return
   }
 
-  return (
-  <div
-    className="fixed inset-x-0 bottom-0 top-[81px] z-[99990] flex items-end justify-center bg-black/45"
-    onClick={onClose}
-  >
+  if (notification.link) {
+    navigate(notification.link)
+  }
+}
+
+const freezeForYouHeaderStyle = `
+  body.shadow-notification-open .for-you-top-bars {
+    transform: translateY(0) !important;
+    pointer-events: none !important;
+  }
+`
+
+return (
+  <>
+    <style>{freezeForYouHeaderStyle}</style>
+
+    <div
+      className="fixed inset-0 z-[100010] flex items-end justify-center bg-black/45"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
     <div
       className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
       onClick={(event) => event.stopPropagation()}
@@ -424,7 +442,8 @@ export default function NotificationPage({ isOpen = true, onClose }) {
             ) : null}
           </div>
         </div>
-      ) : null}
+            ) : null}
     </div>
+  </>
   )
 }
