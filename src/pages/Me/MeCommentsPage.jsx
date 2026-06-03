@@ -71,10 +71,7 @@ export default function MeCommentsPage() {
         setLoading(true)
         setError('')
 
-        const endpoint =
-          activeTab === 'all'
-            ? `${API_BASE_URL}/api/notifications?type=community`
-            : `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
+        const endpoint = `${API_BASE_URL}/api/comments/me/activities?filter=${activeTab}`
 
         const response = await fetch(endpoint, {
           headers: {
