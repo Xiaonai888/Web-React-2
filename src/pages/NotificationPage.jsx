@@ -10,7 +10,7 @@ const API_BASE_URL =
 const TABS = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
-  { key: 'community', label: 'Community' },
+  { key: 'community', label: 'Comments' },
   { key: 'announcements', label: 'Announcements' },
 ]
 
@@ -34,8 +34,8 @@ function getNotificationColor(type) {
 }
 
 function getNotificationTypeLabel(type) {
-  if (type === 'community') return 'Community'
-  return 'Announcement'
+  if (type === 'community') return 'Comments'
+  return 'Announcements'
 }
 
 function formatCount(count) {
@@ -113,7 +113,6 @@ export default function NotificationPage() {
   const [counts, setCounts] = useState(emptyCounts)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [selectedNotification, setSelectedNotification] = useState(null)
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
@@ -186,10 +185,6 @@ export default function NotificationPage() {
     setNotifications((items) => items.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)))
     setCounts((current) => decreaseUnreadCounts(current, notification))
 
-    if (selectedNotification?.id === notification.id) {
-      setSelectedNotification({ ...notification, isRead: true })
-    }
-
     try {
       await fetch(`${API_BASE_URL}/api/notifications/${notification.id}/read`, {
         method: 'PATCH',
@@ -199,13 +194,18 @@ export default function NotificationPage() {
     }
   }
 
-async function openNotification(notification) {
-  await markNotificationAsRead(notification)
+  async function openNotification(notification) {
+    await markNotificationAsRead(notification)
 
-  if (notification.link) {
-    navigate(notification.link)
+    if (notification.type === 'announcements') {
+      navigate(`/notifications/${notification.id}`)
+      return
+    }
+
+    if (notification.link) {
+      navigate(notification.link)
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-[#F6F7FB] pb-10">
@@ -274,32 +274,43 @@ async function openNotification(notification) {
 
         {!loading && !message && filteredNotifications.length ? (
           <div className="space-y-3">
-            {filteredNotifications.map((notification) => (
-              <button
-                key={notification.id}
-                type="button"
-                onClick={() => openNotification(notification)}
-                className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
-              >
-                <div className="flex gap-3">
-                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
-                    <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
-                  </div>
+            {filteredNotifications.map((notification) => {
+              const showTypePill = activeTab === 'all' || activeTab === 'unread'
+              const canOpen = notification.type === 'announcements' || Boolean(notification.link)
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-[14px] font-black text-[#111111]">{notification.title}</h2>
-                      {!notification.isRead ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F6B800]" /> : null}
+              return (
+                <button
+                  key={notification.id}
+                  type="button"
+                  onClick={() => openNotification(notification)}
+                  className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${canOpen ? 'cursor-pointer' : 'cursor-default'} ${
+                    notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
+                      <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
                     </div>
-                    <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
-                     
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 className="text-[14px] font-black text-[#111111]">{notification.title}</h2>
+                        {!notification.isRead ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F6B800]" /> : null}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
+                        {showTypePill ? (
+                          <span className="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+                            {getNotificationTypeLabel(notification.type)}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         ) : null}
 
@@ -313,8 +324,6 @@ async function openNotification(notification) {
           </div>
         ) : null}
       </main>
-
-     
     </div>
   )
 }
