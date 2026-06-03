@@ -77,12 +77,7 @@ export default function ForYou() {
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0)
-
-  const navigate = useNavigate()
-  const swiperRef = useRef(null)
-  const lastScrollYRef = useRef(0)
-
-  useEffect(() => {
+  async function refreshNotificationUnreadCount() {
   const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 
   if (!token) {
@@ -90,18 +85,49 @@ export default function ForYou() {
     return
   }
 
-  fetch(`${API_URL}/api/notifications/unread-count`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data?.ok) setNotificationUnreadCount(Number(data.unread_count || 0))
+  try {
+    const response = await fetch(`${API_URL}/api/notifications/unread-count`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch(() => setNotificationUnreadCount(0))
-}, [])
 
+    const data = await response.json().catch(() => ({}))
+
+    if (data?.ok) {
+      setNotificationUnreadCount(Number(data.unread_count || 0))
+    }
+  } catch {
+    setNotificationUnreadCount(0)
+  }
+}
+
+  const navigate = useNavigate()
+  const swiperRef = useRef(null)
+  const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+  refreshNotificationUnreadCount()
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      refreshNotificationUnreadCount()
+    }
+  }
+
+  function handleFocus() {
+    refreshNotificationUnreadCount()
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleFocus)
+
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.removeEventListener('focus', handleFocus)
+  }
+}, [])
+  
   useEffect(() => {
     function handleScroll() {
       const currentScrollY = window.scrollY
