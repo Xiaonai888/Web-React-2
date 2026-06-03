@@ -41,7 +41,7 @@ import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
-
+import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 
 
 
@@ -92,6 +92,7 @@ const SecondChanceGenrePage = lazy(() => import('./pages/Genre/SecondChanceGenre
 const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenrePage'))
 const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
+<Route path="/author/story/:storyId/episode/publish-warning" element={<PublishBlockedWarningPage />} />
 
 
 function ComingSoon({ title }) {
