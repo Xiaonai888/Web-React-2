@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Footer from './components/Footer'
@@ -122,6 +122,7 @@ function LazyPage({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  const [adStep, setAdStep] = useState('splash')
   const hideFooterPaths = [
     '/login',
     '/register',
@@ -624,7 +625,13 @@ function AppShell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <AdvertisementPopup placement="opening" />
+      {adStep === 'splash' ? (
+  <AdvertisementPopup placement="splash" onFinish={() => setAdStep('opening')} />
+) : null}
+
+{adStep === 'opening' ? (
+  <AdvertisementPopup placement="opening" onFinish={() => setAdStep('done')} />
+) : null}
 
       {!shouldHideFooter ? <Footer /> : null}
     </>
