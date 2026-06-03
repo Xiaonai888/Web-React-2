@@ -76,7 +76,7 @@ export default function ForYou() {
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
   const [barsHidden, setBarsHidden] = useState(false)
-  const notificationUnreadCount = 2
+  const notificationUnreadCount = 0
 
   const navigate = useNavigate()
   const swiperRef = useRef(null)
