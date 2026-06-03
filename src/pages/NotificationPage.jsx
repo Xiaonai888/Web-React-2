@@ -235,15 +235,14 @@ export default function NotificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black/45 pt-12">
-      <div className="mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-[560px] flex-col rounded-t-[30px] bg-[#F6F7FB] shadow-2xl">
+   <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45">
+      <div className="flex max-h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl">
         <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
 
         <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[24px] font-black leading-7 text-[#111111]">Shadow Notification</h1>
-              <p className="mt-1 text-[12px] font-bold text-[#8A8F98]">All updates in one place</p>
             </div>
 
             <button
@@ -286,7 +285,7 @@ export default function NotificationPage() {
           </div>
         </div>
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-5">
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4">
           {loading ? (
             <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
               <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
