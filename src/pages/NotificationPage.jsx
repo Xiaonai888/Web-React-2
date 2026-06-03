@@ -43,6 +43,22 @@ function formatCount(count) {
   return String(count)
 }
 
+function formatDateGroup(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date
+    .toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+    .toUpperCase()
+}
+
 function formatNotificationTime(value) {
   if (!value) return ''
 
@@ -50,22 +66,10 @@ function formatNotificationTime(value) {
 
   if (Number.isNaN(date.getTime())) return ''
 
-  const diffMs = Date.now() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / 60000)
-
-  if (diffMinutes < 1) return 'Just now'
-  if (diffMinutes < 60) return `${diffMinutes} minutes ago`
-
-  const diffHours = Math.floor(diffMinutes / 60)
-
-  if (diffHours < 24) return `${diffHours} hours ago`
-
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-
-  return date.toLocaleDateString('en-GB')
+  return date.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 function mapNotification(item) {
@@ -75,6 +79,7 @@ function mapNotification(item) {
     title: item.title || 'Notification',
     message: item.message || '',
     time: formatNotificationTime(item.created_at),
+    dateGroup: formatDateGroup(item.created_at),
     link: item.link || '',
     isRead: Boolean(item.is_read),
   }
@@ -106,6 +111,25 @@ function decreaseUnreadCounts(current, notification) {
   }
 }
 
+function groupNotificationsByDate(items) {
+  const groups = []
+
+  items.forEach((item) => {
+    const label = item.dateGroup || 'OLDER'
+
+    if (!groups.length || groups[groups.length - 1].label !== label) {
+      groups.push({
+        label,
+        items: [],
+      })
+    }
+
+    groups[groups.length - 1].items.push(item)
+  })
+
+  return groups
+}
+
 export default function NotificationPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
@@ -113,6 +137,7 @@ export default function NotificationPage() {
   const [counts, setCounts] = useState(emptyCounts)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
@@ -120,6 +145,8 @@ export default function NotificationPage() {
     if (activeTab === 'announcements') return notifications.filter((item) => item.type === 'announcements')
     return notifications
   }, [activeTab, notifications])
+
+  const groupedNotifications = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications])
 
   async function loadNotifications() {
     const token = getReaderToken()
@@ -198,7 +225,7 @@ export default function NotificationPage() {
     await markNotificationAsRead(notification)
 
     if (notification.type === 'announcements') {
-      navigate(`/notifications/${notification.id}`)
+      setSelectedAnnouncement({ ...notification, isRead: true })
       return
     }
 
@@ -208,122 +235,173 @@ export default function NotificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F7FB] pb-10">
-      <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 px-4 pb-3 pt-3 backdrop-blur">
-        <div className="mx-auto flex max-w-[560px] items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
-            <i className="fas fa-chevron-left text-[14px]" />
-          </button>
+    <div className="min-h-screen bg-black/45 pt-12">
+      <div className="mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-[560px] flex-col rounded-t-[30px] bg-[#F6F7FB] shadow-2xl">
+        <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
 
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-black text-[#111111]">Notifications</h1>
-            <p className="mt-0.5 text-[12px] font-bold text-[#8A8F98]">All updates in one place</p>
+        <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-[24px] font-black leading-7 text-[#111111]">Shadow Notification</h1>
+              <p className="mt-1 text-[12px] font-bold text-[#8A8F98]">All updates in one place</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={markAllAsRead}
+              aria-label="Mark all as read"
+              disabled={!counts.unread}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111111] shadow-sm active:scale-95 disabled:opacity-40"
+            >
+              <i className="fa-solid fa-check-double text-[14px]" />
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={markAllAsRead}
-            aria-label="Mark all as read"
-            disabled={!counts.unread}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95 disabled:opacity-40"
-          >
-            <i className="fa-solid fa-check-double text-[14px]" />
-          </button>
         </div>
 
-        <div className="mx-auto mt-3 flex max-w-[560px] gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.key
-            const count = counts[tab.key] || 0
-            const showCount = tab.key !== 'all' && count > 0
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
-                  isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
-                }`}
-              >
-                <span>{tab.label}</span>
-                {showCount ? (
-                  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
-                    {formatCount(count)}
-                  </span>
-                ) : null}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-[560px] px-4 pt-5">
-        {loading ? (
-          <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
-            <p className="text-[13px] font-bold text-[#7B8190]">Loading notifications...</p>
-          </div>
-        ) : null}
-
-        {!loading && message ? (
-          <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
-            {message}
-          </div>
-        ) : null}
-
-        {!loading && !message && filteredNotifications.length ? (
-          <div className="space-y-3">
-            {filteredNotifications.map((notification) => {
-              const showTypePill = activeTab === 'all' || activeTab === 'unread'
-              const canOpen = notification.type === 'announcements' || Boolean(notification.link)
+        <div className="shrink-0 border-y border-[#E5E7EB] bg-[#F6F7FB] px-5 py-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.key
+              const count = counts[tab.key] || 0
+              const showCount = tab.key !== 'all' && count > 0
 
               return (
                 <button
-                  key={notification.id}
+                  key={tab.key}
                   type="button"
-                  onClick={() => openNotification(notification)}
-                  className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${canOpen ? 'cursor-pointer' : 'cursor-default'} ${
-                    notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
+                    isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
                   }`}
                 >
-                  <div className="flex gap-3">
-                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
-                      <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <h2 className="text-[14px] font-black text-[#111111]">{notification.title}</h2>
-                        {!notification.isRead ? <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F6B800]" /> : null}
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
-                        {showTypePill ? (
-                          <span className="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
-                            {getNotificationTypeLabel(notification.type)}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
+                  <span>{tab.label}</span>
+                  {showCount ? (
+                    <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
+                      {formatCount(count)}
+                    </span>
+                  ) : null}
                 </button>
               )
             })}
           </div>
-        ) : null}
+        </div>
 
-        {!loading && !message && !filteredNotifications.length ? (
-          <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
-              <i className="fas fa-bell-slash text-[22px]" />
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-5">
+          {loading ? (
+            <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
+              <p className="text-[13px] font-bold text-[#7B8190]">Loading notifications...</p>
             </div>
-            <h2 className="mt-4 text-[18px] font-black text-[#111111]">No notifications</h2>
-            <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190]">You are all caught up for now.</p>
+          ) : null}
+
+          {!loading && message ? (
+            <div className="rounded-[22px] border border-[#FECACA] bg-[#FFF1F1] p-4 text-[13px] font-bold text-[#E5484D]">
+              {message}
+            </div>
+          ) : null}
+
+          {!loading && !message && groupedNotifications.length ? (
+            <div className="space-y-6">
+              {groupedNotifications.map((group) => (
+                <section key={group.label}>
+                  <h2 className="mb-3 text-[15px] font-black tracking-wide text-[#111827]">{group.label}</h2>
+
+                  <div className="space-y-3">
+                    {group.items.map((notification) => {
+                      const showTypePill = activeTab === 'all' || activeTab === 'unread'
+                      const canOpen = notification.type === 'announcements' || Boolean(notification.link)
+
+                      return (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => openNotification(notification)}
+                          className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${
+                            canOpen ? 'cursor-pointer' : 'cursor-default'
+                          } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
+                        >
+                          <div className="flex gap-3">
+                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
+                              <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-3">
+                                <h3 className="text-[14px] font-black text-[#111111]">{notification.title}</h3>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
+                                  {!notification.isRead ? <span className="h-2.5 w-2.5 rounded-full bg-[#F6B800]" /> : null}
+                                </div>
+                              </div>
+
+                              <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
+
+                              {showTypePill ? (
+                                <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+                                  {getNotificationTypeLabel(notification.type)}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : null}
+
+          {!loading && !message && !filteredNotifications.length ? (
+            <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF7D6] text-[#B77900]">
+                <i className="fas fa-bell-slash text-[22px]" />
+              </div>
+              <h2 className="mt-4 text-[18px] font-black text-[#111111]">No notifications</h2>
+              <p className="mt-2 text-[13px] font-semibold leading-6 text-[#7B8190]">You are all caught up for now.</p>
+            </div>
+          ) : null}
+        </main>
+      </div>
+
+      {selectedAnnouncement ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35">
+          <div className="w-full max-w-[560px] rounded-t-[30px] bg-white p-5 shadow-2xl">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
+
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-[13px] font-black tracking-wide text-[#111827]">{selectedAnnouncement.dateGroup}</div>
+                <h2 className="mt-3 text-[22px] font-black leading-7 text-[#111111]">{selectedAnnouncement.title}</h2>
+                <div className="mt-1 text-[12px] font-bold text-[#9CA3AF]">{selectedAnnouncement.time}</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedAnnouncement(null)}
+                aria-label="Close announcement"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+              >
+                <i className="fas fa-xmark text-[14px]" />
+              </button>
+            </div>
+
+            <p className="mt-5 max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-[15px] font-semibold leading-8 text-[#4B5563]">
+              {selectedAnnouncement.message}
+            </p>
+
+            {selectedAnnouncement.link ? (
+              <button
+                type="button"
+                onClick={() => navigate(selectedAnnouncement.link)}
+                className="mt-6 flex w-full items-center justify-center rounded-full bg-[#111111] px-5 py-3 text-[13px] font-black text-white active:scale-95"
+              >
+                Open link
+              </button>
+            ) : null}
           </div>
-        ) : null}
-      </main>
+        </div>
+      ) : null}
     </div>
   )
 }
