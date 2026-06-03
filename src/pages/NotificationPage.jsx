@@ -81,6 +81,7 @@ function mapNotification(item) {
     time: formatNotificationTime(item.created_at),
     dateGroup: formatDateGroup(item.created_at),
     link: item.link || '',
+    imageUrl: item.image_url || '',
     isRead: Boolean(item.is_read),
   }
 }
@@ -405,37 +406,49 @@ return (
 
                       return (
                         <button
-                          key={notification.id}
-                          type="button"
-                          onClick={() => openNotification(notification)}
-                          className={`w-full rounded-[22px] border p-4 text-left shadow-sm active:scale-[0.99] ${
-                            canOpen ? 'cursor-pointer' : 'cursor-default'
-                          } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
-                        >
-                          <div className="flex gap-3">
-                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
-                              <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
-                            </div>
+  key={notification.id}
+  type="button"
+  onClick={() => openNotification(notification)}
+  className={`w-full overflow-hidden rounded-[22px] border text-left shadow-sm active:scale-[0.99] ${
+    canOpen ? 'cursor-pointer' : 'cursor-default'
+  } ${notification.isRead ? 'border-[#E5E7EB] bg-white' : 'border-[#FDE68A] bg-[#FFFBEA]'}`}
+>
+  {notification.imageUrl ? (
+    <div className="aspect-[16/9] w-full bg-[#F3F4F6]">
+      <img
+        src={notification.imageUrl}
+        alt=""
+        className="h-full w-full object-cover"
+      />
+    </div>
+  ) : null}
 
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-3">
-                                <h3 className="text-[14px] font-black text-[#111111]">{notification.title}</h3>
-                                <div className="flex shrink-0 items-center gap-2">
-                                  <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
-                                  {!notification.isRead ? <span className="h-2.5 w-2.5 rounded-full bg-[#F6B800]" /> : null}
-                                </div>
-                              </div>
+  <div className="p-4">
+    <div className="flex gap-3">
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${getNotificationColor(notification.type)}`}>
+        <i className={`${getNotificationIcon(notification.type)} text-[15px]`} />
+      </div>
 
-                              <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-[14px] font-black text-[#111111]">{notification.title}</h3>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
+            {!notification.isRead ? <span className="h-2.5 w-2.5 rounded-full bg-[#F6B800]" /> : null}
+          </div>
+        </div>
 
-                              {showTypePill ? (
-                                <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
-                                  {getNotificationTypeLabel(notification.type)}
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </button>
+        <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
+
+        {showTypePill ? (
+          <span className="mt-3 inline-flex rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+            {getNotificationTypeLabel(notification.type)}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  </div>
+</button>
                       )
                     })}
                   </div>
