@@ -61,9 +61,10 @@ function markShown(advertisement) {
   }
 }
 
-export default function AdvertisementPopup({ placement = 'opening', onFinish = null }) {
+export default function AdvertisementPopup({ placement = 'opening', onFinish = null, blocking = false }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
+  const [loadingAd, setLoadingAd] = useState(Boolean(blocking))
   const [canSkip, setCanSkip] = useState(false)
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
@@ -82,6 +83,7 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
 
     finishedRef.current = true
     setVisible(false)
+    setLoadingAd(false)
 
     if (typeof onFinish === 'function') onFinish()
   }
@@ -98,6 +100,7 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
     setCanSkip(false)
     setSkipCountdown(0)
     setDebugMessage('')
+    setLoadingAd(Boolean(blocking))
   }, [placement])
 
   useEffect(() => {
@@ -142,7 +145,8 @@ const waitSeconds = Math.max(0, Number(nextAdvertisement.close_after_seconds ?? 
 await preloadImage(nextAdvertisement.image_url)
 
 if (cancelled) return
-
+        
+setLoadingAd(false)
 setAdvertisement(nextAdvertisement)
 setVisible(true)
 setCanSkip(waitSeconds <= 0)
@@ -216,6 +220,9 @@ markShown(nextAdvertisement)
   }, [visible])
 
   if (!visible || !advertisement?.image_url) {
+  if (loadingAd && blocking) {
+    return <div className="fixed inset-0 z-[2147483647] bg-black" />
+  }
     if (getSearchFlag('addebug') && debugMessage) {
       return (
         <div className="fixed bottom-4 left-4 right-4 z-[2147483647] rounded-[16px] bg-black/90 p-4 text-[12px] font-bold leading-5 text-white">
