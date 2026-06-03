@@ -210,22 +210,22 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
 
   return (
     <div className="fixed inset-0 z-[2147483647] bg-black">
-      <div className="absolute right-5 top-8 z-20 flex items-center gap-3 text-[17px] font-black">
-        {!canSkip ? (
-          <span className="text-[#FFB020]">{skipCountdown}s</span>
-        ) : null}
+      <div className="absolute right-4 top-7 z-20 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-[14px] font-semibold shadow-lg backdrop-blur-[2px]">
+  {!canSkip ? (
+    <span className="text-[#FFB020]">{skipCountdown}s</span>
+  ) : null}
 
-        <button
-          type="button"
-          onClick={closeAd}
-          disabled={!canSkip}
-          className={`rounded-full px-2 py-1 text-white ${
-            canSkip ? 'cursor-pointer opacity-100 active:scale-95' : 'cursor-not-allowed opacity-70'
-          }`}
-        >
-          Skip
-        </button>
-      </div>
+  <button
+    type="button"
+    onClick={closeAd}
+    disabled={!canSkip}
+    className={`text-white ${
+      canSkip ? 'cursor-pointer opacity-100 active:scale-95' : 'cursor-not-allowed opacity-80'
+    }`}
+  >
+    Skip
+  </button>
+</div>
 
       {advertisement.link_url ? (
         <a href={advertisement.link_url} target="_blank" rel="noreferrer" className="block h-full w-full">
