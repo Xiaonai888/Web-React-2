@@ -20,6 +20,7 @@ function getReaderToken() {
 
 function formatTime(value) {
   if (!value) return ''
+
   return new Date(value).toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -28,15 +29,11 @@ function formatTime(value) {
   })
 }
 
-function isCommentNotification(item) {
-  const text = `${item.title || ''} ${item.message || ''} ${item.link || ''}`.toLowerCase()
-  return text.includes('comment') || text.includes('reply') || text.includes('mention') || text.includes('liked your comment')
-}
-
 function getActivityTitle(item) {
   if (item.activity_type === 'mine') return 'You commented'
   if (item.activity_type === 'reply') return 'Someone replied'
   if (item.activity_type === 'mention') return 'You were mentioned'
+
   return item.title || 'Comment activity'
 }
 
@@ -94,7 +91,7 @@ export default function MeCommentsPage() {
         if (ignore) return
 
         if (activeTab === 'all') {
-          setItems((data.notifications || []).filter(isCommentNotification))
+          setItems(data.notifications || [])
           setCounts(data.counts || {})
         } else {
           setItems(data.activities || [])
@@ -146,21 +143,18 @@ export default function MeCommentsPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[96px] dark:bg-[#0d0f16]">
-      <header className="sticky top-0 z-30 bg-[#f5f3fa]/95 px-4 pb-3 pt-4 backdrop-blur dark:bg-[#0d0f16]/95">
+      <header className="sticky top-0 z-30 border-b border-[#eceaf2] bg-white px-4 pb-3 pt-4 shadow-sm dark:border-white/10 dark:bg-[#171923]">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:text-white dark:ring-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5 active:scale-95 dark:bg-white/10 dark:text-white dark:ring-white/10"
             aria-label="Back"
           >
             <i className="fa-solid fa-chevron-left text-[13px]" />
           </button>
 
-          <div className="min-w-0">
-            <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">Comments</h1>
-            <p className="mt-0.5 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">Your comment activity</p>
-          </div>
+          <h1 className="text-[22px] font-black leading-tight text-[#111827] dark:text-white">Comments</h1>
         </div>
 
         <div className="mx-auto mt-4 flex max-w-3xl gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -172,10 +166,10 @@ export default function MeCommentsPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold transition ${
+                className={`shrink-0 rounded-full px-4 py-2 text-[12px] transition ${
                   active
-                    ? 'bg-[#111827] text-white dark:bg-[#f6b800] dark:text-[#111827]'
-                    : 'bg-white text-[#6b7280] ring-1 ring-black/5 dark:bg-[#171923] dark:text-white/60 dark:ring-white/10'
+                    ? 'bg-[#111827] font-extrabold text-white dark:bg-[#f6b800] dark:text-[#111827]'
+                    : 'bg-[#f8f8fb] font-semibold text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/65 dark:ring-white/10'
                 }`}
               >
                 {tab.label}
@@ -186,7 +180,7 @@ export default function MeCommentsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-2">
+      <main className="mx-auto max-w-3xl px-4 pt-4">
         {error ? (
           <div className="mb-3 rounded-2xl bg-[#fff1f1] px-4 py-3 text-[13px] font-bold text-[#e5484d]">
             {error}
@@ -208,7 +202,7 @@ export default function MeCommentsPage() {
                 onClick={() => openItem(item)}
                 className={`w-full rounded-[22px] bg-white p-4 text-left shadow-sm ring-1 transition active:scale-[0.99] dark:bg-[#171923] ${
                   activeTab === 'all' && !item.is_read
-                    ? 'ring-[#f6b800]/50'
+                    ? 'ring-[#f6b800]/55'
                     : 'ring-black/5 dark:ring-white/10'
                 }`}
               >
@@ -251,7 +245,7 @@ export default function MeCommentsPage() {
               <i className="far fa-comment-dots text-[22px]" />
             </div>
             <h2 className="mt-4 text-[17px] font-black text-[#111827] dark:text-white">No comments yet</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1] dark:text-white/50">Your comment activity will show here.</p>
+            <p className="mt-2 text-[13px] leading-6 text-[#8d94a1] dark:text-white/50">No comment activity found.</p>
           </div>
         )}
       </main>
