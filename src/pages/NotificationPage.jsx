@@ -33,6 +33,11 @@ function getNotificationColor(type) {
   return 'bg-[#FFF7D6] text-[#B77900]'
 }
 
+function getNotificationTypeLabel(type) {
+  if (type === 'community') return 'Community'
+  return 'Announcement'
+}
+
 function formatCount(count) {
   if (count > 99) return '99+'
   return String(count)
@@ -84,6 +89,23 @@ function emptyCounts() {
   }
 }
 
+function decreaseUnreadCounts(current, notification) {
+  if (!notification || notification.isRead) return current
+
+  return {
+    ...current,
+    unread: Math.max(0, Number(current.unread || 0) - 1),
+    community:
+      notification.type === 'community'
+        ? Math.max(0, Number(current.community || 0) - 1)
+        : Number(current.community || 0),
+    announcements:
+      notification.type === 'announcements'
+        ? Math.max(0, Number(current.announcements || 0) - 1)
+        : Number(current.announcements || 0),
+  }
+}
+
 export default function NotificationPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
@@ -91,6 +113,7 @@ export default function NotificationPage() {
   const [counts, setCounts] = useState(emptyCounts)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [selectedNotification, setSelectedNotification] = useState(null)
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
@@ -159,8 +182,13 @@ export default function NotificationPage() {
     }
   }
 
-  async function openNotification(notification) {
+  async function markNotificationAsRead(notification) {
     setNotifications((items) => items.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)))
+    setCounts((current) => decreaseUnreadCounts(current, notification))
+
+    if (selectedNotification?.id === notification.id) {
+      setSelectedNotification({ ...notification, isRead: true })
+    }
 
     try {
       await fetch(`${API_BASE_URL}/api/notifications/${notification.id}/read`, {
@@ -169,10 +197,17 @@ export default function NotificationPage() {
       })
     } catch {
     }
+  }
 
-    loadNotifications()
+  async function openNotification(notification) {
+    await markNotificationAsRead(notification)
 
-    if (notification.link) navigate(notification.link)
+    if (notification.link) {
+      navigate(notification.link)
+      return
+    }
+
+    setSelectedNotification({ ...notification, isRead: true })
   }
 
   return (
@@ -262,7 +297,9 @@ export default function NotificationPage() {
                     <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#606773]">{notification.message}</p>
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <span className="text-[11px] font-bold text-[#9CA3AF]">{notification.time}</span>
-                      <span className="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#6B7280]">{notification.id}</span>
+                      <span className="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[10px] font-black text-[#6B7280]">
+                        {notification.link ? 'Open' : getNotificationTypeLabel(notification.type)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -281,6 +318,50 @@ export default function NotificationPage() {
           </div>
         ) : null}
       </main>
+
+      {selectedNotification ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 px-4 pb-4 sm:items-center sm:pb-0">
+          <div className="w-full max-w-[520px] rounded-[28px] bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${getNotificationColor(selectedNotification.type)}`}>
+                  <i className={`${getNotificationIcon(selectedNotification.type)} text-[16px]`} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black uppercase tracking-wide text-[#9CA3AF]">
+                    {getNotificationTypeLabel(selectedNotification.type)}
+                  </div>
+                  <h2 className="mt-1 text-[18px] font-black leading-6 text-[#111111]">{selectedNotification.title}</h2>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedNotification(null)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95"
+                aria-label="Close notification"
+              >
+                <i className="fas fa-xmark text-[14px]" />
+              </button>
+            </div>
+
+            <p className="mt-4 whitespace-pre-wrap text-[14px] font-semibold leading-7 text-[#4B5563]">
+              {selectedNotification.message}
+            </p>
+
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#EEF0F4] pt-4">
+              <span className="text-[12px] font-bold text-[#9CA3AF]">{selectedNotification.time}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedNotification(null)}
+                className="rounded-full bg-[#111111] px-5 py-2.5 text-[12px] font-black text-white active:scale-95"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
