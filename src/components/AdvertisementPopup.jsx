@@ -210,7 +210,9 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
 
   return (
     <div className="fixed inset-0 z-[2147483647] bg-black">
-      <div className="absolute right-4 top-7 z-20 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-[14px] font-semibold shadow-lg backdrop-blur-[2px]">
+  <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-28 bg-gradient-to-b from-black/45 to-transparent" />
+
+  <div className="absolute right-4 top-7 z-20 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[14px] font-semibold shadow-lg backdrop-blur-[2px]">
   {!canSkip ? (
     <span className="text-[#FFB020]">{skipCountdown}s</span>
   ) : null}
