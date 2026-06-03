@@ -301,6 +301,7 @@ const freezeForYouHeaderStyle = `
   display: none !important;
   pointer-events: none !important;
 }
+`
 
 return (
   <>
