@@ -87,13 +87,8 @@ export default function MeCommentsPage() {
 
         if (ignore) return
 
-        if (activeTab === 'all') {
-          setItems(data.notifications || [])
-          setCounts(data.counts || {})
-        } else {
-          setItems(data.activities || [])
-          setCounts(data.counts || {})
-        }
+        setItems(data.activities || [])
+setCounts(data.counts || {})
       } catch (err) {
         if (!ignore) {
           setError(err.message || 'Failed to load comments')
