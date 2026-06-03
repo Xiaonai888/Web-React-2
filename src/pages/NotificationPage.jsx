@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+const [sheetDragY, setSheetDragY] = useState(0)
+const dragStartYRef = useRef(null)
+const sheetDragYRef = useRef(0)
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -259,6 +262,33 @@ useEffect(() => {
   }
 }
 
+  function handleSheetDragStart(event) {
+  dragStartYRef.current = event.clientY
+  sheetDragYRef.current = 0
+  setSheetDragY(0)
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function handleSheetDragMove(event) {
+  if (dragStartYRef.current === null) return
+
+  const nextY = Math.max(0, event.clientY - dragStartYRef.current)
+  sheetDragYRef.current = nextY
+  setSheetDragY(nextY)
+}
+
+function handleSheetDragEnd() {
+  const shouldClose = sheetDragYRef.current > 90
+
+  dragStartYRef.current = null
+  sheetDragYRef.current = 0
+  setSheetDragY(0)
+
+  if (shouldClose) {
+    onClose?.()
+  }
+}
+
 const freezeForYouHeaderStyle = `
   body.shadow-notification-open .for-you-top-bars {
     transform: translateY(0) !important;
@@ -282,11 +312,24 @@ return (
       
     >
       <div
-        className="flex h-[72vh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[30px] bg-[#F6F7FB] shadow-2xl"
+        style={{
+  transform: `translateY(${sheetDragY}px)`,
+  transition: dragStartYRef.current === null ? 'transform 0.18s ease-out' : 'none',
+}}
         onClick={(event) => event.stopPropagation()}
       
       >
-        <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-[#B8BDC7]" />
+        <button
+  type="button"
+  aria-label="Drag down to close notifications"
+  className="flex w-full shrink-0 cursor-grab touch-none justify-center pb-1 pt-2 active:cursor-grabbing"
+  onPointerDown={handleSheetDragStart}
+  onPointerMove={handleSheetDragMove}
+  onPointerUp={handleSheetDragEnd}
+  onPointerCancel={handleSheetDragEnd}
+>
+  <span className="h-1.5 w-12 rounded-full bg-[#B8BDC7]" />
+</button>
 
         <div className="shrink-0 bg-[#F6F7FB] px-5 pb-3 pt-5">
           <div className="flex items-center justify-between gap-3">
