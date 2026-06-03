@@ -21,6 +21,7 @@ function shouldShowByFrequency(advertisement) {
   const frequency = advertisement.frequency || 'once_per_session'
 
   if (frequency === 'every_visit') return true
+  if (frequency === 'every_unlock') return true
 
   if (frequency === 'once_per_day') {
     const today = new Date().toISOString().slice(0, 10)
@@ -41,9 +42,8 @@ function markShown(advertisement) {
     return
   }
 
-  if (frequency !== 'every_visit') {
-    sessionStorage.setItem(key, '1')
-  }
+  if (frequency !== 'every_visit' && frequency !== 'every_unlock') {
+  sessionStorage.setItem(key, '1')
 }
 
 export default function AdvertisementPopup({ placement = 'opening' }) {
