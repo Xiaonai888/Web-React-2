@@ -6,11 +6,17 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+function getSearchFlag(name) {
+  return new URLSearchParams(window.location.search).get(name) === '1'
+}
+
 function storageKey(advertisement) {
   return `shadow_ad_seen_${advertisement.placement}_${advertisement.updated_at || 'current'}`
 }
 
 function shouldShowByFrequency(advertisement) {
+  if (getSearchFlag('adtest')) return true
+
   const key = storageKey(advertisement)
   const frequency = advertisement.frequency || 'once_per_session'
 
@@ -25,6 +31,8 @@ function shouldShowByFrequency(advertisement) {
 }
 
 function markShown(advertisement) {
+  if (getSearchFlag('adtest')) return
+
   const key = storageKey(advertisement)
   const frequency = advertisement.frequency || 'once_per_session'
 
@@ -42,6 +50,7 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [canClose, setCanClose] = useState(false)
+  const [debugMessage, setDebugMessage] = useState('')
 
   const durationSeconds = useMemo(() => {
     return Math.max(1, Number(advertisement?.duration_seconds || 5))
@@ -59,13 +68,25 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     let cancelled = false
 
     async function loadAdvertisement() {
+      const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
+
       try {
-        const response = await fetch(`${API_URL}/api/advertisements/public?placement=${placement}`)
+        const url = `${API_URL}/api/advertisements/public?placement=${placement}`
+        if (debug) setDebugMessage(`Loading: ${url}`)
+
+        const response = await fetch(url, {
+          cache: 'no-store',
+        })
         const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false || !data.advertisement?.image_url) return
-        if (!shouldShowByFrequency(data.advertisement)) return
+        if (debug) {
+          console.log('Advertisement response:', data)
+          setDebugMessage(JSON.stringify(data))
+        }
 
+        if (!response.ok || data.ok === false) return
+        if (!data.advertisement?.image_url) return
+        if (!shouldShowByFrequency(data.advertisement)) return
         if (cancelled) return
 
         setAdvertisement(data.advertisement)
@@ -74,6 +95,7 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
         markShown(data.advertisement)
       } catch (error) {
         console.error('Advertisement load error:', error)
+        if (debug) setDebugMessage(error.message || 'Advertisement load error')
       }
     }
 
@@ -112,13 +134,27 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     }
   }, [visible])
 
-  if (!visible || !advertisement?.image_url) return null
+  if (!visible || !advertisement?.image_url) {
+    if (getSearchFlag('addebug') && debugMessage) {
+      return (
+        <div className="fixed bottom-4 left-4 right-4 z-[2147483647] rounded-[16px] bg-black/90 p-4 text-[12px] font-bold leading-5 text-white">
+          {debugMessage}
+        </div>
+      )
+    }
+
+    return null
+  }
 
   const image = (
     <img
       src={advertisement.image_url}
       alt="Advertisement"
       className="max-h-[82vh] w-full max-w-[420px] rounded-[24px] object-contain shadow-2xl"
+      onError={() => {
+        setVisible(false)
+        setDebugMessage('Advertisement image failed to load')
+      }}
     />
   )
 
