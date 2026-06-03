@@ -199,12 +199,15 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   document.body.style.position = 'fixed'
   document.body.style.top = `-${scrollY}px`
   document.body.style.width = '100%'
-
-  useEffect(() => {
   document.body.style.overflow = 'hidden'
 
   return () => {
-    document.body.style.overflow = ''
+    document.body.classList.remove('shadow-notification-open')
+    document.body.style.position = previousPosition
+    document.body.style.top = previousTop
+    document.body.style.width = previousWidth
+    document.body.style.overflow = previousOverflow
+    window.scrollTo(0, scrollY)
   }
 }, [])
 
