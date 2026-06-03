@@ -51,7 +51,8 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
   const [visible, setVisible] = useState(false)
   const [canSkip, setCanSkip] = useState(false)
   const [skipCountdown, setSkipCountdown] = useState(0)
-  const finishedRef = useRef(false)
+const [debugMessage, setDebugMessage] = useState('')
+const finishedRef = useRef(false)
 
   const durationSeconds = useMemo(() => {
     return Math.max(1, Number(advertisement?.duration_seconds || 5))
@@ -230,9 +231,9 @@ finishAd()
           alt="Advertisement"
           className="h-full w-full object-cover"
           onError={() => {
-            setVisible(false)
-            setDebugMessage('Advertisement image failed to load')
-          }}
+  setDebugMessage('Advertisement image failed to load')
+  finishAd()
+}}
         />
       )}
     </div>
