@@ -209,7 +209,7 @@ export default function NotificationPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F7FB] pb-10">
-      <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 px-4 pb-3 pt-4 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 px-4 pb-3 pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-[560px] items-center justify-between gap-3">
           <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] active:scale-95">
             <i className="fas fa-chevron-left text-[14px]" />
@@ -231,7 +231,7 @@ export default function NotificationPage() {
           </button>
         </div>
 
-        <div className="mx-auto mt-4 flex max-w-[560px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto mt-3 flex max-w-[560px] gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key
             const count = counts[tab.key] || 0
@@ -242,13 +242,13 @@ export default function NotificationPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative flex shrink-0 items-center rounded-full px-4 py-2.5 text-[13px] font-black transition active:scale-95 ${
-                  isActive ? 'bg-[#111111] text-white shadow-sm' : 'bg-[#EEF0F4] text-[#606773]'
+                className={`relative shrink-0 rounded-full px-5 py-1.5 text-xs transition active:scale-95 ${
+                  isActive ? 'bg-[#111827] text-white font-bold shadow-sm' : 'border border-gray-200 bg-white text-gray-600 font-semibold'
                 }`}
               >
                 <span>{tab.label}</span>
                 {showCount ? (
-                  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black text-[#111111] shadow-sm">
+                  <span className="absolute -right-1 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
                     {formatCount(count)}
                   </span>
                 ) : null}
@@ -258,7 +258,7 @@ export default function NotificationPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[560px] px-4 pt-4">
+      <main className="mx-auto max-w-[560px] px-4 pt-5">
         {loading ? (
           <div className="mt-16 rounded-[26px] border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#E5E7EB] border-t-[#111111]" />
