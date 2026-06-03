@@ -151,42 +151,46 @@ export default function NotificationPage({ isOpen = true, onClose }) {
   const groupedNotifications = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications])
 
   async function loadNotifications() {
-    const token = getReaderToken()
+  const token = getReaderToken()
 
-    if (!token) {
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  try {
+    setLoading(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+      headers: getHeaders(),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (response.status === 401 || response.status === 403) {
       navigate('/login')
       return
     }
 
-    try {
-      setLoading(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        headers: getHeaders(),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (response.status === 401 || response.status === 403) {
-        navigate('/login')
-        return
-      }
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.message || 'Failed to load notifications')
-      }
-
-      setNotifications((data.notifications || []).map(mapNotification))
-      setCounts(data.counts || emptyCounts())
-    } catch (error) {
-      setMessage(error.message || 'Failed to load notifications')
-      setNotifications([])
-      setCounts(emptyCounts())
-    } finally {
-      setLoading(false)
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || 'Failed to load notifications')
     }
+
+    setNotifications((data.notifications || []).map(mapNotification))
+    setCounts(data.counts || emptyCounts())
+  } catch (error) {
+    setMessage(error.message || 'Failed to load notifications')
+    setNotifications([])
+    setCounts(emptyCounts())
+  } finally {
+    setLoading(false)
   }
+}
+
+useEffect(() => {
+  loadNotifications()
+}, [])
 
   useEffect(() => {
   const scrollY = window.scrollY
