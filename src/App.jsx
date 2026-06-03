@@ -640,11 +640,11 @@ function AppShell() {
       </Routes>
 
       {adStep === 'splash' ? (
-  <AdvertisementPopup placement="splash" onFinish={() => setAdStep('opening')} />
+  <AdvertisementPopup placement="splash" blocking onFinish={() => setAdStep('opening')} />
 ) : null}
 
 {adStep === 'opening' ? (
-  <AdvertisementPopup placement="opening" onFinish={() => setAdStep('done')} />
+  <AdvertisementPopup placement="opening" blocking onFinish={() => setAdStep('done')} />
 ) : null}
 
       {!shouldHideFooter ? <Footer /> : null}
