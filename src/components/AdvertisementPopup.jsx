@@ -49,7 +49,8 @@ function markShown(advertisement) {
 export default function AdvertisementPopup({ placement = 'opening' }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
-  const [canClose, setCanClose] = useState(false)
+  const [canSkip, setCanSkip] = useState(false)
+  const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
 
   const durationSeconds = useMemo(() => {
@@ -57,10 +58,11 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
   }, [advertisement])
 
   const closeAfterSeconds = useMemo(() => {
-    return Math.max(0, Number(advertisement?.close_after_seconds || 0))
+    return Math.max(0, Number(advertisement?.close_after_seconds || 3))
   }, [advertisement])
 
   function closeAd() {
+    if (!canSkip) return
     setVisible(false)
   }
 
@@ -74,9 +76,7 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
         const url = `${API_URL}/api/advertisements/public?placement=${placement}`
         if (debug) setDebugMessage(`Loading: ${url}`)
 
-        const response = await fetch(url, {
-          cache: 'no-store',
-        })
+        const response = await fetch(url, { cache: 'no-store' })
         const data = await response.json().catch(() => ({}))
 
         if (debug) {
@@ -89,9 +89,12 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
         if (!shouldShowByFrequency(data.advertisement)) return
         if (cancelled) return
 
+        const waitSeconds = Math.max(0, Number(data.advertisement.close_after_seconds || 3))
+
         setAdvertisement(data.advertisement)
         setVisible(true)
-        setCanClose(Number(data.advertisement.close_after_seconds || 0) <= 0)
+        setCanSkip(waitSeconds <= 0)
+        setSkipCountdown(waitSeconds)
         markShown(data.advertisement)
       } catch (error) {
         console.error('Advertisement load error:', error)
@@ -113,15 +116,39 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
       setVisible(false)
     }, durationSeconds * 1000)
 
-    const allowCloseTimer = window.setTimeout(() => {
-      setCanClose(true)
-    }, closeAfterSeconds * 1000)
-
     return () => {
       window.clearTimeout(closeTimer)
-      window.clearTimeout(allowCloseTimer)
     }
-  }, [visible, advertisement, durationSeconds, closeAfterSeconds])
+  }, [visible, advertisement, durationSeconds])
+
+  useEffect(() => {
+    if (!visible || !advertisement) return
+
+    if (closeAfterSeconds <= 0) {
+      setCanSkip(true)
+      setSkipCountdown(0)
+      return
+    }
+
+    setCanSkip(false)
+    setSkipCountdown(closeAfterSeconds)
+
+    const interval = window.setInterval(() => {
+      setSkipCountdown((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(interval)
+          setCanSkip(true)
+          return 0
+        }
+
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [visible, advertisement, closeAfterSeconds])
 
   useEffect(() => {
     if (!visible) return
@@ -146,40 +173,48 @@ export default function AdvertisementPopup({ placement = 'opening' }) {
     return null
   }
 
-  const image = (
-    <img
-      src={advertisement.image_url}
-      alt="Advertisement"
-      className="max-h-[82vh] w-full max-w-[420px] rounded-[24px] object-contain shadow-2xl"
-      onError={() => {
-        setVisible(false)
-        setDebugMessage('Advertisement image failed to load')
-      }}
-    />
-  )
-
   return (
-    <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/85 px-4 py-6">
-      <div className="relative w-full max-w-[430px]">
-        {canClose ? (
-          <button
-            type="button"
-            onClick={closeAd}
-            className="absolute -right-2 -top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[16px] font-black text-[#111827] shadow-lg active:scale-95"
-            aria-label="Close advertisement"
-          >
-            ×
-          </button>
+    <div className="fixed inset-0 z-[2147483647] bg-black">
+      <div className="absolute right-5 top-8 z-20 flex items-center gap-3 text-[17px] font-black">
+        {!canSkip ? (
+          <span className="text-[#FFB020]">{skipCountdown}s</span>
         ) : null}
 
-        {advertisement.link_url ? (
-          <a href={advertisement.link_url} target="_blank" rel="noreferrer">
-            {image}
-          </a>
-        ) : (
-          image
-        )}
+        <button
+          type="button"
+          onClick={closeAd}
+          disabled={!canSkip}
+          className={`rounded-full px-2 py-1 text-white ${
+            canSkip ? 'cursor-pointer opacity-100 active:scale-95' : 'cursor-not-allowed opacity-70'
+          }`}
+        >
+          Skip
+        </button>
       </div>
+
+      {advertisement.link_url ? (
+        <a href={advertisement.link_url} target="_blank" rel="noreferrer" className="block h-full w-full">
+          <img
+            src={advertisement.image_url}
+            alt="Advertisement"
+            className="h-full w-full object-cover"
+            onError={() => {
+              setVisible(false)
+              setDebugMessage('Advertisement image failed to load')
+            }}
+          />
+        </a>
+      ) : (
+        <img
+          src={advertisement.image_url}
+          alt="Advertisement"
+          className="h-full w-full object-cover"
+          onError={() => {
+            setVisible(false)
+            setDebugMessage('Advertisement image failed to load')
+          }}
+        />
+      )}
     </div>
   )
 }
