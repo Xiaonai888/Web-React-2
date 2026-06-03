@@ -31,6 +31,20 @@ function shouldShowByFrequency(advertisement) {
   return sessionStorage.getItem(key) !== '1'
 }
 
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      reject(new Error('Missing advertisement image'))
+      return
+    }
+
+    const image = new Image()
+    image.onload = resolve
+    image.onerror = reject
+    image.src = src
+  })
+}
+
 function markShown(advertisement) {
   if (getSearchFlag('adtest')) return
 
@@ -122,19 +136,24 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
 
         if (cancelled) return
 
-        const waitSeconds = Math.max(0, Number(data.advertisement.close_after_seconds ?? 3))
+        const nextAdvertisement = data.advertisement
+const waitSeconds = Math.max(0, Number(nextAdvertisement.close_after_seconds ?? 3))
 
-        setAdvertisement(data.advertisement)
-        setVisible(true)
-        setCanSkip(waitSeconds <= 0)
-        setSkipCountdown(waitSeconds)
-        markShown(data.advertisement)
+await preloadImage(nextAdvertisement.image_url)
+
+if (cancelled) return
+
+setAdvertisement(nextAdvertisement)
+setVisible(true)
+setCanSkip(waitSeconds <= 0)
+setSkipCountdown(waitSeconds)
+markShown(nextAdvertisement)
       } catch (error) {
-        console.error('Advertisement load error:', error)
+  console.error('Advertisement load error:', error)
 
-        if (debug) setDebugMessage(error.message || 'Advertisement load error')
-        finishAd()
-      }
+  if (debug) setDebugMessage(error.message || 'Advertisement load error')
+  finishAd()
+}
     }
 
     loadAdvertisement()
