@@ -482,12 +482,15 @@ return (
 </button>
 
       <div className="min-w-0">
-        <div className="text-[12px] font-black uppercase tracking-wide text-[#6B7280]">{selectedAnnouncement.dateGroup}</div>
-        <div className="truncate text-[15px] font-black text-[#111111]">Announcement</div>
-      </div>
-    </div>
+  <div className="truncate text-[15px] font-black text-[#111111]">Notification</div>
+</div>
 
     <article className="mx-auto w-full max-w-[720px] px-5 pb-10 pt-6">
+
+
+      <div className="mb-3 text-[12px] font-black uppercase tracking-wide text-[#6B7280]">
+  {getNotificationTypeLabel(selectedAnnouncement.type)} · {selectedAnnouncement.dateGroup} · {selectedAnnouncement.time}
+</div>
       {selectedAnnouncement.imageUrl ? (
   <div className="mb-5 overflow-hidden rounded-[24px] bg-[#F3F4F6] shadow-sm">
     <img
