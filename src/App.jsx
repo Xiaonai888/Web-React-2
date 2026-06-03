@@ -39,6 +39,7 @@ import TaskCenterPage from './pages/TaskCenterPage'
 import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
+import AdvertisementPopup from './components/AdvertisementPopup'
 
 
 
@@ -622,6 +623,8 @@ function AppShell() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      <AdvertisementPopup placement="opening" />
 
       {!shouldHideFooter ? <Footer /> : null}
     </>
