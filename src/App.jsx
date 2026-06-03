@@ -40,6 +40,8 @@ import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
+const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
+
 
 
 
@@ -145,6 +147,7 @@ function AppShell() {
     '/tasks',
     '/tasks/history',
     '/author/trash',
+    '/comments',
     
   ]
 
@@ -577,6 +580,16 @@ function AppShell() {
     </LazyPage>
   }
 />
+        
+<Route
+  path="/comments"
+  element={
+    <LazyPage>
+      <MeCommentsPage />
+    </LazyPage>
+  }
+/>
+
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
