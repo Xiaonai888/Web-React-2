@@ -1,65 +1,93 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const MAILS = [
-  {
-    id: 1,
-    type: 'Admin Mail',
-    tab: 'admin',
-    title: 'Welcome to Shadow Era',
-    message: 'Thanks for joining Shadow Era. Start reading, collect rewards, and enjoy your story journey.',
-    detail: 'Welcome to Shadow Era. This inbox is where you will receive admin mail, rewards, coupons, system messages, and important account notices from Shadow Era.',
-    time: 'Today',
-    icon: 'fa-solid fa-user-shield',
-    unread: true,
-    sender: 'Admin',
-  },
-  {
-    id: 2,
-    type: 'Rewards',
-    tab: 'rewards',
-    title: 'You received a welcome reward',
-    message: 'Your welcome reward is ready. Open this mail and claim it before it expires.',
-    detail: 'Your welcome reward is ready. Claim it now and keep reading to receive more rewards from future events and activities.',
-    time: 'Today',
-    icon: 'fa-solid fa-gift',
-    unread: true,
-    sender: 'System Auto',
-    action: 'Claim',
-    claimed: false,
-  },
-  {
-    id: 3,
-    type: 'System',
-    tab: 'system',
-    title: 'Payment completed',
-    message: 'Your diamonds were added to your wallet successfully.',
-    detail: 'Your payment was completed successfully. The purchased diamonds were added to your wallet.',
-    time: 'Yesterday',
-    icon: 'fa-solid fa-wallet',
-    unread: false,
-    sender: 'System Auto',
-  },
-  {
-    id: 4,
-    type: 'Admin Mail',
-    tab: 'admin',
-    title: 'Reading event announcement',
-    message: 'A new reading event is coming soon. Check the event page for details and rewards.',
-    detail: 'A new reading event is coming soon. You can join the event, complete reading tasks, and receive rewards when the event is available.',
-    time: '2 days ago',
-    icon: 'fa-solid fa-bullhorn',
-    unread: false,
-    sender: 'Admin',
-  },
-]
+const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
 const TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'rewards', label: 'Rewards' },
-  { key: 'admin', label: 'Admin Mail' },
-  { key: 'system', label: 'System' },
+  { key: 'all', label: 'All', apiType: 'all' },
+  { key: 'rewards', label: 'Rewards', apiType: 'rewards' },
+  { key: 'admin', label: 'Admin Mail', apiType: 'admin' },
+  { key: 'system', label: 'System', apiType: 'system' },
 ]
+
+function getReaderToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function getMailTypeLabel(type) {
+  const value = String(type || '').toLowerCase()
+
+  if (value === 'reward') return 'Rewards'
+  if (value === 'system') return 'System'
+  if (value === 'coupon') return 'Coupon'
+  if (value === 'event') return 'Event'
+  if (value === 'payment') return 'Payment'
+
+  return 'Admin Mail'
+}
+
+function getMailIcon(mail) {
+  const type = String(mail.mail_type || '').toLowerCase()
+
+  if (type === 'reward') return 'fa-solid fa-gift'
+  if (type === 'coupon') return 'fa-solid fa-ticket'
+  if (type === 'payment') return 'fa-solid fa-wallet'
+  if (type === 'event') return 'fa-solid fa-bullhorn'
+  if (type === 'system') return 'fa-solid fa-gear'
+
+  return mail.sender_type === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-envelope'
+}
+
+function getSenderLabel(senderType) {
+  return senderType === 'admin' ? 'Admin' : 'System Auto'
+}
+
+function formatMailTime(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMinutes / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMinutes < 1) return 'Now'
+  if (diffMinutes < 60) return `${diffMinutes}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays} days ago`
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  })
+}
+
+function normalizeMail(mail) {
+  return {
+    id: mail.id,
+    type: getMailTypeLabel(mail.mail_type),
+    title: mail.title || '',
+    message: mail.message || '',
+    detail: mail.detail || mail.message || '',
+    time: formatMailTime(mail.created_at),
+    icon: getMailIcon(mail),
+    unread: !mail.is_read,
+    sender: getSenderLabel(mail.sender_type),
+    action: mail.action_type === 'claim' ? 'Claim' : '',
+    claimed: Boolean(mail.claimed_at),
+    raw: mail,
+  }
+}
 
 function MailCard({ mail, onOpen, onClaim }) {
   return (
@@ -169,22 +197,134 @@ function MailDetailSheet({ mail, onClose, onClaim }) {
 export default function InboxPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
-  const [mails, setMails] = useState(MAILS)
+  const [mails, setMails] = useState([])
   const [selectedMailId, setSelectedMailId] = useState(null)
-
-  const filteredMails = useMemo(() => {
-    return activeTab === 'all' ? mails : mails.filter((mail) => mail.tab === activeTab)
-  }, [activeTab, mails])
+  const [loading, setLoading] = useState(true)
+  const [errorText, setErrorText] = useState('')
 
   const selectedMail = mails.find((mail) => mail.id === selectedMailId) || null
 
-  const handleOpenMail = (mailId) => {
-    setMails((items) => items.map((mail) => (mail.id === mailId ? { ...mail, unread: false } : mail)))
-    setSelectedMailId(mailId)
+  const activeApiType = useMemo(() => {
+    return TABS.find((tab) => tab.key === activeTab)?.apiType || 'all'
+  }, [activeTab])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadMails() {
+      const token = getReaderToken()
+
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      try {
+        setLoading(true)
+        setErrorText('')
+
+        const response = await fetch(`${API_BASE_URL}/api/mails?type=${activeApiType}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (response.status === 401 || response.status === 403) {
+          navigate('/login', { replace: true })
+          return
+        }
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.message || 'Failed to load mails')
+        }
+
+        if (!ignore) {
+          setMails((data.mails || []).map(normalizeMail))
+        }
+      } catch (error) {
+        if (!ignore) {
+          setErrorText(error.message || 'Failed to load mails')
+          setMails([])
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadMails()
+
+    return () => {
+      ignore = true
+    }
+  }, [activeApiType, navigate])
+
+  const updateMail = (mailId, nextRawMail) => {
+    setMails((items) => items.map((mail) => (mail.id === mailId ? normalizeMail(nextRawMail) : mail)))
   }
 
-  const handleClaim = (mailId) => {
-    setMails((items) => items.map((mail) => (mail.id === mailId ? { ...mail, unread: false, claimed: true } : mail)))
+  const handleOpenMail = async (mailId) => {
+    setSelectedMailId(mailId)
+
+    const currentMail = mails.find((mail) => mail.id === mailId)
+
+    if (!currentMail || !currentMail.unread) return
+
+    const token = getReaderToken()
+
+    if (!token) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mails/${mailId}/read`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok && data.ok && data.mail) {
+        updateMail(mailId, data.mail)
+      }
+    } catch {
+      setMails((items) => items.map((mail) => (mail.id === mailId ? { ...mail, unread: false } : mail)))
+    }
+  }
+
+  const handleClaim = async (mailId) => {
+    const currentMail = mails.find((mail) => mail.id === mailId)
+
+    if (!currentMail || currentMail.claimed) return
+
+    const token = getReaderToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mails/${mailId}/claim`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to claim reward')
+      }
+
+      if (data.mail) {
+        updateMail(mailId, data.mail)
+      }
+    } catch (error) {
+      setErrorText(error.message || 'Failed to claim reward')
+    }
   }
 
   return (
@@ -226,9 +366,20 @@ export default function InboxPage() {
           </div>
         </section>
 
-        {filteredMails.length ? (
+        {errorText ? (
+          <div className="mb-3 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-semibold text-[#e5484d] dark:bg-[#3a1f25]">
+            {errorText}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <section className="rounded-[24px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827] dark:border-white/10 dark:border-t-[#f6b800]" />
+            <div className="text-[14px] font-extrabold text-[#111827] dark:text-white">Loading mails...</div>
+          </section>
+        ) : mails.length ? (
           <section className="space-y-3">
-            {filteredMails.map((mail) => (
+            {mails.map((mail) => (
               <MailCard key={mail.id} mail={mail} onOpen={handleOpenMail} onClaim={handleClaim} />
             ))}
           </section>
