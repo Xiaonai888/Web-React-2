@@ -1,17 +1,37 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 function normalizeMatches(value) {
   if (!Array.isArray(value)) return []
 
-  return value
-    .map((item) => ({
-      id: item?.id || `${item?.word || 'word'}-${item?.category || 'custom'}`,
-      word: String(item?.word || '').trim(),
+  const grouped = new Map()
+
+  value.forEach((item) => {
+    const word = String(item?.word || '').trim()
+    if (!word) return
+
+    const key = word.toLowerCase()
+    const count = Number(item?.count || item?.matched_count || 1)
+
+    if (grouped.has(key)) {
+      const oldItem = grouped.get(key)
+      grouped.set(key, {
+        ...oldItem,
+        count: oldItem.count + count,
+      })
+      return
+    }
+
+    grouped.set(key, {
+      id: item?.id || `${word}-${item?.category || 'custom'}`,
+      word,
       category: String(item?.category || 'custom').trim(),
       severity: String(item?.severity || 'medium').trim(),
-    }))
-    .filter((item) => item.word)
+      count,
+    })
+  })
+
+  return Array.from(grouped.values())
 }
 
 function Pill({ children, type }) {
@@ -33,12 +53,23 @@ export default function PublishBlockedWarningPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { storyId } = useParams()
+  const [copiedWord, setCopiedWord] = useState('')
 
   const matches = useMemo(() => normalizeMatches(location.state?.blockedWords), [location.state])
   const episodeId = location.state?.episodeId || ''
   const editPath = episodeId
     ? `/author/story/${storyId}/episode/create?episodeId=${episodeId}`
     : `/author/story/${storyId}/episode/create`
+
+  const copyWord = async (word) => {
+    try {
+      await navigator.clipboard.writeText(word)
+      setCopiedWord(word)
+      window.setTimeout(() => setCopiedWord(''), 1600)
+    } catch {
+      setCopiedWord('')
+    }
+  }
 
   if (!matches.length) {
     return <Navigate to={`/author/story/${storyId}/manage`} replace />
@@ -73,7 +104,7 @@ export default function PublishBlockedWarningPage() {
                 <div>
                   <h2 className="text-[16px] font-black text-[#111827]">Restricted words found</h2>
                   <p className="mt-1 text-[12.5px] font-semibold leading-5 text-[#667085]">
-                    Review the words below, then go back to your episode editor and remove or rewrite them.
+                    Review the words below, copy each word, then search inside your editor and remove or rewrite it.
                   </p>
                 </div>
               </div>
@@ -90,9 +121,23 @@ export default function PublishBlockedWarningPage() {
                         <div className="mt-1 text-[11.5px] font-bold uppercase tracking-[0.35px] text-[#98a2b3]">
                           Category: {item.category}
                         </div>
+                        <div className="mt-2 inline-flex rounded-full bg-[#f8fafc] px-3 py-1 text-[11.5px] font-extrabold text-[#475467]">
+                          Found {item.count} time{item.count > 1 ? 's' : ''}
+                        </div>
                       </div>
 
-                      <Pill type={item.severity}>{item.severity}</Pill>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Pill type={item.severity}>{item.severity}</Pill>
+
+                        <button
+                          type="button"
+                          onClick={() => copyWord(item.word)}
+                          className="inline-flex h-9 items-center gap-2 rounded-full border border-[#e4e7ec] bg-white px-3 text-[11.5px] font-extrabold text-[#111827] active:scale-[0.98]"
+                        >
+                          <i className="fa-regular fa-copy text-[12px]" />
+                          {copiedWord === item.word ? 'Copied' : 'Copy Word'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -100,7 +145,7 @@ export default function PublishBlockedWarningPage() {
             </div>
 
             <div className="mt-5 rounded-[20px] bg-[#f8fafc] px-4 py-3 text-[12.5px] font-semibold leading-5 text-[#667085]">
-              Tip: Copy each restricted word and search inside your editor to find it faster.
+              Tip: On mobile, use Copy Word, then paste it into the editor search or your keyboard search field.
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
