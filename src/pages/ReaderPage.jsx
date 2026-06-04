@@ -1455,6 +1455,7 @@ export default function ReaderPage() {
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
   const [readerAdPolicy, setReaderAdPolicy] = useState(null)
+  const [readerAdFinished, setReaderAdFinished] = useState(false)
   const lastScrollYRef = useRef(0)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
@@ -1539,9 +1540,13 @@ async function loadReaderAdPolicy() {
       setLoading(true)
       setMessage('')
       setAutoScrollEnabled(false)
+      setReaderAdFinished(false)
 
       if (!getReaderToken()) {
         navigate('/login')
+
+        const shouldShowReaderAd = !loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
+        const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
         return
       }
 
@@ -1957,8 +1962,13 @@ async function handleLockedDiamondUnlock(packageKey) {
   key={storyId}
 />
 
-      {!loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad ? (
-  <AdvertisementPopup placement="freeUnlock" key={`freeUnlock-${storyId}-${episodeId}`} />
+      {shouldShowReaderAd && !readerAdFinished ? (
+  <AdvertisementPopup
+    placement="freeUnlock"
+    blocking
+    key={`freeUnlock-${storyId}-${episodeId}`}
+    onFinish={() => setReaderAdFinished(true)}
+  />
 ) : null}
       
       <ReaderBottomActionBar
@@ -2006,7 +2016,7 @@ async function handleLockedDiamondUnlock(packageKey) {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pt-[76px]">
-        {loading ? <LoadingCard /> : null}
+        {loading ? null : null}
 
         {message ? (
           <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
