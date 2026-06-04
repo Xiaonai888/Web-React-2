@@ -219,7 +219,18 @@ markShown(nextAdvertisement)
 
   if (!visible || !advertisement?.image_url) {
   if (loadingAd && blocking) {
-    return <div className="fixed inset-0 z-[2147483647] bg-black" />
+    return (
+      <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black">
+        <div className="text-center">
+          <div className="text-[13px] font-medium tracking-wide text-white/80">
+            Preparing your story...
+          </div>
+          <div className="mx-auto mt-3 h-1 w-16 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-white/55" />
+          </div>
+        </div>
+      </div>
+    )
   }
     if (getSearchFlag('addebug') && debugMessage) {
       return (
