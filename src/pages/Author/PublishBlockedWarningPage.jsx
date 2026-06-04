@@ -67,8 +67,8 @@ export default function PublishBlockedWarningPage() {
   const matches = useMemo(() => normalizeMatches(location.state?.blockedWords), [location.state])
   const episodeId = location.state?.episodeId || ''
   const editPath = episodeId
-    ? `/author/story/${storyId}/episode/create?episodeId=${episodeId}`
-    : `/author/story/${storyId}/episode/create`
+  ? `/author/story/${storyId}/episode/create?editEpisodeId=${episodeId}&fromPublishWarning=1`
+  : `/author/story/${storyId}/episode/create?fromPublishWarning=1`
 
   const mainIssue = useMemo(() => getMainIssue(matches), [matches])
   const totalMatches = useMemo(() => matches.reduce((sum, item) => sum + item.count, 0), [matches])
@@ -184,7 +184,12 @@ export default function PublishBlockedWarningPage() {
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => navigate(editPath, { replace: true })}
+                onClick={() => {
+  navigate('/author/dashboard', { replace: true })
+  window.setTimeout(() => {
+    navigate(editPath)
+  }, 0)
+}}
                 className="rounded-full bg-[#111827] px-5 py-4 text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.22)] active:scale-[0.99]"
               >
                 Back to Edit Episode
@@ -192,7 +197,12 @@ export default function PublishBlockedWarningPage() {
 
               <button
                 type="button"
-                onClick={() => navigate(`/author/story/${storyId}/manage`, { replace: true })}
+                onClick={() => {
+  navigate('/author/dashboard', { replace: true })
+  window.setTimeout(() => {
+    navigate(`/author/story/${storyId}/manage`)
+  }, 0)
+}}
                 className="rounded-full border border-[#e4e7ec] bg-white px-5 py-4 text-[14px] font-extrabold text-[#111827] active:scale-[0.99]"
               >
                 Story Manager
