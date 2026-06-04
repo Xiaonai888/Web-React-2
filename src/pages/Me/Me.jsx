@@ -488,6 +488,7 @@ export default function Me() {
   const isLoggedIn = Boolean(token)
   const isPremium = false
   const tx = (key) => getDisplayText(key)
+  const inboxUnreadCount = 0
 
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
@@ -665,7 +666,7 @@ useEffect(() => {
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
           <div className="flex justify-end gap-2">
-            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" />
+            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" badgeCount={inboxUnreadCount} />
             <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
           </div>
 
