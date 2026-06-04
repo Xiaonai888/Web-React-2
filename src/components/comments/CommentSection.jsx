@@ -700,6 +700,19 @@ export default function CommentSection({
     window.setTimeout(() => setToast(''), 1600)
   }
 
+  const openCommentWarning = (data) => {
+  const matchedWords = Array.isArray(data.matched_words)
+    ? data.matched_words.map((item) => item.word).filter(Boolean)
+    : []
+
+  setWarningDialog({
+    title: data.code === 'READER_COMMENT_BLOCKED' ? 'Commenting Restricted' : 'Comment Hidden',
+    message: data.message || 'Your comment could not be posted.',
+    matchedWords,
+    until: data.comment_block?.expires_at || '',
+  })
+}
+
   const handleSend = async () => {
     if (!text.trim() || sending) return
 
