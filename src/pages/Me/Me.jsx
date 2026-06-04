@@ -476,6 +476,7 @@ export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
+  const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
   const [walletBalance, setWalletBalance] = useState({
@@ -506,6 +507,42 @@ useEffect(() => {
   applyTheme(getStoredTheme())
 }, [])
 
+  useEffect(() => {
+  let ignore = false
+
+  async function loadInboxUnreadCount() {
+    const currentToken = getReaderToken()
+
+    if (!currentToken) {
+      setInboxUnreadCount(0)
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mails/unread-count`, {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!ignore && response.ok && data.ok) {
+        setInboxUnreadCount(Number(data.unread_count || 0))
+      }
+    } catch {
+      if (!ignore) setInboxUnreadCount(0)
+    }
+  }
+
+  loadInboxUnreadCount()
+
+  return () => {
+    ignore = true
+  }
+}, [])
+
+  
 useEffect(() => {
   let ignore = false
 
