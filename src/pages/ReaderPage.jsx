@@ -1970,6 +1970,10 @@ return (
     onFinish={() => setReaderAdFinished(true)}
   />
 ) : null}
+
+      {shouldBlockReaderContent ? (
+  <div className="fixed inset-0 z-[2147483646] bg-black" />
+) : null}
       
       <ReaderBottomActionBar
   visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
@@ -2039,7 +2043,7 @@ return (
   />
 ) : null}
 
-        {!loading && episode && adultAccepted && !lockedEpisode ? (
+        {!loading && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
           <>
             <section className={`overflow-hidden rounded-[28px] ${theme.card} shadow-sm ring-1 ring-black/5`}>
               {cover ? (
