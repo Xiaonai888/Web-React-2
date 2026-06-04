@@ -61,7 +61,7 @@ function markShown(advertisement) {
   }
 }
 
-export default function AdvertisementPopup({ placement = 'opening', onFinish = null, blocking = false }) {
+export default function AdvertisementPopup({ placement = 'opening', onFinish = null, blocking = false, advertisementOverride = null }) {
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [loadingAd, setLoadingAd] = useState(Boolean(blocking))
@@ -103,7 +103,7 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
     setDebugMessage('')
     setLoadingAd(Boolean(blocking))
     setImageLoaded(false)
-  }, [placement])
+  }, [placement, advertisementOverride])
 
   useEffect(() => {
     let cancelled = false
@@ -112,7 +112,26 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
       const debug = getSearchFlag('addebug') || getSearchFlag('adtest')
 
       try {
-        const url = `${API_URL}/api/advertisements/public?placement=${placement}`
+  if (advertisementOverride?.image_url) {
+    if (!shouldShowByFrequency(advertisementOverride)) {
+      finishAd()
+      return
+    }
+
+    const waitSeconds = Math.max(0, Number(advertisementOverride.close_after_seconds ?? 3))
+
+    if (cancelled) return
+
+    setLoadingAd(false)
+    setAdvertisement(advertisementOverride)
+    setVisible(true)
+    setCanSkip(waitSeconds <= 0)
+    setSkipCountdown(waitSeconds)
+    markShown(advertisementOverride)
+    return
+  }
+
+  const url = `${API_URL}/api/advertisements/public?placement=${placement}`
 
         if (debug) setDebugMessage(`Loading: ${url}`)
 
@@ -163,7 +182,7 @@ markShown(nextAdvertisement)
     return () => {
       cancelled = true
     }
-  }, [placement])
+  }, [placement, advertisementOverride])
 
   useEffect(() => {
     if (!visible || !advertisement) return undefined
