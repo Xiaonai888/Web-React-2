@@ -43,6 +43,8 @@ import AdvertisementPopup from './components/AdvertisementPopup'
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
+import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
+
 
 
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -148,6 +150,7 @@ function AppShell() {
     '/tasks/history',
     '/author/trash',
     '/comments',
+    '/author/comment-protection',
     
   ]
 
@@ -646,8 +649,8 @@ const shouldShowOpeningAds =
         <Route path="/tasks" element={<TaskCenterPage />} />
         <Route path="/tasks/history" element={<TaskHistoryPage />} />
         <Route path="/author/trash" element={<AuthorTrashPage />} />
-
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
       </Routes>
 
       {shouldShowOpeningAds && adStep === 'splash' ? (
