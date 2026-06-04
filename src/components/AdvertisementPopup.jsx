@@ -65,6 +65,7 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [loadingAd, setLoadingAd] = useState(Boolean(blocking))
+  const [imageLoaded, setImageLoaded] = useState(false)
   const [canSkip, setCanSkip] = useState(false)
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
@@ -101,6 +102,7 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
     setSkipCountdown(0)
     setDebugMessage('')
     setLoadingAd(Boolean(blocking))
+    setImageLoaded(false)
   }, [placement])
 
   useEffect(() => {
@@ -142,10 +144,6 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
         const nextAdvertisement = data.advertisement
 const waitSeconds = Math.max(0, Number(nextAdvertisement.close_after_seconds ?? 3))
 
-await preloadImage(nextAdvertisement.image_url)
-
-if (cancelled) return
-        
 setLoadingAd(false)
 setAdvertisement(nextAdvertisement)
 setVisible(true)
@@ -260,7 +258,8 @@ markShown(nextAdvertisement)
           <img
             src={advertisement.image_url}
             alt="Advertisement"
-            className="h-full w-full object-cover"
+            className={`h-full w-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
             onError={() => {
               setDebugMessage('Advertisement image failed to load')
               finishAd()
@@ -271,7 +270,8 @@ markShown(nextAdvertisement)
         <img
           src={advertisement.image_url}
           alt="Advertisement"
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setImageLoaded(true)}
           onError={() => {
             setDebugMessage('Advertisement image failed to load')
             finishAd()
