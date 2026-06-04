@@ -1456,6 +1456,7 @@ export default function ReaderPage() {
   const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
   const [readerAdPolicy, setReaderAdPolicy] = useState(null)
   const [readerAdFinished, setReaderAdFinished] = useState(false)
+  const [readerGateReady, setReaderGateReady] = useState(false)
   const lastScrollYRef = useRef(0)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
@@ -1541,6 +1542,7 @@ async function loadReaderAdPolicy() {
       setMessage('')
       setAutoScrollEnabled(false)
       setReaderAdFinished(false)
+      setReaderGateReady(false)
 
       if (!getReaderToken()) {
         navigate('/login')
@@ -1571,6 +1573,7 @@ async function loadReaderAdPolicy() {
   setLockedEpisode(true)
   setReaderAdPolicy(null)
   setReadingProgress(0)
+  setReaderGateReady(true)
 
   try {
     await loadLockedUnlockStatus()
@@ -1597,6 +1600,7 @@ setEpisodes(episodesData.episodes || [])
 setLockedEpisode(false)
 setReaderAdPolicy(nextReaderAdPolicy)
 setReadingProgress(0)
+setReaderGateReady(true)       
 
         if (episodeData.episode?.is_adult) {
           setAdultAccepted(false)
@@ -1862,8 +1866,8 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
-const shouldShowReaderAd = !loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
-const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
+const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
+const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
 
 return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
@@ -1971,7 +1975,7 @@ return (
   />
 ) : null}
 
-      {shouldBlockReaderContent ? (
+     {shouldBlockReaderContent ? (
   <div className="fixed inset-0 z-[2147483646] bg-black" />
 ) : null}
       
