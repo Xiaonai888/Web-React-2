@@ -489,7 +489,7 @@ export default function Me() {
   const isLoggedIn = Boolean(token)
   const isPremium = false
   const tx = (key) => getDisplayText(key)
-  const inboxUnreadCount = 0
+  const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
 
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
