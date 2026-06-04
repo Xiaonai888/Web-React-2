@@ -92,7 +92,6 @@ const SecondChanceGenrePage = lazy(() => import('./pages/Genre/SecondChanceGenre
 const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenrePage'))
 const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
-<Route path="/author/story/:storyId/episode/publish-warning" element={<PublishBlockedWarningPage />} />
 
 
 function ComingSoon({ title }) {
@@ -611,6 +610,7 @@ function AppShell() {
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
+        <Route path="/author/story/:storyId/episode/publish-warning" element={<PublishBlockedWarningPage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<ComingSoon title="Premium" />} />
