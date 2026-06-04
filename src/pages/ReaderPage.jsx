@@ -1980,12 +1980,12 @@ return (
 
       {shouldShowReaderAd && !readerAdFinished ? (
   <AdvertisementPopup
-    placement="freeUnlock"
-    blocking
-    advertisementOverride={readerAdvertisement}
-    key={`freeUnlock-${storyId}-${episodeId}`}
-    onFinish={() => setReaderAdFinished(true)}
-  />
+  placement="freeUnlock"
+  blocking
+  advertisementOverride={readerAdvertisement}
+  key={`freeUnlock-${storyId}-${episodeId}`}
+  onFinish={() => setReaderAdFinished(true)}
+/>
 ) : null}
 
      {shouldBlockReaderContent ? (
