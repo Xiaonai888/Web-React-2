@@ -89,15 +89,21 @@ function clearReaderSession() {
 
 const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827] dark:bg-white/10 dark:text-white'
 
-function HeaderIcon({ icon, label, to, onClick }) {
+function HeaderIcon({ icon, label, to, onClick, badgeCount = 0 }) {
+  const showBadge = Number(badgeCount) > 0
   const content = (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f2430] shadow-sm ring-1 ring-black/5 active:scale-95 dark:bg-[#202331] dark:text-white dark:ring-white/10"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f2430] shadow-sm ring-1 ring-black/5 active:scale-95 dark:bg-[#202331] dark:text-white dark:ring-white/10"
     >
       <i className={`${icon} text-[15px]`} />
+      {showBadge ? (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-white dark:ring-[#202331]">
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
+      ) : null}
     </button>
   )
 
