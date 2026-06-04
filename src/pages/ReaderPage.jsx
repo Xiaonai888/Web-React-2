@@ -1544,9 +1544,6 @@ async function loadReaderAdPolicy() {
 
       if (!getReaderToken()) {
         navigate('/login')
-
-        const shouldShowReaderAd = !loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
-        const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
         return
       }
 
@@ -1865,7 +1862,10 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
-  return (
+const shouldShowReaderAd = !loading && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
+const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
+
+return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
       {brightnessOpacity > 0 ? (
         <div
@@ -1972,7 +1972,7 @@ async function handleLockedDiamondUnlock(packageKey) {
 ) : null}
       
       <ReaderBottomActionBar
-  visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode)}
+  visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   story={story}
   episode={episode}
   onOpenComments={() => setCommentsOpen(true)}
