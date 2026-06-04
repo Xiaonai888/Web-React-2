@@ -158,6 +158,17 @@ function AppShell() {
   location.pathname.startsWith('/shop/mall/') ||
   location.pathname.startsWith('/profile/') ||
   location.pathname.startsWith('/notifications/')
+  const readerToken =
+  sessionStorage.getItem('shadow_reader_token') ||
+  localStorage.getItem('shadow_reader_token') ||
+  ''
+
+const shouldShowOpeningAds =
+  Boolean(readerToken) &&
+  location.pathname !== '/login' &&
+  location.pathname !== '/register' &&
+  location.pathname !== '/forgot-password' &&
+  location.pathname !== '/reset-password'
   return (
     <>
       <Routes>
@@ -639,11 +650,11 @@ function AppShell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {adStep === 'splash' ? (
+      {shouldShowOpeningAds && adStep === 'splash' ? (
   <AdvertisementPopup placement="splash" blocking onFinish={() => setAdStep('opening')} />
 ) : null}
 
-{adStep === 'opening' ? (
+{shouldShowOpeningAds && adStep === 'opening' ? (
   <AdvertisementPopup placement="opening" blocking onFinish={() => setAdStep('done')} />
 ) : null}
 
