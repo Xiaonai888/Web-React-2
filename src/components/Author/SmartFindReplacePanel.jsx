@@ -299,9 +299,15 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
                 </div>
               </div>
 
-              <div className="text-[11px] font-extrabold text-[#555b66]">
-                {selectedMatches.length} selected
-              </div>
+              <div className="flex flex-col items-end gap-1">
+  <div className="text-[11px] font-extrabold text-[#555b66]">
+    {selectedMatches.length} selected
+  </div>
+  <div className="flex gap-1">
+    <button type="button" onClick={() => setSelectedIds(result.safe.map((item) => item.id))} className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-extrabold text-[#027a48]">Select safe</button>
+    <button type="button" onClick={() => setSelectedIds([])} className="rounded-full bg-white px-2 py-1 text-[10px] font-extrabold text-[#667085] ring-1 ring-[#e4e7ec]">Clear</button>
+  </div>
+</div>
             </div>
 
             <div className="max-h-[300px] overflow-y-auto p-2">
@@ -365,7 +371,7 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
             disabled={!selectedMatches.length || !findText.trim()}
             className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9ca3af]"
           >
-            Replace {selectedMatches.length} selected
+            {selectedMatches.length ? `Replace ${selectedMatches.length} selected` : 'No match selected'}
           </button>
         </div>
       </div>
