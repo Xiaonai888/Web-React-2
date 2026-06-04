@@ -723,10 +723,10 @@ export default function EpisodeEditorPage() {
     return
   }
 
-  if (searchParams.get('fromPublishSuccess') === '1') {
-    navigate('/author/dashboard', { replace: true })
-    return
-  }
+ if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
+  navigate('/author/dashboard', { replace: true })
+  return
+}
 
   navigate(`/author/story/${storyId}/manage`, { replace: true })
 }
@@ -734,10 +734,10 @@ export default function EpisodeEditorPage() {
   const handleDiscard = () => {
   setShowExitModal(false)
 
-  if (searchParams.get('fromPublishSuccess') === '1') {
-    navigate('/author/dashboard', { replace: true })
-    return
-  }
+  if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
+  navigate('/author/dashboard', { replace: true })
+  return
+}
 
   navigate(`/author/story/${storyId}/manage`, { replace: true })
 }
