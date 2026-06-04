@@ -42,7 +42,7 @@ import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
-
+import InboxPage from './pages/InboxPage'
 
 
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -614,7 +614,7 @@ function AppShell() {
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<ComingSoon title="Premium" />} />
-        <Route path="/inbox" element={<ComingSoon title="Inbox" />} />
+        <Route path="/inbox" element={<InboxPage />} />
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
