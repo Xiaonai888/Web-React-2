@@ -1455,6 +1455,7 @@ export default function ReaderPage() {
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
   const [readerAdPolicy, setReaderAdPolicy] = useState(null)
+  const [readerAdvertisement, setReaderAdvertisement] = useState(null)
   const [readerAdFinished, setReaderAdFinished] = useState(false)
   const [readerGateReady, setReaderGateReady] = useState(false)
   const lastScrollYRef = useRef(0)
@@ -1522,16 +1523,24 @@ export default function ReaderPage() {
     readingProgressRef.current = progress
   }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
 
-async function loadReaderAdPolicy() {
+async function loadReaderAdStatus() {
   const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
     headers: readerAuthHeaders(),
   })
 
   const data = await response.json().catch(() => ({}))
 
-  if (!response.ok || data.ok === false) return null
+  if (!response.ok || data.ok === false) {
+    return {
+      ad_policy: null,
+      advertisement: null,
+    }
+  }
 
-  return data.ad_policy || null
+  return {
+    ad_policy: data.ad_policy || null,
+    advertisement: data.advertisement || null,
+  }
 }
   
   useEffect(() => {
@@ -1541,7 +1550,7 @@ async function loadReaderAdPolicy() {
       setLoading(true)
       setMessage('')
       setAutoScrollEnabled(false)
-      setReaderAdFinished(false)
+      setReaderAdvertisement(null)
       setReaderGateReady(false)
 
       if (!getReaderToken()) {
@@ -1590,15 +1599,18 @@ async function loadReaderAdPolicy() {
           throw new Error(episodeData.message || 'Episode not found')
         }
 
-        const nextReaderAdPolicy = await loadReaderAdPolicy().catch(() => null)
-
+        const nextReaderAdStatus = await loadReaderAdStatus().catch(() => ({
+  ad_policy: null,
+  advertisement: null,
+}))
 if (ignore) return
 
 setStory(episodeData.story || null)
 setEpisode(episodeData.episode || null)
 setEpisodes(episodesData.episodes || [])
 setLockedEpisode(false)
-setReaderAdPolicy(nextReaderAdPolicy)
+setReaderAdPolicy(nextReaderAdStatus.ad_policy)
+setReaderAdvertisement(nextReaderAdStatus.advertisement)
 setReadingProgress(0)
 setReaderGateReady(true)       
 
@@ -1866,7 +1878,7 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
-const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad
+const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
 
 return (
