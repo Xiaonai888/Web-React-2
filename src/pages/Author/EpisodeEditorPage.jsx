@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
+import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -446,6 +447,8 @@ export default function EpisodeEditorPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   const [content, setContent] = useState('')
+  const textareaRef = useRef(null)
+  const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
@@ -455,6 +458,7 @@ export default function EpisodeEditorPage() {
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(false)
   const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
+  
 
   const characterCount = content.length
 
@@ -495,6 +499,12 @@ export default function EpisodeEditorPage() {
     setContent(event.target.value)
     markUnsaved()
   }
+
+  const handleSmartReplaceContent = (nextContent) => {
+  setContent(nextContent)
+  markUnsaved()
+  showToast('Text updated. Please review before saving.')
+}
 
   const handleConfirmCleanParagraphs = () => {
     const cleanedContent = cleanBrokenParagraphs(content)
@@ -796,6 +806,14 @@ export default function EpisodeEditorPage() {
         onClean={handleConfirmCleanParagraphs}
       />
 
+      <SmartFindReplacePanel
+  open={findReplaceOpen}
+  content={content}
+  textareaRef={textareaRef}
+  onClose={() => setFindReplaceOpen(false)}
+  onReplace={handleSmartReplaceContent}
+/>
+
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -950,23 +968,29 @@ export default function EpisodeEditorPage() {
               </div>
 
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[18px] bg-[#fafafe] p-2">
-               <ToolButton icon="fa-solid fa-bold" label="Bold" />
-                <ToolButton icon="fa-solid fa-italic" label="Italic" />
-                <ToolButton icon="fa-solid fa-minus" label="Divider" />
-                <ToolButton icon="fa-regular fa-image" label="Insert image" />
-                <ToolButton
-                  icon="fa-solid fa-wand-magic-sparkles"
-                  label="Clean Paragraphs"
-                  onClick={() => setCleanModalOpen(true)}
-                />
-                <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
-                <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
-                <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
-              </div>
+  <ToolButton icon="fa-solid fa-bold" label="Bold" />
+  <ToolButton icon="fa-solid fa-italic" label="Italic" />
+  <ToolButton icon="fa-solid fa-minus" label="Divider" />
+  <ToolButton icon="fa-regular fa-image" label="Insert image" />
+  <ToolButton
+    icon="fa-solid fa-wand-magic-sparkles"
+    label="Clean Paragraphs"
+    onClick={() => setCleanModalOpen(true)}
+  />
+  <ToolButton
+    icon="fa-solid fa-magnifying-glass"
+    label="Find & Replace"
+    onClick={() => setFindReplaceOpen(true)}
+  />
+  <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
+  <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
+  <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
+</div>
 
               <div className="rounded-[20px] border border-[#d9dde6] bg-white p-3">
                 <textarea
-                  value={content}
+  ref={textareaRef}
+  value={content}
                   onChange={handleContentChange}
                   placeholder="Start writing your episode..."
                   className="min-h-[520px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-white px-4 py-4 text-[15px] leading-8 text-[#111827] outline-none"
