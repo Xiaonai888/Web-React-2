@@ -604,6 +604,7 @@ export default function CommentSection({
   const [sort, setSort] = useState('newest')
   const [text, setText] = useState('')
   const [toast, setToast] = useState('')
+  const [warningDialog, setWarningDialog] = useState(null)
   const [editComment, setEditComment] = useState(null)
   const [editText, setEditText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -867,9 +868,13 @@ export default function CommentSection({
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Action failed')
-      }
+  if (data.code === 'COMMENT_AUTO_HIDDEN' || data.code === 'READER_COMMENT_BLOCKED') {
+    openCommentWarning(data)
+    return
+  }
 
+  throw new Error(data.message || 'Failed to create comment')
+}
       if (action === 'delete') {
         updateComments(comments.filter((item) => item.id !== comment.id))
         showToast('Comment deleted.')
@@ -988,6 +993,51 @@ export default function CommentSection({
           {toast}
         </div>
       ) : null}
+
+      {warningDialog ? (
+  <div className={`${isModal ? 'absolute' : 'fixed'} inset-0 z-[95] flex items-center justify-center bg-black/35 px-4`}>
+    <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 shadow-2xl">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
+        <i className="fa-solid fa-triangle-exclamation text-[18px]" />
+      </div>
+
+      <h3 className="mt-4 text-[20px] font-black text-[#111827]">{warningDialog.title}</h3>
+
+      <p className="mt-2 text-[13.5px] font-semibold leading-6 text-[#667085]">
+        {warningDialog.message}
+      </p>
+
+      {warningDialog.matchedWords.length ? (
+        <div className="mt-4 rounded-[18px] bg-[#fff7f7] p-3">
+          <div className="text-[11px] font-black uppercase tracking-[0.4px] text-[#b91c1c]">
+            Restricted words found
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {warningDialog.matchedWords.map((word) => (
+              <span key={word} className="rounded-full bg-[#fee2e2] px-3 py-1 text-[11.5px] font-black text-[#b91c1c]">
+                {word}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {warningDialog.until ? (
+        <div className="mt-3 rounded-[16px] bg-[#f8fafc] px-3 py-2 text-[12px] font-bold text-[#667085]">
+          Until: {formatDate(warningDialog.until)}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setWarningDialog(null)}
+        className="mt-5 h-11 w-full rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
+      >
+        I Understand
+      </button>
+    </div>
+  </div>
+) : null}
 
       <CommentComposer
         value={text}
