@@ -479,10 +479,10 @@ export default function AuthorPublicPage() {
   document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
 
   useEffect(() => {
-  document.body.classList.add('mobile-popup-open')
+  document.body.classList.add('author-page-mode')
 
   return () => {
-    document.body.classList.remove('mobile-popup-open')
+    document.body.classList.remove('author-page-mode')
   }
 }, [])
 
