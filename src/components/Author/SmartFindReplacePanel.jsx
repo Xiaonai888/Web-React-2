@@ -300,9 +300,15 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
               </div>
 
               <div className="flex flex-col items-end gap-1">
+ <div className="flex flex-col items-end gap-1">
   <div className="text-[11px] font-extrabold text-[#555b66]">
     {selectedMatches.length} selected
   </div>
+  <div className="flex gap-1">
+    <button type="button" onClick={() => setSelectedIds(result.safe.map((item) => item.id))} className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-extrabold text-[#027a48]">Select safe</button>
+    <button type="button" onClick={() => setSelectedIds([])} className="rounded-full bg-white px-2 py-1 text-[10px] font-extrabold text-[#667085] ring-1 ring-[#e4e7ec]">Clear</button>
+  </div>
+</div>
   <div className="flex gap-1">
     <button type="button" onClick={() => setSelectedIds(result.safe.map((item) => item.id))} className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-extrabold text-[#027a48]">Select safe</button>
     <button type="button" onClick={() => setSelectedIds([])} className="rounded-full bg-white px-2 py-1 text-[10px] font-extrabold text-[#667085] ring-1 ring-[#e4e7ec]">Clear</button>
