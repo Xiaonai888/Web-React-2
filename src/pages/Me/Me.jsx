@@ -175,7 +175,6 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
               {subtitle}
             </div>
           ) : null}
-          {extra ? <div className="mt-1.5">{extra}</div> : null}
         </div>
       </div>
       <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
@@ -473,9 +472,76 @@ const tx = (key) => getDisplayText(key)
   )
 }
 
+
+function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLetter, authorPage, authorNotificationCount, onOwnAccount, onAuthorPage, onManageAccount }) {
+  if (!open) return null
+
+  const pageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const pageUsername = authorPage?.page_username || authorPage?.username || ''
+  const pageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
+  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
+  const showAuthorBadge = Number(authorNotificationCount || 0) > 0
+
+  return (
+    <div className="fixed inset-0 z-[130]">
+      <button type="button" aria-label="Close profile switcher" onClick={onClose} className="absolute inset-0 bg-black/35" />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px] dark:bg-[#12141d]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
+
+        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
+          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{avatarLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{displayName}</div>
+                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">Own Account</div>
+              </div>
+            </div>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white dark:bg-[#f6b800] dark:text-[#111827]">
+              <i className="fa-solid fa-check text-[12px]" />
+            </span>
+          </button>
+
+          <button type="button" onClick={onAuthorPage} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99] dark:border-white/10">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
+                {pageLogo ? (
+                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{pageName}</div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">
+                  {showAuthorBadge ? <span className="h-2 w-2 rounded-full bg-[#ef4444]" /> : null}
+                  <span>{showAuthorBadge ? `${authorNotificationCount} notification${Number(authorNotificationCount) > 1 ? 's' : ''}` : pageUsername ? `@${pageUsername}` : 'Author Page'}</span>
+                </div>
+              </div>
+            </div>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1] dark:text-white/35" />
+          </button>
+        </div>
+
+        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-extrabold text-[#111827] active:scale-[0.99] dark:border-white/10 dark:bg-[#171923] dark:text-white">
+          Manage Account
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
   const [authorPage, setAuthorPage] = useState(null)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
@@ -496,14 +562,18 @@ export default function Me() {
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const hasAuthorPage = Boolean(authorPage?.page_username)
+  const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
+  const authorPageNotificationCount = Number(authorPage?.notification_count || authorPage?.unread_count || 0)
 
   useEffect(() => {
-    document.body.classList.toggle('settings-popup-open', settingsOpen)
+    document.body.classList.toggle('settings-popup-open', settingsOpen || profileSwitcherOpen)
 
     return () => {
       document.body.classList.remove('settings-popup-open')
     }
-  }, [settingsOpen])
+  }, [settingsOpen, profileSwitcherOpen])
 
 useEffect(() => {
   applyTheme(getStoredTheme())
@@ -699,6 +769,7 @@ useEffect(() => {
   const handleAuthorDashboard = async () => {
     if (authorLoading) return
 
+
     const currentToken = getReaderToken()
 
     if (!currentToken) {
@@ -737,17 +808,51 @@ useEffect(() => {
     }
   }
 
-  const handleViewAuthorPage = (event) => {
-    event.stopPropagation()
+  const handleOpenProfileArea = () => {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
 
+    if (hasAuthorPage) {
+      setProfileSwitcherOpen(true)
+      return
+    }
+
+    navigate('/profile')
+  }
+
+  const handleViewAuthorPage = () => {
     if (!authorPage?.page_username) return
-
+    setProfileSwitcherOpen(false)
     navigate(`/author/page/${encodeURIComponent(authorPage.page_username)}`)
+  }
+
+  const handleOwnAccount = () => {
+    setProfileSwitcherOpen(false)
+    navigate('/profile')
+  }
+
+  const handleManageAccount = () => {
+    setProfileSwitcherOpen(false)
+    navigate('/settings')
   }
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
+      <ProfileSwitcherSheet
+        open={profileSwitcherOpen}
+        onClose={() => setProfileSwitcherOpen(false)}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        avatarLetter={avatarLetter}
+        authorPage={authorPage}
+        authorNotificationCount={authorPageNotificationCount}
+        onOwnAccount={handleOwnAccount}
+        onAuthorPage={handleViewAuthorPage}
+        onManageAccount={handleManageAccount}
+      />
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
@@ -756,11 +861,8 @@ useEffect(() => {
             <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
           </div>
 
-          <div className="mt-3 flex items-start gap-4">
-            <Link
-              to={isLoggedIn ? '/profile' : '/login'}
-              className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white"
-            >
+          <button type="button" onClick={handleOpenProfileArea} className="mt-3 flex w-full items-center gap-4 text-left active:scale-[0.99]">
+            <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
               {isLoggedIn && avatarUrl ? (
                 <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
               ) : isLoggedIn ? (
@@ -768,41 +870,61 @@ useEffect(() => {
               ) : (
                 <i className="far fa-user text-[26px]" />
               )}
-            </Link>
+            </div>
 
             <div className="min-w-0 flex-1 pt-1.5">
-              <Link to={isLoggedIn ? '/profile' : '/login'} className="block">
-                <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
-                  {isLoggedIn ? (
-                    <>
-                      {checkingUser ? tx('loadingAccount') : displayName}
-                      {isPremium ? (
-                        <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
-                          <i className="fa-solid fa-crown text-[15px]" />
-                        </span>
-                      ) : null}
-                    </>
-                  ) : (
-                    tx('clickToLogin')
-                  )}
-                </h1>
-              </Link>
+              <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
+                {isLoggedIn ? (
+                  <>
+                    {checkingUser ? tx('loadingAccount') : displayName}
+                    {isPremium ? (
+                      <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
+                        <i className="fa-solid fa-crown text-[15px]" />
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  tx('clickToLogin')
+                )}
+              </h1>
 
               {!isLoggedIn ? (
                 <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
                   {tx('loginToSave')}
                 </p>
+              ) : hasAuthorPage ? (
+                <div className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">
+                  <span>Switch Profile</span>
+                  <i className="fa-solid fa-chevron-down text-[9px]" />
+                </div>
               ) : (
-                <Link
-                  to="/profile"
-                  className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50"
-                >
+                <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">
                   <span>{tx('viewProfile')}</span>
                   <i className="fa-solid fa-chevron-right text-[9px]" />
-                </Link>
+                </div>
               )}
             </div>
-          </div>
+
+            {isLoggedIn && hasAuthorPage ? (
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
+                  {authorPageLogo ? (
+                    <img src={authorPageLogo} alt={authorPageName} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[15px] font-extrabold">{authorPageName.charAt(0).toUpperCase()}</span>
+                  )}
+                  {authorPageNotificationCount > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-white dark:ring-[#171923]">
+                      {authorPageNotificationCount > 99 ? '99+' : authorPageNotificationCount}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] dark:bg-white/10 dark:text-white">
+                  <i className="fa-solid fa-chevron-down text-[13px]" />
+                </span>
+              </div>
+            ) : null}
+          </button>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
             <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
@@ -820,19 +942,8 @@ useEffect(() => {
         </section>
 
         <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={handleAuthorDashboard}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                handleAuthorDashboard()
-              }
-            }}
-            className="flex w-full cursor-pointer items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]"
-          >
-            <div className="flex min-w-0 items-start gap-3">
+          <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827] dark:bg-[#FFE9A6] dark:text-[#111827]">
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
@@ -842,7 +953,7 @@ useEffect(() => {
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1] dark:text-white/35" />
-          </div>
+          </button>
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
