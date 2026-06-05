@@ -569,12 +569,12 @@ export default function Me() {
   const authorPageNotificationCount = Number(authorPage?.notification_count || authorPage?.unread_count || 0)
 
   useEffect(() => {
-    document.body.classList.toggle('settings-popup-open', settingsOpen || profileSwitcherOpen)
+  document.body.classList.toggle('settings-popup-open', settingsOpen || profileSwitcherOpen || switchingProfile)
 
-    return () => {
-      document.body.classList.remove('settings-popup-open')
-    }
-  }, [settingsOpen, profileSwitcherOpen])
+  return () => {
+    document.body.classList.remove('settings-popup-open')
+  }
+}, [settingsOpen, profileSwitcherOpen, switchingProfile])
 
 useEffect(() => {
   applyTheme(getStoredTheme())
