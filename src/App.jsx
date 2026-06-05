@@ -94,6 +94,7 @@ const SecondChanceGenrePage = lazy(() => import('./pages/Genre/SecondChanceGenre
 const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenrePage'))
 const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
+const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 
 
 function ComingSoon({ title }) {
@@ -601,6 +602,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <MeCommentsPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/store"
+  element={
+    <LazyPage>
+      <AuthorStoreManagerPage />
     </LazyPage>
   }
 />
