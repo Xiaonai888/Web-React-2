@@ -544,6 +544,7 @@ export default function Me() {
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
   const [authorPage, setAuthorPage] = useState(null)
+  const [switchingProfile, setSwitchingProfile] = useState(false)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
@@ -562,6 +563,8 @@ export default function Me() {
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
   const avatarLetter = storedUser?.name?.charAt(0)?.toUpperCase() || 'S'
+  const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || authorPage?.logo_url || ''
   const hasAuthorPage = Boolean(authorPage?.page_username)
   const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
   const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
@@ -823,11 +826,15 @@ useEffect(() => {
   }
 
   const handleViewAuthorPage = () => {
-    if (!authorPage?.page_username) return
-    setProfileSwitcherOpen(false)
-    navigate(`/author/page/${encodeURIComponent(authorPage.page_username)}`)
-  }
+  if (!authorPage?.page_username) return
 
+  setProfileSwitcherOpen(false)
+  setSwitchingProfile(true)
+
+  window.setTimeout(() => {
+    navigate(`/author/page/${encodeURIComponent(authorPage.page_username)}`)
+  }, 1200)
+}
   const handleOwnAccount = () => {
     setProfileSwitcherOpen(false)
     navigate('/profile')
@@ -841,6 +848,33 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
+      {switchingProfile ? (
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white px-6 text-center dark:bg-[#0d0f16]">
+    <div className="relative flex h-[86px] w-[86px] items-center justify-center">
+      <div className="absolute inset-0 rounded-full border-2 border-[#e5e7eb] border-t-[#9ca3af] animate-spin" />
+      <div className="flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-black/10 dark:bg-white/10 dark:ring-white/10">
+        {authorPageLogo ? (
+          <img src={authorPageLogo} alt={authorPageName} className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-[20px] font-extrabold text-[#111827] dark:text-white">
+            {authorPageName.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
+    </div>
+
+    <div className="mt-5 text-[18px] font-medium text-[#111827] dark:text-white">
+      Switching to
+    </div>
+    <div className="mt-1 line-clamp-2 max-w-[280px] text-[18px] font-semibold text-[#111827] dark:text-white">
+      {authorPageName}
+    </div>
+
+    <div className="absolute bottom-16 text-[26px] font-black tracking-tight text-[#111827] dark:text-white">
+      Shadow
+    </div>
+  </div>
+) : null}
       <ProfileSwitcherSheet
         open={profileSwitcherOpen}
         onClose={() => setProfileSwitcherOpen(false)}
