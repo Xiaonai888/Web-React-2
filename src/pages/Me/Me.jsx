@@ -904,20 +904,6 @@ useEffect(() => {
                 </div>
               )}
             </div>
-
-            {isLoggedIn && hasAuthorPage ? (
-              <div className="flex shrink-0 items-center gap-2">
-                <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
-                  {authorPageLogo ? (
-                    <img src={authorPageLogo} alt={authorPageName} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[15px] font-extrabold">{authorPageName.charAt(0).toUpperCase()}</span>
-                  )}
-                  {authorPageNotificationCount > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-white dark:ring-[#171923]">
-                      {authorPageNotificationCount > 99 ? '99+' : authorPageNotificationCount}
-                    </span>
-                  ) : null}
                 </div>
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] dark:bg-white/10 dark:text-white">
                   <i className="fa-solid fa-chevron-down text-[13px]" />
