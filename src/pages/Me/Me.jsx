@@ -868,9 +868,11 @@ useEffect(() => {
       {authorPageName}
     </div>
 
-    <div className="absolute bottom-16 text-[26px] font-black tracking-tight text-[#111827] dark:text-white">
-      Shadow
-    </div>
+   <img
+  src="/assets/Icons/Logo Shadow 2.svg"
+  alt="Shadow"
+  className="absolute bottom-14 h-auto w-[150px] object-contain"
+/>
   </div>
 ) : null}
       <ProfileSwitcherSheet
