@@ -176,21 +176,23 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
   return (
     <div className="fixed inset-0 z-[170] bg-black/35 sm:flex sm:items-center sm:justify-center sm:px-4">
       <div className="flex h-full w-full flex-col bg-white shadow-2xl sm:h-[86vh] sm:max-w-[760px] sm:rounded-[28px]">
-        <div className="flex items-center justify-between border-b border-[#eceaf2] px-4 py-3">
-          <div>
-            <h2 className="text-[17px] font-extrabold text-[#111827]">Find & Replace</h2>
-            <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">Smart match helps avoid wrong replace.</p>
-          </div>
+       <div className="flex items-center gap-3 border-b border-[#eceaf2] bg-white px-4 py-3">
+  <button
+    type="button"
+    onClick={onClose}
+    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+    aria-label="Back to editor"
+  >
+    <i className="fa-solid fa-chevron-left text-[13px]" />
+  </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Close find and replace"
-          >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
+  <div className="min-w-0 flex-1">
+    <h2 className="text-[17px] font-extrabold leading-5 text-[#111827]">Find & Replace</h2>
+    <p className="mt-1 line-clamp-1 text-[11px] font-bold text-[#8d94a1]">
+      Review safe and risky matches before replacing.
+    </p>
+  </div>
+</div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
