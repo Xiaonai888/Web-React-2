@@ -166,8 +166,7 @@ function PageMenu({ open, onClose, onSelect }) {
         </div>
 
         <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white">
-          <div className="divide-y divide-[#f0eef6]">
-            <ToolRow icon="fa-regular fa-user" title="View Page" subtitle="Open your public author page" onClick={() => onSelect('/author/page')} />
+          <div className="divide-y divide-[#f0eef6]"
             <ToolRow icon="fa-regular fa-pen-to-square" title="Edit Page" subtitle="Avatar, name, and page details" onClick={() => onSelect('/author/edit-page')} />
             <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
             <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
