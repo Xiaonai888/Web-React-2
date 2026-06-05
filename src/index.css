@@ -120,3 +120,12 @@ body::-webkit-scrollbar,
     display: none !important;
   }
 }
+
+
+@media (max-width: 767px) {
+  body.author-page-mode nav[aria-label="Bottom navigation"],
+  body.author-page-mode .bottom-navigation,
+  body.author-page-mode .mobile-bottom-nav {
+    display: none !important;
+  }
+}
