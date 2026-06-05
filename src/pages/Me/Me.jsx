@@ -147,7 +147,7 @@ function QuickAction({ icon, title, subtitle, to, onClick }) {
   )
 }
 
-function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = false }) {
+function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = false, extra = null }) {
   const body = (
     <>
       <div className="flex min-w-0 items-center gap-3">
@@ -175,6 +175,7 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
               {subtitle}
             </div>
           ) : null}
+          {extra ? <div className="mt-1.5">{extra}</div> : null}
         </div>
       </div>
       <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
@@ -476,6 +477,7 @@ export default function Me() {
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
+  const [authorPage, setAuthorPage] = useState(null)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
@@ -584,6 +586,44 @@ useEffect(() => {
   }
 }, [])
 
+
+useEffect(() => {
+  let ignore = false
+
+  async function loadAuthorPage() {
+    const currentToken = getReaderToken()
+
+    if (!currentToken) {
+      setAuthorPage(null)
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!ignore && response.ok && data.has_author_page && data.author_page) {
+        setAuthorPage(data.author_page)
+      } else if (!ignore) {
+        setAuthorPage(null)
+      }
+    } catch {
+      if (!ignore) setAuthorPage(null)
+    }
+  }
+
+  loadAuthorPage()
+
+  return () => {
+    ignore = true
+  }
+}, [])
+  
   useEffect(() => {
     let ignore = false
 
@@ -684,6 +724,7 @@ useEffect(() => {
       }
 
       if (response.ok && data.has_author_page) {
+        setAuthorPage(data.author_page || null)
         navigate('/author/dashboard')
         return
       }
@@ -694,6 +735,14 @@ useEffect(() => {
     } finally {
       setAuthorLoading(false)
     }
+  }
+
+  const handleViewAuthorPage = (event) => {
+    event.stopPropagation()
+
+    if (!authorPage?.page_username) return
+
+    navigate(`/author/page/${encodeURIComponent(authorPage.page_username)}`)
   }
 
   return (
@@ -771,18 +820,39 @@ useEffect(() => {
         </section>
 
         <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-          <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleAuthorDashboard}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                handleAuthorDashboard()
+              }
+            }}
+            className="flex w-full cursor-pointer items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]"
+          >
+            <div className="flex min-w-0 items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827] dark:bg-[#FFE9A6] dark:text-[#111827]">
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">{tx('authorDashboard')}</div>
                 <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{tx('authorDashboardSub')}</div>
+                {authorPage?.page_username ? (
+                  <button
+                    type="button"
+                    onClick={handleViewAuthorPage}
+                    className="mt-1.5 inline-flex w-fit items-center gap-1 text-[11.5px] font-extrabold text-[#2563eb] active:scale-95 dark:text-[#8bb6ff]"
+                  >
+                    <span>View Author Page</span>
+                    <i className="fa-solid fa-chevron-right text-[9px]" />
+                  </button>
+                ) : null}
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1] dark:text-white/35" />
-          </button>
+          </div>
         </section>
 
         <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
