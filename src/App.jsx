@@ -162,6 +162,7 @@ function AppShell() {
   location.pathname.startsWith('/shop/mall/') ||
   location.pathname.startsWith('/profile/') ||
   location.pathname.startsWith('/notifications/')
+  location.pathname.startsWith('/author/page/') ||
   const readerToken =
   sessionStorage.getItem('shadow_reader_token') ||
   localStorage.getItem('shadow_reader_token') ||
