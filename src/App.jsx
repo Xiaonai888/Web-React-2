@@ -159,6 +159,7 @@ function AppShell() {
   hideFooterPaths.includes(location.pathname) ||
   location.pathname.startsWith('/story/') ||
   location.pathname.startsWith('/author/story/') ||
+  location.pathname === '/author/page' ||
   location.pathname.startsWith('/author/page/') ||
   location.pathname.startsWith('/shop/mall/') ||
   location.pathname.startsWith('/profile/') ||
