@@ -516,25 +516,7 @@ export default function AuthorDashboardPage() {
             <div className="min-w-0 flex-1">
               <div className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{author.name}</div>
 
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const latestAuthorPage = await fetchMyAuthorPage()
-
-                    if (!latestAuthorPage?.page_username) {
-                      setMessage('Author page data is missing. Please refresh and try again.')
-                      return
-                    }
-
-                    navigate(`/author/page/${encodeURIComponent(latestAuthorPage.page_username)}`)
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
-                >
-                  View Page
-                  <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />
-                </button>
-              </div>
+             
             </div>
           </div>
 
