@@ -972,6 +972,7 @@ async function handleUnfollowFromSettings() {
           ) : null}
         </section>
       </main>
+      <div className="fixed bottom-0 left-0 right-0 z-[80] h-[64px] border-t border-[#eef0f4] bg-white dark:border-white/10 dark:bg-[#0d0f16]" />
     </div>
   )
 }
