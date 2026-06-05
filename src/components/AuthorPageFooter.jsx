@@ -1,6 +1,6 @@
 function AuthorPageFooter({ active = 'Page', onComingSoon }) {
   const items = [
-    { label: 'Page', icon: 'fa-regular fa-user' },
+    { label: 'Page', icon: 'fa-regular fa-flag' },
     { label: 'Dashboard', icon: 'fa-solid fa-chart-simple' },
     { label: 'Store', icon: 'fa-solid fa-bag-shopping' },
     { label: 'Notifications', icon: 'fa-regular fa-bell' },
