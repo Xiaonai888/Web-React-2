@@ -478,6 +478,14 @@ export default function AuthorPublicPage() {
   useEffect(() => {
   document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
 
+  useEffect(() => {
+  document.body.classList.add('mobile-popup-open')
+
+  return () => {
+    document.body.classList.remove('mobile-popup-open')
+  }
+}, [])
+
   return () => {
     document.body.classList.remove('mobile-popup-open')
   }
