@@ -566,8 +566,6 @@ export default function Me() {
   const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
   const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || authorPage?.logo_url || ''
   const hasAuthorPage = Boolean(authorPage?.page_username)
-  const authorPageName = authorPage?.page_name || authorPage?.name || 'Author Page'
-  const authorPageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
   const authorPageNotificationCount = Number(authorPage?.notification_count || authorPage?.unread_count || 0)
 
   useEffect(() => {
