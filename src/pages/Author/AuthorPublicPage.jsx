@@ -8,7 +8,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const tabs = ['Posts', 'Works', 'About']
+const tabs = ['Posts', 'Works', 'Store', 'About']
 
 function getAuthToken() {
   return (
@@ -254,6 +254,98 @@ function AuthorWorkCard({ work, onOpen }) {
     </button>
   )
 }
+
+const STORE_TYPE_FILTERS = ['All', 'Books', 'PDF']
+
+const DEFAULT_STORE_CATEGORIES = [
+  'New Release',
+  'Best Seller',
+  'Completed Series',
+  'Special Edition',
+  'Author Picks',
+]
+
+function AuthorStoreSection({
+  activeType,
+  activeCategory,
+  onTypeChange,
+  onCategoryChange,
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-black text-[#111827]">Store</h2>
+            <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
+              Books and PDFs from this author will appear here.
+            </p>
+          </div>
+          <span className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-black text-[#111827]">
+            Coming soon
+          </span>
+        </div>
+
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {STORE_TYPE_FILTERS.map((type) => {
+            const active = activeType === type
+
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => onTypeChange(type)}
+                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
+                  active
+                    ? 'bg-[#111827] text-white'
+                    : 'bg-[#f3f4f6] text-[#6b7280]'
+                }`}
+              >
+                {type}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 className="text-[15px] font-black text-[#111827]">Categories</h3>
+          <span className="text-[11px] font-bold text-[#9ca3af]">
+            Editable later in Dashboard
+          </span>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {DEFAULT_STORE_CATEGORIES.map((category) => {
+            const active = activeCategory === category
+
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => onCategoryChange(category)}
+                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
+                  active
+                    ? 'bg-[#fff4cc] text-[#111827] ring-1 ring-[#f6b800]/40'
+                    : 'bg-[#f8fafc] text-[#6b7280] ring-1 ring-black/5'
+                }`}
+              >
+                {category}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <EmptyPanel
+        title="No store items yet"
+        text="Paper books, PDFs, bundles, and pre-orders from this author will appear here."
+      />
+    </div>
+  )
+}
+
   
 function EmptyPanel({ title, text }) {
   return (
@@ -464,6 +556,8 @@ export default function AuthorPublicPage() {
   const { pageUsername } = useParams()
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState('Posts')
+  const [activeStoreType, setActiveStoreType] = useState('All')
+  const [activeStoreCategory, setActiveStoreCategory] = useState('New Release')
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
@@ -898,7 +992,7 @@ async function handleUnfollowFromSettings() {
         </section>
 
         <section className="sticky top-14 z-30 border-y border-[#eef0f4] bg-white">
-          <div className="grid grid-cols-3 px-4">
+          <div className="grid grid-cols-4 px-4">
             {tabs.map((tab) => {
               const active = activeTab === tab
 
@@ -947,6 +1041,15 @@ async function handleUnfollowFromSettings() {
               />
             )
           ) : null}
+
+          {activeTab === 'Store' ? (
+  <AuthorStoreSection
+    activeType={activeStoreType}
+    activeCategory={activeStoreCategory}
+    onTypeChange={setActiveStoreType}
+    onCategoryChange={setActiveStoreCategory}
+  />
+) : null}
 
           {activeTab === 'About' ? (
             <div className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
