@@ -1,9 +1,13 @@
+import { useNavigate } from 'react-router-dom'
+
 function AuthorPageFooter({ active = 'Page', onComingSoon }) {
+  const navigate = useNavigate()
+
   const items = [
-    { label: 'Page', icon: 'fa-regular fa-flag' },
-    { label: 'Dashboard', icon: 'fa-solid fa-chart-simple' },
-    { label: 'Store', icon: 'fa-solid fa-bag-shopping' },
-    { label: 'Notifications', icon: 'fa-regular fa-bell' },
+    { label: 'Page', icon: 'fa-regular fa-flag', action: () => navigate('/author/page') },
+    { label: 'Dashboard', icon: 'fa-solid fa-chart-simple', action: () => onComingSoon?.('Dashboard') },
+    { label: 'Store', icon: 'fa-solid fa-bag-shopping', action: () => navigate('/author/page/store') },
+    { label: 'Notifications', icon: 'fa-regular fa-bell', action: () => onComingSoon?.('Notifications') },
   ]
 
   return (
@@ -16,9 +20,7 @@ function AuthorPageFooter({ active = 'Page', onComingSoon }) {
             <button
               key={item.label}
               type="button"
-              onClick={() => {
-                if (item.label !== 'Page') onComingSoon?.(item.label)
-              }}
+              onClick={item.action}
               className={`flex flex-col items-center justify-center gap-1 text-[10px] font-extrabold transition active:scale-95 ${
                 isActive ? 'text-[#111827] dark:text-white' : 'text-[#9aa1ad] dark:text-white/45'
               }`}
