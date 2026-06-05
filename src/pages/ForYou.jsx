@@ -349,14 +349,13 @@ export default function ForYou() {
             <div className="flex items-center space-x-2">
               <div className="flex h-9 w-9 items-center justify-center overflow-visible">
   <img
-    src="/assets/Icons/Shadow%20Logo.svg"
+    src="/assets/Icons/Logo Shadow 2.svg"
     alt="Shadow"
     className="h-full w-full object-contain"
     loading="eager"
     decoding="async"
   />
 </div>
-              <h1 className="text-2xl font-bold tracking-tight text-[#111827]">SHADOW</h1>
             </div>
 
             <div className="flex items-center space-x-5 text-gray-400 text-xl">
