@@ -843,9 +843,9 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={handleViewAuthorPage}
-                    className="mt-1.5 inline-flex w-fit items-center gap-1 text-[11.5px] font-extrabold text-[#2563eb] active:scale-95 dark:text-[#8bb6ff]"
+                    className="mt-1 inline-flex w-fit items-center text-[11.5px] font-bold text-[#6b7280] active:text-[#d99a00] dark:text-white/55 dark:active:text-[#f6b800]"
                   >
-                    <span>View Author Page</span>
+                    <span>View My Page</span>
                     <i className="fa-solid fa-chevron-right text-[9px]" />
                   </button>
                 ) : null}
