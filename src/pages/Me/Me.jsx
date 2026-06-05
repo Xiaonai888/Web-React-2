@@ -839,16 +839,6 @@ useEffect(() => {
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">{tx('authorDashboard')}</div>
                 <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{tx('authorDashboardSub')}</div>
-                {authorPage?.page_username ? (
-                  <button
-                    type="button"
-                    onClick={handleViewAuthorPage}
-                    className="mt-1 inline-flex w-fit items-center text-[11.5px] font-bold text-[#6b7280] active:text-[#d99a00] dark:text-white/55 dark:active:text-[#f6b800]"
-                  >
-                    <span>View My Page</span>
-                    <i className="fa-solid fa-chevron-right text-[9px]" />
-                  </button>
-                ) : null}
               </div>
             </div>
             <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1] dark:text-white/35" />
