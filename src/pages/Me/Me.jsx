@@ -904,12 +904,6 @@ useEffect(() => {
                 </div>
               )}
             </div>
-                </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] dark:bg-white/10 dark:text-white">
-                  <i className="fa-solid fa-chevron-down text-[13px]" />
-                </span>
-              </div>
-            ) : null}
           </button>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
