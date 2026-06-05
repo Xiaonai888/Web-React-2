@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import AuthorPageFooter from '../../components/AuthorPageFooter'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
@@ -513,7 +514,6 @@ export default function AuthorPublicPage() {
   function handleAuthorFooterComingSoon(label) {
   setMessage(`${label} is coming soon.`)
 }
-
   useEffect(() => {
   document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
 
@@ -755,6 +755,10 @@ async function handleUnfollowFromSettings() {
   }
 
   const authorWorks = Array.isArray(author?.works) ? author.works : []
+
+  function handleAuthorFooterComingSoon(label) {
+  setMessage(`${label} is coming soon.`)
+}
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
@@ -1003,6 +1007,7 @@ async function handleUnfollowFromSettings() {
           ) : null}
         </section>
       </main>
+      <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
     </div>
   )
 }
