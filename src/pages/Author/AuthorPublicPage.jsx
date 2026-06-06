@@ -635,6 +635,36 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   )
 }
 
+function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[260] flex min-h-screen flex-col items-center justify-center bg-white">
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="relative flex h-20 w-20 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-[#d9dce4] border-t-[#111827] animate-spin" />
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[20px] font-bold">{avatarLetter}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 text-center">
+          <div className="text-[16px] font-medium text-[#111827]">Switching to</div>
+          <div className="mt-1 text-[17px] font-bold text-[#111827]">{name}</div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none mb-8 flex h-14 w-36 items-center justify-center">
+        <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-11 w-auto object-contain opacity-95" />
+      </div>
+    </div>
+  )
+}
+
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
@@ -656,7 +686,20 @@ export default function AuthorPublicPage() {
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
+  const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
+  const readerName = readerUser?.name || 'Reader'
+  const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
+  const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
+
+  function handleSwitchToReaderAccount() {
+  setPageSwitcherOpen(false)
+  setSwitchingToReader(true)
+
+  window.setTimeout(() => {
+    navigate('/me')
+  }, 900)
+}
 
   function handleAuthorFooterComingSoon(label) {
   setMessage(`${label} is coming soon.`)
@@ -931,14 +974,18 @@ async function handleUnfollowFromSettings() {
   readerUser={readerUser}
   onClose={() => setPageSwitcherOpen(false)}
   onPage={() => setPageSwitcherOpen(false)}
-  onOwnAccount={() => {
-    setPageSwitcherOpen(false)
-    navigate('/me')
-  }}
+  onOwnAccount={handleSwitchToReaderAccount}
   onManageAccount={() => {
     setPageSwitcherOpen(false)
     navigate('/settings')
   }}
+/>
+
+      <SwitchingAccountScreen
+  open={switchingToReader}
+  name={readerName}
+  avatarUrl={readerAvatar}
+  avatarLetter={readerLetter}
 />
       
       <main className="mx-auto max-w-[980px]">
