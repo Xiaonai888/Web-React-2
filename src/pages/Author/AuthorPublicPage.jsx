@@ -1010,6 +1010,7 @@ async function handleUnfollowFromSettings() {
   ) : (
     <div className="h-full w-full bg-gradient-to-br from-[#111827] via-[#1f2937] to-[#374151]" />
   )}
+   <div className="absolute inset-0 bg-black/15" />         
 
   <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
     {displayAuthor.is_owner ? (
@@ -1037,7 +1038,7 @@ async function handleUnfollowFromSettings() {
     <button
   type="button"
   onClick={() => openCropEditor('cover')}
-  className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
+  className="absolute bottom-5 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
 >
   <i className="fa-solid fa-camera text-[22px]" />
 </button>
@@ -1127,21 +1128,21 @@ async function handleUnfollowFromSettings() {
     <div className="mt-4 space-y-2">
   <div className="flex items-center gap-2">
     {actionButtons.map((button) => (
-      <button
-        key={button.label}
-        type="button"
-        onClick={button.onClick}
-        disabled={button.disabled}
-        className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-          button.type === 'primary'
-            ? 'bg-[#111827] text-white'
-            : 'bg-[#f3f4f6] text-[#111827]'
-        }`}
-      >
-        <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
-        {button.disabled ? 'Loading...' : button.label}
-      </button>
-    ))}
+  <button
+    key={button.label}
+    type="button"
+    onClick={button.onClick}
+    disabled={button.disabled}
+    className={`h-10 flex-1 rounded-full text-[13px] font-medium transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+      button.type === 'primary'
+        ? 'bg-[#111827] text-white'
+        : 'bg-[#f3f4f6] text-[#111827]'
+    }`}
+  >
+    <i className={`fa-solid ${button.icon} mr-2 text-[12px]`} />
+    {button.disabled ? 'Loading...' : button.label}
+  </button>
+))}
 
     {!displayAuthor.is_owner ? (
       <button
