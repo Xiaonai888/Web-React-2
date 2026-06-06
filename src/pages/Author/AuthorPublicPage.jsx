@@ -696,11 +696,11 @@ async function handleUnfollowFromSettings() {
   
   const actionButtons = useMemo(() => {
   if (author?.is_owner) {
-    return [
-      { label: 'Edit Page', icon: 'fa-pen', type: 'primary', onClick: () => navigate('/author/edit-page') },
-      { label: 'Add Story', icon: 'fa-plus', type: 'secondary', onClick: () => navigate('/author/create-story') },
-    ]
-  }
+  return [
+    { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/dashboard') },
+    { label: 'Advertise', icon: 'fa-bullhorn', type: 'secondary', onClick: () => setMessage('Advertise is coming soon.') },
+  ]
+}
 
     return [
       {
