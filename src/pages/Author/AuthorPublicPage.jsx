@@ -904,6 +904,56 @@ async function handleUnfollowFromSettings() {
     </button>
   ) : null}
 </div>
+
+          <div className="px-4 pb-5 sm:px-6">
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="-mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
+                {displayAuthor.avatar_url ? (
+                  <img
+                    src={displayAuthor.avatar_url}
+                    alt={displayAuthor.page_name}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#e5e7eb] text-[42px] font-black text-[#9ca3af]">
+                    {displayAuthor.page_name.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+
+                {displayAuthor.is_owner ? (
+                  <button
+                    type="button"
+                    onClick={() => openCropEditor('avatar')}
+                    className="absolute left-[92px] top-[44px] flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm sm:left-[112px] sm:top-[58px]"
+                  >
+                    <i className="fa-solid fa-camera text-[13px]" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="min-w-0 flex-1 sm:pb-2">
+                {loading ? (
+                  <div className="h-8 w-52 animate-pulse rounded-full bg-[#f3f4f6]" />
+                ) : (
+                  <h1 className="line-clamp-1 text-[24px] font-black tracking-tight text-[#111827] sm:text-[30px]">
+                    {displayAuthor.page_name}
+                  </h1>
+                )}
+
+                <p className="mt-1 text-[13px] font-bold text-[#6b7280] sm:text-[14px]">
+                  @{displayAuthor.page_username}
+                </p>
+
+                {loading ? (
+                  <div className="mt-3 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[#f3f4f6]" />
+                ) : (
+                  <p className="mt-2 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#374151] sm:text-[14px]">
+                    {displayAuthor.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="mt-5 grid grid-cols-3 rounded-[22px] bg-[#f8fafc] p-4 ring-1 ring-black/5">
               <StatItem value={displayAuthor.works_count} label="Works" />
               <StatItem value={displayAuthor.followers_count || displayAuthor.fans_count} label="Followers" />
