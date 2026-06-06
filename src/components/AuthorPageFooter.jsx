@@ -5,7 +5,7 @@ function AuthorPageFooter({ active = 'Page', onComingSoon }) {
 
   const items = [
     { label: 'Page', icon: 'fa-regular fa-flag', action: () => navigate('/author/page') },
-    { label: 'Dashboard', icon: 'fa-solid fa-chart-simple', action: () => onComingSoon?.('Dashboard') },
+    { label: 'Dashboard', icon: 'fa-solid fa-chart-simple', action: () => navigate('/author/page/dashboard') },
     { label: 'Store', icon: 'fa-solid fa-bag-shopping', action: () => navigate('/author/page/store') },
     { label: 'Notifications', icon: 'fa-regular fa-bell', action: () => onComingSoon?.('Notifications') },
   ]
