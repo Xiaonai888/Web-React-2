@@ -886,7 +886,7 @@ async function handleUnfollowFromSettings() {
     <button
       type="button"
       onClick={() => setMessage('More options coming soon.')}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur active:scale-95"
+      className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
       aria-label="More options"
     >
       <i className="fa-solid fa-ellipsis text-[15px]" />
