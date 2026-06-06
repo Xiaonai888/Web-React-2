@@ -1049,7 +1049,7 @@ async function handleUnfollowFromSettings() {
 
             <div className="relative z-10">
               <div className="flex items-start gap-4">
-                <div className="relative -mt-[46px] h-[92px] w-[92px] shrink-0 rounded-full border-[3px] border-white bg-[#f3f4f6] shadow-sm sm:-mt-[56px] sm:h-[112px] sm:w-[112px]">
+                <div className="relative -mt-[42px] h-[92px] w-[92px] shrink-0 rounded-full border-[3px] border-white bg-[#f3f4f6] shadow-sm sm:-mt-[52px] sm:h-[112px] sm:w-[112px]">
                   {displayAuthor.avatar_url ? (
                     <img
                       src={displayAuthor.avatar_url}
@@ -1066,9 +1066,9 @@ async function handleUnfollowFromSettings() {
                     <button
                       type="button"
                       onClick={() => openCropEditor('avatar')}
-                      className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm active:scale-95 sm:h-10 sm:w-10"
+                      className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-sm active:scale-95 sm:h-8 sm:w-8"
                     >
-                      <i className="fa-solid fa-camera text-[13px]" />
+                      <i className="fa-solid fa-camera text-[11px]" />
                     </button>
                   ) : null}
                 </div>
@@ -1099,7 +1099,7 @@ async function handleUnfollowFromSettings() {
                     ) : null}
                   </div>
 
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
+                  <div className="-mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
                     <span>
                       <strong>{formatCompactNumber(displayAuthor.works_count)}</strong>{' '}
                       <span className="text-[#6b7280]">Works</span>
