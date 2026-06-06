@@ -204,6 +204,46 @@ function StatItem({ value, label }) {
   )
 }
 
+async function fetchAuthorPosts(pageUsername) {
+  if (!pageUsername) return []
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts`)
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load posts')
+  }
+
+  return Array.isArray(data.posts) ? data.posts : []
+}
+
+async function createAuthorPost(content) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me/posts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      post_type: 'article',
+      content,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to create post')
+  }
+
+  return data.post || null
+}
+
+
 function AuthorWorkCard({ work, onOpen }) {
   return (
     <button
@@ -337,6 +377,91 @@ function AuthorStoreSection({
           })}
         </div>
       </div>
+
+      Add these components before EmptyPanel():
+
+function formatPostDate(value) {
+  if (!value) return 'Just now'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return 'Just now'
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function AuthorPostComposer({ value, saving, onChange, onSubmit }) {
+  return (
+    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-black text-[#111827]">
+          Article
+        </span>
+        <span className="text-[11px] font-bold text-[#9ca3af]">Text only</span>
+      </div>
+
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        maxLength={5000}
+        placeholder="Write an update, announcement, or article for your readers..."
+        className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-white px-4 py-3 text-[14px] font-semibold leading-6 text-[#111827] outline-none focus:border-[#111827]"
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="text-[11px] font-bold text-[#9ca3af]">{value.length}/5000</span>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={saving || !value.trim()}
+          className="h-10 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? 'Posting...' : 'Post'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+      function AuthorPostCard({ post }) {
+  return (
+    <article className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[12px] font-black uppercase tracking-[0.05em] text-[#111827]">
+            {post.post_type || 'Article'}
+          </div>
+          <div className="mt-1 text-[11px] font-bold text-[#9ca3af]">
+            {formatPostDate(post.created_at)}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]"
+        >
+          <i className="fa-solid fa-ellipsis text-[13px]" />
+        </button>
+      </div>
+
+      <p className="whitespace-pre-wrap text-[14px] font-semibold leading-7 text-[#111827]">
+        {post.content}
+      </p>
+
+      <div className="mt-4 flex items-center gap-5 border-t border-[#eef0f4] pt-3 text-[12px] font-bold text-[#8b93a1]">
+        <span><i className="fa-regular fa-heart mr-1.5" />{formatCompactNumber(post.like_count)}</span>
+        <span><i className="fa-regular fa-comment mr-1.5" />{formatCompactNumber(post.comment_count)}</span>
+        <span><i className="fa-solid fa-retweet mr-1.5" />{formatCompactNumber(post.echo_count)}</span>
+      </div>
+    </article>
+  )
+}
+
 
       <EmptyPanel
         title="No store items yet"
@@ -570,6 +695,10 @@ export default function AuthorPublicPage() {
   const [savingImage, setSavingImage] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
+  const [authorPosts, setAuthorPosts] = useState([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [postDraft, setPostDraft] = useState('')
+  const [postSaving, setPostSaving] = useState(false)
 
   function handleAuthorFooterComingSoon(label) {
   setMessage(`${label} is coming soon.`)
@@ -797,6 +926,59 @@ async function handleUnfollowFromSettings() {
     }
   }
 
+  useEffect(() => {
+  let ignore = false
+
+  async function loadPosts() {
+    if (!author?.page_username) {
+      setAuthorPosts([])
+      return
+    }
+
+    try {
+      setPostsLoading(true)
+      const posts = await fetchAuthorPosts(author.page_username)
+
+      if (!ignore) setAuthorPosts(posts)
+    } catch (error) {
+      if (!ignore) setMessage(error.message || 'Failed to load posts')
+    } finally {
+      if (!ignore) setPostsLoading(false)
+    }
+  }
+
+  loadPosts()
+
+  return () => {
+    ignore = true
+  }
+}, [author?.page_username])
+
+Add this function before: if (!loading && pageError) {
+
+async function handleCreatePost() {
+  const content = postDraft.trim()
+
+  if (!content || postSaving) return
+
+  try {
+    setPostSaving(true)
+    setMessage('')
+
+    const post = await createAuthorPost(content)
+
+    if (post) {
+      setAuthorPosts((current) => [post, ...current])
+      setPostDraft('')
+    }
+  } catch (error) {
+    setMessage(error.message || 'Failed to create post')
+  } finally {
+    setPostSaving(false)
+  }
+}
+
+
   if (!loading && pageError) {
     return <AuthorNotFound onBack={() => navigate(-1)} />
   }
@@ -956,7 +1138,7 @@ async function handleUnfollowFromSettings() {
             <div className="mt-5 grid grid-cols-3 rounded-[22px] bg-[#f8fafc] p-4 ring-1 ring-black/5">
               <StatItem value={displayAuthor.works_count} label="Works" />
               <StatItem value={displayAuthor.followers_count || displayAuthor.fans_count} label="Followers" />
-              <StatItem value={displayAuthor.posts_count || 0} label="Posts" />
+              <StatItem value={authorPosts.length} label="Posts" />
             </div>
 
             <div className="mt-4 flex items-center gap-2">
@@ -1013,11 +1195,32 @@ async function handleUnfollowFromSettings() {
 
         <section className="px-4 py-5 sm:px-0">
           {activeTab === 'Posts' ? (
-            <EmptyPanel
-              title="No posts yet"
-              text="Author posts and announcements will appear here."
-            />
-          ) : null}
+  <div className="space-y-4">
+    {displayAuthor.is_owner ? (
+      <AuthorPostComposer
+        value={postDraft}
+        saving={postSaving}
+        onChange={setPostDraft}
+        onSubmit={handleCreatePost}
+      />
+    ) : null}
+
+    {postsLoading ? (
+      <EmptyPanel title="Loading posts..." text="Please wait while author posts load." />
+    ) : authorPosts.length ? (
+      <div className="space-y-4">
+        {authorPosts.map((post) => (
+          <AuthorPostCard key={post.id} post={post} />
+        ))}
+      </div>
+    ) : (
+      <EmptyPanel
+        title="No posts yet"
+        text="Author posts and announcements will appear here."
+      />
+    )}
+  </div>
+) : null}
 
           {activeTab === 'Works' ? (
             authorWorks.length ? (
