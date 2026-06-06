@@ -942,18 +942,18 @@ async function handleUnfollowFromSettings() {
                     </div>
 
                     {displayAuthor.is_owner ? (
-                      <button
-                        type="button"
-                        onClick={() => navigate('/me')}
-                        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-95"
-                        aria-label="Switch to Reader account"
-                      >
-                        <i className="fa-solid fa-chevron-down text-[15px]" />
-                      </button>
+                     <button
+  type="button"
+  onClick={() => navigate('/me')}
+  className="mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
+  aria-label="Switch to Reader account"
+>
+  <i className="fa-solid fa-chevron-down text-[12px]" />
+</button>
                     ) : null}
                   </div>
 
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
                     <span>
                       <strong>{formatCompactNumber(displayAuthor.works_count)}</strong>{' '}
                       <span className="text-[#6b7280]">Works</span>
