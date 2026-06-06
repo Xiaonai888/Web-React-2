@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import Cropper from 'react-easy-crop'
 
@@ -378,7 +378,14 @@ function AuthorStoreSection({
         </div>
       </div>
 
-      Add these components before EmptyPanel():
+      <EmptyPanel
+        title="No store items yet"
+        text="Paper books, PDFs, bundles, and pre-orders from this author will appear here."
+      />
+    </div>
+  )
+}
+
 
 function formatPostDate(value) {
   if (!value) return 'Just now'
@@ -428,7 +435,7 @@ function AuthorPostComposer({ value, saving, onChange, onSubmit }) {
   )
 }
 
-      function AuthorPostCard({ post }) {
+function AuthorPostCard({ post }) {
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -462,16 +469,6 @@ function AuthorPostComposer({ value, saving, onChange, onSubmit }) {
   )
 }
 
-
-      <EmptyPanel
-        title="No store items yet"
-        text="Paper books, PDFs, bundles, and pre-orders from this author will appear here."
-      />
-    </div>
-  )
-}
-
-  
 function EmptyPanel({ title, text }) {
   return (
     <div className="rounded-[24px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
@@ -711,14 +708,6 @@ export default function AuthorPublicPage() {
   }
 }, [followSettingsOpen])
 
-  useEffect(() => {
-  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
-
-  return () => {
-    document.body.classList.remove('mobile-popup-open')
-  }
-}, [followSettingsOpen])
-
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
   }, [])
@@ -830,7 +819,7 @@ async function handleUnfollowFromSettings() {
   const actionButtons = useMemo(() => {
   if (author?.is_owner) {
     return [
-      { label: 'Edit Page', icon: 'fa-pen', type: 'primary' },
+      { label: 'Edit Page', icon: 'fa-pen', type: 'primary', onClick: () => navigate('/author/edit-page') },
       { label: 'Add Story', icon: 'fa-plus', type: 'secondary', onClick: () => navigate('/author/create-story') },
     ]
   }
@@ -954,7 +943,6 @@ async function handleUnfollowFromSettings() {
   }
 }, [author?.page_username])
 
-Add this function before: if (!loading && pageError) {
 
 async function handleCreatePost() {
   const content = postDraft.trim()
@@ -998,9 +986,6 @@ async function handleCreatePost() {
 
   const authorWorks = Array.isArray(author?.works) ? author.works : []
 
-  function handleAuthorFooterComingSoon(label) {
-  setMessage(`${label} is coming soon.`)
-}
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
