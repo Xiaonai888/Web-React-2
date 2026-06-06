@@ -1133,7 +1133,7 @@ async function handleUnfollowFromSettings() {
     type="button"
     onClick={button.onClick}
     disabled={button.disabled}
-    className={`h-10 flex-1 rounded-[12px] text-[13px] font-medium transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+    className={`h-10 flex-1 rounded-[12px] text-[13px] font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
       button.type === 'primary'
         ? 'bg-[#111827] text-white'
         : 'bg-[#f3f4f6] text-[#111827]'
@@ -1159,7 +1159,7 @@ async function handleUnfollowFromSettings() {
     <button
       type="button"
       onClick={() => setMessage('Add to story is coming soon.')}
-      className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-bold text-[#111827] transition active:scale-[0.98]"
+      className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
     >
      <img
   src="/assets/Icons/Add Story.svg"
