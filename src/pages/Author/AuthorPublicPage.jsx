@@ -9,7 +9,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const tabs = ['Posts', 'Works', 'Store', 'About']
+const tabs = ['Posts', 'Works', 'Store']
 
 function getAuthToken() {
   return (
@@ -1175,7 +1175,7 @@ async function handleUnfollowFromSettings() {
 
         </section>
       <section className="sticky top-14 z-30 overflow-hidden border-t border-b border-[#eef0f4] bg-white">
-          <div className="grid grid-cols-4 px-4">
+          <div className="grid grid-cols-3 px-4">
             {tabs.map((tab) => {
               const active = activeTab === tab
 
@@ -1199,13 +1199,106 @@ async function handleUnfollowFromSettings() {
         </section>
 
         <section className="bg-white px-4 pb-5 pt-4 sm:px-6">
-          {activeTab === 'Posts' ? (
-            <AuthorPostsSection
-              author={displayAuthor}
-              onCountChange={setAuthorPostsCount}
-              onMessage={setMessage}
-            />
+         {activeTab === 'Posts' ? (
+  <div className="space-y-5 pb-4">
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#111827]">Details</h2>
+        {displayAuthor.is_owner ? (
+          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+            <i className="fa-solid fa-pen text-[14px]" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="space-y-4 text-[14px] font-normal text-[#111827]">
+        <div className="flex items-center gap-4">
+          <i className="fa-regular fa-star w-8 text-center text-[23px] text-[#111827]" />
+          <span>92% recommend (23 Reviews)</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <i className="fa-solid fa-book w-8 text-center text-[20px] text-[#111827]" />
+          <span>Book · $$</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
+        {displayAuthor.is_owner ? (
+          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+            <i className="fa-solid fa-pen text-[14px]" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-4 text-[14px] font-normal text-[#111827]">
+        <i className="fa-solid fa-link w-8 text-center text-[22px]" />
+        <span>Shadow website</span>
+      </div>
+    </section>
+
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#111827]">Facebook Page</h2>
+        {displayAuthor.is_owner ? (
+          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+            <i className="fa-solid fa-pen text-[14px]" />
+          </button>
+        ) : null}
+      </div>
+
+      <button type="button" onClick={() => setMessage('Facebook Page link will be available after update.')} className="flex w-full items-center gap-4 text-left active:scale-[0.99]">
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10">
+          {displayAuthor.avatar_url ? (
+            <img src={displayAuthor.avatar_url} alt={displayAuthor.page_name} className="h-full w-full object-cover" />
           ) : null}
+        </div>
+        <div className="min-w-0">
+          <div className="line-clamp-1 text-[14px] font-normal text-[#111827]">{displayAuthor.page_name}</div>
+          <div className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Facebook Page</div>
+        </div>
+      </button>
+    </section>
+
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#111827]">Contact info</h2>
+        {displayAuthor.is_owner ? (
+          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+            <i className="fa-solid fa-pen text-[14px]" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="space-y-4 text-[14px] font-normal text-[#111827]">
+        <div className="flex items-center gap-4">
+          <i className="fa-solid fa-at w-8 text-center text-[21px]" />
+          <span>author contact</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <i className="fa-solid fa-phone w-8 text-center text-[20px]" />
+          <span>Phone number</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <i className="fa-regular fa-envelope w-8 text-center text-[21px]" />
+          <span>Email address</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <i className="fa-brands fa-facebook-messenger w-8 text-center text-[22px]" />
+          <span>Messenger</span>
+        </div>
+      </div>
+    </section>
+
+    <AuthorPostsSection
+      author={displayAuthor}
+      onCountChange={setAuthorPostsCount}
+      onMessage={setMessage}
+    />
+  </div>
+) : null}
 
           {activeTab === 'Works' ? (
             authorWorks.length ? (
@@ -1235,38 +1328,7 @@ async function handleUnfollowFromSettings() {
   />
 ) : null}
 
-         {activeTab === 'About' ? (
-  <div className="space-y-6 pb-4">
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-black text-[#111827]">Details</h2>
-        {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
-            <i className="fa-solid fa-pen text-[15px]" />
-          </button>
-        ) : null}
-      </div>
-
-      <div className="space-y-4 text-[15px] font-medium text-[#111827]">
-        <div className="flex items-center gap-4">
-          <i className="fa-regular fa-star w-8 text-center text-[25px] text-[#111827]" />
-          <span>92% recommend (23 Reviews)</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <i className="fa-solid fa-book w-8 text-center text-[22px] text-[#111827]" />
-          <span>Book · $$</span>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-black text-[#111827]">Links</h2>
-        {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
-            <i className="fa-solid fa-pen text-[15px]" />
-          </button>
-        ) : null}
+         
       </div>
 
       <div className="flex items-center gap-4 text-[15px] font-medium text-[#111827]">
