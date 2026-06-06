@@ -98,6 +98,7 @@ const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
+const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 
 
 function ComingSoon({ title }) {
@@ -155,6 +156,7 @@ function AppShell() {
     '/author/trash',
     '/comments',
     '/author/comment-protection',
+    '/author/page-settings',
     
   ]
 
@@ -642,6 +644,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorPageNotificationsPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page-settings"
+  element={
+    <LazyPage>
+      <AuthorPageSettingsPage />
     </LazyPage>
   }
 />
