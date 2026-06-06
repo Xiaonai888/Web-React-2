@@ -895,19 +895,18 @@ async function handleUnfollowFromSettings() {
 
   {displayAuthor.is_owner ? (
     <button
-      type="button"
-      onClick={() => openCropEditor('cover')}
-      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-      className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
-    >
-      <i className="fa-solid fa-camera text-[22px]" />
-    </button>
+  type="button"
+  onClick={() => openCropEditor('cover')}
+  className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
+>
+  <i className="fa-solid fa-camera text-[22px]" />
+</button>
   ) : null}
 </div>
 
           <div className="px-4 pb-5 sm:px-6">
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="-mt-16 h-[124px] w-[124px] shrink-0 rounded-[28px] border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
+              <div className="relative -mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
                 {displayAuthor.avatar_url ? (
                   <img
                     src={displayAuthor.avatar_url}
@@ -924,7 +923,7 @@ async function handleUnfollowFromSettings() {
                   <button
                     type="button"
                     onClick={() => openCropEditor('avatar')}
-                    className="absolute left-[92px] top-[44px] flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm sm:left-[112px] sm:top-[58px]"
+                    className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm active:scale-95 sm:h-10 sm:w-10"
                   >
                     <i className="fa-solid fa-camera text-[13px]" />
                   </button>
