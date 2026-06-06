@@ -44,6 +44,7 @@ const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
 import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
+const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 
 
 
@@ -632,6 +633,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorPageDashboardPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/notifications"
+  element={
+    <LazyPage>
+      <AuthorPageNotificationsPage />
     </LazyPage>
   }
 />
