@@ -860,7 +860,7 @@ async function handleUnfollowFromSettings() {
   const actionButtons = useMemo(() => {
   if (author?.is_owner) {
   return [
-    { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/dashboard') },
+    { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/page/dashboard') },
     { label: 'Advertise', icon: 'fa-bullhorn', type: 'secondary', onClick: () => setMessage('Advertise is coming soon.') },
   ]
 }
@@ -974,7 +974,13 @@ async function handleUnfollowFromSettings() {
     is_owner: false,
   }
 
-  const authorWorks = Array.isArray(author?.works) ? author.works : []
+  const authorWorks = Array.isArray(author?.works)
+  ? author.works
+  : Array.isArray(author?.stories)
+    ? author.stories
+    : Array.isArray(displayAuthor?.works)
+      ? displayAuthor.works
+      : []
 
 
   return (
