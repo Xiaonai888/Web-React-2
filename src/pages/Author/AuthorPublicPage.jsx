@@ -1232,7 +1232,10 @@ async function handleUnfollowFromSettings() {
     {!displayAuthor.is_owner ? (
       <button
         type="button"
-        onClick={() => setMessage('More options coming soon.')}
+        onClick={(event) => {
+  event.stopPropagation()
+  navigate('/author/page-settings')
+}}
         className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
       >
         <i className="fa-solid fa-ellipsis text-[15px]" />
