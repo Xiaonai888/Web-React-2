@@ -486,7 +486,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
     <div className="fixed inset-0 z-[130]">
       <button type="button" aria-label="Close profile switcher" onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-0 left-0 right-0 max-h-[82vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-5 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px] dark:bg-[#12141d]">
+      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px] dark:bg-[#12141d]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden dark:bg-white/15" />
 
         <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
@@ -501,12 +501,12 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
               </div>
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{displayName}</div>
-                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">Own Account</div>
+                
               </div>
             </div>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white dark:bg-[#f6b800] dark:text-[#111827]">
-              <i className="fa-solid fa-check text-[12px]" />
-            </span>
+           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white dark:bg-[#f6b800] dark:text-[#111827]">
+  <i className="fa-solid fa-check text-[10px]" />
+</span>
           </button>
 
           <button type="button" onClick={onAuthorPage} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99] dark:border-white/10">
@@ -521,8 +521,8 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
               <div className="min-w-0">
                 <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827] dark:text-white">{pageName}</div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1] dark:text-white/50">
-                  {showAuthorBadge ? <span className="h-2 w-2 rounded-full bg-[#ef4444]" /> : null}
-                  <span>{showAuthorBadge ? `${authorNotificationCount} notification${Number(authorNotificationCount) > 1 ? 's' : ''}` : pageUsername ? `@${pageUsername}` : 'Author Page'}</span>
+                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+                  <span>{`${authorNotificationCount} notification${Number(authorNotificationCount) === 1 ? '' : 's'}`}</span>
                 </div>
               </div>
             </div>
@@ -530,9 +530,14 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
           </button>
         </div>
 
-        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-extrabold text-[#111827] active:scale-[0.99] dark:border-white/10 dark:bg-[#171923] dark:text-white">
-          Manage Account
-        </button>
+       <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99] dark:border-white/10 dark:bg-[#171923] dark:text-white">
+  Manage Account
+</button>
+        
+<div className="pointer-events-none mx-auto mt-5 flex h-10 w-28 items-center justify-center">
+  <span className="h-5 w-20 rounded-full bg-[#e8ebf2] blur-[10px] dark:bg-whi្្te/10" />
+  <span className="-ml-14 h-4 w-16 rounded-full bg-[#d8dce7] blur-[8px] dark:bg-white/10" />
+</div>
       </div>
     </div>
   )
