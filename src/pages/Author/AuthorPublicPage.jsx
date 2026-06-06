@@ -938,9 +938,7 @@ async function handleUnfollowFromSettings() {
                         </h1>
                       )}
 
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#6b7280] sm:text-[12px]">
-                        @{displayAuthor.page_username}
-                      </p>
+                      
                     </div>
 
                     {displayAuthor.is_owner ? (
@@ -980,34 +978,47 @@ async function handleUnfollowFromSettings() {
                 </p>
               ) : null}
 
-              <div className="mt-4 flex items-center gap-2">
-                {actionButtons.map((button) => (
-                  <button
-                    key={button.label}
-                    type="button"
-                    onClick={button.onClick}
-                    disabled={button.disabled}
-                    className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-                      button.type === 'primary'
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-[#f3f4f6] text-[#111827]'
-                    }`}
-                  >
-                    <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
-                    {button.disabled ? 'Loading...' : button.label}
-                  </button>
-                ))}
+             <div className="mt-4 space-y-2">
+  <div className="flex items-center gap-2">
+    {actionButtons.map((button) => (
+      <button
+        key={button.label}
+        type="button"
+        onClick={button.onClick}
+        disabled={button.disabled}
+        className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+          button.type === 'primary'
+            ? 'bg-[#111827] text-white'
+            : 'bg-[#f3f4f6] text-[#111827]'
+        }`}
+      >
+        <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
+        {button.disabled ? 'Loading...' : button.label}
+      </button>
+    ))}
 
-                <button
-                  type="button"
-                  onClick={() => setMessage('More options coming soon.')}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
-                >
-                  <i className="fa-solid fa-ellipsis text-[15px]" />
-                </button>
-              </div>
-            </div>
-          </div>
+    {!displayAuthor.is_owner ? (
+      <button
+        type="button"
+        onClick={() => setMessage('More options coming soon.')}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
+      >
+        <i className="fa-solid fa-ellipsis text-[15px]" />
+      </button>
+    ) : null}
+  </div>
+
+  {displayAuthor.is_owner ? (
+    <button
+      type="button"
+      onClick={() => setMessage('Add to story is coming soon.')}
+      className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-bold text-[#111827] transition active:scale-[0.98]"
+    >
+      <i className="fa-regular fa-circle-plus mr-2 text-[13px]" />
+      Add to story
+    </button>
+  ) : null}
+</div>
 
         </section>
 
