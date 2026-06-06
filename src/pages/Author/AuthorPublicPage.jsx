@@ -364,7 +364,7 @@ function EmptyPanel({ title, text }) {
 function AuthorNotFound({ onBack }) {
   return (
     <div className="min-h-screen bg-[#f3f4f6] px-4 py-10">
-      <div className="mx-auto max-w-[420px] rounded-[28px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
+      <div className="mx-auto max-w-[420px] rounded-full bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
           <i className="fa-regular fa-user text-[24px]" />
         </div>
@@ -500,7 +500,7 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         aria-label="Close follow settings"
       />
 
-      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
+      <div className="relative w-full overflow-hidden rounded-t-[24px] bg-white pb-5 shadow-2xl md:max-w-[420px] md:rounded-full">
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <div className="px-5 py-4">
