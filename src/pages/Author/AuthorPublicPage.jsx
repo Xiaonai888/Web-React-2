@@ -848,31 +848,6 @@ async function handleUnfollowFromSettings() {
   onUnfollow={handleUnfollowFromSettings}
 />
 
-      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f3f4f6]"
-          >
-            <i className="fa-solid fa-chevron-left text-[16px]" />
-          </button>
-
-          <div className="min-w-0 flex-1 px-3 text-center">
-            <div className="truncate text-[15px] font-black text-[#111827] sm:text-[17px]">
-              @{displayAuthor.page_username}
-            </div>
-          </div>
-
-          <Link
-            to="/search"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f3f4f6]"
-          >
-            <i className="fa-solid fa-magnifying-glass text-[16px]" />
-          </Link>
-        </div>
-      </div>
-
       <main className="mx-auto max-w-[980px]">
         {message && !cropModalOpen ? (
           <button
@@ -886,77 +861,49 @@ async function handleUnfollowFromSettings() {
 
         <section className="bg-white shadow-sm">
           <div className="relative h-[210px] bg-[#111827] sm:h-[280px]">
-            {displayAuthor.cover_url ? (
-              <img
-                src={displayAuthor.cover_url}
-                alt={displayAuthor.page_name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-[#111827] via-[#1f2937] to-[#374151]" />
-            )}
+  {displayAuthor.cover_url ? (
+    <img
+      src={displayAuthor.cover_url}
+      alt={displayAuthor.page_name}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <div className="h-full w-full bg-gradient-to-br from-[#111827] via-[#1f2937] to-[#374151]" />
+  )}
 
-            {displayAuthor.is_owner ? (
-              <button
-                type="button"
-                onClick={() => openCropEditor('cover')}
-                className="absolute bottom-4 right-4 rounded-full bg-white/95 px-4 py-2 text-[12px] font-black text-[#111827] shadow-sm"
-              >
-                <i className="fa-solid fa-camera mr-2" />
-                Edit Cover
-              </button>
-            ) : null}
-          </div>
+  <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+    {displayAuthor.is_owner ? (
+      <button
+        type="button"
+        onClick={() => navigate('/author/edit-page')}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur active:scale-95"
+        aria-label="Edit page"
+      >
+        <i className="fa-solid fa-pen text-[14px]" />
+      </button>
+    ) : null}
 
-          <div className="px-4 pb-5 sm:px-6">
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="-mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
-                {displayAuthor.avatar_url ? (
-                  <img
-                    src={displayAuthor.avatar_url}
-                    alt={displayAuthor.page_name}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#e5e7eb] text-[42px] font-black text-[#9ca3af]">
-                    {displayAuthor.page_name.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
+    <button
+      type="button"
+      onClick={() => setMessage('More options coming soon.')}
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur active:scale-95"
+      aria-label="More options"
+    >
+      <i className="fa-solid fa-ellipsis text-[15px]" />
+    </button>
+  </div>
 
-                {displayAuthor.is_owner ? (
-                  <button
-                    type="button"
-                    onClick={() => openCropEditor('avatar')}
-                    className="absolute left-[92px] top-[44px] flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm sm:left-[112px] sm:top-[58px]"
-                  >
-                    <i className="fa-solid fa-camera text-[13px]" />
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="min-w-0 flex-1 sm:pb-2">
-                {loading ? (
-                  <div className="h-8 w-52 animate-pulse rounded-full bg-[#f3f4f6]" />
-                ) : (
-                  <h1 className="line-clamp-1 text-[24px] font-black tracking-tight text-[#111827] sm:text-[30px]">
-                    {displayAuthor.page_name}
-                  </h1>
-                )}
-
-                <p className="mt-1 text-[13px] font-bold text-[#6b7280] sm:text-[14px]">
-                  @{displayAuthor.page_username}
-                </p>
-
-                {loading ? (
-                  <div className="mt-3 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[#f3f4f6]" />
-                ) : (
-                  <p className="mt-2 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#374151] sm:text-[14px]">
-                    {displayAuthor.bio}
-                  </p>
-                )}
-              </div>
-            </div>
-
+  {displayAuthor.is_owner ? (
+    <button
+      type="button"
+      onClick={() => openCropEditor('cover')}
+      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-sm active:scale-95"
+      aria-label="Edit cover"
+    >
+      <i className="fa-solid fa-camera text-[14px]" />
+    </button>
+  ) : null}
+</div>
             <div className="mt-5 grid grid-cols-3 rounded-[22px] bg-[#f8fafc] p-4 ring-1 ring-black/5">
               <StatItem value={displayAuthor.works_count} label="Works" />
               <StatItem value={displayAuthor.followers_count || displayAuthor.fans_count} label="Followers" />
