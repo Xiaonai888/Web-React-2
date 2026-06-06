@@ -96,6 +96,7 @@ const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
+const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 
 
 function ComingSoon({ title }) {
@@ -622,6 +623,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorEditPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/dashboard"
+  element={
+    <LazyPage>
+      <AuthorPageDashboardPage />
     </LazyPage>
   }
 />
