@@ -1019,9 +1019,10 @@ async function handleUnfollowFromSettings() {
     </button>
   ) : null}
 </div>
+            </div>
+          </div>
 
         </section>
-
        <section className="sticky top-14 z-30 overflow-hidden rounded-b-[16px] border-t border-b border-[#eef0f4] bg-white shadow-sm">
           <div className="grid grid-cols-4 px-4">
             {tabs.map((tab) => {
