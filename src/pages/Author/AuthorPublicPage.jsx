@@ -859,7 +859,7 @@ async function handleUnfollowFromSettings() {
           </button>
         ) : null}
 
-        <section className="bg-white shadow-sm">
+        <section className="overflow-hidden rounded-b-[28px] bg-white shadow-sm">
           <div className="relative h-[210px] bg-[#111827] sm:h-[280px]">
   {displayAuthor.cover_url ? (
     <img
@@ -956,7 +956,7 @@ async function handleUnfollowFromSettings() {
             <div className="mt-5 grid grid-cols-3 rounded-[22px] bg-[#f8fafc] p-4 ring-1 ring-black/5">
               <StatItem value={displayAuthor.works_count} label="Works" />
               <StatItem value={displayAuthor.followers_count || displayAuthor.fans_count} label="Followers" />
-              <StatItem value={displayAuthor.likes_count} label="Likes" />
+              <StatItem value={displayAuthor.posts_count || 0} label="Posts" />
             </div>
 
             <div className="mt-4 flex items-center gap-2">
