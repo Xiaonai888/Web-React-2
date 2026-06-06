@@ -19,6 +19,18 @@ function getAuthToken() {
   )
 }
 
+function getStoredReaderUser() {
+  try {
+    return JSON.parse(
+      localStorage.getItem('shadow_reader_user') ||
+        sessionStorage.getItem('shadow_reader_user') ||
+        'null'
+    )
+  } catch {
+    return null
+  }
+}
+
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
   const mimeMatch = header.match(/:(.*?);/)
@@ -554,6 +566,105 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
 }
 
 
+function ProfileSwitcherSheet({ open, onClose, author, readerUser, onAuthorPage, onOwnAccount, onManageAccount }) {
+  if (!open) return null
+
+  const pageName = author?.page_name || 'Author Page'
+  const pageUsername = author?.page_username || ''
+  const pageLogo = author?.avatar_url || ''
+  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
+  const readerName = readerUser?.name || readerUser?.username || 'Reader Account'
+  const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
+  const readerLetter = readerName.charAt(0).toUpperCase() || 'R'
+
+  return (
+    <div className="fixed inset-0 z-[230] flex items-end justify-center bg-black/35 px-3 pb-[78px] md:items-center md:pb-0">
+      <button
+        type="button"
+        className="absolute inset-0 h-full w-full cursor-default"
+        onClick={onClose}
+        aria-label="Close profile switcher"
+      />
+
+      <div className="relative w-full max-w-[430px] overflow-hidden rounded-[28px] bg-white p-4 shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d8dde6]" />
+
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={onAuthorPage}
+            className="flex w-full items-center gap-3 rounded-[22px] bg-white px-3 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+          >
+            <span className="relative flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-white shadow-[0_10px_22px_rgba(17,24,39,0.16)]">
+              {pageLogo ? (
+                <img
+                  src={pageLogo}
+                  alt={pageName}
+                  className="h-[48px] w-[48px] rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#eef2f7] text-[18px] font-black text-[#9ca3af]">
+                  {pageLetter}
+                </span>
+              )}
+            </span>
+
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] font-black text-[#111827]">{pageName}</span>
+              <span className="mt-0.5 block truncate text-[11px] font-bold text-[#8b93a1]">
+                {pageUsername ? `@${pageUsername}` : 'Author Page'}
+              </span>
+            </span>
+
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+              <i className="fa-solid fa-check text-[13px]" />
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOwnAccount}
+            className="flex w-full items-center gap-3 rounded-[22px] bg-white px-3 py-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+          >
+            <span className="relative flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-white shadow-[0_10px_22px_rgba(17,24,39,0.16)]">
+              <span className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#dbeafe,#ffffff,#bfdbfe,#dbeafe)] p-[2px] animate-spin" />
+              <span className="relative flex h-[50px] w-[50px] items-center justify-center rounded-full bg-white p-[2px]">
+                {readerAvatar ? (
+                  <img
+                    src={readerAvatar}
+                    alt={readerName}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center rounded-full bg-[#f3f4f6] text-[17px] font-black text-[#6b7280]">
+                    {readerLetter}
+                  </span>
+                )}
+              </span>
+            </span>
+
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] font-black text-[#111827]">{readerName}</span>
+              <span className="mt-0.5 block text-[11px] font-bold text-[#8b93a1]">Own Account</span>
+            </span>
+
+            <i className="fa-solid fa-chevron-right text-[13px] text-[#c4cad4]" />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={onManageAccount}
+          className="mt-4 h-11 w-full rounded-full border border-[#dfe4ec] bg-white text-[13px] font-black text-[#111827] active:scale-[0.99]"
+        >
+          Manage Account
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
@@ -573,18 +684,20 @@ export default function AuthorPublicPage() {
   const [savingImage, setSavingImage] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
+  const [storedReaderUser] = useState(() => getStoredReaderUser())
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
 
   function handleAuthorFooterComingSoon(label) {
   setMessage(`${label} is coming soon.`)
 }
   useEffect(() => {
-  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
+  document.body.classList.toggle('mobile-popup-open', followSettingsOpen || profileSwitcherOpen)
 
   return () => {
     document.body.classList.remove('mobile-popup-open')
   }
-}, [followSettingsOpen])
+}, [followSettingsOpen, profileSwitcherOpen])
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -692,6 +805,25 @@ function handleMuteUpdates() {
 async function handleUnfollowFromSettings() {
   setFollowSettingsOpen(false)
   await handleToggleFollow()
+}
+
+function handleOpenProfileSwitcher() {
+  if (!displayAuthor?.is_owner) return
+  setProfileSwitcherOpen(true)
+}
+
+function handleSwitchToAuthorPage() {
+  setProfileSwitcherOpen(false)
+}
+
+function handleSwitchToOwnAccount() {
+  setProfileSwitcherOpen(false)
+  navigate('/profile')
+}
+
+function handleManageAccount() {
+  setProfileSwitcherOpen(false)
+  navigate('/settings')
 }
   
   const actionButtons = useMemo(() => {
@@ -842,6 +974,16 @@ async function handleUnfollowFromSettings() {
   onUnfollow={handleUnfollowFromSettings}
 />
 
+      <ProfileSwitcherSheet
+        open={profileSwitcherOpen}
+        author={displayAuthor}
+        readerUser={storedReaderUser}
+        onClose={() => setProfileSwitcherOpen(false)}
+        onAuthorPage={handleSwitchToAuthorPage}
+        onOwnAccount={handleSwitchToOwnAccount}
+        onManageAccount={handleManageAccount}
+      />
+
       <main className="mx-auto max-w-[980px]">
         {message && !cropModalOpen ? (
           <button
@@ -946,7 +1088,7 @@ async function handleUnfollowFromSettings() {
                     {displayAuthor.is_owner ? (
                       <button
                         type="button"
-                        onClick={() => navigate('/me')}
+                        onClick={handleOpenProfileSwitcher}
                         className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-95"
                         aria-label="Switch to Reader account"
                       >
