@@ -534,9 +534,12 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
   Manage Account
 </button>
         
-<div className="pointer-events-none mx-auto mt-5 flex h-10 w-28 items-center justify-center">
-  <span className="h-5 w-20 rounded-full bg-[#e8ebf2] blur-[10px] dark:bg-whi្្te/10" />
-  <span className="-ml-14 h-4 w-16 rounded-full bg-[#d8dce7] blur-[8px] dark:bg-white/10" />
+<div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
+  <img
+    src="/assets/Icons/Logo Shadow 2.svg"
+    alt=""
+    className="h-10 w-auto object-contain opacity-90"
+  />
 </div>
       </div>
     </div>
