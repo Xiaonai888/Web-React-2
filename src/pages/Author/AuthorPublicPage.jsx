@@ -898,87 +898,117 @@ async function handleUnfollowFromSettings() {
   ) : null}
 </div>
 
-          <div className="px-4 pb-5 sm:px-6">
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="relative -mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
-                {displayAuthor.avatar_url ? (
-                  <img
-                    src={displayAuthor.avatar_url}
-                    alt={displayAuthor.page_name}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#e5e7eb] text-[42px] font-black text-[#9ca3af]">
-                    {displayAuthor.page_name.slice(0, 1).toUpperCase()}
+          <div className="relative px-4 pb-5 sm:px-6">
+            <div className="pointer-events-none absolute -top-[38px] left-0 right-0 h-[78px] rounded-t-[44px] bg-white" />
+
+            <div className="relative z-10">
+              <div className="flex items-start gap-4">
+                <div className="relative -mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:-mt-20 sm:h-[148px] sm:w-[148px]">
+                  {displayAuthor.avatar_url ? (
+                    <img
+                      src={displayAuthor.avatar_url}
+                      alt={displayAuthor.page_name}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#e5e7eb] text-[42px] font-black text-[#9ca3af]">
+                      {displayAuthor.page_name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+
+                  {displayAuthor.is_owner ? (
+                    <button
+                      type="button"
+                      onClick={() => openCropEditor('avatar')}
+                      className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm active:scale-95 sm:h-10 sm:w-10"
+                    >
+                      <i className="fa-solid fa-camera text-[13px]" />
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0 flex-1 pt-3 sm:pt-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {loading ? (
+                        <div className="h-8 w-52 animate-pulse rounded-full bg-[#f3f4f6]" />
+                      ) : (
+                        <h1 className="line-clamp-1 text-[24px] font-black tracking-tight text-[#111827] sm:text-[30px]">
+                          {displayAuthor.page_name}
+                        </h1>
+                      )}
+
+                      <p className="mt-1 text-[13px] font-bold text-[#6b7280] sm:text-[14px]">
+                        @{displayAuthor.page_username}
+                      </p>
+                    </div>
+
+                    {displayAuthor.is_owner ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/me')}
+                        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-95"
+                        aria-label="Switch to Reader account"
+                      >
+                        <i className="fa-solid fa-chevron-down text-[15px]" />
+                      </button>
+                    ) : null}
                   </div>
-                )}
 
-                {displayAuthor.is_owner ? (
-                  <button
-                    type="button"
-                    onClick={() => openCropEditor('avatar')}
-                    className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#111827] text-white shadow-sm active:scale-95 sm:h-10 sm:w-10"
-                  >
-                    <i className="fa-solid fa-camera text-[13px]" />
-                  </button>
-                ) : null}
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] font-bold text-[#111827] sm:text-[14px]">
+                    <span>
+                      <strong>{formatCompactNumber(displayAuthor.works_count)}</strong>{' '}
+                      <span className="text-[#6b7280]">Works</span>
+                    </span>
+                    <span>
+                      <strong>{formatCompactNumber(displayAuthor.followers_count || displayAuthor.fans_count)}</strong>{' '}
+                      <span className="text-[#6b7280]">Followers</span>
+                    </span>
+                    <span>
+                      <strong>{formatCompactNumber(authorPostsCount)}</strong>{' '}
+                      <span className="text-[#6b7280]">Posts</span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="min-w-0 flex-1 sm:pb-2">
-                {loading ? (
-                  <div className="h-8 w-52 animate-pulse rounded-full bg-[#f3f4f6]" />
-                ) : (
-                  <h1 className="line-clamp-1 text-[24px] font-black tracking-tight text-[#111827] sm:text-[30px]">
-                    {displayAuthor.page_name}
-                  </h1>
-                )}
-
-                <p className="mt-1 text-[13px] font-bold text-[#6b7280] sm:text-[14px]">
-                  @{displayAuthor.page_username}
+              {loading ? (
+                <div className="mt-4 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[#f3f4f6]" />
+              ) : displayAuthor.bio ? (
+                <p className="mt-4 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#374151] sm:text-[14px]">
+                  {displayAuthor.bio}
                 </p>
+              ) : null}
 
-                {loading ? (
-                  <div className="mt-3 h-4 w-full max-w-[420px] animate-pulse rounded-full bg-[#f3f4f6]" />
-                ) : (
-                  <p className="mt-2 line-clamp-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#374151] sm:text-[14px]">
-                    {displayAuthor.bio}
-                  </p>
-                )}
-              </div>
-            </div>
+              <div className="mt-4 flex items-center gap-2">
+                {actionButtons.map((button) => (
+                  <button
+                    key={button.label}
+                    type="button"
+                    onClick={button.onClick}
+                    disabled={button.disabled}
+                    className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                      button.type === 'primary'
+                        ? 'bg-[#111827] text-white'
+                        : 'bg-[#f3f4f6] text-[#111827]'
+                    }`}
+                  >
+                    <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
+                    {button.disabled ? 'Loading...' : button.label}
+                  </button>
+                ))}
 
-            <div className="mt-5 grid grid-cols-3 rounded-[22px] bg-[#f8fafc] p-4 ring-1 ring-black/5">
-              <StatItem value={displayAuthor.works_count} label="Works" />
-              <StatItem value={displayAuthor.followers_count || displayAuthor.fans_count} label="Followers" />
-              <StatItem value={authorPostsCount} label="Posts" />
-            </div>
-
-            <div className="mt-4 flex items-center gap-2">
-              {actionButtons.map((button) => (
                 <button
-                  key={button.label}
                   type="button"
-                  onClick={button.onClick}
-                  disabled={button.disabled}
-                  className={`h-11 flex-1 rounded-full text-[14px] font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-                    button.type === 'primary'
-                      ? 'bg-[#111827] text-white'
-                      : 'bg-[#f3f4f6] text-[#111827]'
-                  }`}
+                  onClick={() => setMessage('More options coming soon.')}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
                 >
-                  <i className={`fa-solid ${button.icon} mr-2 text-[13px]`} />
-                  {button.disabled ? 'Loading...' : button.label}
+                  <i className="fa-solid fa-ellipsis text-[15px]" />
                 </button>
-              ))}
-
-              <button
-                type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
-              >
-                <i className="fa-solid fa-ellipsis text-[15px]" />
-              </button>
+              </div>
             </div>
           </div>
+
         </section>
 
         <section className="sticky top-14 z-30 border-y border-[#eef0f4] bg-white">
