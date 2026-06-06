@@ -664,6 +664,42 @@ function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
     </div>
   )
 }
+function CoverOptionsSheet({ open, onClose, onSeeCover, onUploadCover, onChooseCover }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[240]">
+      <button type="button" aria-label="Close cover options" onClick={onClose} className="absolute inset-0 bg-black/35" />
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-5 pb-8 pt-4 shadow-2xl">
+        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#9ca3af]" />
+
+        <div className="space-y-1">
+          <button type="button" onClick={onSeeCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+              <i className="fa-regular fa-image text-[18px]" />
+            </span>
+            <span className="text-[17px] font-normal text-[#111827]">See cover</span>
+          </button>
+
+          <button type="button" onClick={onUploadCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+              <i className="fa-solid fa-arrow-up-from-bracket text-[17px]" />
+            </span>
+            <span className="text-[17px] font-normal text-[#111827]">Upload cover</span>
+          </button>
+
+          <button type="button" onClick={onChooseCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
+              <i className="fa-solid fa-images text-[17px]" />
+            </span>
+            <span className="text-[17px] font-normal text-[#111827]">Choose cover</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AuthorPublicPage() {
   const navigate = useNavigate()
@@ -691,6 +727,7 @@ export default function AuthorPublicPage() {
   const readerName = readerUser?.name || 'Reader'
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
+  const [coverOptionsOpen, setCoverOptionsOpen] = useState(false)
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
@@ -987,6 +1024,27 @@ async function handleUnfollowFromSettings() {
   avatarUrl={readerAvatar}
   avatarLetter={readerLetter}
 />
+
+      <CoverOptionsSheet
+  open={coverOptionsOpen}
+  onClose={() => setCoverOptionsOpen(false)}
+  onSeeCover={() => {
+    setCoverOptionsOpen(false)
+    if (displayAuthor.cover_url) {
+      window.open(displayAuthor.cover_url, '_blank', 'noopener,noreferrer')
+    } else {
+      setMessage('No cover photo yet.')
+    }
+  }}
+  onUploadCover={() => {
+    setCoverOptionsOpen(false)
+    openCropEditor('cover')
+  }}
+  onChooseCover={() => {
+    setCoverOptionsOpen(false)
+    setMessage('Choose cover is coming soon.')
+  }}
+/>
       
       <main className="mx-auto max-w-[980px]">
         {message && !cropModalOpen ? (
@@ -1000,7 +1058,19 @@ async function handleUnfollowFromSettings() {
         ) : null}
 
         <section className="overflow-hidden bg-white">
-          <div className="relative h-[210px] bg-[#111827] sm:h-[280px]">
+          <div
+  role="button"
+  tabIndex={0}
+  onClick={() => {
+    if (displayAuthor.is_owner) setCoverOptionsOpen(true)
+  }}
+  onKeyDown={(event) => {
+    if (displayAuthor.is_owner && (event.key === 'Enter' || event.key === ' ')) {
+      setCoverOptionsOpen(true)
+    }
+  }}
+  className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
+>
   {displayAuthor.cover_url ? (
     <img
       src={displayAuthor.cover_url}
@@ -1016,7 +1086,10 @@ async function handleUnfollowFromSettings() {
     {displayAuthor.is_owner ? (
       <button
         type="button"
-        onClick={() => navigate('/author/edit-page')}
+        onClick={(event) => {
+  event.stopPropagation()
+  navigate('/author/edit-page')
+}}
         className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
         aria-label="Edit page"
       >
@@ -1026,7 +1099,10 @@ async function handleUnfollowFromSettings() {
 
     <button
       type="button"
-      onClick={() => setMessage('More options coming soon.')}
+      onClick={(event) => {
+  event.stopPropagation()
+  setMessage('More options coming soon.')
+}}
       className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
       aria-label="More options"
     >
@@ -1037,7 +1113,10 @@ async function handleUnfollowFromSettings() {
   {displayAuthor.is_owner ? (
     <button
   type="button"
-  onClick={() => openCropEditor('cover')}
+  onClick={(event) => {
+  event.stopPropagation()
+  setCoverOptionsOpen(true)
+}}
   className="absolute bottom-5 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
 >
   <i className="fa-solid fa-camera text-[22px]" />
