@@ -978,7 +978,7 @@ async function handleUnfollowFromSettings() {
                 </p>
               ) : null}
 
-             <div className="mt-4 space-y-2">
+    <div className="mt-4 space-y-2">
   <div className="flex items-center gap-2">
     {actionButtons.map((button) => (
       <button
