@@ -876,7 +876,7 @@ async function handleUnfollowFromSettings() {
       <button
         type="button"
         onClick={() => navigate('/author/edit-page')}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur active:scale-95"
+        className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
         aria-label="Edit page"
       >
         <i className="fa-solid fa-pen text-[14px]" />
@@ -897,17 +897,17 @@ async function handleUnfollowFromSettings() {
     <button
       type="button"
       onClick={() => openCropEditor('cover')}
-      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-sm active:scale-95"
-      aria-label="Edit cover"
+      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
+      className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
     >
-      <i className="fa-solid fa-camera text-[14px]" />
+      <i className="fa-solid fa-camera text-[22px]" />
     </button>
   ) : null}
 </div>
 
           <div className="px-4 pb-5 sm:px-6">
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end">
-              <div className="-mt-16 h-[124px] w-[124px] shrink-0 rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
+              <div className="-mt-16 h-[124px] w-[124px] shrink-0 rounded-[28px] border-4 border-white bg-[#f3f4f6] shadow-sm sm:h-[148px] sm:w-[148px]">
                 {displayAuthor.avatar_url ? (
                   <img
                     src={displayAuthor.avatar_url}
