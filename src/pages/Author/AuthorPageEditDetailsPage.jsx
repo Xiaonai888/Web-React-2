@@ -99,22 +99,24 @@ function SectionBlock({ id, title, children, sectionRef }) {
 function ModalShell({ title, children, onClose }) {
   return (
     <div className="fixed inset-0 z-[260] bg-white">
-      <header className="sticky top-0 z-10 bg-white">
-        <div className="flex h-16 items-center justify-between px-4">
+      <header className="sticky top-0 z-10 border-b border-[#eef0f4] bg-white">
+        <div className="mx-auto flex h-12 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+            className="flex h-9 w-9 items-center justify-center rounded-full active:bg-[#f3f4f6]"
             aria-label="Close"
           >
-            <i className="fa-solid fa-xmark text-[28px] text-[#111827]" />
+            <i className="fa-solid fa-xmark text-[18px] text-[#111827]" />
           </button>
-          <h2 className="text-[22px] font-bold text-[#111827]">{title}</h2>
-          <div className="h-10 w-10" />
+
+          <h2 className="text-[16px] font-semibold text-[#111827]">{title}</h2>
+
+          <div className="h-9 w-9" />
         </div>
       </header>
 
-      <main className="mx-auto max-w-[720px] px-5 pb-28 pt-4">{children}</main>
+      <main className="mx-auto max-w-[720px] px-4 pb-24 pt-5">{children}</main>
     </div>
   )
 }
@@ -132,15 +134,14 @@ function TextEditModal({ open, title, label, value, multiline, placeholder, maxL
 
   return (
     <ModalShell title={title} onClose={onClose}>
-      <label className="mb-2 block text-[13px] font-semibold text-[#6b7280]">{label}</label>
-
+      <label className="mb-1.5 block text-[12px] font-normal text-[#6b7280]">{label}</label>
       {multiline ? (
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           maxLength={maxLength}
           placeholder={placeholder}
-          className="min-h-[170px] w-full rounded-[20px] border border-[#e5e7eb] bg-white px-4 py-3 text-[16px] font-normal leading-6 text-[#111827] outline-none focus:border-[#111827]"
+          className="min-h-[128px] w-full rounded-[16px] border border-[#e5e7eb] bg-white px-3 py-3 text-[14px] font-normal leading-6 text-[#111827] outline-none focus:border-[#111827]"
         />
       ) : (
         <input
@@ -148,7 +149,7 @@ function TextEditModal({ open, title, label, value, multiline, placeholder, maxL
           onChange={(event) => setDraft(event.target.value)}
           maxLength={maxLength}
           placeholder={placeholder}
-          className="h-13 w-full rounded-[18px] border border-[#e5e7eb] bg-white px-4 text-[16px] font-normal text-[#111827] outline-none focus:border-[#111827]"
+          className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[14px] font-normal text-[#111827] outline-none focus:border-[#111827]"
         />
       )}
 
@@ -158,16 +159,16 @@ function TextEditModal({ open, title, label, value, multiline, placeholder, maxL
         </div>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
-        <button
-          type="button"
-          disabled={!canSave}
-          onClick={() => onSave(draft.trim())}
-          className="h-13 w-full rounded-[14px] bg-[#111827] text-[16px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#b4bbc6]"
-        >
-          Save
-        </button>
-      </div>
+     <div className="fixed bottom-0 left-0 right-0 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
+  <button
+    type="button"
+    disabled={!canSave}
+    onClick={() => onSave(draft.trim())}
+    className="h-10 w-full rounded-[12px] bg-[#111827] text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#b4bbc6]"
+  >
+    Save
+  </button>
+</div>
     </ModalShell>
   )
 }
