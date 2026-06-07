@@ -6,6 +6,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const COMMENT_PAGE_SIZE = 20
+
 function getReaderToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -75,6 +77,16 @@ function isStoryAuthor(currentUser, story) {
   return String(currentUser.id) === String(ownerId)
 }
 
+function formatDate(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleDateString('en-GB')
+}
+
 function formatTime(value) {
   if (!value) return 'Just now'
 
@@ -112,7 +124,7 @@ function normalizeApiComment(comment) {
     updated_at: comment.updated_at,
     name: user.name || comment.name || 'Reader',
     avatar_url: user.avatar_url || comment.avatar_url || '',
-    replies: [],
+    replies: (comment.replies || []).map(normalizeApiComment),
   }
 }
 
@@ -201,6 +213,17 @@ function CommentMenu({
           label="Edit"
           onClick={() => {
             onEdit()
+            onClose()
+          }}
+        />
+      ) : null}
+
+      {permissions.isOtherReader ? (
+        <MenuButton
+          icon="fa-regular fa-flag"
+          label="Report"
+          onClick={() => {
+            onHide()
             onClose()
           }}
         />
@@ -379,7 +402,7 @@ function CommentItem({
         />
 
         <div className="min-w-0 flex-1">
-          <div className="relative">
+          <div className="relative pr-8">
             <div className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-[13px] font-black text-[#111827]">{comment.name || 'Reader'}</h3>
@@ -608,48 +631,53 @@ export default function CommentSection({
   const [editComment, setEditComment] = useState(null)
   const [editText, setEditText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [totalComments, setTotalComments] = useState(0)
   const isModal = variant === 'modal'
   const currentUser = getCurrentUser()
   const token = getReaderToken()
 
-  useEffect(() => {
-    let ignore = false
+  async function fetchComments(nextPage = 1, append = false) {
+    if (!targetId) return
 
-    async function loadComments() {
-      if (!targetId) return
+    try {
+      append ? setLoadingMore(true) : setLoading(true)
 
-      try {
-        setLoading(true)
+      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      const data = await response.json().catch(() => ({}))
 
-        const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`)
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load comments')
-        }
-
-        if (ignore) return
-
-        const normalized = (data.comments || []).map(normalizeApiComment)
-        setComments(normalized)
-        onCommentsChange?.(normalized)
-      } catch (error) {
-        if (!ignore) {
-          showToast(error.message || 'Failed to load comments.')
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load comments')
       }
-    }
 
-    loadComments()
+      const normalized = (data.comments || []).map(normalizeApiComment)
+      const nextComments = append ? [...comments, ...normalized] : normalized
 
-    return () => {
-      ignore = true
+      setComments(nextComments)
+      setPage(Number(data.page || nextPage))
+      setHasMore(Boolean(data.has_more))
+      setTotalComments(Number(data.total || nextComments.length))
+      onCommentsChange?.(nextComments)
+    } catch (error) {
+      showToast(error.message || 'Failed to load comments.')
+    } finally {
+      append ? setLoadingMore(false) : setLoading(false)
     }
-  }, [targetId])
+  }
+
+  useEffect(() => {
+    setComments([])
+    setPage(1)
+    setHasMore(false)
+    setTotalComments(0)
+    fetchComments(1, false)
+  }, [targetId, sort])
 
   const isBanned = false
 
@@ -670,25 +698,8 @@ export default function CommentSection({
   }, [comments, currentUser, story])
 
   const sortedComments = useMemo(() => {
-    const list = [...visibleComments]
-
-    list.sort((a, b) => {
-      if (a.is_pinned && !b.is_pinned) return -1
-      if (!a.is_pinned && b.is_pinned) return 1
-
-      if (sort === 'top') {
-        return Number(b.likes || 0) - Number(a.likes || 0)
-      }
-
-      if (sort === 'oldest') {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      }
-
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    })
-
-    return list
-  }, [visibleComments, sort])
+    return [...visibleComments]
+  }, [visibleComments])
 
   const updateComments = (nextComments) => {
     setComments(nextComments)
@@ -701,17 +712,17 @@ export default function CommentSection({
   }
 
   const openCommentWarning = (data) => {
-  const matchedWords = Array.isArray(data.matched_words)
-    ? data.matched_words.map((item) => item.word).filter(Boolean)
-    : []
+    const matchedWords = Array.isArray(data.matched_words)
+      ? data.matched_words.map((item) => item.word).filter(Boolean)
+      : []
 
-  setWarningDialog({
-    title: data.code === 'READER_COMMENT_BLOCKED' ? 'Commenting Restricted' : 'Comment Hidden',
-    message: data.message || 'Your comment could not be posted.',
-    matchedWords,
-    until: data.comment_block?.expires_at || '',
-  })
-}
+    setWarningDialog({
+      title: data.code === 'READER_COMMENT_BLOCKED' ? 'Commenting Restricted' : 'Comment Hidden',
+      message: data.message || 'Your comment could not be posted.',
+      matchedWords,
+      until: data.comment_block?.expires_at || '',
+    })
+  }
 
   const handleSend = async () => {
     if (!text.trim() || sending) return
@@ -742,7 +753,10 @@ export default function CommentSection({
       }
 
       const newComment = normalizeApiComment(data.comment)
-      updateComments([newComment, ...comments])
+      const nextComments = [newComment, ...comments]
+
+      updateComments(nextComments)
+      setTotalComments((value) => value + 1)
       setText('')
     } catch (error) {
       showToast(error.message || 'Failed to create comment.')
@@ -751,21 +765,75 @@ export default function CommentSection({
     }
   }
 
-  const handleLike = (commentId) => {
+  const updateCommentLikeLocal = (commentId, liked, likes) => {
     const nextComments = comments.map((comment) => {
-      if (comment.id !== commentId) return comment
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          liked,
+          likes,
+        }
+      }
 
-      const liked = !comment.liked
-      const currentLikes = Number(comment.likes || 0)
+      const replies = Array.isArray(comment.replies)
+        ? comment.replies.map((reply) =>
+            reply.id === commentId
+              ? {
+                  ...reply,
+                  liked,
+                  likes,
+                }
+              : reply
+          )
+        : []
 
       return {
         ...comment,
-        liked,
-        likes: liked ? currentLikes + 1 : Math.max(0, currentLikes - 1),
+        replies,
       }
     })
 
     updateComments(nextComments)
+  }
+
+  const handleLike = async (commentId) => {
+    if (!token) {
+      showToast('Please login to like.')
+      return
+    }
+
+    const targetComment =
+      comments.find((comment) => comment.id === commentId) ||
+      comments.flatMap((comment) => comment.replies || []).find((comment) => comment.id === commentId)
+
+    if (!targetComment) return
+
+    const nextLiked = !targetComment.liked
+    const nextLikes = nextLiked
+      ? Number(targetComment.likes || 0) + 1
+      : Math.max(0, Number(targetComment.likes || 0) - 1)
+
+    updateCommentLikeLocal(commentId, nextLiked, nextLikes)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}/like`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        updateCommentLikeLocal(commentId, targetComment.liked, Number(targetComment.likes || 0))
+        throw new Error(data.message || 'Failed to update like')
+      }
+
+      updateCommentLikeLocal(commentId, Boolean(data.liked), Number(data.likes || 0))
+    } catch (error) {
+      showToast(error.message || 'Failed to update like.')
+    }
   }
 
   const handleReply = async (commentId, replyText) => {
@@ -807,6 +875,7 @@ export default function CommentSection({
       })
 
       updateComments(nextComments)
+      setTotalComments((value) => value + 1)
     } catch (error) {
       showToast(error.message || 'Failed to create reply.')
     }
@@ -847,9 +916,18 @@ export default function CommentSection({
 
       const updatedComment = normalizeApiComment(data.comment)
 
-      const nextComments = comments.map((comment) =>
-        comment.id === editComment.id ? { ...comment, ...updatedComment } : comment
-      )
+      const nextComments = comments.map((comment) => {
+        if (comment.id === editComment.id) return { ...comment, ...updatedComment }
+
+        const replies = Array.isArray(comment.replies)
+          ? comment.replies.map((reply) => (reply.id === editComment.id ? { ...reply, ...updatedComment } : reply))
+          : []
+
+        return {
+          ...comment,
+          replies,
+        }
+      })
 
       updateComments(nextComments)
       setEditComment(null)
@@ -881,15 +959,17 @@ export default function CommentSection({
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-  if (data.code === 'COMMENT_AUTO_HIDDEN' || data.code === 'READER_COMMENT_BLOCKED') {
-    openCommentWarning(data)
-    return
-  }
+        if (data.code === 'COMMENT_AUTO_HIDDEN' || data.code === 'READER_COMMENT_BLOCKED') {
+          openCommentWarning(data)
+          return
+        }
 
-  throw new Error(data.message || 'Failed to create comment')
-}
+        throw new Error(data.message || 'Failed to create comment')
+      }
+
       if (action === 'delete') {
         updateComments(comments.filter((item) => item.id !== comment.id))
+        setTotalComments((value) => Math.max(0, value - 1))
         showToast('Comment deleted.')
         return
       }
@@ -921,6 +1001,11 @@ export default function CommentSection({
     showToast('Sticker picker is hidden for now.')
   }
 
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore) return
+    fetchComments(page + 1, true)
+  }
+
   return (
     <section className={`${isModal ? 'relative flex h-full flex-col bg-white' : 'min-h-screen bg-white pb-[84px]'}`}>
       <div className="shrink-0 border-b border-[#eef1f5] bg-white px-4 py-3">
@@ -928,7 +1013,7 @@ export default function CommentSection({
           <div>
             <h2 className="text-[17px] font-black text-[#111827]">All Comments</h2>
             <p className="mt-0.5 text-[12px] font-semibold text-[#98a2b3]">
-              {loading ? 'Loading comments...' : visibleComments.length ? `${visibleComments.length} comments` : 'No comments yet'}
+              {loading ? 'Loading comments...' : totalComments ? `${totalComments} comments` : 'No comments yet'}
             </p>
           </div>
 
@@ -951,50 +1036,62 @@ export default function CommentSection({
             >
               Top
             </button>
-            <button
-              type="button"
-              onClick={() => setSort('oldest')}
-              className={`hidden rounded-full px-3 py-1.5 text-[12px] font-black sm:inline-block ${
-                sort === 'oldest' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#98a2b3]'
-              }`}
-            >
-              Oldest
-            </button>
           </div>
         </div>
       </div>
 
       <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto' : 'mx-auto max-w-3xl divide-y divide-[#eef1f5]'}`}>
         <div className="mx-auto max-w-3xl divide-y divide-[#eef1f5]">
-          {sortedComments.length ? (
-            sortedComments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                story={story}
-                onLike={handleLike}
-                onReply={handleReply}
-                onEdit={handleEdit}
-                onDelete={(selectedComment) => handleModerate(selectedComment, 'delete')}
-                onHide={(selectedComment) => {
-                  const currentUserIsAuthor = isStoryAuthor(currentUser, story)
-                  const currentUserIsAdmin = currentUser.is_admin
+          {loading && !sortedComments.length ? (
+            <div className="px-4 py-4">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="mb-3 h-20 animate-pulse rounded-[18px] bg-[#f3f4f6]" />
+              ))}
+            </div>
+          ) : sortedComments.length ? (
+            <>
+              {sortedComments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  story={story}
+                  onLike={handleLike}
+                  onReply={handleReply}
+                  onEdit={handleEdit}
+                  onDelete={(selectedComment) => handleModerate(selectedComment, 'delete')}
+                  onHide={(selectedComment) => {
+                    const currentUserIsAuthor = isStoryAuthor(currentUser, story)
+                    const currentUserIsAdmin = currentUser.is_admin
 
-                  if (currentUserIsAuthor || currentUserIsAdmin) {
-                    handleModerate(selectedComment, 'hide')
-                    return
-                  }
+                    if (currentUserIsAuthor || currentUserIsAdmin) {
+                      handleModerate(selectedComment, 'hide')
+                      return
+                    }
 
-                  handleHideForReader(selectedComment)
-                }}
-                onUnhide={(selectedComment) => handleModerate(selectedComment, 'unhide')}
-                onPin={(selectedComment) => handleModerate(selectedComment, 'pin')}
-                onUnpin={(selectedComment) => handleModerate(selectedComment, 'unpin')}
-                onSpoiler={(selectedComment) => handleModerate(selectedComment, 'spoiler')}
-                onUnspoiler={(selectedComment) => handleModerate(selectedComment, 'unspoiler')}
-                onBan={(selectedComment) => handleModerate(selectedComment, 'ban')}
-              />
-            ))
+                    handleHideForReader(selectedComment)
+                  }}
+                  onUnhide={(selectedComment) => handleModerate(selectedComment, 'unhide')}
+                  onPin={(selectedComment) => handleModerate(selectedComment, 'pin')}
+                  onUnpin={(selectedComment) => handleModerate(selectedComment, 'unpin')}
+                  onSpoiler={(selectedComment) => handleModerate(selectedComment, 'spoiler')}
+                  onUnspoiler={(selectedComment) => handleModerate(selectedComment, 'unspoiler')}
+                  onBan={(selectedComment) => handleModerate(selectedComment, 'ban')}
+                />
+              ))}
+
+              {hasMore ? (
+                <div className="px-4 py-4">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="h-11 w-full rounded-full bg-[#f5f3fa] text-[13px] font-black text-[#111827] disabled:text-[#98a2b3]"
+                  >
+                    {loadingMore ? 'Loading...' : 'Load more comments'}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <EmptyComments onFocus={() => document.getElementById('shadow-comment-input')?.focus()} />
           )}
@@ -1008,49 +1105,49 @@ export default function CommentSection({
       ) : null}
 
       {warningDialog ? (
-  <div className={`${isModal ? 'absolute' : 'fixed'} inset-0 z-[95] flex items-center justify-center bg-black/35 px-4`}>
-    <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 shadow-2xl">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
-        <i className="fa-solid fa-triangle-exclamation text-[18px]" />
-      </div>
+        <div className={`${isModal ? 'absolute' : 'fixed'} inset-0 z-[95] flex items-center justify-center bg-black/35 px-4`}>
+          <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
+              <i className="fa-solid fa-triangle-exclamation text-[18px]" />
+            </div>
 
-      <h3 className="mt-4 text-[20px] font-black text-[#111827]">{warningDialog.title}</h3>
+            <h3 className="mt-4 text-[20px] font-black text-[#111827]">{warningDialog.title}</h3>
 
-      <p className="mt-2 text-[13.5px] font-semibold leading-6 text-[#667085]">
-        {warningDialog.message}
-      </p>
+            <p className="mt-2 text-[13.5px] font-semibold leading-6 text-[#667085]">
+              {warningDialog.message}
+            </p>
 
-      {warningDialog.matchedWords.length ? (
-        <div className="mt-4 rounded-[18px] bg-[#fff7f7] p-3">
-          <div className="text-[11px] font-black uppercase tracking-[0.4px] text-[#b91c1c]">
-            Restricted words found
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {warningDialog.matchedWords.map((word) => (
-              <span key={word} className="rounded-full bg-[#fee2e2] px-3 py-1 text-[11.5px] font-black text-[#b91c1c]">
-                {word}
-              </span>
-            ))}
+            {warningDialog.matchedWords.length ? (
+              <div className="mt-4 rounded-[18px] bg-[#fff7f7] p-3">
+                <div className="text-[11px] font-black uppercase tracking-[0.4px] text-[#b91c1c]">
+                  Restricted words found
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {warningDialog.matchedWords.map((word) => (
+                    <span key={word} className="rounded-full bg-[#fee2e2] px-3 py-1 text-[11.5px] font-black text-[#b91c1c]">
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {warningDialog.until ? (
+              <div className="mt-3 rounded-[16px] bg-[#f8fafc] px-3 py-2 text-[12px] font-bold text-[#667085]">
+                Until: {formatDate(warningDialog.until)}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setWarningDialog(null)}
+              className="mt-5 h-11 w-full rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
+            >
+              I Understand
+            </button>
           </div>
         </div>
       ) : null}
-
-      {warningDialog.until ? (
-        <div className="mt-3 rounded-[16px] bg-[#f8fafc] px-3 py-2 text-[12px] font-bold text-[#667085]">
-          Until: {formatDate(warningDialog.until)}
-        </div>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={() => setWarningDialog(null)}
-        className="mt-5 h-11 w-full rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-95"
-      >
-        I Understand
-      </button>
-    </div>
-  </div>
-) : null}
 
       <CommentComposer
         value={text}
