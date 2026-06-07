@@ -1314,8 +1314,7 @@ async function handleUnfollowFromSettings() {
             )
           ) : null}
 
-          {activeTab === 'Store' ? (
- {activeTab === 'Store' ? (
+         {activeTab === 'Store' ? (
   <AuthorStoreTab author={displayAuthor} onMessage={setMessage} />
 ) : null}
           
