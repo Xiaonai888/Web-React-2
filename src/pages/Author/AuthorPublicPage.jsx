@@ -1105,9 +1105,9 @@ async function handleUnfollowFromSettings() {
 
     <button
       type="button"
-      onClick={(event) => {
+     onClick={(event) => {
   event.stopPropagation()
-  setMessage('More options coming soon.')
+  navigate('/author/page-settings')
 }}
       className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
       aria-label="More options"
@@ -1232,9 +1232,9 @@ async function handleUnfollowFromSettings() {
     {!displayAuthor.is_owner ? (
       <button
         type="button"
-        onClick={(event) => {
+       onClick={(event) => {
   event.stopPropagation()
-  navigate('/author/page-settings')
+  navigate('/author/page/edit?section=cover')
 }}
         className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
       >
@@ -1292,7 +1292,7 @@ async function handleUnfollowFromSettings() {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Details</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=details')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
@@ -1314,7 +1314,7 @@ async function handleUnfollowFromSettings() {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=links')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
@@ -1330,7 +1330,7 @@ async function handleUnfollowFromSettings() {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Facebook Page</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=facebook')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
@@ -1353,7 +1353,7 @@ async function handleUnfollowFromSettings() {
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Contact info</h2>
         {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/edit-page')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <button type="button" onClick={() => navigate('/author/page/edit?section=contact')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
             <i className="fa-solid fa-pen text-[14px]" />
           </button>
         ) : null}
