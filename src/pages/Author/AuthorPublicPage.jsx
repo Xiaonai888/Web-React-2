@@ -1094,7 +1094,7 @@ async function handleUnfollowFromSettings() {
         type="button"
         onClick={(event) => {
   event.stopPropagation()
-  navigate('/author/edit-page')
+  navigate('/author/page/edit?section=cover')
 }}
         className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
         aria-label="Edit page"
