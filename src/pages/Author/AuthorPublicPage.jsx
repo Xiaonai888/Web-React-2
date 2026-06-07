@@ -1265,23 +1265,28 @@ async function handleUnfollowFromSettings() {
      <section className="sticky top-14 z-30 bg-white">
   <div className="flex items-center gap-2 px-4 py-2">
     <div className="sticky top-0 z-[60] -mx-4 border-b border-[#eef0f3] bg-white px-4">
-      const active = activeTab === tab
+               <div className="sticky top-0 z-[80] border-b border-[#eef0f3] bg-white">
+            <div className="flex gap-2 overflow-x-auto px-4 py-2">
+              {tabs.map((tab) => {
+                const active = activeTab === tab
 
-      return (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => setActiveTab(tab)}
-          className={`h-9 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
-            active
-              ? 'bg-[#f3f4f6] font-medium text-[#111827]'
-              : 'bg-transparent font-normal text-[#9ca3af]'
-          }`}
-        >
-          {tab}
-        </button>
-      )
-    })}
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
+                      active
+                        ? 'bg-[#f3f4f6] font-medium text-[#111827]'
+                        : 'bg-transparent font-normal text-[#9ca3af]'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
   </div>
 </section>
 
