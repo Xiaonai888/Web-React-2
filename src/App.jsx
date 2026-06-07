@@ -99,6 +99,7 @@ const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreMana
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
+const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 
 
 function ComingSoon({ title }) {
@@ -157,6 +158,7 @@ function AppShell() {
     '/comments',
     '/author/comment-protection',
     '/author/page-settings',
+    '/author/page/edit',
     
   ]
 
@@ -653,6 +655,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorPageSettingsPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/edit"
+  element={
+    <LazyPage>
+      <AuthorPageEditDetailsPage />
     </LazyPage>
   }
 />
