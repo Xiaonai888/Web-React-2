@@ -98,6 +98,7 @@ const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
+const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 
