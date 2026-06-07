@@ -21,6 +21,8 @@ const DEFAULT_DETAILS = {
   email: '',
   phone: '',
   messenger: '',
+  address: '',
+  hours: '',
 }
 
 function getAuthToken() {
@@ -682,21 +684,35 @@ export default function AuthorPageEditDetailsPage() {
           </SectionBlock>
 
           <SectionBlock id="details" title="Details" sectionRef={detailsRef}>
-            <FieldRow
-              icon="fa-regular fa-star"
-              title={`Reviews: ${details.reviews_enabled ? 'On' : 'Off'}`}
-              value={details.reviews_enabled ? 'Readers can leave reviews on your page' : 'Reviews are hidden from your page'}
-              placeholder=""
-              onClick={() => setActiveModal('reviews')}
-            />
-            <FieldRow
-              icon="fa-solid fa-dollar-sign"
-              title={details.price_range || 'Price hidden'}
-              value={details.price_range ? 'Price range shown on your public page' : 'Price range will not be shown'}
-              placeholder=""
-              onClick={() => setActiveModal('price')}
-            />
-          </SectionBlock>
+  <FieldRow
+    icon="fa-regular fa-star"
+    title={`Reviews: ${details.reviews_enabled ? 'On' : 'Off'}`}
+    value={details.reviews_enabled ? 'Readers can leave reviews on your page' : 'Reviews are hidden from your page'}
+    placeholder=""
+    onClick={() => setActiveModal('reviews')}
+  />
+  <FieldRow
+    icon="fa-solid fa-dollar-sign"
+    title={details.price_range || 'Price hidden'}
+    value={details.price_range ? 'Price range shown on your public page' : 'Price range will not be shown'}
+    placeholder=""
+    onClick={() => setActiveModal('price')}
+  />
+  <FieldRow
+    icon="fa-solid fa-location-dot"
+    title={details.address || 'Address'}
+    value={details.address ? 'Shown on your public page' : ''}
+    placeholder="Add address"
+    onClick={() => setActiveModal('address')}
+  />
+  <FieldRow
+    icon="fa-regular fa-clock"
+    title={details.hours || 'Hours'}
+    value={details.hours ? 'Shown on your public page' : ''}
+    placeholder="Add opening hours"
+    onClick={() => setActiveModal('hours')}
+  />
+</SectionBlock>
 
           <SectionBlock id="links" title="Links" sectionRef={linksRef}>
             <FieldRow
@@ -824,6 +840,35 @@ export default function AuthorPageEditDetailsPage() {
         }}
       />
 
+<TextEditModal
+  open={activeModal === 'address'}
+  title="Edit address"
+  label="Address"
+  value={details.address}
+  maxLength={180}
+  placeholder="Add your public address"
+  onClose={() => setActiveModal('')}
+  onSave={(value) => {
+    updateDetails({ address: value })
+    setActiveModal('')
+  }}
+/>
+
+<TextEditModal
+  open={activeModal === 'hours'}
+  title="Edit hours"
+  label="Hours"
+  value={details.hours}
+  multiline
+  maxLength={180}
+  placeholder="Example: Mon–Fri · 9:00 AM – 5:00 PM"
+  onClose={() => setActiveModal('')}
+  onSave={(value) => {
+    updateDetails({ hours: value })
+    setActiveModal('')
+  }}
+/>
+      
       <ReviewsModal
         open={activeModal === 'reviews'}
         value={details.reviews_enabled}
