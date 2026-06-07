@@ -2,6 +2,64 @@ import { useEffect, useRef, useState } from 'react'
 
 const MAX_POST_PHOTOS = 5
 const MAX_POST_IMAGE_BYTES = 2 * 1024 * 1024
+const MAX_IMAGE_WIDTH = 1600
+const TARGET_IMAGE_BYTES = 420 * 1024
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const url = URL.createObjectURL(file)
+
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to load image'))
+    }
+
+    image.src = url
+  })
+}
+
+async function compressImageFile(file) {
+  if (!file?.type?.startsWith('image/')) return null
+
+  if (file.size <= TARGET_IMAGE_BYTES) return file
+
+  const image = await loadImageFromFile(file)
+  const scale = Math.min(1, MAX_IMAGE_WIDTH / Math.max(image.width, image.height))
+  const width = Math.max(1, Math.round(image.width * scale))
+  const height = Math.max(1, Math.round(image.height * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+
+  const context = canvas.getContext('2d')
+  context.drawImage(image, 0, 0, width, height)
+
+  let quality = 0.82
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+
+  while (blob && blob.size > TARGET_IMAGE_BYTES && quality > 0.45) {
+    quality -= 0.08
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+  }
+
+  if (!blob) return file
+
+  return new File(
+    [blob],
+    file.name.replace(/\.[^.]+$/, '.jpg'),
+    {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    }
+  )
+}
 
 function getSelectedImageSize(images) {
   return images.reduce((sum, image) => sum + Number(image.file?.size || 0), 0)
@@ -188,63 +246,7 @@ export default function AuthorPostComposerSheet({
     onClose?.()
   }
 
-  function handlePickImages(fileList) {
-    const files = Array.from(fileList || [])
-    const imageFiles = files.filter((file) => file.type.startsWith('image/'))
-
-    if (!imageFiles.length) return
-
-    if (selectedImages.length + imageFiles.length > MAX_POST_PHOTOS) {
-      setImageError('You can add up to 5 photos.')
-      return
-    }
-
-    const nextImages = imageFiles.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
-      file,
-      url: URL.createObjectURL(file),
-    }))
-
-    const nextSelectedImages = [...selectedImages, ...nextImages]
-
-    if (getSelectedImageSize(nextSelectedImages) > MAX_POST_IMAGE_BYTES) {
-      nextImages.forEach((image) => URL.revokeObjectURL(image.url))
-      setImageError('Photos are too large. Please choose smaller images.')
-      return
-    }
-
-    setSelectedImages(nextSelectedImages)
-    setImageError('')
-  }
-
-  function removeImage(imageId) {
-    setSelectedImages((current) => {
-      const imageToRemove = current.find((image) => image.id === imageId)
-
-      if (imageToRemove) URL.revokeObjectURL(imageToRemove.url)
-
-      return current.filter((image) => image.id !== imageId)
-    })
-    setImageError('')
-  }
-
-  async function publishPost() {
-    if (selectedImages.length) {
-      onMessage?.('Photo publishing will be connected in the next stage.')
-      return
-    }
-
-    const ok = await onPublishText?.(draft.trim())
-
-    if (ok) {
-      clearImages()
-      setDraft('')
-      setImageError('')
-      setScreen('compose')
-      onClose?.()
-    }
-  }
-
+  
   return (
     <>
       <div className="fixed inset-0 z-[240] bg-white">
@@ -283,7 +285,7 @@ export default function AuthorPostComposerSheet({
                   onClick={() => setScreen('review')}
                   className="h-9 rounded-full bg-[#2563eb] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
                 >
-                  Review
+                  Next
                 </button>
               </div>
             </header>
@@ -397,7 +399,7 @@ export default function AuthorPostComposerSheet({
 
               {selectedImages.length ? (
                 <div className="mb-4 rounded-[14px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
-                  Photo publishing will be connected in the next stage. Remove photos to publish a text post now.
+                  Photo publishing is not connected yet. Text posts can publish now.
                 </div>
               ) : null}
 
