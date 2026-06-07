@@ -150,7 +150,7 @@ export default function AuthorEditPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <div className="text-[16px] font-black text-[#111827]">Edit Page</div>
+          <div className="text-[16px] font-black text-[#111827]">Basic Page Info</div>
 
           <div className="h-10 w-10" />
         </div>
@@ -159,9 +159,9 @@ export default function AuthorEditPage() {
       <main className="mx-auto max-w-[680px] px-4 py-5">
         <form onSubmit={handleSubmit} className="rounded-[26px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div>
-            <h1 className="text-[22px] font-black text-[#111827]">Page details</h1>
+            <h1 className="text-[22px] font-black text-[#111827]">Basic Page Info</h1>
             <p className="mt-1 text-[13px] font-semibold leading-6 text-[#8b93a1]">
-              Change your public author page name, username, and bio.
+              Update your page name, username, and short bio.
             </p>
           </div>
 
