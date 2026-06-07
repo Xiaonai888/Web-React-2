@@ -270,6 +270,79 @@ function ReviewsModal({ open, value, onClose, onSave }) {
   )
 }
 
+function FacebookPageModal({ open, name, url, imageUrl, fallbackImage, onClose, onSave, onUploadImage }) {
+  const [draftName, setDraftName] = useState(name || '')
+  const [draftUrl, setDraftUrl] = useState(url || '')
+
+  useEffect(() => {
+    if (open) {
+      setDraftName(name || '')
+      setDraftUrl(url || '')
+    }
+  }, [open, name, url])
+
+  if (!open) return null
+
+  const canSave =
+    draftName.trim() !== String(name || '').trim() ||
+    draftUrl.trim() !== String(url || '').trim()
+
+  const displayImage = imageUrl || fallbackImage
+
+  return (
+    <ModalShell title="Edit Facebook Page" onClose={onClose}>
+      <div className="mb-5 flex items-center gap-3">
+        <span className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10">
+          {displayImage ? (
+            <img src={displayImage} alt={draftName || 'Facebook Page'} className="h-full w-full object-cover" />
+          ) : null}
+        </span>
+
+        <button
+          type="button"
+          onClick={onUploadImage}
+          className="rounded-full bg-[#f4f5f7] px-3 py-2 text-[12px] font-medium text-[#111827] active:scale-95"
+        >
+          Change image
+        </button>
+      </div>
+
+      <label className="mb-1.5 block text-[12px] font-normal text-[#6b7280]">Page name</label>
+      <input
+        value={draftName}
+        onChange={(event) => setDraftName(event.target.value)}
+        maxLength={80}
+        placeholder="Example: Alpha Centauri"
+        className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[14px] font-normal text-[#111827] outline-none focus:border-[#111827]"
+      />
+
+      <label className="mb-1.5 mt-4 block text-[12px] font-normal text-[#6b7280]">Page link</label>
+      <input
+        value={draftUrl}
+        onChange={(event) => setDraftUrl(event.target.value)}
+        maxLength={180}
+        placeholder="https://facebook.com/yourpage"
+        className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[14px] font-normal text-[#111827] outline-none focus:border-[#111827]"
+      />
+
+      <p className="mt-2 text-[12px] font-normal leading-5 text-[#8b93a1]">
+        The image is optional. If you do not add one, your author logo will be shown.
+      </p>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
+        <button
+          type="button"
+          disabled={!canSave}
+          onClick={() => onSave({ name: draftName.trim(), url: draftUrl.trim() })}
+          className="h-10 w-full rounded-[12px] bg-[#111827] text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#b4bbc6]"
+        >
+          Save
+        </button>
+      </div>
+    </ModalShell>
+  )
+}
+
 function CoverOptionsSheet({ open, onClose, onSeeCover, onUploadCover, onChooseCover }) {
   if (!open) return null
 
@@ -776,23 +849,22 @@ export default function AuthorPageEditDetailsPage() {
       />
 
       <TextEditModal
-        open={activeModal === 'facebook'}
-        title="Edit Facebook Page"
-        label="Facebook Page name and link"
-        value={`${details.facebook_page_name || ''}${details.facebook_page_url ? `\n${details.facebook_page_url}` : ''}`}
-        multiline
-        maxLength={260}
-        placeholder="Page name&#10;https://facebook.com/yourpage"
-        onClose={() => setActiveModal('')}
-        onSave={(value) => {
-          const lines = value.split('\n').map((item) => item.trim()).filter(Boolean)
-          updateDetails({
-            facebook_page_name: lines[0] || '',
-            facebook_page_url: lines[1] || '',
-          })
-          setActiveModal('')
-        }}
-      />
+      <FacebookPageModal
+  open={activeModal === 'facebook'}
+  name={details.facebook_page_name}
+  url={details.facebook_page_url}
+  imageUrl={details.facebook_page_image_url}
+  fallbackImage={displayAvatar}
+  onClose={() => setActiveModal('')}
+  onUploadImage={() => openImagePicker('facebook')}
+  onSave={({ name, url }) => {
+    updateDetails({
+      facebook_page_name: name,
+      facebook_page_url: url,
+    })
+    setActiveModal('')
+  }}
+/>
 
       <TextEditModal
         open={activeModal === 'social'}
