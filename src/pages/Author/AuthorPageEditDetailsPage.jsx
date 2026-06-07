@@ -531,15 +531,8 @@ export default function AuthorPageEditDetailsPage() {
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
-          <h1 className="text-[16px] font-semibold text-[#111827]">Edit Page</h1>
-          <button
-            type="button"
-            onClick={handleSaveMainPage}
-            disabled={loading || saving}
-            className="rounded-full px-3 py-2 text-[13px] font-semibold text-[#111827] disabled:text-[#cbd5e1]"
-          >
-            {saving ? 'Saving' : 'Save'}
-          </button>
+         <h1 className="text-[16px] font-semibold text-[#111827]">Edit Page</h1>
+<div className="h-10 w-10" />
         </div>
       </header>
 
