@@ -14,22 +14,21 @@ function ToolRow({ icon, label, subtext, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[#f3f4f6]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${icon} text-[24px]`} />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[18px]`} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[17px] font-normal text-[#111827]">{label}</span>
-        {subtext ? <span className="mt-0.5 block text-[12px] font-normal text-[#8b93a1]">{subtext}</span> : null}
+        <span className="block text-[14px] font-normal text-[#111827]">{label}</span>
+        {subtext ? <span className="mt-0.5 block text-[11px] font-normal text-[#8b93a1]">{subtext}</span> : null}
       </span>
-      <i className="fa-solid fa-chevron-right text-[11px] text-[#c7cbd3]" />
     </button>
   )
 }
 
 function SectionTitle({ children }) {
-  return <h2 className="px-1 pt-5 text-[24px] font-bold text-[#111827]">{children}</h2>
+  return <h2 className="px-1 pt-5 text-[17px] font-semibold text-[#111827]">{children}</h2>
 }
 
 export default function AuthorPageSettingsPage() {
@@ -98,20 +97,9 @@ export default function AuthorPageSettingsPage() {
             <i className="fa-solid fa-chevron-left text-[22px]" />
           </button>
 
-          <h1 className="text-[20px] font-bold text-[#111827]">Page Settings</h1>
+          <h1 className="text-[16px] font-semibold text-[#111827]">Page Settings</h1>
 
-          <button
-            type="button"
-            onClick={() => navigate('/author/page')}
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/5"
-            aria-label="Author page"
-          >
-            {authorPage?.avatar_url ? (
-              <img src={authorPage.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <i className="fa-solid fa-user text-[15px] text-[#9ca3af]" />
-            )}
-          </button>
+         <div className="h-10 w-10" />
         </div>
       </header>
 
@@ -128,7 +116,7 @@ export default function AuthorPageSettingsPage() {
 
         <SectionTitle>Manage</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-pen" label="Edit Author Page" subtext="Edit cover, intro, details, links, and contact info" onClick={() => navigate('/author/page/edit?section=intro&from=settings')} />
+          <ToolRow icon="fa-solid fa-pen" label="Basic Page Info" subtext="Edit page name, username, and bio" onClick={() => navigate('/author/edit-page?from=settings')} />
           <ToolRow icon="fa-solid fa-shield-halved" label="Page status" subtext="Active, review, or restriction status" onClick={() => setMessage('Page status is coming soon.')} />
           <ToolRow icon="fa-solid fa-list" label="Activity log" subtext="Review important page actions" onClick={() => setMessage('Activity log is coming soon.')} />
         </div>
