@@ -163,7 +163,7 @@ export default function AuthorEditPage() {
   </div>
 </div>
 
-<main className="mx-auto max-w-[680px] bg-white px-5 pb-10 pt-5">
+<main className="mx-auto max-w-[680px] bg-white px-6 pb-10 pt-5">
   <form id="basic-page-info-form" onSubmit={handleSubmit} className="space-y-5">
     <div>
       <h1 className="text-[18px] font-semibold text-[#111827]">Basic Page Info</h1>
