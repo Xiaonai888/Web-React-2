@@ -126,25 +126,35 @@ function ToolRow({ icon, title, subtitle, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99]"
+      className="flex w-full items-center gap-3 rounded-[14px] px-2 py-2.5 text-left active:bg-[#f4f5f7]"
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]">
-          <i className={`${icon} text-[14px]`} />
-        </div>
-
-        <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827]">{title}</div>
-          <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1]">{subtitle}</div>
-        </div>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+        <i className={`${icon} text-[13px]`} />
       </div>
 
-      <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c6c9d1]" />
+      <div className="min-w-0">
+        <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">{title}</div>
+        <div className="mt-0.5 line-clamp-1 text-[11px] font-normal text-[#8d94a1]">{subtitle}</div>
+      </div>
     </button>
   )
 }
-
 function PageMenu({ open, onClose, onSelect }) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    const previousTouchAction = document.body.style.touchAction
+
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.touchAction = previousTouchAction
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -155,26 +165,21 @@ function PageMenu({ open, onClose, onSelect }) {
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden" />
 
         <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-[17px] font-extrabold text-[#111827]">Author Tools</div>
-            <div className="mt-0.5 text-[12px] text-[#8d94a1]">Page, income, and settings</div>
-          </div>
-
+          <div className="text-[16px] font-semibold text-[#111827]">Author Tools</div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7]">
             <i className="fa-solid fa-times text-[13px] text-[#555]" />
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[20px] border border-[#eceaf2] bg-white">
-          <div className="divide-y divide-[#f0eef6]">
-            <ToolRow icon="fa-regular fa-pen-to-square" title="Edit Page" subtitle="Avatar, name, and page details" onClick={() => onSelect('/author/edit-page')} />
-            <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
-            <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
-            <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
-            <ToolRow icon="fa-solid fa-shield-halved" title="Comment Protection" subtitle="Blocked words and hidden comments" onClick={() => onSelect('/author/comment-protection')} />
-            <ToolRow icon="fa-solid fa-gear" title="Settings" subtitle="Privacy and author options" onClick={() => onSelect('/author/settings')} />
-            <ToolRow icon="fa-regular fa-trash-can" title="Trash" subtitle="Restore deleted stories within 30 days" onClick={() => onSelect('/author/trash')} />
-          </div>
+       <div className="space-y-1">
+  <ToolRow icon="fa-regular fa-pen-to-square" title="Edit Page" subtitle="Avatar, name, and page details" onClick={() => onSelect('/author/edit-page')} />
+  <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
+  <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
+  <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
+  <ToolRow icon="fa-solid fa-shield-halved" title="Comment Protection" subtitle="Blocked words and hidden comments" onClick={() => onSelect('/author/comment-protection')} />
+  <ToolRow icon="fa-solid fa-gear" title="Settings" subtitle="Privacy and author options" onClick={() => onSelect('/author/settings')} />
+  <ToolRow icon="fa-regular fa-trash-can" title="Trash" subtitle="Restore deleted stories within 30 days" onClick={() => onSelect('/author/trash')} />
+</div>
         </div>
       </div>
     </div>
