@@ -10,6 +10,7 @@ const DETAILS_STORAGE_KEY = 'shadow_author_page_profile_details'
 
 const DEFAULT_DETAILS = {
   pinned_details: 'Book · $$',
+  pinned_detail_keys: ['book', 'price'],
   price_range: '$$',
   reviews_enabled: true,
   website_label: 'Shadow website',
@@ -60,6 +61,75 @@ function normalizeUsername(value) {
 function getSearchSection(search) {
   const value = new URLSearchParams(search).get('section')
   return value || 'top'
+}
+
+function getPinnedDetailOptions(details) {
+  return [
+    {
+      key: 'book',
+      icon: 'fa-solid fa-book',
+      title: 'Book',
+      text: 'Public',
+      display: 'Book',
+    },
+    {
+      key: 'reviews',
+      icon: 'fa-regular fa-star',
+      title: details.reviews_enabled ? 'Reviews: On' : 'Reviews: Off',
+      text: 'Public',
+      display: details.reviews_enabled ? 'Reviews: On' : '',
+    },
+    {
+      key: 'price',
+      icon: 'fa-solid fa-dollar-sign',
+      title: details.price_range || 'Price hidden',
+      text: 'Public',
+      display: details.price_range || '',
+    },
+    {
+      key: 'phone',
+      icon: 'fa-solid fa-phone',
+      title: details.phone || 'Phone number',
+      text: 'Public',
+      display: details.phone || '',
+    },
+    {
+      key: 'social',
+      icon: 'fa-solid fa-at',
+      title: details.social_media || 'Social media',
+      text: 'Public',
+      display: details.social_media || '',
+    },
+    {
+      key: 'address',
+      icon: 'fa-solid fa-location-dot',
+      title: details.address || 'Address',
+      text: 'Public',
+      display: details.address || '',
+    },
+    {
+      key: 'hours',
+      icon: 'fa-regular fa-clock',
+      title: details.hours || 'Hours',
+      text: 'Public',
+      display: details.hours || '',
+    },
+    {
+      key: 'telegram',
+      icon: 'fa-brands fa-telegram',
+      title: details.telegram || 'Telegram',
+      text: 'Public',
+      display: details.telegram || '',
+    },
+  ]
+}
+
+function makePinnedDetailsText(details, keys) {
+  const options = getPinnedDetailOptions(details)
+  return keys
+    .map((key) => options.find((option) => option.key === key)?.display)
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function FieldRow({ icon, title, value, placeholder, onClick }) {
@@ -338,6 +408,78 @@ function FacebookPageModal({ open, name, url, imageUrl, fallbackImage, onClose, 
           disabled={!canSave}
           onClick={() => onSave({ name: draftName.trim(), url: draftUrl.trim() })}
           className="h-10 w-full rounded-[12px] bg-[#111827] text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#b4bbc6]"
+        >
+          Save
+        </button>
+      </div>
+    </ModalShell>
+  )
+}
+
+function PinnedDetailsModal({ open, details, onClose, onSave }) {
+  const options = getPinnedDetailOptions(details)
+  const savedKeys = Array.isArray(details.pinned_detail_keys) ? details.pinned_detail_keys : ['book', 'price']
+  const [selectedKeys, setSelectedKeys] = useState(savedKeys)
+
+  useEffect(() => {
+    if (open) setSelectedKeys(savedKeys)
+  }, [open, details.pinned_detail_keys])
+
+  if (!open) return null
+
+  function toggleKey(key) {
+    setSelectedKeys((current) => {
+      if (current.includes(key)) return current.filter((item) => item !== key)
+      if (current.length >= 5) return current
+      return [...current, key]
+    })
+  }
+
+  return (
+    <ModalShell title="Intro" onClose={onClose}>
+      <div className="mb-5">
+        <h3 className="text-[18px] font-semibold text-[#111827]">Pinned details</h3>
+        <p className="mt-1 text-[13px] font-normal leading-5 text-[#6b7280]">
+          Choose up to 5 details to feature near the top of your page.
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        {options.map((option) => {
+          const active = selectedKeys.includes(option.key)
+
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => toggleKey(option.key)}
+              className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
+                <i className={`${option.icon} text-[22px]`} />
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block text-[16px] font-normal text-[#111827]">{option.title}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-[#6b7280]">
+                  <i className="fa-solid fa-earth-asia text-[10px]" />
+                  {option.text}
+                </span>
+              </span>
+
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] border-2 ${active ? 'border-[#1877f2] bg-[#1877f2]' : 'border-[#9ca3af]'}`}>
+                {active ? <i className="fa-solid fa-check text-[12px] text-white" /> : null}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
+        <button
+          type="button"
+          onClick={() => onSave(selectedKeys)}
+          className="h-10 w-full rounded-[12px] bg-[#111827] text-[13px] font-semibold text-white"
         >
           Save
         </button>
@@ -825,26 +967,29 @@ export default function AuthorPageEditDetailsPage() {
         }}
       />
 
-      <TextEditModal
-        open={activeModal === 'pinned'}
-        title="Edit pinned detail"
-        label="Pinned detail"
-        value={details.pinned_details}
-        maxLength={80}
-        placeholder="Book · $$"
-        onClose={() => setActiveModal('')}
-        onSave={(value) => {
-          updateDetails({ pinned_details: value })
-          setActiveModal('')
-        }}
-      />
+      <PinnedDetailsModal
+  open={activeModal === 'pinned'}
+  details={details}
+  onClose={() => setActiveModal('')}
+  onSave={(keys) => {
+    updateDetails({
+      pinned_detail_keys: keys,
+      pinned_details: makePinnedDetailsText(details, keys),
+    })
+    setActiveModal('')
+  }}
+/>
 
       <PriceModal
         open={activeModal === 'price'}
         value={details.price_range}
         onClose={() => setActiveModal('')}
         onSave={(value) => {
-          updateDetails({ price_range: value, pinned_details: value ? `Book · ${value}` : 'Book' })
+          const nextDetails = { ...details, price_range: value }
+updateDetails({
+  price_range: value,
+  pinned_details: makePinnedDetailsText(nextDetails, nextDetails.pinned_detail_keys || ['book', 'price']),
+})
           setActiveModal('')
         }}
       />
