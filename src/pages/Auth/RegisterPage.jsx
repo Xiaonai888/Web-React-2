@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import TurnstileBox from '../../components/TurnstileBox'
 import Cropper from 'react-easy-crop'
 
 const API_BASE_URL =
@@ -7,6 +8,8 @@ const API_BASE_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
 const days = Array.from({ length: 31 }, (_, index) => index + 1)
 const months = [
@@ -264,6 +267,10 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('')
   const [avatarMessage, setAvatarMessage] = useState('')
 
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileRefreshKey, setTurnstileRefreshKey] = useState(0)
+  
+
   const getDateOfBirth = () => {
     if (!birthDay || !birthMonth || !birthYear) return ''
 
@@ -330,6 +337,11 @@ export default function RegisterPage() {
       return
     }
 
+    if (!turnstileToken) {
+      setMessage('Please complete the security check.')
+      return
+    }
+
     try {
       setLoading(true)
 
@@ -347,6 +359,7 @@ export default function RegisterPage() {
           date_of_birth: getDateOfBirth(),
           gender,
           custom_gender: gender === 'custom' ? customGender : null,
+          turnstileToken,
         }),
       })
 
@@ -361,6 +374,8 @@ export default function RegisterPage() {
       setCreatedUser(data.user)
       setStep(2)
     } catch (error) {
+      setTurnstileToken('')
+      setTurnstileRefreshKey((value) => value + 1)
       setMessage(error.message || 'Failed to create account')
     } finally {
       setLoading(false)
@@ -703,6 +718,16 @@ export default function RegisterPage() {
               </button>
             </div>
 
+            <div className="mb-4">
+              <TurnstileBox
+                siteKey={TURNSTILE_SITE_KEY}
+                refreshKey={turnstileRefreshKey}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken('')}
+                onError={() => setTurnstileToken('')}
+              />
+            </div>
+
             <label className="mb-5 flex items-start gap-2 text-[12px] leading-5 text-[#8d94a1]">
               <input
                 type="checkbox"
@@ -720,7 +745,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !turnstileToken}
               className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5 hover:bg-[#1b2233] hover:shadow-[0_18px_34px_rgba(17,24,39,0.24)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? 'Creating...' : 'Sign Up'}
@@ -741,3 +766,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+
