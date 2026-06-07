@@ -140,89 +140,91 @@ export default function AuthorEditPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
-      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[680px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate('/author/dashboard')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] active:scale-95"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+<div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+  <div className="mx-auto flex h-12 max-w-[680px] items-center justify-between px-4">
+    <button
+      type="button"
+      onClick={() => navigate('/author/page-settings', { replace: true })}
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] active:scale-95"
+    >
+      <i className="fa-solid fa-chevron-left text-[13px]" />
+    </button>
 
-          <div className="text-[16px] font-black text-[#111827]">Basic Page Info</div>
+    <div className="text-[16px] font-semibold text-[#111827]">Basic Page Info</div>
 
-          <div className="h-10 w-10" />
-        </div>
+    <div className="h-9 w-9" />
+  </div>
+</div>
+
+<main className="mx-auto max-w-[680px] bg-white px-5 pb-28 pt-5">
+  <form onSubmit={handleSubmit} className="space-y-5">
+    <div>
+      <h1 className="text-[18px] font-semibold text-[#111827]">Basic Page Info</h1>
+      <p className="mt-1 text-[12px] font-normal leading-5 text-[#8b93a1]">
+        Update your page name, username, and short bio.
+      </p>
+    </div>
+
+    {message ? (
+      <div className="rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
+        {message}
+      </div>
+    ) : null}
+
+    <div className="space-y-4">
+      <div>
+        <label className="mb-1.5 block text-[12px] font-semibold text-[#374151]">Page name</label>
+        <input
+          value={pageName}
+          onChange={(event) => setPageName(event.target.value)}
+          disabled={loading || saving}
+          placeholder="Your public page name"
+          className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[14px] font-normal text-[#111827] outline-none focus:border-[#111827] disabled:bg-[#f8fafc]"
+        />
       </div>
 
-      <main className="mx-auto max-w-[680px] px-4 py-5">
-        <form onSubmit={handleSubmit} className="rounded-[26px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <div>
-            <h1 className="text-[22px] font-black text-[#111827]">Basic Page Info</h1>
-            <p className="mt-1 text-[13px] font-semibold leading-6 text-[#8b93a1]">
-              Update your page name, username, and short bio.
-            </p>
-          </div>
-
-          {message ? (
-            <div className="mt-4 rounded-[16px] bg-[#fff7ed] px-4 py-3 text-[12px] font-bold leading-5 text-[#9a3412]">
-              {message}
-            </div>
-          ) : null}
-
-          <div className="mt-5 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-[12px] font-black text-[#374151]">Page name</label>
-              <input
-                value={pageName}
-                onChange={(event) => setPageName(event.target.value)}
-                disabled={loading || saving}
-                placeholder="Your public page name"
-                className="h-12 w-full rounded-2xl border border-[#e5e7eb] bg-white px-4 text-[14px] font-bold text-[#111827] outline-none focus:border-[#111827] disabled:bg-[#f8fafc]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-black text-[#374151]">Page username</label>
-              <div className="flex h-12 items-center rounded-2xl border border-[#e5e7eb] bg-white px-4 focus-within:border-[#111827]">
-                <span className="shrink-0 text-[14px] font-black text-[#9ca3af]">@</span>
-                <input
-                  value={pageUsername}
-                  onChange={(event) => setPageUsername(normalizeUsername(event.target.value))}
-                  disabled={loading || saving}
-                  placeholder="page_username"
-                  className="h-full min-w-0 flex-1 bg-transparent pl-1 text-[14px] font-bold text-[#111827] outline-none disabled:bg-transparent"
-                />
-              </div>
-              <p className="mt-1.5 text-[11.5px] font-semibold text-[#9ca3af]">
-                Use lowercase English letters, numbers, and underscore only.
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-black text-[#374151]">Bio</label>
-              <textarea
-                value={bio}
-                onChange={(event) => setBio(event.target.value)}
-                disabled={loading || saving}
-                maxLength={240}
-                placeholder="Tell readers about your author page."
-                className="min-h-[120px] w-full rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-[#111827] outline-none focus:border-[#111827] disabled:bg-[#f8fafc]"
-              />
-              <div className="mt-1.5 text-right text-[11px] font-bold text-[#9ca3af]">{bio.length}/240</div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
+      <div>
+        <label className="mb-1.5 block text-[12px] font-semibold text-[#374151]">Page username</label>
+        <div className="flex h-11 items-center rounded-[14px] border border-[#e5e7eb] bg-white px-3 focus-within:border-[#111827]">
+          <span className="shrink-0 text-[14px] font-normal text-[#9ca3af]">@</span>
+          <input
+            value={pageUsername}
+            onChange={(event) => setPageUsername(normalizeUsername(event.target.value))}
             disabled={loading || saving}
-            className="mt-6 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : loading ? 'Loading...' : 'Save Changes'}
-          </button>
-        </form>
-      </main>
+            placeholder="page_username"
+            className="h-full min-w-0 flex-1 bg-transparent pl-1 text-[14px] font-normal text-[#111827] outline-none disabled:bg-transparent"
+          />
+        </div>
+        <p className="mt-1.5 text-[11.5px] font-normal leading-4 text-[#9ca3af]">
+          Use lowercase English letters, numbers, and underscore only.
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-[12px] font-semibold text-[#374151]">Bio</label>
+        <textarea
+          value={bio}
+          onChange={(event) => setBio(event.target.value)}
+          disabled={loading || saving}
+          maxLength={240}
+          placeholder="Tell readers about your author page."
+          className="min-h-[116px] w-full rounded-[14px] border border-[#e5e7eb] bg-white px-3 py-3 text-[14px] font-normal leading-6 text-[#111827] outline-none focus:border-[#111827] disabled:bg-[#f8fafc]"
+        />
+        <div className="mt-1.5 text-right text-[11px] font-normal text-[#9ca3af]">{bio.length}/240</div>
+      </div>
+    </div>
+
+    <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
+      <button
+        type="submit"
+        disabled={loading || saving}
+        className="h-12 w-full rounded-[14px] bg-[#111827] text-[14px] font-semibold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {saving ? 'Saving...' : loading ? 'Loading...' : 'Save Changes'}
+      </button>
+    </div>
+  </form>
+</main>
     </div>
   )
 }
