@@ -128,7 +128,7 @@ export default function AuthorPageSettingsPage() {
 
         <SectionTitle>Manage</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-pen" label="Edit Page" subtext="Update page details, links, and contact info" onClick={() => navigate('/author/edit-page')} />
+          <ToolRow icon="fa-solid fa-pen" label="Edit Author Page" subtext="Edit cover, intro, details, links, and contact info" onClick={() => navigate('/author/page/edit?section=intro&from=settings')} />
           <ToolRow icon="fa-solid fa-shield-halved" label="Page status" subtext="Active, review, or restriction status" onClick={() => setMessage('Page status is coming soon.')} />
           <ToolRow icon="fa-solid fa-list" label="Activity log" subtext="Review important page actions" onClick={() => setMessage('Activity log is coming soon.')} />
         </div>
