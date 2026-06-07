@@ -569,7 +569,7 @@ export default function AuthorPageEditDetailsPage() {
             <button
               type="button"
               onClick={() => setCoverOptionsOpen(true)}
-              className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95"
+              className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
             >
               <i className="fa-solid fa-camera text-[16px]" />
             </button>
