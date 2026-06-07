@@ -64,21 +64,21 @@ function FieldRow({ icon, title, value, placeholder, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-start gap-4 py-3 text-left active:bg-[#f8fafc]"
+      className="flex w-full items-start gap-3 py-2.5 text-left active:bg-[#f8fafc]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${icon} text-[25px]`} />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[18px]`} />
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[17px] font-semibold leading-5 text-[#111827]">{title}</span>
-        <span className={`mt-1 block whitespace-pre-wrap break-words text-[15px] font-normal leading-5 ${value ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>
+        <span className="block text-[14px] font-medium leading-5 text-[#111827]">{title}</span>
+        <span className={`mt-0.5 block whitespace-pre-wrap break-words text-[12px] font-normal leading-5 ${value ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>
           {value || placeholder}
         </span>
       </span>
 
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#6b7280]">
-        <i className="fa-solid fa-pen text-[18px]" />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#6b7280]">
+        <i className="fa-solid fa-pen text-[14px]" />
       </span>
     </button>
   )
@@ -87,11 +87,11 @@ function FieldRow({ icon, title, value, placeholder, onClick }) {
 function SectionBlock({ id, title, children, sectionRef }) {
   return (
     <section ref={sectionRef} id={id} className="scroll-mt-20">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-[24px] font-bold text-[#111827]">{title}</h2>
-        <i className="fa-solid fa-chevron-up text-[22px] text-[#111827]" />
+      <div className="mb-1.5 flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#111827]">{title}</h2>
+        <i className="fa-solid fa-chevron-up text-[15px] text-[#111827]" />
       </div>
-      <div className="space-y-1">{children}</div>
+      <div className="space-y-0.5">{children}</div>
     </section>
   )
 }
@@ -521,18 +521,17 @@ export default function AuthorPageEditDetailsPage() {
   return (
     <div className="min-h-screen bg-white pb-10">
       <header className="sticky top-0 z-40 bg-white">
-        <div className="mx-auto flex h-16 max-w-[720px] items-center justify-between px-4">
+        <div className="mx-auto flex h-12 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
-            <i className="fa-solid fa-chevron-left text-[28px]" />
+            <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
-          <h1 className="text-[22px] font-bold text-[#111827]">Edit Page</h1>
-
+          <h1 className="text-[16px] font-semibold text-[#111827]">Edit Page</h1>
           <button
             type="button"
             onClick={handleSaveMainPage}
@@ -558,7 +557,7 @@ export default function AuthorPageEditDetailsPage() {
         ) : null}
 
         <section ref={coverRef} id="cover" className="scroll-mt-20">
-          <div className="relative h-[220px] overflow-hidden rounded-t-[24px] bg-[#111827]">
+          <div className="relative h-[165px] overflow-hidden rounded-t-[18px] bg-[#111827] sm:h-[190px]">
             {displayCover ? (
               <img src={displayCover} alt={pageName} className="h-full w-full object-cover" />
             ) : (
@@ -570,19 +569,18 @@ export default function AuthorPageEditDetailsPage() {
             <button
               type="button"
               onClick={() => setCoverOptionsOpen(true)}
-              className="absolute bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95"
-              aria-label="Cover options"
+              className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm active:scale-95"
             >
-              <i className="fa-solid fa-camera text-[22px]" />
+              <i className="fa-solid fa-camera text-[16px]" />
             </button>
           </div>
 
-          <div className="relative min-h-[92px] bg-white">
-            <div className="absolute -top-14 left-6 h-[110px] w-[110px] rounded-full border-4 border-white bg-[#f3f4f6] shadow-sm">
+          <div className="relative min-h-[72px] bg-white">
+            <div className="absolute -top-11 left-5 h-[84px] w-[84px] rounded-full border-[3px] border-white bg-[#f3f4f6] shadow-sm">
               {displayAvatar ? (
                 <img src={displayAvatar} alt={pageName} className="h-full w-full rounded-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full text-[36px] font-bold text-[#9ca3af]">
+                <div className="flex h-full w-full items-center justify-center rounded-full text-[28px] font-bold text-[#9ca3af]">
                   {(pageName || 'A').slice(0, 1).toUpperCase()}
                 </div>
               )}
@@ -590,16 +588,16 @@ export default function AuthorPageEditDetailsPage() {
               <button
                 type="button"
                 onClick={() => openImagePicker('avatar')}
-                className="absolute -bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white active:scale-95"
+                className="absolute -bottom-0.5 right-0 flex h-7 w-7 items-center justify-center rounded-full border-[2px] border-white bg-[#111827] text-white active:scale-95"
                 aria-label="Upload logo"
               >
-                <i className="fa-solid fa-camera text-[13px]" />
+                <i className="fa-solid fa-camera text-[10px]" />
               </button>
             </div>
           </div>
         </section>
 
-        <div className="mt-4 space-y-9">
+        <div className="mt-2 space-y-6">
           <SectionBlock id="intro" title="Intro" sectionRef={introRef}>
             <FieldRow
               icon="fa-regular fa-hand"
