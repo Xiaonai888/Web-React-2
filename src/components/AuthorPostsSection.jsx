@@ -76,48 +76,58 @@ async function createAuthorPost(content) {
   return data.post || null
 }
 
-function AuthorPostComposer({ value, saving, onChange, onSubmit }) {
+function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePosts }) {
+  const avatarUrl = author?.avatar_url || ''
+  const pageName = author?.page_name || 'Author'
+
   return (
-    <div className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
-      <div className="border-b border-[#eef0f4] px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-[15px] font-black text-[#111827]">Create Article</h3>
-            <p className="mt-0.5 text-[11.5px] font-bold text-[#9ca3af]">Text only · no image upload</p>
-          </div>
+    <div className="space-y-3 rounded-[18px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[15px] font-semibold text-[#111827]">Author Posts</h3>
 
-          <span className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-black text-[#111827]">
-            Article
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={onOpenFilter}
+          className="flex h-8 items-center gap-1.5 rounded-full bg-[#f4f5f7] px-3 text-[12px] font-medium text-[#111827] active:scale-95"
+        >
+          <i className="fa-solid fa-sliders text-[11px]" />
+          Filter
+        </button>
       </div>
 
-      <div className="p-4">
-        <textarea
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          maxLength={5000}
-          placeholder="Write an update, announcement, or article for your readers..."
-          className="min-h-[150px] w-full resize-none rounded-[20px] border border-[#e5e7eb] bg-[#fbfbfd] px-4 py-3 text-[14px] font-semibold leading-7 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white sm:min-h-[180px]"
-        />
+      <button
+        type="button"
+        onClick={onOpenComposer}
+        className="flex w-full items-center gap-3 rounded-[16px] bg-[#f8f9fb] px-3 py-2.5 text-left active:bg-[#f1f3f6]"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={pageName} className="h-full w-full object-cover" />
+          ) : (
+            <i className="fa-solid fa-user text-[14px] text-[#9ca3af]" />
+          )}
+        </span>
 
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-[11px] font-bold text-[#9ca3af]">{value.length}/5000</span>
+        <span className="min-w-0 flex-1 text-[13px] font-normal text-[#8b93a1]">
+          Write something for your readers...
+        </span>
 
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={saving || !value.trim()}
-            className="h-10 rounded-full bg-[#111827] px-6 text-[12px] font-black text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {saving ? 'Posting...' : 'Post'}
-          </button>
-        </div>
-      </div>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827]">
+          <i className="fa-regular fa-image text-[17px]" />
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onManagePosts}
+        className="flex h-9 w-full items-center justify-center gap-2 rounded-[12px] bg-[#f4f5f7] text-[13px] font-medium text-[#111827] active:scale-[0.99]"
+      >
+        <i className="fa-solid fa-list-check text-[12px]" />
+        Manage posts
+      </button>
     </div>
   )
 }
-
 function AuthorPostCard({ post }) {
   return (
     <article className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
@@ -245,13 +255,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   return (
     <div className="space-y-4">
       {author?.is_owner ? (
-        <AuthorPostComposer
-          value={draft}
-          saving={saving}
-          onChange={setDraft}
-          onSubmit={handleCreatePost}
-        />
-      ) : null}
+  <AuthorPostComposer
+    author={author}
+    onOpenComposer={() => onMessage?.('Post composer is coming soon.')}
+    onOpenFilter={() => onMessage?.('Post filter is coming soon.')}
+    onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
+  />
+) : null}
 
       {localError ? (
         <button
