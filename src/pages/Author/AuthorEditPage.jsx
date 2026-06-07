@@ -139,7 +139,7 @@ export default function AuthorEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-10">
+    <div className="min-h-screen bg-white">
 <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
   <div className="mx-auto flex h-12 max-w-[680px] items-center justify-between px-4">
     <button
@@ -152,12 +152,19 @@ export default function AuthorEditPage() {
 
     <div className="text-[16px] font-semibold text-[#111827]">Basic Page Info</div>
 
-    <div className="h-9 w-9" />
+    <button
+      type="submit"
+      form="basic-page-info-form"
+      disabled={loading || saving}
+      className="h-9 rounded-full bg-[#f4f5f7] px-4 text-[12px] font-semibold text-[#111827] active:scale-95 disabled:opacity-50"
+    >
+      {saving ? 'Saving' : 'Save'}
+    </button>
   </div>
 </div>
 
-<main className="mx-auto max-w-[680px] bg-white px-5 pb-28 pt-5">
-  <form onSubmit={handleSubmit} className="space-y-5">
+<main className="mx-auto max-w-[680px] bg-white px-5 pb-10 pt-5">
+  <form id="basic-page-info-form" onSubmit={handleSubmit} className="space-y-5">
     <div>
       <h1 className="text-[18px] font-semibold text-[#111827]">Basic Page Info</h1>
       <p className="mt-1 text-[12px] font-normal leading-5 text-[#8b93a1]">
@@ -214,15 +221,7 @@ export default function AuthorEditPage() {
       </div>
     </div>
 
-    <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
-      <button
-        type="submit"
-        disabled={loading || saving}
-        className="h-12 w-full rounded-[14px] bg-[#111827] text-[14px] font-semibold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {saving ? 'Saving...' : loading ? 'Loading...' : 'Save Changes'}
-      </button>
-    </div>
+   
   </form>
 </main>
     </div>
