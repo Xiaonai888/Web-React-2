@@ -21,6 +21,7 @@ const DEFAULT_DETAILS = {
   email: '',
   phone: '',
   messenger: '',
+  telegram: '',
   address: '',
   hours: '',
 }
@@ -778,6 +779,14 @@ export default function AuthorPageEditDetailsPage() {
               placeholder="Add Messenger name or link"
               onClick={() => setActiveModal('messenger')}
             />
+
+            <FieldRow
+  icon="fa-brands fa-telegram"
+  title={details.telegram || 'Telegram'}
+  value={details.telegram ? 'Shown on your public page' : ''}
+  placeholder="Add Telegram link"
+  onClick={() => setActiveModal('telegram')}
+/>
           </SectionBlock>
         </div>
       </main>
@@ -967,6 +976,20 @@ export default function AuthorPageEditDetailsPage() {
           setActiveModal('')
         }}
       />
+
+      <TextEditModal
+  open={activeModal === 'telegram'}
+  title="Edit Telegram"
+  label="Telegram"
+  value={details.telegram}
+  maxLength={140}
+  placeholder="https://t.me/yourname"
+  onClose={() => setActiveModal('')}
+  onSave={(value) => {
+    updateDetails({ telegram: value })
+    setActiveModal('')
+  }}
+/>
     </div>
   )
 }
