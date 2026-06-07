@@ -1264,7 +1264,7 @@ async function handleUnfollowFromSettings() {
         </section>
      <section className="sticky top-14 z-30 bg-white">
   <div className="flex items-center gap-2 px-4 py-2">
-    {tabs.map((tab) => {
+    <div className="sticky top-0 z-[60] -mx-4 border-b border-[#eef0f3] bg-white px-4">
       const active = activeTab === tab
 
       return (
