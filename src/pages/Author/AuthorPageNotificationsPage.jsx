@@ -1,71 +1,164 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
 const filters = ['All', 'Unread', 'Comments', 'Orders', 'Income']
 
-const demoNotifications = [
-  {
-    id: 'income-ready',
-    section: 'New',
-    type: 'Income',
-    title: 'Withdrawal available',
-    message: 'Your store and PDF income will be available to request on the 15th after admin review.',
-    time: 'Today',
-    unread: true,
-    icon: 'fa-solid fa-wallet',
-    route: '/author/page/dashboard',
-  },
-  {
-    id: 'payment-method',
-    section: 'New',
-    type: 'Income',
-    title: 'Check payment method',
-    message: 'Make sure your payout information is correct before requesting withdrawal.',
-    time: 'Today',
-    unread: true,
-    icon: 'fa-solid fa-money-check-dollar',
-    route: '/author/payment-method',
-  },
-  {
-    id: 'store-orders',
-    section: 'New',
-    type: 'Orders',
-    title: 'Orders will appear here',
-    message: 'New book and PDF orders from your Author Page Store will show in this tab.',
-    time: 'Soon',
-    unread: false,
-    icon: 'fa-solid fa-bag-shopping',
-    route: '/author/page/store',
-  },
-  {
-  id: 'post-activity',
-  section: 'Earlier',
-  type: 'Comments',
-  title: 'Post comments and mentions',
-    message: 'Comments, mentions, likes, echoes, and reports on your posts will appear here.',
-    time: 'Soon',
-    unread: false,
-    icon: 'fa-regular fa-file-lines',
-    route: '/author/page',
-  },
-  {
-    id: 'admin-notice',
-    section: 'Earlier',
-    type: 'System',
-    title: 'Admin notices',
-    message: 'Policy updates, product reviews, warnings, and page safety notices will appear here.',
-    time: 'Soon',
-    unread: false,
-    icon: 'fa-solid fa-shield-halved',
-    route: '',
-  },
-]
+const typeMap = {
+  comments: 'Comments',
+  comment: 'Comments',
+  mention: 'Comments',
+  mentions: 'Comments',
+  post: 'Comments',
+  posts: 'Comments',
+  orders: 'Orders',
+  order: 'Orders',
+  income: 'Income',
+  withdrawal: 'Income',
+  payout: 'Income',
+  system: 'System',
+  admin: 'System',
+}
+
+const iconMap = {
+  comments: 'fa-regular fa-comment',
+  comment: 'fa-regular fa-comment',
+  mention: 'fa-solid fa-at',
+  mentions: 'fa-solid fa-at',
+  post: 'fa-regular fa-file-lines',
+  posts: 'fa-regular fa-file-lines',
+  orders: 'fa-solid fa-bag-shopping',
+  order: 'fa-solid fa-bag-shopping',
+  income: 'fa-solid fa-wallet',
+  withdrawal: 'fa-solid fa-money-bill-transfer',
+  payout: 'fa-solid fa-money-check-dollar',
+  system: 'fa-solid fa-shield-halved',
+  admin: 'fa-solid fa-shield-halved',
+}
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function getNotificationTypeLabel(type) {
+  return typeMap[String(type || '').toLowerCase()] || 'System'
+}
+
+function getNotificationIcon(type) {
+  return iconMap[String(type || '').toLowerCase()] || 'fa-regular fa-bell'
+}
+
+function formatTime(value) {
+  if (!value) return 'Now'
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return 'Now'
+
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / 60000)
+
+  if (diffMinutes < 1) return 'Now'
+  if (diffMinutes < 60) return `${diffMinutes}m`
+
+  const diffHours = Math.floor(diffMinutes / 60)
+
+  if (diffHours < 24) return `${diffHours}h`
+
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffDays < 7) return `${diffDays}d`
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+  })
+}
+
+function normalizeNotification(item) {
+  return {
+    id: item.id,
+    type: item.type || 'system',
+    typeLabel: getNotificationTypeLabel(item.type),
+    title: item.title || 'Notification',
+    message: item.message || '',
+    targetUrl: item.target_url || item.targetUrl || '',
+    unread: !Boolean(item.is_read),
+    time: formatTime(item.created_at),
+    createdAt: item.created_at || '',
+  }
+}
+
+async function fetchPageNotifications() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me/page-notifications`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load notifications')
+  }
+
+  return {
+    notifications: Array.isArray(data.notifications)
+      ? data.notifications.map(normalizeNotification)
+      : [],
+    unreadCount: Number(data.unread_count || 0),
+  }
+}
+
+async function markNotificationRead(notificationId) {
+  const token = getAuthToken()
+
+  if (!token || !notificationId) return
+
+  await fetch(`${API_BASE_URL}/api/authors/me/page-notifications/${encodeURIComponent(notificationId)}/read`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
+
+async function markAllNotificationsRead() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me/page-notifications/read-all`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to mark notifications as read')
+  }
+}
 
 function NotificationIcon({ notification }) {
   return (
     <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-      <i className={`${notification.icon} text-[17px]`} />
+      <i className={`${getNotificationIcon(notification.type)} text-[17px]`} />
       {notification.unread ? (
         <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
       ) : null}
@@ -93,7 +186,9 @@ function NotificationItem({ notification, onOpen, onOptions }) {
               }`}
             >
               {notification.title}
-              <span className="font-semibold text-[#374151]"> · {notification.message}</span>
+              {notification.message ? (
+                <span className="font-semibold text-[#374151]"> · {notification.message}</span>
+              ) : null}
             </p>
 
             <div className="mt-1 flex items-center gap-2">
@@ -105,7 +200,7 @@ function NotificationItem({ notification, onOpen, onOptions }) {
                 {notification.time}
               </span>
               <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
-              <span className="text-[12px] font-semibold text-[#8b93a1]">{notification.type}</span>
+              <span className="text-[12px] font-semibold text-[#8b93a1]">{notification.typeLabel}</span>
             </div>
           </div>
 
@@ -168,27 +263,72 @@ export default function AuthorPageNotificationsPage() {
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('All')
   const [message, setMessage] = useState('')
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setLoading(true)
+      setMessage('')
+
+      const data = await fetchPageNotifications()
+
+      setNotifications(data.notifications)
+      setUnreadCount(data.unreadCount)
+    } catch (error) {
+      setNotifications([])
+      setUnreadCount(0)
+      setMessage(error.message || 'Failed to load notifications')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadNotifications()
+  }, [loadNotifications])
 
   const filteredNotifications = useMemo(() => {
-    if (activeFilter === 'All') return demoNotifications
-    if (activeFilter === 'Unread') return demoNotifications.filter((item) => item.unread)
-    return demoNotifications.filter((item) => item.type === activeFilter)
-  }, [activeFilter])
+    if (activeFilter === 'All') return notifications
+    if (activeFilter === 'Unread') return notifications.filter((item) => item.unread)
+    return notifications.filter((item) => item.typeLabel === activeFilter)
+  }, [activeFilter, notifications])
 
-  const newNotifications = filteredNotifications.filter((item) => item.section === 'New')
-  const earlierNotifications = filteredNotifications.filter((item) => item.section !== 'New')
+  const newNotifications = filteredNotifications.filter((item) => item.unread)
+  const earlierNotifications = filteredNotifications.filter((item) => !item.unread)
 
-  function handleOpen(notification) {
-    if (notification.route) {
-      navigate(notification.route)
+  async function handleOpen(notification) {
+    if (notification.unread) {
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id ? { ...item, unread: false } : item
+        )
+      )
+      setUnreadCount((current) => Math.max(0, current - 1))
+      markNotificationRead(notification.id).catch(() => null)
+    }
+
+    if (notification.targetUrl) {
+      navigate(notification.targetUrl)
       return
     }
 
-    setMessage('This notification will be connected later.')
+    setMessage('This notification does not have a target page yet.')
   }
 
   function handleOptions() {
     setMessage('Notification options will be connected later.')
+  }
+
+  async function handleMarkAllRead() {
+    try {
+      await markAllNotificationsRead()
+      setNotifications((current) => current.map((item) => ({ ...item, unread: false })))
+      setUnreadCount(0)
+    } catch (error) {
+      setMessage(error.message || 'Failed to mark notifications as read')
+    }
   }
 
   return (
@@ -208,7 +348,7 @@ export default function AuthorPageNotificationsPage() {
 
           <button
             type="button"
-            onClick={() => setMessage('Mark all as read will be connected later.')}
+            onClick={handleMarkAllRead}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] active:scale-95"
             aria-label="Mark all as read"
           >
@@ -245,13 +385,18 @@ export default function AuthorPageNotificationsPage() {
                   }`}
                 >
                   {filter}
+                  {filter === 'Unread' && unreadCount > 0 ? (
+                    <span className="ml-1 text-[11px] font-black text-[#2563eb]">{unreadCount}</span>
+                  ) : null}
                 </button>
               )
             })}
           </div>
         </section>
 
-        {filteredNotifications.length ? (
+        {loading ? (
+          <EmptyState filter="loading" />
+        ) : filteredNotifications.length ? (
           <div>
             <NotificationGroup
               title="New"
