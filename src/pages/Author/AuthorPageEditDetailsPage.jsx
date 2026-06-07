@@ -1046,9 +1046,8 @@ updateDetails({
           setActiveModal('')
         }}
       />
-
-      <TextEditModal
-      <FacebookPageModal
+      
+<FacebookPageModal
   open={activeModal === 'facebook'}
   name={details.facebook_page_name}
   url={details.facebook_page_url}
@@ -1064,7 +1063,7 @@ updateDetails({
     setActiveModal('')
   }}
 />
-
+      
       <TextEditModal
         open={activeModal === 'social'}
         title="Edit social media"
