@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -75,6 +76,7 @@ async function createAuthorPost(content) {
 
   return data.post || null
 }
+
 function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePosts }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
@@ -131,6 +133,7 @@ function AuthorPostCard({ post, author }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
+  const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
 
   return (
     <article className="bg-white px-4 py-3">
@@ -178,9 +181,26 @@ function AuthorPostCard({ post, author }) {
             </button>
           </div>
 
-          <p className="mt-2 whitespace-pre-wrap text-[14px] font-normal leading-6 text-[#111827]">
-            {post.content}
-          </p>
+          {post.content ? (
+            <p className="mt-2 whitespace-pre-wrap text-[14px] font-normal leading-6 text-[#111827]">
+              {post.content}
+            </p>
+          ) : null}
+
+          {postImages.length ? (
+            <div className={`mt-3 grid gap-1 overflow-hidden rounded-[14px] ${postImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {postImages.slice(0, 4).map((imageUrl, index) => (
+                <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
+                  <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                  {index === 3 && postImages.length > 4 ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[22px] font-semibold text-white">
+                      +{postImages.length - 4}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           <div className="mt-3 flex items-center gap-5 text-[12px] font-normal text-[#8b93a1]">
             <span><i className="fa-regular fa-heart mr-1.5" />{formatCompactNumber(post.like_count)}</span>
@@ -212,9 +232,9 @@ function PostsEmpty({ title, text }) {
 export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
-  const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [composerOpen, setComposerOpen] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -254,16 +274,16 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }, [author?.page_username, onCountChange])
 
-  async function handleCreatePost() {
-    const content = draft.trim()
+  async function handleCreatePost(content) {
+    const nextContent = String(content || '').trim()
 
-    if (!content || saving) return
+    if (!nextContent || saving) return false
 
     try {
       setSaving(true)
       setLocalError('')
 
-      const post = await createAuthorPost(content)
+      const post = await createAuthorPost(nextContent)
 
       if (post) {
         setPosts((current) => {
@@ -271,52 +291,64 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
           onCountChange?.(nextPosts.length)
           return nextPosts
         })
-        setDraft('')
+        return true
       }
+
+      return false
     } catch (error) {
       const message = error.message || 'Failed to create post'
       setLocalError(message)
       onMessage?.(message)
+      return false
     } finally {
       setSaving(false)
     }
   }
 
- return (
-  <div className="overflow-hidden rounded-[18px] bg-white shadow-sm ring-1 ring-black/5">
-    {author?.is_owner ? (
-      <AuthorPostComposer
+  return (
+    <div className="overflow-hidden rounded-[18px] bg-white shadow-sm ring-1 ring-black/5">
+      {author?.is_owner ? (
+        <AuthorPostComposer
+          author={author}
+          onOpenComposer={() => setComposerOpen(true)}
+          onOpenFilter={() => onMessage?.('Post filter is coming soon.')}
+          onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
+        />
+      ) : null}
+
+      {localError ? (
+        <button
+          type="button"
+          onClick={() => setLocalError('')}
+          className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-[#fff7ed] px-3 py-2 text-left text-[12px] font-normal leading-5 text-[#9a3412]"
+        >
+          {localError}
+        </button>
+      ) : null}
+
+      {loading ? (
+        <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
+      ) : posts.length ? (
+        <div className="divide-y divide-[#eef0f4]">
+          {posts.map((post) => (
+            <AuthorPostCard key={post.id} post={post} author={author} />
+          ))}
+        </div>
+      ) : (
+        <PostsEmpty
+          title="No posts yet"
+          text="Updates, notes, and announcements will appear here."
+        />
+      )}
+
+      <AuthorPostComposerSheet
+        open={composerOpen}
         author={author}
-        onOpenComposer={() => onMessage?.('Post composer is coming soon.')}
-        onOpenFilter={() => onMessage?.('Post filter is coming soon.')}
-        onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
+        saving={saving}
+        onClose={() => setComposerOpen(false)}
+        onPublishText={handleCreatePost}
+        onMessage={onMessage}
       />
-    ) : null}
-
-    {localError ? (
-      <button
-        type="button"
-        onClick={() => setLocalError('')}
-        className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-[#fff7ed] px-3 py-2 text-left text-[12px] font-normal leading-5 text-[#9a3412]"
-      >
-        {localError}
-      </button>
-    ) : null}
-
-    {loading ? (
-      <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
-    ) : posts.length ? (
-      <div className="divide-y divide-[#eef0f4]">
-        {posts.map((post) => (
-          <AuthorPostCard key={post.id} post={post} author={author} />
-        ))}
-      </div>
-    ) : (
-      <PostsEmpty
-        title="No posts yet"
-        text="Updates, notes, and announcements will appear here."
-      />
-    )}
-  </div>
-)
+    </div>
+  )
 }
