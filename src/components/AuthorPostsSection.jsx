@@ -38,6 +38,16 @@ function formatPostDate(value) {
   })
 }
 
+function sortAuthorPosts(posts) {
+  return [...posts].sort((a, b) => {
+    const pinnedScore = Number(Boolean(b.is_pinned || b.pinned)) - Number(Boolean(a.is_pinned || a.pinned))
+
+    if (pinnedScore !== 0) return pinnedScore
+
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+  })
+}
+
 async function fetchAuthorPosts(pageUsername) {
   if (!pageUsername) return []
 
@@ -72,6 +82,31 @@ async function createAuthorPost(content) {
 
   if (!response.ok || data.ok === false) {
     throw new Error(data.message || 'Failed to create post')
+  }
+
+  return data.post || null
+}
+
+async function setAuthorPostPinned(postId, isPinned) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/pin`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      is_pinned: Boolean(isPinned),
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update pinned post')
   }
 
   return data.post || null
@@ -129,7 +164,7 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
   )
 }
 
-function AuthorPostCard({ post, author }) {
+function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -172,13 +207,16 @@ function AuthorPostCard({ post, author }) {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
-              aria-label="Post options"
-            >
-              <i className="fa-solid fa-ellipsis text-[14px]" />
-            </button>
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={() => onOpenMenu(post)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
+                aria-label="Post options"
+              >
+                <i className="fa-solid fa-ellipsis text-[14px]" />
+              </button>
+            ) : null}
           </div>
 
           {post.content ? (
@@ -213,6 +251,56 @@ function AuthorPostCard({ post, author }) {
   )
 }
 
+function PostOptionsSheet({ post, busy, onClose, onPinChange }) {
+  if (!post) return null
+
+  const isPinned = Boolean(post.is_pinned || post.pinned)
+
+  return (
+    <div className="fixed inset-0 z-[230]">
+      <button type="button" aria-label="Close post options" onClick={onClose} className="absolute inset-0 bg-black/35" />
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-4 pb-7 pt-4 shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d1d5db]" />
+
+        <div className="mb-3 text-[15px] font-semibold text-[#111827]">Post options</div>
+
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onPinChange(post, !isPinned)}
+          className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6] disabled:opacity-60"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+            <i className={`fa-solid ${isPinned ? 'fa-thumbtack-slash' : 'fa-thumbtack'} text-[14px]`} />
+          </span>
+
+          <span className="min-w-0">
+            <span className="block text-[15px] font-normal text-[#111827]">
+              {isPinned ? 'Remove from top' : 'Pin to top'}
+            </span>
+            <span className="mt-0.5 block text-[12px] font-normal text-[#8b93a1]">
+              {isPinned ? 'Stop showing this post first' : 'Show this post first on your page'}
+            </span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-1 flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </span>
+
+          <span className="text-[15px] font-normal text-[#111827]">Close</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function PostsEmpty({ title, text }) {
   return (
     <div className="bg-white px-5 py-8 text-center">
@@ -235,6 +323,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
+  const [selectedPost, setSelectedPost] = useState(null)
+  const [pinBusy, setPinBusy] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -253,8 +343,9 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         const nextPosts = await fetchAuthorPosts(author.page_username)
 
         if (!ignore) {
-          setPosts(nextPosts)
-          onCountChange?.(nextPosts.length)
+          const sortedPosts = sortAuthorPosts(nextPosts)
+          setPosts(sortedPosts)
+          onCountChange?.(sortedPosts.length)
         }
       } catch (error) {
         if (!ignore) {
@@ -287,7 +378,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
       if (post) {
         setPosts((current) => {
-          const nextPosts = [post, ...current]
+          const nextPosts = sortAuthorPosts([post, ...current])
           onCountChange?.(nextPosts.length)
           return nextPosts
         })
@@ -302,6 +393,37 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       return false
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handlePinChange(post, isPinned) {
+    if (!post?.id || pinBusy) return
+
+    try {
+      setPinBusy(true)
+
+      const updatedPost = await setAuthorPostPinned(post.id, isPinned)
+
+      setPosts((current) => {
+        const nextPosts = current.map((item) => {
+          if (isPinned) {
+            return item.id === post.id ? { ...item, ...updatedPost, is_pinned: true } : { ...item, is_pinned: false }
+          }
+
+          return item.id === post.id ? { ...item, ...updatedPost, is_pinned: false } : item
+        })
+
+        return sortAuthorPosts(nextPosts)
+      })
+
+      setSelectedPost(null)
+      onMessage?.(isPinned ? 'Post pinned to top.' : 'Post removed from top.')
+    } catch (error) {
+      const message = error.message || 'Failed to update pinned post'
+      setLocalError(message)
+      onMessage?.(message)
+    } finally {
+      setPinBusy(false)
     }
   }
 
@@ -331,7 +453,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       ) : posts.length ? (
         <div className="divide-y divide-[#eef0f4]">
           {posts.map((post) => (
-            <AuthorPostCard key={post.id} post={post} author={author} />
+            <AuthorPostCard
+              key={post.id}
+              post={post}
+              author={author}
+              isOwner={Boolean(author?.is_owner)}
+              onOpenMenu={setSelectedPost}
+            />
           ))}
         </div>
       ) : (
@@ -348,6 +476,13 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         onClose={() => setComposerOpen(false)}
         onPublishText={handleCreatePost}
         onMessage={onMessage}
+      />
+
+      <PostOptionsSheet
+        post={selectedPost}
+        busy={pinBusy}
+        onClose={() => setSelectedPost(null)}
+        onPinChange={handlePinChange}
       />
     </div>
   )
