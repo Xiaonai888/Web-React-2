@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
-const filters = ['All', 'Unread', 'Income', 'Orders', 'Posts', 'System']
+const filters = ['All', 'Unread', 'Comments', 'Orders', 'Income']
 
 const demoNotifications = [
   {
@@ -39,11 +39,11 @@ const demoNotifications = [
     route: '/author/page/store',
   },
   {
-    id: 'post-activity',
-    section: 'Earlier',
-    type: 'Posts',
-    title: 'Post activity',
-    message: 'Comments, likes, echoes, reports, and admin actions on your posts will appear here.',
+  id: 'post-activity',
+  section: 'Earlier',
+  type: 'Comments',
+  title: 'Post comments and mentions',
+    message: 'Comments, mentions, likes, echoes, and reports on your posts will appear here.',
     time: 'Soon',
     unread: false,
     icon: 'fa-regular fa-file-lines',
@@ -158,7 +158,7 @@ function EmptyState({ filter }) {
       </div>
       <h2 className="text-[17px] font-black text-[#111827]">No {filter.toLowerCase()} notifications</h2>
       <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Page income, orders, post activity, and admin notices will appear here.
+        Page income, orders, comments, mentions, and admin notices will appear here.
       </p>
     </div>
   )
