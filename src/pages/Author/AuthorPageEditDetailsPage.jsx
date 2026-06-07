@@ -87,9 +87,8 @@ function FieldRow({ icon, title, value, placeholder, onClick }) {
 function SectionBlock({ id, title, children, sectionRef }) {
   return (
     <section ref={sectionRef} id={id} className="scroll-mt-20">
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5">
         <h2 className="text-[17px] font-semibold text-[#111827]">{title}</h2>
-        <i className="fa-solid fa-chevron-up text-[15px] text-[#111827]" />
       </div>
       <div className="space-y-0.5">{children}</div>
     </section>
