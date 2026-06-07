@@ -310,7 +310,7 @@ return (
 
     <div
       className="fixed inset-0 z-[2147483647] flex items-end justify-center bg-black/45"
-      onClick={() => setSelectedAnnouncement(null)}
+      onClick={onClose}
       
     >
       <div
