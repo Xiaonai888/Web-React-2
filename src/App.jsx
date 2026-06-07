@@ -159,6 +159,7 @@ function AppShell() {
     '/author/comment-protection',
     '/author/page-settings',
     '/author/page/edit',
+    '/author/edit-page',
     
   ]
 
