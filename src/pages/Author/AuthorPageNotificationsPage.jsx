@@ -2,124 +2,163 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
-const filters = ['All', 'Unread', 'Income', 'Orders', 'Posts']
+const filters = ['All', 'Unread', 'Income', 'Orders', 'Posts', 'System']
 
 const demoNotifications = [
   {
     id: 'income-ready',
+    section: 'New',
     type: 'Income',
     title: 'Withdrawal available',
     message: 'Your store and PDF income will be available to request on the 15th after admin review.',
     time: 'Today',
     unread: true,
     icon: 'fa-solid fa-wallet',
-    action: 'View Income',
     route: '/author/page/dashboard',
   },
   {
     id: 'payment-method',
+    section: 'New',
     type: 'Income',
     title: 'Check payment method',
     message: 'Make sure your payout information is correct before requesting withdrawal.',
     time: 'Today',
     unread: true,
     icon: 'fa-solid fa-money-check-dollar',
-    action: 'Payment',
     route: '/author/payment-method',
   },
   {
     id: 'store-orders',
+    section: 'New',
     type: 'Orders',
     title: 'Orders will appear here',
     message: 'New book and PDF orders from your Author Page Store will show in this tab.',
     time: 'Soon',
     unread: false,
     icon: 'fa-solid fa-bag-shopping',
-    action: 'Store',
     route: '/author/page/store',
   },
   {
     id: 'post-activity',
+    section: 'Earlier',
     type: 'Posts',
     title: 'Post activity',
     message: 'Comments, likes, echoes, reports, and admin actions on your posts will appear here.',
     time: 'Soon',
     unread: false,
     icon: 'fa-regular fa-file-lines',
-    action: 'View Page',
     route: '/author/page',
   },
   {
     id: 'admin-notice',
+    section: 'Earlier',
     type: 'System',
     title: 'Admin notices',
     message: 'Policy updates, product reviews, warnings, and page safety notices will appear here.',
     time: 'Soon',
     unread: false,
     icon: 'fa-solid fa-shield-halved',
-    action: 'Details',
     route: '',
   },
 ]
 
-function NotificationCard({ notification, onOpen }) {
+function NotificationIcon({ notification }) {
+  return (
+    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+      <i className={`${notification.icon} text-[17px]`} />
+      {notification.unread ? (
+        <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
+      ) : null}
+    </div>
+  )
+}
+
+function NotificationItem({ notification, onOpen, onOptions }) {
   return (
     <button
       type="button"
       onClick={() => onOpen(notification)}
-      className="w-full rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+      className={`flex w-full gap-3 px-4 py-3 text-left transition active:bg-[#eef0f4] ${
+        notification.unread ? 'bg-[#eef6ff]' : 'bg-white'
+      }`}
     >
-      <div className="flex gap-3">
-        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-          <i className={`${notification.icon} text-[17px]`} />
-          {notification.unread ? (
-            <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
-          ) : null}
-        </div>
+      <NotificationIcon notification={notification} />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="line-clamp-1 text-[14px] font-black text-[#111827]">
-                  {notification.title}
-                </h3>
-                <span className="shrink-0 rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#8b93a1] ring-1 ring-black/5">
-                  {notification.type}
-                </span>
-              </div>
-              <p className="mt-1.5 line-clamp-2 text-[12.5px] font-semibold leading-5 text-[#6b7280]">
-                {notification.message}
-              </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <p
+              className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
+                notification.unread ? 'font-black' : 'font-semibold'
+              }`}
+            >
+              {notification.title}
+              <span className="font-semibold text-[#374151]"> · {notification.message}</span>
+            </p>
+
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className={`text-[12px] ${
+                  notification.unread ? 'font-black text-[#2563eb]' : 'font-semibold text-[#8b93a1]'
+                }`}
+              >
+                {notification.time}
+              </span>
+              <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
+              <span className="text-[12px] font-semibold text-[#8b93a1]">{notification.type}</span>
             </div>
-
-            <span className="shrink-0 text-[11px] font-bold text-[#9ca3af]">{notification.time}</span>
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <span className={`text-[11px] font-black ${notification.unread ? 'text-[#111827]' : 'text-[#9ca3af]'}`}>
-              {notification.unread ? 'Unread' : 'Read'}
-            </span>
-
-            <span className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-black text-white">
-              {notification.action}
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onOptions(notification)
+            }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
+            aria-label="Notification options"
+          >
+            <i className="fa-solid fa-ellipsis text-[14px]" />
+          </button>
         </div>
       </div>
     </button>
   )
 }
 
+function NotificationGroup({ title, notifications, onOpen, onOptions }) {
+  if (!notifications.length) return null
+
+  return (
+    <section>
+      <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">{title}</h2>
+      <div className="overflow-hidden border-y border-[#eef0f4] bg-white">
+        {notifications.map((notification, index) => (
+          <div
+            key={notification.id}
+            className={index > 0 ? 'border-t border-[#eef0f4]' : ''}
+          >
+            <NotificationItem
+              notification={notification}
+              onOpen={onOpen}
+              onOptions={onOptions}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function EmptyState({ filter }) {
   return (
-    <div className="rounded-[26px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+    <div className="mx-4 mt-5 rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
       <h2 className="text-[17px] font-black text-[#111827]">No {filter.toLowerCase()} notifications</h2>
       <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Page income, orders, posts, and admin notices will appear here.
+        Page income, orders, post activity, and admin notices will appear here.
       </p>
     </div>
   )
@@ -136,13 +175,20 @@ export default function AuthorPageNotificationsPage() {
     return demoNotifications.filter((item) => item.type === activeFilter)
   }, [activeFilter])
 
+  const newNotifications = filteredNotifications.filter((item) => item.section === 'New')
+  const earlierNotifications = filteredNotifications.filter((item) => item.section !== 'New')
+
   function handleOpen(notification) {
     if (notification.route) {
       navigate(notification.route)
       return
     }
 
-    setMessage('This notification type will be connected later.')
+    setMessage('This notification will be connected later.')
+  }
+
+  function handleOptions() {
+    setMessage('Notification options will be connected later.')
   }
 
   return (
@@ -158,7 +204,7 @@ export default function AuthorPageNotificationsPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[16px] font-black text-[#111827]">Page Notifications</div>
+          <div className="text-[18px] font-black text-[#111827]">Page Notifications</div>
 
           <button
             type="button"
@@ -166,82 +212,61 @@ export default function AuthorPageNotificationsPage() {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] active:scale-95"
             aria-label="Mark all as read"
           >
-            <i className="fa-solid fa-check-double text-[13px]" />
+            <i className="fa-solid fa-check text-[14px]" />
           </button>
         </div>
       </div>
 
-      <main className="mx-auto max-w-[980px] px-4 py-4">
-        <section className="mb-4 overflow-hidden rounded-[28px] bg-[#111827] text-white shadow-sm">
-          <div className="p-5">
-            <div className="text-[12px] font-black uppercase tracking-[0.08em] text-white/55">Author Page</div>
-            <h1 className="mt-1 text-[24px] font-black tracking-tight sm:text-[30px]">Notifications</h1>
-            <p className="mt-1 text-[12px] font-bold text-white/60">
-              Track income, orders, post activity, followers, and admin notices.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 border-t border-white/10">
-            <div className="p-4">
-              <div className="text-[11px] font-bold text-white/45">Unread</div>
-              <div className="mt-1 text-[20px] font-black">
-                {demoNotifications.filter((item) => item.unread).length}
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="text-[11px] font-bold text-white/45">Income</div>
-              <div className="mt-1 text-[20px] font-black">
-                {demoNotifications.filter((item) => item.type === 'Income').length}
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="text-[11px] font-bold text-white/45">Orders</div>
-              <div className="mt-1 text-[20px] font-black">
-                {demoNotifications.filter((item) => item.type === 'Orders').length}
-              </div>
-            </div>
-          </div>
-        </section>
-
+      <main className="mx-auto max-w-[980px]">
         {message ? (
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mb-4 w-full rounded-[18px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
+            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
           >
             {message}
           </button>
         ) : null}
 
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-          {filters.map((filter) => {
-            const active = activeFilter === filter
+        <section className="sticky top-14 z-30 border-b border-[#eef0f4] bg-white">
+          <div className="flex gap-2 overflow-x-auto px-4 py-2">
+            {filters.map((filter) => {
+              const active = activeFilter === filter
 
-            return (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setActiveFilter(filter)}
-                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
-                  active ? 'bg-[#111827] text-white' : 'bg-white text-[#6b7280] ring-1 ring-black/5'
-                }`}
-              >
-                {filter}
-              </button>
-            )
-          })}
-        </div>
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
+                    active
+                      ? 'bg-[#f3f4f6] font-medium text-[#111827]'
+                      : 'bg-transparent font-normal text-[#9ca3af]'
+                  }`}
+                >
+                  {filter}
+                </button>
+              )
+            })}
+          </div>
+        </section>
 
         {filteredNotifications.length ? (
-          <section className="space-y-3">
-            {filteredNotifications.map((notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-                onOpen={handleOpen}
-              />
-            ))}
-          </section>
+          <div>
+            <NotificationGroup
+              title="New"
+              notifications={newNotifications}
+              onOpen={handleOpen}
+              onOptions={handleOptions}
+            />
+
+            <NotificationGroup
+              title="Earlier"
+              notifications={earlierNotifications}
+              onOpen={handleOpen}
+              onOptions={handleOptions}
+            />
+          </div>
         ) : (
           <EmptyState filter={activeFilter} />
         )}
