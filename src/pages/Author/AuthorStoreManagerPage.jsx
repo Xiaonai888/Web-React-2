@@ -957,9 +957,10 @@ function AddProductPage({ categories, onBack, onSave }) {
   <FieldLabel>Sort order</FieldLabel>
   <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
 </div>
-                <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
-                Pre-order product
-              </label>
+<label className="flex items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827]">
+  <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
+  Pre-order product
+</label>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
