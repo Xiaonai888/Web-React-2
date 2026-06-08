@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, onError }) {
   const containerRef = useRef(null)
   const widgetRef = useRef(null)
+  const callbacksRef = useRef({ onVerify, onExpire, onError })
   const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    callbacksRef.current = { onVerify, onExpire, onError }
+  }, [onVerify, onExpire, onError])
 
   useEffect(() => {
     if (window.turnstile) {
@@ -36,9 +41,9 @@ export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, 
 
     widgetRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
-      callback: onVerify,
-      'expired-callback': onExpire,
-      'error-callback': onError,
+      callback: (token) => callbacksRef.current.onVerify?.(token),
+      'expired-callback': () => callbacksRef.current.onExpire?.(),
+      'error-callback': () => callbacksRef.current.onError?.(),
       theme: 'light',
     })
 
@@ -48,7 +53,7 @@ export default function TurnstileBox({ siteKey, refreshKey, onVerify, onExpire, 
         widgetRef.current = null
       }
     }
-  }, [ready, siteKey, refreshKey, onVerify, onExpire, onError])
+  }, [ready, siteKey, refreshKey])
 
   if (!siteKey) {
     return (
