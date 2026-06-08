@@ -192,15 +192,15 @@ function PostImageGrid({ images }) {
   )
 }
 
-function AuthorPostCard({ post, author, onOpenMenu }) {
+function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
 
   return (
-    <article className="bg-white px-4 py-3">
-      <div className="flex items-start gap-3">
+    <article className="bg-white py-3">
+      <div className="flex items-start gap-3 px-4">
         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
           {avatarUrl ? (
             <img src={avatarUrl} alt={pageName} className="h-full w-full object-cover" />
@@ -244,26 +244,49 @@ function AuthorPostCard({ post, author, onOpenMenu }) {
               <i className="fa-solid fa-ellipsis text-[14px]" />
             </button>
           </div>
-
-          {post.content ? (
-            <p className="mt-2 whitespace-pre-wrap text-[14px] font-normal leading-6 text-[#111827]">
-              {post.content}
-            </p>
-          ) : null}
-
-          <PostImageGrid images={postImages} />
-
-          <div className="mt-3 flex items-center gap-5 text-[12px] font-normal text-[#8b93a1]">
-            <span><i className="fa-regular fa-heart mr-1.5" />{formatCompactNumber(post.like_count)}</span>
-            <span><i className="fa-regular fa-comment mr-1.5" />{formatCompactNumber(post.comment_count)}</span>
-            <span><i className="fa-solid fa-retweet mr-1.5" />{formatCompactNumber(post.echo_count)}</span>
-          </div>
         </div>
+      </div>
+
+      {post.content ? (
+        <p className="mt-2 whitespace-pre-wrap px-4 text-[14px] font-normal leading-6 text-[#111827]">
+          {post.content}
+        </p>
+      ) : null}
+
+      <PostImageGrid images={postImages} />
+
+      {isOwner ? (
+        <button
+          type="button"
+          onClick={() => onOpenMenu(post)}
+          className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
+        >
+          <span className="text-[13px] font-medium leading-5 text-[#1877f2]">
+            See insights<br />
+            and ads
+          </span>
+        </button>
+      ) : null}
+
+      <div className="flex items-center gap-6 px-4 pt-2 text-[13px] font-normal text-[#6b7280]">
+        <span className="inline-flex items-center gap-1.5">
+          <i className="fa-regular fa-heart text-[15px]" />
+          {formatCompactNumber(post.like_count)}
+        </span>
+
+        <span className="inline-flex items-center gap-1.5">
+          <i className="fa-regular fa-comment text-[15px]" />
+          {formatCompactNumber(post.comment_count)}
+        </span>
+
+        <span className="inline-flex items-center gap-1.5">
+          <i className="fa-solid fa-retweet text-[15px]" />
+          {formatCompactNumber(post.echo_count)}
+        </span>
       </div>
     </article>
   )
 }
-
 function ToastBubble({ text, author }) {
   if (!text) return null
 
@@ -522,7 +545,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-white shadow-sm ring-1 ring-black/5">
+   <div className="overflow-hidden bg-white">
       {author?.is_owner ? (
         <AuthorPostComposer
           author={author}
@@ -545,14 +568,15 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       {loading ? (
         <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
       ) : posts.length ? (
-        <div className="divide-y divide-[#eef0f4]">
+        <div className="space-y-2 bg-[#f3f4f6]">
           {posts.map((post) => (
             <AuthorPostCard
-              key={post.id}
-              post={post}
-              author={author}
-              onOpenMenu={setSelectedPost}
-            />
+  key={post.id}
+  post={post}
+  author={author}
+  isOwner={Boolean(author?.is_owner)}
+  onOpenMenu={setSelectedPost}
+/>
           ))}
         </div>
       ) : (
