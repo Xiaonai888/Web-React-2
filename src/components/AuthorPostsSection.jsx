@@ -319,7 +319,21 @@ function cancelReactionPress() {
       ) : null}
 
       <PostImageGrid images={postImages} />
-onClick={() => onMessage?.('Insights and Ads coming soon.')}
+
+{isOwner ? (
+  <button
+    type="button"
+    onClick={() => onMessage?.('Insights and Ads coming soon.')}
+    className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="text-[13px] font-medium leading-5 text-[#64748B]">
+      See insights<br />
+      and ads
+    </span>
+  </button>
+) : null}
+
+<div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
 
       <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
         <div className="relative">
