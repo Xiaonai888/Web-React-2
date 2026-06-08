@@ -399,11 +399,10 @@ function StoreManagerHome({
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <StatCard label="Products" value={products.length} icon="fa-box" />
-          <StatCard label="Orders" value="0" icon="fa-receipt" />
-          <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
-        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+  <StatCard label="Orders" value="0" icon="fa-receipt" />
+  <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
+</div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {['Records', 'Orders', 'Settings'].map((tab) => {
