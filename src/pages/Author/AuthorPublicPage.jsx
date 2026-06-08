@@ -455,47 +455,47 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
         <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
         <div className="px-5 py-4">
-          <div className="text-[15px] font-black text-[#111827]">{author.page_name}</div>
-          <div className="mt-1 text-[12px] font-bold text-[#8b93a1]">@{author.page_username}</div>
-        </div>
+  <div className="text-[15px] font-normal text-[#111827]">{author.page_name}</div>
+  <div className="mt-1 text-[12px] font-normal text-[#8b93a1]">@{author.page_username}</div>
+</div>
 
-        <div className="border-t border-[#f0eef6]">
-          <button
-            type="button"
-            onClick={onSeeFirst}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-  <i className="fa-regular fa-star text-[15px]" />
-</span>
-<span className="text-[15px] font-bold text-[#111827]">See first</span>
-          </button>
+<div className="border-t border-[#f0eef6]">
+  <button
+    type="button"
+    onClick={onSeeFirst}
+    className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+      <i className="fa-regular fa-star text-[15px]" />
+    </span>
+    <span className="text-[15px] font-normal text-[#111827]">See first</span>
+  </button>
 
-          <button
-            type="button"
-            onClick={onMute}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-              <i className="fa-regular fa-bell-slash text-[15px]" />
-            </span>
-            <span className="text-[15px] font-bold text-[#111827]">Mute updates</span>
-          </button>
+  <button
+    type="button"
+    onClick={onMute}
+    className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#f7f7fb]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+      <i className="fa-regular fa-bell-slash text-[15px]" />
+    </span>
+    <span className="text-[15px] font-normal text-[#111827]">Mute updates</span>
+  </button>
 
-          <button
-            type="button"
-            onClick={onUnfollow}
-            disabled={loading}
-            className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#fff1f1] disabled:opacity-60"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
-              <i className="fa-solid fa-user-minus text-[14px]" />
-            </span>
-            <span className="text-[15px] font-bold text-[#e5484d]">
-              {loading ? 'Unfollowing...' : `Unfollow ${author.page_name}`}
-            </span>
-          </button>
-        </div>
+  <button
+    type="button"
+    onClick={onUnfollow}
+    disabled={loading}
+    className="flex w-full items-center gap-3 px-5 py-4 text-left active:bg-[#fff1f1] disabled:opacity-60"
+  >
+    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+      <i className="fa-solid fa-user-minus text-[14px]" />
+    </span>
+    <span className="text-[15px] font-normal text-[#e5484d]">
+      {loading ? 'Unfollowing...' : `Unfollow ${author.page_name}`}
+    </span>
+  </button>
+</div>
       </div>
     </div>
   )
