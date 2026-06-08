@@ -103,6 +103,26 @@ async function fetchMyProducts() {
 }
 
 async function createStoreProduct(product) {
+  async function deleteStoreProduct(productId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to delete product')
+  }
+
+  return data
+}
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
@@ -263,7 +283,7 @@ function ProductCard({ product }) {
   )
 }
 
-function ProductRecordRow({ product }) {
+function ProductRecordRow({ product, onDelete }) {
   const priceText = product.salePrice || product.originalPrice || '0.00'
   const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
   const isActive = product.status === 'Active'
@@ -297,13 +317,13 @@ function ProductRecordRow({ product }) {
                 className="h-8 rounded-xl bg-[#f3f4f6] px-3 text-[11px] font-black text-[#111827] active:scale-95"
               >
                 Edit
-              </button>
               <button
-                type="button"
-                className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
-              >
-                Delete
-              </button>
+  type="button"
+  onClick={() => onDelete(product)}
+  className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
+>
+  Delete
+</button>
             </div>
           </div>
 
@@ -368,6 +388,7 @@ function StoreManagerHome({
   setNewCategory,
   addCategory,
   onAddProduct,
+  onDeleteProduct,
   loading,
   localError,
 }) {
@@ -492,7 +513,13 @@ function StoreManagerHome({
     </div>
   ) : visibleRecords.length ? (
     <div className="overflow-hidden bg-white">
-      {visibleRecords.map((product) => <ProductRecordRow key={product.id} product={product} />)}
+      {visibleRecords.map((product) => (
+  <ProductRecordRow
+    key={product.id}
+    product={product}
+    onDelete={onDeleteProduct}
+  />
+))}
     </div>
   ) : (
     <EmptyState onAddProduct={onAddProduct} />
@@ -1129,6 +1156,22 @@ export default function AuthorStoreManagerPage() {
     setActiveTab('Records')
   }
 
+      const handleDeleteProduct = async (product) => {
+  if (!product?.id) return
+
+  const confirmed = window.confirm(`Delete "${product.title || 'this product'}"?`)
+
+  if (!confirmed) return
+
+  try {
+    setLocalError('')
+    await deleteStoreProduct(product.id)
+    setProducts((current) => current.filter((item) => item.id !== product.id))
+  } catch (error) {
+    setLocalError(error.message || 'Failed to delete product')
+  }
+}
+
   return (
     <div className={`min-h-screen bg-[#f3f4f6] ${mode === 'form' ? 'pb-0' : 'pb-[92px]'}`}>
       <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
@@ -1155,20 +1198,21 @@ export default function AuthorStoreManagerPage() {
         <AddProductPage categories={categories} onBack={() => setMode('manager')} onSave={saveProduct} />
       ) : (
         <StoreManagerHome
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeType={activeType}
-          setActiveType={setActiveType}
-          filteredProducts={filteredProducts}
-          products={products}
-          categories={categories}
-          newCategory={newCategory}
-          setNewCategory={setNewCategory}
-          addCategory={addCategory}
-          onAddProduct={() => setMode('form')}
-          loading={loading}
-          localError={localError}
-        />
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  activeType={activeType}
+  setActiveType={setActiveType}
+  filteredProducts={filteredProducts}
+  products={products}
+  categories={categories}
+  newCategory={newCategory}
+  setNewCategory={setNewCategory}
+  addCategory={addCategory}
+  onAddProduct={() => setMode('form')}
+  onDeleteProduct={handleDeleteProduct}
+  loading={loading}
+  localError={localError}
+/>
       )}
 
       {mode === 'manager' ? <AuthorPageFooter active="Store" /> : null}
