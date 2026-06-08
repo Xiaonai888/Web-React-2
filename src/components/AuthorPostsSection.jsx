@@ -249,8 +249,6 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const hasReacted = Boolean(post.my_reaction)
   const reactionBusy = reactionBusyId === post.id
-  const hasReacted = Boolean(post.my_reaction)
-  const reactionBusy = reactionBusyId === post.id
 
   return (
     <article className="bg-white py-3">
@@ -506,7 +504,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [selectedPost, setSelectedPost] = useState(null)
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
-  const [reactionBusyId, setReactionBusyId] = useState('')
+ 
 
   useEffect(() => {
     let ignore = false
