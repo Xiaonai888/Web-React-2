@@ -103,26 +103,6 @@ async function fetchMyProducts() {
 }
 
 async function createStoreProduct(product) {
-  async function deleteStoreProduct(productId) {
-  const token = getAuthToken()
-
-  if (!token) throw new Error('Please login first')
-
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products/${productId}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to delete product')
-  }
-
-  return data
-}
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
@@ -161,6 +141,68 @@ async function createStoreProduct(product) {
   }
 
   return data.product ? formatProductForUi(data.product) : null
+}
+
+async function updateStoreProduct(productId, product) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products/${productId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      product_type: product.type === 'PDF' ? 'pdf' : 'book',
+      title: product.title,
+      category: product.category,
+      description: product.description,
+      original_price: product.originalPrice,
+      sale_price: product.salePrice,
+      status: statusToApi(product.status),
+      cover_url: product.coverUrl,
+      stock_quantity: product.stock,
+      paper_type: product.paperType,
+      book_condition: product.condition,
+      quality_percent: product.qualityPercent,
+      delivery_note: product.deliveryNote,
+      pre_order: product.preOrder,
+      pdf_file_name: product.pdfFileName,
+      page_count: product.pageCount,
+      access_rule: product.accessRule,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update product')
+  }
+
+  return data.product ? formatProductForUi(data.product) : null
+}
+
+async function deleteStoreProduct(productId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to delete product')
+  }
+
+  return data
 }
 
 function FieldLabel({ children }) {
@@ -283,7 +325,7 @@ function ProductCard({ product }) {
   )
 }
 
-function ProductRecordRow({ product, onDelete }) {
+function ProductRecordRow({ product, onEdit, onDelete }) {
   const priceText = product.salePrice || product.originalPrice || '0.00'
   const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
   const isActive = product.status === 'Active'
@@ -314,16 +356,18 @@ function ProductRecordRow({ product, onDelete }) {
             <div className="flex shrink-0 gap-1.5">
               <button
                 type="button"
-                className="h-8 rounded-xl bg-[#f3f4f6] px-3 text-[11px] font-black text-[#111827] active:scale-95"
+                onClick={() => onEdit(product)}
+                className="h-8 rounded-xl bg-[#fff4cc] px-3 text-[11px] font-black text-[#111827] active:scale-95"
               >
                 Edit
+              </button>
               <button
-  type="button"
-  onClick={() => onDelete(product)}
-  className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
->
-  Delete
-</button>
+                type="button"
+                onClick={() => onDelete(product)}
+                className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
+              >
+                Delete
+              </button>
             </div>
           </div>
 
@@ -388,6 +432,7 @@ function StoreManagerHome({
   setNewCategory,
   addCategory,
   onAddProduct,
+  onEditProduct,
   onDeleteProduct,
   loading,
   localError,
@@ -515,10 +560,11 @@ function StoreManagerHome({
     <div className="overflow-hidden bg-white">
       {visibleRecords.map((product) => (
   <ProductRecordRow
-    key={product.id}
-    product={product}
-    onDelete={onDeleteProduct}
-  />
+  key={product.id}
+  product={product}
+  onEdit={onEditProduct}
+  onDelete={onDeleteProduct}
+/>
 ))}
     </div>
   ) : (
@@ -618,12 +664,12 @@ function GallerySlot({ image, index, onChoose, onRemove }) {
   )
 }
 
-function AddProductPage({ categories, onBack, onSave }) {
+function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const fileInputRef = useRef(null)
   const galleryInputRefs = useRef([])
-  const [type, setType] = useState('Book')
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState(categories[0] || 'New Books')
+  const [type, setType] = useState(productToEdit?.type || 'Book')
+  const [title, setTitle] = useState(productToEdit?.title || '')
+  const [category, setCategory] = useState(productToEdit?.category || categories[0] || 'New Books')
   const [authorName, setAuthorName] = useState('')
   const [publisher, setPublisher] = useState('')
   const [novelType, setNovelType] = useState('Khmer')
@@ -631,24 +677,24 @@ function AddProductPage({ categories, onBack, onSave }) {
   const [sortOrder, setSortOrder] = useState('0')
   const [bestSeller, setBestSeller] = useState(false)
   const [discount, setDiscount] = useState(false)
-  const [description, setDescription] = useState('')
-  const [originalPrice, setOriginalPrice] = useState('')
-  const [salePrice, setSalePrice] = useState('')
-  const [active, setActive] = useState(false)
+  const [description, setDescription] = useState(productToEdit?.description || '')
+  const [originalPrice, setOriginalPrice] = useState(productToEdit?.originalPrice || '')
+  const [salePrice, setSalePrice] = useState(productToEdit?.salePrice || '')
+  const [active, setActive] = useState(productToEdit?.status === 'Active')
   const [coverFile, setCoverFile] = useState(null)
   const [coverFileName, setCoverFileName] = useState('')
-  const [coverPreview, setCoverPreview] = useState('')
+  const [coverPreview, setCoverPreview] = useState(productToEdit?.coverUrl || '')
   const [galleryImages, setGalleryImages] = useState([null, null, null, null, null])
-  const [stock, setStock] = useState('')
-  const [paperType, setPaperType] = useState('Normal Paper')
-  const [condition, setCondition] = useState('New')
-  const [qualityPercent, setQualityPercent] = useState('')
-  const [deliveryNote, setDeliveryNote] = useState('')
+  const [stock, setStock] = useState(productToEdit?.stock || '')
+  const [paperType, setPaperType] = useState(productToEdit?.paperType || 'Normal Paper')
+  const [condition, setCondition] = useState(productToEdit?.condition || 'New')
+  const [qualityPercent, setQualityPercent] = useState(productToEdit?.qualityPercent || '')
+  const [deliveryNote, setDeliveryNote] = useState(productToEdit?.deliveryNote || '')
   const [genre, setGenre] = useState('')
-  const [preOrder, setPreOrder] = useState(false)
-  const [pdfFileName, setPdfFileName] = useState('')
-  const [pageCount, setPageCount] = useState('')
-  const [accessRule, setAccessRule] = useState('Download after payment')
+  const [preOrder, setPreOrder] = useState(Boolean(productToEdit?.preOrder))
+  const [pdfFileName, setPdfFileName] = useState(productToEdit?.pdfFileName || '')
+  const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
+  const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Download after payment')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -733,10 +779,10 @@ function AddProductPage({ categories, onBack, onSave }) {
 
     if (saving) return
 
-    if (!coverFile) {
-      setFormError('Book cover is required.')
-      return
-    }
+   if (!coverFile && !coverPreview) {
+  setFormError('Book cover is required.')
+  return
+}
 
     if (!title.trim()) {
       setFormError('Book title is required.')
@@ -750,11 +796,11 @@ function AddProductPage({ categories, onBack, onSave }) {
 
     try {
       setSaving(true)
-      setFormError('Uploading cover to Cloudflare...')
+    setFormError(coverFile ? 'Uploading cover to Cloudflare...' : 'Saving product...')
 
-      const coverUrl = await uploadCoverImage(coverFile)
+const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
-      setFormError('Creating product...')
+setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
       await onSave({
         type,
@@ -1084,6 +1130,7 @@ function AddProductPage({ categories, onBack, onSave }) {
 export default function AuthorStoreManagerPage() {
   const navigate = useNavigate()
   const [mode, setMode] = useState('manager')
+  const [editingProduct, setEditingProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('Records')
   const [activeType, setActiveType] = useState('All')
   const [newCategory, setNewCategory] = useState('')
@@ -1143,34 +1190,59 @@ export default function AuthorStoreManagerPage() {
   }
 
   const saveProduct = async (product) => {
-    const savedProduct = await createStoreProduct(product)
+    const savedProduct = editingProduct?.id
+      ? await updateStoreProduct(editingProduct.id, product)
+      : await createStoreProduct(product)
 
     if (savedProduct) {
-      setProducts((current) => [savedProduct, ...current])
+      setProducts((current) => {
+        if (editingProduct?.id) {
+          return current.map((item) => (item.id === savedProduct.id ? savedProduct : item))
+        }
+
+        return [savedProduct, ...current]
+      })
+
       if (savedProduct.category && !categories.includes(savedProduct.category)) {
         setCategories((current) => [...current, savedProduct.category])
       }
     }
 
+    setEditingProduct(null)
     setMode('manager')
     setActiveTab('Records')
   }
 
-      const handleDeleteProduct = async (product) => {
-  if (!product?.id) return
+  const handleDeleteProduct = async (product) => {
+    if (!product?.id) return
 
-  const confirmed = window.confirm(`Delete "${product.title || 'this product'}"?`)
+    const confirmed = window.confirm(`Delete "${product.title || 'this product'}"?`)
 
-  if (!confirmed) return
+    if (!confirmed) return
 
-  try {
-    setLocalError('')
-    await deleteStoreProduct(product.id)
-    setProducts((current) => current.filter((item) => item.id !== product.id))
-  } catch (error) {
-    setLocalError(error.message || 'Failed to delete product')
+    try {
+      setLocalError('')
+      await deleteStoreProduct(product.id)
+      setProducts((current) => current.filter((item) => item.id !== product.id))
+    } catch (error) {
+      setLocalError(error.message || 'Failed to delete product')
+    }
   }
-}
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product)
+    setMode('form')
+  }
+
+  const openAddProductForm = () => {
+    setEditingProduct(null)
+    setMode('form')
+  }
+
+  const closeProductForm = () => {
+    setEditingProduct(null)
+    setMode('manager')
+  }
 
   return (
     <div className={`min-h-screen bg-[#f3f4f6] ${mode === 'form' ? 'pb-0' : 'pb-[92px]'}`}>
@@ -1178,15 +1250,26 @@ export default function AuthorStoreManagerPage() {
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => (mode === 'form' ? setMode('manager') : navigate('/author/page'))}
+            onClick={() => {
+              if (mode === 'form') {
+                closeProductForm()
+                return
+              }
+
+              navigate('/author/page')
+            }}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
           >
             <i className="fa-solid fa-chevron-left text-[16px]" />
           </button>
-          <div className="text-[16px] font-black text-[#111827]">{mode === 'form' ? 'Add Product' : 'Store'}</div>
+
+          <div className="text-[16px] font-black text-[#111827]">
+            {mode === 'form' ? (editingProduct ? 'Edit Product' : 'Add Product') : 'Store'}
+          </div>
+
           <button
             type="button"
-            onClick={() => setMode('form')}
+            onClick={openAddProductForm}
             className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm ${mode === 'form' ? 'invisible' : ''}`}
           >
             <i className="fa-solid fa-plus text-[14px]" />
@@ -1195,24 +1278,30 @@ export default function AuthorStoreManagerPage() {
       </div>
 
       {mode === 'form' ? (
-        <AddProductPage categories={categories} onBack={() => setMode('manager')} onSave={saveProduct} />
+        <AddProductPage
+          categories={categories}
+          productToEdit={editingProduct}
+          onBack={closeProductForm}
+          onSave={saveProduct}
+        />
       ) : (
         <StoreManagerHome
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  activeType={activeType}
-  setActiveType={setActiveType}
-  filteredProducts={filteredProducts}
-  products={products}
-  categories={categories}
-  newCategory={newCategory}
-  setNewCategory={setNewCategory}
-  addCategory={addCategory}
-  onAddProduct={() => setMode('form')}
-  onDeleteProduct={handleDeleteProduct}
-  loading={loading}
-  localError={localError}
-/>
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeType={activeType}
+          setActiveType={setActiveType}
+          filteredProducts={filteredProducts}
+          products={products}
+          categories={categories}
+          newCategory={newCategory}
+          setNewCategory={setNewCategory}
+          addCategory={addCategory}
+          onAddProduct={openAddProductForm}
+          onEditProduct={handleEditProduct}
+          onDeleteProduct={handleDeleteProduct}
+          loading={loading}
+          localError={localError}
+        />
       )}
 
       {mode === 'manager' ? <AuthorPageFooter active="Store" /> : null}
