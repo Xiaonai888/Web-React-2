@@ -170,14 +170,14 @@ function PostImageGrid({ images }) {
 
   if (images.length === 1) {
     return (
-      <div className="mt-3 overflow-hidden rounded-[14px] bg-[#f3f4f6]">
-        <img src={images[0]} alt="" className="max-h-[520px] w-full object-contain" />
+      <div className="mt-3 w-full bg-[#f3f4f6]">
+        <img src={images[0]} alt="" className="max-h-[560px] w-full object-contain" />
       </div>
     )
   }
 
   return (
-    <div className="mt-3 grid grid-cols-2 gap-1 overflow-hidden rounded-[14px]">
+    <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-[#f3f4f6]">
       {images.slice(0, 4).map((imageUrl, index) => (
         <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
