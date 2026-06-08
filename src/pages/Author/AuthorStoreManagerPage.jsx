@@ -7,9 +7,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const DEFAULT_CATEGORIES = ['New Release', 'Best Seller', 'Completed Series', 'Special Edition', 'Author Picks']
+const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks']
 const TYPE_FILTERS = ['All', 'Book', 'PDF']
-const PRODUCT_STATUSES = ['Draft', 'Active', 'Hidden']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
@@ -38,7 +37,7 @@ function formatProductForUi(product) {
     id: product.id,
     type: apiTypeToUi(product.product_type),
     title: product.title || '',
-    category: product.category || 'New Release',
+    category: product.category || 'New Books',
     description: product.description || '',
     originalPrice: String(product.original_price || ''),
     salePrice: String(product.sale_price || ''),
@@ -138,14 +137,14 @@ async function createStoreProduct(product) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to save product')
+    throw new Error(data.message || 'Failed to create product')
   }
 
   return data.product ? formatProductForUi(data.product) : null
 }
 
 function FieldLabel({ children }) {
-  return <div className="mb-1.5 text-[12px] font-black text-[#374151]">{children}</div>
+  return <div className="mb-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">{children}</div>
 }
 
 function TextInput({ value, onChange, placeholder, type = 'text' }) {
@@ -155,7 +154,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }) {
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="h-11 w-full rounded-2xl border border-[#e5e7eb] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#7c5cff]"
+      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
     />
   )
 }
@@ -165,22 +164,30 @@ function SelectInput({ value, onChange, children }) {
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-11 w-full rounded-2xl border border-[#e5e7eb] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#7c5cff]"
+      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
     >
       {children}
     </select>
   )
 }
 
-function SectionCard({ title, text, children }) {
+function AdminStyleCard({ title, text, children }) {
   return (
-    <section className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="mb-4">
-        <h2 className="text-[17px] font-black text-[#111827]">{title}</h2>
+    <section className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+      <div className="border-b border-[#e6edf5] px-4 py-4">
+        <h2 className="text-[17px] font-black leading-5 text-[#111827]">{title}</h2>
         {text ? <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">{text}</p> : null}
       </div>
-      {children}
+      <div className="p-4">{children}</div>
     </section>
+  )
+}
+
+function FormDivider({ title }) {
+  return (
+    <div className="border-t border-[#e6edf5] pt-4">
+      <div className="mb-3 text-[11px] font-black uppercase tracking-[0.09em] text-[#111827]">{title}</div>
+    </div>
   )
 }
 
@@ -188,7 +195,7 @@ function EmptyState({ onAddProduct }) {
   return (
     <div className="overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
       <div className="bg-gradient-to-br from-[#f8f7ff] via-white to-[#fff8e6] px-5 py-6 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#7c5cff] shadow-sm ring-1 ring-black/5">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
           <i className="fa-solid fa-store text-[22px]" />
         </div>
         <h3 className="text-[18px] font-black text-[#111827]">Start selling from your author page</h3>
@@ -198,7 +205,7 @@ function EmptyState({ onAddProduct }) {
         <button
           type="button"
           onClick={onAddProduct}
-          className="mt-5 h-12 rounded-full bg-[#7c5cff] px-6 text-[13px] font-black text-white shadow-sm active:scale-[0.98]"
+          className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-black text-white shadow-sm active:scale-[0.98]"
         >
           Add your first product
         </button>
@@ -227,7 +234,7 @@ function ProductCard({ product }) {
         </div>
         <button
           type="button"
-          className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#7c5cff] shadow-lg ring-1 ring-black/5 active:scale-95"
+          className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-lg ring-1 ring-black/5 active:scale-95"
         >
           <i className="fa-solid fa-bag-shopping text-[13px]" />
         </button>
@@ -238,7 +245,7 @@ function ProductCard({ product }) {
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#6b7280] ring-1 ring-black/5">{product.category}</span>
-          <span className="rounded-full bg-[#f5f3ff] px-2 py-1 text-[10px] font-black text-[#7c5cff]">{product.status}</span>
+          <span className={`rounded-full px-2 py-1 text-[10px] font-black ${product.status === 'Active' ? 'bg-[#ecfdf3] text-[#027a48]' : 'bg-[#f5f3ff] text-[#6b5cff]'}`}>{product.status}</span>
         </div>
 
         <div className="mt-2 text-[15px] font-black text-[#111827]">
@@ -290,51 +297,51 @@ function StoreManagerHome({
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
       <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-  <div className="flex items-start justify-between gap-3">
-    <div>
-      <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
-      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        Sell books, PDFs, and pre-orders from your author page.
-      </p>
-    </div>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              Sell books, PDFs, and pre-orders from your author page.
+            </p>
+          </div>
 
-    <button
-      type="button"
-      onClick={onAddProduct}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-[0.98]"
-      aria-label="Add product"
-    >
-      <i className="fa-solid fa-plus text-[14px]" />
-    </button>
-  </div>
+          <button
+            type="button"
+            onClick={onAddProduct}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-[0.98]"
+            aria-label="Add product"
+          >
+            <i className="fa-solid fa-plus text-[14px]" />
+          </button>
+        </div>
 
-  <div className="mt-4 grid grid-cols-3 gap-2">
-    <StatCard label="Products" value={products.length} icon="fa-box" />
-    <StatCard label="Orders" value="0" icon="fa-receipt" />
-    <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
-  </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <StatCard label="Products" value={products.length} icon="fa-box" />
+          <StatCard label="Orders" value="0" icon="fa-receipt" />
+          <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
+        </div>
 
-  <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-    {['Products', 'Categories', 'Orders'].map((tab) => {
-      const active = activeTab === tab
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {['Products', 'Categories', 'Orders'].map((tab) => {
+            const active = activeTab === tab
 
-      return (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => setActiveTab(tab)}
-          className={`h-9 shrink-0 rounded-full px-4 text-[12px] font-semibold transition active:scale-[0.98] ${
-            active
-              ? 'bg-[#f3f4f6] text-[#111827] shadow-sm'
-              : 'bg-transparent text-[#8b93a1]'
-          }`}
-        >
-          {tab}
-        </button>
-      )
-    })}
-  </div>
-</section>
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`h-9 shrink-0 rounded-full px-4 text-[12px] font-semibold transition active:scale-[0.98] ${
+                  active
+                    ? 'bg-[#f3f4f6] text-[#111827] shadow-sm'
+                    : 'bg-transparent text-[#8b93a1]'
+                }`}
+              >
+                {tab}
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
       {localError ? (
         <button
@@ -388,7 +395,7 @@ function StoreManagerHome({
             <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
             <div className="mt-3 flex gap-2">
               <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
-              <button type="button" onClick={addCategory} className="h-11 shrink-0 rounded-2xl bg-[#7c5cff] px-4 text-[12px] font-black text-white">
+              <button type="button" onClick={addCategory} className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white">
                 Add
               </button>
             </div>
@@ -414,7 +421,7 @@ function StoreManagerHome({
       {activeTab === 'Orders' ? (
         <section className="mt-4">
           <div className="rounded-[28px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f3ff] text-[#7c5cff]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
               <i className="fa-solid fa-receipt text-[22px]" />
             </div>
             <h3 className="text-[17px] font-black text-[#111827]">No orders yet</h3>
@@ -428,18 +435,61 @@ function StoreManagerHome({
   )
 }
 
+function GallerySlot({ image, index, onChoose, onRemove }) {
+  return (
+    <div className="overflow-hidden rounded-[18px] border border-[#d9e1ec] bg-[#f8fafc]">
+      <div className="relative aspect-[3/4] bg-[#f3f6fa]">
+        {image?.url ? (
+          <img src={image.url} alt={`Book image ${index + 1}`} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[12px] font-black text-[#9ca3af]">
+            Image {index + 1}
+          </div>
+        )}
+
+        {image?.url ? (
+          <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[10px] font-black text-[#111827] shadow-sm">
+            {index + 1}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="space-y-1.5 p-2">
+        <button
+          type="button"
+          onClick={onChoose}
+          className="h-8 w-full rounded-xl bg-[#eef2ff] text-[11px] font-black text-[#111827] active:scale-[0.98]"
+        >
+          Choose
+        </button>
+        {image?.url ? (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="h-8 w-full rounded-xl bg-[#fff1f1] text-[11px] font-black text-[#e5484d] active:scale-[0.98]"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function AddProductPage({ categories, onBack, onSave }) {
   const fileInputRef = useRef(null)
+  const galleryInputRefs = useRef([])
   const [type, setType] = useState('Book')
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState(categories[0] || 'New Release')
+  const [category, setCategory] = useState(categories[0] || 'New Books')
   const [description, setDescription] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
-  const [status, setStatus] = useState('Draft')
+  const [active, setActive] = useState(false)
   const [coverFile, setCoverFile] = useState(null)
   const [coverFileName, setCoverFileName] = useState('')
   const [coverPreview, setCoverPreview] = useState('')
+  const [galleryImages, setGalleryImages] = useState([null, null, null, null, null])
   const [stock, setStock] = useState('')
   const [paperType, setPaperType] = useState('Normal Paper')
   const [condition, setCondition] = useState('New')
@@ -484,18 +534,62 @@ function AddProductPage({ categories, onBack, onSave }) {
     }
   }
 
+  const selectGalleryImage = (index, file) => {
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setFormError('Please upload a valid gallery image.')
+      return
+    }
+
+    setGalleryImages((current) => {
+      const next = [...current]
+
+      if (next[index]?.url) {
+        URL.revokeObjectURL(next[index].url)
+      }
+
+      next[index] = {
+        file,
+        name: file.name,
+        url: URL.createObjectURL(file),
+      }
+
+      return next
+    })
+
+    setFormError('')
+  }
+
+  const removeGalleryImage = (index) => {
+    setGalleryImages((current) => {
+      const next = [...current]
+
+      if (next[index]?.url) {
+        URL.revokeObjectURL(next[index].url)
+      }
+
+      next[index] = null
+      return next
+    })
+
+    if (galleryInputRefs.current[index]) {
+      galleryInputRefs.current[index].value = ''
+    }
+  }
+
   const saveProduct = async () => {
     const qualityNumber = Number(qualityPercent)
 
     if (saving) return
 
     if (!coverFile) {
-      setFormError('Product cover is required.')
+      setFormError('Book cover is required.')
       return
     }
 
     if (!title.trim()) {
-      setFormError('Product title is required.')
+      setFormError('Book title is required.')
       return
     }
 
@@ -510,7 +604,7 @@ function AddProductPage({ categories, onBack, onSave }) {
 
       const coverUrl = await uploadCoverImage(coverFile)
 
-      setFormError('Saving product...')
+      setFormError('Creating product...')
 
       await onSave({
         type,
@@ -519,7 +613,7 @@ function AddProductPage({ categories, onBack, onSave }) {
         description,
         originalPrice,
         salePrice,
-        status,
+        status: active ? 'Active' : 'Draft',
         coverUrl,
         stock,
         paperType,
@@ -532,127 +626,144 @@ function AddProductPage({ categories, onBack, onSave }) {
         accessRule,
       })
     } catch (error) {
-      setFormError(error.message || 'Failed to save product')
+      setFormError(error.message || 'Failed to create product')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <main className="mx-auto max-w-[980px] px-4 py-4 pb-28">
-      <SectionCard title="Product cover" text="Upload 1 vertical cover image. This image will be saved to Cloudflare R2.">
-        <div className="flex flex-col items-center">
-          <div className="aspect-[3/4] w-[168px] overflow-hidden rounded-[24px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] shadow-inner sm:w-[210px]">
-            {coverPreview ? (
-              <img src={coverPreview} alt="Cover preview" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[#9ca3af]">
-                <i className="fa-regular fa-image mb-3 text-[28px]" />
-                <span className="text-[12px] font-black">Main Cover Preview</span>
-                <span className="mt-1 text-[11px] font-bold">2:3 vertical</span>
-              </div>
-            )}
-          </div>
+    <main className="mx-auto max-w-[1180px] px-4 py-4 pb-28">
+      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <AdminStyleCard title="Book Cover" text="Upload the vertical cover shown on product cards.">
+          <FormDivider title="Main cover" />
 
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => selectCover(event.target.files?.[0])} className="hidden" />
+          <p className="mb-3 text-[11px] font-semibold leading-5 text-[#64748b]">
+            Recommended vertical 2:3 ratio, JPG, PNG, or WEBP.
+          </p>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-4 h-11 w-full max-w-[360px] rounded-2xl border border-dashed border-[#b8c2d6] bg-white text-[12px] font-black text-[#111827] active:scale-[0.98]"
-          >
-            {coverPreview ? 'Choose or replace main cover' : 'Choose main cover'}
-          </button>
+          <div className="flex flex-col items-center">
+            <div className="aspect-[2/3] w-[200px] overflow-hidden rounded-[24px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] shadow-inner">
+              {coverPreview ? (
+                <img src={coverPreview} alt="Cover preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center px-5 text-center text-[#9ca3af]">
+                  <i className="fa-regular fa-image mb-3 text-[28px]" />
+                  <span className="text-[12px] font-black">Book Cover Preview</span>
+                  <span className="mt-1 text-[11px] font-bold">2:3 vertical</span>
+                </div>
+              )}
+            </div>
 
-          {coverPreview ? (
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(event) => selectCover(event.target.files?.[0])} className="hidden" />
+
             <button
               type="button"
-              onClick={removeCover}
-              className="mt-2 h-10 w-full max-w-[360px] rounded-2xl bg-[#fff1f1] text-[12px] font-black text-[#e5484d] active:scale-[0.98]"
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-4 h-11 w-full rounded-2xl border border-dashed border-[#b8c2d6] bg-white text-[12px] font-black text-[#111827] active:scale-[0.98]"
             >
-              Remove cover
+              {coverPreview ? 'Choose or replace book cover' : 'Choose book cover'}
             </button>
-          ) : null}
 
-          {coverFileName ? <p className="mt-2 max-w-[360px] truncate text-center text-[11px] font-bold text-[#8b93a1]">{coverFileName}</p> : null}
-        </div>
-      </SectionCard>
+            {coverPreview ? (
+              <button
+                type="button"
+                onClick={removeCover}
+                className="mt-2 h-10 w-full rounded-2xl bg-[#fff1f1] text-[12px] font-black text-[#e5484d] active:scale-[0.98]"
+              >
+                Clear Book Cover
+              </button>
+            ) : null}
 
-      <section className="mt-4 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <h1 className="text-[22px] font-black text-[#111827]">Add Product</h1>
-        <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">Create a book or PDF product for your author store.</p>
-
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-[#f3f4f6] p-1">
-          <button
-            type="button"
-            onClick={() => setType('Book')}
-            className={`h-11 rounded-xl text-[13px] font-black ${type === 'Book' ? 'bg-white text-[#7c5cff] shadow-sm' : 'text-[#6b7280]'}`}
-          >
-            Book
-          </button>
-          <button
-            type="button"
-            onClick={() => setType('PDF')}
-            className={`h-11 rounded-xl text-[13px] font-black ${type === 'PDF' ? 'bg-white text-[#7c5cff] shadow-sm' : 'text-[#6b7280]'}`}
-          >
-            PDF
-          </button>
-        </div>
-      </section>
-
-      <section className="mt-4 space-y-4 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <h2 className="text-[16px] font-black text-[#111827]">Product information</h2>
-
-        <div>
-          <FieldLabel>Title</FieldLabel>
-          <TextInput value={title} onChange={setTitle} placeholder="Product title" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <FieldLabel>Category</FieldLabel>
-            <SelectInput value={category} onChange={setCategory}>
-              {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-            </SelectInput>
+            {coverFileName ? <p className="mt-2 w-full truncate text-center text-[11px] font-bold text-[#8b93a1]">{coverFileName}</p> : null}
           </div>
-          <div>
-            <FieldLabel>Status</FieldLabel>
-            <SelectInput value={status} onChange={setStatus}>
-              {PRODUCT_STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </SelectInput>
+        </AdminStyleCard>
+
+        <AdminStyleCard title="Book Gallery" text="Upload extra vertical images shown on the product detail page.">
+          <FormDivider title="Extra book images" />
+
+          <p className="mb-3 text-[11px] font-semibold leading-5 text-[#64748b]">
+            Maximum 5 vertical gallery images. These help readers see more details before buying.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {galleryImages.map((image, index) => (
+              <div key={index}>
+                <input
+                  ref={(node) => {
+                    galleryInputRefs.current[index] = node
+                  }}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => selectGalleryImage(index, event.target.files?.[0])}
+                  className="hidden"
+                />
+                <GallerySlot
+                  image={image}
+                  index={index}
+                  onChoose={() => galleryInputRefs.current[index]?.click()}
+                  onRemove={() => removeGalleryImage(index)}
+                />
+              </div>
+            ))}
           </div>
+        </AdminStyleCard>
+      </div>
+
+      <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+        <div className="border-b border-[#e6edf5] px-4 py-4">
+          <h1 className="text-[17px] font-black leading-5 text-[#111827]">Book Information</h1>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+            Add book details for your author store.
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <FieldLabel>Original price</FieldLabel>
-            <TextInput value={originalPrice} onChange={setOriginalPrice} placeholder="5.00" type="number" />
+        <div className="space-y-4 p-4">
+          <FormDivider title="Product type" />
+
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#f3f4f6] p-1">
+            <button
+              type="button"
+              onClick={() => setType('Book')}
+              className={`h-11 rounded-xl text-[13px] font-black ${type === 'Book' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#6b7280]'}`}
+            >
+              Book
+            </button>
+            <button
+              type="button"
+              onClick={() => setType('PDF')}
+              className={`h-11 rounded-xl text-[13px] font-black ${type === 'PDF' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#6b7280]'}`}
+            >
+              PDF
+            </button>
           </div>
+
+          <FormDivider title="Book information" />
+
           <div>
-            <FieldLabel>Sale price</FieldLabel>
-            <TextInput value={salePrice} onChange={setSalePrice} placeholder="3.99" type="number" />
+            <FieldLabel>Book title</FieldLabel>
+            <TextInput value={title} onChange={setTitle} placeholder="Enter book title" />
           </div>
-        </div>
 
-        <div>
-          <FieldLabel>Description</FieldLabel>
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Short product description"
-            className="min-h-[110px] w-full rounded-2xl border border-[#e5e7eb] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#7c5cff]"
-          />
-        </div>
-      </section>
-
-      {type === 'Book' ? (
-        <section className="mt-4 space-y-4 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <h2 className="text-[16px] font-black text-[#111827]">Book details</h2>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <FieldLabel>Stock quantity</FieldLabel>
-              <TextInput value={stock} onChange={setStock} placeholder="10" type="number" />
+              <FieldLabel>Category</FieldLabel>
+              <SelectInput value={category} onChange={setCategory}>
+                {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+              </SelectInput>
+            </div>
+            <div>
+              <FieldLabel>Availability</FieldLabel>
+              <SelectInput value={condition} onChange={setCondition}>
+                {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+              </SelectInput>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <FieldLabel>Genre</FieldLabel>
+              <TextInput value={deliveryNote} onChange={setDeliveryNote} placeholder="Romance, fantasy, mystery..." />
             </div>
             <div>
               <FieldLabel>Paper type</FieldLabel>
@@ -662,67 +773,81 @@ function AddProductPage({ categories, onBack, onSave }) {
             </div>
           </div>
 
-          <div>
-            <FieldLabel>Book condition</FieldLabel>
-            <SelectInput
-              value={condition}
-              onChange={(value) => {
-                setCondition(value)
-                setFormError('')
-                if (value !== 'Second Hand') setQualityPercent('')
-              }}
-            >
-              {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-            </SelectInput>
-          </div>
-
           {condition === 'Second Hand' ? (
             <div>
-              <FieldLabel>Book quality percentage</FieldLabel>
+              <FieldLabel>Condition note</FieldLabel>
               <TextInput value={qualityPercent} onChange={setQualityPercent} placeholder="Example: 85" type="number" />
               <p className="mt-1.5 text-[11px] font-bold text-[#8b93a1]">Enter the estimated book quality from 1% to 100%.</p>
             </div>
           ) : null}
 
-          <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
-            <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
-            Pre-order product
-          </label>
+          <FormDivider title="Sale & stock" />
 
-          <div>
-            <FieldLabel>Delivery note</FieldLabel>
-            <TextInput value={deliveryNote} onChange={setDeliveryNote} placeholder="Delivery note for buyers" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <FieldLabel>Sale price</FieldLabel>
+              <TextInput value={salePrice} onChange={setSalePrice} placeholder="Example: 8.75" type="number" />
+            </div>
+            <div>
+              <FieldLabel>Original price</FieldLabel>
+              <TextInput value={originalPrice} onChange={setOriginalPrice} placeholder="Leave empty if no discount" type="number" />
+            </div>
           </div>
-        </section>
-      ) : (
-        <section className="mt-4 space-y-4 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <h2 className="text-[16px] font-black text-[#111827]">PDF details</h2>
+
+          {type === 'Book' ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <FieldLabel>Stock quantity</FieldLabel>
+                <TextInput value={stock} onChange={setStock} placeholder="Example: 10" type="number" />
+              </div>
+              <label className="flex h-11 items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+                <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
+                Pre-order product
+              </label>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <FieldLabel>PDF file</FieldLabel>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => setPdfFileName(event.target.files?.[0]?.name || '')}
+                  className="block h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-2 text-[13px] font-bold text-[#111827]"
+                />
+                {pdfFileName ? <div className="mt-2 text-[11px] font-bold text-[#6b7280]">{pdfFileName}</div> : null}
+              </div>
+              <div>
+                <FieldLabel>Page count</FieldLabel>
+                <TextInput value={pageCount} onChange={setPageCount} placeholder="Example: 120" type="number" />
+              </div>
+              <div className="sm:col-span-2">
+                <FieldLabel>Access rule</FieldLabel>
+                <SelectInput value={accessRule} onChange={setAccessRule}>
+                  {PDF_ACCESS_RULES.map((item) => <option key={item} value={item}>{item}</option>)}
+                </SelectInput>
+              </div>
+            </div>
+          )}
+
+          <FormDivider title="Product details" />
 
           <div>
-            <FieldLabel>PDF file</FieldLabel>
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(event) => setPdfFileName(event.target.files?.[0]?.name || '')}
-              className="block w-full rounded-2xl border border-[#e5e7eb] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827]"
+            <FieldLabel>Description</FieldLabel>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Book details, condition, delivery note, or pre-order note..."
+              className="min-h-[120px] w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
             />
-            {pdfFileName ? <div className="mt-2 text-[11px] font-bold text-[#6b7280]">{pdfFileName}</div> : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Page count</FieldLabel>
-              <TextInput value={pageCount} onChange={setPageCount} placeholder="120" type="number" />
-            </div>
-            <div>
-              <FieldLabel>Access rule</FieldLabel>
-              <SelectInput value={accessRule} onChange={setAccessRule}>
-                {PDF_ACCESS_RULES.map((item) => <option key={item} value={item}>{item}</option>)}
-              </SelectInput>
-            </div>
-          </div>
-        </section>
-      )}
+          <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+            <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
+            Active
+          </label>
+        </div>
+      </section>
 
       {formError ? <p className="mt-4 rounded-2xl bg-[#fff7ed] px-4 py-3 text-[12px] font-black text-[#9a3412]">{formError}</p> : null}
 
@@ -731,8 +856,8 @@ function AddProductPage({ categories, onBack, onSave }) {
           <button type="button" onClick={onBack} className="h-12 rounded-full border border-[#e5e7eb] bg-white text-[13px] font-black text-[#111827]">
             Cancel
           </button>
-          <button type="button" disabled={saving} onClick={saveProduct} className="h-12 rounded-full bg-[#7c5cff] text-[13px] font-black text-white disabled:opacity-60">
-            {saving ? 'Saving...' : 'Save Product'}
+          <button type="button" disabled={saving} onClick={saveProduct} className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white disabled:opacity-60">
+            {saving ? 'Creating...' : 'Create Product'}
           </button>
         </div>
       </div>
@@ -830,7 +955,7 @@ export default function AuthorStoreManagerPage() {
           <button
             type="button"
             onClick={() => setMode('form')}
-            className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#7c5cff] text-white shadow-sm ${mode === 'form' ? 'invisible' : ''}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm ${mode === 'form' ? 'invisible' : ''}`}
           >
             <i className="fa-solid fa-plus text-[14px]" />
           </button>
