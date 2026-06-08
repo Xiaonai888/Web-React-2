@@ -401,6 +401,10 @@ function cancelReactionPress() {
     {formatCompactNumber(post.echo_count)}
   </button>
 </div>
+    </article>
+  )
+}
+
 function ToastBubble({ text, author }) {
   if (!text) return null
 
