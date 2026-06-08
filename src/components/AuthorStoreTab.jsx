@@ -14,6 +14,7 @@ const STORE_SECTIONS = [
     subtitle: 'Fresh copies and latest arrivals.',
     types: ['Book'],
     categories: ['New Release', 'Special Edition', 'Author Picks'],
+    emptyText: 'No new books yet.',
   },
   {
     key: 'second-hand',
@@ -21,6 +22,7 @@ const STORE_SECTIONS = [
     subtitle: 'Checked condition, lower price, limited stock.',
     types: ['Book'],
     conditions: ['Second Hand'],
+    emptyText: 'No second hand books yet.',
   },
   {
     key: 'best-seller',
@@ -28,12 +30,14 @@ const STORE_SECTIONS = [
     subtitle: 'Books readers are choosing most.',
     types: ['Book'],
     categories: ['Best Seller'],
+    emptyText: 'No best sellers yet.',
   },
   {
     key: 'pdf-books',
     title: 'PDF Books',
     subtitle: 'Digital books from this author.',
     types: ['PDF'],
+    emptyText: 'No PDF books yet.',
   },
   {
     key: 'pre-order',
@@ -41,6 +45,7 @@ const STORE_SECTIONS = [
     subtitle: 'Reserve upcoming books before release.',
     types: ['Book'],
     preOrder: true,
+    emptyText: 'No pre-orders yet.',
   },
 ]
 
@@ -112,9 +117,11 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart }) {
         )}
 
         {item.stock_label ? (
-          <span className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${
-            isOutOfStock ? 'bg-[#f3f4f6] text-[#6b7280]' : 'bg-[#ecfdf3] text-[#027a48]'
-          }`}>
+          <span
+            className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${
+              isOutOfStock ? 'bg-[#f3f4f6] text-[#6b7280]' : 'bg-[#ecfdf3] text-[#027a48]'
+            }`}
+          >
             {item.stock_label}
           </span>
         ) : null}
@@ -127,7 +134,7 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart }) {
           </h3>
 
           <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8b93a1]">
-            {item.type}
+            {item.category || item.type}
           </p>
         </button>
 
@@ -158,11 +165,20 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart }) {
   )
 }
 
-function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
-  if (!items.length) return null
-
+function SectionEmptyCard({ text }) {
   return (
-    <section>
+    <div className="rounded-[18px] border border-dashed border-[#e5e7eb] bg-[#fbfbfd] px-4 py-7 text-center">
+      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#9ca3af] shadow-sm ring-1 ring-black/5">
+        <i className="fa-regular fa-file-lines text-[15px]" />
+      </div>
+      <p className="text-[12px] font-semibold leading-5 text-[#8b93a1]">{text}</p>
+    </div>
+  )
+}
+
+function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
+  return (
+    <section className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[17px] font-black leading-5 text-[#111827]">{section.title}</h2>
@@ -180,16 +196,20 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-          <AuthorStoreProductCard
-            key={item.id}
-            item={item}
-            onOpen={onOpenItem}
-            onAddToCart={onAddToCart}
-          />
-        ))}
-      </div>
+      {items.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {items.map((item) => (
+            <AuthorStoreProductCard
+              key={item.id}
+              item={item}
+              onOpen={onOpenItem}
+              onAddToCart={onAddToCart}
+            />
+          ))}
+        </div>
+      ) : (
+        <SectionEmptyCard text={section.emptyText} />
+      )}
     </section>
   )
 }
@@ -230,7 +250,10 @@ export default function AuthorStoreTab({ author, onMessage }) {
   }, [author?.page_username])
 
   const visibleSections = useMemo(() => {
-    return STORE_SECTIONS.map((section) => {
+    return STORE_SECTIONS.filter((section) => {
+      if (activeType === 'All') return true
+      return section.types.includes(activeType.slice(0, -1)) || section.types.includes(activeType)
+    }).map((section) => {
       const sectionItems = products.filter((product) => {
         const typeMatches = activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
         return typeMatches && sectionMatchesProduct(section, product)
@@ -240,93 +263,82 @@ export default function AuthorStoreTab({ author, onMessage }) {
         ...section,
         items: sectionItems,
       }
-    }).filter((section) => section.items.length)
+    })
   }, [activeType, products])
 
   const isOwner = Boolean(author?.is_owner)
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-[18px] font-black text-[#111827]">Store</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              Books, PDFs, bundles, and pre-orders from this author.
-            </p>
+    <div className="space-y-4">
+      <section className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+        <div className="bg-gradient-to-br from-[#fffaf0] via-white to-[#f7f5ff] px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[18px] font-black leading-6 text-[#111827]">Store</h2>
+                {loading ? (
+                  <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-black text-[#8b93a1] ring-1 ring-black/5">
+                    Loading
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                Books, PDFs, bundles, and pre-orders from this author.
+              </p>
+            </div>
+
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={() => onMessage?.('Manage store is coming soon.')}
+                className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+              >
+                Manage
+              </button>
+            ) : null}
           </div>
 
-          {isOwner ? (
-            <button
-              type="button"
-              onClick={() => onMessage?.('Manage store is coming soon.')}
-              className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827] active:scale-95"
-            >
-              Manage
-            </button>
-          ) : null}
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            {STORE_TYPE_FILTERS.map((type) => {
+              const active = activeType === type
+
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setActiveType(type)}
+                  className={`h-8 shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-95 ${
+                    active ? 'bg-[#111827] text-white' : 'bg-white text-[#6b7280] ring-1 ring-black/5'
+                  }`}
+                >
+                  {type}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {STORE_TYPE_FILTERS.map((type) => {
-            const active = activeType === type
-
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setActiveType(type)}
-                className={`h-8 shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-95 ${
-                  active ? 'bg-[#111827] text-white' : 'bg-[#f3f4f6] text-[#6b7280]'
-                }`}
-              >
-                {type}
-              </button>
-            )
-          })}
-        </div>
+        {loadError ? (
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="block w-full border-t border-[#f0eef6] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
+          >
+            {loadError}
+          </button>
+        ) : null}
       </section>
 
-      {loading ? (
-        <div className="rounded-[22px] bg-white px-4 py-10 text-center shadow-sm ring-1 ring-black/5">
-          <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-          <div className="text-[13px] font-black text-[#111827]">Loading store...</div>
-        </div>
-      ) : null}
-
-      {!loading && loadError ? (
-        <div className="rounded-[22px] bg-white px-4 py-8 text-center shadow-sm ring-1 ring-black/5">
-          <h3 className="text-[15px] font-black text-[#111827]">Could not load store</h3>
-          <p className="mx-auto mt-1.5 max-w-[280px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
-            {loadError}
-          </p>
-        </div>
-      ) : null}
-
-      {!loading && !loadError && visibleSections.length ? (
-        visibleSections.map((section) => (
-          <AuthorStoreShelf
-            key={section.key}
-            section={section}
-            items={section.items}
-            onMore={() => onMessage?.(`${section.title} page is next stage.`)}
-            onOpenItem={() => onMessage?.('Book detail page is next stage.')}
-            onAddToCart={() => onMessage?.('Author Store cart is next stage.')}
-          />
-        ))
-      ) : null}
-
-      {!loading && !loadError && !visibleSections.length ? (
-        <div className="rounded-[22px] bg-white px-4 py-10 text-center shadow-sm ring-1 ring-black/5">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-            <i className="fa-regular fa-file-lines text-[17px]" />
-          </div>
-          <h3 className="text-[15px] font-black text-[#111827]">No store items yet</h3>
-          <p className="mx-auto mt-1.5 max-w-[260px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
-            Active books and PDFs from this author will appear here.
-          </p>
-        </div>
-      ) : null}
+      {visibleSections.map((section) => (
+        <AuthorStoreShelf
+          key={section.key}
+          section={section}
+          items={section.items}
+          onMore={() => onMessage?.(`${section.title} page is next stage.`)}
+          onOpenItem={() => onMessage?.('Book detail page is next stage.')}
+          onAddToCart={() => onMessage?.('Author Store cart is next stage.')}
+        />
+      ))}
     </div>
   )
 }
