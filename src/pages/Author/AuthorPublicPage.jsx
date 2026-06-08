@@ -181,7 +181,17 @@ async function fetchPublicAuthorPage(pageUsername) {
         ...authorPage,
         is_following: Boolean(data.is_following),
         total_followers: Number(data.total_followers ?? authorPage.total_followers ?? 0),
-        works: Array.isArray(data.works) ? data.works : [],
+        works: Array.isArray(data.works)
+  ? data.works
+  : Array.isArray(data.stories)
+    ? data.stories
+    : Array.isArray(data.author_stories)
+      ? data.author_stories
+      : Array.isArray(authorPage.works)
+        ? authorPage.works
+        : Array.isArray(authorPage.stories)
+          ? authorPage.stories
+          : [],
       }
     : null
 }
@@ -202,7 +212,24 @@ async function fetchMyAuthorPage() {
     return null
   }
 
-  return data.author_page || null
+  const authorPage = data.author_page || null
+
+if (!authorPage) return null
+
+return {
+  ...authorPage,
+  works: Array.isArray(data.works)
+    ? data.works
+    : Array.isArray(data.stories)
+      ? data.stories
+      : Array.isArray(data.author_stories)
+        ? data.author_stories
+        : Array.isArray(authorPage.works)
+          ? authorPage.works
+          : Array.isArray(authorPage.stories)
+            ? authorPage.stories
+            : [],
+}
 }
 
 function StatItem({ value, label }) {
