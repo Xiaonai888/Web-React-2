@@ -263,6 +263,83 @@ function ProductCard({ product }) {
   )
 }
 
+function ProductRecordRow({ product }) {
+  const priceText = product.salePrice || product.originalPrice || '0.00'
+  const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
+  const isActive = product.status === 'Active'
+  const isDraft = product.status === 'Draft'
+
+  return (
+    <article className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+      <div className="flex gap-3">
+        <div className="h-[86px] w-[64px] shrink-0 overflow-hidden rounded-[12px] bg-[#f3f4f6] ring-1 ring-black/5">
+          {product.coverUrl ? (
+            <img src={product.coverUrl} alt={product.title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+              <i className="fa-regular fa-image text-[18px]" />
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="line-clamp-1 text-[13px] font-black text-[#111827]">
+                {product.title || 'Untitled product'}
+              </h3>
+              <p className="mt-0.5 text-[10px] font-bold text-[#8b93a1]">ID: {product.id}</p>
+            </div>
+
+            <div className="flex shrink-0 gap-1.5">
+              <button
+                type="button"
+                className="h-8 rounded-xl bg-[#f3f4f6] px-3 text-[11px] font-black text-[#111827] active:scale-95"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#6b7280] ring-1 ring-black/5">
+              {product.category}
+            </span>
+            <span className="rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#111827] ring-1 ring-black/5">
+              {product.type}
+            </span>
+            <span className={`rounded-full px-2 py-1 text-[10px] font-black ${
+              isActive
+                ? 'bg-[#ecfdf3] text-[#027a48]'
+                : isDraft
+                  ? 'bg-[#f5f3ff] text-[#6b5cff]'
+                  : 'bg-[#f3f4f6] text-[#6b7280]'
+            }`}>
+              {product.status}
+            </span>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-[#6b7280]">
+            <span className="font-black text-[#111827]">${priceText}</span>
+            {hasDiscount ? <span className="line-through">${product.originalPrice}</span> : null}
+            <span>
+              {product.type === 'Book'
+                ? `${product.stock || 0} stock • ${product.condition}`
+                : `${product.pageCount || 0} pages • PDF`}
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function StatCard({ label, value, icon }) {
   return (
     <div className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
@@ -294,25 +371,32 @@ function StoreManagerHome({
   loading,
   localError,
 }) {
+  const [recordQuery, setRecordQuery] = useState('')
+
+  const visibleRecords = useMemo(() => {
+    const query = recordQuery.trim().toLowerCase()
+
+    if (!query) return filteredProducts
+
+    return filteredProducts.filter((product) => {
+      return (
+        product.title.toLowerCase().includes(query) ||
+        String(product.id).toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query) ||
+        product.status.toLowerCase().includes(query) ||
+        product.type.toLowerCase().includes(query)
+      )
+    })
+  }, [filteredProducts, recordQuery])
+
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
       <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              Sell books, PDFs, and pre-orders from your author page.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onAddProduct}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-[0.98]"
-            aria-label="Add product"
-          >
-            <i className="fa-solid fa-plus text-[14px]" />
-          </button>
+        <div>
+          <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+            Sell books, PDFs, and pre-orders from your author page.
+          </p>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -322,7 +406,7 @@ function StoreManagerHome({
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {['Products', 'Categories', 'Orders'].map((tab) => {
+          {['Records', 'Orders', 'Settings'].map((tab) => {
             const active = activeTab === tab
 
             return (
@@ -353,46 +437,78 @@ function StoreManagerHome({
         </button>
       ) : null}
 
-      {activeTab === 'Products' ? (
-        <section className="mt-4 space-y-4">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {TYPE_FILTERS.map((type) => {
-              const active = activeType === type
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActiveType(type)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
-                    active
-                      ? 'bg-[#fff4cc] text-[#111827] ring-1 ring-[#f6b800]/35'
-                      : 'bg-white text-[#6b7280] ring-1 ring-black/5'
-                  }`}
-                >
-                  {type}
-                </button>
-              )
-            })}
+      {activeTab === 'Records' ? (
+        <section className="mt-4 rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+          <div className="border-b border-[#eef0f4] px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[17px] font-black text-[#111827]">Book Records</h2>
+                <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                  Search, filter, and manage your author store products.
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
+                {products.length} products
+              </span>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#9ca3af]" />
+                <input
+                  type="search"
+                  value={recordQuery}
+                  onChange={(event) => setRecordQuery(event.target.value)}
+                  placeholder="Search title, category, product ID..."
+                  className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white pl-9 pr-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+                />
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+                {TYPE_FILTERS.map((type) => {
+                  const active = activeType === type
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setActiveType(type)}
+                      className={`h-10 shrink-0 rounded-full px-4 text-[12px] font-black ${
+                        active
+                          ? 'bg-[#fff4cc] text-[#111827] ring-1 ring-[#f6b800]/35'
+                          : 'bg-[#f8fafc] text-[#6b7280] ring-1 ring-black/5'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
-          {loading ? (
-            <div className="rounded-[28px] bg-white p-8 text-center text-[13px] font-bold text-[#8b93a1] shadow-sm ring-1 ring-black/5">
-              Loading products...
-            </div>
-          ) : filteredProducts.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
-            </div>
-          ) : (
-            <EmptyState onAddProduct={onAddProduct} />
-          )}
+          <div className="p-4">
+            {loading ? (
+              <div className="rounded-[18px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#8b93a1] ring-1 ring-black/5">
+                Loading products...
+              </div>
+            ) : visibleRecords.length ? (
+              <div className="space-y-3">
+                {visibleRecords.map((product) => <ProductRecordRow key={product.id} product={product} />)}
+              </div>
+            ) : (
+              <EmptyState onAddProduct={onAddProduct} />
+            )}
+          </div>
         </section>
       ) : null}
 
-      {activeTab === 'Categories' ? (
+      {activeTab === 'Settings' ? (
         <section className="mt-4 space-y-3">
           <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
             <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              New categories can become sections in the public Store tab.
+            </p>
             <div className="mt-3 flex gap-2">
               <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
               <button type="button" onClick={addCategory} className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white">
@@ -868,7 +984,7 @@ function AddProductPage({ categories, onBack, onSave }) {
 export default function AuthorStoreManagerPage() {
   const navigate = useNavigate()
   const [mode, setMode] = useState('manager')
-  const [activeTab, setActiveTab] = useState('Products')
+  const [activeTab, setActiveTab] = useState('Records')
   const [activeType, setActiveType] = useState('All')
   const [newCategory, setNewCategory] = useState('')
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
@@ -937,7 +1053,7 @@ export default function AuthorStoreManagerPage() {
     }
 
     setMode('manager')
-    setActiveTab('Products')
+    setActiveTab('Records')
   }
 
   return (
