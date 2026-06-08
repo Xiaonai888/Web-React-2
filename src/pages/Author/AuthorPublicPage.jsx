@@ -106,17 +106,23 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   return data.image_url || data.imageUrl
 }
 
-async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '' }) {
+async function saveAuthorProfileImages({ token, avatarUrl = '', coverUrl = '', slideUrls = null }) {
+  const body = {
+    avatar_url: avatarUrl,
+    cover_url: coverUrl,
+  }
+
+  if (Array.isArray(slideUrls)) {
+    body.slide_urls = slideUrls
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/authors/profile-images`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      avatar_url: avatarUrl,
-      cover_url: coverUrl,
-    }),
+    body: JSON.stringify(body),
   })
 
   const data = await response.json().catch(() => ({}))
