@@ -1243,7 +1243,7 @@ async function handleUnfollowFromSettings() {
           </div>
         </section>
 
-        <section className="bg-white px-4 pb-5 pt-4 sm:px-6">
+        <section className="min-h-[70vh] bg-white px-4 pb-24 pt-4 sm:px-6">
          {activeTab === 'Posts' ? (
   <div className="space-y-5 pb-4">
     <section>
