@@ -214,7 +214,7 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
   )
 }
 
-export default function AuthorStoreTab({ author, onMessage }) {
+export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChange, onMessage }) {
   const [activeType, setActiveType] = useState('All')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
@@ -336,7 +336,10 @@ export default function AuthorStoreTab({ author, onMessage }) {
           items={section.items}
           onMore={() => onMessage?.(`${section.title} page is next stage.`)}
           onOpenItem={() => onMessage?.('Book detail page is next stage.')}
-          onAddToCart={() => onMessage?.('Author Store cart is next stage.')}
+          onAddToCart={(item) => {
+  onCartCountChange?.(Number(cartCount || 0) + 1)
+  onMessage?.(`${item.title} added to cart.`)
+}}
         />
       ))}
     </div>
