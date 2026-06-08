@@ -1,4 +1,44 @@
 import { useEffect, useRef, useState } from 'react'
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+async function uploadAuthorPostImage(file) {
+  const token = getAuthToken()
+
+  if (!token) {
+    throw new Error('Please login first')
+  }
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('folder', 'author_post_image')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload photo')
+  }
+
+  return data.image_url || data.imageUrl
+}
 
 const MAX_POST_PHOTOS = 5
 const MAX_POST_IMAGE_BYTES = 2 * 1024 * 1024
@@ -185,7 +225,7 @@ export default function AuthorPostComposerSheet({
   const pageName = author?.page_name || 'Author'
   const hasContent = Boolean(draft.trim() || selectedImages.length)
   const canReview = hasContent
-  const canPublish = Boolean(draft.trim()) && !selectedImages.length && !saving
+  const canPublish = hasContent && !saving
 
   useEffect(() => {
     if (!open) return undefined
@@ -295,19 +335,31 @@ function removeImage(imageId) {
 }
 
 async function publishPost() {
-  if (selectedImages.length) {
-    onMessage?.('Photo publishing is not connected yet. Text posts can publish now.')
-    return
-  }
+  if (!canPublish) return
 
-  const ok = await onPublishText?.(draft.trim())
-
-  if (ok) {
-    clearImages()
-    setDraft('')
+  try {
     setImageError('')
-    setScreen('compose')
-    onClose?.()
+
+    const imageUrls = []
+
+    for (const image of selectedImages) {
+      const imageUrl = await uploadAuthorPostImage(image.file)
+      imageUrls.push(imageUrl)
+    }
+
+    const ok = await onPublishText?.(draft.trim(), imageUrls)
+
+    if (ok) {
+      clearImages()
+      setDraft('')
+      setImageError('')
+      setScreen('compose')
+      onClose?.()
+    }
+  } catch (error) {
+    const message = error.message || 'Failed to publish post'
+    setImageError(message)
+    onMessage?.(message)
   }
 }
 
@@ -460,12 +512,6 @@ return (
                   </div>
                 </div>
               </div>
-
-              {selectedImages.length ? (
-                <div className="mb-4 rounded-[14px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
-                  Photo publishing is not connected yet. Text posts can publish now.
-                </div>
-              ) : null}
 
               <div className="space-y-1">
                 <ReviewOption icon="fa-solid fa-earth-asia" title="Who can see this" value="Public" />
