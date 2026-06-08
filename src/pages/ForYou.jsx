@@ -676,7 +676,7 @@ if (tab.slug === 'gl') {
       onClick={() => item.path && navigate(item.path)}
     >
       <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
-        <i className={`fas ${item.icon} text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]`} />
+        <i className={`fas ${item.icon} text-[#6b7280]`} />
       </div>
       <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
     </div>
