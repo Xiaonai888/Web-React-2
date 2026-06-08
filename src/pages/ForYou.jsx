@@ -664,24 +664,24 @@ if (tab.slug === 'gl') {
             </div>
 
             <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
-              {[
-                { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
-                { icon: 'fa-tasks', label: 'Tasks', path: '/tasks' },
-                { icon: 'fa-trophy', label: 'Ranking', path: '/ranking' },
-                { icon: 'fa-calendar', label: 'Event', path: '/event' },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="group cursor-pointer"
-                  onClick={() => item.path && navigate(item.path)}
-                >
-                  <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-[#f8fafc]">
-                    <i className={`fas ${item.icon} ${item.color}`} />
-                  </div>
-                  <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
-                </div>
-              ))}
-            </div>
+  {[
+    { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
+    { icon: 'fa-tasks', label: 'Tasks', path: '/tasks' },
+    { icon: 'fa-trophy', label: 'Ranking', path: '/ranking' },
+    { icon: 'fa-calendar', label: 'Event', path: '/event' },
+  ].map((item) => (
+    <div
+      key={item.label}
+      className="group cursor-pointer"
+      onClick={() => item.path && navigate(item.path)}
+    >
+      <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
+        <i className={`fas ${item.icon} text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]`} />
+      </div>
+      <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
+    </div>
+  ))}
+</div>
 
             <div className="my-6">
               <ShadowSpotlight />
