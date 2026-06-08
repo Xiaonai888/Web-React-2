@@ -342,66 +342,64 @@ function cancelReactionPress() {
 ) : null}
 
 <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
+  <div className="relative">
+    {reactionPickerOpen ? (
+      <div className="absolute bottom-8 left-0 z-30 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
+        {AUTHOR_POST_REACTIONS.map((reaction) => (
+          <button
+            key={reaction.type}
+            type="button"
+            disabled={reactionBusy}
+            onClick={() => {
+              setReactionPickerOpen(false)
+              onReact(post, reaction.type)
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90"
+            aria-label={reaction.label}
+          >
+            <img src={reaction.src} alt={reaction.label} className="h-8 w-8 object-contain" />
+          </button>
+        ))}
+      </div>
+    ) : null}
 
-      <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
-        <div className="relative">
-  {reactionPickerOpen ? (
-    <div className="absolute bottom-8 left-0 z-30 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
-      {AUTHOR_POST_REACTIONS.map((reaction) => (
-        <button
-          key={reaction.type}
-          type="button"
-          disabled={reactionBusy}
-          onClick={() => {
-            setReactionPickerOpen(false)
-            onReact(post, reaction.type)
-          }}
-          className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90"
-          aria-label={reaction.label}
-        >
-          <img src={reaction.src} alt={reaction.label} className="h-8 w-8 object-contain" />
-        </button>
-      ))}
-    </div>
-  ) : null}
+    <button
+      type="button"
+      disabled={reactionBusy}
+      onPointerDown={startReactionPress}
+      onPointerUp={endReactionPress}
+      onPointerLeave={cancelReactionPress}
+      onContextMenu={(event) => event.preventDefault()}
+      className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+      style={{ color: activeReaction?.text || undefined }}
+    >
+      {activeReaction ? (
+        <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
+      ) : (
+        <i className="fa-regular fa-heart text-[15px]" />
+      )}
+      {formatCompactNumber(post.like_count)}
+    </button>
+  </div>
 
   <button
     type="button"
-    disabled={reactionBusy}
-    onPointerDown={startReactionPress}
-    onPointerUp={endReactionPress}
-    onPointerLeave={cancelReactionPress}
-    onContextMenu={(event) => event.preventDefault()}
-    className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
-    style={{ color: activeReaction?.text || undefined }}
+    onClick={() => onMessage?.('Author post comments are coming soon.')}
+    className="inline-flex items-center gap-1.5 active:scale-95"
   >
-    {activeReaction ? (
-      <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
-    ) : (
-      <i className="fa-regular fa-heart text-[15px]" />
-    )}
-    {formatCompactNumber(post.like_count)}
+    <i className="fa-regular fa-comment text-[15px]" />
+    {formatCompactNumber(post.comment_count)}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => onEcho(post)}
+    className="inline-flex items-center gap-1.5 active:scale-95"
+  >
+    <i className="fa-solid fa-retweet text-[15px]" />
+    {formatCompactNumber(post.echo_count)}
   </button>
 </div>
-
-        <button
-  type="button"
-  onClick={() => onEcho(post)}
-  className="inline-flex items-center gap-1.5 active:scale-95"
->
-  <i className="fa-solid fa-retweet text-[15px]" />
-  {formatCompactNumber(post.echo_count)}
-</button>
-
-        <span className="inline-flex items-center gap-1.5">
-          <i className="fa-solid fa-retweet text-[15px]" />
-          {formatCompactNumber(post.echo_count)}
-        </span>
-      </div>
-    </article>
-  )
-}
-
 function ToastBubble({ text, author }) {
   if (!text) return null
 
