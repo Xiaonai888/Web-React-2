@@ -1139,25 +1139,15 @@ async function handleUnfollowFromSettings() {
   readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
 }`}>
   <div className="mx-auto flex h-[54px] max-w-[980px] items-center justify-between px-3">
-    <button
+   <button
   type="button"
-  onClick={() => {
-    setActiveTab('Store')
-    setMessage('Cart is coming soon.')
-  }}
+  onClick={handleReaderBack}
   className={`flex h-10 w-10 items-center justify-center rounded-full ${
     readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
   }`}
-  aria-label="Open cart"
+  aria-label="Back"
 >
-  <span id="author-cover-cart-target" className="relative flex h-10 w-10 items-center justify-center">
-    <i className="fa-solid fa-cart-shopping text-[15px]" />
-    {readerCartCount > 0 ? (
-      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black leading-none text-white">
-        {readerCartCount > 99 ? '99+' : readerCartCount}
-      </span>
-    ) : null}
-  </span>
+  <i className="fa-solid fa-chevron-left text-[15px]" />
 </button>
     <div className={`min-w-0 flex-1 px-3 text-center text-[15px] font-semibold text-[#111827] transition ${
       readerHeaderTitle ? 'opacity-100' : 'opacity-0'
@@ -1165,6 +1155,20 @@ async function handleUnfollowFromSettings() {
       <span className="line-clamp-1">{displayAuthor.page_name}</span>
     </div>
 <div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={() => {
+      setActiveTab('Store')
+      setMessage('Cart is coming soon.')
+    }}
+    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+      readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+    }`}
+    aria-label="Open cart"
+  >
+    <i className="fa-solid fa-cart-shopping text-[15px]" />
+  </button>
+
   <button
         type="button"
         onClick={() => setMessage('Page options are coming soon.')}
