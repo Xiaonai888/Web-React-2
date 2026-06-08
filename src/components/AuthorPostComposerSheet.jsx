@@ -238,18 +238,15 @@ export default function AuthorPostComposerSheet({
   }
 
   function requestClose() {
-    if (hasContent) {
-      setLeaveSheetOpen(true)
-      return
-    }
-
-    onClose?.()
+  if (hasContent) {
+    setLeaveSheetOpen(true)
+    return
   }
 
-  
-  return (
+  onClose?.()
+}
 
-    async function handlePickImages(fileList) {
+async function handlePickImages(fileList) {
   const files = Array.from(fileList || [])
   const imageFiles = files.filter((file) => file.type.startsWith('image/'))
 
@@ -313,8 +310,9 @@ async function publishPost() {
     onClose?.()
   }
 }
-  
-    <>
+
+return (
+  <>
       <div className="fixed inset-0 z-[240] bg-white">
         <input
           ref={fileInputRef}
