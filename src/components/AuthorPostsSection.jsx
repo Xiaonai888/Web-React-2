@@ -199,28 +199,37 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
   )
 }
 
-function PostImageGrid({ images }) {
+function PostImageGrid({ images, onView }) {
   if (!images.length) return null
 
   if (images.length === 1) {
     return (
-      <div className="mt-3 w-full bg-white">
+      <button
+        type="button"
+        onClick={() => onView(images[0])}
+        className="mt-3 block w-full bg-white"
+      >
         <img src={images[0]} alt="" className="max-h-[620px] w-full object-contain" />
-      </div>
+      </button>
     )
   }
 
   return (
     <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-white">
       {images.slice(0, 4).map((imageUrl, index) => (
-        <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
+        <button
+          key={`${imageUrl}-${index}`}
+          type="button"
+          onClick={() => onView(imageUrl)}
+          className="relative aspect-square bg-[#f3f4f6]"
+        >
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
           {index === 3 && images.length > 4 ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[22px] font-semibold text-white">
               +{images.length - 4}
             </div>
           ) : null}
-        </div>
+        </button>
       ))}
     </div>
   )
