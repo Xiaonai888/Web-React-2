@@ -384,13 +384,13 @@ function cancelReactionPress() {
   </div>
 
   <button
-    type="button"
-    onClick={() => onMessage?.('Author post comments are coming soon.')}
-    className="inline-flex items-center gap-1.5 active:scale-95"
-  >
-    <i className="fa-regular fa-comment text-[15px]" />
-    {formatCompactNumber(post.comment_count)}
-  </button>
+  type="button"
+  onClick={() => onComment(post)}
+  className="inline-flex items-center gap-1.5 active:scale-95"
+>
+  <i className="fa-regular fa-comment text-[15px]" />
+  {formatCompactNumber(post.comment_count)}
+</button>
 
   <button
     type="button"
