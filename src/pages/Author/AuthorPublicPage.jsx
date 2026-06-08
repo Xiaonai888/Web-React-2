@@ -644,7 +644,7 @@ export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
   const [author, setAuthor] = useState(null)
-  const [activeTab, setActiveTab] = useState('Posts')
+  const [tabsFrozen, setTabsFrozen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
@@ -970,6 +970,25 @@ async function handleUnfollowFromSettings() {
       ? displayAuthor.works
       : []
 
+  useEffect(() => {
+  function handleTabsStickyState() {
+    const tabsElement = document.getElementById('author-page-tabs')
+    if (!tabsElement) return
+
+    const rect = tabsElement.getBoundingClientRect()
+    setTabsFrozen(rect.top <= 0 && window.scrollY > 20)
+  }
+
+  handleTabsStickyState()
+  window.addEventListener('scroll', handleTabsStickyState, { passive: true })
+  window.addEventListener('resize', handleTabsStickyState)
+
+  return () => {
+    window.removeEventListener('scroll', handleTabsStickyState)
+    window.removeEventListener('resize', handleTabsStickyState)
+  }
+}, [])
+  
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
@@ -1290,7 +1309,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
         </section>
 
-       <section className="sticky top-0 z-50 border-b border-[#eef0f3] bg-white">
+       <section id="author-page-tabs" className="sticky top-0 z-50 border-b border-[#eef0f3] bg-white">
   <div className="flex items-center justify-between gap-3 px-4 py-2">
     <div className="flex min-w-0 gap-2 overflow-x-auto">
       {tabs.map((tab) => {
@@ -1313,17 +1332,19 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       })}
     </div>
 
-    <button
-      type="button"
-      onClick={() => {
-        setActiveTab('Store')
-        setMessage('Cart is coming soon.')
-      }}
-      className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-      aria-label="Open cart"
-    >
-      <i className="fa-solid fa-cart-shopping text-[17px]" />
-    </button>
+    {!displayAuthor.is_owner && tabsFrozen ? (
+      <button
+        type="button"
+        onClick={() => {
+          setActiveTab('Store')
+          setMessage('Cart is coming soon.')
+        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+        aria-label="Open cart"
+      >
+        <i className="fa-solid fa-cart-shopping text-[17px]" />
+      </button>
+    ) : null}
   </div>
 </section>
 
