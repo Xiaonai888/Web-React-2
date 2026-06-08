@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
+import CommentsModal from './story-detail/CommentsModal'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -235,7 +236,7 @@ function PostImageGrid({ images, onView }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onEcho, onViewImage, onMessage }) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onEcho, onViewImage, onMessage }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -681,6 +682,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [composerOpen, setComposerOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState(null)
   const [echoPost, setEchoPost] = useState(null)
+  const [commentPost, setCommentPost] = useState(null)
   const [viewImageUrl, setViewImageUrl] = useState('')    
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
@@ -790,6 +792,19 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
  async function handlePostReaction(post, reactionType = 'love') {
   if (!post?.id || reactionBusyId) return
 
+  function handleAuthorPostCommentChanged(nextComments = []) {
+  if (!commentPost?.id) return
+
+  setPosts((current) => current.map((post) => {
+    if (post.id !== commentPost.id) return post
+
+    return {
+      ...post,
+      comment_count: Array.isArray(nextComments) ? nextComments.length : Number(post.comment_count || 0),
+    }
+  }))
+}    
+
   try {
     setReactionBusyId(post.id)
 
@@ -866,6 +881,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
               onEcho={setEchoPost}
               onViewImage={setViewImageUrl}
               onMessage={onMessage}
+              onComment={setCommentPost}
             />
           ))}
         </div>
@@ -902,6 +918,15 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         onPinChange={handlePinChange}
         onMessage={onMessage}
       />
+
+      <CommentsModal
+  open={Boolean(commentPost)}
+  targetType="author_post"
+  targetId={commentPost?.id}
+  title="Author post comments"
+  onClose={() => setCommentPost(null)}
+  onCommentChanged={handleAuthorPostCommentChanged}
+/>
 
       <ImageViewer
   imageUrl={viewImageUrl}
