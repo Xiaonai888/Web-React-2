@@ -9,18 +9,18 @@ function getStoredAuthorPage() {
   }
 }
 
-function ToolRow({ icon, label, subtext, onClick }) {
+function ToolRow({ icon, label, subtext, danger = false, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[#f3f4f6]"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>
         <i className={`${icon} text-[18px]`} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-normal text-[#111827]">{label}</span>
+        <span className={`block text-[14px] font-normal ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>{label}</span>
         {subtext ? <span className="mt-0.5 block text-[11px] font-normal text-[#8b93a1]">{subtext}</span> : null}
       </span>
     </button>
@@ -99,7 +99,7 @@ export default function AuthorPageSettingsPage() {
 
           <h1 className="text-[16px] font-semibold text-[#111827]">Page Settings</h1>
 
-         <div className="h-10 w-10" />
+          <div className="h-10 w-10" />
         </div>
       </header>
 
@@ -130,6 +130,17 @@ export default function AuthorPageSettingsPage() {
         <SectionTitle>View</SectionTitle>
         <div className="mt-3 space-y-1">
           <ToolRow icon="fa-regular fa-eye" label="View as reader" subtext="Open the public author page view" onClick={viewAsReader} />
+        </div>
+
+        <SectionTitle>Trash</SectionTitle>
+        <div className="mt-3 space-y-1">
+          <ToolRow
+            icon="fa-solid fa-trash-can"
+            label="Trash"
+            subtext="Review posts and page items moved to trash"
+            danger
+            onClick={() => navigate('/author/trash')}
+          />
         </div>
       </main>
     </div>
