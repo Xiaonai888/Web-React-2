@@ -644,6 +644,7 @@ export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
   const [author, setAuthor] = useState(null)
+  const [activeTab, setActiveTab] = useState('Posts')
   const [tabsFrozen, setTabsFrozen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
