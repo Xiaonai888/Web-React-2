@@ -1164,23 +1164,8 @@ async function handleUnfollowFromSettings() {
     }`}>
       <span className="line-clamp-1">{displayAuthor.page_name}</span>
     </div>
-
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => {
-          setActiveTab('Store')
-          setMessage('Cart is coming soon.')
-        }}
-        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-          readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
-        }`}
-        aria-label="Open cart"
-      >
-        <i className="fa-solid fa-cart-shopping text-[15px]" />
-      </button>
-
-      <button
+<div className="flex items-center gap-2">
+  <button
         type="button"
         onClick={() => setMessage('Page options are coming soon.')}
         className={`flex h-10 w-10 items-center justify-center rounded-full ${
