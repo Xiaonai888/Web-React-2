@@ -258,14 +258,14 @@ function ProductCard({ product }) {
 
 function StatCard({ label, value, icon }) {
   return (
-    <div className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-[18px] font-black text-[#111827]">{value}</div>
-          <div className="mt-0.5 text-[11px] font-bold text-[#8b93a1]">{label}</div>
+          <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">{label}</div>
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3ff] text-[#7c5cff]">
-          <i className={`fa-solid ${icon} text-[14px]`} />
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+          <i className={`fa-solid ${icon} text-[13px]`} />
         </div>
       </div>
     </div>
@@ -289,52 +289,52 @@ function StoreManagerHome({
 }) {
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
-      <section className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[22px] font-black text-[#111827]">Store Manager</h1>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">Sell books, PDFs, and pre-orders from your author page.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onAddProduct}
-            className="hidden h-10 rounded-full bg-[#7c5cff] px-4 text-[12px] font-black text-white shadow-sm sm:block"
-          >
-            Add Product
-          </button>
-        </div>
+      <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        Sell books, PDFs, and pre-orders from your author page.
+      </p>
+    </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <StatCard label="Products" value={products.length} icon="fa-box" />
-          <StatCard label="Orders" value="0" icon="fa-receipt" />
-          <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
-        </div>
+    <button
+      type="button"
+      onClick={onAddProduct}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm active:scale-[0.98]"
+      aria-label="Add product"
+    >
+      <i className="fa-solid fa-plus text-[14px]" />
+    </button>
+  </div>
 
+  <div className="mt-4 grid grid-cols-3 gap-2">
+    <StatCard label="Products" value={products.length} icon="fa-box" />
+    <StatCard label="Orders" value="0" icon="fa-receipt" />
+    <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
+  </div>
+
+  <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+    {['Products', 'Categories', 'Orders'].map((tab) => {
+      const active = activeTab === tab
+
+      return (
         <button
+          key={tab}
           type="button"
-          onClick={onAddProduct}
-          className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-[#7c5cff] text-[13px] font-black text-white shadow-sm active:scale-[0.98]"
+          onClick={() => setActiveTab(tab)}
+          className={`h-9 shrink-0 rounded-full px-4 text-[12px] font-semibold transition active:scale-[0.98] ${
+            active
+              ? 'bg-[#f3f4f6] text-[#111827] shadow-sm'
+              : 'bg-transparent text-[#8b93a1]'
+          }`}
         >
-          <i className="fa-solid fa-plus mr-2 text-[12px]" />
-          Add Product
+          {tab}
         </button>
-
-        <div className="mt-4 grid grid-cols-3 rounded-2xl bg-[#f3f4f6] p-1">
-          {['Products', 'Categories', 'Orders'].map((tab) => {
-            const active = activeTab === tab
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`h-10 rounded-xl text-[12px] font-black ${active ? 'bg-white text-[#7c5cff] shadow-sm' : 'text-[#8b93a1]'}`}
-              >
-                {tab}
-              </button>
-            )
-          })}
-        </div>
-      </section>
+      )
+    })}
+  </div>
+</section>
 
       {localError ? (
         <button
