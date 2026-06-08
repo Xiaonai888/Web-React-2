@@ -124,9 +124,13 @@ async function uploadAuthorPostImage(file) {
 
   const data = await response.json().catch(() => ({}))
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload photo')
-  }
+ if (!response.ok || data.ok === false) {
+  const missingEnvText = Array.isArray(data.missing_env) && data.missing_env.length
+    ? ` Missing: ${data.missing_env.join(', ')}`
+    : ''
+
+  throw new Error(`${data.message || 'Failed to upload photo'}${missingEnvText}`)
+}
 
   return data.image_url || data.imageUrl
 }
@@ -137,7 +141,7 @@ function SelectedImagePreview({ images, onRemove, removable = true }) {
   if (images.length === 1) {
     return (
       <div className="mt-4 overflow-hidden rounded-[16px] bg-[#f3f4f6]">
-        <div className="relative max-h-[520px]">
+        <div className="relative flex max-h-[520px] min-h-[240px] items-center justify-center bg-[#f3f4f6]">
           <img src={images[0].url} alt="" className="max-h-[520px] w-full object-contain" />
 
           {removable ? (
@@ -154,6 +158,28 @@ function SelectedImagePreview({ images, onRemove, removable = true }) {
       </div>
     )
   }
+
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
+      {images.map((image) => (
+        <div key={image.id} className="relative aspect-square bg-[#f3f4f6]">
+          <img src={image.url} alt="" className="h-full w-full object-cover" />
+
+          {removable ? (
+            <button
+              type="button"
+              onClick={() => onRemove(image.id)}
+              className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"
+              aria-label="Remove photo"
+            >
+              <i className="fa-solid fa-xmark text-[11px]" />
+            </button>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
 
   return (
     <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
