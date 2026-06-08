@@ -986,7 +986,7 @@ function AddProductPage({ categories, onBack, onSave }) {
             </div>
           )}
 
-         <FormDivider title="Product details" />
+<FormDivider title="Product details" />
 
 <div>
   <FieldLabel>Condition label</FieldLabel>
@@ -1019,6 +1019,40 @@ function AddProductPage({ categories, onBack, onSave }) {
     Active
   </label>
 </div>
+
+{formError ? (
+  <button
+    type="button"
+    onClick={() => setFormError('')}
+    className="w-full rounded-2xl bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
+  >
+    {formError}
+  </button>
+) : null}
+
+<div className="grid gap-3 sm:grid-cols-2">
+  <button
+    type="button"
+    onClick={onBack}
+    className="h-12 rounded-2xl bg-[#f3f4f6] text-[13px] font-black text-[#111827] active:scale-[0.98]"
+  >
+    Cancel
+  </button>
+
+  <button
+    type="button"
+    onClick={saveProduct}
+    disabled={saving}
+    className="h-12 rounded-2xl bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:opacity-60"
+  >
+    {saving ? 'Saving...' : 'Save product'}
+  </button>
+</div>
+        </div>
+      </section>
+    </main>
+  )
+}
 
 export default function AuthorStoreManagerPage() {
   const navigate = useNavigate()
