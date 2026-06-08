@@ -156,6 +156,7 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
     bio: author.bio || 'This author has not added a bio yet.',
     avatar_url: author.avatar_url || author.profile_image_url || '',
     cover_url: author.cover_url || author.banner_url || '',
+    slide_urls: Array.isArray(author.slide_urls) ? author.slide_urls : [],
     works_count: Number(author.total_stories || author.works_count || 0),
     followers_count: Number(author.total_followers || author.followers_count || 0),
     fans_count: Number(author.total_fans || author.fans_count || 0),
@@ -638,7 +639,7 @@ function CoverOptionsSheet({ open, onClose, onSeeCover, onUploadCover, onChooseC
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
               <i className="fa-solid fa-images text-[17px]" />
             </span>
-            <span className="text-[17px] font-normal text-[#111827]">Choose cover</span>
+            <span className="text-[17px] font-normal text-[#111827]">{savingSlide ? 'Uploading slide...' : 'Upload slide'}</span>
           </button>
         </div>
       </div>
@@ -662,6 +663,7 @@ export default function AuthorPublicPage() {
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [savingImage, setSavingImage] = useState(false)
+  const [savingSlide, setSavingSlide] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
@@ -921,6 +923,71 @@ async function handleUnfollowFromSettings() {
     }
   }
 
+  function handleUploadSlide() {
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (savingSlide) return
+
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+
+  input.onchange = () => {
+    const file = input.files?.[0]
+
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please select an image file')
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = async () => {
+      try {
+        setSavingSlide(true)
+        setMessage('Uploading slide to Cloudflare...')
+
+        const imageUrl = await uploadImageToStorage({
+          token,
+          imageDataUrl: String(reader.result || ''),
+          folder: 'author_page_slide',
+          fileName: `author-slide-${Date.now()}.jpg`,
+        })
+
+        const currentSlides = Array.isArray(author?.slide_urls) ? author.slide_urls : []
+        const nextSlides = [imageUrl, ...currentSlides].filter(Boolean).slice(0, 5)
+
+        const updatedAuthorPage = await saveAuthorProfileImages({
+          token,
+          slideUrls: nextSlides,
+        })
+
+        if (updatedAuthorPage) {
+          localStorage.setItem('shadow_author_page', JSON.stringify(updatedAuthorPage))
+          setAuthor((current) => normalizeAuthor(updatedAuthorPage, current?.page_username || pageUsername, updatedAuthorPage, true))
+        }
+
+        setMessage('Slide uploaded.')
+      } catch (error) {
+        setMessage(error.message || 'Failed to upload slide')
+      } finally {
+        setSavingSlide(false)
+      }
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  input.click()
+}
+
 
   function handleReaderBack() {
     if (window.history.length > 1) {
@@ -1061,10 +1128,9 @@ async function handleUnfollowFromSettings() {
     openCropEditor('cover')
   }}
   onChooseCover={() => {
-    setCoverOptionsOpen(false)
-    setMessage('Choose cover is coming soon.')
-  }}
-/>
+  setCoverOptionsOpen(false)
+  handleUploadSlide()
+}}
 
       {!displayAuthor.is_owner ? (
   <header className={`fixed left-0 right-0 top-0 z-[120] flex h-[54px] items-center justify-between px-3 transition ${
