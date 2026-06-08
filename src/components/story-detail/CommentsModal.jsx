@@ -6,7 +6,15 @@ function getPointerY(event) {
   return event.clientY
 }
 
-export default function CommentsModal({ open, story, onClose, onCommentChanged }) {
+export default function CommentsModal({
+  open,
+  story,
+  targetType = 'story',
+  targetId,
+  title,
+  onClose,
+  onCommentChanged,
+}) {
   const sheetRef = useRef(null)
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
@@ -88,7 +96,7 @@ const handleDragEnd = () => {
             <div className="min-w-0 flex-1 px-2 text-center">
               <h2 className="text-[17px] font-black text-[#111827]">Comments</h2>
               <p className="line-clamp-1 text-[11px] font-semibold text-[#98a2b3]">
-                {story?.title || 'Story comments'}
+                {title || story?.title || 'Comments'}
               </p>
             </div>
 
@@ -98,12 +106,12 @@ const handleDragEnd = () => {
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <CommentSection
-            targetType="story"
-            targetId={story?.id}
-            story={story}
-            variant="modal"
-            onCommentsChange={onCommentChanged}
-          />
+  targetType={targetType}
+  targetId={targetId || story?.id}
+  story={story}
+  variant="modal"
+  onCommentsChange={onCommentChanged}
+/>
         </div>
       </section>
     </div>
