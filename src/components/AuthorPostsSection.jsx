@@ -6,6 +6,16 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const AUTHOR_POST_REACTIONS = [
+  { type: 'love', label: 'Love', src: '/assets/React/1%20React_Love.svg', text: '#ff2f5f' },
+  { type: 'haha', label: 'Haha', src: '/assets/React/2%20React_Haha.svg', text: '#f59e0b' },
+  { type: 'wow', label: 'Wow', src: '/assets/React/3%20React_Wow.svg', text: '#f59e0b' },
+  { type: 'sad', label: 'Sad', src: '/assets/React/4%20React_Sad.svg', text: '#3b82f6' },
+  { type: 'angry', label: 'Angry', src: '/assets/React/5%20React_Angry.svg', text: '#ef4444' },
+  { type: 'support', label: 'Support', src: '/assets/React/6%20React_Support.svg', text: '#16a34a' },
+  { type: 'touched', label: 'Touched', src: '/assets/React/7%20React_Touched.svg', text: '#8b5cf6' },
+]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -225,6 +235,34 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const hasReacted = Boolean(post.my_reaction)
   const reactionBusy = reactionBusyId === post.id
 
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
+const [pressTimer, setPressTimer] = useState(null)
+const activeReaction = AUTHOR_POST_REACTIONS.find((item) => item.type === post.my_reaction) || null
+
+function startReactionPress() {
+  const timer = window.setTimeout(() => {
+    setReactionPickerOpen(true)
+    setPressTimer(null)
+  }, 420)
+
+  setPressTimer(timer)
+}
+
+function endReactionPress() {
+  if (!pressTimer) return
+
+  window.clearTimeout(pressTimer)
+  setPressTimer(null)
+  onReact(post, 'love')
+}
+
+function cancelReactionPress() {
+  if (!pressTimer) return
+
+  window.clearTimeout(pressTimer)
+  setPressTimer(null)
+}
+
   return (
     <article className="bg-white py-3">
       <div className="flex items-start gap-3 px-4">
@@ -284,15 +322,45 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
 onClick={() => onMessage?.('Insights and Ads coming soon.')}
 
       <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
+        <div className="relative">
+  {reactionPickerOpen ? (
+    <div className="absolute bottom-8 left-0 z-30 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
+      {AUTHOR_POST_REACTIONS.map((reaction) => (
         <button
+          key={reaction.type}
           type="button"
           disabled={reactionBusy}
-          onClick={() => onReact(post)}
-          className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${hasReacted ? 'text-[#ef4444]' : ''}`}
+          onClick={() => {
+            setReactionPickerOpen(false)
+            onReact(post, reaction.type)
+          }}
+          className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90"
+          aria-label={reaction.label}
         >
-          <i className={`${hasReacted ? 'fa-solid' : 'fa-regular'} fa-heart text-[15px]`} />
-          {formatCompactNumber(post.like_count)}
+          <img src={reaction.src} alt={reaction.label} className="h-8 w-8 object-contain" />
         </button>
+      ))}
+    </div>
+  ) : null}
+
+  <button
+    type="button"
+    disabled={reactionBusy}
+    onPointerDown={startReactionPress}
+    onPointerUp={endReactionPress}
+    onPointerLeave={cancelReactionPress}
+    onContextMenu={(event) => event.preventDefault()}
+    className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+    style={{ color: activeReaction?.text || undefined }}
+  >
+    {activeReaction ? (
+      <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
+    ) : (
+      <i className="fa-regular fa-heart text-[15px]" />
+    )}
+    {formatCompactNumber(post.like_count)}
+  </button>
+</div>
 
         <span className="inline-flex items-center gap-1.5">
           <i className="fa-regular fa-comment text-[15px]" />
@@ -566,31 +634,31 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }
 
-  async function handlePostReaction(post) {
-    if (!post?.id || reactionBusyId) return
+ async function handlePostReaction(post, reactionType = 'love') {
+  if (!post?.id || reactionBusyId) return
 
-    try {
-      setReactionBusyId(post.id)
+  try {
+    setReactionBusyId(post.id)
 
-      const data = await setAuthorPostReaction(post.id, 'love')
+    const data = await setAuthorPostReaction(post.id, reactionType)
 
-      setPosts((current) => current.map((item) => {
-        if (item.id !== post.id) return item
+    setPosts((current) => current.map((item) => {
+      if (item.id !== post.id) return item
 
-        return {
-          ...item,
-          like_count: Number(data.like_count || 0),
-          my_reaction: data.reacted ? data.reaction_type || 'love' : null,
-        }
-      }))
-    } catch (error) {
-      const message = error.message || 'Failed to update reaction'
-      setLocalError(message)
-      onMessage?.(message)
-    } finally {
-      setReactionBusyId('')
-    }
+      return {
+        ...item,
+        like_count: Number(data.like_count || 0),
+        my_reaction: data.reacted ? data.reaction_type || reactionType : null,
+      }
+    }))
+  } catch (error) {
+    const message = error.message || 'Failed to update reaction'
+    setLocalError(message)
+    onMessage?.(message)
+  } finally {
+    setReactionBusyId('')
   }
+}
 
   return (
     <div className="mx-[-16px] overflow-hidden bg-white sm:mx-0">
