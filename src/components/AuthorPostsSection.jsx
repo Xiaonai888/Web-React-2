@@ -145,8 +145,8 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
         </span>
 
         <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[#111827]">
-  Share an update...
-</span>
+          Share an update...
+        </span>
 
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#22c55e]">
           <i className="fa-regular fa-image text-[20px]" />
@@ -161,6 +161,33 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
         <i className="fa-regular fa-rectangle-list text-[15px]" />
         Manage posts
       </button>
+    </div>
+  )
+}
+
+function PostImageGrid({ images }) {
+  if (!images.length) return null
+
+  if (images.length === 1) {
+    return (
+      <div className="mt-3 overflow-hidden rounded-[14px] bg-[#f3f4f6]">
+        <img src={images[0]} alt="" className="max-h-[520px] w-full object-contain" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-1 overflow-hidden rounded-[14px]">
+      {images.slice(0, 4).map((imageUrl, index) => (
+        <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
+          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+          {index === 3 && images.length > 4 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[22px] font-semibold text-white">
+              +{images.length - 4}
+            </div>
+          ) : null}
+        </div>
+      ))}
     </div>
   )
 }
@@ -226,20 +253,7 @@ function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
             </p>
           ) : null}
 
-          {postImages.length ? (
-            <div className={`mt-3 grid gap-1 overflow-hidden rounded-[14px] ${postImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              {postImages.slice(0, 4).map((imageUrl, index) => (
-                <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
-                  <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-                  {index === 3 && postImages.length > 4 ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[22px] font-semibold text-white">
-                      +{postImages.length - 4}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <PostImageGrid images={postImages} />
 
           <div className="mt-3 flex items-center gap-5 text-[12px] font-normal text-[#8b93a1]">
             <span><i className="fa-regular fa-heart mr-1.5" />{formatCompactNumber(post.like_count)}</span>
@@ -366,11 +380,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }, [author?.page_username, onCountChange])
 
- async function handleCreatePost(content, imageUrls = []) {
-  const nextContent = String(content || '').trim()
-  const nextImageUrls = Array.isArray(imageUrls) ? imageUrls : []
+  async function handleCreatePost(content, imageUrls = []) {
+    const nextContent = String(content || '').trim()
+    const nextImageUrls = Array.isArray(imageUrls) ? imageUrls : []
 
-  if ((!nextContent && !nextImageUrls.length) || saving) return false
+    if ((!nextContent && !nextImageUrls.length) || saving) return false
 
     try {
       setSaving(true)
