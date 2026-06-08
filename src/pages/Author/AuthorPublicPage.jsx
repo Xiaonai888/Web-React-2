@@ -653,6 +653,7 @@ export default function AuthorPublicPage() {
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState('Posts')
   const [tabsFrozen, setTabsFrozen] = useState(false)
+  const [readerCartCount, setReaderCartCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
@@ -1137,16 +1138,25 @@ async function handleUnfollowFromSettings() {
     readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
   }`}>
     <button
-      type="button"
-      onClick={handleReaderBack}
-      className={`flex h-10 w-10 items-center justify-center rounded-full ${
-        readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
-      }`}
-      aria-label="Back"
-    >
-      <i className="fa-solid fa-chevron-left text-[15px]" />
-    </button>
-
+  type="button"
+  onClick={() => {
+    setActiveTab('Store')
+    setMessage('Cart is coming soon.')
+  }}
+  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+    readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+  }`}
+  aria-label="Open cart"
+>
+  <span id="author-cover-cart-target" className="relative flex h-10 w-10 items-center justify-center">
+    <i className="fa-solid fa-cart-shopping text-[15px]" />
+    {readerCartCount > 0 ? (
+      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black leading-none text-white">
+        {readerCartCount > 99 ? '99+' : readerCartCount}
+      </span>
+    ) : null}
+  </span>
+</button>
     <div className={`min-w-0 flex-1 px-3 text-center text-[15px] font-semibold text-[#111827] transition ${
       readerHeaderTitle ? 'opacity-100' : 'opacity-0'
     }`}>
@@ -1405,19 +1415,26 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       })}
     </div>
 
-    {!displayAuthor.is_owner && tabsFrozen ? (
-      <button
-        type="button"
-        onClick={() => {
-          setActiveTab('Store')
-          setMessage('Cart is coming soon.')
-        }}
-        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-        aria-label="Open cart"
-      >
-        <i className="fa-solid fa-cart-shopping text-[17px]" />
-      </button>
-    ) : null}
+   {!displayAuthor.is_owner && tabsFrozen ? (
+  <button
+    type="button"
+    onClick={() => {
+      setActiveTab('Store')
+      setMessage('Cart is coming soon.')
+    }}
+    className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+    aria-label="Open cart"
+  >
+    <span id="author-cover-cart-target" className="relative flex h-9 w-9 items-center justify-center">
+      <i className="fa-solid fa-cart-shopping text-[17px]" />
+      {readerCartCount > 0 ? (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black leading-none text-white">
+          {readerCartCount > 99 ? '99+' : readerCartCount}
+        </span>
+      ) : null}
+    </span>
+  </button>
+) : null}
   </div>
 </section>
 
@@ -1543,7 +1560,12 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           ) : null}
 
         {activeTab === 'Store' ? (
-  <AuthorStoreTab author={displayAuthor} onMessage={setMessage} />
+  <AuthorStoreTab
+  author={displayAuthor}
+  cartCount={readerCartCount}
+  onCartCountChange={setReaderCartCount}
+  onMessage={setMessage}
+/>
 ) : null}
           
         </section>
