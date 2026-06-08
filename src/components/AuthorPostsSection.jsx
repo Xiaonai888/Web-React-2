@@ -104,38 +104,16 @@ async function setAuthorPostPinned(postId, isPinned) {
     }),
   })
 
-  async function setAuthorPostReaction(postId, reactionType = 'love') {
-  const token = getAuthToken()
-
-  if (!token) throw new Error('Please login first')
-
-  const response = await fetch(`${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/react`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      reaction_type: reactionType,
-    }),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to update reaction')
-  }
-
-  return data
-}
-
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
     throw new Error(data.message || 'Failed to update pinned post')
   }
 
-  async function setAuthorPostReaction(postId, reactionType = 'love') {
+  return data.post || null
+}
+
+async function setAuthorPostReaction(postId, reactionType = 'love') {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
@@ -158,9 +136,6 @@ async function setAuthorPostPinned(postId, isPinned) {
   }
 
   return data
-}
-
-  return data.post || null
 }
 
 function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePosts }) {
@@ -220,14 +195,14 @@ function PostImageGrid({ images }) {
 
   if (images.length === 1) {
     return (
-      <div className="mt-3 w-full bg-[#f3f4f6]">
-        <img src={images[0]} alt="" className="max-h-[560px] w-full object-contain" />
+      <div className="mt-3 w-full bg-white">
+        <img src={images[0]} alt="" className="max-h-[620px] w-full object-contain" />
       </div>
     )
   }
 
   return (
-    <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-[#f3f4f6]">
+    <div className="mt-3 grid w-full grid-cols-2 gap-1 bg-white">
       {images.slice(0, 4).map((imageUrl, index) => (
         <div key={`${imageUrl}-${index}`} className="relative aspect-square bg-[#f3f4f6]">
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
@@ -300,7 +275,7 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
       </div>
 
       {post.content ? (
-        <p className="mt-2 whitespace-pre-wrap px-4 text-[14px] font-normal leading-6 text-[#111827]">
+        <p className="mt-2 whitespace-pre-wrap px-4 text-[16px] font-normal leading-7 text-[#111827]">
           {post.content}
         </p>
       ) : null}
@@ -308,38 +283,33 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
       <PostImageGrid images={postImages} />
 
       {isOwner ? (
-  <button
-    type="button"
-    onClick={() => onMessage?.('Insights and Ads coming soon.')}
-    className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
-  >
-    <span className="text-[13px] font-medium leading-5 text-[#64748B]">
-      See insights<br />
-      and ads
-    </span>
-  </button>
-) : null}
-
-      <div className="flex items-center gap-6 px-4 pt-2 text-[13px] font-normal text-[#6b7280]">
         <button
-  type="button"
-  disabled={reactionBusy}
-  onClick={() => onReact(post)}
-  className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${hasReacted ? 'text-[#ef4444]' : ''}`}
->
-  <i className={`${hasReacted ? 'fa-solid' : 'fa-regular'} fa-heart text-[15px]`} />
-  {formatCompactNumber(post.like_count)}
-</button>
+          type="button"
+          onClick={() => onMessage?.('Insights and Ads coming soon.')}
+          className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
+        >
+          <span className="text-[13px] font-medium leading-5 text-[#64748B]">
+            See insights<br />
+            and ads
+          </span>
+        </button>
+      ) : null}
 
+      <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
         <button
-  type="button"
-  disabled={reactionBusy}
-  onClick={() => onReact(post)}
-  className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${hasReacted ? 'text-[#ef4444]' : ''}`}
->
-  <i className={`${hasReacted ? 'fa-solid' : 'fa-regular'} fa-heart text-[15px]`} />
-  {formatCompactNumber(post.like_count)}
-</button>
+          type="button"
+          disabled={reactionBusy}
+          onClick={() => onReact(post)}
+          className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${hasReacted ? 'text-[#ef4444]' : ''}`}
+        >
+          <i className={`${hasReacted ? 'fa-solid' : 'fa-regular'} fa-heart text-[15px]`} />
+          {formatCompactNumber(post.like_count)}
+        </button>
+
+        <span className="inline-flex items-center gap-1.5">
+          <i className="fa-regular fa-comment text-[15px]" />
+          {formatCompactNumber(post.comment_count)}
+        </span>
 
         <span className="inline-flex items-center gap-1.5">
           <i className="fa-solid fa-retweet text-[15px]" />
@@ -349,6 +319,7 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
     </article>
   )
 }
+
 function ToastBubble({ text, author }) {
   if (!text) return null
 
@@ -504,7 +475,6 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [selectedPost, setSelectedPost] = useState(null)
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
- 
 
   useEffect(() => {
     let ignore = false
@@ -609,59 +579,33 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   }
 
   async function handlePostReaction(post) {
-  if (!post?.id || reactionBusyId) return
+    if (!post?.id || reactionBusyId) return
 
-  try {
-    setReactionBusyId(post.id)
+    try {
+      setReactionBusyId(post.id)
 
-    const data = await setAuthorPostReaction(post.id, 'love')
+      const data = await setAuthorPostReaction(post.id, 'love')
 
-    setPosts((current) => current.map((item) => {
-      if (item.id !== post.id) return item
+      setPosts((current) => current.map((item) => {
+        if (item.id !== post.id) return item
 
-      return {
-        ...item,
-        like_count: Number(data.like_count || 0),
-        my_reaction: data.reacted ? data.reaction_type || 'love' : null,
-      }
-    }))
-  } catch (error) {
-    const message = error.message || 'Failed to update reaction'
-    setLocalError(message)
-    onMessage?.(message)
-  } finally {
-    setReactionBusyId('')
+        return {
+          ...item,
+          like_count: Number(data.like_count || 0),
+          my_reaction: data.reacted ? data.reaction_type || 'love' : null,
+        }
+      }))
+    } catch (error) {
+      const message = error.message || 'Failed to update reaction'
+      setLocalError(message)
+      onMessage?.(message)
+    } finally {
+      setReactionBusyId('')
+    }
   }
-}
-
-  async function handlePostReaction(post) {
-  if (!post?.id || reactionBusyId) return
-
-  try {
-    setReactionBusyId(post.id)
-
-    const data = await setAuthorPostReaction(post.id, 'love')
-
-    setPosts((current) => current.map((item) => {
-      if (item.id !== post.id) return item
-
-      return {
-        ...item,
-        like_count: Number(data.like_count || 0),
-        my_reaction: data.reacted ? data.reaction_type || 'love' : null,
-      }
-    }))
-  } catch (error) {
-    const message = error.message || 'Failed to update reaction'
-    setLocalError(message)
-    onMessage?.(message)
-  } finally {
-    setReactionBusyId('')
-  }
-}
 
   return (
-   <div className="overflow-hidden bg-white">
+    <div className="mx-[-16px] overflow-hidden bg-white sm:mx-0">
       {author?.is_owner ? (
         <AuthorPostComposer
           author={author}
@@ -687,15 +631,15 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         <div className="space-y-2 bg-[#f3f4f6]">
           {posts.map((post) => (
             <AuthorPostCard
-  key={post.id}
-  post={post}
-  author={author}
-  isOwner={Boolean(author?.is_owner)}
-  reactionBusyId={reactionBusyId}
-  onOpenMenu={setSelectedPost}
-  onReact={handlePostReaction}
-  onMessage={onMessage}
-/>
+              key={post.id}
+              post={post}
+              author={author}
+              isOwner={Boolean(author?.is_owner)}
+              reactionBusyId={reactionBusyId}
+              onOpenMenu={setSelectedPost}
+              onReact={handlePostReaction}
+              onMessage={onMessage}
+            />
           ))}
         </div>
       ) : (
