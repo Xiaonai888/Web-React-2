@@ -1128,10 +1128,11 @@ async function handleUnfollowFromSettings() {
     setCoverOptionsOpen(false)
     openCropEditor('cover')
   }}
-  onChooseCover={() => {
+ onChooseCover={() => {
   setCoverOptionsOpen(false)
   handleUploadSlide()
 }}
+/>
 
       {!displayAuthor.is_owner ? (
   <header className={`fixed left-0 right-0 top-0 z-[120] flex h-[54px] items-center justify-between px-3 transition ${
