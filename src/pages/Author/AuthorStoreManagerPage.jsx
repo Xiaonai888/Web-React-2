@@ -270,8 +270,8 @@ function ProductRecordRow({ product }) {
   const isDraft = product.status === 'Draft'
 
   return (
-    <article className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-      <div className="flex gap-3">
+    <article className="border-b border-[#eef0f4] px-0 py-3 last:border-b-0">
+  <div className="flex gap-3">
         <div className="h-[86px] w-[64px] shrink-0 overflow-hidden rounded-[12px] bg-[#f3f4f6] ring-1 ring-black/5">
           {product.coverUrl ? (
             <img src={product.coverUrl} alt={product.title} className="h-full w-full object-cover" />
