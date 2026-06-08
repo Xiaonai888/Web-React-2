@@ -4,6 +4,8 @@ import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import Cropper from 'react-easy-crop'
+import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
