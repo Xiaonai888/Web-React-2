@@ -1,6 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
+
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
 const DEFAULT_CATEGORIES = ['New Release', 'Best Seller', 'Completed Series', 'Special Edition', 'Author Picks']
 const TYPE_FILTERS = ['All', 'Book', 'PDF']
@@ -8,6 +13,136 @@ const PRODUCT_STATUSES = ['Draft', 'Active', 'Hidden']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function statusToApi(status) {
+  const value = String(status || '').toLowerCase()
+  if (value === 'active') return 'active'
+  if (value === 'hidden') return 'hidden'
+  return 'draft'
+}
+
+function apiTypeToUi(productType) {
+  return productType === 'pdf' ? 'PDF' : 'Book'
+}
+
+function formatProductForUi(product) {
+  return {
+    id: product.id,
+    type: apiTypeToUi(product.product_type),
+    title: product.title || '',
+    category: product.category || 'New Release',
+    description: product.description || '',
+    originalPrice: String(product.original_price || ''),
+    salePrice: String(product.sale_price || ''),
+    status: product.status === 'active' ? 'Active' : product.status === 'hidden' ? 'Hidden' : 'Draft',
+    coverUrl: product.cover_url || '',
+    stock: String(product.stock_quantity || ''),
+    paperType: product.paper_type || 'Normal Paper',
+    condition: product.book_condition || 'New',
+    qualityPercent: product.quality_percent ? String(product.quality_percent) : '',
+    deliveryNote: product.delivery_note || '',
+    preOrder: Boolean(product.pre_order),
+    pdfFileName: product.pdf_file_name || '',
+    pageCount: String(product.page_count || ''),
+    accessRule: product.access_rule || 'Download after payment',
+    createdAt: product.created_at,
+  }
+}
+
+async function uploadCoverImage(file) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('folder', 'author_store_cover')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload cover image')
+  }
+
+  return data.image_url || data.imageUrl
+}
+
+async function fetchMyProducts() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load products')
+  }
+
+  return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
+}
+
+async function createStoreProduct(product) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/products`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      product_type: product.type === 'PDF' ? 'pdf' : 'book',
+      title: product.title,
+      category: product.category,
+      description: product.description,
+      original_price: product.originalPrice,
+      sale_price: product.salePrice,
+      status: statusToApi(product.status),
+      cover_url: product.coverUrl,
+      stock_quantity: product.stock,
+      paper_type: product.paperType,
+      book_condition: product.condition,
+      quality_percent: product.qualityPercent,
+      delivery_note: product.deliveryNote,
+      pre_order: product.preOrder,
+      pdf_file_name: product.pdfFileName,
+      page_count: product.pageCount,
+      access_rule: product.accessRule,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save product')
+  }
+
+  return data.product ? formatProductForUi(data.product) : null
+}
 
 function FieldLabel({ children }) {
   return <div className="mb-1.5 text-[12px] font-black text-[#374151]">{children}</div>
@@ -79,8 +214,8 @@ function ProductCard({ product }) {
   return (
     <div className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
       <div className="relative aspect-[3/4] bg-[#f3f4f6]">
-        {product.coverPreview ? (
-          <img src={product.coverPreview} alt={product.title} className="h-full w-full object-cover" />
+        {product.coverUrl ? (
+          <img src={product.coverUrl} alt={product.title} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
             <i className="fa-regular fa-image text-[30px]" />
@@ -149,6 +284,8 @@ function StoreManagerHome({
   setNewCategory,
   addCategory,
   onAddProduct,
+  loading,
+  localError,
 }) {
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
@@ -199,6 +336,16 @@ function StoreManagerHome({
         </div>
       </section>
 
+      {localError ? (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 w-full rounded-[18px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
+        >
+          {localError}
+        </button>
+      ) : null}
+
       {activeTab === 'Products' ? (
         <section className="mt-4 space-y-4">
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -221,7 +368,11 @@ function StoreManagerHome({
             })}
           </div>
 
-          {filteredProducts.length ? (
+          {loading ? (
+            <div className="rounded-[28px] bg-white p-8 text-center text-[13px] font-bold text-[#8b93a1] shadow-sm ring-1 ring-black/5">
+              Loading products...
+            </div>
+          ) : filteredProducts.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
@@ -246,7 +397,7 @@ function StoreManagerHome({
           <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-[16px] font-black text-[#111827]">Categories</h2>
-              <span className="text-[11px] font-bold text-[#9ca3af]">Local for now</span>
+              <span className="text-[11px] font-bold text-[#9ca3af]">Product categories</span>
             </div>
             <div className="space-y-2">
               {categories.map((category) => (
@@ -286,6 +437,7 @@ function AddProductPage({ categories, onBack, onSave }) {
   const [originalPrice, setOriginalPrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
   const [status, setStatus] = useState('Draft')
+  const [coverFile, setCoverFile] = useState(null)
   const [coverFileName, setCoverFileName] = useState('')
   const [coverPreview, setCoverPreview] = useState('')
   const [stock, setStock] = useState('')
@@ -298,6 +450,7 @@ function AddProductPage({ categories, onBack, onSave }) {
   const [pageCount, setPageCount] = useState('')
   const [accessRule, setAccessRule] = useState('Download after payment')
   const [formError, setFormError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const selectCover = (file) => {
     if (!file) return
@@ -311,6 +464,7 @@ function AddProductPage({ categories, onBack, onSave }) {
       URL.revokeObjectURL(coverPreview)
     }
 
+    setCoverFile(file)
     setCoverFileName(file.name)
     setCoverPreview(URL.createObjectURL(file))
     setFormError('')
@@ -321,6 +475,7 @@ function AddProductPage({ categories, onBack, onSave }) {
       URL.revokeObjectURL(coverPreview)
     }
 
+    setCoverFile(null)
     setCoverFileName('')
     setCoverPreview('')
 
@@ -329,8 +484,15 @@ function AddProductPage({ categories, onBack, onSave }) {
     }
   }
 
-  const saveProduct = () => {
+  const saveProduct = async () => {
     const qualityNumber = Number(qualityPercent)
+
+    if (saving) return
+
+    if (!coverFile) {
+      setFormError('Product cover is required.')
+      return
+    }
 
     if (!title.trim()) {
       setFormError('Product title is required.')
@@ -342,34 +504,43 @@ function AddProductPage({ categories, onBack, onSave }) {
       return
     }
 
-    setFormError('')
+    try {
+      setSaving(true)
+      setFormError('Uploading cover to Cloudflare...')
 
-    onSave({
-      id: `local-${Date.now()}`,
-      type,
-      title: title.trim(),
-      category,
-      description,
-      originalPrice,
-      salePrice,
-      status,
-      coverFileName,
-      coverPreview,
-      stock,
-      paperType,
-      condition,
-      qualityPercent: condition === 'Second Hand' ? qualityPercent : '',
-      deliveryNote,
-      preOrder,
-      pdfFileName,
-      pageCount,
-      accessRule,
-    })
+      const coverUrl = await uploadCoverImage(coverFile)
+
+      setFormError('Saving product...')
+
+      await onSave({
+        type,
+        title: title.trim(),
+        category,
+        description,
+        originalPrice,
+        salePrice,
+        status,
+        coverUrl,
+        stock,
+        paperType,
+        condition,
+        qualityPercent: condition === 'Second Hand' ? qualityPercent : '',
+        deliveryNote,
+        preOrder,
+        pdfFileName,
+        pageCount,
+        accessRule,
+      })
+    } catch (error) {
+      setFormError(error.message || 'Failed to save product')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4 pb-28">
-      <SectionCard title="Product cover" text="Upload 1 vertical cover image. Recommended ratio 2:3 or 3:4, JPG, PNG, or WEBP.">
+      <SectionCard title="Product cover" text="Upload 1 vertical cover image. This image will be saved to Cloudflare R2.">
         <div className="flex flex-col items-center">
           <div className="aspect-[3/4] w-[168px] overflow-hidden rounded-[24px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] shadow-inner sm:w-[210px]">
             {coverPreview ? (
@@ -553,15 +724,15 @@ function AddProductPage({ categories, onBack, onSave }) {
         </section>
       )}
 
-      {formError ? <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-[12px] font-black text-red-600">{formError}</p> : null}
+      {formError ? <p className="mt-4 rounded-2xl bg-[#fff7ed] px-4 py-3 text-[12px] font-black text-[#9a3412]">{formError}</p> : null}
 
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#eef0f4] bg-white/95 p-3 shadow-xl backdrop-blur">
         <div className="mx-auto grid max-w-[980px] grid-cols-2 gap-3">
           <button type="button" onClick={onBack} className="h-12 rounded-full border border-[#e5e7eb] bg-white text-[13px] font-black text-[#111827]">
             Cancel
           </button>
-          <button type="button" onClick={saveProduct} className="h-12 rounded-full bg-[#7c5cff] text-[13px] font-black text-white">
-            Save Product
+          <button type="button" disabled={saving} onClick={saveProduct} className="h-12 rounded-full bg-[#7c5cff] text-[13px] font-black text-white disabled:opacity-60">
+            {saving ? 'Saving...' : 'Save Product'}
           </button>
         </div>
       </div>
@@ -577,11 +748,44 @@ export default function AuthorStoreManagerPage() {
   const [newCategory, setNewCategory] = useState('')
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [localError, setLocalError] = useState('')
 
   const filteredProducts = useMemo(() => {
     if (activeType === 'All') return products
     return products.filter((product) => product.type === activeType)
   }, [activeType, products])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadProducts() {
+      try {
+        setLoading(true)
+        setLocalError('')
+
+        const nextProducts = await fetchMyProducts()
+
+        if (!ignore) {
+          setProducts(nextProducts)
+          const productCategories = nextProducts.map((item) => item.category).filter(Boolean)
+          setCategories((current) => Array.from(new Set([...current, ...productCategories])))
+        }
+      } catch (error) {
+        if (!ignore) {
+          setLocalError(error.message || 'Failed to load products')
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadProducts()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const addCategory = () => {
     const name = newCategory.trim()
@@ -597,8 +801,16 @@ export default function AuthorStoreManagerPage() {
     setNewCategory('')
   }
 
-  const saveProduct = (product) => {
-    setProducts((current) => [product, ...current])
+  const saveProduct = async (product) => {
+    const savedProduct = await createStoreProduct(product)
+
+    if (savedProduct) {
+      setProducts((current) => [savedProduct, ...current])
+      if (savedProduct.category && !categories.includes(savedProduct.category)) {
+        setCategories((current) => [...current, savedProduct.category])
+      }
+    }
+
     setMode('manager')
     setActiveTab('Products')
   }
@@ -640,6 +852,8 @@ export default function AuthorStoreManagerPage() {
           setNewCategory={setNewCategory}
           addCategory={addCategory}
           onAddProduct={() => setMode('form')}
+          loading={loading}
+          localError={localError}
         />
       )}
 
