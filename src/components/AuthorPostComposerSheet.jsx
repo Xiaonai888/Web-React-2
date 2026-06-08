@@ -186,14 +186,18 @@ function LeavePostSheet({ open, onSave, onDiscard, onContinue }) {
   )
 }
 
-function ReviewOption({ icon, title, value }) {
+function ReviewOption({ icon, imageSrc, title, value }) {
   return (
     <button
       type="button"
       className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-        <i className={`${icon} text-[15px]`} />
+        {imageSrc ? (
+          <img src={imageSrc} alt="" className="h-5 w-5 object-contain" />
+        ) : (
+          <i className={`${icon} text-[15px]`} />
+        )}
       </span>
 
       <span className="min-w-0 flex-1">
@@ -488,7 +492,7 @@ return (
                 <ReviewOption icon="fa-solid fa-earth-asia" title="Who can see this" value="Public" />
                 <ReviewOption icon="fa-regular fa-comment" title="Reader comments" value="Everyone" />
                 <ReviewOption icon="fa-regular fa-clock" title="Publish time" value="Now" />
-                <ReviewOption icon="fa-regular fa-circle-plus" title="Story sharing" value="Off" />
+                <ReviewOption imageSrc="/assets/icons/Add%20Story.svg" title="Story sharing" value="Off" />
               </div>
             </main>
           </>
