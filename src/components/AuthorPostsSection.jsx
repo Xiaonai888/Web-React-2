@@ -796,19 +796,6 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
  async function handlePostReaction(post, reactionType = 'love') {
   if (!post?.id || reactionBusyId) return
 
-  function handleAuthorPostCommentChanged(nextComments = []) {
-  if (!commentPost?.id) return
-
-  setPosts((current) => current.map((post) => {
-    if (post.id !== commentPost.id) return post
-
-    return {
-      ...post,
-      comment_count: Array.isArray(nextComments) ? nextComments.length : Number(post.comment_count || 0),
-    }
-  }))
-}    
-
   try {
     setReactionBusyId(post.id)
 
@@ -831,6 +818,20 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     setReactionBusyId('')
   }
 }
+
+function handleAuthorPostCommentChanged(nextComments = []) {
+  if (!commentPost?.id) return
+
+  setPosts((current) => current.map((post) => {
+    if (post.id !== commentPost.id) return post
+
+    return {
+      ...post,
+      comment_count: Array.isArray(nextComments) ? nextComments.length : Number(post.comment_count || 0),
+    }
+  }))
+}
+  
   async function copyAuthorPostLink(post) {
   const username = author?.page_username || ''
   const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
