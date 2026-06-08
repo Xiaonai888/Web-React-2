@@ -791,25 +791,42 @@ async function handleUnfollowFromSettings() {
   await handleToggleFollow()
 }
   
-  const actionButtons = useMemo(() => {
+ const actionButtons = useMemo(() => {
   if (author?.is_owner) {
-  return [
-    { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/page/dashboard') },
-    { label: 'Advertise', icon: 'fa-bullhorn', type: 'secondary', onClick: () => setMessage('Advertise is coming soon.') },
-  ]
-}
+    return [
+      { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/page/dashboard') },
+      { label: 'Advertise', icon: 'fa-bullhorn', type: 'secondary', onClick: () => setMessage('Advertise is coming soon.') },
+    ]
+  }
 
+  if (author?.is_following) {
     return [
       {
-  label: author?.is_following ? 'Following' : 'Follow',
-  icon: author?.is_following ? 'fa-user-check' : 'fa-user-plus',
-  type: author?.is_following ? 'secondary' : 'primary',
-  onClick: author?.is_following ? handleOpenFollowSettings : handleToggleFollow,
-  disabled: followLoading,
-},
-      { label: 'Message', icon: 'fa-comment', type: 'secondary' },
+        label: 'Following',
+        icon: 'fa-user-check',
+        type: 'primary',
+        onClick: handleOpenFollowSettings,
+        disabled: followLoading,
+      },
+      {
+        label: 'Message',
+        icon: 'fa-comment',
+        type: 'secondary',
+        onClick: () => setMessage('Message is coming soon.'),
+      },
     ]
-  }, [author?.is_owner, author?.is_following, followLoading, navigate])
+  }
+
+  return [
+    {
+      label: 'Follow',
+      icon: 'fa-user-plus',
+      type: 'primary',
+      onClick: handleToggleFollow,
+      disabled: followLoading,
+    },
+  ]
+}, [author?.is_owner, author?.is_following, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -1176,18 +1193,6 @@ async function handleUnfollowFromSettings() {
   </button>
 ))}
 
-    {!displayAuthor.is_owner ? (
-      <button
-        type="button"
-       onClick={(event) => {
-  event.stopPropagation()
-  navigate('/author/page/edit?section=cover')
-}}
-        className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
-      >
-        <i className="fa-solid fa-ellipsis text-[15px]" />
-      </button>
-    ) : null}
   </div>
 
   {displayAuthor.is_owner ? (
