@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
+import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import Cropper from 'react-easy-crop'
-import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
+
 
 
 const API_BASE_URL =
@@ -1361,8 +1362,14 @@ async function handleUnfollowFromSettings() {
             )
           ) : null}
 
-         {activeTab === 'Store' ? (
-  <AuthorStoreTab author={displayAuthor} onMessage={setMessage} />
+        {activeTab === 'Store' ? (
+  <AuthorPublicStoreSection
+    author={displayAuthor}
+    activeType={activeStoreType}
+    activeCategory={activeStoreCategory}
+    onTypeChange={setActiveStoreType}
+    onCategoryChange={setActiveStoreCategory}
+  />
 ) : null}
           
         </section>
