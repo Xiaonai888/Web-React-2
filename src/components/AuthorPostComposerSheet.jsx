@@ -248,6 +248,72 @@ export default function AuthorPostComposerSheet({
 
   
   return (
+
+    async function handlePickImages(fileList) {
+  const files = Array.from(fileList || [])
+  const imageFiles = files.filter((file) => file.type.startsWith('image/'))
+
+  if (!imageFiles.length) return
+
+  if (selectedImages.length + imageFiles.length > MAX_POST_PHOTOS) {
+    setImageError(`You can add up to ${MAX_POST_PHOTOS} photos per post.`)
+    return
+  }
+
+  try {
+    const compressedFiles = await Promise.all(imageFiles.map((file) => compressImageFile(file)))
+
+    const nextImages = compressedFiles
+      .filter(Boolean)
+      .map((file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+        file,
+        url: URL.createObjectURL(file),
+      }))
+
+    const nextSelectedImages = [...selectedImages, ...nextImages]
+
+    if (getSelectedImageSize(nextSelectedImages) > MAX_POST_IMAGE_BYTES) {
+      nextImages.forEach((image) => URL.revokeObjectURL(image.url))
+      setImageError('Photos are too large. You can add up to 5 photos, with a total size under 2MB per post.')
+      return
+    }
+
+    setSelectedImages(nextSelectedImages)
+    setImageError('')
+  } catch {
+    setImageError('Could not prepare these photos. Please choose different images.')
+  }
+}
+
+function removeImage(imageId) {
+  setSelectedImages((current) => {
+    const imageToRemove = current.find((image) => image.id === imageId)
+
+    if (imageToRemove) URL.revokeObjectURL(imageToRemove.url)
+
+    return current.filter((image) => image.id !== imageId)
+  })
+  setImageError('')
+}
+
+async function publishPost() {
+  if (selectedImages.length) {
+    onMessage?.('Photo publishing is not connected yet. Text posts can publish now.')
+    return
+  }
+
+  const ok = await onPublishText?.(draft.trim())
+
+  if (ok) {
+    clearImages()
+    setDraft('')
+    setImageError('')
+    setScreen('compose')
+    onClose?.()
+  }
+}
+  
     <>
       <div className="fixed inset-0 z-[240] bg-white">
         <input
