@@ -888,11 +888,11 @@ async function handleUnfollowFromSettings() {
 
       const croppedImage = await getCroppedImage(rawImage, pixels)
       const imageUrl = await uploadImageToStorage({
-        token,
-        imageDataUrl: croppedImage,
-        folder: cropMode === 'avatar' ? 'author_profile' : 'author_cover',
-        fileName: `author-${cropMode}-${Date.now()}.jpg`,
-      })
+  token,
+  imageDataUrl: croppedImage,
+  folder: cropMode === 'avatar' ? 'author_page_avatar' : 'author_page_cover',
+  fileName: `author-${cropMode}-${Date.now()}.jpg`,
+})
 
       const updatedAuthorPage = await saveAuthorProfileImages({
         token,
