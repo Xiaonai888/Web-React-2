@@ -1135,9 +1135,10 @@ async function handleUnfollowFromSettings() {
 />
 
       {!displayAuthor.is_owner ? (
-  <header className={`fixed left-0 right-0 top-0 z-[120] flex h-[54px] items-center justify-between px-3 transition ${
-    readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
-  }`}>
+ <header className={`fixed left-0 right-0 top-0 z-[120] transition ${
+  readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
+}`}>
+  <div className="mx-auto flex h-[54px] max-w-[980px] items-center justify-between px-3">
     <button
   type="button"
   onClick={() => {
@@ -1189,8 +1190,9 @@ async function handleUnfollowFromSettings() {
       >
         <i className="fa-solid fa-ellipsis text-[15px]" />
       </button>
-    </div>
-  </header>
+        </div>
+  </div>
+</header>
 ) : null}
       
       <main className="mx-auto max-w-[980px]">
