@@ -111,6 +111,7 @@ export default function AuthorPublicStoreSection({ author, activeType, activeCat
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [cartFly, setCartFly] = useState(null)
 
   const categories = useMemo(() => {
     const values = products.map((product) => product.category).filter(Boolean)
@@ -124,6 +125,19 @@ export default function AuthorPublicStoreSection({ author, activeType, activeCat
       return typeOk && categoryOk
     })
   }, [activeCategory, activeType, products])
+
+
+  function handleAddToCart(product, fromPoint) {
+  if (!fromPoint) return
+
+  setCartFly({
+    id: `${product.id}-${Date.now()}`,
+    x: fromPoint.x,
+    y: fromPoint.y,
+  })
+
+  window.setTimeout(() => setCartFly(null), 700)
+}
 
   useEffect(() => {
     let ignore = false
@@ -165,8 +179,22 @@ export default function AuthorPublicStoreSection({ author, activeType, activeCat
     }
   }, [author?.page_username])
 
-  return (
-    <div className="space-y-4">
+ return (
+  <div className="relative space-y-4">
+    {cartFly ? (
+      <span
+        key={cartFly.id}
+        className="pointer-events-none fixed z-[300] flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white shadow-2xl transition-all duration-700 ease-out"
+        style={{
+          left: cartFly.x,
+          top: cartFly.y,
+          transform: 'translate(-50%, -50%) translate(90px, -360px) scale(0.35)',
+          opacity: 0,
+        }}
+      >
+        <i className="fa-solid fa-bag-shopping text-[13px]" />
+      </span>
+    ) : null}
       <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -237,7 +265,7 @@ export default function AuthorPublicStoreSection({ author, activeType, activeCat
       ) : filteredProducts.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {filteredProducts.map((product) => (
-            <PublicProductCard key={product.id} product={product} />
+            <PublicProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
           ))}
         </div>
       ) : (
