@@ -679,6 +679,7 @@ export default function AuthorPublicPage() {
   const [readerHeaderTitle, setReaderHeaderTitle] = useState(false)
   const coverRef = useRef(null)
   const profileRef = useRef(null)
+  const tabsRef = useRef(null)
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
@@ -1003,15 +1004,18 @@ async function handleUnfollowFromSettings() {
     if (author?.is_owner) {
       setReaderHeaderSolid(false)
       setReaderHeaderTitle(false)
+      setTabsFrozen(false)
       return undefined
     }
 
     function syncReaderHeader() {
       const coverBottom = coverRef.current?.getBoundingClientRect().bottom ?? 0
-      const profileBottom = profileRef.current?.getBoundingClientRect().bottom ?? 0
+const profileBottom = profileRef.current?.getBoundingClientRect().bottom ?? 0
+const tabsTop = tabsRef.current?.getBoundingClientRect().top ?? 999
 
-      setReaderHeaderSolid(coverBottom <= 54)
-      setReaderHeaderTitle(profileBottom <= 58)
+setReaderHeaderSolid(coverBottom <= 54)
+setReaderHeaderTitle(profileBottom <= 58)
+setTabsFrozen(tabsTop <= 55)
     }
 
     syncReaderHeader()
@@ -1384,8 +1388,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
         </section>
 
-       <section id="author-page-tabs" className="sticky top-0 z-50 border-b border-[#eef0f3] bg-white">
-  <div className="flex items-center justify-between gap-3 px-4 py-2">
+       <section
+  id="author-page-tabs"
+  ref={tabsRef}
+  className={`sticky z-50 border-b border-[#eef0f3] bg-white transition ${
+    displayAuthor.is_owner ? 'top-0' : 'top-[54px]'
+  } ${tabsFrozen && !displayAuthor.is_owner ? 'shadow-sm' : ''}`}
+>
+  <div className="mx-auto flex h-[50px] max-w-[980px] items-center justify-between gap-3 px-4">
     <div className="flex min-w-0 gap-2 overflow-x-auto">
       {tabs.map((tab) => {
         const active = activeTab === tab
