@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
@@ -665,6 +665,10 @@ export default function AuthorPublicPage() {
   const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const [coverOptionsOpen, setCoverOptionsOpen] = useState(false)
+  const [readerHeaderSolid, setReaderHeaderSolid] = useState(false)
+  const [readerHeaderTitle, setReaderHeaderTitle] = useState(false)
+  const coverRef = useRef(null)
+  const profileRef = useRef(null)
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
@@ -911,8 +915,38 @@ async function handleUnfollowFromSettings() {
   }
 
 
+  function handleReaderBack() {
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/')
+  }
+
+  useEffect(() => {
+    if (author?.is_owner) {
+      setReaderHeaderSolid(false)
+      setReaderHeaderTitle(false)
+      return undefined
+    }
+
+    function syncReaderHeader() {
+      const coverBottom = coverRef.current?.getBoundingClientRect().bottom ?? 0
+      const profileBottom = profileRef.current?.getBoundingClientRect().bottom ?? 0
+
+      setReaderHeaderSolid(coverBottom <= 54)
+      setReaderHeaderTitle(profileBottom <= 58)
+    }
+
+    syncReaderHeader()
+    window.addEventListener('scroll', syncReaderHeader, { passive: true })
+
+    return () => window.removeEventListener('scroll', syncReaderHeader)
+  }, [author?.id, author?.is_owner])
+
   if (!loading && pageError) {
-    return <AuthorNotFound onBack={() => navigate(-1)} />
+    return <AuthorNotFound onBack={handleReaderBack} />
   }
 
   const displayAuthor = author || {
@@ -1005,6 +1039,56 @@ async function handleUnfollowFromSettings() {
     setMessage('Choose cover is coming soon.')
   }}
 />
+
+      {!displayAuthor.is_owner ? (
+  <header className={`fixed left-0 right-0 top-0 z-[120] flex h-[54px] items-center justify-between px-3 transition ${
+    readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
+  }`}>
+    <button
+      type="button"
+      onClick={handleReaderBack}
+      className={`flex h-10 w-10 items-center justify-center rounded-full ${
+        readerHeaderSolid ? 'bg-white text-[#111827]' : 'bg-white/95 text-[#111827]'
+      }`}
+      aria-label="Back"
+    >
+      <i className="fa-solid fa-chevron-left text-[15px]" />
+    </button>
+
+    <div className={`min-w-0 flex-1 px-3 text-center text-[15px] font-semibold text-[#111827] transition ${
+      readerHeaderTitle ? 'opacity-100' : 'opacity-0'
+    }`}>
+      <span className="line-clamp-1">{displayAuthor.page_name}</span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => {
+          setActiveTab('Store')
+          setMessage('Cart is coming soon.')
+        }}
+        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+          readerHeaderSolid ? 'bg-white text-[#111827]' : 'bg-white/95 text-[#111827]'
+        }`}
+        aria-label="Open cart"
+      >
+        <i className="fa-solid fa-cart-shopping text-[15px]" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setMessage('Page options are coming soon.')}
+        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+          readerHeaderSolid ? 'bg-white text-[#111827]' : 'bg-white/95 text-[#111827]'
+        }`}
+        aria-label="More options"
+      >
+        <i className="fa-solid fa-ellipsis text-[15px]" />
+      </button>
+    </div>
+  </header>
+) : null}
       
       <main className="mx-auto max-w-[980px]">
         {message && !cropModalOpen ? (
@@ -1029,7 +1113,8 @@ async function handleUnfollowFromSettings() {
       setCoverOptionsOpen(true)
     }
   }}
-  className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
+  ref={coverRef}
+className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 >
   {displayAuthor.cover_url ? (
     <img
@@ -1042,48 +1127,33 @@ async function handleUnfollowFromSettings() {
   )}
    <div className="absolute inset-0 bg-black/15" />         
 
-    <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-    {!displayAuthor.is_owner ? (
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          setActiveTab('Store')
-          setMessage('Cart is coming soon.')
-        }}
-        className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
-        aria-label="Open cart"
-      >
-        <i className="fa-solid fa-cart-shopping text-[17px]" />
-      </button>
-    ) : null}
-
     {displayAuthor.is_owner ? (
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          navigate('/author/page/edit?section=cover')
-        }}
-        className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-        aria-label="Edit page"
-      >
-        <i className="fa-solid fa-pen text-[14px]" />
-      </button>
-    ) : null}
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            navigate('/author/page/edit?section=cover')
+          }}
+          className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
+          aria-label="Edit page"
+        >
+          <i className="fa-solid fa-pen text-[14px]" />
+        </button>
 
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation()
-        navigate('/author/page-settings')
-      }}
-      className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
-      aria-label="More options"
-    >
-      <i className="fa-solid fa-ellipsis text-[15px]" />
-    </button>
-  </div>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            navigate('/author/page-settings')
+          }}
+          className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
+          aria-label="More options"
+        >
+          <i className="fa-solid fa-ellipsis text-[15px]" />
+        </button>
+      </div>
+    ) : null}
 
   {displayAuthor.is_owner ? (
     <button
@@ -1099,7 +1169,7 @@ async function handleUnfollowFromSettings() {
   ) : null}
 </div>
 
-          <div className="relative px-4 pb-5 sm:px-6">
+          <div ref={profileRef} className="relative px-4 pb-5 sm:px-6">
             <div className="pointer-events-none absolute -top-[14px] left-0 right-0 h-[36px] rounded-t-[16px] bg-white" />
 
             <div className="relative z-10">
@@ -1385,8 +1455,8 @@ async function handleUnfollowFromSettings() {
         </section>
       </main>
       {displayAuthor.is_owner ? (
-  <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
-) : null}
+        <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
+      ) : null}
     </div>
   )
 }
