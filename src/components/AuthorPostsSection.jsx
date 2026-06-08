@@ -192,7 +192,7 @@ function PostImageGrid({ images }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
+function AuthorPostCard({ post, author, onOpenMenu }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -235,16 +235,14 @@ function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
               </div>
             </div>
 
-            {isOwner ? (
-              <button
-                type="button"
-                onClick={() => onOpenMenu(post)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
-                aria-label="Post options"
-              >
-                <i className="fa-solid fa-ellipsis text-[14px]" />
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => onOpenMenu(post)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
+              aria-label="Post options"
+            >
+              <i className="fa-solid fa-ellipsis text-[14px]" />
+            </button>
           </div>
 
           {post.content ? (
@@ -266,52 +264,132 @@ function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
   )
 }
 
-function PostOptionsSheet({ post, busy, onClose, onPinChange }) {
+function ToastBubble({ text, author }) {
+  if (!text) return null
+
+  const avatarUrl = author?.avatar_url || ''
+
+  return (
+    <div className="pointer-events-none fixed left-1/2 top-20 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white shadow-2xl">
+      <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <i className="fa-solid fa-feather-pointed text-[11px] text-[#111827]" />
+        )}
+      </span>
+      <span>{text}</span>
+    </div>
+  )
+}
+
+function SheetOption({ icon, title, subtext, danger = false, disabled = false, onClick }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3.5 text-left active:bg-[#f3f4f6] disabled:opacity-60"
+    >
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${danger ? 'bg-[#fff1f2] text-[#dc2626]' : 'bg-[#f3f4f6] text-[#111827]'}`}>
+        <i className={`${icon} text-[17px]`} />
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className={`block text-[16px] font-semibold ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>{title}</span>
+        {subtext ? <span className="mt-0.5 block text-[12px] font-normal leading-5 text-[#8b93a1]">{subtext}</span> : null}
+      </span>
+    </button>
+  )
+}
+
+function PostOptionsSheet({ post, busy, isOwner, author, onClose, onPinChange, onMessage }) {
+  const [toast, setToast] = useState('')
+  const [notificationsOff, setNotificationsOff] = useState(false)
+
   if (!post) return null
 
   const isPinned = Boolean(post.is_pinned || post.pinned)
+
+  function showToast(text) {
+    setToast(text)
+    window.clearTimeout(showToast.timer)
+    showToast.timer = window.setTimeout(() => setToast(''), 1600)
+  }
+
+  async function copyPostLink() {
+    const username = author?.page_username || ''
+    const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
+    const link = `${window.location.origin}${path}`
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(link)
+      showToast('Post link copied')
+      return
+    }
+
+    onMessage?.(link)
+  }
+
+  function handleNotificationToggle() {
+    const nextValue = !notificationsOff
+    setNotificationsOff(nextValue)
+    showToast(nextValue ? 'Notifications turned off' : 'Notifications turned on')
+  }
+
+  function handleComingSoon(message) {
+    showToast(message)
+    onMessage?.(message)
+  }
 
   return (
     <div className="fixed inset-0 z-[230]">
       <button type="button" aria-label="Close post options" onClick={onClose} className="absolute inset-0 bg-black/35" />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-4 pb-7 pt-4 shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d1d5db]" />
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-5 pb-7 pt-4 shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
-        <div className="mb-3 text-[15px] font-semibold text-[#111827]">Post options</div>
+        <div className="mb-2 text-[15px] font-semibold text-[#111827]">Post options</div>
 
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => onPinChange(post, !isPinned)}
-          className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6] disabled:opacity-60"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-            <i className={`fa-solid ${isPinned ? 'fa-thumbtack-slash' : 'fa-thumbtack'} text-[14px]`} />
-          </span>
-
-          <span className="min-w-0">
-            <span className="block text-[15px] font-normal text-[#111827]">
-              {isPinned ? 'Remove from top' : 'Pin to top'}
-            </span>
-            <span className="mt-0.5 block text-[12px] font-normal text-[#8b93a1]">
-              {isPinned ? 'Stop showing this post first' : 'Show this post first on your page'}
-            </span>
-          </span>
-        </button>
+        {isOwner ? (
+          <>
+            <SheetOption
+              icon={`fa-solid ${isPinned ? 'fa-thumbtack-slash' : 'fa-thumbtack'}`}
+              title={isPinned ? 'Unpin post' : 'Pin to top'}
+              subtext={isPinned ? 'Remove this post from the top of your page' : 'Show this post first on your page'}
+              disabled={busy}
+              onClick={() => onPinChange(post, !isPinned)}
+            />
+            <SheetOption icon="fa-regular fa-bookmark" title="Save post" subtext="Add this to your saved items." onClick={() => handleComingSoon('Post saved')} />
+            <SheetOption icon="fa-solid fa-pen" title="Edit post" onClick={() => handleComingSoon('Edit post is coming soon.')} />
+            <SheetOption icon="fa-solid fa-trash-can" title="Move to trash" subtext="Items in your trash are deleted after 30 days." danger onClick={() => handleComingSoon('Move to trash is coming soon.')} />
+            <SheetOption icon="fa-regular fa-bell-slash" title={notificationsOff ? 'Turn on notifications for this post' : 'Turn off notifications for this post'} onClick={handleNotificationToggle} />
+            <SheetOption icon="fa-regular fa-copy" title="Copy link" onClick={copyPostLink} />
+          </>
+        ) : (
+          <>
+            <SheetOption icon="fa-regular fa-bookmark" title="Save post" subtext="Add this to your saved items." onClick={() => handleComingSoon('Post saved')} />
+            <SheetOption icon="fa-regular fa-eye-slash" title="Hide post" subtext="See fewer posts like this." onClick={() => handleComingSoon('Post hidden')} />
+            <SheetOption icon="fa-regular fa-flag" title="Report post" subtext="Tell us if this post violates platform rules." onClick={() => handleComingSoon('Report post is coming soon.')} />
+            <SheetOption icon="fa-solid fa-user-slash" title="Block author" subtext="Stop seeing this author in your experience." onClick={() => handleComingSoon('Block author is coming soon.')} />
+            <SheetOption icon="fa-regular fa-bell-slash" title={notificationsOff ? 'Turn on notifications for this post' : 'Turn off notifications for this post'} onClick={handleNotificationToggle} />
+            <SheetOption icon="fa-regular fa-copy" title="Copy link" onClick={copyPostLink} />
+          </>
+        )}
 
         <button
           type="button"
           onClick={onClose}
-          className="mt-1 flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+          className="mt-2 flex w-full items-center gap-4 rounded-[16px] px-1 py-3.5 text-left active:bg-[#f3f4f6]"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-            <i className="fa-solid fa-xmark text-[14px]" />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+            <i className="fa-solid fa-xmark text-[16px]" />
           </span>
-
-          <span className="text-[15px] font-normal text-[#111827]">Close</span>
+          <span className="text-[16px] font-semibold text-[#111827]">Close</span>
         </button>
       </div>
+
+      <ToastBubble text={toast} author={author} />
     </div>
   )
 }
@@ -473,7 +551,6 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
               key={post.id}
               post={post}
               author={author}
-              isOwner={Boolean(author?.is_owner)}
               onOpenMenu={setSelectedPost}
             />
           ))}
@@ -497,8 +574,11 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       <PostOptionsSheet
         post={selectedPost}
         busy={pinBusy}
+        isOwner={Boolean(author?.is_owner)}
+        author={author}
         onClose={() => setSelectedPost(null)}
         onPinChange={handlePinChange}
+        onMessage={onMessage}
       />
     </div>
   )
