@@ -486,19 +486,19 @@ function StoreManagerHome({
             </div>
           </div>
 
-          <div className="p-4">
-            {loading ? (
-              <div className="rounded-[18px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#8b93a1] ring-1 ring-black/5">
-                Loading products...
-              </div>
-            ) : visibleRecords.length ? (
-              <div className="space-y-3">
-                {visibleRecords.map((product) => <ProductRecordRow key={product.id} product={product} />)}
-              </div>
-            ) : (
-              <EmptyState onAddProduct={onAddProduct} />
-            )}
-          </div>
+          <div className="px-4 py-2">
+  {loading ? (
+    <div className="rounded-[18px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#8b93a1] ring-1 ring-black/5">
+      Loading products...
+    </div>
+  ) : visibleRecords.length ? (
+    <div className="overflow-hidden bg-white">
+      {visibleRecords.map((product) => <ProductRecordRow key={product.id} product={product} />)}
+    </div>
+  ) : (
+    <EmptyState onAddProduct={onAddProduct} />
+  )}
+</div>
         </section>
       ) : null}
 
