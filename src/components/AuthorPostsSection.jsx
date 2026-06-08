@@ -192,7 +192,7 @@ function PostImageGrid({ images }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
+function AuthorPostCard({ post, author, isOwner, onOpenMenu, onMessage }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -256,17 +256,17 @@ function AuthorPostCard({ post, author, isOwner, onOpenMenu }) {
       <PostImageGrid images={postImages} />
 
       {isOwner ? (
-        <button
-          type="button"
-          onClick={() => onOpenMenu(post)}
-          className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
-        >
-          <span className="text-[13px] font-medium leading-5 text-[#1877f2]">
-            See insights<br />
-            and ads
-          </span>
-        </button>
-      ) : null}
+  <button
+    type="button"
+    onClick={() => onMessage?.('Insights and Ads coming soon.')}
+    className="flex w-full border-b border-[#eef0f4] px-4 py-2 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="text-[13px] font-medium leading-5 text-[#64748B]">
+      See insights<br />
+      and ads
+    </span>
+  </button>
+) : null}
 
       <div className="flex items-center gap-6 px-4 pt-2 text-[13px] font-normal text-[#6b7280]">
         <span className="inline-flex items-center gap-1.5">
@@ -576,6 +576,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   author={author}
   isOwner={Boolean(author?.is_owner)}
   onOpenMenu={setSelectedPost}
+  onMessage={onMessage}
 />
           ))}
         </div>
