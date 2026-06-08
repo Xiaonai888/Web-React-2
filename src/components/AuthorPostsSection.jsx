@@ -61,7 +61,7 @@ async function fetchAuthorPosts(pageUsername) {
   return Array.isArray(data.posts) ? data.posts : []
 }
 
-async function createAuthorPost(content) {
+async function createAuthorPost(content, imageUrls = []) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
@@ -75,6 +75,7 @@ async function createAuthorPost(content) {
     body: JSON.stringify({
       post_type: 'article',
       content,
+      image_urls: Array.isArray(imageUrls) ? imageUrls : [],
     }),
   })
 
@@ -365,16 +366,17 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }, [author?.page_username, onCountChange])
 
-  async function handleCreatePost(content) {
-    const nextContent = String(content || '').trim()
+ async function handleCreatePost(content, imageUrls = []) {
+  const nextContent = String(content || '').trim()
+  const nextImageUrls = Array.isArray(imageUrls) ? imageUrls : []
 
-    if (!nextContent || saving) return false
+  if ((!nextContent && !nextImageUrls.length) || saving) return false
 
     try {
       setSaving(true)
       setLocalError('')
 
-      const post = await createAuthorPost(nextContent)
+      const post = await createAuthorPost(nextContent, nextImageUrls)
 
       if (post) {
         setPosts((current) => {
