@@ -235,7 +235,7 @@ function PostImageGrid({ images, onView }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onEcho, onMessage }) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onEcho, onViewImage, onMessage }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -326,7 +326,7 @@ function cancelReactionPress() {
         </p>
       ) : null}
 
-      <PostImageGrid images={postImages} />
+      <PostImageGrid images={postImages} onView={onViewImage} />
 
 {isOwner ? (
   <button
@@ -638,6 +638,27 @@ function AuthorPostEchoSheet({ post, author, onClose, onCopyLink, onMessage }) {
   )
 }
 
+function ImageViewer({ imageUrl, onClose }) {
+  if (!imageUrl) return null
+
+  return (
+    <div className="fixed inset-0 z-[280] bg-black">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white"
+        aria-label="Close image"
+      >
+        <i className="fa-solid fa-xmark text-[18px]" />
+      </button>
+
+      <div className="flex h-full w-full items-center justify-center">
+        <img src={imageUrl} alt="" className="max-h-full max-w-full object-contain" />
+      </div>
+    </div>
+  )
+}
+      
 function PostsEmpty({ title, text }) {
   return (
     <div className="bg-white px-5 py-8 text-center">
@@ -662,6 +683,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [composerOpen, setComposerOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState(null)
   const [echoPost, setEchoPost] = useState(null)
+  const [viewImageUrl, setViewImageUrl] = useState('')    
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
 
@@ -844,6 +866,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
               onOpenMenu={setSelectedPost}
               onReact={handlePostReaction}
               onEcho={setEchoPost}
+              onViewImage={setViewImageUrl}
               onMessage={onMessage}
             />
           ))}
@@ -881,6 +904,12 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         onPinChange={handlePinChange}
         onMessage={onMessage}
       />
+
+      <ImageViewer
+  imageUrl={viewImageUrl}
+  onClose={() => setViewImageUrl('')}
+/>
+      
     </div>
   )
 }
