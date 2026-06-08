@@ -8,7 +8,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks']
-const TYPE_FILTERS = ['All', 'Book', 'PDF']
+const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
@@ -439,21 +439,26 @@ function StoreManagerHome({
 }) {
   const [recordQuery, setRecordQuery] = useState('')
 
-  const visibleRecords = useMemo(() => {
-    const query = recordQuery.trim().toLowerCase()
+ const visibleRecords = useMemo(() => {
+  const query = recordQuery.trim().toLowerCase()
+  const records = filteredProducts.filter((product) => {
+    if (activeType === 'Active') return product.status === 'Active'
+    if (activeType === 'Draft') return product.status === 'Draft'
+    return true
+  })
 
-    if (!query) return filteredProducts
+  if (!query) return records
 
-    return filteredProducts.filter((product) => {
-      return (
-        product.title.toLowerCase().includes(query) ||
-        String(product.id).toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query) ||
-        product.status.toLowerCase().includes(query) ||
-        product.type.toLowerCase().includes(query)
-      )
-    })
-  }, [filteredProducts, recordQuery])
+  return records.filter((product) => {
+    return (
+      product.title.toLowerCase().includes(query) ||
+      String(product.id).toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query) ||
+      product.status.toLowerCase().includes(query) ||
+      product.type.toLowerCase().includes(query)
+    )
+  })
+}, [filteredProducts, recordQuery, activeType])
 
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
@@ -1140,10 +1145,10 @@ export default function AuthorStoreManagerPage() {
   const [localError, setLocalError] = useState('')
 
   const filteredProducts = useMemo(() => {
-    if (activeType === 'All') return products
-    return products.filter((product) => product.type === activeType)
-  }, [activeType, products])
-
+  if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
+  return products.filter((product) => product.type === activeType)
+}, [activeType, products])
+  
   useEffect(() => {
     let ignore = false
 
