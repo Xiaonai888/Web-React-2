@@ -69,6 +69,22 @@ function getStoryOwnerId(story) {
   )
 }
 
+function buildCommentListUrl(targetType, targetId, page, sort) {
+  if (targetType === 'author_post') {
+    return `${API_BASE_URL}/api/authors/page/posts/${targetId}/comments?limit=${COMMENT_PAGE_SIZE}`
+  }
+
+  return `${API_BASE_URL}/api/comments/story/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+}
+
+function buildCommentCreateUrl(targetType, targetId) {
+  if (targetType === 'author_post') {
+    return `${API_BASE_URL}/api/authors/me/posts/${targetId}/comments`
+  }
+
+  return `${API_BASE_URL}/api/comments/story/${targetId}`
+}
+
 function isStoryAuthor(currentUser, story) {
   const ownerId = getStoryOwnerId(story)
 
@@ -647,9 +663,9 @@ export default function CommentSection({
     try {
       append ? setLoadingMore(true) : setLoading(true)
 
-      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+      const response = await fetch(buildCommentListUrl(targetType, targetId, nextPage, sort), {
+  headers: token ? { Authorization: `Bearer ${token}` } : {},
+})
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
@@ -735,7 +751,7 @@ export default function CommentSection({
     try {
       setSending(true)
 
-      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`, {
+      const response = await fetch(buildCommentCreateUrl(targetType, targetId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -843,7 +859,7 @@ export default function CommentSection({
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/story/${targetId}`, {
+      const response = await fetch(buildCommentCreateUrl(targetType, targetId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
