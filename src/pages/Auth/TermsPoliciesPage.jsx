@@ -19,16 +19,16 @@ export default function TermsPoliciesPage() {
             <i className="fas fa-chevron-left text-[13px]" />
           </button>
 
-          <h1 className="text-center text-[22px] font-[700] tracking-tight">
+          <h1 className="text-center text-[15px] font-[700] tracking-tight sm:text-[22px]">
             <span className="mr-2">📜</span>
             Terms and Policies
           </h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-10">
-        <article className="rounded-[26px] bg-white px-6 py-8 text-[#151515] shadow-sm sm:px-9 sm:py-10">
-          <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[18px] leading-7">
+      <main className="mx-auto max-w-3xl px-4 pt-6 sm:pt-10">
+        <article className="rounded-[22px] bg-white px-5 py-6 text-[#151515] shadow-sm sm:rounded-[26px] sm:px-9 sm:py-10">
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-6 sm:mb-5 sm:gap-x-5 sm:text-[18px] sm:leading-7">
             <span className="font-[700]">Effective Date:</span>
             <span className="font-[400]">21/12/2025</span>
           </div>
