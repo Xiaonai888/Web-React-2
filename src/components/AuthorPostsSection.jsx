@@ -143,9 +143,9 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
           )}
         </span>
 
-        <span className="min-w-0 flex-1 text-[15px] font-normal text-[#111827]">
-          Write something for your readers...
-        </span>
+        <span className="min-w-0 flex-1 truncate text-[15px] font-normal text-[#111827]">
+  Share an update...
+</span>
 
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#22c55e]">
           <i className="fa-regular fa-image text-[20px]" />
