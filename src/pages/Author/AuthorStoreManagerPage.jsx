@@ -598,6 +598,13 @@ function AddProductPage({ categories, onBack, onSave }) {
   const [type, setType] = useState('Book')
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState(categories[0] || 'New Books')
+  const [authorName, setAuthorName] = useState('')
+  const [publisher, setPublisher] = useState('')
+  const [novelType, setNovelType] = useState('Khmer')
+  const [coverType, setCoverType] = useState('Paperback')
+  const [sortOrder, setSortOrder] = useState('0')
+  const [bestSeller, setBestSeller] = useState(false)
+  const [discount, setDiscount] = useState(false)
   const [description, setDescription] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
@@ -611,6 +618,7 @@ function AddProductPage({ categories, onBack, onSave }) {
   const [condition, setCondition] = useState('New')
   const [qualityPercent, setQualityPercent] = useState('')
   const [deliveryNote, setDeliveryNote] = useState('')
+  const [genre, setGenre] = useState('')
   const [preOrder, setPreOrder] = useState(false)
   const [pdfFileName, setPdfFileName] = useState('')
   const [pageCount, setPageCount] = useState('')
@@ -854,48 +862,81 @@ function AddProductPage({ categories, onBack, onSave }) {
             </button>
           </div>
 
-          <FormDivider title="Book information" />
+        <FormDivider title="Book information" />
 
-          <div>
-            <FieldLabel>Book title</FieldLabel>
-            <TextInput value={title} onChange={setTitle} placeholder="Enter book title" />
-          </div>
+<div>
+  <FieldLabel>Book title</FieldLabel>
+  <TextInput value={title} onChange={setTitle} placeholder="Enter book title" />
+</div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <FieldLabel>Category</FieldLabel>
-              <SelectInput value={category} onChange={setCategory}>
-                {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-              </SelectInput>
-            </div>
-            <div>
-              <FieldLabel>Availability</FieldLabel>
-              <SelectInput value={condition} onChange={setCondition}>
-                {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-              </SelectInput>
-            </div>
-          </div>
+<div className="grid gap-3 sm:grid-cols-2">
+  <div>
+    <FieldLabel>Author name</FieldLabel>
+    <TextInput value={authorName} onChange={setAuthorName} placeholder="Author name" />
+  </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <FieldLabel>Genre</FieldLabel>
-              <TextInput value={deliveryNote} onChange={setDeliveryNote} placeholder="Romance, fantasy, mystery..." />
-            </div>
-            <div>
-              <FieldLabel>Paper type</FieldLabel>
-              <SelectInput value={paperType} onChange={setPaperType}>
-                {PAPER_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
-              </SelectInput>
-            </div>
-          </div>
+  <div>
+    <FieldLabel>Publisher</FieldLabel>
+    <TextInput value={publisher} onChange={setPublisher} placeholder="Publisher" />
+  </div>
+</div>
 
-          {condition === 'Second Hand' ? (
-            <div>
-              <FieldLabel>Condition note</FieldLabel>
-              <TextInput value={qualityPercent} onChange={setQualityPercent} placeholder="Example: 85" type="number" />
-              <p className="mt-1.5 text-[11px] font-bold text-[#8b93a1]">Enter the estimated book quality from 1% to 100%.</p>
-            </div>
-          ) : null}
+<div className="grid gap-3 sm:grid-cols-2">
+  <div>
+    <FieldLabel>Novel type</FieldLabel>
+    <TextInput value={novelType} onChange={setNovelType} placeholder="Khmer" />
+  </div>
+
+  <div>
+    <FieldLabel>Category</FieldLabel>
+    <SelectInput value={category} onChange={setCategory}>
+      {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+    </SelectInput>
+  </div>
+</div>
+
+<div className="grid gap-3 sm:grid-cols-2">
+  <div>
+    <FieldLabel>Genre</FieldLabel>
+    <TextInput value={genre} onChange={setGenre} placeholder="Romance, fantasy, mystery..." />
+  </div>
+
+  <div>
+    <FieldLabel>Availability / Stock status</FieldLabel>
+    <SelectInput value={condition} onChange={setCondition}>
+      {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+    </SelectInput>
+  </div>
+</div>
+
+<div className="grid gap-3 sm:grid-cols-2">
+  <div>
+    <FieldLabel>Paper type</FieldLabel>
+    <SelectInput value={paperType} onChange={setPaperType}>
+      {PAPER_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
+    </SelectInput>
+  </div>
+
+  <div>
+    <FieldLabel>Cover type</FieldLabel>
+    <TextInput value={coverType} onChange={setCoverType} placeholder="Paperback" />
+  </div>
+</div>
+
+<div className="grid gap-3 sm:grid-cols-2">
+  <div>
+    <FieldLabel>Page count</FieldLabel>
+    <TextInput value={pageCount} onChange={setPageCount} placeholder="Example: 436" type="number" />
+  </div>
+
+  {condition === 'Second Hand' ? (
+    <div>
+      <FieldLabel>Condition note</FieldLabel>
+      <TextInput value={qualityPercent} onChange={setQualityPercent} placeholder="Example: 85" type="number" />
+      <p className="mt-1.5 text-[11px] font-bold text-[#8b93a1]">Enter the estimated book quality from 1% to 100%.</p>
+    </div>
+  ) : null}
+</div>
 
           <FormDivider title="Sale & stock" />
 
@@ -912,11 +953,10 @@ function AddProductPage({ categories, onBack, onSave }) {
 
           {type === 'Book' ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <FieldLabel>Stock quantity</FieldLabel>
-                <TextInput value={stock} onChange={setStock} placeholder="Example: 10" type="number" />
-              </div>
-              <label className="flex h-11 items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+             <div>
+  <FieldLabel>Sort order</FieldLabel>
+  <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
+</div>
                 <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
                 Pre-order product
               </label>
@@ -946,40 +986,39 @@ function AddProductPage({ categories, onBack, onSave }) {
             </div>
           )}
 
-          <FormDivider title="Product details" />
+         <FormDivider title="Product details" />
 
-          <div>
-            <FieldLabel>Description</FieldLabel>
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Book details, condition, delivery note, or pre-order note..."
-              className="min-h-[120px] w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
-            />
-          </div>
+<div>
+  <FieldLabel>Condition label</FieldLabel>
+  <TextInput value={deliveryNote} onChange={setDeliveryNote} placeholder="New, Like new, Good, Fair..." />
+</div>
 
-          <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
-            <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
-            Active
-          </label>
-        </div>
-      </section>
+<div>
+  <FieldLabel>Description</FieldLabel>
+  <textarea
+    value={description}
+    onChange={(event) => setDescription(event.target.value)}
+    placeholder="Book details, condition, delivery note, or pre-order note..."
+    className="min-h-[120px] w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+  />
+</div>
 
-      {formError ? <p className="mt-4 rounded-2xl bg-[#fff7ed] px-4 py-3 text-[12px] font-black text-[#9a3412]">{formError}</p> : null}
+<div className="grid gap-3 sm:grid-cols-3">
+  <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+    <input type="checkbox" checked={bestSeller} onChange={(event) => setBestSeller(event.target.checked)} />
+    Best seller
+  </label>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#eef0f4] bg-white/95 p-3 shadow-xl backdrop-blur">
-        <div className="mx-auto grid max-w-[980px] grid-cols-2 gap-3">
-          <button type="button" onClick={onBack} className="h-12 rounded-full border border-[#e5e7eb] bg-white text-[13px] font-black text-[#111827]">
-            Cancel
-          </button>
-          <button type="button" disabled={saving} onClick={saveProduct} className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white disabled:opacity-60">
-            {saving ? 'Creating...' : 'Create Product'}
-          </button>
-        </div>
-      </div>
-    </main>
-  )
-}
+  <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+    <input type="checkbox" checked={discount} onChange={(event) => setDiscount(event.target.checked)} />
+    Discount
+  </label>
+
+  <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
+    <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
+    Active
+  </label>
+</div>
 
 export default function AuthorStoreManagerPage() {
   const navigate = useNavigate()
