@@ -536,7 +536,7 @@ export default function AuthorPostComposerSheet({
                   type="button"
                   disabled={!canPublish}
                   onClick={publishPost}
-                  className="h-9 rounded-full bg-[#2563eb] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
+                  className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
                 >
                   {uploading || saving ? 'Publishing' : 'Publish'}
                 </button>
