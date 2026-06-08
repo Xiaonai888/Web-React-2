@@ -104,6 +104,31 @@ async function setAuthorPostPinned(postId, isPinned) {
     }),
   })
 
+  async function setAuthorPostReaction(postId, reactionType = 'love') {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/react`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      reaction_type: reactionType,
+    }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update reaction')
+  }
+
+  return data
+}
+
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -224,6 +249,8 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const hasReacted = Boolean(post.my_reaction)
   const reactionBusy = reactionBusyId === post.id
+  const hasReacted = Boolean(post.my_reaction)
+  const reactionBusy = reactionBusyId === post.id
 
   return (
     <article className="bg-white py-3">
@@ -306,10 +333,15 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   {formatCompactNumber(post.like_count)}
 </button>
 
-        <span className="inline-flex items-center gap-1.5">
-          <i className="fa-regular fa-comment text-[15px]" />
-          {formatCompactNumber(post.comment_count)}
-        </span>
+        <button
+  type="button"
+  disabled={reactionBusy}
+  onClick={() => onReact(post)}
+  className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${hasReacted ? 'text-[#ef4444]' : ''}`}
+>
+  <i className={`${hasReacted ? 'fa-solid' : 'fa-regular'} fa-heart text-[15px]`} />
+  {formatCompactNumber(post.like_count)}
+</button>
 
         <span className="inline-flex items-center gap-1.5">
           <i className="fa-solid fa-retweet text-[15px]" />
@@ -474,6 +506,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [selectedPost, setSelectedPost] = useState(null)
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
+  const [reactionBusyId, setReactionBusyId] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -576,6 +609,32 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setPinBusy(false)
     }
   }
+
+  async function handlePostReaction(post) {
+  if (!post?.id || reactionBusyId) return
+
+  try {
+    setReactionBusyId(post.id)
+
+    const data = await setAuthorPostReaction(post.id, 'love')
+
+    setPosts((current) => current.map((item) => {
+      if (item.id !== post.id) return item
+
+      return {
+        ...item,
+        like_count: Number(data.like_count || 0),
+        my_reaction: data.reacted ? data.reaction_type || 'love' : null,
+      }
+    }))
+  } catch (error) {
+    const message = error.message || 'Failed to update reaction'
+    setLocalError(message)
+    onMessage?.(message)
+  } finally {
+    setReactionBusyId('')
+  }
+}
 
   async function handlePostReaction(post) {
   if (!post?.id || reactionBusyId) return
