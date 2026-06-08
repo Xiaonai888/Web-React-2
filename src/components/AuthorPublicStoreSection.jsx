@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -6,7 +6,6 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const STORE_TYPE_FILTERS = ['All', 'Book', 'PDF']
-
 function formatPrice(product) {
   const sale = Number(product.sale_price || 0)
   const original = Number(product.original_price || 0)
@@ -29,8 +28,23 @@ function EmptyStore() {
   )
 }
 
-function PublicProductCard({ product }) {
+function PublicProductCard({ product, onAddToCart }) {
   const hasDiscount = Number(product.sale_price || 0) > 0 && Number(product.original_price || 0) > Number(product.sale_price || 0)
+  const buttonRef = useRef(null)
+
+  function handleAddToCart() {
+    if (!buttonRef.current) {
+      onAddToCart?.(product, null)
+      return
+    }
+
+    const rect = buttonRef.current.getBoundingClientRect()
+
+    onAddToCart?.(product, {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    })
+  }
 
   return (
     <div className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-black/5">
@@ -48,8 +62,11 @@ function PublicProductCard({ product }) {
         </span>
 
         <button
+          ref={buttonRef}
           type="button"
+          onClick={handleAddToCart}
           className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-lg ring-1 ring-black/5 active:scale-95"
+          aria-label="Add to cart"
         >
           <i className="fa-solid fa-bag-shopping text-[13px]" />
         </button>
