@@ -1044,33 +1044,6 @@ async function handleUnfollowFromSettings() {
 
   <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
     {displayAuthor.is_owner ? (
-      <button
-        type="button"
-        onClick={(event) => {
-  event.stopPropagation()
-  navigate('/author/page/edit?section=cover')
-}}
-        className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-        aria-label="Edit page"
-      >
-        <i className="fa-solid fa-pen text-[14px]" />
-      </button>
-    ) : null}
-
-    <button
-      type="button"
-     onClick={(event) => {
-  event.stopPropagation()
-  navigate('/author/page-settings')
-}}
-      className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
-      aria-label="More options"
-    >
-      <i className="fa-solid fa-ellipsis text-[15px]" />
-    </button>
-  </div>
-
-  {displayAuthor.is_owner ? (
   <button
     type="button"
     onClick={(event) => {
@@ -1089,10 +1062,10 @@ async function handleUnfollowFromSettings() {
       setActiveTab('Store')
       setMessage('Cart is coming soon.')
     }}
-    className="absolute bottom-5 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-[0_2px_8px_rgba(0,0,0,0.25)] active:scale-95"
+    className="absolute right-[58px] top-3 z-10 flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
     aria-label="Open cart"
   >
-    <i className="fa-solid fa-cart-shopping text-[18px]" />
+    <i className="fa-solid fa-cart-shopping text-[17px]" />
   </button>
 )}
 </div>
