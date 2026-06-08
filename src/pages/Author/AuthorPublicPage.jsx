@@ -1384,7 +1384,7 @@ async function handleUnfollowFromSettings() {
           
         </section>
       </main>
-      <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
+      {false ? <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} /> : null}
     </div>
   )
 }
