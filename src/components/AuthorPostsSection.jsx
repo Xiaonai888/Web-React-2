@@ -227,7 +227,7 @@ function PostImageGrid({ images }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onMessage }) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onEcho, onMessage }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -362,10 +362,14 @@ onClick={() => onMessage?.('Insights and Ads coming soon.')}
   </button>
 </div>
 
-        <span className="inline-flex items-center gap-1.5">
-          <i className="fa-regular fa-comment text-[15px]" />
-          {formatCompactNumber(post.comment_count)}
-        </span>
+        <button
+  type="button"
+  onClick={() => onEcho(post)}
+  className="inline-flex items-center gap-1.5 active:scale-95"
+>
+  <i className="fa-solid fa-retweet text-[15px]" />
+  {formatCompactNumber(post.echo_count)}
+</button>
 
         <span className="inline-flex items-center gap-1.5">
           <i className="fa-solid fa-retweet text-[15px]" />
@@ -529,6 +533,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [localError, setLocalError] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState(null)
+  const [echoPost, setEchoPost] = useState(null)
   const [pinBusy, setPinBusy] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
 
@@ -659,6 +664,19 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     setReactionBusyId('')
   }
 }
+  async function copyAuthorPostLink(post) {
+  const username = author?.page_username || ''
+  const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
+  const link = `${window.location.origin}${path}`
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(link)
+    onMessage?.('Post link copied.')
+    return
+  }
+
+  onMessage?.(link)
+}
 
   return (
     <div className="mx-[-16px] overflow-hidden bg-white sm:mx-0">
@@ -681,6 +699,111 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         </button>
       ) : null}
 
+
+      function AuthorPostEchoSheet({ post, author, onClose, onCopyLink, onMessage }) {
+  const [mode, setMode] = useState('write')
+  const [text, setText] = useState('')
+
+  if (!post) return null
+
+  function handleEcho() {
+    onMessage?.('Echo for Author Posts is coming soon.')
+    onClose?.()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[260]">
+      <button
+        type="button"
+        aria-label="Close echo"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-4 pb-6 pt-4 shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-[17px] font-semibold text-[#111827]">Echo Post</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div className="rounded-[18px] bg-[#f8fafc] p-3 ring-1 ring-[#eef0f4]">
+          <div className="text-[13px] font-semibold text-[#111827]">
+            {author?.page_name || 'Author'}
+          </div>
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[13px] leading-5 text-[#6b7280]">
+            {post.content || 'Author post'}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setMode('share-now')}
+            className={`rounded-[18px] border px-4 py-3 text-left active:scale-[0.99] ${
+              mode === 'share-now'
+                ? 'border-[#111827] bg-[#111827] text-white'
+                : 'border-[#eef0f4] bg-white text-[#111827]'
+            }`}
+          >
+            <i className="fa-solid fa-bolt text-[15px]" />
+            <div className="mt-2 text-[13px] font-semibold">Share Now</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode('write')}
+            className={`rounded-[18px] border px-4 py-3 text-left active:scale-[0.99] ${
+              mode === 'write'
+                ? 'border-[#111827] bg-[#111827] text-white'
+                : 'border-[#eef0f4] bg-white text-[#111827]'
+            }`}
+          >
+            <i className="fa-regular fa-pen-to-square text-[15px]" />
+            <div className="mt-2 text-[13px] font-semibold">Write Post</div>
+          </button>
+        </div>
+
+        {mode === 'write' ? (
+          <textarea
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            maxLength={280}
+            rows={4}
+            placeholder="Say something about this post..."
+            className="mt-4 w-full resize-none rounded-[18px] bg-[#f5f3fa] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3]"
+          />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => onCopyLink(post)}
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#f3f4f6] text-[14px] font-semibold text-[#111827] active:scale-[0.99]"
+        >
+          <i className="fa-regular fa-copy text-[14px]" />
+          Copy Link
+        </button>
+
+        <button
+          type="button"
+          onClick={handleEcho}
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#111827] text-[14px] font-semibold text-white active:scale-[0.99]"
+        >
+          <i className="fa-solid fa-retweet text-[14px]" />
+          Echo
+        </button>
+      </div>
+    </div>
+  )
+}
+
       {loading ? (
         <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
       ) : posts.length ? (
@@ -694,6 +817,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
               reactionBusyId={reactionBusyId}
               onOpenMenu={setSelectedPost}
               onReact={handlePostReaction}
+              onEcho={setEchoPost}
               onMessage={onMessage}
             />
           ))}
@@ -713,6 +837,14 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         onPublishText={handleCreatePost}
         onMessage={onMessage}
       />
+
+      <AuthorPostEchoSheet
+  post={echoPost}
+  author={author}
+  onClose={() => setEchoPost(null)}
+  onCopyLink={copyAuthorPostLink}
+  onMessage={onMessage}
+/>
 
       <PostOptionsSheet
         post={selectedPost}
