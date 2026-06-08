@@ -1363,13 +1363,7 @@ async function handleUnfollowFromSettings() {
           ) : null}
 
         {activeTab === 'Store' ? (
-  <AuthorPublicStoreSection
-    author={displayAuthor}
-    activeType={activeStoreType}
-    activeCategory={activeStoreCategory}
-    onTypeChange={setActiveStoreType}
-    onCategoryChange={setActiveStoreCategory}
-  />
+  <AuthorStoreTab author={displayAuthor} onMessage={setMessage} />
 ) : null}
           
         </section>
