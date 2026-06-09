@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -215,6 +216,7 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
 }
 
 export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChange, onMessage }) {
+  const navigate = useNavigate()
   const [activeType, setActiveType] = useState('All')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
@@ -336,6 +338,7 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
           items={section.items}
           onMore={() => onMessage?.(`${section.title} page is next stage.`)}
           onOpenItem={() => onMessage?.('Book detail page is next stage.')}
+          onOpenItem={(item) => navigate(`/author/page/${author.page_username}/store/product/${item.id}`)}
           onAddToCart={(item) => {
   const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
   const cartItems = JSON.parse(rawCart)
