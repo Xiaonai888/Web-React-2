@@ -105,7 +105,7 @@ const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEd
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
 const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'))
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
-
+const AuthorStoreProductDetailPage = lazy(() => import('./pages/Author/AuthorStoreProductDetailPage'))
 
 
 
@@ -648,6 +648,14 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorStoreManagerPage />
+    </LazyPage>
+  }
+/>
+        <Route
+  path="/author/page/:pageUsername/store/product/:productId"
+  element={
+    <LazyPage>
+      <AuthorStoreProductDetailPage />
     </LazyPage>
   }
 />
