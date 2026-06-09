@@ -603,6 +603,16 @@ function StatCard({ label, value, icon }) {
   )
 }
 
+function DeliveryLogo({ type }) {
+  const isJnt = type === 'jnt'
+
+  return (
+    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[15px] font-black shadow-sm ring-1 ${isJnt ? 'text-[#e5484d] ring-[#f6b800]/40' : 'text-[#f97316] ring-black/10'}`}>
+      {isJnt ? 'J&T' : 'VET'}
+    </div>
+  )
+}
+
 function StoreManagerHome({
   activeTab,
   setActiveTab,
@@ -1072,51 +1082,90 @@ function StoreManagerHome({
       </>
     ) : null}
 
-    {settingsView === 'delivery' ? (
-      <>
+   {settingsView === 'delivery' ? (
+  <div className="-mx-4 -my-4 min-h-screen bg-[#f7f5fb] pb-24">
+    <header className="sticky top-0 z-40 border-b border-[#eeeaf5] bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-[980px] items-center gap-3 px-4">
         <button
           type="button"
           onClick={() => setSettingsView('home')}
-          className="flex h-11 items-center gap-2 rounded-2xl bg-white px-4 text-[12px] font-black text-[#111827] shadow-sm ring-1 ring-black/5"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f0f8] text-[#111827] active:scale-95"
         >
-          <i className="fa-solid fa-chevron-left text-[12px]" />
-          Settings
+          <i className="fa-solid fa-chevron-left text-[14px]" />
         </button>
 
-        <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <h2 className="text-[16px] font-black text-[#111827]">Delivery Company</h2>
-      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        Set delivery fees for checkout. Default fee is $2.
-      </p>
+        <div className="min-w-0">
+          <h1 className="text-[18px] font-black leading-5 text-[#111827]">Delivery Company</h1>
+          <p className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">Set delivery fees for reader checkout.</p>
+        </div>
+      </div>
+    </header>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div>
-          <FieldLabel>J&amp;T delivery fee</FieldLabel>
-          <TextInput value={jtDeliveryFee} onChange={setJtDeliveryFee} placeholder="2.00" type="number" />
+    <div className="mx-auto max-w-[980px] space-y-3 px-4 py-4">
+      <div className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="flex items-center gap-3">
+          <DeliveryLogo type="jnt" />
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-black text-[#111827]">J&T</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">J&T Express delivery for printed books.</p>
+          </div>
+
+          <span className="rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+            ${Number(jtDeliveryFee || 0).toFixed(2)}
+          </span>
         </div>
 
-        <div>
-          <FieldLabel>VET delivery fee</FieldLabel>
+        <div className="mt-4">
+          <FieldLabel>Delivery fee</FieldLabel>
+          <TextInput value={jtDeliveryFee} onChange={setJtDeliveryFee} placeholder="2.00" type="number" />
+        </div>
+      </div>
+
+      <div className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="flex items-center gap-3">
+          <DeliveryLogo type="vet" />
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-black text-[#111827]">VET</h2>
+            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">Virak Buntham Express delivery option.</p>
+          </div>
+
+          <span className="rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+            ${Number(vetDeliveryFee || 0).toFixed(2)}
+          </span>
+        </div>
+
+        <div className="mt-4">
+          <FieldLabel>Delivery fee</FieldLabel>
           <TextInput value={vetDeliveryFee} onChange={setVetDeliveryFee} placeholder="2.00" type="number" />
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handleSaveDeliveryFees}
-        disabled={deliverySaving}
-        className="mt-4 h-11 w-full rounded-2xl bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
-      >
-        {deliverySaving || deliveryLoading ? 'Saving...' : 'Save delivery fees'}
-      </button>
-
       {deliveryMessage ? (
-        <p className="mt-3 text-[12px] font-bold text-[#42526b]">{deliveryMessage}</p>
+        <button
+          type="button"
+          onClick={() => setDeliveryMessage('')}
+          className="w-full rounded-2xl bg-white px-4 py-3 text-left text-[12px] font-bold text-[#42526b] shadow-sm ring-1 ring-black/5"
+        >
+          {deliveryMessage}
+        </button>
       ) : null}
-        </div>
-      </>
-    ) : null}
-  </section>
+    </div>
+
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeaf5] bg-white/95 p-4 backdrop-blur">
+      <div className="mx-auto max-w-[980px]">
+        <button
+          type="button"
+          onClick={handleSaveDeliveryFees}
+          disabled={deliverySaving}
+          className="h-12 w-full rounded-2xl bg-[#111827] text-[13px] font-black text-white shadow-lg active:scale-[0.98] disabled:opacity-60"
+        >
+          {deliverySaving ? 'Saving...' : 'Save delivery fees'}
+        </button>
+      </div>
+    </div>
+  </div>
 ) : null}
 
       {activeTab === 'Orders' ? (
