@@ -104,6 +104,10 @@ const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSetti
 const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
+const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
+const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
+
+
 
 
 function ComingSoon({ title }) {
@@ -626,6 +630,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorCartPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/checkout"
+  element={
+    <LazyPage>
+      <AuthorCheckoutPage />
     </LazyPage>
   }
 />
