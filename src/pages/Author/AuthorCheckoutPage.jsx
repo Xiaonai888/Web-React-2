@@ -199,7 +199,7 @@ export default function AuthorCheckoutPage() {
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
   const [buyerOpen, setBuyerOpen] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState(DELIVERY_COMPANIES[0].id)
-  const [deliveryNote, setDeliveryNote] = useState('')
+  const [deliveryNote, setDeliveryNote] = useState(() => getBuyerProfile().delivery_note || '')
   const [message, setMessage] = useState('')
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
