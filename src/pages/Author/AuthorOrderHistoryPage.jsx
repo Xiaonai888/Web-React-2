@@ -123,8 +123,16 @@ export default function AuthorOrderHistoryPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-[11px] font-semibold text-[#8b93a1]">Order ID</div>
-                    <div className="mt-1 text-[13px] font-black text-[#111827]">{order.order_id}</div>
-                    <div className="mt-1 text-[11px] font-semibold text-[#42526b]">{formatDate(order.created_at)}</div>
+<div className="mt-1 text-[13px] font-black text-[#111827]">{order.order_id}</div>
+{order.author_page_name || order.author_page_username ? (
+  <div className="mt-1 text-[11px] font-black text-[#111827]">
+    {order.author_page_name || 'Author Store'}
+    {order.author_page_username ? (
+      <span className="font-semibold text-[#8b93a1]"> @{order.author_page_username}</span>
+    ) : null}
+  </div>
+) : null}
+<div className="mt-1 text-[11px] font-semibold text-[#42526b]">{formatDate(order.created_at)}</div>
                   </div>
 
                   <span className="shrink-0 rounded-full bg-[#eef3f8] px-3 py-1 text-[9px] font-black uppercase text-[#42526b]">
