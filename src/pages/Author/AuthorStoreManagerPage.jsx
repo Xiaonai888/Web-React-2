@@ -1270,10 +1270,13 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
   <FieldLabel>Sort order</FieldLabel>
   <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
 </div>
-<label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
-  <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
-  Pre-order product
-</label>
+<div>
+  <FieldLabel>&nbsp;</FieldLabel>
+  <label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
+    <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
+    Pre-order product
+  </label>
+</div>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
