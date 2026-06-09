@@ -592,6 +592,7 @@ function StoreManagerHome({
 }) {
   const [recordQuery, setRecordQuery] = useState('')
   const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
+  const [settingsView, setSettingsView] = useState('home')
   const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
   const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
 
@@ -737,7 +738,50 @@ function StoreManagerHome({
 
 {activeTab === 'Settings' ? (
   <section className="mt-4 space-y-3">
-    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    {settingsView === 'home' ? (
+      <>
+        <button
+          type="button"
+          onClick={() => setSettingsView('categories')}
+          className="flex w-full items-center justify-between rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+        >
+          <span>
+            <span className="block text-[16px] font-black text-[#111827]">Category Management</span>
+            <span className="mt-1 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              Create, hide, edit, delete, and reorder store categories.
+            </span>
+          </span>
+          <i className="fa-solid fa-chevron-right text-[13px] text-[#9ca3af]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSettingsView('delivery')}
+          className="flex w-full items-center justify-between rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+        >
+          <span>
+            <span className="block text-[16px] font-black text-[#111827]">Delivery Company</span>
+            <span className="mt-1 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              Set delivery fees for J&amp;T and VET checkout.
+            </span>
+          </span>
+          <i className="fa-solid fa-chevron-right text-[13px] text-[#9ca3af]" />
+        </button>
+      </>
+    ) : null}
+
+    {settingsView === 'categories' ? (
+      <>
+        <button
+          type="button"
+          onClick={() => setSettingsView('home')}
+          className="flex h-11 items-center gap-2 rounded-2xl bg-white px-4 text-[12px] font-black text-[#111827] shadow-sm ring-1 ring-black/5"
+        >
+          <i className="fa-solid fa-chevron-left text-[12px]" />
+          Settings
+        </button>
+
+        <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
       <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
         New categories can become sections in the public Store tab.
@@ -917,7 +961,20 @@ function StoreManagerHome({
           )
         })}
       </div>
-    </div>
+       </div>
+      </>
+    ) : null}
+
+    {settingsView === 'delivery' ? (
+      <>
+        <button
+          type="button"
+          onClick={() => setSettingsView('home')}
+          className="flex h-11 items-center gap-2 rounded-2xl bg-white px-4 text-[12px] font-black text-[#111827] shadow-sm ring-1 ring-black/5"
+        >
+          <i className="fa-solid fa-chevron-left text-[12px]" />
+          Settings
+        </button>
 
         <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <h2 className="text-[16px] font-black text-[#111827]">Delivery Company</h2>
@@ -944,8 +1001,9 @@ function StoreManagerHome({
       >
         Save delivery fees
       </button>
-    </div>
-    
+        </div>
+      </>
+    ) : null}
   </section>
 ) : null}
 
