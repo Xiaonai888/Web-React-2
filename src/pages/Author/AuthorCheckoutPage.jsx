@@ -5,16 +5,16 @@ const DELIVERY_COMPANIES = [
   {
     id: 'jnt',
     name: 'J&T',
-    subtitle: 'J&T Express',
-    price: 2,
-    logo: '/assets/icons/J&T.svg',
+    label: 'J&T Express',
+    fee: 2,
+    logo: '/assets/Icons/J&T.svg',
   },
   {
     id: 'vet',
     name: 'VET',
-    subtitle: 'Virak Buntham Express',
-    price: 2,
-    logo: '/assets/icons/VET.svg',
+    label: 'Vireak Buntham Express',
+    fee: 2,
+    logo: '/assets/Icons/VET.svg',
   },
 ]
 
