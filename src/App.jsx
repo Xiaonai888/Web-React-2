@@ -103,8 +103,7 @@ const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPage
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
-const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
-const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
+const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'))
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
 
 
