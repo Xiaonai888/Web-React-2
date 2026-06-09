@@ -3,18 +3,18 @@ import { useNavigate } from 'react-router-dom'
 
 const DELIVERY_COMPANIES = [
   {
-    id: 'jt',
+    id: 'jnt',
     name: 'J&T',
-    label: 'J&T Express',
-    fee: 2,
-    logoText: 'J&T',
+    subtitle: 'J&T Express',
+    price: 2,
+    logo: '/assets/icons/J&T.svg',
   },
   {
     id: 'vet',
     name: 'VET',
-    label: 'Vireak Buntham Express',
-    fee: 2,
-    logoText: 'VET',
+    subtitle: 'Virak Buntham Express',
+    price: 2,
+    logo: '/assets/icons/VET.svg',
   },
 ]
 
@@ -280,11 +280,9 @@ export default function AuthorCheckoutPage() {
                   }`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-white text-[14px] font-black ring-1 ring-black/5 ${
-                      company.id === 'jt' ? 'text-[#e5484d]' : 'text-[#f97316]'
-                    }`}>
-                      {company.logoText}
-                    </span>
+                   <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white ring-1 ring-black/5">
+  <img src={company.logo} alt={company.name} className="h-9 w-9 object-contain" />
+</span>
                     <span className="min-w-0">
                       <span className="block text-[13px] font-black text-[#111827]">{company.name}</span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-[#8b93a1]">{company.label}</span>
