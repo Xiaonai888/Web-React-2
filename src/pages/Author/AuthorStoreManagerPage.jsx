@@ -1214,25 +1214,28 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
     <TextInput value={genre} onChange={setGenre} placeholder="Romance, fantasy, mystery..." />
   </div>
 
+ {type === 'Book' ? (
   <div>
     <FieldLabel>Availability / Stock status</FieldLabel>
     <SelectInput value={condition} onChange={setCondition}>
       {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
     </SelectInput>
   </div>
-</div>
+) : null}
 
-<div className="grid gap-3 sm:grid-cols-2">
-  <div>
-  <FieldLabel>Paper type</FieldLabel>
-  <TextInput value={paperType} onChange={setPaperType} placeholder="Example: Normal paper, glossy paper, cream paper..." />
-</div>
+{type === 'Book' ? (
+  <div className="grid gap-3 sm:grid-cols-2">
+    <div>
+      <FieldLabel>Paper type</FieldLabel>
+      <TextInput value={paperType} onChange={setPaperType} placeholder="Example: Normal paper, glossy paper, cream paper..." />
+    </div>
 
-  <div>
-    <FieldLabel>Cover type</FieldLabel>
-    <TextInput value={coverType} onChange={setCoverType} placeholder="Paperback" />
+    <div>
+      <FieldLabel>Cover type</FieldLabel>
+      <TextInput value={coverType} onChange={setCoverType} placeholder="Example: Paperback, hardcover..." />
+    </div>
   </div>
-</div>
+) : null}
 
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
