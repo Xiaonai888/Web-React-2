@@ -604,11 +604,12 @@ function StatCard({ label, value, icon }) {
 }
 
 function DeliveryLogo({ type }) {
-  const isJnt = type === 'jnt'
+  const src = type === 'jnt' ? '/assets/Icons/J%26T.svg' : '/assets/Icons/VET.svg'
+  const label = type === 'jnt' ? 'J&T' : 'VET'
 
   return (
-    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[15px] font-black shadow-sm ring-1 ${isJnt ? 'text-[#e5484d] ring-[#f6b800]/40' : 'text-[#f97316] ring-black/10'}`}>
-      {isJnt ? 'J&T' : 'VET'}
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/10">
+      <img src={src} alt={label} className="h-10 w-10 object-contain" />
     </div>
   )
 }
@@ -1082,10 +1083,10 @@ function StoreManagerHome({
       </>
     ) : null}
 
-   {settingsView === 'delivery' ? (
-  <div className="-mx-4 -my-4 min-h-screen bg-[#f7f5fb] pb-24">
+  {settingsView === 'delivery' ? (
+  <div className="fixed inset-0 z-[999] bg-[#f7f5fb]">
     <header className="sticky top-0 z-40 border-b border-[#eeeaf5] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[980px] items-center gap-3 px-4">
+      <div className="flex h-14 items-center gap-3 px-4">
         <button
           type="button"
           onClick={() => setSettingsView('home')}
@@ -1096,78 +1097,99 @@ function StoreManagerHome({
 
         <div className="min-w-0">
           <h1 className="text-[18px] font-black leading-5 text-[#111827]">Delivery Company</h1>
-          <p className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">Set delivery fees for reader checkout.</p>
+          <p className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">
+            Set delivery fees for reader checkout.
+          </p>
         </div>
       </div>
     </header>
 
-    <div className="mx-auto max-w-[980px] space-y-3 px-4 py-4">
-      <div className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-center gap-3">
-          <DeliveryLogo type="jnt" />
+    <main className="h-[calc(100vh-56px)] overflow-y-auto px-4 pb-28 pt-4">
+      <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
+        <div className="px-4 pb-2 pt-4">
+          <h2 className="text-[16px] font-black text-[#111827]">Delivery fees</h2>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+            These fees will be added to checkout total.
+          </p>
+        </div>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-black text-[#111827]">J&T</h2>
-            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">J&T Express delivery for printed books.</p>
+        <div className="px-4 py-4">
+          <div className="flex gap-3">
+            <DeliveryLogo type="jnt" />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-[15px] font-black text-[#111827]">J&T</h3>
+                  <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+                    J&T Express delivery for printed books.
+                  </p>
+                </div>
+
+                <span className="shrink-0 rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+                  ${Number(jtDeliveryFee || 0).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <FieldLabel>Delivery fee</FieldLabel>
+                <TextInput value={jtDeliveryFee} onChange={setJtDeliveryFee} placeholder="2.00" type="number" />
+              </div>
+            </div>
           </div>
-
-          <span className="rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
-            ${Number(jtDeliveryFee || 0).toFixed(2)}
-          </span>
         </div>
 
-        <div className="mt-4">
-          <FieldLabel>Delivery fee</FieldLabel>
-          <TextInput value={jtDeliveryFee} onChange={setJtDeliveryFee} placeholder="2.00" type="number" />
-        </div>
-      </div>
+        <div className="mx-4 h-px bg-[#eef0f4]" />
 
-      <div className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-center gap-3">
-          <DeliveryLogo type="vet" />
+        <div className="px-4 py-4">
+          <div className="flex gap-3">
+            <DeliveryLogo type="vet" />
 
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-black text-[#111827]">VET</h2>
-            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">Virak Buntham Express delivery option.</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-[15px] font-black text-[#111827]">VET</h3>
+                  <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+                    Virak Buntham Express delivery option.
+                  </p>
+                </div>
+
+                <span className="shrink-0 rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+                  ${Number(vetDeliveryFee || 0).toFixed(2)}
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <FieldLabel>Delivery fee</FieldLabel>
+                <TextInput value={vetDeliveryFee} onChange={setVetDeliveryFee} placeholder="2.00" type="number" />
+              </div>
+            </div>
           </div>
-
-          <span className="rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
-            ${Number(vetDeliveryFee || 0).toFixed(2)}
-          </span>
         </div>
-
-        <div className="mt-4">
-          <FieldLabel>Delivery fee</FieldLabel>
-          <TextInput value={vetDeliveryFee} onChange={setVetDeliveryFee} placeholder="2.00" type="number" />
-        </div>
-      </div>
+      </section>
 
       {deliveryMessage ? (
         <button
           type="button"
           onClick={() => setDeliveryMessage('')}
-          className="w-full rounded-2xl bg-white px-4 py-3 text-left text-[12px] font-bold text-[#42526b] shadow-sm ring-1 ring-black/5"
+          className="mt-3 w-full rounded-2xl bg-white px-4 py-3 text-left text-[12px] font-bold text-[#42526b] shadow-sm ring-1 ring-black/5"
         >
           {deliveryMessage}
         </button>
       ) : null}
-    </div>
+    </main>
 
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeaf5] bg-white/95 p-4 backdrop-blur">
-      <div className="mx-auto max-w-[980px]">
-        <button
-          type="button"
-          onClick={handleSaveDeliveryFees}
-          disabled={deliverySaving}
-          className="h-12 w-full rounded-2xl bg-[#111827] text-[13px] font-black text-white shadow-lg active:scale-[0.98] disabled:opacity-60"
-        >
-          {deliverySaving ? 'Saving...' : 'Save delivery fees'}
-        </button>
-      </div>
+    <div className="fixed inset-x-0 bottom-0 z-[1000] border-t border-[#eeeaf5] bg-white/95 p-4 backdrop-blur">
+      <button
+        type="button"
+        onClick={handleSaveDeliveryFees}
+        disabled={deliverySaving}
+        className="h-12 w-full rounded-2xl bg-[#111827] text-[13px] font-black text-white shadow-lg active:scale-[0.98] disabled:opacity-60"
+      >
+        {deliverySaving ? 'Saving...' : 'Save delivery fees'}
+      </button>
     </div>
-    </div>
-) : null}
-  </section>
+  </div>
 ) : null}
 
       {activeTab === 'Orders' ? (
