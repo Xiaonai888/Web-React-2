@@ -113,8 +113,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   const [phone, setPhone] = useState(profile.phone_number || '')
   const [telegram, setTelegram] = useState(profile.telegram_username || '')
   const [facebook, setFacebook] = useState(profile.facebook_link || '')
-  const [address, setAddress] = useState(profile.delivery_address || '')
-  const [address, setAddress] = useState(profile.address || '')
+ const [address, setAddress] = useState(profile.delivery_address || profile.address || '')
   const [error, setError] = useState('')
 
   if (!open) return null
