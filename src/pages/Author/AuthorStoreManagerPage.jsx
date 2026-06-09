@@ -685,7 +685,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [description, setDescription] = useState(productToEdit?.description || '')
   const [originalPrice, setOriginalPrice] = useState(productToEdit?.originalPrice || '')
   const [salePrice, setSalePrice] = useState(productToEdit?.salePrice || '')
-  const [active, setActive] = useState(productToEdit?.status === 'Active')
+  const [active, setActive] = useState(productToEdit ? productToEdit.status === 'Active' : true)
   const [coverFile, setCoverFile] = useState(null)
   const [coverFileName, setCoverFileName] = useState('')
   const [coverPreview, setCoverPreview] = useState(productToEdit?.coverUrl || '')
@@ -1034,7 +1034,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
   <FieldLabel>Sort order</FieldLabel>
   <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
 </div>
-<label className="flex items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-3 text-[13px] font-bold text-[#111827]">
+<label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
   <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
   Pre-order product
 </label>
@@ -1123,7 +1123,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
     disabled={saving}
     className="h-12 rounded-2xl bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:opacity-60"
   >
-    {saving ? 'Saving...' : 'Save product'}
+    {saving ? 'Saving...' : productToEdit ? 'Save Product' : 'Create Product'}
   </button>
 </div>
         </div>
