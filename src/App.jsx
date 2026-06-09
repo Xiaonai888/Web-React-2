@@ -103,6 +103,7 @@ const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPage
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
+const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
 
 
 function ComingSoon({ title }) {
@@ -681,6 +682,23 @@ const shouldShowOpeningAds =
   }
 />
 
+        <Route
+  path="/author/cart"
+  element={
+    <LazyPage>
+      <AuthorCartPage />
+    </LazyPage>
+  }
+/>
+
+<Route
+  path="/author/orders"
+  element={
+    <LazyPage>
+      <AuthorOrderHistoryPage />
+    </LazyPage>
+  }
+/>
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
