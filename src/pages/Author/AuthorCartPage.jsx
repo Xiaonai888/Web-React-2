@@ -160,9 +160,9 @@ export default function AuthorCartPage() {
             <div className="text-[11px] font-semibold text-[#8b93a1]">Total</div>
             <div className="mt-1 text-[17px] font-black text-[#e5484d]">{money(subtotal)}</div>
           </div>
-          <button type="button" onClick={() => alert('Checkout is next stage.')} className="h-12 rounded-full bg-[#111827] px-10 text-[13px] font-black text-white shadow-xl active:scale-95">
-            Checkout
-          </button>
+          <button type="button" onClick={() => navigate('/author/checkout')} className="h-12 rounded-full bg-[#111827] px-10 text-[13px] font-black text-white shadow-xl active:scale-95">
+  Checkout
+</button>
         </div>
       </footer>
     </div>
