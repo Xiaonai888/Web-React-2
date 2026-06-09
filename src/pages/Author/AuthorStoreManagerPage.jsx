@@ -1201,19 +1201,19 @@ function StoreManagerHome({
         </button>
       ) : null}
 
-      {!isSoldOutSystem ? (
-        <button
-          type="button"
-          onClick={() => {
-            setOpenCategoryMenuId('')
-            handleDeleteCategory(category)
-          }}
-          disabled={isLocalCategory}
-          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
-        >
-          Delete
-        </button>
-      ) : null}
+     {!category.isDefault ? (
+  <button
+    type="button"
+    onClick={() => {
+      setOpenCategoryMenuId('')
+      handleDeleteCategory(category)
+    }}
+    disabled={isLocalCategory}
+    className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
+  >
+    Delete
+  </button>
+) : null}
     </div>
   ) : null}
 </div>
@@ -1347,13 +1347,7 @@ function StoreManagerHome({
       Settings
     </button>
 
-    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="mb-4">
-        <h2 className="text-[17px] font-black text-[#111827]">Telegram Bot</h2>
-        <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-          Save your bot username and Telegram group chat ID for approved order notifications.
-        </p>
-      </div>
+  
 
       {telegramMessage ? (
         <button
