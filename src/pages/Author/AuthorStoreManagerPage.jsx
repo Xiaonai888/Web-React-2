@@ -1191,6 +1191,8 @@ function StoreManagerHome({
     </div>
   </div>
 ) : null}
+  </section>
+) : null}
 
       {activeTab === 'Orders' ? (
         <section className="mt-4">
