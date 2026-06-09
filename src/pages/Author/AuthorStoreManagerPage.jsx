@@ -213,6 +213,29 @@ async function updateTelegramSettings(settings) {
   return data.telegram_settings || { bot_username: '', chat_id: '' }
 }
 
+
+async function testTelegramSettings() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/test`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to send test message')
+  }
+
+  return data
+}
+
+
 async function updateDeliverySettings(deliverySettings) {
   const token = getAuthToken()
 
@@ -731,6 +754,7 @@ function StoreManagerHome({
   const [telegramSaving, setTelegramSaving] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
+  const [telegramTesting, setTelegramTesting] = useState(false)
 
 
   useEffect(() => {
@@ -830,6 +854,21 @@ function StoreManagerHome({
   }
 }
 
+const handleTestTelegramSettings = async () => {
+  try {
+    setTelegramTesting(true)
+    setTelegramMessage('')
+
+    await testTelegramSettings()
+
+    setTelegramMessage('Test message sent to your Telegram group.')
+  } catch (error) {
+    setTelegramMessage(error.message || 'Failed to send Telegram test message.')
+  } finally {
+    setTelegramTesting(false)
+  }
+}
+  
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
   const records = filteredProducts.filter((product) => {
@@ -1395,6 +1434,15 @@ function StoreManagerHome({
 ) : null}
   </section>
 ) : null}
+
+      <button
+  type="button"
+  onClick={handleTestTelegramSettings}
+  disabled={telegramTesting || telegramSaving || telegramLoading || !telegramChatId.trim()}
+  className="h-12 w-full rounded-full bg-[#fff4cc] text-[13px] font-black text-[#111827] shadow-sm ring-1 ring-[#f6b800]/35 active:scale-[0.98] disabled:opacity-50"
+>
+  {telegramTesting ? 'Sending test...' : 'Send Test Message'}
+</button>
 
       {activeTab === 'Orders' ? (
         <section className="mt-4">
