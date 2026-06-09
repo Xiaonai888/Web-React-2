@@ -910,7 +910,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const galleryInputRefs = useRef([])
   const [type, setType] = useState(productToEdit?.type || 'Book')
   const [title, setTitle] = useState(productToEdit?.title || '')
-  const [category, setCategory] = useState(productToEdit?.category || categories[0] || 'New Books')
+  const [category, setCategory] = useState(productToEdit?.category || '')
   const [authorName, setAuthorName] = useState('')
   const [publisher, setPublisher] = useState('')
   const [novelType, setNovelType] = useState('')
@@ -1196,14 +1196,15 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
     <FieldLabel>Novel type</FieldLabel>
-    <TextInput value={novelType} onChange={setNovelType} placeholder="Khmer" />
+    <TextInput value={novelType} onChange={setNovelType} placeholder="Example: Khmer, English, Chinese..." />
   </div>
 
   <div>
     <FieldLabel>Category</FieldLabel>
     <SelectInput value={category} onChange={setCategory}>
-      {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-    </SelectInput>
+  <option value="">Select category</option>
+  {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+</SelectInput>
   </div>
 </div>
 
@@ -1224,7 +1225,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
   <FieldLabel>Paper type</FieldLabel>
-  <TextInput value={paperType} onChange={setPaperType} placeholder="Normal paper, glossy paper, cream paper..." />
+  <TextInput value={paperType} onChange={setPaperType} placeholder="Example: Normal paper, glossy paper, cream paper..." />
 </div>
 
   <div>
