@@ -337,7 +337,30 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
           onMore={() => onMessage?.(`${section.title} page is next stage.`)}
           onOpenItem={() => onMessage?.('Book detail page is next stage.')}
           onAddToCart={(item) => {
-  onCartCountChange?.(Number(cartCount || 0) + 1)
+  const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
+  const cartItems = JSON.parse(rawCart)
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : []
+  const existingItem = safeCartItems.find((cartItem) => cartItem.id === item.id)
+
+  const nextCartItems = existingItem
+    ? safeCartItems.map((cartItem) => (
+        cartItem.id === item.id ? { ...cartItem, quantity: Number(cartItem.quantity || 1) + 1 } : cartItem
+      ))
+    : [
+        ...safeCartItems,
+        {
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          cover_url: item.cover_url,
+          price_value: Number(String(item.price || '0').replace('$', '')) || 0,
+          quantity: 1,
+        },
+      ]
+
+  localStorage.setItem('shadow_author_cart_items', JSON.stringify(nextCartItems))
+  window.dispatchEvent(new Event('shadow-author-cart-updated'))
+  onCartCountChange?.(nextCartItems.reduce((total, cartItem) => total + Number(cartItem.quantity || 1), 0))
   onMessage?.(`${item.title} added to cart.`)
 }}
         />
