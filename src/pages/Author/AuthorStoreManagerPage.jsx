@@ -872,6 +872,8 @@ const handleTestTelegramSettings = async () => {
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
   const records = filteredProducts.filter((product) => {
+  const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
+  const canCreateCustomCategory = customCategoryCount < 5
     if (activeType === 'Active') return product.status === 'Active'
     if (activeType === 'Draft') return product.status === 'Draft'
     return true
