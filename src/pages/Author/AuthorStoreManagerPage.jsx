@@ -7,7 +7,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks']
+const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks', 'New Release']
 const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
@@ -404,6 +404,126 @@ function ProductRecordRow({ product, onEdit, onDelete }) {
   )
 }
 
+
+function formatCategoryForUi(category) {
+  return {
+    id: category.id,
+    name: category.name || '',
+    sortOrder: Number(category.sort_order || 0),
+    isDefault: Boolean(category.is_default),
+  }
+}
+
+async function fetchMyCategories() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load categories')
+  }
+
+  return Array.isArray(data.categories) ? data.categories.map(formatCategoryForUi) : []
+}
+
+async function createStoreCategory(name) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to create category')
+  }
+
+  return data.category ? formatCategoryForUi(data.category) : null
+}
+
+async function updateStoreCategory(categoryId, name) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/${categoryId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update category')
+  }
+
+  return data.category ? formatCategoryForUi(data.category) : null
+}
+
+async function deleteStoreCategory(categoryId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/${categoryId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to delete category')
+  }
+
+  return data
+}
+
+async function reorderStoreCategories(categoryIds) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/reorder`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ category_ids: categoryIds }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save category order')
+  }
+
+  return Array.isArray(data.categories) ? data.categories.map(formatCategoryForUi) : []
+}
+
 function StatCard({ label, value, icon }) {
   return (
     <div className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
@@ -428,9 +548,21 @@ function StoreManagerHome({
   filteredProducts,
   products,
   categories,
+  storeCategories,
   newCategory,
   setNewCategory,
   addCategory,
+  categoryError,
+  categorySaving,
+  editingCategoryId,
+  editingCategoryName,
+  setEditingCategoryName,
+  startEditCategory,
+  cancelEditCategory,
+  saveEditCategory,
+  handleDeleteCategory,
+  moveCategory,
+  saveCategoryOrder,
   onAddProduct,
   onEditProduct,
   onDeleteProduct,
@@ -579,37 +711,141 @@ function StoreManagerHome({
         </section>
       ) : null}
 
-      {activeTab === 'Settings' ? (
-        <section className="mt-4 space-y-3">
-          <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-            <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              New categories can become sections in the public Store tab.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
-              <button type="button" onClick={addCategory} className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white">
-                Add
-              </button>
-            </div>
-          </div>
+{activeTab === 'Settings' ? (
+  <section className="mt-4 space-y-3">
+    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        New categories can become sections in the public Store tab.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
+        <button
+          type="button"
+          onClick={addCategory}
+          disabled={categorySaving}
+          className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-60"
+        >
+          Add
+        </button>
+      </div>
+    </div>
 
-          <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-[16px] font-black text-[#111827]">Categories</h2>
-              <span className="text-[11px] font-bold text-[#9ca3af]">Product categories</span>
-            </div>
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <div key={category} className="flex items-center justify-between rounded-2xl bg-[#f8fafc] px-4 py-3 ring-1 ring-black/5">
-                  <span className="text-[13px] font-black text-[#111827]">{category}</span>
-                  <i className="fa-solid fa-grip-lines text-[#9ca3af]" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-[16px] font-black text-[#111827]">Categories</h2>
+        <button
+          type="button"
+          onClick={saveCategoryOrder}
+          disabled={categorySaving || !storeCategories.length}
+          className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50"
+        >
+          Save order
+        </button>
+      </div>
+
+      {categoryError ? (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mb-3 w-full rounded-2xl bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
+        >
+          {categoryError}
+        </button>
       ) : null}
+
+      <div className="space-y-2">
+        {(storeCategories.length ? storeCategories : categories.map((name, index) => ({
+          id: `local-${index}`,
+          name,
+        }))).map((category, index, list) => {
+          const editing = editingCategoryId === category.id
+
+          return (
+            <div
+              key={category.id}
+              className="rounded-2xl bg-[#f8fafc] px-3 py-3 ring-1 ring-black/5"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  {editing ? (
+                    <input
+                      type="text"
+                      value={editingCategoryName}
+                      onChange={(event) => setEditingCategoryName(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-black text-[#111827] outline-none focus:border-[#111827]"
+                    />
+                  ) : (
+                    <span className="truncate text-[13px] font-black text-[#111827]">
+                      {category.name}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => moveCategory(category.id, 'up')}
+                  disabled={index === 0 || category.id.startsWith('local-')}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/5 disabled:opacity-30"
+                >
+                  <i className="fa-solid fa-arrow-up text-[11px]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => moveCategory(category.id, 'down')}
+                  disabled={index === list.length - 1 || category.id.startsWith('local-')}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/5 disabled:opacity-30"
+                >
+                  <i className="fa-solid fa-arrow-down text-[11px]" />
+                </button>
+
+                {editing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => saveEditCategory(category)}
+                      disabled={categorySaving}
+                      className="h-8 rounded-xl bg-[#111827] px-3 text-[11px] font-black text-white disabled:opacity-60"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditCategory}
+                      className="h-8 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/5"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => startEditCategory(category)}
+                      disabled={category.id.startsWith('local-')}
+                      className="h-8 rounded-xl bg-[#fff4cc] px-3 text-[11px] font-black text-[#111827] disabled:opacity-40"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(category)}
+                      disabled={category.id.startsWith('local-')}
+                      className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] disabled:opacity-40"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  </section>
+) : null}
 
       {activeTab === 'Orders' ? (
         <section className="mt-4">
@@ -1140,6 +1376,11 @@ export default function AuthorStoreManagerPage() {
   const [activeType, setActiveType] = useState('All')
   const [newCategory, setNewCategory] = useState('')
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
+  const [storeCategories, setStoreCategories] = useState([])
+  const [categoryError, setCategoryError] = useState('')
+  const [categorySaving, setCategorySaving] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState('')
+  const [editingCategoryName, setEditingCategoryName] = useState('')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -1180,19 +1421,152 @@ export default function AuthorStoreManagerPage() {
     }
   }, [])
 
-  const addCategory = () => {
-    const name = newCategory.trim()
+  useEffect(() => {
+    let ignore = false
 
-    if (!name) return
+    async function loadCategories() {
+      try {
+        setCategoryError('')
+        const nextCategories = await fetchMyCategories()
 
-    if (categories.some((item) => item.toLowerCase() === name.toLowerCase())) {
-      setNewCategory('')
-      return
+        if (!ignore) {
+          setStoreCategories(nextCategories)
+          setCategories((current) => {
+            const names = nextCategories.map((item) => item.name).filter(Boolean)
+            return Array.from(new Set([...current, ...names]))
+          })
+        }
+      } catch (error) {
+        if (!ignore) {
+          setCategoryError(error.message || 'Failed to load categories')
+        }
+      }
     }
 
-    setCategories((current) => [...current, name])
+    loadCategories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const addCategory = async () => {
+  const name = newCategory.trim()
+
+  if (!name || categorySaving) return
+
+  if (storeCategories.some((item) => item.name.toLowerCase() === name.toLowerCase())) {
     setNewCategory('')
+    return
   }
+
+  try {
+    setCategorySaving(true)
+    setCategoryError('')
+
+    const createdCategory = await createStoreCategory(name)
+
+    if (createdCategory) {
+      setStoreCategories((current) => [...current, createdCategory])
+      setCategories((current) => Array.from(new Set([...current, createdCategory.name])))
+    }
+
+    setNewCategory('')
+  } catch (error) {
+    setCategoryError(error.message || 'Failed to create category')
+  } finally {
+    setCategorySaving(false)
+  }
+}
+
+  const startEditCategory = (category) => {
+  setEditingCategoryId(category.id)
+  setEditingCategoryName(category.name)
+  setCategoryError('')
+}
+
+const cancelEditCategory = () => {
+  setEditingCategoryId('')
+  setEditingCategoryName('')
+}
+
+const saveEditCategory = async (category) => {
+  const name = editingCategoryName.trim()
+
+  if (!category?.id || !name || categorySaving) return
+
+  try {
+    setCategorySaving(true)
+    setCategoryError('')
+
+    const updatedCategory = await updateStoreCategory(category.id, name)
+
+    if (updatedCategory) {
+      setStoreCategories((current) =>
+        current.map((item) => (item.id === updatedCategory.id ? updatedCategory : item))
+      )
+      setCategories((current) => Array.from(new Set([...current, updatedCategory.name])))
+    }
+
+    cancelEditCategory()
+  } catch (error) {
+    setCategoryError(error.message || 'Failed to update category')
+  } finally {
+    setCategorySaving(false)
+  }
+}
+
+const handleDeleteCategory = async (category) => {
+  if (!category?.id || categorySaving) return
+
+  const confirmed = window.confirm(`Delete "${category.name}"?`)
+
+  if (!confirmed) return
+
+  try {
+    setCategorySaving(true)
+    setCategoryError('')
+
+    await deleteStoreCategory(category.id)
+    setStoreCategories((current) => current.filter((item) => item.id !== category.id))
+  } catch (error) {
+    setCategoryError(error.message || 'Failed to delete category')
+  } finally {
+    setCategorySaving(false)
+  }
+}
+
+const moveCategory = (categoryId, direction) => {
+  setStoreCategories((current) => {
+    const index = current.findIndex((item) => item.id === categoryId)
+    if (index < 0) return current
+
+    const nextIndex = direction === 'up' ? index - 1 : index + 1
+    if (nextIndex < 0 || nextIndex >= current.length) return current
+
+    const next = [...current]
+    const temp = next[index]
+    next[index] = next[nextIndex]
+    next[nextIndex] = temp
+    return next
+  })
+}
+
+const saveCategoryOrder = async () => {
+  if (categorySaving) return
+
+  try {
+    setCategorySaving(true)
+    setCategoryError('')
+
+    const savedCategories = await reorderStoreCategories(storeCategories.map((item) => item.id))
+    setStoreCategories(savedCategories)
+  } catch (error) {
+    setCategoryError(error.message || 'Failed to save category order')
+  } finally {
+    setCategorySaving(false)
+  }
+}
 
   const saveProduct = async (product) => {
     const savedProduct = editingProduct?.id
@@ -1306,6 +1680,18 @@ export default function AuthorStoreManagerPage() {
           onDeleteProduct={handleDeleteProduct}
           loading={loading}
           localError={localError}
+          storeCategories={storeCategories}
+categoryError={categoryError}
+categorySaving={categorySaving}
+editingCategoryId={editingCategoryId}
+editingCategoryName={editingCategoryName}
+setEditingCategoryName={setEditingCategoryName}
+startEditCategory={startEditCategory}
+cancelEditCategory={cancelEditCategory}
+saveEditCategory={saveEditCategory}
+handleDeleteCategory={handleDeleteCategory}
+moveCategory={moveCategory}
+saveCategoryOrder={saveCategoryOrder}
         />
       )}
 
@@ -1313,3 +1699,4 @@ export default function AuthorStoreManagerPage() {
     </div>
   )
 }
+
