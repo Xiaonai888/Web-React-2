@@ -1286,14 +1286,15 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
     <TextInput value={genre} onChange={setGenre} placeholder="Romance, fantasy, mystery..." />
   </div>
 
- {type === 'Book' ? (
-  <div>
-    <FieldLabel>Condition</FieldLabel>
-    <SelectInput value={condition} onChange={setCondition}>
-      {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-    </SelectInput>
-  </div>
-) : null}
+  {type === 'Book' ? (
+    <div>
+      <FieldLabel>Condition</FieldLabel>
+      <SelectInput value={condition} onChange={setCondition}>
+        {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+      </SelectInput>
+    </div>
+  ) : null}
+</div>
 
 {type === 'Book' ? (
   <div className="grid gap-3 sm:grid-cols-2">
