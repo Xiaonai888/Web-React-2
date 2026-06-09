@@ -1419,12 +1419,28 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           </button>
         )
       })}
-    </div>
+     </div>
 
-  
-    </span>
-  </button>
-) : null}
+    {!displayAuthor.is_owner && tabsFrozen ? (
+      <button
+        type="button"
+        onClick={() => {
+          setActiveTab('Store')
+          setMessage('Cart is coming soon.')
+        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+        aria-label="Open cart"
+      >
+        <span id="author-cover-cart-target" className="relative flex h-9 w-9 items-center justify-center">
+          <i className="fa-solid fa-cart-shopping text-[17px]" />
+          {readerCartCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black leading-none text-white">
+              {readerCartCount > 99 ? '99+' : readerCartCount}
+            </span>
+          ) : null}
+        </span>
+      </button>
+    ) : null}
   </div>
 </section>
 
