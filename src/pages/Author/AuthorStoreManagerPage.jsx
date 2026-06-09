@@ -1025,11 +1025,10 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   return
 }
 
-    if (!title.trim()) {
-      setFormError('Book title is required.')
-      return
-    }
-
+   if (type === 'Book' && !productToEdit && (!stock || Number(stock) < 1)) {
+  setFormError('Stock quantity must be at least 1.')
+  return
+}
     if (type === 'Book' && condition === 'Second Hand' && (!qualityPercent || Number.isNaN(qualityNumber) || qualityNumber < 1 || qualityNumber > 100)) {
       setFormError('Book quality must be between 1% and 100%.')
       return
@@ -1262,21 +1261,26 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
             </div>
           </div>
 
-          {type === 'Book' ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-             <div>
-  <FieldLabel>Sort order</FieldLabel>
-  <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
-</div>
-<div>
-  <FieldLabel>&nbsp;</FieldLabel>
-  <label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
-    <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
-    Pre-order product
-  </label>
-</div>
-            </div>
-          ) : (
+         {type === 'Book' ? (
+  <div className="space-y-3">
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div>
+        <FieldLabel>Stock quantity</FieldLabel>
+        <TextInput value={stock} onChange={setStock} placeholder="Example: 10" type="number" />
+      </div>
+
+      <div>
+        <FieldLabel>Sort order</FieldLabel>
+        <TextInput value={sortOrder} onChange={setSortOrder} placeholder="0" type="number" />
+      </div>
+    </div>
+
+    <label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
+      <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
+      Pre-order product
+    </label>
+  </div>
+) : (
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <FieldLabel>PDF file</FieldLabel>
