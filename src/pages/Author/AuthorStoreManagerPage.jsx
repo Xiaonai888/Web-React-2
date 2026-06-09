@@ -1216,7 +1216,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
  {type === 'Book' ? (
   <div>
-    <FieldLabel>Availability / Stock status</FieldLabel>
+    <FieldLabel>Condition</FieldLabel>
     <SelectInput value={condition} onChange={setCondition}>
       {BOOK_CONDITIONS.map((item) => <option key={item} value={item}>{item}</option>)}
     </SelectInput>
