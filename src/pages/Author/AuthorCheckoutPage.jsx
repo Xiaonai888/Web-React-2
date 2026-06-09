@@ -1,6 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+
+function getReaderToken() {
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+}
+
 const DELIVERY_COMPANIES = [
   {
     id: 'jnt',
@@ -201,6 +213,7 @@ export default function AuthorCheckoutPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState(DELIVERY_COMPANIES[0].id)
   const [deliveryNote, setDeliveryNote] = useState(() => getBuyerProfile().delivery_note || '')
   const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price_value || 0) * Number(item.quantity || 1), 0), [items])
@@ -227,30 +240,109 @@ export default function AuthorCheckoutPage() {
     saveCartItems(nextItems)
   }
 
-  function handleContinuePayment() {
-    if (!items.length) {
-      setMessage('Your cart is empty.')
-      return
-    }
+ async function handleContinuePayment() {
+  const token = getReaderToken()
 
-    if (!hasBuyerProfile) {
-      setBuyerOpen(true)
-      return
-    }
+  if (!token) {
+    setMessage('Please login before checkout.')
+    setBuyerOpen(true)
+    return
+  }
 
-    saveAuthorOrder({
-      items,
-      subtotal,
-      deliveryFee,
-      deliveryCompany: selectedCompany,
-      deliveryNote,
-      buyerProfile,
+  if (!items.length) {
+    setMessage('Your cart is empty.')
+    return
+  }
+
+  if (!hasBuyerProfile) {
+    setBuyerOpen(true)
+    return
+  }
+
+  const profile = {
+    phone_number: buyerProfile.phone_number || '',
+    province_city: buyerProfile.province_city || 'Phnom Penh',
+    delivery_address: buyerProfile.delivery_address || '',
+    delivery_note: deliveryNote || buyerProfile.delivery_note || '',
+    telegram_username: buyerProfile.telegram_username || '',
+    facebook_link: buyerProfile.facebook_link || '',
+  }
+
+  try {
+    setSaving(true)
+    setMessage('')
+
+    const profileResponse = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profile),
     })
 
-    setItems([])
-    saveCartItems([])
-    navigate('/author/orders')
+    const profileData = await profileResponse.json().catch(() => ({}))
+
+    if (!profileResponse.ok || profileData.ok === false) {
+      throw new Error(profileData.message || 'Failed to save buyer profile')
+    }
+
+    const savedProfile = {
+      ...buyerProfile,
+      ...profile,
+      ...(profileData.profile || {}),
+    }
+
+    saveBuyerProfile(savedProfile)
+    setBuyerProfile(savedProfile)
+
+    const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items,
+        delivery_company: {
+          key: selectedCompany.id,
+          name: selectedCompany.label,
+          shortName: selectedCompany.name,
+          fee: selectedCompany.fee,
+        },
+      }),
+    })
+
+    const orderData = await orderResponse.json().catch(() => ({}))
+
+    if (!orderResponse.ok || orderData.ok === false) {
+      throw new Error(orderData.message || 'Failed to create Author Store payment')
+    }
+
+    if (!orderData.order) {
+      throw new Error('Payment order was not created')
+    }
+
+    localStorage.setItem(
+      'shadow_author_current_order_payment',
+      JSON.stringify({
+        order: orderData.order,
+        created_at: new Date().toISOString(),
+      })
+    )
+
+    const paywayUrl =
+      orderData.order.checkout_url ||
+      orderData.order.deeplink ||
+      FALLBACK_PAYWAY_LINK
+
+    window.location.replace(paywayUrl)
+  } catch (error) {
+    setMessage(error.message || 'Failed to continue payment')
+  } finally {
+    setSaving(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-[#f7f5fb] pb-[92px]">
@@ -411,9 +503,16 @@ export default function AuthorCheckoutPage() {
             <div className="text-[11px] font-semibold text-[#8b93a1]">Total</div>
             <div className="mt-1 text-[17px] font-black text-[#e5484d]">{money(total)}</div>
           </div>
-          <button type="button" onClick={handleContinuePayment} className="h-12 rounded-full bg-[#111827] px-8 text-[13px] font-black text-white shadow-xl active:scale-95">
-            Continue to Payment
-          </button>
+          
+        <button
+  type="button"
+  onClick={handleContinuePayment}
+  disabled={saving}
+  className="h-12 rounded-full bg-[#111827] px-8 text-[13px] font-black text-white shadow-xl active:scale-95 disabled:bg-[#aeb6c4]"
+>
+  {saving ? 'Creating payment...' : 'Continue to Payment'}
+</button>
+          
         </div>
       </footer>
 
