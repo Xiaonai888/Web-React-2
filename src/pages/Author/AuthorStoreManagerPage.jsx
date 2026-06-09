@@ -7,11 +7,29 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks', 'New Release']
+const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Sold out', 'Author Picks', 'New Release']
 const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
+
+
+function withSystemCategories(categories) {
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const hasSoldOut = safeCategories.some((category) => category.name === 'Sold out')
+
+  if (hasSoldOut) return safeCategories
+
+  return [
+    ...safeCategories,
+    {
+      id: 'system-sold-out',
+      name: 'Sold out',
+      sortOrder: safeCategories.length,
+      isDefault: true,
+    },
+  ]
+}
 
 function getAuthToken() {
   return (
@@ -570,6 +588,7 @@ function StoreManagerHome({
   localError,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
+  const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
 
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
@@ -755,11 +774,14 @@ function StoreManagerHome({
       ) : null}
 
       <div className="space-y-2">
-        {(storeCategories.length ? storeCategories : categories.map((name, index) => ({
-          id: `local-${index}`,
-          name,
-        }))).map((category, index, list) => {
-          const editing = editingCategoryId === category.id
+        {withSystemCategories(storeCategories.length ? storeCategories : categories.map((name, index) => ({
+  id: `local-${index}`,
+  name,
+}))).map((category, index, list) => {
+  const editing = editingCategoryId === category.id
+  const isSoldOutSystem = category.name === 'Sold out'
+  const isLocalCategory = category.id.startsWith('local-')
+  const menuOpen = openCategoryMenuId === category.id
 
           return (
             <div
@@ -776,9 +798,16 @@ function StoreManagerHome({
                       className="h-10 w-full rounded-xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-black text-[#111827] outline-none focus:border-[#111827]"
                     />
                   ) : (
-                    <span className="truncate text-[13px] font-black text-[#111827]">
-                      {category.name}
-                    </span>
+                    <div className="flex min-w-0 items-center gap-2">
+  <span className="truncate text-[13px] font-black text-[#111827]">
+    {category.name}
+  </span>
+  {isSoldOutSystem ? (
+    <span className="shrink-0 rounded-full bg-[#eef3f8] px-2 py-0.5 text-[9px] font-black text-[#42526b]">
+      System
+    </span>
+  ) : null}
+</div>
                   )}
                 </div>
 
@@ -819,24 +848,58 @@ function StoreManagerHome({
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => startEditCategory(category)}
-                      disabled={category.id.startsWith('local-')}
-                      className="h-8 rounded-xl bg-[#fff4cc] px-3 text-[11px] font-black text-[#111827] disabled:opacity-40"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(category)}
-                      disabled={category.id.startsWith('local-')}
-                      className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] disabled:opacity-40"
-                    >
-                      Delete
-                    </button>
-                  </>
+                  <div className="relative">
+  <button
+    type="button"
+    onClick={() => setOpenCategoryMenuId(menuOpen ? '' : category.id)}
+    className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/5 active:scale-95"
+  >
+    <i className="fa-solid fa-ellipsis text-[12px]" />
+  </button>
+
+  {menuOpen ? (
+    <div className="absolute right-0 top-9 z-30 w-32 overflow-hidden rounded-2xl bg-white py-1 shadow-xl ring-1 ring-black/10">
+      <button
+        type="button"
+        onClick={() => {
+          setOpenCategoryMenuId('')
+          window.alert('Hide category is next stage.')
+        }}
+        className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc]"
+      >
+        Hide
+      </button>
+
+      {!isSoldOutSystem ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpenCategoryMenuId('')
+            startEditCategory(category)
+          }}
+          disabled={isLocalCategory}
+          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc] disabled:opacity-40"
+        >
+          Edit
+        </button>
+      ) : null}
+
+      {!isSoldOutSystem ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpenCategoryMenuId('')
+            handleDeleteCategory(category)
+          }}
+          disabled={isLocalCategory}
+          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
+        >
+          Delete
+        </button>
+      ) : null}
+    </div>
+  ) : null}
+</div>
                 )}
               </div>
             </div>
