@@ -19,7 +19,7 @@ const DELIVERY_COMPANIES = [
     name: 'J&T',
     label: 'J&T Express',
     fee: 2,
-    logo: '/assets/Icons/J&T.svg',
+    logo: '/assets/Icons/J%26T.svg',
   },
   {
     id: 'vet',
@@ -217,7 +217,8 @@ export default function AuthorCheckoutPage() {
 
   const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price_value || 0) * Number(item.quantity || 1), 0), [items])
-  const deliveryFee = Number(selectedCompany.fee || 0)
+  const needsDelivery = items.some((item) => String(item.type || item.product_type || '').toLowerCase() === 'book')
+  const deliveryFee = needsDelivery ? Number(selectedCompany.fee || 0) : 0
   const total = subtotal + deliveryFee
   const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)
   const hasBuyerProfile = Boolean(
@@ -254,10 +255,10 @@ export default function AuthorCheckoutPage() {
     return
   }
 
-  if (!hasBuyerProfile) {
-    setBuyerOpen(true)
-    return
-  }
+  if (needsDelivery && !hasBuyerProfile) {
+  setBuyerOpen(true)
+  return
+}
 
   const profile = {
     phone_number: buyerProfile.phone_number || '',
@@ -272,29 +273,31 @@ export default function AuthorCheckoutPage() {
     setSaving(true)
     setMessage('')
 
-    const profileResponse = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    })
+    if (needsDelivery) {
+  const profileResponse = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profile),
+  })
 
-    const profileData = await profileResponse.json().catch(() => ({}))
+  const profileData = await profileResponse.json().catch(() => ({}))
 
-    if (!profileResponse.ok || profileData.ok === false) {
-      throw new Error(profileData.message || 'Failed to save buyer profile')
-    }
+  if (!profileResponse.ok || profileData.ok === false) {
+    throw new Error(profileData.message || 'Failed to save buyer profile')
+  }
 
-    const savedProfile = {
-      ...buyerProfile,
-      ...profile,
-      ...(profileData.profile || {}),
-    }
+  const savedProfile = {
+    ...buyerProfile,
+    ...profile,
+    ...(profileData.profile || {}),
+  }
 
-    saveBuyerProfile(savedProfile)
-    setBuyerProfile(savedProfile)
+  saveBuyerProfile(savedProfile)
+  setBuyerProfile(savedProfile)
+}
 
     const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
       method: 'POST',
@@ -304,12 +307,14 @@ export default function AuthorCheckoutPage() {
       },
       body: JSON.stringify({
         items,
-        delivery_company: {
-          key: selectedCompany.id,
-          name: selectedCompany.label,
-          shortName: selectedCompany.name,
-          fee: selectedCompany.fee,
-        },
+        delivery_company: needsDelivery
+  ? {
+      key: selectedCompany.id,
+      name: selectedCompany.label,
+      shortName: selectedCompany.name,
+      fee: selectedCompany.fee,
+    }
+  : null,
       }),
     })
 
@@ -365,6 +370,7 @@ export default function AuthorCheckoutPage() {
           </button>
         ) : null}
 
+        {needsDelivery ? (
         <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
@@ -416,12 +422,13 @@ export default function AuthorCheckoutPage() {
             />
           </div>
         </section>
+        ) : null}
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-[17px] font-black text-[#111827]">Order Items</h2>
-              <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">{itemCount} books in this order</p>
+              <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">{itemCount} items in this order</p>
             </div>
             <i className="fa-solid fa-chevron-up text-[12px] text-[#9ca3af]" />
           </div>
@@ -471,22 +478,23 @@ export default function AuthorCheckoutPage() {
             )}
           </div>
         </section>
+      
 
         <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <h2 className="text-[17px] font-black text-[#111827]">Payment Summary</h2>
           <div className="mt-4 space-y-3 text-[13px] font-semibold">
-            <div className="flex justify-between text-[#42526b]">
-              <span>Subtotal</span>
-              <span className="font-black text-[#111827]">{money(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-[#42526b]">
-              <span>Delivery Fee</span>
-              <span className="font-black text-[#111827]">{money(deliveryFee)}</span>
-            </div>
-            <div className="flex justify-between text-[#42526b]">
-              <span>Delivery Company</span>
-              <span className="font-black text-[#111827]">{selectedCompany.name}</span>
-            </div>
+            {needsDelivery ? (
+  <>
+    <div className="flex justify-between text-[#42526b]">
+      <span>Delivery Fee</span>
+      <span className="font-black text-[#111827]">{money(deliveryFee)}</span>
+    </div>
+    <div className="flex justify-between text-[#42526b]">
+      <span>Delivery Company</span>
+      <span className="font-black text-[#111827]">{selectedCompany.name}</span>
+    </div>
+  </>
+) : null}
             <div className="border-t border-[#eef0f4] pt-3">
               <div className="flex justify-between text-[14px] font-black text-[#111827]">
                 <span>Total</span>
