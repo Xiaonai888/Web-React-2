@@ -120,6 +120,49 @@ async function fetchMyProducts() {
   return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
 }
 
+async function fetchDeliverySettings() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/delivery-settings`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load delivery settings')
+  }
+
+  return data.delivery_settings || []
+}
+
+async function updateDeliverySettings(deliverySettings) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/delivery-settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ delivery_settings: deliverySettings }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update delivery settings')
+  }
+
+  return data.delivery_settings || []
+}
+
 async function createStoreProduct(product) {
   const token = getAuthToken()
 
@@ -595,6 +638,62 @@ function StoreManagerHome({
   const [settingsView, setSettingsView] = useState('home')
   const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
   const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
+  const [deliverySaving, setDeliverySaving] = useState(false)
+  const [deliveryLoading, setDeliveryLoading] = useState(false)
+  const [deliveryMessage, setDeliveryMessage] = useState('')
+
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadDeliverySettings() {
+      try {
+        setDeliveryLoading(true)
+
+        const settings = await fetchDeliverySettings()
+        const jnt = settings.find((item) => item.company_key === 'jnt')
+        const vet = settings.find((item) => item.company_key === 'vet')
+
+        if (!ignore) {
+          setJtDeliveryFee(String(jnt?.fee_usd ?? 2))
+          setVetDeliveryFee(String(vet?.fee_usd ?? 2))
+        }
+      } catch {
+      } finally {
+        if (!ignore) setDeliveryLoading(false)
+      }
+    }
+
+    loadDeliverySettings()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const handleSaveDeliveryFees = async () => {
+  try {
+    setDeliverySaving(true)
+    setDeliveryMessage('')
+
+    const settings = await updateDeliverySettings([
+      { company_key: 'jnt', fee_usd: Number(jtDeliveryFee || 0) },
+      { company_key: 'vet', fee_usd: Number(vetDeliveryFee || 0) },
+    ])
+
+    const jnt = settings.find((item) => item.company_key === 'jnt')
+    const vet = settings.find((item) => item.company_key === 'vet')
+
+    setJtDeliveryFee(String(jnt?.fee_usd ?? jtDeliveryFee))
+    setVetDeliveryFee(String(vet?.fee_usd ?? vetDeliveryFee))
+    setDeliveryMessage('Delivery fees saved.')
+  } catch (error) {
+    setDeliveryMessage(error.message || 'Failed to save delivery fees.')
+  } finally {
+    setDeliverySaving(false)
+  }
+}
+  
 
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
@@ -1004,11 +1103,16 @@ function StoreManagerHome({
 
       <button
         type="button"
-        onClick={() => window.alert('Delivery fee save route is next stage.')}
+        onClick={handleSaveDeliveryFees}
+        disabled={deliverySaving}
         className="mt-4 h-11 w-full rounded-2xl bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
       >
-        Save delivery fees
+        {deliverySaving || deliveryLoading ? 'Saving...' : 'Save delivery fees'}
       </button>
+
+      {deliveryMessage ? (
+        <p className="mt-3 text-[12px] font-bold text-[#42526b]">{deliveryMessage}</p>
+      ) : null}
         </div>
       </>
     ) : null}
@@ -1882,18 +1986,18 @@ const saveCategoryOrder = async () => {
           loading={loading}
           localError={localError}
           storeCategories={storeCategories}
-categoryError={categoryError}
-categorySaving={categorySaving}
-editingCategoryId={editingCategoryId}
-editingCategoryName={editingCategoryName}
-setEditingCategoryName={setEditingCategoryName}
-startEditCategory={startEditCategory}
-cancelEditCategory={cancelEditCategory}
-saveEditCategory={saveEditCategory}
-handleDeleteCategory={handleDeleteCategory}
-handleToggleHideCategory={handleToggleHideCategory}
-moveCategory={moveCategory}
-saveCategoryOrder={saveCategoryOrder}
+          categoryError={categoryError}
+          categorySaving={categorySaving}
+          editingCategoryId={editingCategoryId}
+          editingCategoryName={editingCategoryName}
+          setEditingCategoryName={setEditingCategoryName}
+          startEditCategory={startEditCategory}
+          cancelEditCategory={cancelEditCategory}
+          saveEditCategory={saveEditCategory}
+          handleDeleteCategory={handleDeleteCategory}
+          handleToggleHideCategory={handleToggleHideCategory}
+          moveCategory={moveCategory}
+          saveCategoryOrder={saveCategoryOrder}
         />
       )}
 
