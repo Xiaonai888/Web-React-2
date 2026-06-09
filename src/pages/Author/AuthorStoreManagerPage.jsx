@@ -739,37 +739,45 @@ function StoreManagerHome({
 {activeTab === 'Settings' ? (
   <section className="mt-4 space-y-3">
     {settingsView === 'home' ? (
-      <>
-        <button
-          type="button"
-          onClick={() => setSettingsView('categories')}
-          className="flex w-full items-center justify-between rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
-        >
-          <span>
-            <span className="block text-[16px] font-black text-[#111827]">Category Management</span>
-            <span className="mt-1 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              Create, hide, edit, delete, and reorder store categories.
-            </span>
-          </span>
-          <i className="fa-solid fa-chevron-right text-[13px] text-[#9ca3af]" />
-        </button>
+  <div className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+    <div className="px-4 pb-2 pt-4">
+      <h2 className="text-[17px] font-black text-[#111827]">Store Settings</h2>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        Manage store sections and checkout settings.
+      </p>
+    </div>
 
-        <button
-          type="button"
-          onClick={() => setSettingsView('delivery')}
-          className="flex w-full items-center justify-between rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
-        >
-          <span>
-            <span className="block text-[16px] font-black text-[#111827]">Delivery Company</span>
-            <span className="mt-1 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              Set delivery fees for J&amp;T and VET checkout.
-            </span>
-          </span>
-          <i className="fa-solid fa-chevron-right text-[13px] text-[#9ca3af]" />
-        </button>
-      </>
-    ) : null}
+    <button
+      type="button"
+      onClick={() => setSettingsView('categories')}
+      className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14px] font-black text-[#111827]">Category Management</span>
+        <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          Categories, hidden sections, and order.
+        </span>
+      </span>
+      <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+    </button>
 
+    <div className="mx-4 h-px bg-[#eef0f4]" />
+
+    <button
+      type="button"
+      onClick={() => setSettingsView('delivery')}
+      className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14px] font-black text-[#111827]">Delivery Company</span>
+        <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          J&amp;T fee, VET fee, and checkout delivery.
+        </span>
+      </span>
+      <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+    </button>
+  </div>
+) : null}
     {settingsView === 'categories' ? (
       <>
         <button
