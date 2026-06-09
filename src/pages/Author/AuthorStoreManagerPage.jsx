@@ -170,6 +170,49 @@ async function fetchDeliverySettings() {
   return data.delivery_settings || []
 }
 
+async function fetchTelegramSettings() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load Telegram settings')
+  }
+
+  return data.telegram_settings || { bot_username: '', chat_id: '' }
+}
+
+async function updateTelegramSettings(settings) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(settings),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save Telegram settings')
+  }
+
+  return data.telegram_settings || { bot_username: '', chat_id: '' }
+}
+
 async function updateDeliverySettings(deliverySettings) {
   const token = getAuthToken()
 
@@ -683,6 +726,11 @@ function StoreManagerHome({
   const [deliverySaving, setDeliverySaving] = useState(false)
   const [deliveryLoading, setDeliveryLoading] = useState(false)
   const [deliveryMessage, setDeliveryMessage] = useState('')
+  const [telegramBotUsername, setTelegramBotUsername] = useState('')
+  const [telegramChatId, setTelegramChatId] = useState('')
+  const [telegramSaving, setTelegramSaving] = useState(false)
+  const [telegramLoading, setTelegramLoading] = useState(false)
+  const [telegramMessage, setTelegramMessage] = useState('')
 
 
   useEffect(() => {
@@ -713,6 +761,32 @@ function StoreManagerHome({
     }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+
+    async function loadTelegramSettings() {
+      try {
+        setTelegramLoading(true)
+
+        const settings = await fetchTelegramSettings()
+
+        if (!ignore) {
+          setTelegramBotUsername(settings.bot_username || '')
+          setTelegramChatId(settings.chat_id || '')
+        }
+      } catch {
+      } finally {
+        if (!ignore) setTelegramLoading(false)
+      }
+    }
+
+    loadTelegramSettings()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const handleSaveDeliveryFees = async () => {
   try {
     setDeliverySaving(true)
@@ -735,7 +809,26 @@ function StoreManagerHome({
     setDeliverySaving(false)
   }
 }
-  
+
+  const handleSaveTelegramSettings = async () => {
+  try {
+    setTelegramSaving(true)
+    setTelegramMessage('')
+
+    const settings = await updateTelegramSettings({
+      bot_username: telegramBotUsername.trim(),
+      chat_id: telegramChatId.trim(),
+    })
+
+    setTelegramBotUsername(settings.bot_username || telegramBotUsername.trim())
+    setTelegramChatId(settings.chat_id || telegramChatId.trim())
+    setTelegramMessage('Telegram bot settings saved.')
+  } catch (error) {
+    setTelegramMessage(error.message || 'Failed to save Telegram bot settings.')
+  } finally {
+    setTelegramSaving(false)
+  }
+}
 
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
@@ -918,6 +1011,21 @@ function StoreManagerHome({
         <span className="block text-[14px] font-black text-[#111827]">Delivery Company</span>
         <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
           J&amp;T fee, VET fee, and checkout delivery.
+        </span>
+      </span>
+      <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+    </button>
+    <div className="mx-4 h-px bg-[#eef0f4]" />
+
+    <button
+      type="button"
+      onClick={() => setSettingsView('telegram')}
+      className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14px] font-black text-[#111827]">Telegram Bot</span>
+        <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          Connect order approval notifications to your Telegram group.
         </span>
       </span>
       <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
@@ -1226,6 +1334,70 @@ function StoreManagerHome({
       </button>
     </div>
   </div>
+) : null}
+
+  {settingsView === 'telegram' ? (
+  <>
+    <button
+      type="button"
+      onClick={() => setSettingsView('home')}
+      className="flex h-11 items-center gap-2 rounded-2xl bg-white px-4 text-[12px] font-black text-[#111827] shadow-sm ring-1 ring-black/5"
+    >
+      <i className="fa-solid fa-chevron-left text-[12px]" />
+      Settings
+    </button>
+
+    <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="mb-4">
+        <h2 className="text-[17px] font-black text-[#111827]">Telegram Bot</h2>
+        <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          Save your bot username and Telegram group chat ID for approved order notifications.
+        </p>
+      </div>
+
+      {telegramMessage ? (
+        <button
+          type="button"
+          onClick={() => setTelegramMessage('')}
+          className="mb-4 w-full rounded-2xl bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold text-[#111827] ring-1 ring-black/5"
+        >
+          {telegramMessage}
+        </button>
+      ) : null}
+
+      <div className="space-y-4">
+        <div>
+          <FieldLabel>Bot Username</FieldLabel>
+          <TextInput
+            value={telegramBotUsername}
+            onChange={setTelegramBotUsername}
+            placeholder="@ShadowAuthorStoreNotifyBot"
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Telegram Group Chat ID</FieldLabel>
+          <TextInput
+            value={telegramChatId}
+            onChange={setTelegramChatId}
+            placeholder="-1001234567890"
+          />
+          <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8b93a1]">
+            Add the bot to your Telegram group first, then paste the group chat ID here.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSaveTelegramSettings}
+          disabled={telegramSaving || telegramLoading}
+          className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-black text-white shadow-sm active:scale-[0.98] disabled:bg-[#aeb6c4]"
+        >
+          {telegramSaving ? 'Saving...' : telegramLoading ? 'Loading...' : 'Save Telegram Bot'}
+        </button>
+      </div>
+    </div>
+  </>
 ) : null}
   </section>
 ) : null}
@@ -2161,4 +2333,3 @@ const saveCategoryOrder = async () => {
     </div>
   )
 }
-
