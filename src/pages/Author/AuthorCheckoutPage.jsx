@@ -35,18 +35,28 @@ function saveCartItems(items) {
 
 function getBuyerProfile() {
   try {
-    const raw = localStorage.getItem('shadow_buyer_profile') || '{}'
+    const raw = localStorage.getItem('shadow_mall_buyer_profile') || '{}'
     const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? parsed : {}
+
+    if (!parsed || typeof parsed !== 'object') return {}
+
+    return {
+      name: parsed.name || '',
+      phone_number: parsed.phone_number || parsed.phone || '',
+      telegram_username: parsed.telegram_username || parsed.telegram || '',
+      facebook_link: parsed.facebook_link || parsed.facebook || '',
+      delivery_address: parsed.delivery_address || parsed.address || '',
+      delivery_note: parsed.delivery_note || '',
+      province_city: parsed.province_city || 'Phnom Penh',
+    }
   } catch {
     return {}
   }
 }
 
 function saveBuyerProfile(profile) {
-  localStorage.setItem('shadow_buyer_profile', JSON.stringify(profile))
+  localStorage.setItem('shadow_mall_buyer_profile', JSON.stringify(profile))
 }
-
 function getReaderUser() {
   try {
     return JSON.parse(
@@ -99,10 +109,11 @@ function saveAuthorOrder({ items, subtotal, deliveryFee, deliveryCompany, delive
 
 function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   const readerUser = getReaderUser()
-  const [name, setName] = useState(profile.name || readerUser?.name || '')
-  const [phone, setPhone] = useState(profile.phone || '')
-  const [telegram, setTelegram] = useState(profile.telegram || '')
-  const [facebook, setFacebook] = useState(profile.facebook || '')
+   const [name, setName] = useState(profile.name || readerUser?.name || '')
+  const [phone, setPhone] = useState(profile.phone_number || '')
+  const [telegram, setTelegram] = useState(profile.telegram_username || '')
+  const [facebook, setFacebook] = useState(profile.facebook_link || '')
+  const [address, setAddress] = useState(profile.delivery_address || '')
   const [address, setAddress] = useState(profile.address || '')
   const [error, setError] = useState('')
 
@@ -115,12 +126,14 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
     }
 
     const nextProfile = {
-      name: name.trim(),
-      phone: phone.trim(),
-      telegram: telegram.trim(),
-      facebook: facebook.trim(),
-      address: address.trim(),
-    }
+  name: name.trim(),
+  phone_number: phone.trim(),
+  telegram_username: telegram.trim(),
+  facebook_link: facebook.trim(),
+  delivery_address: address.trim(),
+  delivery_note: profile.delivery_note || '',
+  province_city: profile.province_city || 'Phnom Penh',
+}
 
     saveBuyerProfile(nextProfile)
     onSave(nextProfile)
@@ -195,7 +208,11 @@ export default function AuthorCheckoutPage() {
   const deliveryFee = Number(selectedCompany.fee || 0)
   const total = subtotal + deliveryFee
   const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)
-  const hasBuyerProfile = Boolean(buyerProfile.name && buyerProfile.phone && buyerProfile.address)
+  const hasBuyerProfile = Boolean(
+  buyerProfile.name &&
+  buyerProfile.phone_number &&
+  buyerProfile.delivery_address
+)
 
   function updateQuantity(id, nextQuantity) {
     const nextItems = items.map((item) => (
