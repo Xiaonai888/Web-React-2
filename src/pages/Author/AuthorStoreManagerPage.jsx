@@ -1224,11 +1224,9 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
-    <FieldLabel>Paper type</FieldLabel>
-    <SelectInput value={paperType} onChange={setPaperType}>
-      {PAPER_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
-    </SelectInput>
-  </div>
+  <FieldLabel>Paper type</FieldLabel>
+  <TextInput value={paperType} onChange={setPaperType} placeholder="Normal paper, glossy paper, cream paper..." />
+</div>
 
   <div>
     <FieldLabel>Cover type</FieldLabel>
