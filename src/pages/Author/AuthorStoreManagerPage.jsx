@@ -1165,7 +1165,9 @@ function StoreManagerHome({
         </button>
       </div>
     </div>
-  </div>
+    </div>
+) : null}
+  </section>
 ) : null}
 
       {activeTab === 'Orders' ? (
