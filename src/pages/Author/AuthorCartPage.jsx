@@ -68,7 +68,7 @@ export default function AuthorCartPage() {
           <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">Check your books and quantity before checkout.</p>
         </section>
 
-        <button type="button" onClick={() => navigate('/shop/mall/orders')} className="mt-3 flex w-full items-center justify-between rounded-[24px] bg-white px-4 py-4 text-left shadow-sm ring-1 ring-black/5">
+        <button type="button" onClick={() => navigate('/author/orders')} className="mt-3 flex w-full items-center justify-between rounded-[24px] bg-white px-4 py-4 text-left shadow-sm ring-1 ring-black/5">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff4cc] text-[#9a6a00]">
               <i className="fa-solid fa-clock-rotate-left text-[15px]" />
