@@ -168,6 +168,7 @@ function AppShell() {
     '/author/page/edit',
     '/author/edit-page',
     '/author/cart',
+    '/author/checkout',
     '/author/orders',
     
   ]
