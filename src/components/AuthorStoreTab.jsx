@@ -348,14 +348,17 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
       ))
     : [
         ...safeCartItems,
-        {
-          id: item.id,
-          title: item.title,
-          type: item.type,
-          cover_url: item.cover_url,
-          price_value: Number(String(item.price || '0').replace('$', '')) || 0,
-          quantity: 1,
-        },
+       {
+  id: item.id,
+  title: item.title,
+  type: item.type,
+  cover_url: item.cover_url,
+  price_value: Number(String(item.price || '0').replace('$', '')) || 0,
+  quantity: 1,
+  author_page_id: author?.id || item.author_page_id || '',
+  author_page_name: author?.page_name || '',
+  author_page_username: author?.page_username || '',
+},
       ]
 
   localStorage.setItem('shadow_author_cart_items', JSON.stringify(nextCartItems))
