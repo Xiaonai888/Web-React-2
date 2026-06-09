@@ -35,6 +35,19 @@ function getStoredReaderUser() {
   }
 }
 
+
+function getAuthorCartCount() {
+  try {
+    const cartItems = JSON.parse(localStorage.getItem('shadow_author_cart_items') || '[]')
+
+    if (!Array.isArray(cartItems)) return 0
+
+    return cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0)
+  } catch {
+    return 0
+  }
+}
+
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
   const mimeMatch = header.match(/:(.*?);/)
@@ -610,7 +623,7 @@ function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
     </div>
   )
 }
-function CoverOptionsSheet({ open, onClose, onSeeCover, onUploadCover, onChooseCover }) {
+function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCover, onChooseCover }) {
   if (!open) return null
 
   return (
@@ -653,7 +666,7 @@ export default function AuthorPublicPage() {
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState('Posts')
   const [tabsFrozen, setTabsFrozen] = useState(false)
-  const [readerCartCount, setReaderCartCount] = useState(0)
+  const [readerCartCount, setReaderCartCount] = useState(() => getAuthorCartCount())
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
@@ -700,6 +713,22 @@ export default function AuthorPublicPage() {
     document.body.classList.remove('mobile-popup-open')
   }
 }, [followSettingsOpen])
+
+  useEffect(() => {
+    function syncAuthorCartCount() {
+      setReaderCartCount(getAuthorCartCount())
+    }
+
+    syncAuthorCartCount()
+
+    window.addEventListener('storage', syncAuthorCartCount)
+    window.addEventListener('shadow-author-cart-updated', syncAuthorCartCount)
+
+    return () => {
+      window.removeEventListener('storage', syncAuthorCartCount)
+      window.removeEventListener('shadow-author-cart-updated', syncAuthorCartCount)
+    }
+  }, [])
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -1119,6 +1148,7 @@ setTabsFrozen(tabsTop <= 55)
 
       <CoverOptionsSheet
   open={coverOptionsOpen}
+  savingSlide={savingSlide}
   onClose={() => setCoverOptionsOpen(false)}
   onSeeCover={() => {
     setCoverOptionsOpen(false)
