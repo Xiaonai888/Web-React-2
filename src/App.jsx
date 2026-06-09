@@ -164,6 +164,8 @@ function AppShell() {
     '/author/page-settings',
     '/author/page/edit',
     '/author/edit-page',
+    '/author/cart',
+    '/author/orders',
     
   ]
 
