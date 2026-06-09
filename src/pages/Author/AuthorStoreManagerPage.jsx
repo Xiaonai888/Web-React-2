@@ -429,6 +429,7 @@ function formatCategoryForUi(category) {
     name: category.name || '',
     sortOrder: Number(category.sort_order || 0),
     isDefault: Boolean(category.is_default),
+    isHidden: Boolean(category.is_hidden),
   }
 }
 
@@ -475,7 +476,7 @@ async function createStoreCategory(name) {
   return data.category ? formatCategoryForUi(data.category) : null
 }
 
-async function updateStoreCategory(categoryId, name) {
+async function updateStoreCategory(categoryId, updates) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
@@ -486,7 +487,7 @@ async function updateStoreCategory(categoryId, name) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(updates),
   })
 
   const data = await response.json().catch(() => ({}))
@@ -497,6 +498,7 @@ async function updateStoreCategory(categoryId, name) {
 
   return data.category ? formatCategoryForUi(data.category) : null
 }
+
 
 async function deleteStoreCategory(categoryId) {
   const token = getAuthToken()
@@ -579,6 +581,7 @@ function StoreManagerHome({
   cancelEditCategory,
   saveEditCategory,
   handleDeleteCategory,
+  handleToggleHideCategory,
   moveCategory,
   saveCategoryOrder,
   onAddProduct,
@@ -807,6 +810,11 @@ function StoreManagerHome({
       System
     </span>
   ) : null}
+  {category.isHidden ? (
+    <span className="shrink-0 rounded-full bg-[#fff1f1] px-2 py-0.5 text-[9px] font-black text-[#e5484d]">
+      Hidden
+    </span>
+  ) : null}
 </div>
                   )}
                 </div>
@@ -860,15 +868,16 @@ function StoreManagerHome({
   {menuOpen ? (
     <div className="absolute right-0 top-9 z-30 w-32 overflow-hidden rounded-2xl bg-white py-1 shadow-xl ring-1 ring-black/10">
       <button
-        type="button"
-        onClick={() => {
-          setOpenCategoryMenuId('')
-          window.alert('Hide category is next stage.')
-        }}
-        className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc]"
-      >
-        Hide
-      </button>
+  type="button"
+  onClick={() => {
+    setOpenCategoryMenuId('')
+    handleToggleHideCategory(category)
+  }}
+  disabled={isLocalCategory}
+  className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc] disabled:opacity-40"
+>
+  {category.isHidden ? 'Show' : 'Hide'}
+</button>
 
       {!isSoldOutSystem ? (
         <button
@@ -1571,7 +1580,7 @@ const saveEditCategory = async (category) => {
     setCategorySaving(true)
     setCategoryError('')
 
-    const updatedCategory = await updateStoreCategory(category.id, name)
+    const updatedCategory = await updateStoreCategory(category.id, { name })
 
     if (updatedCategory) {
       setStoreCategories((current) =>
@@ -1603,6 +1612,29 @@ const handleDeleteCategory = async (category) => {
     setStoreCategories((current) => current.filter((item) => item.id !== category.id))
   } catch (error) {
     setCategoryError(error.message || 'Failed to delete category')
+  } finally {
+    setCategorySaving(false)
+  }
+}
+
+      const handleToggleHideCategory = async (category) => {
+  if (!category?.id || categorySaving) return
+
+  try {
+    setCategorySaving(true)
+    setCategoryError('')
+
+    const updatedCategory = await updateStoreCategory(category.id, {
+      is_hidden: !category.isHidden,
+    })
+
+    if (updatedCategory) {
+      setStoreCategories((current) =>
+        current.map((item) => (item.id === updatedCategory.id ? updatedCategory : item))
+      )
+    }
+  } catch (error) {
+    setCategoryError(error.message || 'Failed to update category')
   } finally {
     setCategorySaving(false)
   }
@@ -1762,6 +1794,7 @@ startEditCategory={startEditCategory}
 cancelEditCategory={cancelEditCategory}
 saveEditCategory={saveEditCategory}
 handleDeleteCategory={handleDeleteCategory}
+handleToggleHideCategory={handleToggleHideCategory}
 moveCategory={moveCategory}
 saveCategoryOrder={saveCategoryOrder}
         />
