@@ -69,6 +69,7 @@ function createOrderId() {
 }
 
 function saveAuthorOrder({ items, subtotal, deliveryFee, deliveryCompany, deliveryNote, buyerProfile }) {
+  const firstItem = Array.isArray(items) ? items[0] || {} : {}
   const rawOrders = localStorage.getItem('shadow_author_order_history') || '[]'
   const orders = JSON.parse(rawOrders)
   const safeOrders = Array.isArray(orders) ? orders : []
@@ -78,6 +79,10 @@ function saveAuthorOrder({ items, subtotal, deliveryFee, deliveryCompany, delive
     transaction_id: '',
     status: 'waiting',
     created_at: new Date().toISOString(),
+    source: 'author_store',
+    author_page_id: firstItem.author_page_id || '',
+    author_page_name: firstItem.author_page_name || '',
+    author_page_username: firstItem.author_page_username || '',
     items,
     subtotal,
     delivery_fee: deliveryFee,
