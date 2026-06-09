@@ -187,39 +187,15 @@ async function fetchTelegramSettings() {
     throw new Error(data.message || 'Failed to load Telegram settings')
   }
 
-  return data.telegram_settings || { bot_username: '', chat_id: '' }
+  return data.telegram_settings || {}
 }
 
-async function updateTelegramSettings(settings) {
+async function createTelegramConnectCode() {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(settings),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to save Telegram settings')
-  }
-
-  return data.telegram_settings || { bot_username: '', chat_id: '' }
-}
-
-
-async function testTelegramSettings() {
-  const token = getAuthToken()
-
-  if (!token) throw new Error('Please login first')
-
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/test`, {
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/connect-code`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -229,12 +205,11 @@ async function testTelegramSettings() {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to send test message')
+    throw new Error(data.message || 'Failed to create Telegram connect code')
   }
 
-  return data
+  return data.telegram_settings || {}
 }
-
 
 async function updateDeliverySettings(deliverySettings) {
   const token = getAuthToken()
@@ -751,10 +726,13 @@ function StoreManagerHome({
   const [deliveryMessage, setDeliveryMessage] = useState('')
   const [telegramBotUsername, setTelegramBotUsername] = useState('')
   const [telegramChatId, setTelegramChatId] = useState('')
-  const [telegramSaving, setTelegramSaving] = useState(false)
+  const [telegramChatTitle, setTelegramChatTitle] = useState('')
+  const [telegramLinkedAt, setTelegramLinkedAt] = useState('')
+  const [telegramLinkCode, setTelegramLinkCode] = useState('')
+  const [telegramLinkExpiresAt, setTelegramLinkExpiresAt] = useState('')
+  const [telegramConnecting, setTelegramConnecting] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
-  const [telegramTesting, setTelegramTesting] = useState(false)
 
 
   useEffect(() => {
@@ -780,9 +758,6 @@ function StoreManagerHome({
 
     loadDeliverySettings()
 
-    const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
-    const canCreateCustomCategory = customCategoryCount < 5
-
     return () => {
       ignore = true
     }
@@ -800,6 +775,10 @@ function StoreManagerHome({
         if (!ignore) {
           setTelegramBotUsername(settings.bot_username || '')
           setTelegramChatId(settings.chat_id || '')
+          setTelegramChatTitle(settings.chat_title || '')
+          setTelegramLinkedAt(settings.linked_at || '')
+          setTelegramLinkCode(settings.link_code || '')
+          setTelegramLinkExpiresAt(settings.expires_at || '')
         }
       } catch {
       } finally {
@@ -837,46 +816,30 @@ function StoreManagerHome({
   }
 }
 
-  const handleSaveTelegramSettings = async () => {
+  const handleCreateTelegramConnectCode = async () => {
   try {
-    setTelegramSaving(true)
+    setTelegramConnecting(true)
     setTelegramMessage('')
 
-    const settings = await updateTelegramSettings({
-      bot_username: telegramBotUsername.trim(),
-      chat_id: telegramChatId.trim(),
-    })
+    const settings = await createTelegramConnectCode()
 
-    setTelegramBotUsername(settings.bot_username || telegramBotUsername.trim())
-    setTelegramChatId(settings.chat_id || telegramChatId.trim())
-    setTelegramMessage('Telegram bot settings saved.')
+    setTelegramBotUsername(settings.bot_username || telegramBotUsername)
+    setTelegramChatId(settings.chat_id || telegramChatId)
+    setTelegramChatTitle(settings.chat_title || telegramChatTitle)
+    setTelegramLinkedAt(settings.linked_at || telegramLinkedAt)
+    setTelegramLinkCode(settings.link_code || '')
+    setTelegramLinkExpiresAt(settings.expires_at || '')
+    setTelegramMessage('Connect code created. Add the bot to your Telegram group and send this code in that group.')
   } catch (error) {
-    setTelegramMessage(error.message || 'Failed to save Telegram bot settings.')
+    setTelegramMessage(error.message || 'Failed to create Telegram connect code.')
   } finally {
-    setTelegramSaving(false)
+    setTelegramConnecting(false)
   }
 }
 
-const handleTestTelegramSettings = async () => {
-  try {
-    setTelegramTesting(true)
-    setTelegramMessage('')
-
-    await testTelegramSettings()
-
-    setTelegramMessage('Test message sent to your Telegram group.')
-  } catch (error) {
-    setTelegramMessage(error.message || 'Failed to send Telegram test message.')
-  } finally {
-    setTelegramTesting(false)
-  }
-}
-  
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
   const records = filteredProducts.filter((product) => {
-  const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
-  const canCreateCustomCategory = customCategoryCount < 5
     if (activeType === 'Active') return product.status === 'Active'
     if (activeType === 'Draft') return product.status === 'Draft'
     return true
@@ -1087,42 +1050,23 @@ const handleTestTelegramSettings = async () => {
           Settings
         </button>
 
-       <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-  <div className="flex items-start justify-between gap-3">
-    <div>
-      <h2 className="text-[16px] font-black text-[#111827]">Create custom category</h2>
+        <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
       <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        You can create up to 5 custom categories.
+        New categories can become sections in the public Store tab.
       </p>
+      <div className="mt-3 flex gap-2">
+        <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
+        <button
+          type="button"
+          onClick={addCategory}
+          disabled={categorySaving}
+          className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-60"
+        >
+          Add
+        </button>
+      </div>
     </div>
-
-    <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
-      {customCategoryCount}/5
-    </span>
-  </div>
-
-  <div className="mt-3 flex gap-2">
-    <TextInput
-      value={newCategory}
-      onChange={setNewCategory}
-      placeholder={canCreateCustomCategory ? 'Category name' : 'Custom category limit reached'}
-    />
-    <button
-      type="button"
-      onClick={addCategory}
-      disabled={categorySaving || !canCreateCustomCategory}
-      className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-40"
-    >
-      Add
-    </button>
-  </div>
-
-  {!canCreateCustomCategory ? (
-    <p className="mt-2 text-[11px] font-bold text-[#e5484d]">
-      Custom category limit reached. Delete one custom category before creating a new one.
-    </p>
-  ) : null}
-</div>
 
     <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -1264,19 +1208,19 @@ const handleTestTelegramSettings = async () => {
         </button>
       ) : null}
 
-     {!category.isDefault ? (
-  <button
-    type="button"
-    onClick={() => {
-      setOpenCategoryMenuId('')
-      handleDeleteCategory(category)
-    }}
-    disabled={isLocalCategory}
-    className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
-  >
-    Delete
-  </button>
-) : null}
+      {!isSoldOutSystem ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpenCategoryMenuId('')
+            handleDeleteCategory(category)
+          }}
+          disabled={isLocalCategory}
+          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
+        >
+          Delete
+        </button>
+      ) : null}
     </div>
   ) : null}
 </div>
@@ -1410,47 +1354,61 @@ const handleTestTelegramSettings = async () => {
       Settings
     </button>
 
-  
+    <div className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+      <div className="bg-gradient-to-br from-[#e9f7ff] via-[#f4fbff] to-white px-4 py-5 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#229ed9] shadow-sm ring-1 ring-black/5">
+          <i className="fa-brands fa-telegram text-[30px]" />
+        </div>
+        <h2 className="mt-3 text-[17px] font-black text-[#111827]">Receive Telegram Notifications</h2>
+        <p className="mx-auto mt-1 max-w-[360px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          Connect this author page to a Telegram group. Add the bot to your group, then send the 4-digit code there.
+        </p>
+      </div>
 
-      {telegramMessage ? (
-        <button
-          type="button"
-          onClick={() => setTelegramMessage('')}
-          className="mb-4 w-full rounded-2xl bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold text-[#111827] ring-1 ring-black/5"
-        >
-          {telegramMessage}
-        </button>
-      ) : null}
+      <div className="space-y-4 p-4">
+        {telegramMessage ? (
+          <button
+            type="button"
+            onClick={() => setTelegramMessage('')}
+            className="w-full rounded-2xl bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold text-[#111827] ring-1 ring-black/5"
+          >
+            {telegramMessage}
+          </button>
+        ) : null}
 
-      <div className="space-y-4">
-        <div>
-          <FieldLabel>Bot Username</FieldLabel>
-          <TextInput
-            value={telegramBotUsername}
-            onChange={setTelegramBotUsername}
-            placeholder="@ShadowAuthorStoreNotifyBot"
-          />
+        {telegramChatId ? (
+          <div className="rounded-2xl bg-[#f8fafc] p-4 ring-1 ring-black/5">
+            <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#8b93a1]">Linked group</div>
+            <div className="mt-2 text-[15px] font-black text-[#111827]">{telegramChatTitle || 'Telegram group'}</div>
+            <div className="mt-1 text-[12px] font-bold text-[#6b7280]">Group ID: {telegramChatId}</div>
+            {telegramLinkedAt ? <div className="mt-1 text-[11px] font-semibold text-[#8b93a1]">Linked: {new Date(telegramLinkedAt).toLocaleString()}</div> : null}
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl border border-dashed border-[#b8c2d6] bg-white p-4">
+          <div className="text-[12px] font-black text-[#111827]">How to connect</div>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] font-semibold leading-5 text-[#6b7280]">
+            <li>Tap Create Connect Code.</li>
+            <li>Add @{telegramBotUsername || 'your bot'} to your Telegram group.</li>
+            <li>Send the 4-digit code in that group.</li>
+          </ol>
         </div>
 
-        <div>
-          <FieldLabel>Telegram Group Chat ID</FieldLabel>
-          <TextInput
-            value={telegramChatId}
-            onChange={setTelegramChatId}
-            placeholder="-1001234567890"
-          />
-          <p className="mt-2 text-[11px] font-semibold leading-5 text-[#8b93a1]">
-            Add the bot to your Telegram group first, then paste the group chat ID here.
-          </p>
-        </div>
+        {telegramLinkCode ? (
+          <div className="rounded-[22px] bg-[#111827] px-4 py-5 text-center text-white">
+            <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white/60">Connect code</div>
+            <div className="mt-2 text-[34px] font-black tracking-[0.22em]">{telegramLinkCode}</div>
+            {telegramLinkExpiresAt ? <div className="mt-2 text-[11px] font-semibold text-white/60">Expires: {new Date(telegramLinkExpiresAt).toLocaleTimeString()}</div> : null}
+          </div>
+        ) : null}
 
         <button
           type="button"
-          onClick={handleSaveTelegramSettings}
-          disabled={telegramSaving || telegramLoading}
+          onClick={handleCreateTelegramConnectCode}
+          disabled={telegramConnecting || telegramLoading}
           className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-black text-white shadow-sm active:scale-[0.98] disabled:bg-[#aeb6c4]"
         >
-          {telegramSaving ? 'Saving...' : telegramLoading ? 'Loading...' : 'Save Telegram Bot'}
+          {telegramConnecting ? 'Creating code...' : telegramLoading ? 'Loading...' : telegramLinkCode ? 'Create New Code' : 'Create Connect Code'}
         </button>
       </div>
     </div>
@@ -1458,15 +1416,6 @@ const handleTestTelegramSettings = async () => {
 ) : null}
   </section>
 ) : null}
-
-      <button
-  type="button"
-  onClick={handleTestTelegramSettings}
-  disabled={telegramTesting || telegramSaving || telegramLoading || !telegramChatId.trim()}
-  className="h-12 w-full rounded-full bg-[#fff4cc] text-[13px] font-black text-[#111827] shadow-sm ring-1 ring-[#f6b800]/35 active:scale-[0.98] disabled:opacity-50"
->
-  {telegramTesting ? 'Sending test...' : 'Send Test Message'}
-</button>
 
       {activeTab === 'Orders' ? (
         <section className="mt-4">
