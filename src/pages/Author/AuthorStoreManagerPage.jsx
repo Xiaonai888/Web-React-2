@@ -592,6 +592,8 @@ function StoreManagerHome({
 }) {
   const [recordQuery, setRecordQuery] = useState('')
   const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
+  const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
+  const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
 
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
@@ -916,6 +918,34 @@ function StoreManagerHome({
         })}
       </div>
     </div>
+
+        <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-[16px] font-black text-[#111827]">Delivery Company</h2>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        Set delivery fees for checkout. Default fee is $2.
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <FieldLabel>J&amp;T delivery fee</FieldLabel>
+          <TextInput value={jtDeliveryFee} onChange={setJtDeliveryFee} placeholder="2.00" type="number" />
+        </div>
+
+        <div>
+          <FieldLabel>VET delivery fee</FieldLabel>
+          <TextInput value={vetDeliveryFee} onChange={setVetDeliveryFee} placeholder="2.00" type="number" />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => window.alert('Delivery fee save route is next stage.')}
+        className="mt-4 h-11 w-full rounded-2xl bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
+      >
+        Save delivery fees
+      </button>
+    </div>
+    
   </section>
 ) : null}
 
