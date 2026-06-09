@@ -39,6 +39,10 @@ function getAuthToken() {
   )
 }
 
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`
+}
+
 function statusToApi(status) {
   const value = String(status || '').toLowerCase()
   if (value === 'active') return 'active'
@@ -118,6 +122,32 @@ async function fetchMyProducts() {
   }
 
   return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
+}
+
+async function fetchMyOrderSummary() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load order summary')
+  }
+
+  return data.summary || {
+    orders_count: 0,
+    revenue: 0,
+    gross_revenue: 0,
+    platform_fee: 0,
+    author_income: 0,
+  }
 }
 
 async function fetchDeliverySettings() {
@@ -643,6 +673,7 @@ function StoreManagerHome({
   onDeleteProduct,
   loading,
   localError,
+  orderSummary,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
   const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
@@ -737,9 +768,14 @@ function StoreManagerHome({
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-  <StatCard label="Orders" value="0" icon="fa-receipt" />
-  <StatCard label="Revenue" value="$0" icon="fa-chart-line" />
+       <div className="mt-4 grid grid-cols-2 gap-2">
+  <StatCard label="Orders" value={String(orderSummary.orders_count || 0)} icon="fa-receipt" />
+  <StatCard label="Net income" value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)} icon="fa-chart-line" />
+</div>
+
+<div className="mt-2 grid grid-cols-2 gap-2">
+  <StatCard label="Gross sales" value={formatMoney(orderSummary.gross_revenue || 0)} icon="fa-sack-dollar" />
+  <StatCard label="Platform fee 10%" value={formatMoney(orderSummary.platform_fee || 0)} icon="fa-percent" />
 </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -1742,6 +1778,14 @@ export default function AuthorStoreManagerPage() {
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
 
+  const [orderSummary, setOrderSummary] = useState({
+    orders_count: 0,
+    revenue: 0,
+    gross_revenue: 0,
+    platform_fee: 0,
+    author_income: 0,
+  })
+
   const filteredProducts = useMemo(() => {
   if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
   return products.filter((product) => product.type === activeType)
@@ -1772,6 +1816,42 @@ export default function AuthorStoreManagerPage() {
     }
 
     loadProducts()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadOrderSummary() {
+      try {
+        const summary = await fetchMyOrderSummary()
+
+        if (!ignore) {
+          setOrderSummary({
+            orders_count: Number(summary.orders_count || 0),
+            revenue: Number(summary.revenue || summary.author_income || 0),
+            gross_revenue: Number(summary.gross_revenue || 0),
+            platform_fee: Number(summary.platform_fee || 0),
+            author_income: Number(summary.author_income || summary.revenue || 0),
+          })
+        }
+      } catch {
+        if (!ignore) {
+          setOrderSummary({
+            orders_count: 0,
+            revenue: 0,
+            gross_revenue: 0,
+            platform_fee: 0,
+            author_income: 0,
+          })
+        }
+      }
+    }
+
+    loadOrderSummary()
 
     return () => {
       ignore = true
@@ -2073,6 +2153,7 @@ const saveCategoryOrder = async () => {
           handleToggleHideCategory={handleToggleHideCategory}
           moveCategory={moveCategory}
           saveCategoryOrder={saveCategoryOrder}
+          orderSummary={orderSummary}
         />
       )}
 
