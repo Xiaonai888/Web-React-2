@@ -1424,10 +1424,10 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       event.stopPropagation()
       setAuthorMenuOpen(true)
     }}
-    className="absolute left-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm ring-1 ring-black/10 backdrop-blur active:scale-95"
+    className="absolute left-3 top-3 z-20 flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)] active:scale-95"
     aria-label="Author menu"
   >
-    <i className="fa-solid fa-bars text-[16px]" />
+    <i className="fa-solid fa-bars text-[18px]" />
   </button>
 ) : null}        
 
