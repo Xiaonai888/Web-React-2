@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
 const API_BASE_URL =
@@ -739,7 +739,11 @@ function StoreManagerHome({
 }) {
   const [recordQuery, setRecordQuery] = useState('')
   const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
-  const [settingsView, setSettingsView] = useState('home')
+ ‌  const [searchParams] = useSearchParams()
+  const initialSettingsView = ['categories', 'delivery', 'telegram'].includes(searchParams.get('settings'))
+  ? searchParams.get('settings')
+  : 'home'
+  const [settingsView, setSettingsView] = useState(initialSettingsView)
   const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
   const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
   const [deliverySaving, setDeliverySaving] = useState(false)
