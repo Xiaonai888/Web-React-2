@@ -177,7 +177,7 @@ export default function AuthorPageIncomePage() {
       setLoading(true)
       setMessage('')
 
-      const response = await fetch(`${API_BASE_URL}/api/authors/store/income`, {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
