@@ -542,57 +542,31 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb]" />
 
-        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
-          <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
-                {pageLogo ? (
-                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
-              </div>
-            </div>
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
-              <i className="fa-solid fa-check text-[10px]" />
-            </span>
-          </button>
+       <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+  <button
+    type="button"
+    onClick={onPage}
+    className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
+  >
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+      {pageLogo ? (
+        <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+      ) : (
+        <span className="text-[20px] font-extrabold">{pageLetter}</span>
+      )}
+    </div>
 
-          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-                {readerAvatar ? (
-                  <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{readerLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
-                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                  <span>0 notifications</span>
-                </div>
-              </div>
-            </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
-          </button>
-        </div>
-
-        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]">
-          Manage Account
-        </button>
-
-        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
-          <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
-        </div>
+    <div className="min-w-0 flex-1">
+      <div className="line-clamp-1 text-[16px] font-black text-[#111827]">
+        {pageName}
+      </div>
+      <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
+        <span>Switch Profile</span>
+        <i className="fa-solid fa-chevron-down text-[9px]" />
       </div>
     </div>
-  )
-}
+  </button>
+</div>
 
 function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
   if (!open) return null
