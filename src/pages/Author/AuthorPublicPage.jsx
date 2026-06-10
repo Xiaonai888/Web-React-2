@@ -702,7 +702,7 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
       </aside>
 
       {profileSwitcherOpen ? (
-        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35 px-4 pb-6 md:items-center md:pb-0">
+        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35 px-0 pb-0 md:items-center md:px-4 md:pb-0">
           <button
             type="button"
             aria-label="Close profile switcher"
@@ -710,7 +710,7 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
             className="absolute inset-0"
           />
 
-          <div className="relative w-full max-w-[390px] overflow-hidden rounded-[26px] bg-white px-4 pb-6 pt-3 shadow-2xl">
+          <div className="relative w-full overflow-hidden rounded-t-[26px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[390px] md:rounded-[26px]">
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
             <div className="overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
