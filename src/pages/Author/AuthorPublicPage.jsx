@@ -1236,11 +1236,10 @@ async function handleUnfollowFromSettings() {
 
   useEffect(() => {
     if (author?.is_owner) {
-      setReaderHeaderSolid(false)
-      setReaderHeaderTitle(false)
-      setTabsFrozen(false)
-      return undefined
-    }
+  setReaderHeaderSolid(false)
+  setReaderHeaderTitle(false)
+  return undefined
+}
 
     function syncReaderHeader() {
       const coverBottom = coverRef.current?.getBoundingClientRect().bottom ?? 0
@@ -1258,13 +1257,15 @@ setTabsFrozen(tabsTop <= 55)
     return () => window.removeEventListener('scroll', syncReaderHeader)
   }, [author?.id, author?.is_owner])
 
-  useEffect(() => {
+ useEffect(() => {
   function handleTabsStickyState() {
     const tabsElement = document.getElementById('author-page-tabs')
     if (!tabsElement) return
 
     const rect = tabsElement.getBoundingClientRect()
-    setTabsFrozen(rect.top <= 0 && window.scrollY > 20)
+    const freezeTop = author?.is_owner ? 0 : 54
+
+    setTabsFrozen(rect.top <= freezeTop && window.scrollY > 20)
   }
 
   handleTabsStickyState()
@@ -1275,7 +1276,8 @@ setTabsFrozen(tabsTop <= 55)
     window.removeEventListener('scroll', handleTabsStickyState)
     window.removeEventListener('resize', handleTabsStickyState)
   }
-}, [])
+}, [author?.is_owner])
+  
 
 if (!loading && pageError) {
   return <AuthorNotFound onBack={handleReaderBack} />
@@ -1654,15 +1656,15 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
         </section>
 
-       <section
+       <<section
   id="author-page-tabs"
   ref={tabsRef}
-  className={`sticky z-50 border-b border-[#eef0f3] bg-white transition ${
+  className={`sticky z-50 border-b border-[#eef0f3] bg-white ${
     displayAuthor.is_owner ? 'top-0' : 'top-[54px]'
-  } ${tabsFrozen && !displayAuthor.is_owner ? 'shadow-sm' : ''}`}
+  } ${tabsFrozen ? 'shadow-sm' : ''}`}
 >
-  <div className="mx-auto flex h-[50px] max-w-[980px] items-center justify-between gap-3 px-4">
-    <div className="flex min-w-0 gap-2 overflow-x-auto">
+  <div className="mx-auto h-[50px] max-w-[980px] px-4">
+    <div className="grid h-full grid-cols-3 items-center gap-2">
       {tabs.map((tab) => {
         const active = activeTab === tab
 
@@ -1671,19 +1673,17 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
-            className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
+            className={`flex h-9 min-w-0 items-center justify-center rounded-full px-0 text-[13px] font-medium leading-none transition-colors ${
               active
-                ? 'bg-[#f3f4f6] font-medium text-[#111827]'
-                : 'bg-transparent font-normal text-[#9ca3af]'
+                ? 'bg-[#f3f4f6] text-[#111827]'
+                : 'bg-transparent text-[#9ca3af]'
             }`}
           >
             {tab}
           </button>
         )
       })}
-     </div>
-
-    
+    </div>
   </div>
 </section>
 
