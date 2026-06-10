@@ -107,7 +107,8 @@ const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
 const AuthorStoreProductDetailPage = lazy(() => import('./pages/Author/AuthorStoreProductDetailPage'))
 const AuthorStoreCategoryPage = lazy(() => import('./pages/Author/AuthorStoreCategoryPage'))
-const AuthorStoreFinancePage = lazy(() => import('./pages/Author/AuthorStoreFinancePage'))
+const AuthorStoreWithdrawalPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalPage'))
+const AuthorPageIncomePage = lazy(() => import('./pages/Author/AuthorPageIncomePage'))
 const AuthorStoreWithdrawalPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalPage'))
 
 
@@ -736,15 +737,6 @@ const shouldShowOpeningAds =
 />
 
         <Route
-  path="/author/page/store/finance"
-  element={
-    <LazyPage>
-      <AuthorStoreFinancePage />
-    </LazyPage>
-  }
-/>
-
-        <Route
   path="/author/page/store/withdrawal"
   element={
     <LazyPage>
@@ -752,6 +744,25 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+<Route
+  path="/author/page/finance/income"
+  element={
+    <LazyPage>
+      <AuthorPageIncomePage />
+    </LazyPage>
+  }
+/>
+
+<Route
+  path="/author/page/finance/withdrawal"
+  element={
+    <LazyPage>
+      <AuthorStoreWithdrawalPage />
+    </LazyPage>
+  }
+/>
+        
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
