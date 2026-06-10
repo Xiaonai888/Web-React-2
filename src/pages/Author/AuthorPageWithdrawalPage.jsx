@@ -366,7 +366,7 @@ export default function AuthorPageWithdrawalPage() {
             <div className="mt-1 text-[13px] font-black text-[#111827]">{paymentLabel}</div>
             <button
               type="button"
-              onClick={() => navigate('/author/payment-method')}
+              onClick={() => navigate('/author/payment-method?back=/author/page/finance/withdrawal')}
               className="mt-3 h-10 rounded-full bg-white px-4 text-[12px] font-black text-[#111827] ring-1 ring-black/10 active:scale-95"
             >
               Edit Payment Method
