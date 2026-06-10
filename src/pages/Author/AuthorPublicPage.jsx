@@ -1329,10 +1329,11 @@ setTabsFrozen(tabsTop <= 55)
     setAuthorMenuOpen(false)
     navigate('/settings')
   }}
-  onOpenStoreSetting={(setting) => {
-  setAuthorMenuOpen(false)
-  navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
-}}
+   onOpenStoreSetting={(setting) => {
+    setAuthorMenuOpen(false)
+    navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
+  }}
+/>
 
       <SwitchingAccountScreen
   open={switchingToReader}
