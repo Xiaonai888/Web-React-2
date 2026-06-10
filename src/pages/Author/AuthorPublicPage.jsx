@@ -1656,7 +1656,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
         </section>
 
-       <<section
+       <section
   id="author-page-tabs"
   ref={tabsRef}
   className={`sticky z-50 border-b border-[#eef0f3] bg-white ${
