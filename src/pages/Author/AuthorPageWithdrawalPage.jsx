@@ -220,7 +220,7 @@ export default function AuthorPageWithdrawalPage() {
       setLoading(true)
       setMessage('')
 
-      const response = await fetch(`${API_BASE_URL}/api/authors/store/income`, {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/me/income`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -262,7 +262,7 @@ export default function AuthorPageWithdrawalPage() {
       setSaving(true)
       setMessage('')
 
-      const response = await fetch(`${API_BASE_URL}/api/authors/store/withdrawals`, {
+      const response = await fetch(`${API_BASE_URL}/api/author-store/me/withdrawals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
