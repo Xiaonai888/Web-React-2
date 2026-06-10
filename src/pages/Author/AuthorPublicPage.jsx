@@ -615,12 +615,12 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
         className="absolute inset-0 bg-black/35"
       />
 
-      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl">
+      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-white px-4 pb-8 pt-4 shadow-2xl"
         <div className="mb-4">
           <h2 className="text-[15px] font-black text-[#111827]">Author Menu</h2>
         </div>
 
-        <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+        <div className="bg-white px-0 py-3">
           <button
             type="button"
             onClick={() => setProfileSwitcherOpen(true)}
@@ -636,15 +636,14 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
 
             <div className="min-w-0 flex-1">
               <div className="line-clamp-1 text-[16px] font-black text-[#111827]">{pageName}</div>
-              <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
-                <span>Switch Profile</span>
-                <i className="fa-solid fa-chevron-down text-[9px]" />
-              </div>
+              <div className="mt-1 text-[11.5px] font-semibold text-[#8b93a1]">
+  Switch Profile
+</div>
             </div>
           </button>
         </div>
 
-        <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+       
           <div className="px-4 pb-2 pt-4">
             <h2 className="text-[17px] font-black text-[#111827]">Store Settings</h2>
             <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
