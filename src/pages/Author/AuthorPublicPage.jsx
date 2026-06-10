@@ -1380,7 +1380,15 @@ setTabsFrozen(tabsTop <= 55)
     setAuthorMenuOpen(false)
     navigate('/settings')
   }}
-    onOpenStoreSetting={(setting) => {
+  onOpenIncome={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page/finance/income')
+  }}
+  onOpenWithdrawal={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page/finance/withdrawal')
+  }}
+  onOpenStoreSetting={(setting) => {
     setAuthorMenuOpen(false)
     navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
   }}
