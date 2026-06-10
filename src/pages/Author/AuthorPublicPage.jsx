@@ -594,7 +594,18 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   )
 }
 
-function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
+function AuthorOwnerMenuSheet({
+  open,
+  onClose,
+  author,
+  readerUser,
+  onPage,
+  onOwnAccount,
+  onManageAccount,
+  onOpenIncome,
+  onOpenWithdrawal,
+  onOpenStoreSetting,
+}) {
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
 
   if (!open) return null
@@ -643,19 +654,59 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
           </button>
         </div>
 
-        <button
-  type="button"
-  onClick={() => onOpenStoreSetting('')}
-  className="mt-6 flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
->
-  <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-    <i className="fa-solid fa-gear text-[22px]" />
-  </span>
+        <div className="mt-6">
+  <div className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">
+    Finance
+  </div>
 
-  <span className="text-[17px] font-semibold text-[#111827]">
+  <button
+    type="button"
+    onClick={onOpenIncome}
+    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
+  >
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-chart-line text-[22px]" />
+    </span>
+
+    <span className="text-[17px] font-semibold text-[#111827]">
+      Income
+    </span>
+  </button>
+
+  <button
+    type="button"
+    onClick={onOpenWithdrawal}
+    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
+  >
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-money-bill-transfer text-[22px]" />
+    </span>
+
+    <span className="text-[17px] font-semibold text-[#111827]">
+      Withdrawal
+    </span>
+  </button>
+</div>
+
+<div className="mt-6">
+  <div className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">
     Settings
-  </span>
-</button>
+  </div>
+
+  <button
+    type="button"
+    onClick={() => onOpenStoreSetting('')}
+    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
+  >
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-gear text-[22px]" />
+    </span>
+
+    <span className="text-[17px] font-semibold text-[#111827]">
+      Settings
+    </span>
+  </button>
+</div>
 
         <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
           <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
@@ -1329,7 +1380,7 @@ setTabsFrozen(tabsTop <= 55)
     setAuthorMenuOpen(false)
     navigate('/settings')
   }}
-   onOpenStoreSetting={(setting) => {
+    onOpenStoreSetting={(setting) => {
     setAuthorMenuOpen(false)
     navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
   }}
