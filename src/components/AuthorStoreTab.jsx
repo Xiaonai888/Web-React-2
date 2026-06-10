@@ -14,31 +14,13 @@ const STORE_SECTIONS = [
     title: 'New Books',
     subtitle: 'Fresh copies and latest arrivals.',
     types: ['Book'],
-    categories: ['New Release', 'Special Edition', 'Author Picks'],
-    emptyText: 'No new books yet.',
-  },
-  {
-    key: 'second-hand',
-    title: 'Second Hand',
-    subtitle: 'Checked condition, lower price, limited stock.',
-    types: ['Book'],
-    conditions: ['Second Hand'],
-    emptyText: 'No second hand books yet.',
-  },
-  {
-    key: 'best-seller',
-    title: 'Best Seller',
-    subtitle: 'Books readers are choosing most.',
-    types: ['Book'],
-    categories: ['Best Seller'],
-    emptyText: 'No best sellers yet.',
+    categories: ['New Books', 'New Release', 'Special Edition'],
   },
   {
     key: 'pdf-books',
     title: 'PDF Books',
     subtitle: 'Digital books from this author.',
     types: ['PDF'],
-    emptyText: 'No PDF books yet.',
   },
   {
     key: 'pre-order',
@@ -46,7 +28,34 @@ const STORE_SECTIONS = [
     subtitle: 'Reserve upcoming books before release.',
     types: ['Book'],
     preOrder: true,
-    emptyText: 'No pre-orders yet.',
+  },
+  {
+    key: 'best-seller',
+    title: 'Best Seller',
+    subtitle: 'Books readers are choosing most.',
+    types: ['Book'],
+    categories: ['Best Seller'],
+  },
+  {
+    key: 'second-hand',
+    title: 'Second Hand',
+    subtitle: 'Checked condition, lower price, limited stock.',
+    types: ['Book'],
+    conditions: ['Second Hand'],
+  },
+  {
+    key: 'author-picks',
+    title: 'Author Picks',
+    subtitle: 'Selected books recommended by this author.',
+    types: ['Book', 'PDF'],
+    categories: ['Author Picks'],
+  },
+  {
+    key: 'sold-out',
+    title: 'Sold out',
+    subtitle: 'Books that readers already bought out.',
+    types: ['Book'],
+    soldOut: true,
   },
 ]
 
@@ -61,19 +70,20 @@ function normalizeProduct(product) {
   const salePrice = Number(product.sale_price || 0)
   const originalPrice = Number(product.original_price || 0)
   const price = salePrice || originalPrice
+  const stockQuantity = Number(product.stock_quantity || product.stock_count || 0)
 
   return {
     id: product.id,
     author_page_id: product.author_page_id,
     title: product.title || 'Untitled book',
     type,
-    category: product.category || 'New Release',
+    category: product.category || 'New Books',
     description: product.description || '',
     cover_url: product.cover_url || '',
     price: formatMoney(price),
     old_price: salePrice && originalPrice && salePrice !== originalPrice ? formatMoney(originalPrice) : '',
-    stock_label: product.pre_order ? 'PRE-ORDER' : product.stock_quantity > 0 || type === 'PDF' ? 'IN STOCK' : 'OUT OF STOCK',
-    stock_quantity: Number(product.stock_quantity || 0),
+    stock_label: product.pre_order ? 'PRE-ORDER' : stockQuantity > 0 || type === 'PDF' ? 'IN STOCK' : 'OUT OF STOCK',
+    stock_quantity: stockQuantity,
     condition: product.book_condition || 'New',
     pre_order: Boolean(product.pre_order),
     created_at: product.created_at || '',
@@ -94,6 +104,7 @@ async function fetchPublicAuthorStoreProducts(pageUsername) {
 function sectionMatchesProduct(section, product) {
   if (section.types?.length && !section.types.includes(product.type)) return false
   if (section.preOrder && !product.pre_order) return false
+  if (section.soldOut && product.stock_label !== 'OUT OF STOCK') return false
   if (section.conditions?.length && !section.conditions.includes(product.condition)) return false
   if (section.categories?.length && !section.categories.includes(product.category)) return false
   return true
@@ -141,13 +152,9 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
-            <div className="text-[13px] font-black text-[#e5484d]">
-              {item.price}
-            </div>
+            <div className="text-[13px] font-black text-[#e5484d]">{item.price}</div>
             {item.old_price ? (
-              <div className="text-[11px] font-semibold text-[#9ca3af] line-through">
-                {item.old_price}
-              </div>
+              <div className="text-[11px] font-semibold text-[#9ca3af] line-through">{item.old_price}</div>
             ) : null}
           </div>
 
@@ -166,51 +173,38 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart }) {
   )
 }
 
-function SectionEmptyCard({ text }) {
-  return (
-    <div className="rounded-[18px] border border-dashed border-[#e5e7eb] bg-[#fbfbfd] px-4 py-7 text-center">
-      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#9ca3af] shadow-sm ring-1 ring-black/5">
-        <i className="fa-regular fa-file-lines text-[15px]" />
-      </div>
-      <p className="text-[12px] font-semibold leading-5 text-[#8b93a1]">{text}</p>
-    </div>
-  )
-}
-
 function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
+  const previewItems = items.slice(0, 6)
+
   return (
     <section className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[17px] font-black leading-5 text-[#111827]">{section.title}</h2>
-          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
-            {section.subtitle}
-          </p>
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">{section.subtitle}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onMore?.(section)}
-          className="shrink-0 pt-0.5 text-[12px] font-black text-[#8b93a1] active:opacity-70"
-        >
-          More &gt;
-        </button>
+        {items.length > 6 ? (
+          <button
+            type="button"
+            onClick={() => onMore?.(section)}
+            className="shrink-0 pt-0.5 text-[12px] font-black text-[#8b93a1] active:opacity-70"
+          >
+            See more &gt;
+          </button>
+        ) : null}
       </div>
 
-      {items.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {items.map((item) => (
-            <AuthorStoreProductCard
-              key={item.id}
-              item={item}
-              onOpen={onOpenItem}
-              onAddToCart={onAddToCart}
-            />
-          ))}
-        </div>
-      ) : (
-        <SectionEmptyCard text={section.emptyText} />
-      )}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {previewItems.map((item) => (
+          <AuthorStoreProductCard
+            key={item.id}
+            item={item}
+            onOpen={onOpenItem}
+            onAddToCart={onAddToCart}
+          />
+        ))}
+      </div>
     </section>
   )
 }
@@ -255,20 +249,53 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
     return STORE_SECTIONS.filter((section) => {
       if (activeType === 'All') return true
       return section.types.includes(activeType.slice(0, -1)) || section.types.includes(activeType)
-    }).map((section) => {
-      const sectionItems = products.filter((product) => {
-        const typeMatches = activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
-        return typeMatches && sectionMatchesProduct(section, product)
-      })
-
-      return {
-        ...section,
-        items: sectionItems,
-      }
     })
+      .map((section) => {
+        const sectionItems = products.filter((product) => {
+          const typeMatches = activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
+          return typeMatches && sectionMatchesProduct(section, product)
+        })
+
+        return {
+          ...section,
+          items: sectionItems,
+        }
+      })
+      .filter((section) => section.items.length > 0)
   }, [activeType, products])
 
   const isOwner = Boolean(author?.is_owner)
+
+  function addToCart(item) {
+    const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
+    const cartItems = JSON.parse(rawCart)
+    const safeCartItems = Array.isArray(cartItems) ? cartItems : []
+    const existingItem = safeCartItems.find((cartItem) => cartItem.id === item.id)
+
+    const nextCartItems = existingItem
+      ? safeCartItems.map((cartItem) => (
+          cartItem.id === item.id ? { ...cartItem, quantity: Number(cartItem.quantity || 1) + 1 } : cartItem
+        ))
+      : [
+          ...safeCartItems,
+          {
+            id: item.id,
+            title: item.title,
+            type: item.type,
+            cover_url: item.cover_url,
+            price_value: Number(String(item.price || '0').replace('$', '')) || 0,
+            quantity: 1,
+            author_page_id: author?.id || item.author_page_id || '',
+            author_page_name: author?.page_name || '',
+            author_page_username: author?.page_username || '',
+          },
+        ]
+
+    localStorage.setItem('shadow_author_cart_items', JSON.stringify(nextCartItems))
+    window.dispatchEvent(new Event('shadow-author-cart-updated'))
+    onCartCountChange?.(nextCartItems.reduce((total, cartItem) => total + Number(cartItem.quantity || 1), 0))
+    onMessage?.(`${item.title} added to cart.`)
+  }
 
   return (
     <div className="space-y-4">
@@ -292,7 +319,7 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
             {isOwner ? (
               <button
                 type="button"
-                onClick={() => onMessage?.('Manage store is coming soon.')}
+                onClick={() => navigate('/author/page/store')}
                 className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
               >
                 Manage
@@ -331,44 +358,26 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
         ) : null}
       </section>
 
+      {!loading && !loadError && !visibleSections.length ? (
+        <section className="rounded-[22px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6] text-[#9ca3af]">
+            <i className="fa-regular fa-store text-[18px]" />
+          </div>
+          <h3 className="text-[15px] font-black text-[#111827]">No products yet</h3>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+            This author store is empty right now.
+          </p>
+        </section>
+      ) : null}
+
       {visibleSections.map((section) => (
         <AuthorStoreShelf
           key={section.key}
           section={section}
           items={section.items}
-          onMore={() => onMessage?.(`${section.title} page is next stage.`)}
-          onOpenItem={() => onMessage?.('Book detail page is next stage.')}
+          onMore={() => navigate(`/author/page/${author.page_username}/store/category/${section.key}`)}
           onOpenItem={(item) => navigate(`/author/page/${author.page_username}/store/product/${item.id}`)}
-          onAddToCart={(item) => {
-  const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
-  const cartItems = JSON.parse(rawCart)
-  const safeCartItems = Array.isArray(cartItems) ? cartItems : []
-  const existingItem = safeCartItems.find((cartItem) => cartItem.id === item.id)
-
-  const nextCartItems = existingItem
-    ? safeCartItems.map((cartItem) => (
-        cartItem.id === item.id ? { ...cartItem, quantity: Number(cartItem.quantity || 1) + 1 } : cartItem
-      ))
-    : [
-        ...safeCartItems,
-       {
-  id: item.id,
-  title: item.title,
-  type: item.type,
-  cover_url: item.cover_url,
-  price_value: Number(String(item.price || '0').replace('$', '')) || 0,
-  quantity: 1,
-  author_page_id: author?.id || item.author_page_id || '',
-  author_page_name: author?.page_name || '',
-  author_page_username: author?.page_username || '',
-},
-      ]
-
-  localStorage.setItem('shadow_author_cart_items', JSON.stringify(nextCartItems))
-  window.dispatchEvent(new Event('shadow-author-cart-updated'))
-  onCartCountChange?.(nextCartItems.reduce((total, cartItem) => total + Number(cartItem.quantity || 1), 0))
-  onMessage?.(`${item.title} added to cart.`)
-}}
+          onAddToCart={addToCart}
         />
       ))}
     </div>
