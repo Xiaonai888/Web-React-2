@@ -738,12 +738,12 @@ function StoreManagerHome({
   orderSummary,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
-  const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
- ‌  const [searchParams] = useSearchParams()
-  const initialSettingsView = ['categories', 'delivery', 'telegram'].includes(searchParams.get('settings'))
+const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
+const [searchParams] = useSearchParams()
+const initialSettingsView = ['categories', 'delivery', 'telegram'].includes(searchParams.get('settings'))
   ? searchParams.get('settings')
   : 'home'
-  const [settingsView, setSettingsView] = useState(initialSettingsView)
+const [settingsView, setSettingsView] = useState(initialSettingsView)
   const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
   const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
   const [deliverySaving, setDeliverySaving] = useState(false)
