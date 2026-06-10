@@ -837,12 +837,19 @@ export default function AuthorPublicPage() {
   setMessage(`${label} is coming soon.`)
 }
   useEffect(() => {
-  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
+  if (!authorMenuOpen) return undefined
+
+  const previousOverflow = document.body.style.overflow
+  const previousTouchAction = document.body.style.touchAction
+
+  document.body.style.overflow = 'hidden'
+  document.body.style.touchAction = 'none'
 
   return () => {
-    document.body.classList.remove('mobile-popup-open')
+    document.body.style.overflow = previousOverflow
+    document.body.style.touchAction = previousTouchAction
   }
-}, [followSettingsOpen])
+}, [authorMenuOpen])
 
   useEffect(() => {
     function syncAuthorCartCount() {
