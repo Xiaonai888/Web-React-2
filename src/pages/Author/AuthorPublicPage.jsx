@@ -602,10 +602,10 @@ function AuthorOwnerMenuSheet({
   onPage,
   onOwnAccount,
   onManageAccount,
-  onOpenIncome,
-  onOpenWithdrawal,
+  onOpenFinance,
   onOpenStoreSetting,
 }) {
+  
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
 
   if (!open) return null
@@ -688,21 +688,31 @@ function AuthorOwnerMenuSheet({
   </button>
 </div>
 
-<div className="mt-6">
-  <div className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">
-    Settings
-  </div>
+<div className="mt-5 space-y-1">
+  <button
+    type="button"
+    onClick={onOpenFinance}
+    className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
+  >
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-wallet text-[17px]" />
+    </span>
+
+    <span className="text-[15px] font-normal text-[#111827]">
+      Finance
+    </span>
+  </button>
 
   <button
     type="button"
     onClick={() => onOpenStoreSetting('')}
-    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
+    className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
   >
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-      <i className="fa-solid fa-gear text-[22px]" />
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-gear text-[17px]" />
     </span>
 
-    <span className="text-[17px] font-semibold text-[#111827]">
+    <span className="text-[15px] font-normal text-[#111827]">
       Settings
     </span>
   </button>
@@ -1380,14 +1390,10 @@ setTabsFrozen(tabsTop <= 55)
     setAuthorMenuOpen(false)
     navigate('/settings')
   }}
-  onOpenIncome={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page/finance/income')
-  }}
-  onOpenWithdrawal={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page/finance/withdrawal')
-  }}
+ onOpenFinance={() => {
+  setAuthorMenuOpen(false)
+  navigate('/author/page/finance')
+}}
   onOpenStoreSetting={(setting) => {
     setAuthorMenuOpen(false)
     navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
