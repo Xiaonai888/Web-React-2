@@ -190,12 +190,12 @@ async function fetchTelegramSettings() {
   return data.telegram_settings || {}
 }
 
-async function createTelegramConnectCode() {
+async function createTelegramConnectLink() {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/connect-code`, {
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/connect-link`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -205,7 +205,28 @@ async function createTelegramConnectCode() {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to create Telegram connect code')
+    throw new Error(data.message || 'Failed to create Telegram connect link')
+  }
+
+  return data
+}
+
+async function unlinkTelegramGroup() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/telegram-settings/unlink`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to unlink Telegram group')
   }
 
   return data.telegram_settings || {}
@@ -728,9 +749,8 @@ function StoreManagerHome({
   const [telegramChatId, setTelegramChatId] = useState('')
   const [telegramChatTitle, setTelegramChatTitle] = useState('')
   const [telegramLinkedAt, setTelegramLinkedAt] = useState('')
-  const [telegramLinkCode, setTelegramLinkCode] = useState('')
-  const [telegramLinkExpiresAt, setTelegramLinkExpiresAt] = useState('')
   const [telegramConnecting, setTelegramConnecting] = useState(false)
+  const [telegramUnlinking, setTelegramUnlinking] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
 
@@ -777,8 +797,6 @@ function StoreManagerHome({
           setTelegramChatId(settings.chat_id || '')
           setTelegramChatTitle(settings.chat_title || '')
           setTelegramLinkedAt(settings.linked_at || '')
-          setTelegramLinkCode(settings.link_code || '')
-          setTelegramLinkExpiresAt(settings.expires_at || '')
         }
       } catch {
       } finally {
@@ -816,24 +834,49 @@ function StoreManagerHome({
   }
 }
 
-  const handleCreateTelegramConnectCode = async () => {
+  const handleCreateTelegramConnectLink = async () => {
   try {
     setTelegramConnecting(true)
     setTelegramMessage('')
 
-    const settings = await createTelegramConnectCode()
+    const data = await createTelegramConnectLink()
+    const settings = data.telegram_settings || {}
+    const connectUrl = data.telegram_connect?.connect_url || ''
 
     setTelegramBotUsername(settings.bot_username || telegramBotUsername)
     setTelegramChatId(settings.chat_id || telegramChatId)
     setTelegramChatTitle(settings.chat_title || telegramChatTitle)
     setTelegramLinkedAt(settings.linked_at || telegramLinkedAt)
-    setTelegramLinkCode(settings.link_code || '')
-    setTelegramLinkExpiresAt(settings.expires_at || '')
-    setTelegramMessage('Connect code created. Add the bot to your Telegram group and send this code in that group.')
+
+    if (connectUrl) {
+      window.location.href = connectUrl
+      return
+    }
+
+    setTelegramMessage('Telegram connect link was created, but the link was missing.')
   } catch (error) {
-    setTelegramMessage(error.message || 'Failed to create Telegram connect code.')
+    setTelegramMessage(error.message || 'Failed to open Telegram connect link.')
   } finally {
     setTelegramConnecting(false)
+  }
+}
+
+  const handleUnlinkTelegramGroup = async () => {
+  try {
+    setTelegramUnlinking(true)
+    setTelegramMessage('')
+
+    const settings = await unlinkTelegramGroup()
+
+    setTelegramBotUsername(settings.bot_username || telegramBotUsername)
+    setTelegramChatId(settings.chat_id || '')
+    setTelegramChatTitle(settings.chat_title || '')
+    setTelegramLinkedAt(settings.linked_at || '')
+    setTelegramMessage('Telegram group unlinked. You can connect a new group now.')
+  } catch (error) {
+    setTelegramMessage(error.message || 'Failed to unlink Telegram group.')
+  } finally {
+    setTelegramUnlinking(false)
   }
 }
 
@@ -857,10 +900,6 @@ function StoreManagerHome({
     )
   })
 }, [filteredProducts, recordQuery, activeType])
-
-
-  const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
-  const canCreateCustomCategory = customCategoryCount < 5
 
   return (
     <main className="mx-auto max-w-[980px] px-4 py-4">
@@ -1055,41 +1094,22 @@ function StoreManagerHome({
         </button>
 
         <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-  <div className="flex items-start justify-between gap-3">
-    <div>
-      <h2 className="text-[16px] font-black text-[#111827]">Create custom category</h2>
+      <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
       <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        You can create up to 5 custom categories.
+        New categories can become sections in the public Store tab.
       </p>
+      <div className="mt-3 flex gap-2">
+        <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
+        <button
+          type="button"
+          onClick={addCategory}
+          disabled={categorySaving}
+          className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-60"
+        >
+          Add
+        </button>
+      </div>
     </div>
-
-    <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
-      {customCategoryCount}/5
-    </span>
-  </div>
-
-  <div className="mt-3 flex gap-2">
-    <TextInput
-      value={newCategory}
-      onChange={setNewCategory}
-      placeholder={canCreateCustomCategory ? 'Category name' : 'Custom category limit reached'}
-    />
-    <button
-      type="button"
-      onClick={addCategory}
-      disabled={categorySaving || !canCreateCustomCategory}
-      className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-40"
-    >
-      Add
-    </button>
-  </div>
-
-  {!canCreateCustomCategory ? (
-    <p className="mt-2 text-[11px] font-bold text-[#e5484d]">
-      Custom category limit reached. Delete one custom category before creating a new one.
-    </p>
-  ) : null}
-</div>
 
     <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -1378,13 +1398,13 @@ function StoreManagerHome({
     </button>
 
     <div className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
-      <div className="bg-gradient-to-br from-[#e9f7ff] via-[#f4fbff] to-white px-4 py-5 text-center">
+      <div className="bg-gradient-to-br from-[#dff6ff] via-[#eefaff] to-white px-4 py-5 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#229ed9] shadow-sm ring-1 ring-black/5">
           <i className="fa-brands fa-telegram text-[30px]" />
         </div>
         <h2 className="mt-3 text-[17px] font-black text-[#111827]">Receive Telegram Notifications</h2>
-        <p className="mx-auto mt-1 max-w-[360px] text-[12px] font-semibold leading-5 text-[#8b93a1]">
-          Connect this author page to a Telegram group. Add the bot to your group, then send the 4-digit code there.
+        <p className="mx-auto mt-1 max-w-[380px] text-[12px] font-semibold leading-5 text-[#6b7280]">
+          Link this author page to one Telegram group for order approval alerts. You can change groups only after unlinking the current one.
         </p>
       </div>
 
@@ -1400,39 +1420,54 @@ function StoreManagerHome({
         ) : null}
 
         {telegramChatId ? (
-          <div className="rounded-2xl bg-[#f8fafc] p-4 ring-1 ring-black/5">
-            <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#8b93a1]">Linked group</div>
-            <div className="mt-2 text-[15px] font-black text-[#111827]">{telegramChatTitle || 'Telegram group'}</div>
-            <div className="mt-1 text-[12px] font-bold text-[#6b7280]">Group ID: {telegramChatId}</div>
-            {telegramLinkedAt ? <div className="mt-1 text-[11px] font-semibold text-[#8b93a1]">Linked: {new Date(telegramLinkedAt).toLocaleString()}</div> : null}
+          <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9f7ff] text-[#229ed9] ring-1 ring-[#229ed9]/20">
+                <i className="fa-brands fa-telegram text-[22px]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#8b93a1]">Linked group</div>
+                <div className="mt-1 truncate text-[16px] font-black text-[#111827]">{telegramChatTitle || 'Telegram group'}</div>
+                <div className="mt-1 text-[12px] font-bold text-[#6b7280]">Group ID: {telegramChatId}</div>
+                {telegramLinkedAt ? <div className="mt-1 text-[11px] font-semibold text-[#8b93a1]">Linked: {new Date(telegramLinkedAt).toLocaleString()}</div> : null}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold leading-5 text-[#6b7280]">
+              This author page can use only one Telegram group. To connect another group, unlink this group first.
+            </div>
+
+            <button
+              type="button"
+              onClick={handleUnlinkTelegramGroup}
+              disabled={telegramUnlinking || telegramLoading}
+              className="mt-4 h-12 w-full rounded-full bg-[#fff1f2] text-[13px] font-black text-[#b91c1c] ring-1 ring-[#fecdd3] active:scale-[0.98] disabled:opacity-60"
+            >
+              {telegramUnlinking ? 'Unlinking...' : 'Unlink group'}
+            </button>
           </div>
-        ) : null}
+        ) : (
+          <>
+            <div className="rounded-2xl border border-dashed border-[#b8c2d6] bg-white p-4">
+              <div className="text-[12px] font-black text-[#111827]">How to connect</div>
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] font-semibold leading-5 text-[#6b7280]">
+                <li>Tap Connect Telegram Group.</li>
+                <li>Telegram will open and ask you to choose a group.</li>
+                <li>Add @{telegramBotUsername || 'ShadowAuthorStoreNotifyBot'} to that group.</li>
+                <li>The bot will confirm when the group is linked.</li>
+              </ol>
+            </div>
 
-        <div className="rounded-2xl border border-dashed border-[#b8c2d6] bg-white p-4">
-          <div className="text-[12px] font-black text-[#111827]">How to connect</div>
-          <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12px] font-semibold leading-5 text-[#6b7280]">
-            <li>Tap Create Connect Code.</li>
-            <li>Add @{telegramBotUsername || 'your bot'} to your Telegram group.</li>
-            <li>Send the 4-digit code in that group.</li>
-          </ol>
-        </div>
-
-        {telegramLinkCode ? (
-          <div className="rounded-[22px] bg-[#111827] px-4 py-5 text-center text-white">
-            <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white/60">Connect code</div>
-            <div className="mt-2 text-[34px] font-black tracking-[0.22em]">{telegramLinkCode}</div>
-            {telegramLinkExpiresAt ? <div className="mt-2 text-[11px] font-semibold text-white/60">Expires: {new Date(telegramLinkExpiresAt).toLocaleTimeString()}</div> : null}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={handleCreateTelegramConnectCode}
-          disabled={telegramConnecting || telegramLoading}
-          className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-black text-white shadow-sm active:scale-[0.98] disabled:bg-[#aeb6c4]"
-        >
-          {telegramConnecting ? 'Creating code...' : telegramLoading ? 'Loading...' : telegramLinkCode ? 'Create New Code' : 'Create Connect Code'}
-        </button>
+            <button
+              type="button"
+              onClick={handleCreateTelegramConnectLink}
+              disabled={telegramConnecting || telegramLoading}
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-black text-white shadow-sm active:scale-[0.98] disabled:bg-[#aeb6c4]"
+            >
+              {telegramConnecting ? 'Opening Telegram...' : telegramLoading ? 'Loading...' : 'Connect Telegram Group'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   </>
