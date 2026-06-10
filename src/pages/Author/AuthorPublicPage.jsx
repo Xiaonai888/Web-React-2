@@ -614,17 +614,9 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
       />
 
       <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-[18px] font-black text-[#111827]">Author Menu</div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
-            aria-label="Close author menu"
-          >
-            <i className="fa-solid fa-xmark text-[15px]" />
-          </button>
-        </div>
+        <div className="mb-4">
+  <h2 className="text-[15px] font-black text-[#111827]">Author Menu</h2>
+</div>
 
         <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
           <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
