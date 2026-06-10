@@ -184,7 +184,7 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart }) {
           <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">{section.subtitle}</p>
         </div>
 
-        {items.length > 6 ? (
+        {items.length ? (
           <button
             type="button"
             onClick={() => onMore?.(section)}
