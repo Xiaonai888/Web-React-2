@@ -654,39 +654,7 @@ function AuthorOwnerMenuSheet({
           </button>
         </div>
 
-        <div className="mt-6">
-  <div className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#9ca3af]">
-    Finance
-  </div>
-
-  <button
-    type="button"
-    onClick={onOpenIncome}
-    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
-  >
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-      <i className="fa-solid fa-chart-line text-[22px]" />
-    </span>
-
-    <span className="text-[17px] font-semibold text-[#111827]">
-      Income
-    </span>
-  </button>
-
-  <button
-    type="button"
-    onClick={onOpenWithdrawal}
-    className="flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
-  >
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-      <i className="fa-solid fa-money-bill-transfer text-[22px]" />
-    </span>
-
-    <span className="text-[17px] font-semibold text-[#111827]">
-      Withdrawal
-    </span>
-  </button>
-</div>
+        
 
 <div className="mt-5 space-y-1">
   <button
@@ -1290,9 +1258,28 @@ setTabsFrozen(tabsTop <= 55)
     return () => window.removeEventListener('scroll', syncReaderHeader)
   }, [author?.id, author?.is_owner])
 
-  if (!loading && pageError) {
-    return <AuthorNotFound onBack={handleReaderBack} />
+  useEffect(() => {
+  function handleTabsStickyState() {
+    const tabsElement = document.getElementById('author-page-tabs')
+    if (!tabsElement) return
+
+    const rect = tabsElement.getBoundingClientRect()
+    setTabsFrozen(rect.top <= 0 && window.scrollY > 20)
   }
+
+  handleTabsStickyState()
+  window.addEventListener('scroll', handleTabsStickyState, { passive: true })
+  window.addEventListener('resize', handleTabsStickyState)
+
+  return () => {
+    window.removeEventListener('scroll', handleTabsStickyState)
+    window.removeEventListener('resize', handleTabsStickyState)
+  }
+}, [])
+
+if (!loading && pageError) {
+  return <AuthorNotFound onBack={handleReaderBack} />
+}
 
   const displayAuthor = author || {
     page_name: 'Loading',
@@ -1315,24 +1302,6 @@ setTabsFrozen(tabsTop <= 55)
       ? displayAuthor.works
       : []
 
-  useEffect(() => {
-  function handleTabsStickyState() {
-    const tabsElement = document.getElementById('author-page-tabs')
-    if (!tabsElement) return
-
-    const rect = tabsElement.getBoundingClientRect()
-    setTabsFrozen(rect.top <= 0 && window.scrollY > 20)
-  }
-
-  handleTabsStickyState()
-  window.addEventListener('scroll', handleTabsStickyState, { passive: true })
-  window.addEventListener('resize', handleTabsStickyState)
-
-  return () => {
-    window.removeEventListener('scroll', handleTabsStickyState)
-    window.removeEventListener('resize', handleTabsStickyState)
-  }
-}, [])
   
 
   return (
