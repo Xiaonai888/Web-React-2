@@ -542,33 +542,61 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
       <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb]" />
 
-       <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
-  <button
-    type="button"
-    onClick={onPage}
-    className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
-  >
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
-      {pageLogo ? (
-        <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-      ) : (
-        <span className="text-[20px] font-extrabold">{pageLetter}</span>
-      )}
-    </div>
+        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
+          <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+                {pageLogo ? (
+                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
+              </div>
+            </div>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+              <i className="fa-solid fa-check text-[10px]" />
+            </span>
+          </button>
 
-    <div className="min-w-0 flex-1">
-      <div className="line-clamp-1 text-[16px] font-black text-[#111827]">
-        {pageName}
-      </div>
-      <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
-        <span>Switch Profile</span>
-        <i className="fa-solid fa-chevron-down text-[9px]" />
+          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
+                {readerAvatar ? (
+                  <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{readerLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
+                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+                  <span>0 notifications</span>
+                </div>
+              </div>
+            </div>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+          </button>
+        </div>
+
+        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]">
+          Manage Account
+        </button>
+
+        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
+          <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
+        </div>
       </div>
     </div>
-  </button>
-</div>
+  )
+}
 
 function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
+
   if (!open) return null
 
   const pageName = author?.page_name || 'Author Page'
@@ -589,50 +617,32 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
 
       <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl">
         <div className="mb-4">
-  <h2 className="text-[15px] font-black text-[#111827]">Author Menu</h2>
-</div>
-
-        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
-          <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
-                {pageLogo ? (
-                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
-                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">Author page</div>
-              </div>
-            </div>
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
-              <i className="fa-solid fa-check text-[10px]" />
-            </span>
-          </button>
-
-          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-                {readerAvatar ? (
-                  <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{readerLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
-                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">Switch to user account</div>
-              </div>
-            </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
-          </button>
+          <h2 className="text-[15px] font-black text-[#111827]">Author Menu</h2>
         </div>
 
-        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]">
-          Manage Account
-        </button>
+        <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+          <button
+            type="button"
+            onClick={() => setProfileSwitcherOpen(true)}
+            className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
+          >
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+              {pageLogo ? (
+                <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-[20px] font-extrabold">{pageLetter}</span>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="line-clamp-1 text-[16px] font-black text-[#111827]">{pageName}</div>
+              <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
+                <span>Switch Profile</span>
+                <i className="fa-solid fa-chevron-down text-[9px]" />
+              </div>
+            </div>
+          </button>
+        </div>
 
         <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
           <div className="px-4 pb-2 pt-4">
@@ -693,6 +703,95 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
           <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
         </div>
       </aside>
+
+      {profileSwitcherOpen ? (
+        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35 px-4 pb-6 md:items-center md:pb-0">
+          <button
+            type="button"
+            aria-label="Close profile switcher"
+            onClick={() => setProfileSwitcherOpen(false)}
+            className="absolute inset-0"
+          />
+
+          <div className="relative w-full max-w-[390px] overflow-hidden rounded-[26px] bg-white px-4 pb-6 pt-3 shadow-2xl">
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+            <div className="overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileSwitcherOpen(false)
+                  onPage?.()
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+                    {pageLogo ? (
+                      <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[18px] font-extrabold">{pageLetter}</span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{pageName}</div>
+                    <div className="mt-0.5 text-[11.5px] font-semibold text-[#8b93a1]">Author page</div>
+                  </div>
+                </div>
+
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+                  <i className="fa-solid fa-check text-[10px]" />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileSwitcherOpen(false)
+                  onOwnAccount?.()
+                }}
+                className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#f8fafc]"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/10">
+                    {readerAvatar ? (
+                      <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[18px] font-extrabold">{readerLetter}</span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="line-clamp-1 text-[15px] font-black text-[#111827]">{readerName}</div>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8b93a1]">
+                      <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+                      <span>0 notifications</span>
+                    </div>
+                  </div>
+                </div>
+
+                <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setProfileSwitcherOpen(false)
+                onManageAccount?.()
+              }}
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]"
+            >
+              Manage Account
+            </button>
+
+            <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
+              <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -810,6 +909,14 @@ export default function AuthorPublicPage() {
   function handleAuthorFooterComingSoon(label) {
   setMessage(`${label} is coming soon.`)
 }
+  useEffect(() => {
+  document.body.classList.toggle('mobile-popup-open', followSettingsOpen)
+
+  return () => {
+    document.body.classList.remove('mobile-popup-open')
+  }
+}, [followSettingsOpen])
+
   useEffect(() => {
   if (!authorMenuOpen) return undefined
 
