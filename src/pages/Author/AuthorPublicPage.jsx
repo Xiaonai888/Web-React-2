@@ -594,6 +594,128 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   )
 }
 
+function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
+  if (!open) return null
+
+  const pageName = author?.page_name || 'Author Page'
+  const pageLogo = author?.avatar_url || ''
+  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
+  const readerName = readerUser?.name || 'Reader'
+  const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
+  const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
+
+  return (
+    <div className="fixed inset-0 z-[235]">
+      <button type="button" aria-label="Close author menu" onClick={onClose} className="absolute inset-0 bg-black/35" />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-y-auto rounded-t-[28px] bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[390px] md:-translate-x-1/2 md:rounded-[24px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
+          <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+                {pageLogo ? (
+                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
+                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">Author page</div>
+              </div>
+            </div>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+              <i className="fa-solid fa-check text-[10px]" />
+            </span>
+          </button>
+
+          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
+                {readerAvatar ? (
+                  <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{readerLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{readerName}</div>
+                <div className="mt-0.5 text-[11.5px] font-semibold text-[#8d94a1]">Switch to user account</div>
+              </div>
+            </div>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+          </button>
+        </div>
+
+        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]">
+          Manage Account
+        </button>
+
+        <section className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+          <div className="px-4 pb-2 pt-4">
+            <h2 className="text-[17px] font-black text-[#111827]">Store Settings</h2>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+              Manage store sections and checkout settings.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpenStoreSetting('categories')}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+          >
+            <span className="min-w-0">
+              <span className="block text-[14px] font-black text-[#111827]">Category Management</span>
+              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                Categories, hidden sections, and order.
+              </span>
+            </span>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+          </button>
+
+          <div className="mx-4 h-px bg-[#eef0f4]" />
+
+          <button
+            type="button"
+            onClick={() => onOpenStoreSetting('delivery')}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+          >
+            <span className="min-w-0">
+              <span className="block text-[14px] font-black text-[#111827]">Delivery Company</span>
+              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                J&amp;T fee, VET fee, and checkout delivery.
+              </span>
+            </span>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+          </button>
+
+          <div className="mx-4 h-px bg-[#eef0f4]" />
+
+          <button
+            type="button"
+            onClick={() => onOpenStoreSetting('telegram')}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+          >
+            <span className="min-w-0">
+              <span className="block text-[14px] font-black text-[#111827]">Telegram Bot</span>
+              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                Connect order approval notifications to your Telegram group.
+              </span>
+            </span>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+          </button>
+        </section>
+
+        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
+          <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
   if (!open) return null
 
@@ -682,6 +804,7 @@ export default function AuthorPublicPage() {
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
+  const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || 'Reader'
@@ -1139,6 +1262,26 @@ setTabsFrozen(tabsTop <= 55)
   }}
 />
 
+      <AuthorOwnerMenuSheet
+  open={authorMenuOpen}
+  author={displayAuthor}
+  readerUser={readerUser}
+  onClose={() => setAuthorMenuOpen(false)}
+  onPage={() => setAuthorMenuOpen(false)}
+  onOwnAccount={() => {
+    setAuthorMenuOpen(false)
+    handleSwitchToReaderAccount()
+  }}
+  onManageAccount={() => {
+    setAuthorMenuOpen(false)
+    navigate('/settings')
+  }}
+  onOpenStoreSetting={(setting) => {
+    setAuthorMenuOpen(false)
+    navigate(`/author/page/store?settings=${setting}`)
+  }}
+/>
+
       <SwitchingAccountScreen
   open={switchingToReader}
   name={readerName}
@@ -1274,16 +1417,16 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         </button>
 
         <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            navigate('/author/page-settings')
-          }}
-          className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
-          aria-label="More options"
-        >
-          <i className="fa-solid fa-ellipsis text-[15px]" />
-        </button>
+  type="button"
+  onClick={(event) => {
+    event.stopPropagation()
+    setAuthorMenuOpen(true)
+  }}
+  className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
+  aria-label="Author menu"
+>
+  <i className="fa-solid fa-bars text-[16px]" />
+</button>
       </div>
     ) : null}
 
