@@ -594,7 +594,6 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   )
 }
 
-
 function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
   if (!open) return null
 
@@ -607,10 +606,25 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
 
   return (
     <div className="fixed inset-0 z-[235]">
-      <button type="button" aria-label="Close author menu" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button
+        type="button"
+        aria-label="Close author menu"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+      />
 
-      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-y-auto rounded-t-[28px] bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[390px] md:-translate-x-1/2 md:rounded-[24px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[#f7f5fb] px-4 pb-8 pt-4 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-[18px] font-black text-[#111827]">Author Menu</div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+            aria-label="Close author menu"
+          >
+            <i className="fa-solid fa-xmark text-[15px]" />
+          </button>
+        </div>
 
         <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
           <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
@@ -712,7 +726,7 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
         <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
           <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
         </div>
-      </div>
+      </aside>
     </div>
   )
 }
@@ -1430,7 +1444,6 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         >
           <i className="fa-solid fa-pen text-[14px]" />
         </button>
-
       </div>
     ) : null}
 
