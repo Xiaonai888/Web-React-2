@@ -1258,7 +1258,7 @@ function StoreManagerHome({
   {category.isHidden ? 'Show' : 'Hide'}
 </button>
 
-      {!isSoldOutSystem ? (
+      {!category.isDefault ? (
         <button
           type="button"
           onClick={() => {
