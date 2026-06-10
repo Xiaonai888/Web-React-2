@@ -643,58 +643,19 @@ function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwn
           </button>
         </div>
 
-        <section className="mt-4 bg-white">
-          <div className="px-4 pb-2 pt-4">
-            <h2 className="text-[17px] font-black text-[#111827]">Store Settings</h2>
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-              Manage store sections and checkout settings.
-            </p>
-          </div>
+        <button
+  type="button"
+  onClick={() => onOpenStoreSetting('')}
+  className="mt-6 flex w-full items-center gap-4 px-0 py-3 text-left active:opacity-70"
+>
+  <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+    <i className="fa-solid fa-gear text-[22px]" />
+  </span>
 
-          <button
-            type="button"
-            onClick={() => onOpenStoreSetting('categories')}
-            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
-          >
-            <span className="min-w-0">
-              <span className="block text-[14px] font-black text-[#111827]">Category Management</span>
-              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                Categories, hidden sections, and order.
-              </span>
-            </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
-          </button>
-
-
-          <button
-            type="button"
-            onClick={() => onOpenStoreSetting('delivery')}
-            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
-          >
-            <span className="min-w-0">
-              <span className="block text-[14px] font-black text-[#111827]">Delivery Company</span>
-              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                J&amp;T fee, VET fee, and checkout delivery.
-              </span>
-            </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
-          </button>
-
-
-          <button
-            type="button"
-            onClick={() => onOpenStoreSetting('telegram')}
-            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
-          >
-            <span className="min-w-0">
-              <span className="block text-[14px] font-black text-[#111827]">Telegram Bot</span>
-              <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                Connect order approval notifications to your Telegram group.
-              </span>
-            </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
-          </button>
-        </section>
+  <span className="text-[17px] font-semibold text-[#111827]">
+    Settings
+  </span>
+</button>
 
         <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
           <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
@@ -1369,10 +1330,9 @@ setTabsFrozen(tabsTop <= 55)
     navigate('/settings')
   }}
   onOpenStoreSetting={(setting) => {
-    setAuthorMenuOpen(false)
-    navigate(`/author/page/store?settings=${setting}`)
-  }}
-/>
+  setAuthorMenuOpen(false)
+  navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
+}}
 
       <SwitchingAccountScreen
   open={switchingToReader}
