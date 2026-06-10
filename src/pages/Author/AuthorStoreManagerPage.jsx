@@ -753,6 +753,9 @@ function StoreManagerHome({
   const [telegramUnlinking, setTelegramUnlinking] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
+  const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
+  const canCreateCustomCategory = customCategoryCount < 5
+
 
 
   useEffect(() => {
@@ -1093,24 +1096,42 @@ function StoreManagerHome({
           Settings
         </button>
 
-        <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <h2 className="text-[16px] font-black text-[#111827]">Create category</h2>
+       <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <h2 className="text-[16px] font-black text-[#111827]">Create custom category</h2>
       <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        New categories can become sections in the public Store tab.
+        You can create up to 5 custom categories.
       </p>
-      <div className="mt-3 flex gap-2">
-        <TextInput value={newCategory} onChange={setNewCategory} placeholder="Category name" />
-        <button
-          type="button"
-          onClick={addCategory}
-          disabled={categorySaving}
-          className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-60"
-        >
-          Add
-        </button>
-      </div>
     </div>
 
+    <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
+      {customCategoryCount}/5
+    </span>
+  </div>
+
+  <div className="mt-3 flex gap-2">
+    <TextInput
+      value={newCategory}
+      onChange={setNewCategory}
+      placeholder={canCreateCustomCategory ? 'Category name' : 'Custom category limit reached'}
+    />
+    <button
+      type="button"
+      onClick={addCategory}
+      disabled={categorySaving || !canCreateCustomCategory}
+      className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-40"
+    >
+      Add
+    </button>
+  </div>
+
+  {!canCreateCustomCategory ? (
+    <p className="mt-2 text-[11px] font-bold text-[#e5484d]">
+      Custom category limit reached. Delete one custom category before creating a new one.
+    </p>
+  ) : null}
+</div>
     <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-[16px] font-black text-[#111827]">Categories</h2>
