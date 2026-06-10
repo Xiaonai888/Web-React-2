@@ -594,6 +594,7 @@ function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, onPage, on
   )
 }
 
+
 function AuthorOwnerMenuSheet({ open, onClose, author, readerUser, onPage, onOwnAccount, onManageAccount, onOpenStoreSetting }) {
   if (!open) return null
 
@@ -1400,7 +1401,21 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   ) : (
     <div className="h-full w-full bg-gradient-to-br from-[#111827] via-[#1f2937] to-[#374151]" />
   )}
-   <div className="absolute inset-0 bg-black/15" />         
+   <div className="absolute inset-0 bg-black/15" />     
+
+    {displayAuthor.is_owner ? (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+      setAuthorMenuOpen(true)
+    }}
+    className="absolute left-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#111827] shadow-sm ring-1 ring-black/10 backdrop-blur active:scale-95"
+    aria-label="Author menu"
+  >
+    <i className="fa-solid fa-bars text-[16px]" />
+  </button>
+) : null}        
 
     {displayAuthor.is_owner ? (
       <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
@@ -1416,17 +1431,6 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           <i className="fa-solid fa-pen text-[14px]" />
         </button>
 
-        <button
-  type="button"
-  onClick={(event) => {
-    event.stopPropagation()
-    setAuthorMenuOpen(true)
-  }}
-  className="flex h-10 w-10 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] active:scale-95"
-  aria-label="Author menu"
->
-  <i className="fa-solid fa-bars text-[16px]" />
-</button>
       </div>
     ) : null}
 
