@@ -1272,19 +1272,19 @@ function StoreManagerHome({
         </button>
       ) : null}
 
-      {!isSoldOutSystem ? (
-        <button
-          type="button"
-          onClick={() => {
-            setOpenCategoryMenuId('')
-            handleDeleteCategory(category)
-          }}
-          disabled={isLocalCategory}
-          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
-        >
-          Delete
-        </button>
-      ) : null}
+      {!category.isDefault ? (
+  <button
+    type="button"
+    onClick={() => {
+      setOpenCategoryMenuId('')
+      handleDeleteCategory(category)
+    }}
+    disabled={isLocalCategory}
+    className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
+  >
+    Delete
+  </button>
+) : null}
     </div>
   ) : null}
 </div>
