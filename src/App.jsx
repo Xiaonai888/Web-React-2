@@ -762,32 +762,6 @@ const shouldShowOpeningAds =
   }
 />
 
-<Route
-  path="/author/page/finance/withdrawal"
-  element={
-    <LazyPage>
-      <AuthorPageWithdrawalPage />
-    </LazyPage>
-  }
-/>
-
-        <Route
-  path="/author/page/finance"
-  element={
-    <LazyPage>
-      <AuthorPageFinancePage />
-    </LazyPage>
-  }
-/>
-
-<Route
-  path="/author/page/finance/income"
-  element={
-    <LazyPage>
-      <AuthorPageIncomePage />
-    </LazyPage>
-  }
-/>
 
 <Route
   path="/author/page/finance/withdrawal"
