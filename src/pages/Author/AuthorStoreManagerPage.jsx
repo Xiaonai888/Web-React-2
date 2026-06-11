@@ -1673,6 +1673,26 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
 
     if (saving) return
 
+    if (!title.trim()) {
+  setFormError('Book title is required.')
+  return
+}
+
+if (!authorName.trim()) {
+  setFormError('Author name is required.')
+  return
+}
+
+if (!category) {
+  setFormError('Category is required.')
+  return
+}
+
+if (!salePrice || Number(salePrice) <= 0) {
+  setFormError('Sell price is required.')
+  return
+}
+
    if (!coverFile && !coverPreview) {
   setFormError('Book cover is required.')
   return
