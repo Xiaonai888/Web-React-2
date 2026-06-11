@@ -71,9 +71,10 @@ function formatProductForUi(product) {
     qualityPercent: product.quality_percent ? String(product.quality_percent) : '',
     deliveryNote: product.delivery_note || '',
     preOrder: Boolean(product.pre_order),
-    pdfFileName: product.pdf_file_name || '',
-    pageCount: String(product.page_count || ''),
-    accessRule: product.access_rule || 'Download after payment',
+   pdfFileUrl: product.pdf_file_url || '',
+pdfFileName: product.pdf_file_name || '',
+pageCount: product.page_count || '',
+accessRule: product.access_rule || 'Download after payment',
     createdAt: product.created_at,
   }
 }
