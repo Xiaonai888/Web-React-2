@@ -246,23 +246,27 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   }, [author?.page_username])
 
   const visibleSections = useMemo(() => {
-    return STORE_SECTIONS.filter((section) => {
-      if (activeType === 'All') return true
-      return section.types.includes(activeType.slice(0, -1)) || section.types.includes(activeType)
-    })
-      .map((section) => {
-        const sectionItems = products.filter((product) => {
-          const typeMatches = activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
-          return typeMatches && sectionMatchesProduct(section, product)
-        })
+  const typeFilteredProducts = products.filter((product) => {
+    return activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
+  })
 
-        return {
-          ...section,
-          items: sectionItems,
-        }
-      })
-      .filter((section) => section.items.length > 0)
-  }, [activeType, products])
+  const customCategories = Array.from(
+    new Set(typeFilteredProducts.map((product) => product.category).filter(Boolean))
+  )
+
+  return customCategories
+    .map((category) => {
+      const items = typeFilteredProducts.filter((product) => product.category === category)
+
+      return {
+        key: category.toLowerCase().replace(/\s+/g, '-'),
+        title: category,
+        subtitle: 'Books and PDFs in this category.',
+        items,
+      }
+    })
+    .filter((section) => section.items.length > 0)
+}, [activeType, products])
 
   const isOwner = Boolean(author?.is_owner)
 
