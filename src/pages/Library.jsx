@@ -9,7 +9,8 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const topTabs = ['Recents', 'Subscribed', 'Downloads']
-const typeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
+const storyTypeTabs = ['All', 'Novel', 'Chat Story', 'Manga']
+const downloadTypeTabs = ['All', 'PDF']
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
@@ -24,9 +25,28 @@ function getHeaders() {
   }
 }
 
+function normalizeAccessRule(value = '') {
+  const rule = String(value || '').toLowerCase()
+
+  if (rule.includes('read') && rule.includes('download')) return 'download_and_read'
+  if (rule.includes('read')) return 'read_only'
+  return 'download_after_payment'
+}
+
+function canDownloadPdf(story) {
+  const rule = normalizeAccessRule(story?.access_rule)
+  return rule === 'download_after_payment' || rule === 'download_and_read'
+}
+
+function canReadPdf(story) {
+  const rule = normalizeAccessRule(story?.access_rule)
+  return rule === 'read_only' || rule === 'download_and_read'
+}
+
 function getStoryType(story) {
   const genre = String(story?.main_genre || '').toLowerCase()
 
+  if (genre.includes('pdf')) return 'PDF'
   if (genre.includes('chat')) return 'Chat Story'
   if (genre.includes('manga') || genre.includes('comic') || genre.includes('manhwa')) return 'Manga'
 
@@ -42,7 +62,7 @@ function getActionText(tab) {
 function getSubtitle(tab) {
   if (tab === 'Recents') return 'Stories you added to your library.'
   if (tab === 'Subscribed') return 'Follow the latest updates from stories you love.'
-  return 'Available offline anytime.'
+  return 'Purchased PDFs and downloads from Author Store.'
 }
 
 function formatInfo(tab, story) {
@@ -51,10 +71,39 @@ function formatInfo(tab, story) {
   }
 
   if (tab === 'Downloads') {
-    return 'Downloaded'
+    const fileName = story?.pdf_file_name || 'PDF'
+    const rule = normalizeAccessRule(story?.access_rule)
+
+    if (rule === 'read_only') return `${fileName} • Read online only`
+    if (rule === 'download_and_read') return `${fileName} • Download + Read`
+    return `${fileName} • Download`
   }
 
   return `Saved • Ep. ${story?.total_episodes || 0}`
+}
+
+function formatDownloadItems(downloads) {
+  if (!Array.isArray(downloads)) return []
+
+  return downloads.map((item) => ({
+    id: item.id,
+    story_id: item.product_id,
+    kind: 'pdf',
+    download: item,
+    story: {
+      id: item.product_id,
+      title: item.title || 'Untitled PDF',
+      description: item.pdf_file_name || 'PDF book',
+      cover_url: item.cover_url || '',
+      main_genre: 'PDF',
+      total_episodes: 1,
+      status: 'completed',
+      pdf_file_url: item.pdf_file_url || '',
+      pdf_file_name: item.pdf_file_name || '',
+      access_rule: item.access_rule || 'Download after payment',
+      order_number: item.order_number || '',
+    },
+  }))
 }
 
 function EmptyState({ title, text, actionText, onAction }) {
@@ -84,6 +133,14 @@ function EndBadge() {
   )
 }
 
+function PdfBadge() {
+  return (
+    <div className="absolute left-2 top-2 rounded-full bg-[#111827] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
+      PDF
+    </div>
+  )
+}
+
 function StoryCover({ story, className = '' }) {
   return (
     <div className={`overflow-hidden bg-[#efefef] ${className}`}>
@@ -101,9 +158,76 @@ function StoryCover({ story, className = '' }) {
   )
 }
 
+function PdfActionButtons({ story, compact = false }) {
+  const pdfUrl = story?.pdf_file_url || ''
+  const fileName = story?.pdf_file_name || `${story?.title || 'download'}.pdf`
+
+  if (!pdfUrl) {
+    return (
+      <div className="rounded-xl bg-[#fff7ed] px-3 py-2 text-[10px] font-extrabold text-[#9a3412]">
+        PDF file is not ready.
+      </div>
+    )
+  }
+
+  return (
+    <div className={`flex ${compact ? 'flex-col gap-1.5' : 'flex-wrap gap-2'}`}>
+      {canReadPdf(story) ? (
+        <a
+          href={pdfUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center justify-center rounded-xl bg-[#111827] px-3 py-2 text-[10px] font-extrabold text-white active:scale-95"
+        >
+          Read
+        </a>
+      ) : null}
+
+      {canDownloadPdf(story) ? (
+        <a
+          href={pdfUrl}
+          download={fileName}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center justify-center rounded-xl bg-[#eef2ff] px-3 py-2 text-[10px] font-extrabold text-[#111827] active:scale-95"
+        >
+          Download
+        </a>
+      ) : null}
+    </div>
+  )
+}
+
 function LibraryBookCard({ item, tab }) {
   const story = item.story
   if (!story) return null
+
+  if (tab === 'Downloads' || item.kind === 'pdf') {
+    return (
+      <article className="group block min-w-0">
+        <div className="relative overflow-hidden rounded-2xl bg-[#efefef] shadow-sm">
+          <div className="aspect-[2/3] overflow-hidden">
+            <StoryCover story={story} className="h-full w-full" />
+          </div>
+
+          <PdfBadge />
+        </div>
+
+        <div className="pt-2.5">
+          <h4 className="line-clamp-1 text-[12px] font-extrabold tracking-tight text-[#111] sm:text-[13px]">
+            {story.title || 'Untitled PDF'}
+          </h4>
+          <p className="mt-1 line-clamp-1 text-[10px] font-medium text-[#8d8d8d] sm:text-[11px]">
+            {formatInfo(tab, story)}
+          </p>
+
+          <div className="mt-2">
+            <PdfActionButtons story={story} compact />
+          </div>
+        </div>
+      </article>
+    )
+  }
 
   return (
     <Link to={`/story/${story.id}`} className="group block min-w-0">
@@ -130,6 +254,44 @@ function LibraryBookCard({ item, tab }) {
 function ContextCard({ item, tab }) {
   const story = item?.story
   if (!story) return null
+
+  if (tab === 'Downloads' || item.kind === 'pdf') {
+    return (
+      <section className="pt-5">
+        <div className="rounded-[24px] border border-[#efefef] bg-[#fafafa] p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-[82px] shrink-0 overflow-hidden rounded-2xl bg-[#ececec] shadow-sm sm:w-[90px]">
+              <div className="aspect-[2/3] overflow-hidden">
+                <StoryCover story={story} className="h-full w-full" />
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[#111827] shadow-sm">
+                PDF Download
+              </div>
+
+              <h3 className="line-clamp-1 text-[15px] font-extrabold tracking-tight text-[#111] sm:text-[17px]">
+                {story.title || 'Untitled PDF'}
+              </h3>
+
+              <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[#6f6f78] sm:text-[13px]">
+                {story.description || 'Purchased PDF book'}
+              </p>
+
+              <p className="mt-2 text-[11px] font-extrabold text-[#111827] sm:text-[12px]">
+                {formatInfo(tab, story)}
+              </p>
+
+              <div className="mt-3">
+                <PdfActionButtons story={story} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="pt-5">
@@ -183,21 +345,23 @@ export default function Library() {
 
   const loadLibrary = async () => {
     if (!isLoggedIn) {
-  setLibraryItems([])
-  setSubscriptionItems([])
-  setDownloadItems([])
-  setLoading(false)
-  return
-}
+      setLibraryItems([])
+      setSubscriptionItems([])
+      setDownloadItems([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setMessage('')
 
     try {
       const [libraryResponse, subscriptionsResponse, downloadsResponse] = await Promise.all([
-  fetch(`${API_BASE_URL}/api/reader/library`, { headers: getHeaders() }),
-  fetch(`${API_BASE_URL}/api/reader/subscriptions`, { headers: getHeaders() }),
-  fetch(`${API_BASE_URL}/api/author-store/downloads/my`, { headers: getHeaders() }),
-])
+        fetch(`${API_BASE_URL}/api/reader/library`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/reader/subscriptions`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/author-store/downloads/my`, { headers: getHeaders() }),
+      ])
+
       const libraryData = await libraryResponse.json().catch(() => ({}))
       const subscriptionsData = await subscriptionsResponse.json().catch(() => ({}))
       const downloadsData = await downloadsResponse.json().catch(() => ({}))
@@ -211,36 +375,17 @@ export default function Library() {
       }
 
       if (!downloadsResponse.ok || downloadsData.ok === false) {
-  throw new Error(downloadsData.message || 'Failed to load downloads')
-}
+        throw new Error(downloadsData.message || 'Failed to load downloads')
+      }
 
       setLibraryItems(Array.isArray(libraryData.items) ? libraryData.items : [])
       setSubscriptionItems(Array.isArray(subscriptionsData.items) ? subscriptionsData.items : [])
-      setDownloadItems(
-  Array.isArray(downloadsData.downloads)
-    ? downloadsData.downloads.map((item) => ({
-        id: item.id,
-        story_id: item.product_id,
-        story: {
-          id: item.product_id,
-          title: item.title || 'Untitled PDF',
-          description: item.pdf_file_name || 'PDF book',
-          cover_url: item.cover_url || '',
-          main_genre: 'PDF',
-          total_episodes: 1,
-          status: 'completed',
-          pdf_file_url: item.pdf_file_url || '',
-          pdf_file_name: item.pdf_file_name || '',
-          access_rule: item.access_rule || 'Download after payment',
-        },
-      }))
-    : []
-)
+      setDownloadItems(formatDownloadItems(downloadsData.downloads))
     } catch (error) {
       setLibraryItems([])
-setSubscriptionItems([])
-setDownloadItems([])
-setMessage(error.message || 'Failed to load library')
+      setSubscriptionItems([])
+      setDownloadItems([])
+      setMessage(error.message || 'Failed to load library')
     } finally {
       setLoading(false)
     }
@@ -255,6 +400,8 @@ setMessage(error.message || 'Failed to load library')
     if (activeTab === 'Downloads') return downloadItems
     return libraryItems
   }, [activeTab, libraryItems, subscriptionItems, downloadItems])
+
+  const currentTypeTabs = activeTab === 'Downloads' ? downloadTypeTabs : storyTypeTabs
 
   const filteredItems = useMemo(() => {
     if (activeType === 'All') return currentItems
@@ -353,7 +500,7 @@ setMessage(error.message || 'Failed to load library')
             </p>
 
             <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
-              {typeTabs.map((type) => {
+              {currentTypeTabs.map((type) => {
                 const active = type === activeType
 
                 return (
@@ -438,7 +585,7 @@ setMessage(error.message || 'Failed to load library')
                   activeTab === 'Subscribed'
                     ? 'Tap the heart button on a story to follow its updates.'
                     : activeTab === 'Downloads'
-                      ? 'Downloaded stories will appear here when offline reading is ready.'
+                      ? 'Purchased PDFs will appear here after payment.'
                       : 'Tap the bookmark button on a story to add it to your library.'
                 }
                 actionText="Browse Stories"
