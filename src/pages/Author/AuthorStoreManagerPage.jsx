@@ -1850,13 +1850,13 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
         <FormDivider title="Book information" />
 
 <div>
-  <FieldLabel>Book title</FieldLabel>
+  <FieldLabel>Book title *</FieldLabel>
   <TextInput value={title} onChange={setTitle} placeholder="Enter book title" />
 </div>
 
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
-    <FieldLabel>Author name</FieldLabel>
+    <FieldLabel>Author name *</FieldLabel>
     <TextInput value={authorName} onChange={setAuthorName} placeholder="Author name" />
   </div>
 
@@ -1873,7 +1873,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
   </div>
 
   <div>
-    <FieldLabel>Category</FieldLabel>
+    <FieldLabel>Category *</FieldLabel>
     <SelectInput value={category} onChange={setCategory}>
   <option value="">Select category</option>
   {categories.map((item) => <option key={item} value={item}>{item}</option>)}
@@ -1930,7 +1930,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <FieldLabel>Sale price</FieldLabel>
+              <FieldLabel>Sale price *</FieldLabel>
               <TextInput value={salePrice} onChange={setSalePrice} placeholder="Example: 8.75" type="number" />
             </div>
             <div>
