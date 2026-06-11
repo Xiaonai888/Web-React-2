@@ -210,6 +210,10 @@ export default function Library() {
         throw new Error(subscriptionsData.message || 'Failed to load subscriptions')
       }
 
+      if (!downloadsResponse.ok || downloadsData.ok === false) {
+  throw new Error(downloadsData.message || 'Failed to load downloads')
+}
+
       setLibraryItems(Array.isArray(libraryData.items) ? libraryData.items : [])
       setSubscriptionItems(Array.isArray(subscriptionsData.items) ? subscriptionsData.items : [])
       setDownloadItems(Array.isArray(downloadsData.downloads) ? downloadsData.downloads : [])
