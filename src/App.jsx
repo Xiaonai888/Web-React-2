@@ -839,7 +839,7 @@ const shouldShowOpeningAds =
         <Route path="/author/trash" element={<AuthorTrashPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
-        <Route path="/discover" element={<ComingSoon title="Discover" />} />
+ 
       </Routes>
 
       {shouldShowOpeningAds && adStep === 'splash' ? (
