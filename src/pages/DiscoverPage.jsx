@@ -87,6 +87,8 @@ const feedItems = [
       { rank: 1, title: 'The Last Rose Contract', meta: 'Romance · 18.2K reads' },
       { rank: 2, title: 'Blood Moon Academy', meta: 'Fantasy · 15.7K reads' },
       { rank: 3, title: 'CEO Hidden Bride', meta: 'Drama · 12.9K reads' },
+      { rank: 4, title: 'The Silent Crown', meta: 'Royalty · 9.4K reads' },
+      { rank: 5, title: 'Kiss Me After Midnight', meta: 'Drama · 8.8K reads' },
     ],
   },
   {
@@ -109,6 +111,8 @@ const feedItems = [
       { name: 'Ari Moon', meta: 'Soft romance writer', avatar: 'AM' },
       { name: 'Nora Vale', meta: 'Dark fantasy author', avatar: 'NV' },
       { name: 'Skye Novel', meta: 'Emotional drama', avatar: 'SN' },
+      { name: 'Luna Hart', meta: 'Sad romance author', avatar: 'LH' },
+      { name: 'Mika Rose', meta: 'Modern drama writer', avatar: 'MR' },
     ],
   },
 ]
@@ -116,10 +120,10 @@ const feedItems = [
 function Header({ hidden }) {
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-[100000] bg-white shadow-sm transition-transform duration-200 ease-out"
+      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-100 bg-white/98 shadow-sm backdrop-blur transition-transform duration-200 ease-out"
       style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
     >
-      <div className="flex items-center justify-between px-4 py-4">
+      <div className="mx-auto flex h-[72px] w-full max-w-[620px] items-center justify-between px-4">
         <Link to="/" className="flex h-9 w-[92px] items-center overflow-visible">
           <img
             src="/assets/Icons/Logo Shadow 2.svg"
@@ -152,7 +156,7 @@ function StoryCard({ item }) {
   return (
     <button
       type="button"
-      className="relative h-[184px] w-[112px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 transition-transform active:scale-[0.98]"
+      className="relative h-[178px] w-[108px] sm:h-[184px] sm:w-[112px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 transition-transform active:scale-[0.98]"
       aria-label={item.name}
     >
       <div className="absolute inset-0" style={{ background: item.image }} />
@@ -169,7 +173,7 @@ function StoryCard({ item }) {
       ) : null}
 
       {item.type === 'create' ? (
-        <div className="absolute left-1/2 top-[72px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
+        <div className="absolute left-1/2 top-[68px] sm:top-[72px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
           +
         </div>
       ) : null}
@@ -188,8 +192,8 @@ function StoryCard({ item }) {
 
 function StorySection() {
   return (
-    <section className="border-b border-gray-100 bg-white py-4">
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
+    <section className="border-b border-gray-100 bg-white py-3 sm:rounded-b-[22px] sm:border sm:shadow-sm sm:ring-1 sm:ring-gray-100">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 sm:px-4">
         {storyItems.map((item) => (
           <StoryCard key={item.id} item={item} />
         ))}
@@ -201,10 +205,10 @@ function StorySection() {
 function FeedImageGrid({ layout }) {
   if (layout === 'single') {
     return (
-      <div className="h-[260px] bg-gradient-to-br from-[#3b0764] via-[#9333ea] to-[#f9a8d4]">
-        <div className="flex h-full items-end p-5">
+      <div className="h-[220px] bg-gradient-to-br from-[#3b0764] via-[#9333ea] to-[#f9a8d4] sm:h-[260px]">
+        <div className="flex h-full items-end p-4 sm:p-5">
           <div className="rounded-2xl bg-black/35 px-4 py-3 backdrop-blur">
-            <div className="text-[18px] font-black text-white">Cover Reveal</div>
+            <div className="text-[17px] font-black text-white sm:text-[18px]">Cover Reveal</div>
             <div className="mt-1 text-[12px] font-bold text-white/80">Coming this week</div>
           </div>
         </div>
@@ -214,15 +218,15 @@ function FeedImageGrid({ layout }) {
 
   return (
     <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
-      <div className="h-[220px] bg-gradient-to-br from-[#111827] via-[#374151] to-[#7c3aed]">
-        <div className="flex h-full items-end p-4">
+      <div className="h-[190px] bg-gradient-to-br from-[#111827] via-[#374151] to-[#7c3aed] sm:h-[220px]">
+        <div className="flex h-full items-end p-3 sm:p-4">
           <div className="rounded-xl bg-white/15 px-3 py-2 backdrop-blur">
             <div className="text-[13px] font-black text-white">New Chapter</div>
           </div>
         </div>
       </div>
-      <div className="h-[220px] bg-gradient-to-br from-[#f8fafc] via-[#dbeafe] to-[#94a3b8]">
-        <div className="flex h-full items-end p-4">
+      <div className="h-[190px] bg-gradient-to-br from-[#f8fafc] via-[#dbeafe] to-[#94a3b8] sm:h-[220px]">
+        <div className="flex h-full items-end p-3 sm:p-4">
           <div className="rounded-xl bg-black/15 px-3 py-2 backdrop-blur">
             <div className="text-[13px] font-black text-white">Reader Gift</div>
           </div>
@@ -234,7 +238,7 @@ function FeedImageGrid({ layout }) {
 
 function FollowedPostCard({ post }) {
   return (
-    <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-gray-100">
+    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
       <div className="flex items-start gap-3 p-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white">
           {post.avatar}
@@ -298,7 +302,7 @@ function FollowedPostCard({ post }) {
 
 function AdsCard({ item }) {
   return (
-    <article className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-gray-100">
+    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
       <div className="p-4">
         <div className="mb-3 flex items-center justify-between">
           <div>
@@ -330,10 +334,12 @@ function TrendingCard({ item }) {
     'from-[#111827] via-[#4f46e5] to-[#a78bfa]',
     'from-[#7f1d1d] via-[#dc2626] to-[#f59e0b]',
     'from-[#064e3b] via-[#0f766e] to-[#5eead4]',
+    'from-[#3b0764] via-[#9333ea] to-[#f0abfc]',
+    'from-[#7c2d12] via-[#ea580c] to-[#fed7aa]',
   ]
 
   return (
-    <article className="rounded-[22px] bg-white py-4 shadow-sm ring-1 ring-gray-100">
+    <article className="bg-white py-4 shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
       <div className="mb-4 flex items-center justify-between px-4">
         <div>
           <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
@@ -375,7 +381,7 @@ function TrendingCard({ item }) {
 
 function RecommendedAuthorsCard({ item }) {
   return (
-    <article className="rounded-[22px] bg-white py-4 shadow-sm ring-1 ring-gray-100">
+    <article className="bg-white py-4 shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
       <div className="mb-4 flex items-center justify-between px-4">
         <div>
           <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
@@ -414,7 +420,7 @@ function RecommendedAuthorsCard({ item }) {
 
 function EmptyStateCard() {
   return (
-    <article className="rounded-[22px] bg-white p-5 text-center shadow-sm ring-1 ring-gray-100">
+    <article className="bg-white p-5 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
         <i className="fa-solid fa-user-plus text-lg" />
       </div>
@@ -487,15 +493,17 @@ export default function DiscoverPage() {
       <Header hidden={barsHidden} />
 
       <main className="pt-[72px]">
-        <StorySection />
+        <div className="mx-auto w-full max-w-[620px]">
+          <StorySection />
 
-        <section className="space-y-4 px-4 py-4">
+          <section className="space-y-2 py-2 sm:space-y-3 sm:px-3 sm:py-3">
           {feed.length ? (
             feed.map((item) => <FeedRenderer key={item.id} item={item} />)
           ) : (
             <EmptyStateCard />
           )}
-        </section>
+          </section>
+        </div>
       </main>
     </div>
   )
