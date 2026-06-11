@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -257,6 +257,15 @@ function WithdrawalHistoryItem({ request }) {
 
 export default function AuthorPageWithdrawalPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const backPath =
+    searchParams.get('back') === 'income'
+      ? '/author/page/finance/income'
+      : '/author/page/finance'
+  const paymentBackPath =
+    searchParams.get('back') === 'income'
+      ? '/author/page/finance/withdrawal?back=income'
+      : '/author/page/finance/withdrawal'
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -367,7 +376,7 @@ export default function AuthorPageWithdrawalPage() {
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/page/finance/income')}
+            onClick={() => navigate(backPath)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
@@ -434,7 +443,7 @@ export default function AuthorPageWithdrawalPage() {
             <div className="mt-1 text-[13px] font-black text-[#111827]">{paymentLabel}</div>
             <button
               type="button"
-              onClick={() => navigate('/author/payment-method?back=/author/page/finance/withdrawal')}
+              onClick={() => navigate(`/author/payment-method?back=${encodeURIComponent(paymentBackPath)}`)}
               className="mt-3 h-10 rounded-full bg-white px-4 text-[12px] font-black text-[#111827] ring-1 ring-black/10 active:scale-95"
             >
               Edit Payment Method
