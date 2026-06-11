@@ -14,6 +14,144 @@ function getAuthToken() {
   )
 }
 
+function formatCategoryForUi(category) {
+  return {
+    id: category.id,
+    name: category.name || '',
+    sortOrder: Number(category.sort_order || 0),
+    isDefault: Boolean(category.is_default),
+    isHidden: Boolean(category.is_hidden),
+  }
+}
+
+function withSystemCategories(categories) {
+  const safeCategories = Array.isArray(categories) ? categories : []
+  const hasSoldOut = safeCategories.some((category) => category.name === 'Sold out')
+
+  if (hasSoldOut) return safeCategories
+
+  return [
+    ...safeCategories,
+    {
+      id: 'system-sold-out',
+      name: 'Sold out',
+      sortOrder: safeCategories.length,
+      isDefault: true,
+      isHidden: false,
+    },
+  ]
+}
+
+async function fetchMyCategories() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load categories')
+  }
+
+  return Array.isArray(data.categories) ? data.categories.map(formatCategoryForUi) : []
+}
+
+async function createStoreCategory(name) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to create category')
+  }
+
+  return data.category ? formatCategoryForUi(data.category) : null
+}
+
+async function updateStoreCategory(categoryId, updates) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/${categoryId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updates),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update category')
+  }
+
+  return data.category ? formatCategoryForUi(data.category) : null
+}
+
+async function deleteStoreCategory(categoryId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/${categoryId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to delete category')
+  }
+
+  return data
+}
+
+async function reorderStoreCategories(categoryIds) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/categories/reorder`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ category_ids: categoryIds }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to save category order')
+  }
+
+  return Array.isArray(data.categories) ? data.categories.map(formatCategoryForUi) : []
+}
+
 async function fetchTelegramSettings() {
   const token = getAuthToken()
 
@@ -103,6 +241,15 @@ export default function AuthorPageSettingsPage() {
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const [settingsView, setSettingsView] = useState('home')
+
+  const [storeCategories, setStoreCategories] = useState([])
+  const [newCategory, setNewCategory] = useState('')
+  const [categoryError, setCategoryError] = useState('')
+  const [categorySaving, setCategorySaving] = useState(false)
+  const [categoryLoading, setCategoryLoading] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState('')
+  const [editingCategoryName, setEditingCategoryName] = useState('')
+
   const [telegramBotUsername, setTelegramBotUsername] = useState('')
   const [telegramChatId, setTelegramChatId] = useState('')
   const [telegramChatTitle, setTelegramChatTitle] = useState('')
@@ -111,6 +258,9 @@ export default function AuthorPageSettingsPage() {
   const [telegramUnlinking, setTelegramUnlinking] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
+
+  const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
+  const canCreateCustomCategory = customCategoryCount < 5
 
   useEffect(() => {
     let ignore = false
@@ -139,6 +289,171 @@ export default function AuthorPageSettingsPage() {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadCategories() {
+      try {
+        setCategoryLoading(true)
+        setCategoryError('')
+
+        const categories = await fetchMyCategories()
+
+        if (!ignore) {
+          setStoreCategories(categories)
+        }
+      } catch (error) {
+        if (!ignore) {
+          setCategoryError(error.message || 'Failed to load categories')
+        }
+      } finally {
+        if (!ignore) setCategoryLoading(false)
+      }
+    }
+
+    loadCategories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  async function addCategory() {
+    const name = newCategory.trim()
+
+    if (!name || categorySaving || !canCreateCustomCategory) return
+
+    try {
+      setCategorySaving(true)
+      setCategoryError('')
+
+      const category = await createStoreCategory(name)
+
+      if (category) {
+        setStoreCategories((current) => [...current, category])
+      }
+
+      setNewCategory('')
+    } catch (error) {
+      setCategoryError(error.message || 'Failed to create category')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  function startEditCategory(category) {
+    setEditingCategoryId(category.id)
+    setEditingCategoryName(category.name)
+  }
+
+  function cancelEditCategory() {
+    setEditingCategoryId('')
+    setEditingCategoryName('')
+  }
+
+  async function saveEditCategory(category) {
+    const name = editingCategoryName.trim()
+
+    if (!name || categorySaving || category.isDefault) return
+
+    try {
+      setCategorySaving(true)
+      setCategoryError('')
+
+      const updated = await updateStoreCategory(category.id, { name })
+
+      if (updated) {
+        setStoreCategories((current) =>
+          current.map((item) => (item.id === updated.id ? updated : item))
+        )
+      }
+
+      cancelEditCategory()
+    } catch (error) {
+      setCategoryError(error.message || 'Failed to update category')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  async function handleDeleteCategory(category) {
+    if (category.isDefault || categorySaving) return
+
+    const confirmed = window.confirm(`Delete "${category.name}" category?`)
+    if (!confirmed) return
+
+    try {
+      setCategorySaving(true)
+      setCategoryError('')
+
+      await deleteStoreCategory(category.id)
+
+      setStoreCategories((current) => current.filter((item) => item.id !== category.id))
+    } catch (error) {
+      setCategoryError(error.message || 'Failed to delete category')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  async function handleToggleHideCategory(category) {
+    if (categorySaving) return
+
+    try {
+      setCategorySaving(true)
+      setCategoryError('')
+
+      const updated = await updateStoreCategory(category.id, {
+        is_hidden: !category.isHidden,
+      })
+
+      if (updated) {
+        setStoreCategories((current) =>
+          current.map((item) => (item.id === updated.id ? updated : item))
+        )
+      }
+    } catch (error) {
+      setCategoryError(error.message || 'Failed to update category')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  function moveCategory(index, direction) {
+    setStoreCategories((current) => {
+      const next = [...current]
+      const targetIndex = index + direction
+
+      if (targetIndex < 0 || targetIndex >= next.length) return current
+
+      const [item] = next.splice(index, 1)
+      next.splice(targetIndex, 0, item)
+
+      return next
+    })
+  }
+
+  async function saveCategoryOrder() {
+    try {
+      setCategorySaving(true)
+      setCategoryError('')
+
+      const ids = storeCategories
+        .filter((category) => !String(category.id).startsWith('system-'))
+        .map((category) => category.id)
+
+      const categories = await reorderStoreCategories(ids)
+
+      setStoreCategories(categories)
+      setMessage('Category order saved.')
+      setSettingsView('home')
+    } catch (error) {
+      setCategoryError(error.message || 'Failed to save category order')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
 
   async function handleCreateTelegramConnectLink() {
     try {
@@ -193,7 +508,7 @@ export default function AuthorPageSettingsPage() {
           <button
             type="button"
             onClick={() => {
-              if (settingsView === 'telegram') {
+              if (settingsView !== 'home') {
                 setSettingsView('home')
                 return
               }
@@ -207,7 +522,11 @@ export default function AuthorPageSettingsPage() {
           </button>
 
           <h1 className="text-[16px] font-semibold text-[#111827]">
-            {settingsView === 'telegram' ? 'Telegram Bot' : 'Page Settings'}
+            {settingsView === 'telegram'
+              ? 'Telegram Bot'
+              : settingsView === 'categories'
+                ? 'Category Management'
+                : 'Page Settings'}
           </h1>
 
           <div className="h-10 w-10" />
@@ -215,7 +534,200 @@ export default function AuthorPageSettingsPage() {
       </header>
 
       <main className="mx-auto max-w-[720px] px-4 py-4">
-        {settingsView === 'telegram' ? (
+        {settingsView === 'categories' ? (
+          <section className="space-y-4">
+            <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[16px] font-black text-[#111827]">
+                    Create custom category
+                  </h2>
+                  <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                    You can create up to 5 custom categories.
+                  </p>
+                </div>
+
+                <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
+                  {customCategoryCount}/5
+                </span>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(event) => setNewCategory(event.target.value)}
+                  placeholder={canCreateCustomCategory ? 'Category name' : 'Custom category limit reached'}
+                  disabled={!canCreateCustomCategory}
+                  className="h-11 min-w-0 flex-1 rounded-2xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827] disabled:opacity-50"
+                />
+
+                <button
+                  type="button"
+                  onClick={addCategory}
+                  disabled={categorySaving || !newCategory.trim() || !canCreateCustomCategory}
+                  className="h-11 shrink-0 rounded-2xl bg-[#111827] px-4 text-[12px] font-black text-white disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
+
+              {!canCreateCustomCategory ? (
+                <p className="mt-2 text-[11px] font-bold text-[#e5484d]">
+                  Custom category limit reached. Delete one custom category before creating a new one.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-[16px] font-black text-[#111827]">Categories</h2>
+
+                <button
+                  type="button"
+                  onClick={saveCategoryOrder}
+                  disabled={categorySaving || !storeCategories.length}
+                  className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50"
+                >
+                  Save order
+                </button>
+              </div>
+
+              {categoryError ? (
+                <button
+                  type="button"
+                  onClick={() => setCategoryError('')}
+                  className="mb-3 w-full rounded-2xl bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold text-[#9a3412]"
+                >
+                  {categoryError}
+                </button>
+              ) : null}
+
+              {categoryLoading ? (
+                <div className="rounded-2xl bg-[#f8fafc] p-6 text-center text-[12px] font-bold text-[#8b93a1] ring-1 ring-black/5">
+                  Loading categories...
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {withSystemCategories(storeCategories).map((category, index, list) => {
+                    const editing = editingCategoryId === category.id
+                    const isSystem = String(category.id).startsWith('system-')
+                    const canEdit = !category.isDefault && !isSystem
+
+                    return (
+                      <div
+                        key={category.id}
+                        className="rounded-2xl bg-[#f8fafc] px-3 py-3 ring-1 ring-black/5"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            {editing ? (
+                              <input
+                                type="text"
+                                value={editingCategoryName}
+                                onChange={(event) => setEditingCategoryName(event.target.value)}
+                                className="h-10 w-full rounded-xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-black text-[#111827] outline-none focus:border-[#111827]"
+                              />
+                            ) : (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="truncate text-[13px] font-black text-[#111827]">
+                                  {category.name}
+                                </span>
+
+                                {category.isDefault || isSystem ? (
+                                  <span className="shrink-0 rounded-full bg-[#eef3f8] px-2 py-0.5 text-[9px] font-black text-[#42526b]">
+                                    System
+                                  </span>
+                                ) : null}
+
+                                {category.isHidden ? (
+                                  <span className="shrink-0 rounded-full bg-[#fff1f2] px-2 py-0.5 text-[9px] font-black text-[#b91c1c]">
+                                    Hidden
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+
+                          {editing ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => saveEditCategory(category)}
+                                disabled={categorySaving}
+                                className="h-9 rounded-xl bg-[#111827] px-3 text-[11px] font-black text-white disabled:opacity-50"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={cancelEditCategory}
+                                className="h-9 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/10"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => moveCategory(index, -1)}
+                                disabled={index === 0 || categorySaving}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/10 disabled:opacity-30"
+                              >
+                                <i className="fa-solid fa-arrow-up text-[11px]" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => moveCategory(index, 1)}
+                                disabled={index === list.length - 1 || categorySaving}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/10 disabled:opacity-30"
+                              >
+                                <i className="fa-solid fa-arrow-down text-[11px]" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleToggleHideCategory(category)}
+                                disabled={categorySaving || isSystem}
+                                className="h-9 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/10 disabled:opacity-40"
+                              >
+                                {category.isHidden ? 'Show' : 'Hide'}
+                              </button>
+
+                              {canEdit ? (
+                                <button
+                                  type="button"
+                                  onClick={() => startEditCategory(category)}
+                                  className="h-9 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/10"
+                                >
+                                  Edit
+                                </button>
+                              ) : null}
+
+                              {canEdit ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCategory(category)}
+                                  disabled={categorySaving}
+                                  className="h-9 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] disabled:opacity-40"
+                                >
+                                  Delete
+                                </button>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          </section>
+        ) : settingsView === 'telegram' ? (
           <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
             <div className="bg-gradient-to-br from-[#dff6ff] via-[#eefaff] to-white px-4 py-5 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#229ed9] shadow-sm ring-1 ring-black/5">
@@ -333,7 +845,7 @@ export default function AuthorPageSettingsPage() {
                 icon="fa-solid fa-layer-group"
                 label="Category Management"
                 subtext="Categories, hidden sections, and order."
-                onClick={() => setMessage('Coming soon.')}
+                onClick={() => setSettingsView('categories')}
               />
 
               <ToolRow
