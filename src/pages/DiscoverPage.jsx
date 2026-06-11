@@ -137,12 +137,12 @@ export default function DiscoverPage() {
 
       <main className="pt-[72px]">
         <section className="border-b border-gray-100 bg-white py-4">
-          <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
             {storyItems.map((item) => (
               <button
                 key={item.name}
                 type="button"
-                className="relative h-[156px] w-[104px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+                className="relative h-[184px] w-[112px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
               >
                 <div className="absolute inset-0" style={{ background: item.image }} />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/5 to-black/55" />
