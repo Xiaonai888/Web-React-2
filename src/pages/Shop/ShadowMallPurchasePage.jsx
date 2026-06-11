@@ -18,7 +18,7 @@ export default function ShadowMallPurchasePage() {
           </button>
 
           <h1 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-            Shadow Mall
+            Purchase
           </h1>
         </div>
       </header>
