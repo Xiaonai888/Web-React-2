@@ -112,7 +112,7 @@ const AuthorPageFinancePage = lazy(() => import('./pages/Author/AuthorPageFinanc
 const AuthorPageIncomePage = lazy(() => import('./pages/Author/AuthorPageIncomePage'))
 const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWithdrawalPage'))
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
-
+const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 
 
 
@@ -781,6 +781,15 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+        <Route
+  path="/discover"
+  element={
+    <LazyPage>
+      <DiscoverPage />
+    </LazyPage>
+  }
+/>
         
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
@@ -830,6 +839,7 @@ const shouldShowOpeningAds =
         <Route path="/author/trash" element={<AuthorTrashPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
+        <Route path="/discover" element={<ComingSoon title="Discover" />} />
       </Routes>
 
       {shouldShowOpeningAds && adStep === 'splash' ? (
