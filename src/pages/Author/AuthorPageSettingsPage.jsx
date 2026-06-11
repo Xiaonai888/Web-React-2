@@ -249,6 +249,7 @@ export default function AuthorPageSettingsPage() {
   const [categoryLoading, setCategoryLoading] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState('')
   const [editingCategoryName, setEditingCategoryName] = useState('')
+  const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
 
   const [telegramBotUsername, setTelegramBotUsername] = useState('')
   const [telegramChatId, setTelegramChatId] = useState('')
@@ -613,6 +614,7 @@ export default function AuthorPageSettingsPage() {
                     const editing = editingCategoryId === category.id
                     const isSystem = String(category.id).startsWith('system-')
                     const canEdit = !category.isDefault && !isSystem
+                    const menuOpen = openCategoryMenuId === category.id
 
                     return (
                       <div
