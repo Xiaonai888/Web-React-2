@@ -1369,6 +1369,8 @@ onOpenStoreSetting={() => {
   setAuthorMenuOpen(false)
   navigate('/author/page-settings')
 }}
+/>
+
       <SwitchingAccountScreen
   open={switchingToReader}
   name={readerName}
