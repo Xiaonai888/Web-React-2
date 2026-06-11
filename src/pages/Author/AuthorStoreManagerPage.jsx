@@ -1757,7 +1757,7 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
   <button
     type="button"
     onClick={() => setFormError('')}
-    className="fixed left-1/2 top-16 z-[300] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 rounded-2xl bg-[#111827] px-4 py-3 text-left text-[12px] font-black text-white shadow-2xl active:scale-[0.98]"
+    className="fixed left-1/2 top-20 z-[300] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 rounded-2xl bg-[#111827] px-4 py-3 text-left text-[12px] font-black text-white shadow-2xl active:scale-[0.98]"
   >
     {formError}
   </button>
