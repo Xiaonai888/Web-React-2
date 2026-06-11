@@ -1591,6 +1591,16 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Download after payment')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
+  useEffect(() => {
+  if (!formError) return
+  if (formError.includes('Uploading') || formError.includes('Saving')) return
+
+  const timer = window.setTimeout(() => {
+    setFormError('')
+  }, 2500)
+
+  return () => window.clearTimeout(timer)
+}, [formError])
 
   const selectCover = (file) => {
     if (!file) return
@@ -1743,6 +1753,16 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
   return (
     <main className="mx-auto max-w-[1180px] px-4 py-4 pb-28">
+{formError ? (
+  <button
+    type="button"
+    onClick={() => setFormError('')}
+    className="fixed left-1/2 top-16 z-[300] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 rounded-2xl bg-[#111827] px-4 py-3 text-left text-[12px] font-black text-white shadow-2xl active:scale-[0.98]"
+  >
+    {formError}
+  </button>
+) : null}
+      
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <AdminStyleCard title="Book Cover" text="Upload the vertical cover shown on product cards.">
           <FormDivider title="Main cover" />
