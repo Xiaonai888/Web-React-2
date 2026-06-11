@@ -205,7 +205,7 @@ const shouldShowOpeningAds =
       <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/fast" element={<ComingSoon title="Fast" />} />
-        <Route path="/discover" element={<ComingSoon title="Discover" />} />
+        <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
 
