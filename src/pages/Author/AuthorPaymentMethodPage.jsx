@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -247,6 +247,8 @@ function FormHeader({ title, subtitle, onBack }) {
 
 export default function AuthorPaymentMethodPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const backPath = searchParams.get('back') || '/author/income'
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -419,7 +421,7 @@ export default function AuthorPaymentMethodPage() {
                 return
               }
 
-              navigate('/author/income', { replace: true })
+              navigate(backPath, { replace: true })
             }}
           />
 
