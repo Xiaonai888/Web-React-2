@@ -216,7 +216,26 @@ export default function Library() {
 
       setLibraryItems(Array.isArray(libraryData.items) ? libraryData.items : [])
       setSubscriptionItems(Array.isArray(subscriptionsData.items) ? subscriptionsData.items : [])
-      setDownloadItems(Array.isArray(downloadsData.downloads) ? downloadsData.downloads : [])
+      setDownloadItems(
+  Array.isArray(downloadsData.downloads)
+    ? downloadsData.downloads.map((item) => ({
+        id: item.id,
+        story_id: item.product_id,
+        story: {
+          id: item.product_id,
+          title: item.title || 'Untitled PDF',
+          description: item.pdf_file_name || 'PDF book',
+          cover_url: item.cover_url || '',
+          main_genre: 'PDF',
+          total_episodes: 1,
+          status: 'completed',
+          pdf_file_url: item.pdf_file_url || '',
+          pdf_file_name: item.pdf_file_name || '',
+          access_rule: item.access_rule || 'Download after payment',
+        },
+      }))
+    : []
+)
     } catch (error) {
       setLibraryItems([])
 setSubscriptionItems([])
