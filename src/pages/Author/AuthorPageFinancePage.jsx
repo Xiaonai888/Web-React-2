@@ -34,7 +34,10 @@ export default function AuthorPageFinancePage() {
         <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/page?openMenu=author')}
+            onClick={() => {
+  sessionStorage.setItem('shadow_open_author_menu', '1')
+  navigate('/author/page')
+}}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
