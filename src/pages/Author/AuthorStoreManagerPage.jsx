@@ -1587,6 +1587,8 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [genre, setGenre] = useState('')
   const [preOrder, setPreOrder] = useState(Boolean(productToEdit?.preOrder))
   const [pdfFileName, setPdfFileName] = useState(productToEdit?.pdfFileName || '')
+  const [pdfFile, setPdfFile] = useState(null)
+  const [pdfFileUrl, setPdfFileUrl] = useState(productToEdit?.pdfFileUrl || '')
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
   const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Download after payment')
   const [formError, setFormError] = useState('')
@@ -1677,6 +1679,34 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
       galleryInputRefs.current[index].value = ''
     }
   }
+
+  const uploadPdfFile = async (file) => {
+  const token = getAuthToken()
+
+  if (!token) {
+    throw new Error('Please login first.')
+  }
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('folder', 'author_store_pdf')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload PDF file.')
+  }
+
+  return data.image_url || data.imageUrl || ''
+}
 
   const saveProduct = async () => {
     const qualityNumber = Number(qualityPercent)
@@ -1985,7 +2015,26 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
                 <input
                   type="file"
                   accept="application/pdf"
-                  onChange={(event) => setPdfFileName(event.target.files?.[0]?.name || '')}
+                  onChange={(event) => {
+  const file = event.target.files?.[0]
+
+  if (!file) {
+    setPdfFile(null)
+    setPdfFileName('')
+    return
+  }
+
+  if (file.type !== 'application/pdf') {
+    setFormError('Please upload a valid PDF file.')
+    setPdfFile(null)
+    setPdfFileName('')
+    return
+  }
+
+  setPdfFile(file)
+  setPdfFileName(file.name)
+  setFormError('')
+}}
                   className="block h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 py-2 text-[13px] font-bold text-[#111827]"
                 />
                 {pdfFileName ? <div className="mt-2 text-[11px] font-bold text-[#6b7280]">{pdfFileName}</div> : null}
