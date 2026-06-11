@@ -1664,28 +1664,27 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   } ${tabsFrozen ? 'shadow-sm' : ''}`}
 >
   <div className="mx-auto h-[50px] max-w-[980px] px-4">
-    <div className="grid h-full grid-cols-3 items-center gap-2">
-      {tabs.map((tab) => {
-        const active = activeTab === tab
+  <div className="flex h-full items-center justify-start gap-2">
+    {tabs.map((tab) => {
+      const active = activeTab === tab
 
-        return (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`flex h-9 min-w-0 items-center justify-center rounded-full px-0 text-[13px] font-medium leading-none transition-colors ${
-              active
-                ? 'bg-[#f3f4f6] text-[#111827]'
-                : 'bg-transparent text-[#9ca3af]'
-            }`}
-          >
-            {tab}
-          </button>
-        )
-      })}
-    </div>
+      return (
+        <button
+          key={tab}
+          type="button"
+          onClick={() => setActiveTab(tab)}
+          className={`flex h-9 shrink-0 items-center justify-center rounded-full px-5 text-[13px] font-medium leading-none transition-colors ${
+            active
+              ? 'bg-[#f3f4f6] text-[#111827]'
+              : 'bg-transparent text-[#9ca3af]'
+          }`}
+        >
+          {tab}
+        </button>
+      )
+    })}
   </div>
-</section>
+</div>
 
         <section className="min-h-[70vh] bg-white px-4 pb-24 pt-4 sm:px-6">
          {activeTab === 'Posts' ? (
