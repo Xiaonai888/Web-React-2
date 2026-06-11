@@ -689,36 +689,58 @@ export default function AuthorPageSettingsPage() {
                               >
                                 <i className="fa-solid fa-arrow-down text-[11px]" />
                               </button>
+<div className="relative">
+  <button
+    type="button"
+    onClick={() => setOpenCategoryMenuId(menuOpen ? '' : category.id)}
+    className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#111827] ring-1 ring-black/10 active:scale-95"
+  >
+    <i className="fa-solid fa-ellipsis text-[12px]" />
+  </button>
 
-                              <button
-                                type="button"
-                                onClick={() => handleToggleHideCategory(category)}
-                                disabled={categorySaving || isSystem}
-                                className="h-9 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/10 disabled:opacity-40"
-                              >
-                                {category.isHidden ? 'Show' : 'Hide'}
-                              </button>
+  {menuOpen ? (
+    <div className="absolute right-0 top-10 z-30 w-32 overflow-hidden rounded-2xl bg-white py-1 shadow-xl ring-1 ring-black/10">
+      <button
+        type="button"
+        onClick={() => {
+          setOpenCategoryMenuId('')
+          handleToggleHideCategory(category)
+        }}
+        disabled={categorySaving || isSystem}
+        className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc] disabled:opacity-40"
+      >
+        {category.isHidden ? 'Show' : 'Hide'}
+      </button>
 
-                              {canEdit ? (
-                                <button
-                                  type="button"
-                                  onClick={() => startEditCategory(category)}
-                                  className="h-9 rounded-xl bg-white px-3 text-[11px] font-black text-[#111827] ring-1 ring-black/10"
-                                >
-                                  Edit
-                                </button>
-                              ) : null}
+      {canEdit ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpenCategoryMenuId('')
+            startEditCategory(category)
+          }}
+          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#111827] hover:bg-[#f8fafc]"
+        >
+          Edit
+        </button>
+      ) : null}
 
-                              {canEdit ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteCategory(category)}
-                                  disabled={categorySaving}
-                                  className="h-9 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] disabled:opacity-40"
-                                >
-                                  Delete
-                                </button>
-                              ) : null}
+      {canEdit ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpenCategoryMenuId('')
+            handleDeleteCategory(category)
+          }}
+          disabled={categorySaving}
+          className="block w-full px-3 py-2 text-left text-[12px] font-black text-[#e5484d] hover:bg-[#fff1f1] disabled:opacity-40"
+        >
+          Delete
+        </button>
+      ) : null}
+    </div>
+  ) : null}
+</div>
                             </>
                           )}
                         </div>
