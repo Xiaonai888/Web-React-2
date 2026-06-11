@@ -672,10 +672,10 @@ function AuthorOwnerMenuSheet({
   </button>
 
   <button
-    type="button"
-    onClick={() => onOpenStoreSetting('')}
-    className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
-  >
+  type="button"
+  onClick={onOpenStoreSetting}
+  className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
+>
     <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
       <i className="fa-solid fa-gear text-[17px]" />
     </span>
