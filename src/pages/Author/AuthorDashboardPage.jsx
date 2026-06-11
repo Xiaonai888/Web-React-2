@@ -491,14 +491,14 @@ export default function AuthorDashboardPage() {
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">Author Dashboard</h1>
 
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
-            aria-label="Author tools"
-          >
-            <i className="fa-solid fa-ellipsis text-[15px]" />
-          </button>
+         <button
+  type="button"
+  onClick={() => setMenuOpen(true)}
+  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+  aria-label="Author tools"
+>
+  <i className="fa-solid fa-ellipsis text-[16px]" />
+</button>
         </div>
       </header>
 
