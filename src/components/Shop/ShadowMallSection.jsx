@@ -13,7 +13,7 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const mallShortcuts = [
-  { label: 'Diamond', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
+    { label: 'Diamond', icon: 'fa-gem', type: 'route', path: '/shop/mall/purchase' },
   { label: 'Plans', icon: 'fa-crown', type: 'tab', tab: 'Plans' },
   { label: 'A', icon: 'fa-book-open', type: 'disabled' },
   { label: 'B', icon: 'fa-box-open', type: 'disabled' },
@@ -312,6 +312,8 @@ function ProductCard({ product, onOpen }) {
 }
 
 function MallShortcutRow({ setActiveTab }) {
+  const navigate = useNavigate()
+
   return (
     <div className="grid grid-cols-4 gap-3">
       {mallShortcuts.map((item) => {
@@ -323,6 +325,7 @@ function MallShortcutRow({ setActiveTab }) {
             type="button"
             disabled={disabled}
             onClick={() => {
+              if (item.type === 'route') navigate(item.path)
               if (item.type === 'tab') setActiveTab?.(item.tab)
             }}
             className={`rounded-[20px] bg-white px-2 py-3 text-center active:scale-[0.98] ${disabled ? 'opacity-45' : ''}`}
