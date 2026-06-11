@@ -163,26 +163,94 @@ function StatusBadge({ status }) {
 }
 
 function WithdrawalHistoryItem({ request }) {
-  const amount = Number(request.amount || request.requested_amount || request.net_amount || 0)
+  const amount = Number(
+    request.amount_usd ||
+      request.amount ||
+      request.requested_amount ||
+      request.net_amount ||
+      0
+  )
+
   const status = request.status || request.state || 'in_review'
   const requestedAt = request.created_at || request.requested_at || request.date
-  const method = getReadablePaymentMethod(request.payment_method || request.method || request.provider)
+  const paidAt = request.paid_at || request.paidAt || null
+
+  const snapshot = request.payment_method_snapshot || request.paymentMethodSnapshot || {}
+  const method = getPaymentLabel(snapshot)
+
+  const transactionId =
+    request.paid_transaction_id ||
+    request.paidTransactionId ||
+    ''
+
+  const proofUrl =
+    request.paid_proof_url ||
+    request.paidProofUrl ||
+    ''
+
+  const rejectReason =
+    request.reject_reason ||
+    request.rejectReason ||
+    ''
+
+  const adminNote =
+    request.admin_note ||
+    request.adminNote ||
+    request.note ||
+    ''
 
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[#f0eef6] py-4 last:border-b-0">
-      <div className="min-w-0">
-        <div className="text-[15px] font-black text-[#111827]">{formatMoney(amount)}</div>
-        <div className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
-          {formatDate(requestedAt)} · {method}
-        </div>
-        {request.admin_note || request.note ? (
-          <div className="mt-2 rounded-[14px] bg-[#f9fafb] px-3 py-2 text-[12px] font-semibold leading-5 text-[#6b7280]">
-            {request.admin_note || request.note}
+    <div className="border-b border-[#f0eef6] py-4 last:border-b-0">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-[15px] font-black text-[#111827]">{formatMoney(amount)}</div>
+
+          <div className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
+            Requested: {formatDate(requestedAt)}
           </div>
-        ) : null}
+
+          <div className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
+            Payment method: {method}
+          </div>
+
+          {paidAt ? (
+            <div className="mt-1 text-[12px] font-semibold text-[#047857]">
+              Paid: {formatDate(paidAt)}
+            </div>
+          ) : null}
+        </div>
+
+        <StatusBadge status={status} />
       </div>
 
-      <StatusBadge status={status} />
+      {transactionId ? (
+        <div className="mt-3 rounded-[14px] bg-[#f8fafc] px-3 py-2 text-[12px] font-bold leading-5 text-[#475569]">
+          Transaction ID: <span className="font-black text-[#111827]">{transactionId}</span>
+        </div>
+      ) : null}
+
+      {proofUrl ? (
+        <a
+          href={proofUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex h-9 items-center rounded-full bg-[#eef2ff] px-4 text-[12px] font-black text-[#4f46e5] active:scale-95"
+        >
+          View payment proof
+        </a>
+      ) : null}
+
+      {rejectReason ? (
+        <div className="mt-3 rounded-[14px] bg-[#fff1f2] px-3 py-2 text-[12px] font-bold leading-5 text-[#be123c]">
+          Reject reason: {rejectReason}
+        </div>
+      ) : null}
+
+      {adminNote ? (
+        <div className="mt-3 rounded-[14px] bg-[#f9fafb] px-3 py-2 text-[12px] font-semibold leading-5 text-[#6b7280]">
+          Admin note: {adminNote}
+        </div>
+      ) : null}
     </div>
   )
 }
