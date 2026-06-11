@@ -39,6 +39,17 @@ const storyItems = [
   },
 ]
 
+const feedPosts = [
+  {
+    author: 'Luna Hart',
+    handle: 'Author Page',
+    time: '9h',
+    avatar: 'LH',
+    text: 'Chapter 25 is out now. A quiet promise becomes the most dangerous lie.',
+    stats: { likes: 19, comments: 1, shares: 3 },
+  },
+]
+
 export default function DiscoverPage() {
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
@@ -152,7 +163,7 @@ export default function DiscoverPage() {
                 </div>
 
                 {item.type === 'create' ? (
-                  <div className="absolute left-1/2 top-[58px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
+                  <div className="absolute left-1/2 top-[72px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
                     +
                   </div>
                 ) : null}
@@ -170,16 +181,67 @@ export default function DiscoverPage() {
           </div>
         </section>
 
-        <section className="px-4 py-5">
-          <div className="rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-gray-100">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-              <i className="fa-solid fa-compass text-xl" />
-            </div>
-            <h1 className="text-[20px] font-extrabold text-[#111827]">Discover</h1>
-            <p className="mt-2 text-[13px] font-semibold leading-6 text-gray-500">
-              Followed page feed demo will be added next.
-            </p>
-          </div>
+        <section className="space-y-4 px-4 py-4">
+          {feedPosts.map((post) => (
+            <article key={`${post.author}-${post.time}`} className="overflow-hidden rounded-[22px] bg-white shadow-sm ring-1 ring-gray-100">
+              <div className="flex items-start gap-3 p-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white">
+                  {post.avatar}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-[15px] font-black text-[#111827]">{post.author}</div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
+                        <span>{post.handle}</span>
+                        <span>·</span>
+                        <span>{post.time}</span>
+                        <span>·</span>
+                        <i className="fa-solid fa-earth-americas text-[10px]" />
+                      </div>
+                    </div>
+
+                    <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100">
+                      <i className="fa-solid fa-ellipsis" />
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-[14px] font-semibold leading-6 text-[#111827]">{post.text}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+                <div className="h-[210px] bg-gradient-to-br from-[#111827] via-[#374151] to-[#7c3aed]" />
+                <div className="h-[210px] bg-gradient-to-br from-[#f8fafc] via-[#dbeafe] to-[#94a3b8]" />
+              </div>
+
+              <div className="flex items-center justify-between px-4 py-3 text-[12px] font-bold text-gray-500">
+                <div className="flex items-center gap-1">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1677ff] text-[10px] text-white">
+                    <i className="fa-solid fa-thumbs-up" />
+                  </span>
+                  <span>{post.stats.likes}</span>
+                </div>
+                <div>{post.stats.comments} comment · {post.stats.shares} shares</div>
+              </div>
+
+              <div className="grid grid-cols-3 border-t border-gray-100 text-[13px] font-extrabold text-gray-500">
+                <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
+                  <i className="fa-regular fa-thumbs-up" />
+                  Like
+                </button>
+                <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
+                  <i className="fa-regular fa-comment" />
+                  Comment
+                </button>
+                <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
+                  <i className="fa-solid fa-share" />
+                  Share
+                </button>
+              </div>
+            </article>
+          ))}
         </section>
       </main>
     </div>
