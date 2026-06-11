@@ -1367,10 +1367,8 @@ if (!loading && pageError) {
 }}
 onOpenStoreSetting={() => {
   setAuthorMenuOpen(false)
-  navigate('/author/page/settings')
+  navigate('/author/page-settings')
 }}
-/>
-
       <SwitchingAccountScreen
   open={switchingToReader}
   name={readerName}
