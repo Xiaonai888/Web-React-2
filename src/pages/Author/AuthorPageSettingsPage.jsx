@@ -130,7 +130,7 @@ export default function AuthorPageSettingsPage() {
     />
   </section>
 
-  <div className="mt-6 px-1 text-[20px] font-semibold text-[#b6b6bd]">
+  <div className="mt-6 px-1 text-[18px] font-semibold text-[#b6b6bd]">
     Payment Alerts
   </div>
 
