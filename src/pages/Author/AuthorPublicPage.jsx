@@ -1687,7 +1687,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 </div>
 </section>
 
-        <section className="min-h-[70vh] bg-white px-4 pb-24 pt-4 sm:px-6">
+        <section className="min-h-[calc(100vh-50px)] bg-white px-4 pb-24 pt-4 sm:px-6">
          {activeTab === 'Posts' ? (
   <div className="space-y-5 pb-4">
     <section>
