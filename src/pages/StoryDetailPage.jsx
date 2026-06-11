@@ -500,7 +500,7 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   storyId={realStoryId}
   onClose={() => setLockedEpisode(null)}
   onLogin={() => navigate('/login')}
-  onTopUp={() => navigate('/shop/mall/purchase')}
+  onTopUp={() => navigate('/shop/mall/purchase', { state: { returnTo: location.pathname } })}
   onUnlocked={(episode) => {
     setUnlockedEpisodeIds((current) => [...new Set([...current, episode.id])])
     setLockedEpisode(null)
