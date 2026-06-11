@@ -207,7 +207,7 @@ export default function AuthorPageIncomePage() {
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/page')}
+            onClick={() => navigate('/author/page/finance')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
@@ -284,7 +284,7 @@ export default function AuthorPageIncomePage() {
 
             <button
               type="button"
-              onClick={() => navigate('/author/page/finance/withdrawal')}
+              onClick={() => navigate('/author/page/finance/withdrawal?back=income')}
               className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-95"
             >
               Withdraw
@@ -297,7 +297,7 @@ export default function AuthorPageIncomePage() {
             <h2 className="text-[18px] font-black text-[#111827]">Recent Withdrawals</h2>
             <button
               type="button"
-              onClick={() => navigate('/author/page/finance/withdrawal')}
+              onClick={() => navigate('/author/page/finance/withdrawal?back=income')}
               className="text-[12px] font-black text-[#6b7280]"
             >
               View all
