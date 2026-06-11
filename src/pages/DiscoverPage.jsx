@@ -388,7 +388,7 @@ function RecommendedAuthorsCard({ item }) {
         {item.authors.map((author) => (
           <div
             key={author.name}
-            className="h-[178px] w-[132px] shrink-0 rounded-[20px] bg-[#f8fafc] p-3 text-center ring-1 ring-gray-100"
+            className="h-[190px] w-[132px] shrink-0 rounded-[20px] bg-[#f8fafc] p-3 text-center ring-1 ring-gray-100"
           >
             <div className="mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-[#4f46e5] text-[16px] font-black text-white shadow-sm">
               {author.avatar}
@@ -401,7 +401,7 @@ function RecommendedAuthorsCard({ item }) {
 
             <button
               type="button"
-              className="mt-3 h-[34px] w-full rounded-full bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
+              className="mt-2 h-[32px] w-full rounded-full bg-[#111827] text-[12px] font-black text-white active:scale-[0.98]"
             >
               Follow
             </button>
