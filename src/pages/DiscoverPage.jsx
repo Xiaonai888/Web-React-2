@@ -356,26 +356,40 @@ function TrendingCard({ item }) {
 
 function RecommendedAuthorsCard({ item }) {
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-gray-100">
-      <div className="mb-4 flex items-center justify-between">
+    <article className="rounded-[22px] bg-white py-4 shadow-sm ring-1 ring-gray-100">
+      <div className="mb-4 flex items-center justify-between px-4">
         <div>
           <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
-          <div className="mt-1 text-[12px] font-bold text-gray-400">Based on your followed authors</div>
+          <div className="mt-1 text-[12px] font-bold text-gray-400">Swipe to discover new authors</div>
         </div>
         <button type="button" className="text-[12px] font-black text-[#1677ff]">More</button>
       </div>
 
-      <div className="space-y-3">
+      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
         {item.authors.map((author) => (
-          <div key={author.name} className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-black text-white">
+          <div
+            key={author.name}
+            className="relative h-[214px] w-[152px] shrink-0 overflow-hidden rounded-[22px] bg-[#252a31] p-4 text-center shadow-sm"
+          >
+            <button
+              type="button"
+              className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full text-white/70 active:bg-white/10"
+              aria-label="Hide author"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+
+            <div className="mx-auto mt-3 flex h-[76px] w-[76px] items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-[#4f46e5] text-[18px] font-black text-white ring-4 ring-white/10">
               {author.avatar}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-black text-[#111827]">{author.name}</div>
-              <div className="mt-0.5 truncate text-[11px] font-bold text-gray-400">{author.meta}</div>
-            </div>
-            <button type="button" className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-black text-white active:scale-[0.98]">
+
+            <div className="mt-4 truncate text-[16px] font-black text-white">{author.name}</div>
+            <div className="mt-1 truncate text-[12px] font-bold text-white/55">{author.meta}</div>
+
+            <button
+              type="button"
+              className="absolute bottom-4 left-4 right-4 rounded-[12px] bg-white py-3 text-[14px] font-black text-[#111827] active:scale-[0.98]"
+            >
               Follow
             </button>
           </div>
@@ -384,7 +398,6 @@ function RecommendedAuthorsCard({ item }) {
     </article>
   )
 }
-
 function EmptyStateCard() {
   return (
     <article className="rounded-[22px] bg-white p-5 text-center shadow-sm ring-1 ring-gray-100">
