@@ -1753,6 +1753,22 @@ if (!salePrice || Number(salePrice) <= 0) {
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
+let nextPdfFileUrl = pdfFileUrl
+
+if (type === 'PDF') {
+  if (!pdfFile && !nextPdfFileUrl) {
+    setFormError('PDF file is required.')
+    setSaving(false)
+    return
+  }
+
+  if (pdfFile) {
+    setFormError('Uploading PDF file...')
+    nextPdfFileUrl = await uploadPdfFile(pdfFile)
+    setPdfFileUrl(nextPdfFileUrl)
+  }
+}
+
 setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
 
       await onSave({
@@ -1771,8 +1787,9 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
         deliveryNote,
         preOrder,
         pdfFileName,
-        pageCount,
-        accessRule,
+pdfFileUrl: nextPdfFileUrl,
+pageCount,
+accessRule,
       })
     } catch (error) {
       setFormError(error.message || 'Failed to create product')
