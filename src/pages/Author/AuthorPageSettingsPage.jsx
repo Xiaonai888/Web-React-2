@@ -103,46 +103,46 @@ export default function AuthorPageSettingsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[720px] px-4 pb-8">
-        {message ? (
-          <button
-            type="button"
-            onClick={() => setMessage('')}
-            className="mt-4 w-full rounded-[16px] bg-[#f3f4f6] px-4 py-3 text-left text-[13px] font-normal text-[#111827]"
-          >
-            {message}
-          </button>
-        ) : null}
+   <main className="mx-auto max-w-[720px] px-4 py-4">
+  {message ? (
+    <button
+      type="button"
+      onClick={() => setMessage('')}
+      className="mb-4 w-full rounded-[18px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
+    >
+      {message}
+    </button>
+  ) : null}
 
-        <SectionTitle>Manage</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-pen" label="Basic Page Info" subtext="Edit page name, username, and bio" onClick={() => navigate('/author/edit-page?from=settings')} />
-          <ToolRow icon="fa-solid fa-shield-halved" label="Page status" subtext="Active, review, or restriction status" onClick={() => setMessage('Page status is coming soon.')} />
-          <ToolRow icon="fa-solid fa-list" label="Activity log" subtext="Review important page actions" onClick={() => setMessage('Activity log is coming soon.')} />
-        </div>
+  <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
+    <ToolRow
+      icon="fa-solid fa-layer-group"
+      label="Category Management"
+      subtext="Categories, hidden sections, and order."
+      onClick={() => setMessage('Coming soon.')}
+    />
 
-        <SectionTitle>Share</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-share" label="Share Page" subtext="Share this author page" onClick={sharePage} />
-          <ToolRow icon="fa-solid fa-link" label="Copy Page link" subtext="Copy public author page URL" onClick={copyPageLink} />
-        </div>
+    <ToolRow
+      icon="fa-solid fa-truck-fast"
+      label="Delivery Company"
+      subtext="J&T fee, VET fee, and checkout delivery."
+      onClick={() => setMessage('Coming soon.')}
+    />
+  </section>
 
-        <SectionTitle>View</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-eye" label="View as reader" subtext="Open the public author page view" onClick={viewAsReader} />
-        </div>
+  <div className="mt-6 px-1 text-[20px] font-semibold text-[#b6b6bd]">
+    Payment Alerts
+  </div>
 
-        <SectionTitle>Trash</SectionTitle>
-        <div className="mt-3 space-y-1">
-          <ToolRow
-            icon="fa-solid fa-trash-can"
-            label="Trash"
-            subtext="Review posts and page items moved to trash"
-            danger
-            onClick={() => navigate('/author/trash')}
-          />
-        </div>
-      </main>
+  <section className="mt-3 overflow-hidden rounded-[20px] bg-white shadow-sm ring-1 ring-black/5">
+    <ToolRow
+      icon="fa-regular fa-paper-plane"
+      label="Telegram Bot"
+      subtext=""
+      onClick={() => setMessage('Coming soon.')}
+    />
+  </section>
+</main>
     </div>
   )
 }
