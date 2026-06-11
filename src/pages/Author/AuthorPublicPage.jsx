@@ -1400,7 +1400,7 @@ onOpenStoreSetting={() => {
 }}
 />
 
-      {!displayAuthor.is_owner ? (
+      {!loading && !displayAuthor.is_owner ? (
  <header className={`fixed left-0 right-0 top-0 z-[120] transition ${
   readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
 }`}>
