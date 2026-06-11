@@ -1,5 +1,13 @@
 import { Link } from 'react-router-dom'
 
+const storyItems = [
+  { name: 'Luna Hart', status: 'New', avatar: 'LH', ring: true },
+  { name: 'Mika Rose', status: 'Update', avatar: 'MR', ring: true },
+  { name: 'Nora Vale', status: 'Hot', avatar: 'NV', ring: true },
+  { name: 'Ari Moon', status: 'Book', avatar: 'AM', ring: false },
+  { name: 'Sky Novel', status: 'Ads', avatar: 'SN', ring: false },
+]
+
 export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-white pb-[100px]">
@@ -47,15 +55,37 @@ export default function DiscoverPage() {
         </div>
       </header>
 
-      <main className="px-4 pt-[78px]">
-        <section className="rounded-[24px] bg-[#f8fafc] p-5 text-center ring-1 ring-gray-100">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
-            <i className="fa-solid fa-compass text-xl" />
+      <main className="pt-[72px]">
+        <section className="border-b border-gray-100 bg-white py-4">
+          <div className="no-scrollbar flex gap-4 overflow-x-auto px-4">
+            {storyItems.map((item) => (
+              <button key={item.name} type="button" className="w-[72px] shrink-0 text-center">
+                <div
+                  className={`mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full p-[3px] ${
+                    item.ring ? 'bg-gradient-to-br from-[#f6b800] via-[#ff5a7a] to-[#7c3aed]' : 'bg-gray-200'
+                  }`}
+                >
+                  <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[15px] font-black text-white">
+                    {item.avatar}
+                  </div>
+                </div>
+                <div className="mt-2 truncate text-[11px] font-extrabold text-[#111827]">{item.name}</div>
+                <div className="truncate text-[10px] font-bold text-gray-400">{item.status}</div>
+              </button>
+            ))}
           </div>
-          <h1 className="text-[20px] font-extrabold text-[#111827]">Discover</h1>
-          <p className="mt-2 text-[13px] font-semibold leading-6 text-gray-500">
-            Story row demo will be added at the top next.
-          </p>
+        </section>
+
+        <section className="px-4 py-5">
+          <div className="rounded-[24px] bg-[#f8fafc] p-5 text-center ring-1 ring-gray-100">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
+              <i className="fa-solid fa-compass text-xl" />
+            </div>
+            <h1 className="text-[20px] font-extrabold text-[#111827]">Discover</h1>
+            <p className="mt-2 text-[13px] font-semibold leading-6 text-gray-500">
+              Feed demo will be added under story row next.
+            </p>
+          </div>
         </section>
       </main>
     </div>
