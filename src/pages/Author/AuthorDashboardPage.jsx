@@ -183,12 +183,11 @@ function PageMenu({ open, onClose, onSelect }) {
         </div>
 
         <div className="space-y-1">
-          <ToolRow icon="fa-regular fa-pen-to-square" title="Edit Page" subtitle="Avatar, name, and page details" onClick={() => onSelect('/author/edit-page')} />
+          
           <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
           <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
           <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
           <ToolRow icon="fa-solid fa-shield-halved" title="Comment Protection" subtitle="Blocked words and hidden comments" onClick={() => onSelect('/author/comment-protection')} />
-          <ToolRow icon="fa-solid fa-gear" title="Settings" subtitle="Privacy and author options" onClick={() => onSelect('/author/settings')} />
           <ToolRow icon="fa-regular fa-trash-can" title="Trash" subtitle="Restore deleted stories within 30 days" onClick={() => onSelect('/author/trash')} />
         </div>
       </div>
