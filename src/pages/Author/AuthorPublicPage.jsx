@@ -908,10 +908,14 @@ const { pageUsername } = useParams()
 
 useEffect(() => {
   if (sessionStorage.getItem('shadow_open_author_menu') !== '1') return
+  if (loading) return
 
   sessionStorage.removeItem('shadow_open_author_menu')
-  setAuthorMenuOpen(true)
-}, [])
+
+  if (author?.is_owner) {
+    setAuthorMenuOpen(true)
+  }
+}, [loading, author?.is_owner])
   
   useEffect(() => {
   if (!authorMenuOpen) return undefined
