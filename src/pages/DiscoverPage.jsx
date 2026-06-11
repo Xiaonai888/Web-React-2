@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const storyItems = [
@@ -9,9 +10,58 @@ const storyItems = [
 ]
 
 export default function DiscoverPage() {
+  const [barsHidden, setBarsHidden] = useState(false)
+  const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+    function handleScroll() {
+      const currentScrollY = window.scrollY
+      const previousScrollY = lastScrollYRef.current
+      const difference = currentScrollY - previousScrollY
+
+      if (currentScrollY < 20) {
+        setBarsHidden(false)
+        document.body.classList.remove('discover-bars-hidden')
+      } else if (difference > 8) {
+        setBarsHidden(true)
+        document.body.classList.add('discover-bars-hidden')
+      } else if (difference < -8) {
+        setBarsHidden(false)
+        document.body.classList.remove('discover-bars-hidden')
+      }
+
+      lastScrollYRef.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.body.classList.remove('discover-bars-hidden')
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-white pb-[100px]">
-      <header className="fixed left-0 right-0 top-0 z-[100000] bg-white shadow-sm">
+      <style>{`
+        body.discover-bars-hidden footer {
+          transform: translateY(110%);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
+      <header
+        className="fixed left-0 right-0 top-0 z-[100000] bg-white shadow-sm transition-transform duration-200 ease-out"
+        style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
+      >
         <div className="flex items-center justify-between px-4 py-4">
           <Link to="/" className="flex h-9 w-[92px] items-center overflow-visible">
             <img
