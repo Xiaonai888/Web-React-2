@@ -1365,10 +1365,10 @@ if (!loading && pageError) {
   setAuthorMenuOpen(false)
   navigate('/author/page/finance')
 }}
-  onOpenStoreSetting={(setting) => {
-    setAuthorMenuOpen(false)
-    navigate(setting ? `/author/page/store?settings=${setting}` : '/author/page/store')
-  }}
+onOpenStoreSetting={() => {
+  setAuthorMenuOpen(false)
+  navigate('/author/page/settings')
+}}
 />
 
       <SwitchingAccountScreen
