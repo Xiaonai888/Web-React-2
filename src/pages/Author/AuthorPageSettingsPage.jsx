@@ -457,7 +457,7 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
   async function saveEditCategory(category) {
     const name = editingCategoryName.trim()
 
-    if (!name || categorySaving || category.isDefault) return
+   if (!name || categorySaving || category.name === 'Sold out') return
 
     try {
       setCategorySaving(true)
@@ -716,7 +716,7 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
                   {withSystemCategories(storeCategories).map((category, index, list) => {
                     const editing = editingCategoryId === category.id
                     const isSystem = String(category.id).startsWith('system-')
-                    const canEdit = !category.isDefault && !isSystem
+                    const canEdit = category.name !== 'Sold out' && !isSystem
                     const menuOpen = openCategoryMenuId === category.id
 
                     return (
