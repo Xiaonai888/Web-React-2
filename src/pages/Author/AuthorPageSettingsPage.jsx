@@ -152,6 +152,51 @@ async function reorderStoreCategories(categoryIds) {
   return Array.isArray(data.categories) ? data.categories.map(formatCategoryForUi) : []
 }
 
+
+async function fetchDeliverySettings() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/delivery-settings`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load delivery settings')
+  }
+
+  return data.delivery_settings || []
+}
+
+async function updateDeliverySettings(deliverySettings) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/delivery-settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ delivery_settings: deliverySettings }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update delivery settings')
+  }
+
+  return data.delivery_settings || []
+}
+
+
 async function fetchTelegramSettings() {
   const token = getAuthToken()
 
@@ -259,6 +304,11 @@ export default function AuthorPageSettingsPage() {
   const [telegramUnlinking, setTelegramUnlinking] = useState(false)
   const [telegramLoading, setTelegramLoading] = useState(false)
   const [telegramMessage, setTelegramMessage] = useState('')
+  const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
+const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
+const [deliverySaving, setDeliverySaving] = useState(false)
+const [deliveryLoading, setDeliveryLoading] = useState(false)
+const [deliveryMessage, setDeliveryMessage] = useState('')
 
   const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
   const canCreateCustomCategory = customCategoryCount < 5
@@ -319,6 +369,57 @@ export default function AuthorPageSettingsPage() {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+    let ignore = false
+  
+    async function loadDeliverySettings() {
+      try {
+        setDeliveryLoading(true)
+  
+        const settings = await fetchDeliverySettings()
+        const jnt = settings.find((item) => item.company_key === 'jnt')
+        const vet = settings.find((item) => item.company_key === 'vet')
+  
+        if (!ignore) {
+          setJtDeliveryFee(String(jnt?.fee_usd ?? 2))
+          setVetDeliveryFee(String(vet?.fee_usd ?? 2))
+        }
+      } catch {
+      } finally {
+        if (!ignore) setDeliveryLoading(false)
+      }
+    }
+  
+    loadDeliverySettings()
+  
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  async function handleSaveDeliveryFees() {
+    try {
+      setDeliverySaving(true)
+      setDeliveryMessage('')
+  
+      const settings = await updateDeliverySettings([
+        { company_key: 'jnt', fee_usd: Number(jtDeliveryFee || 0) },
+        { company_key: 'vet', fee_usd: Number(vetDeliveryFee || 0) },
+      ])
+  
+      const jnt = settings.find((item) => item.company_key === 'jnt')
+      const vet = settings.find((item) => item.company_key === 'vet')
+  
+      setJtDeliveryFee(String(jnt?.fee_usd ?? jtDeliveryFee))
+      setVetDeliveryFee(String(vet?.fee_usd ?? vetDeliveryFee))
+      setDeliveryMessage('Delivery fees saved.')
+    } catch (error) {
+      setDeliveryMessage(error.message || 'Failed to save delivery fees.')
+    } finally {
+      setDeliverySaving(false)
+    }
+  }
 
   async function addCategory() {
     const name = newCategory.trim()
@@ -527,7 +628,9 @@ export default function AuthorPageSettingsPage() {
               ? 'Telegram Bot'
               : settingsView === 'categories'
                 ? 'Category Management'
-                : 'Page Settings'}
+                : settingsView === 'delivery'
+                  ? 'Delivery Company'
+                  : 'Page Settings'}
           </h1>
 
           <div className="h-10 w-10" />
@@ -751,6 +854,113 @@ export default function AuthorPageSettingsPage() {
               )}
             </section>
           </section>
+
+
+      ) : settingsView === 'delivery' ? (
+  <section className="space-y-4">
+    <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
+      <div className="px-4 pb-2 pt-4">
+        <h2 className="text-[16px] font-black text-[#111827]">Delivery fees</h2>
+        <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          These fees will be added to checkout total.
+        </p>
+      </div>
+
+      {deliveryMessage ? (
+        <button
+          type="button"
+          onClick={() => setDeliveryMessage('')}
+          className="mx-4 mb-3 w-[calc(100%-2rem)] rounded-2xl bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold text-[#111827] ring-1 ring-black/5"
+        >
+          {deliveryMessage}
+        </button>
+      ) : null}
+
+      <div className="px-4 py-4">
+        <div className="flex gap-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-black/10">
+            <span className="text-[14px] font-black text-[#ef4444]">J&T</span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-[15px] font-black text-[#111827]">J&T</h3>
+                <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+                  J&T Express delivery for printed books.
+                </p>
+              </div>
+
+              <span className="shrink-0 rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+                ${Number(jtDeliveryFee || 0).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="mt-3">
+              <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">
+                Delivery fee
+              </label>
+              <input
+                type="number"
+                value={jtDeliveryFee}
+                onChange={(event) => setJtDeliveryFee(event.target.value)}
+                placeholder="2.00"
+                className="h-12 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[14px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-4 h-px bg-[#eef0f4]" />
+
+      <div className="px-4 py-4">
+        <div className="flex gap-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-black/10">
+            <span className="text-[13px] font-black text-[#f97316]">VET</span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-[15px] font-black text-[#111827]">VET</h3>
+                <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+                  Virak Buntham Express delivery option.
+                </p>
+              </div>
+
+              <span className="shrink-0 rounded-full bg-[#fff4cc] px-3 py-1 text-[11px] font-black text-[#111827]">
+                ${Number(vetDeliveryFee || 0).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="mt-3">
+              <label className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">
+                Delivery fee
+              </label>
+              <input
+                type="number"
+                value={vetDeliveryFee}
+                onChange={(event) => setVetDeliveryFee(event.target.value)}
+                placeholder="2.00"
+                className="h-12 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[14px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <button
+      type="button"
+      onClick={handleSaveDeliveryFees}
+      disabled={deliverySaving || deliveryLoading}
+      className="h-12 w-full rounded-2xl bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:opacity-50"
+    >
+      {deliverySaving ? 'Saving...' : 'Save delivery fees'}
+    </button>
+  </section>
+      
         ) : settingsView === 'telegram' ? (
           <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
             <div className="bg-gradient-to-br from-[#dff6ff] via-[#eefaff] to-white px-4 py-5 text-center">
@@ -876,7 +1086,7 @@ export default function AuthorPageSettingsPage() {
                 icon="fa-solid fa-truck-fast"
                 label="Delivery Company"
                 subtext="J&T fee, VET fee, and checkout delivery."
-                onClick={() => setMessage('Coming soon.')}
+                onClick={() => setSettingsView('delivery')}
               />
             </section>
 
