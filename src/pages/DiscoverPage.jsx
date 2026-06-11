@@ -2,11 +2,41 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const storyItems = [
-  { name: 'Luna Hart', status: 'New', avatar: 'LH', ring: true },
-  { name: 'Mika Rose', status: 'Update', avatar: 'MR', ring: true },
-  { name: 'Nora Vale', status: 'Hot', avatar: 'NV', ring: true },
-  { name: 'Ari Moon', status: 'Book', avatar: 'AM', ring: false },
-  { name: 'Sky Novel', status: 'Ads', avatar: 'SN', ring: false },
+  {
+    name: 'Music',
+    label: 'Music',
+    avatar: '♪',
+    image: 'linear-gradient(160deg, #4ec7a5 0%, #45b4df 100%)',
+    type: 'feature',
+  },
+  {
+    name: 'Create story',
+    label: 'Create story',
+    avatar: '+',
+    image: 'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
+    type: 'create',
+  },
+  {
+    name: 'Luna Hart',
+    label: 'New episode',
+    avatar: 'LH',
+    image: 'linear-gradient(160deg, #111827 0%, #4f46e5 100%)',
+    type: 'author',
+  },
+  {
+    name: 'Mika Rose',
+    label: 'New book',
+    avatar: 'MR',
+    image: 'linear-gradient(160deg, #3b0764 0%, #f472b6 100%)',
+    type: 'author',
+  },
+  {
+    name: 'Nora Vale',
+    label: 'Trending',
+    avatar: 'NV',
+    image: 'linear-gradient(160deg, #7f1d1d 0%, #f59e0b 100%)',
+    type: 'author',
+  },
 ]
 
 export default function DiscoverPage() {
@@ -42,7 +72,7 @@ export default function DiscoverPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white pb-[100px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
       <style>{`
         body.discover-bars-hidden footer {
           transform: translateY(110%);
@@ -107,33 +137,47 @@ export default function DiscoverPage() {
 
       <main className="pt-[72px]">
         <section className="border-b border-gray-100 bg-white py-4">
-          <div className="no-scrollbar flex gap-4 overflow-x-auto px-4">
+          <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
             {storyItems.map((item) => (
-              <button key={item.name} type="button" className="w-[72px] shrink-0 text-center">
-                <div
-                  className={`mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full p-[3px] ${
-                    item.ring ? 'bg-gradient-to-br from-[#f6b800] via-[#ff5a7a] to-[#7c3aed]' : 'bg-gray-200'
-                  }`}
-                >
-                  <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[15px] font-black text-white">
-                    {item.avatar}
-                  </div>
+              <button
+                key={item.name}
+                type="button"
+                className="relative h-[156px] w-[104px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+              >
+                <div className="absolute inset-0" style={{ background: item.image }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/5 to-black/55" />
+
+                <div className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[14px] font-black text-white shadow-md">
+                  {item.avatar}
                 </div>
-                <div className="mt-2 truncate text-[11px] font-extrabold text-[#111827]">{item.name}</div>
-                <div className="truncate text-[10px] font-bold text-gray-400">{item.status}</div>
+
+                {item.type === 'create' ? (
+                  <div className="absolute left-1/2 top-[58px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
+                    +
+                  </div>
+                ) : null}
+
+                <div className="absolute bottom-3 left-3 right-3">
+                  <div className="line-clamp-2 text-[13px] font-black leading-[16px] text-white drop-shadow">
+                    {item.label}
+                  </div>
+                  {item.type === 'author' ? (
+                    <div className="mt-1 truncate text-[10px] font-bold text-white/80">{item.name}</div>
+                  ) : null}
+                </div>
               </button>
             ))}
           </div>
         </section>
 
         <section className="px-4 py-5">
-          <div className="rounded-[24px] bg-[#f8fafc] p-5 text-center ring-1 ring-gray-100">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
+          <div className="rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-gray-100">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
               <i className="fa-solid fa-compass text-xl" />
             </div>
             <h1 className="text-[20px] font-extrabold text-[#111827]">Discover</h1>
             <p className="mt-2 text-[13px] font-semibold leading-6 text-gray-500">
-              Feed demo will be added under story row next.
+              Followed page feed demo will be added next.
             </p>
           </div>
         </section>
