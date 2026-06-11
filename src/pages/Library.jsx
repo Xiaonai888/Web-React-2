@@ -183,23 +183,24 @@ export default function Library() {
 
   const loadLibrary = async () => {
     if (!isLoggedIn) {
-      setLibraryItems([])
-      setSubscriptionItems([])
-      setLoading(false)
-      return
-    }
-
+  setLibraryItems([])
+  setSubscriptionItems([])
+  setDownloadItems([])
+  setLoading(false)
+  return
+}
     setLoading(true)
     setMessage('')
 
     try {
-      const [libraryResponse, subscriptionsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/reader/library`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/reader/subscriptions`, { headers: getHeaders() }),
-      ])
-
+      const [libraryResponse, subscriptionsResponse, downloadsResponse] = await Promise.all([
+  fetch(`${API_BASE_URL}/api/reader/library`, { headers: getHeaders() }),
+  fetch(`${API_BASE_URL}/api/reader/subscriptions`, { headers: getHeaders() }),
+  fetch(`${API_BASE_URL}/api/author-store/downloads/my`, { headers: getHeaders() }),
+])
       const libraryData = await libraryResponse.json().catch(() => ({}))
       const subscriptionsData = await subscriptionsResponse.json().catch(() => ({}))
+      const downloadsData = await downloadsResponse.json().catch(() => ({}))
 
       if (!libraryResponse.ok || libraryData.ok === false) {
         throw new Error(libraryData.message || 'Failed to load library')
@@ -211,10 +212,12 @@ export default function Library() {
 
       setLibraryItems(Array.isArray(libraryData.items) ? libraryData.items : [])
       setSubscriptionItems(Array.isArray(subscriptionsData.items) ? subscriptionsData.items : [])
+      setDownloadItems(Array.isArray(downloadsData.downloads) ? downloadsData.downloads : [])
     } catch (error) {
       setLibraryItems([])
-      setSubscriptionItems([])
-      setMessage(error.message || 'Failed to load library')
+setSubscriptionItems([])
+setDownloadItems([])
+setMessage(error.message || 'Failed to load library')
     } finally {
       setLoading(false)
     }
