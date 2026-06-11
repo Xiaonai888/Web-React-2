@@ -1683,8 +1683,9 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         </button>
       )
     })}
-  </div>
+   </div>
 </div>
+</section>
 
         <section className="min-h-[70vh] bg-white px-4 pb-24 pt-4 sm:px-6">
          {activeTab === 'Posts' ? (
