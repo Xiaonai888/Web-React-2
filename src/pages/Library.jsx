@@ -175,7 +175,7 @@ export default function Library() {
   const [activeType, setActiveType] = useState('All')
   const [libraryItems, setLibraryItems] = useState([])
   const [subscriptionItems, setSubscriptionItems] = useState([])
-  const [downloadItems] = useState([])
+  const [downloadItems, setDownloadItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
