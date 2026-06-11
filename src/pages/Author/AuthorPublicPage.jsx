@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
@@ -852,7 +852,7 @@ function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCov
 export default function AuthorPublicPage() {
  const navigate = useNavigate()
 const { pageUsername } = useParams()
-const [searchParams, setSearchParams] = useSearchParams()
+
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState('Posts')
   const [tabsFrozen, setTabsFrozen] = useState(false)
@@ -907,14 +907,11 @@ const [searchParams, setSearchParams] = useSearchParams()
 
 
 useEffect(() => {
-  if (searchParams.get('openMenu') !== 'author') return
+  if (sessionStorage.getItem('shadow_open_author_menu') !== '1') return
 
+  sessionStorage.removeItem('shadow_open_author_menu')
   setAuthorMenuOpen(true)
-
-  const nextParams = new URLSearchParams(searchParams)
-  nextParams.delete('openMenu')
-  setSearchParams(nextParams, { replace: true })
-}, [searchParams, setSearchParams])
+}, [])
   
   useEffect(() => {
   if (!authorMenuOpen) return undefined
