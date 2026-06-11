@@ -326,27 +326,45 @@ function AdsCard({ item }) {
 }
 
 function TrendingCard({ item }) {
+  const coverColors = [
+    'from-[#111827] via-[#4f46e5] to-[#a78bfa]',
+    'from-[#7f1d1d] via-[#dc2626] to-[#f59e0b]',
+    'from-[#064e3b] via-[#0f766e] to-[#5eead4]',
+  ]
+
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-gray-100">
-      <div className="mb-4 flex items-center justify-between">
+    <article className="rounded-[22px] bg-white py-4 shadow-sm ring-1 ring-gray-100">
+      <div className="mb-4 flex items-center justify-between px-4">
         <div>
           <div className="text-[18px] font-black text-[#111827]">{item.title}</div>
-          <div className="mt-1 text-[12px] font-bold text-gray-400">Popular stories on Shadow now</div>
+          <div className="mt-1 text-[12px] font-bold text-gray-400">Popular books on Shadow now</div>
         </div>
         <button type="button" className="text-[12px] font-black text-[#1677ff]">See all</button>
       </div>
 
-      <div className="space-y-3">
-        {item.items.map((novel) => (
-          <button key={novel.rank} type="button" className="flex w-full items-center gap-3 rounded-[16px] p-2 text-left active:bg-gray-50">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[15px] font-black text-[#111827]">
-              {novel.rank}
+      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
+        {item.items.map((novel, index) => (
+          <button key={novel.rank} type="button" className="w-[104px] shrink-0 text-left active:scale-[0.98]">
+            <div className={`relative h-[148px] overflow-hidden rounded-[14px] bg-gradient-to-br ${coverColors[index % coverColors.length]} shadow-sm`}>
+              <div className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[12px] font-black text-[#111827]">
+                {novel.rank}
+              </div>
+
+              <div className="absolute inset-x-3 bottom-3">
+                <div className="rounded-[10px] bg-white/15 p-2 backdrop-blur">
+                  <div className="line-clamp-2 text-[11px] font-black leading-[14px] text-white">
+                    {novel.title}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-black text-[#111827]">{novel.title}</div>
-              <div className="mt-0.5 truncate text-[11px] font-bold text-gray-400">{novel.meta}</div>
+
+            <div className="mt-2 line-clamp-2 text-[12px] font-black leading-[15px] text-[#111827]">
+              {novel.title}
             </div>
-            <i className="fa-solid fa-chevron-right text-[12px] text-gray-300" />
+            <div className="mt-1 truncate text-[10px] font-bold text-gray-400">
+              {novel.meta}
+            </div>
           </button>
         ))}
       </div>
