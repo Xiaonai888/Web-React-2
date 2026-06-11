@@ -1,8 +1,10 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import PurchaseSection from '../../components/Shop/PurchaseSection'
 
 export default function ShadowMallPurchasePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = location.state?.returnTo || '/shop'
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -10,7 +12,7 @@ export default function ShadowMallPurchasePage() {
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate('/shop')}
+            onClick={() => navigate(returnTo)}
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
