@@ -31,7 +31,7 @@ function SectionTitle({ children }) {
   return <h2 className="px-1 pt-5 text-[17px] font-semibold text-[#111827]">{children}</h2>
 }
 
-export default function AuthorPageSettingsPage() {
+export default function AuthorPageOptionsPage() {
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const authorPage = useMemo(() => getStoredAuthorPage(), [])
