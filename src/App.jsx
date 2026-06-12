@@ -810,6 +810,7 @@ const shouldShowOpeningAds =
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
         <Route path="/story/:storyId/echo" element={<EchoPage />} />
+        <Route path="/author/post/:postId/echo" element={<EchoPage />} />
         <Route path="/story/:storyId/reaction" element={<ReactionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
 
