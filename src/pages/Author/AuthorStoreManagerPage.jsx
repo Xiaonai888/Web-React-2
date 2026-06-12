@@ -128,12 +128,21 @@ async function fetchMyProducts() {
   return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
 }
 
-async function fetchMyOrderReport(page = 1, limit = 20) {
+async function fetchMyOrderReport({ page = 1, limit = 20, type = 'book', prepareStatus = 'all', q = '' } = {}) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders?page=${page}&limit=${limit}`, {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    type,
+    prepare_status: prepareStatus,
+  })
+
+  if (q) params.set('q', q)
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders?${params.toString()}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -161,6 +170,27 @@ async function fetchMyOrderReport(page = 1, limit = 20) {
       total_pages: Number(data.total_pages || 1),
     },
   }
+}
+
+async function markMyAuthorStoreOrderPreparing(orderId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders/${encodeURIComponent(orderId)}/preparing`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to mark preparing')
+  }
+
+  return data.order || null
 }
 
 async function fetchDeliverySettings() {
@@ -720,40 +750,75 @@ function StatCard({ label, value, icon }) {
   )
 }
 
-function OrderHistoryRow({ order }) {
+function OrderHistoryRow({ order, onMarkPreparing, preparingLoading }) {
   const items = Array.isArray(order.items) ? order.items : []
   const firstItem = items[0] || {}
-  const status = String(order.payment_status || order.status || 'waiting').toLowerCase()
-  const paid = status === 'paid' || status === 'approved' || status === 'confirmed'
   const title = firstItem.product_title || firstItem.title || order.product_title || 'Order item'
-  const total = order.total_usd || order.product_subtotal_usd || order.amount_usd || 0
+  const total = order.total_usd || order.total_amount || order.product_subtotal_usd || order.amount_usd || 0
   const buyer = order.buyer_name || order.customer_name || order.reader_name || 'Reader'
+  const phone = order.buyer_phone || order.customer_phone || ''
   const dateText = order.created_at ? new Date(order.created_at).toLocaleString() : ''
+  const preparing = String(order.author_prepare_status || '').toLowerCase() === 'preparing'
+  const hasBook = items.some((item) => String(item.product_type || '').toLowerCase() === 'book')
 
   return (
-    <article className="rounded-[20px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <article className="rounded-[22px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-start gap-3">
+        <div className="h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-[#f3f4f6] ring-1 ring-black/5">
+          {firstItem.cover_url ? (
+            <img src={firstItem.cover_url} alt={title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
+              <i className="fa-regular fa-image text-[14px]" />
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
           <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{title}</div>
-          <div className="mt-1 text-[11px] font-semibold text-[#8b93a1]">
-            Order #{String(order.id || '').slice(0, 8)} · {buyer}
+          <div className="mt-1 text-[11px] font-bold text-[#8b93a1]">
+            Order #{String(order.order_number || order.order_id || order.id || '').slice(0, 16)}
+          </div>
+          <div className="mt-1 text-[12px] font-semibold text-[#6b7280]">
+            {buyer}{phone ? ` · ${phone}` : ''}
           </div>
           {dateText ? <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">{dateText}</div> : null}
         </div>
 
         <div className="shrink-0 text-right">
           <div className="text-[14px] font-black text-[#111827]">{formatMoney(total)}</div>
-          <div className={`mt-1 rounded-full px-2 py-1 text-[10px] font-black ${paid ? 'bg-[#ecfdf3] text-[#027a48]' : 'bg-[#fff7ed] text-[#9a3412]'}`}>
-            {paid ? 'Approved' : status || 'Waiting'}
+          <div className="mt-1 text-[11px] font-bold text-[#6b7280]">
+            Income {formatMoney(order.author_income_usd || 0)}
           </div>
         </div>
       </div>
 
-      {items.length > 1 ? (
-        <div className="mt-2 text-[11px] font-semibold text-[#6b7280]">
-          {items.length} items
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#eef0f4] pt-3">
+        <div className="text-[11px] font-bold text-[#8b93a1]">
+          {items.length || 1} item{items.length > 1 ? 's' : ''}
         </div>
-      ) : null}
+
+        {hasBook ? (
+          preparing ? (
+            <div className="rounded-full bg-[#ecfdf3] px-3 py-1.5 text-[11px] font-black text-[#027a48]">
+              Preparing ✓
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onMarkPreparing(order)}
+              disabled={preparingLoading}
+              className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-50"
+            >
+              {preparingLoading ? 'Saving...' : 'Mark Preparing'}
+            </button>
+          )
+        ) : (
+          <div className="rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#6b7280]">
+            PDF order
+          </div>
+        )}
+      </div>
     </article>
   )
 }
@@ -805,6 +870,15 @@ orderPage,
 setOrderPage,
 orderLoading,
 orderPagination,
+  orderType,
+  setOrderType,
+  orderPrepareFilter,
+  setOrderPrepareFilter,
+  orderSearchDraft,
+  setOrderSearchDraft,
+  setOrderSearchQuery,
+  onMarkOrderPreparing,
+  orderActionLoadingId,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
@@ -1568,7 +1642,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         <div>
           <h2 className="text-[17px] font-black text-[#111827]">Order history</h2>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-            Approved and paid orders from your author store.
+            Orders checked by admin from your author store.
           </p>
         </div>
 
@@ -1581,6 +1655,71 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
           Refresh
         </button>
       </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-[#f3f4f6] p-1">
+        {[
+          { value: 'book', label: 'Book Orders' },
+          { value: 'pdf', label: 'PDF Orders' },
+        ].map((item) => {
+          const active = orderType === item.value
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => {
+                setOrderType(item.value)
+                setOrderPage(1)
+                if (item.value === 'pdf') setOrderPrepareFilter('all')
+              }}
+              className={`h-10 rounded-xl text-[12px] font-black ${
+                active ? 'bg-white text-[#111827] shadow-sm' : 'text-[#6b7280]'
+              }`}
+            >
+              {item.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          setOrderPage(1)
+          setOrderSearchQuery(orderSearchDraft.trim())
+        }}
+        className="mt-3 flex flex-col gap-2 sm:flex-row"
+      >
+        <input
+          type="search"
+          value={orderSearchDraft}
+          onChange={(event) => setOrderSearchDraft(event.target.value)}
+          placeholder="Search order ID, buyer name, phone..."
+          className="h-11 flex-1 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+        />
+
+        {orderType === 'book' ? (
+          <select
+            value={orderPrepareFilter}
+            onChange={(event) => {
+              setOrderPage(1)
+              setOrderPrepareFilter(event.target.value)
+            }}
+            className="h-11 rounded-2xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-black text-[#111827] outline-none focus:border-[#111827]"
+          >
+            <option value="all">All</option>
+            <option value="to_prepare">To prepare</option>
+            <option value="preparing">Preparing</option>
+          </select>
+        ) : null}
+
+        <button
+          type="submit"
+          className="h-11 rounded-2xl bg-[#111827] px-5 text-[13px] font-black text-white active:scale-[0.98]"
+        >
+          Search
+        </button>
+      </form>
     </div>
 
     {orderLoading ? (
@@ -1591,7 +1730,12 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       <>
         <div className="space-y-2">
           {orders.map((order) => (
-            <OrderHistoryRow key={order.id} order={order} />
+            <OrderHistoryRow
+              key={order.id}
+              order={order}
+              onMarkPreparing={onMarkOrderPreparing}
+              preparingLoading={orderActionLoadingId === order.id}
+            />
           ))}
         </div>
 
@@ -1626,7 +1770,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         </div>
         <h3 className="text-[17px] font-black text-[#111827]">No orders yet</h3>
         <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-          Approved orders will appear here after payment is confirmed.
+          Orders checked by admin will appear here.
         </p>
       </div>
     )}
@@ -2289,6 +2433,11 @@ export default function AuthorStoreManagerPage() {
     total: 0,
     total_pages: 1,
   })
+  const [orderType, setOrderType] = useState('book')
+  const [orderPrepareFilter, setOrderPrepareFilter] = useState('all')
+  const [orderSearchDraft, setOrderSearchDraft] = useState('')
+  const [orderSearchQuery, setOrderSearchQuery] = useState('')
+  const [orderActionLoadingId, setOrderActionLoadingId] = useState('')
   const orderAutoRefreshCountRef = useRef(0)
   const lastOrderReportLoadAtRef = useRef(0)
 
@@ -2296,7 +2445,13 @@ export default function AuthorStoreManagerPage() {
     try {
       if (!silent) setOrderLoading(true)
 
-      const report = await fetchMyOrderReport(orderPage, ORDER_REPORT_LIMIT)
+      const report = await fetchMyOrderReport({
+        page: orderPage,
+        limit: ORDER_REPORT_LIMIT,
+        type: orderType,
+        prepareStatus: orderType === 'book' ? orderPrepareFilter : 'all',
+        q: orderSearchQuery,
+      })
       const summary = report.summary || {}
 
       lastOrderReportLoadAtRef.current = Date.now()
@@ -2321,7 +2476,11 @@ export default function AuthorStoreManagerPage() {
     } finally {
       setOrderLoading(false)
     }
-  }, [orderPage])
+  }, [orderPage, orderType, orderPrepareFilter, orderSearchQuery])
+
+  useEffect(() => {
+    setOrderPage(1)
+  }, [orderType, orderPrepareFilter, orderSearchQuery])
 
   const filteredProducts = useMemo(() => {
   if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
@@ -2599,6 +2758,29 @@ const saveCategoryOrder = async () => {
     setActiveTab('Records')
   }
 
+  const handleMarkOrderPreparing = async (order) => {
+    const orderId = order?.order_id || order?.order_number || order?.id
+
+    if (!orderId || orderActionLoadingId) return
+
+    try {
+      setOrderActionLoadingId(order.id || orderId)
+
+      const updatedOrder = await markMyAuthorStoreOrderPreparing(orderId)
+
+      if (updatedOrder) {
+        setOrders((current) =>
+          current.map((item) => (item.id === updatedOrder.id ? updatedOrder : item))
+        )
+      }
+
+      await loadOrderReport({ silent: true })
+    } catch {
+    } finally {
+      setOrderActionLoadingId('')
+    }
+  }
+
   const handleDeleteProduct = async (product) => {
     if (!product?.id) return
 
@@ -2707,6 +2889,15 @@ setOrderPage={setOrderPage}
 orderLoading={orderLoading}
 orderPagination={orderPagination}
           onRefreshOrders={() => loadOrderReport({ silent: false })}
+          orderType={orderType}
+          setOrderType={setOrderType}
+          orderPrepareFilter={orderPrepareFilter}
+          setOrderPrepareFilter={setOrderPrepareFilter}
+          orderSearchDraft={orderSearchDraft}
+          setOrderSearchDraft={setOrderSearchDraft}
+          setOrderSearchQuery={setOrderSearchQuery}
+          onMarkOrderPreparing={handleMarkOrderPreparing}
+          orderActionLoadingId={orderActionLoadingId}
         />
       )}
 
