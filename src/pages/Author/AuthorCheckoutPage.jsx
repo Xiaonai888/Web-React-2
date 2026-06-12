@@ -222,9 +222,9 @@ export default function AuthorCheckoutPage() {
   const total = subtotal + deliveryFee
   const itemCount = items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)
   const hasBuyerProfile = Boolean(
-  buyerProfile.name &&
-  buyerProfile.phone_number &&
-  buyerProfile.delivery_address
+  (buyerProfile.name || '').trim() &&
+  (buyerProfile.phone_number || buyerProfile.phone || '').trim() &&
+  (buyerProfile.delivery_address || buyerProfile.address || '').trim()
 )
 
   function updateQuantity(id, nextQuantity) {
@@ -245,10 +245,10 @@ export default function AuthorCheckoutPage() {
   const token = getReaderToken()
 
   if (!token) {
-    setMessage('Please login before checkout.')
-    setBuyerOpen(true)
-    return
-  }
+  setMessage('Please login before checkout.')
+  navigate('/login')
+  return
+}
 
   if (!items.length) {
     setMessage('Your cart is empty.')
