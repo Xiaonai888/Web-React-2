@@ -367,9 +367,9 @@ function FieldLabel({ children }) {
   const cleanLabel = label.replace('*', '').trim()
 
   return (
-    <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#1f2937]">
+    <div className="mb-1.5 text-[12px] font-medium tracking-normal text-[#374151]">
       {cleanLabel}
-      {hasRequiredMark ? <span className="font-bold text-[#ef4444]"> *</span> : null}
+      {hasRequiredMark ? <span className="font-semibold text-[#ef4444]"> *</span> : null}
     </div>
   )
 }
@@ -413,7 +413,7 @@ function AdminStyleCard({ title, text, children }) {
 function FormDivider({ title }) {
   return (
     <div className="border-t border-[#e6edf5] pt-4">
-      <div className="mb-3 text-[12px] font-bold uppercase tracking-[0.07em] text-[#334155]">{title}</div>
+      <div className="mb-3 text-[13px] font-semibold tracking-normal text-[#111827]">{title}</div>
     </div>
   )
 }
