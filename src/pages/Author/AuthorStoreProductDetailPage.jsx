@@ -26,13 +26,27 @@ function saveCartItems(items) {
   window.dispatchEvent(new Event('shadow-author-cart-updated'))
 }
 
+function normalizeGalleryImages(images) {
+  const list = Array.isArray(images) ? images : []
+
+  return list
+    .map((item) => {
+      if (typeof item === 'string') return item
+
+      return item?.url || item?.image_url || item?.imageUrl || ''
+    })
+    .filter(Boolean)
+    .slice(0, 5)
+}
+
 function normalizeProduct(product, pageUsername) {
   const type = product.type || (product.product_type === 'pdf' ? 'PDF' : 'Book')
   const salePrice = Number(product.sale_price || 0)
   const originalPrice = Number(product.original_price || 0)
   const price = salePrice || originalPrice
   const stockQuantity = Number(product.stock_quantity || 0)
-  const images = [product.cover_url || ''].filter(Boolean)
+  const galleryImages = normalizeGalleryImages(product.gallery_images || product.galleryImages)
+  const images = [product.cover_url || '', ...galleryImages].filter(Boolean)
 
   return {
     id: product.id,
