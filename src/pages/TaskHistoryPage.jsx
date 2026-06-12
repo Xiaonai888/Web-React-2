@@ -114,7 +114,7 @@ export default function TaskHistoryPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[18px] font-black text-[#111827]">Gem Earned</h1>
+          <h1 className="text-[18px] font-black text-[#111827]">Reward History</h1>
 
           <button type="button" onClick={loadHistory} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95">
             <i className="fa-solid fa-rotate-right text-[13px]" />
@@ -123,13 +123,36 @@ export default function TaskHistoryPage() {
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 pt-4">
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <SummaryItem label="Today" value={summary.today} />
-          <SummaryItem label="This week" value={summary.this_week} />
-          <SummaryItem label="This month" value={summary.this_month} />
-          <SummaryItem label="This year" value={summary.this_year} />
-          <SummaryItem label="Total" value={summary.total} />
-        </section>
+        
+      <section className="relative overflow-hidden rounded-[30px] bg-[#111827] p-5 text-white shadow-[0_18px_45px_rgba(17,24,39,0.22)]">
+  <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#F6B800]/30 blur-2xl" />
+  <div className="absolute -left-10 bottom-0 h-32 w-32 rounded-full bg-[#ef4444]/15 blur-2xl" />
+  <div className="absolute right-6 top-6 text-[62px] opacity-20">🏆</div>
+
+  <div className="relative">
+    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-[#F6B800] ring-1 ring-white/10">
+      <i className="fa-solid fa-clock-rotate-left" />
+      Reward Records
+    </div>
+
+    <div className="mt-4 text-[12px] font-semibold text-white/60">Total Earned</div>
+
+    <div className="mt-1 flex items-center gap-2 text-[36px] font-black leading-none tracking-[-0.04em]">
+      <CrystalShardIcon className="h-7 w-7" />
+      <span>{formatNumber(summary.total)}</span>
+    </div>
+
+    <p className="mt-2 max-w-[360px] text-[12px] font-semibold leading-5 text-white/65">
+      Coins collected from daily rewards and missions.
+    </p>
+  </div>
+</section>
+
+<section className="mt-4 grid grid-cols-3 gap-3">
+  <SummaryItem label="Today" value={summary.today} />
+  <SummaryItem label="This Week" value={summary.this_week} />
+  <SummaryItem label="This Month" value={summary.this_month} />
+</section>
 
         <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <h2 className="text-[20px] font-black text-[#111827]">Earned Center</h2>
