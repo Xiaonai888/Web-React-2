@@ -362,7 +362,16 @@ async function deleteStoreProduct(productId) {
 }
 
 function FieldLabel({ children }) {
-  return <div className="mb-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">{children}</div>
+  const label = String(children || '')
+  const hasRequiredMark = label.includes('*')
+  const cleanLabel = label.replace('*', '').trim()
+
+  return (
+    <div className="mb-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">
+      {cleanLabel}
+      {hasRequiredMark ? <span className="text-[#ef4444]"> *</span> : null}
+    </div>
+  )
 }
 
 function TextInput({ value, onChange, placeholder, type = 'text' }) {
