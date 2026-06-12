@@ -74,9 +74,8 @@ function ActionButton({ active, icon, title, text, onClick }) {
 
 export default function EchoPage() {
   const navigate = useNavigate()
-  const { storyId } = useParams()
   const { storyId, postId } = useParams()
-  const isAuthorPostEcho = Boolean(postId)
+const isAuthorPostEcho = Boolean(postId)
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
