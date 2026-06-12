@@ -50,6 +50,7 @@ import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 
 
 
+
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -113,6 +114,7 @@ const AuthorPageIncomePage = lazy(() => import('./pages/Author/AuthorPageIncomeP
 const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWithdrawalPage'))
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
+const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 
 
 
@@ -787,6 +789,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <DiscoverPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page-options"
+  element={
+    <LazyPage>
+      <AuthorPageOptionsPage />
     </LazyPage>
   }
 />
