@@ -492,15 +492,15 @@ export default function TaskCenterPage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-[24px] bg-[#111827] p-4 text-white shadow-sm">
+        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-[#F6B800]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff7d6] text-[#F6B800]">
               <i className="fa-solid fa-lightbulb text-[14px]" />
             </div>
 
             <div>
-              <h3 className="text-[14px] font-black">Reward Rules</h3>
-              <p className="mt-1 text-[11px] font-semibold leading-5 text-white/65">
+              <h3 className="text-[14px] font-black text-[#111827]">Reward Rules</h3>
+              <p className="mt-1 text-[11px] font-semibold leading-5 text-[#8b93a1]">
                 Coins are used for story rewards. Diamonds are premium currency. Rewards may reset if you miss daily check-in.
               </p>
             </div>
