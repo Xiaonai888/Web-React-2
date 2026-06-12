@@ -873,7 +873,7 @@ export default function AuthorPageEditDetailsPage() {
               onClick={() => setActiveModal('facebook')}
               className="flex w-full items-center gap-4 py-3 text-left active:bg-[#f8fafc]"
             >
-              <span className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10">
+              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10"
                 {displayFacebookImage ? (
                   <img src={displayFacebookImage} alt={displayFacebookName} className="h-full w-full object-cover" />
                 ) : null}
@@ -881,13 +881,13 @@ export default function AuthorPageEditDetailsPage() {
 
               <span className="min-w-0 flex-1">
                 <span className="line-clamp-1 block text-[17px] font-semibold text-[#111827]">{displayFacebookName}</span>
-                <span className="mt-1 line-clamp-2 block text-[15px] font-normal text-[#6b7280]">
+                <span className="line-clamp-1 block text-[13px] font-normal text-[#111827]"
                   {details.facebook_page_url || 'Add Facebook Page link'}
                 </span>
               </span>
 
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#6b7280]">
-                <i className="fa-solid fa-pen text-[18px]" />
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#6b7280]"
+                <i className="fa-solid fa-pen text-[12px]" />
               </span>
             </button>
           </SectionBlock>
