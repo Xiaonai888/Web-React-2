@@ -68,6 +68,7 @@ function formatProductForUi(product) {
     salePrice: String(product.sale_price || ''),
     status: product.status === 'active' ? 'Active' : product.status === 'hidden' ? 'Hidden' : 'Draft',
     coverUrl: product.cover_url || '',
+galleryImages: formatGalleryImagesForUi(product.gallery_images),
     stock: String(product.stock_quantity || ''),
     paperType: product.paper_type || 'Normal Paper',
     condition: product.book_condition || 'New',
@@ -78,8 +79,30 @@ function formatProductForUi(product) {
 pdfFileName: product.pdf_file_name || '',
 pageCount: product.page_count || '',
 accessRule: product.access_rule || 'Download after payment',
+    
     createdAt: product.created_at,
   }
+}
+
+function formatGalleryImagesForUi(images) {
+  const list = Array.isArray(images) ? images : []
+
+  return list
+    .map((item) => {
+      if (typeof item === 'string') {
+        return {
+          url: item,
+          name: '',
+        }
+      }
+
+      return {
+        url: item?.url || item?.image_url || item?.imageUrl || '',
+        name: item?.name || item?.file_name || item?.fileName || '',
+      }
+    })
+    .filter((item) => item.url)
+    .slice(0, 5)
 }
 
 async function uploadCoverImage(file) {
@@ -107,6 +130,34 @@ async function uploadCoverImage(file) {
 
   return data.image_url || data.imageUrl
 }
+
+
+async function uploadGalleryImage(file) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('folder', 'author_store_gallery')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload gallery image')
+  }
+
+  return data.image_url || data.imageUrl || ''
+}
+
 
 async function fetchMyProducts() {
   const token = getAuthToken()
@@ -318,6 +369,7 @@ async function createStoreProduct(product) {
       sale_price: product.salePrice,
       status: statusToApi(product.status),
       cover_url: product.coverUrl,
+      gallery_images: product.galleryImages || [],
       stock_quantity: product.stock,
       paper_type: product.paperType,
       book_condition: product.condition,
@@ -360,6 +412,7 @@ async function updateStoreProduct(productId, product) {
       sale_price: product.salePrice,
       status: statusToApi(product.status),
       cover_url: product.coverUrl,
+      gallery_images: product.galleryImages || [],
       stock_quantity: product.stock,
       paper_type: product.paperType,
       book_condition: product.condition,
@@ -1841,7 +1894,21 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [coverFile, setCoverFile] = useState(null)
   const [coverFileName, setCoverFileName] = useState('')
   const [coverPreview, setCoverPreview] = useState(productToEdit?.coverUrl || '')
-  const [galleryImages, setGalleryImages] = useState([null, null, null, null, null])
+  const [galleryImages, setGalleryImages] = useState(() => {
+  const savedImages = Array.isArray(productToEdit?.galleryImages)
+    ? productToEdit.galleryImages.slice(0, 5).map((image) => ({
+        url: image.url || '',
+        name: image.name || '',
+        file: null,
+        local: false,
+      }))
+    : []
+
+  return [
+    ...savedImages,
+    ...Array.from({ length: Math.max(0, 5 - savedImages.length) }, () => null),
+  ]
+})
   const [stock, setStock] = useState(productToEdit?.stock || '')
   const [paperType, setPaperType] = useState(productToEdit?.paperType || '')
   const [condition, setCondition] = useState(productToEdit?.condition || 'New')
@@ -1899,49 +1966,50 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
     }
   }
 
-  const selectGalleryImage = (index, file) => {
-    if (!file) return
+ const selectGalleryImage = (index, file) => {
+  if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      setFormError('Please upload a valid gallery image.')
-      return
+  if (!file.type.startsWith('image/')) {
+    setFormError('Please upload a valid gallery image.')
+    return
+  }
+
+  setGalleryImages((current) => {
+    const next = [...current]
+
+    if (next[index]?.local && next[index]?.url) {
+      URL.revokeObjectURL(next[index].url)
     }
 
-    setGalleryImages((current) => {
-      const next = [...current]
+    next[index] = {
+      url: URL.createObjectURL(file),
+      name: file.name,
+      file,
+      local: true,
+    }
 
-      if (next[index]?.url) {
-        URL.revokeObjectURL(next[index].url)
-      }
+    return next
+  })
 
-      next[index] = {
-        file,
-        name: file.name,
-        url: URL.createObjectURL(file),
-      }
-
-      return next
-    })
-
-    setFormError('')
-  }
+  setFormError('')
+}
 
   const removeGalleryImage = (index) => {
-    setGalleryImages((current) => {
-      const next = [...current]
+  setGalleryImages((current) => {
+    const next = [...current]
 
-      if (next[index]?.url) {
-        URL.revokeObjectURL(next[index].url)
-      }
-
-      next[index] = null
-      return next
-    })
-
-    if (galleryInputRefs.current[index]) {
-      galleryInputRefs.current[index].value = ''
+    if (next[index]?.local && next[index]?.url) {
+      URL.revokeObjectURL(next[index].url)
     }
+
+    next[index] = null
+    return next
+  })
+
+  if (galleryInputRefs.current[index]) {
+    galleryInputRefs.current[index].value = ''
   }
+}
 
   const uploadPdfFile = async (file) => {
   const token = getAuthToken()
@@ -1970,6 +2038,35 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
 
   return data.image_url || data.imageUrl || ''
 }
+
+  const uploadBookGalleryImages = async () => {
+    if (type !== 'Book') return []
+
+    const uploadedImages = []
+
+    for (let index = 0; index < galleryImages.length; index += 1) {
+      const image = galleryImages[index]
+
+      if (!image?.url && !image?.file) continue
+
+      if (image.file) {
+        setFormError(`Uploading gallery image ${index + 1}...`)
+        const imageUrl = await uploadGalleryImage(image.file)
+
+        uploadedImages.push({
+          url: imageUrl,
+          name: image.name || image.file.name || `Gallery image ${index + 1}`,
+        })
+      } else if (image.url) {
+        uploadedImages.push({
+          url: image.url,
+          name: image.name || '',
+        })
+      }
+    }
+
+    return uploadedImages.slice(0, 5)
+  }
 
   const saveProduct = async () => {
     const qualityNumber = Number(qualityPercent)
@@ -2016,6 +2113,8 @@ if (!salePrice || Number(salePrice) <= 0) {
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
+const nextGalleryImages = await uploadBookGalleryImages()
+
 let nextPdfFileUrl = pdfFileUrl
 
 if (type === 'PDF') {
@@ -2043,7 +2142,8 @@ setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
         salePrice,
         status: active ? 'Active' : 'Draft',
         coverUrl,
-        stock,
+galleryImages: nextGalleryImages,
+stock,
         paperType,
         condition,
         qualityPercent: condition === 'Second Hand' ? qualityPercent : '',
