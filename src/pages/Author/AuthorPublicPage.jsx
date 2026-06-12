@@ -893,7 +893,7 @@ const [loading, setLoading] = useState(true)
   const profileRef = useRef(null)
   const tabsRef = useRef(null)
   const [profileDetails, setProfileDetails] = useState(getStoredAuthorProfileDetails)
-  const [readerNotificationCount, setReaderNotificationCount] = useState(1)
+
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
