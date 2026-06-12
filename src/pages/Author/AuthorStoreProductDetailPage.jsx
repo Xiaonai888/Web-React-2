@@ -227,34 +227,32 @@ function ImageSlider({ images, title }) {
       </div>
 
       {safeImages.length > 1 ? (
-        <div className="mt-3 flex items-center justify-center gap-2">
-          {safeImages.length > 1 ? (
-  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-    {safeImages.map((imageUrl, index) => (
-      <button
-        key={`${imageUrl}-${index}`}
-        type="button"
-        onClick={() => goTo(index)}
-        aria-label={`Open media ${index + 1}`}
-        className={`h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-[#eef0f4] transition ${
-          activeIndex === index ? 'ring-2 ring-[#111827]' : 'ring-1 ring-black/10'
-        }`}
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={`${title} thumbnail ${index + 1}`}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-[#98a2b3]">
-            {index + 1}
-          </div>
-        )}
-      </button>
-    ))}
-  </div>
-) : null}
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {safeImages.map((imageUrl, index) => (
+            <button
+              key={`${imageUrl}-${index}`}
+              type="button"
+              onClick={() => goTo(index)}
+              aria-label={`Open media ${index + 1}`}
+              className={`h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-[#eef0f4] transition ${
+                activeIndex === index ? 'ring-2 ring-[#111827]' : 'ring-1 ring-black/10'
+              }`}
+            >
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={`${title} thumbnail ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-[#98a2b3]">
+                  {index + 1}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
