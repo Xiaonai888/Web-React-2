@@ -12,7 +12,7 @@ const AUTHOR_POST_REACTIONS = [
   { type: 'haha', label: 'Haha', src: '/assets/React/2%20React_Haha.svg', text: '#f59e0b' },
   { type: 'wow', label: 'Wow', src: '/assets/React/3%20React_Wow.svg', text: '#f59e0b' },
   { type: 'sad', label: 'Sad', src: '/assets/React/4%20React_Sad.svg', text: '#3b82f6' },
-  { type: 'angry', label: 'Angry', src: '/assets/React/5%20React_Angry.svg', text: '#ef4444' },
+  { type: 'angry', label: 'Angry', src: '/assets/React/5%20React_Angry.svg?v=2', text: '#ef4444' },
   { type: 'support', label: 'Support', src: '/assets/React/6%20React_Support.svg', text: '#16a34a' },
   { type: 'touched', label: 'Touched', src: '/assets/React/7%20React_Touched.svg', text: '#8b5cf6' },
 ]
