@@ -927,8 +927,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   }}
 />
 
-<PostOptionsSheet
-
       <AuthorPostComposerSheet
         open={composerOpen}
         author={author}
