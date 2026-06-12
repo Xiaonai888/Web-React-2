@@ -1518,21 +1518,33 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   </button>
 ) : null}        
 
-    {displayAuthor.is_owner ? (
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            navigate('/author/page/edit?section=cover')
-          }}
-          className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-          aria-label="Edit page"
-        >
-          <i className="fa-solid fa-pen text-[14px]" />
-        </button>
-      </div>
-    ) : null}
+   {displayAuthor.is_owner ? (
+  <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation()
+        navigate('/author/page/edit?section=cover')
+      }}
+      className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
+      aria-label="Edit page"
+    >
+      <i className="fa-solid fa-pen text-[14px]" />
+    </button>
+
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation()
+        navigate('/author/page-settings')
+      }}
+      className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
+      aria-label="Page settings"
+    >
+      <i className="fa-solid fa-ellipsis text-[16px]" />
+    </button>
+  </div>
+) : null}
 
   {displayAuthor.is_owner ? (
     <button
