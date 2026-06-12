@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import EchoShareSheet from './reader/EchoShareSheet'
@@ -681,7 +680,6 @@ function PostsEmpty({ title, text }) {
 }
 
 export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
-  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
