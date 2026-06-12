@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
+import EchoShareSheet from './reader/EchoShareSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -887,7 +888,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               reactionBusyId={reactionBusyId}
               onOpenMenu={setSelectedPost}
               onReact={handlePostReaction}
-              onEcho={openAuthorPostEcho}
               onViewImage={setViewImageUrl}
               onMessage={onMessage}
               onComment={setCommentPost}
@@ -900,6 +900,36 @@ function handleAuthorPostCommentChanged(nextComments = []) {
           text="Updates, notes, and announcements will appear here."
         />
       )}
+
+      <AuthorPostComposerSheet
+  open={composerOpen}
+  author={author}
+  saving={saving}
+  onClose={() => setComposerOpen(false)}
+  onPublishText={handleCreatePost}
+  onMessage={onMessage}
+/>
+
+<EchoShareSheet
+  open={Boolean(echoPost)}
+  story={echoPost ? {
+    id: echoPost.id,
+    title: echoPost.content || 'Author post',
+    cover_url: echoPost.image_urls?.[0] || '',
+    main_genre: 'Author Post',
+    author_page: {
+      page_name: author?.page_name || 'Author',
+      page_username: author?.page_username || '',
+    },
+  } : null}
+  onClose={() => setEchoPost(null)}
+  onEchoed={() => {
+    setEchoPost(null)
+    onMessage?.('Echo posted.')
+  }}
+/>
+
+<PostOptionsSheet
 
       <AuthorPostComposerSheet
         open={composerOpen}
