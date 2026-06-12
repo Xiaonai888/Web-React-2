@@ -8,13 +8,13 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const AUTHOR_POST_REACTIONS = [
-  { type: 'love', label: 'Love', src: '/assets/React/1%20React_Love.svg', text: '#ff2f5f' },
-  { type: 'haha', label: 'Haha', src: '/assets/React/2%20React_Haha.svg', text: '#f59e0b' },
-  { type: 'wow', label: 'Wow', src: '/assets/React/3%20React_Wow.svg', text: '#f59e0b' },
-  { type: 'sad', label: 'Sad', src: '/assets/React/4%20React_Sad.svg', text: '#3b82f6' },
-  { type: 'angry', label: 'Angry', src: '/assets/React/React_Angry.svg', text: '#ef4444' },
-  { type: 'support', label: 'Support', src: '/assets/React/6%20React_Support.svg', text: '#16a34a' },
-  { type: 'touched', label: 'Touched', src: '/assets/React/7%20React_Touched.svg', text: '#8b5cf6' },
+  { type: 'love', label: 'Love', src: '/assets/React/Love.svg', text: '#ff2f5f' },
+  { type: 'haha', label: 'Haha', src: '/assets/React/Haha.svg', text: '#f59e0b' },
+  { type: 'wow', label: 'Wow', src: '/assets/React/Wow.svg', text: '#f59e0b' },
+  { type: 'sad', label: 'Sad', src: '/assets/React/Sad.svg', text: '#3b82f6' },
+  { type: 'angry', label: 'Angry', src: '/assets/React/Angry.svg', text: '#ef4444' },
+  { type: 'support', label: 'Support', src: '/assets/React/Support.svg', text: '#16a34a' },
+  { type: 'touched', label: 'Touched', src: '/assets/React/Touched.svg', text: '#8b5cf6' },
 ]
 function getAuthToken() {
   return (
