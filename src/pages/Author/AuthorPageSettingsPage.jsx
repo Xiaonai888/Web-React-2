@@ -630,7 +630,7 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
                 ? 'Category Management'
                 : settingsView === 'delivery'
                   ? 'Delivery Company'
-                  : 'Page Settings'}
+                  : 'Settings'}
           </h1>
 
           <div className="h-10 w-10" />
