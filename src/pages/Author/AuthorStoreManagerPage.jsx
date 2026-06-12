@@ -381,7 +381,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }) {
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-medium text-[#111827] placeholder:font-normal outline-none focus:border-[#111827]"
     />
   )
 }
@@ -391,7 +391,7 @@ function SelectInput({ value, onChange, children }) {
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
+      className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-medium text-[#111827] placeholder:font-normal outline-none focus:border-[#111827]"
     >
       {children}
     </select>
@@ -413,10 +413,11 @@ function AdminStyleCard({ title, text, children }) {
 function FormDivider({ title }) {
   return (
     <div className="border-t border-[#e6edf5] pt-4">
-      <div className="mb-3 text-[12px] font-black uppercase tracking-[0.09em] text-[#ef4444]">{title}</div>
+      <div className="mb-3 text-[12px] font-bold uppercase tracking-[0.07em] text-[#334155]">{title}</div>
     </div>
   )
 }
+
 
 function EmptyState({ onAddProduct }) {
   return (
