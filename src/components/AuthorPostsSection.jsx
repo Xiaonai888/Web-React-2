@@ -848,6 +848,11 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   onMessage?.(link)
 }
 
+  function openAuthorPostEcho(post) {
+  if (!post?.id) return
+  navigate(`/author/post/${post.id}/echo`)
+}
+
   return (
     <div className="mx-[-16px] overflow-hidden bg-white sm:mx-0">
       {author?.is_owner ? (
@@ -885,7 +890,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               reactionBusyId={reactionBusyId}
               onOpenMenu={setSelectedPost}
               onReact={handlePostReaction}
-              onEcho={setEchoPost}
               onEcho={openAuthorPostEcho}
               onViewImage={setViewImageUrl}
               onMessage={onMessage}
