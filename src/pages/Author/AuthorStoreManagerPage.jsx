@@ -2349,17 +2349,7 @@ accessRule,
   />
 </div>
 
-<div className="grid gap-3 sm:grid-cols-3">
-  <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
-    <input type="checkbox" checked={bestSeller} onChange={(event) => setBestSeller(event.target.checked)} />
-    Best seller
-  </label>
-
-  <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
-    <input type="checkbox" checked={discount} onChange={(event) => setDiscount(event.target.checked)} />
-    Discount
-  </label>
-
+<div>
   <label className="flex items-center gap-3 rounded-2xl bg-[#f8fafc] px-4 py-3 text-[13px] font-black text-[#111827] ring-1 ring-black/5">
     <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
     Active
