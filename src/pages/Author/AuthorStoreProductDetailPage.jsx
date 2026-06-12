@@ -228,17 +228,33 @@ function ImageSlider({ images, title }) {
 
       {safeImages.length > 1 ? (
         <div className="mt-3 flex items-center justify-center gap-2">
-          {safeImages.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => goTo(index)}
-              aria-label={`Open media ${index + 1}`}
-              className={`h-2 rounded-full transition-all ${activeIndex === index ? 'w-6 bg-[#111827]' : 'w-2 bg-[#d7dce5]'}`}
-            />
-          ))}
-        </div>
-      ) : null}
+          {safeImages.length > 1 ? (
+  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+    {safeImages.map((imageUrl, index) => (
+      <button
+        key={`${imageUrl}-${index}`}
+        type="button"
+        onClick={() => goTo(index)}
+        aria-label={`Open media ${index + 1}`}
+        className={`h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-[#eef0f4] transition ${
+          activeIndex === index ? 'ring-2 ring-[#111827]' : 'ring-1 ring-black/10'
+        }`}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={`${title} thumbnail ${index + 1}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-[#98a2b3]">
+            {index + 1}
+          </div>
+        )}
+      </button>
+    ))}
+  </div>
+) : null}
     </div>
   )
 }
