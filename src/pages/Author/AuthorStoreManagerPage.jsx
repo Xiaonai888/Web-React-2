@@ -367,9 +367,9 @@ function FieldLabel({ children }) {
   const cleanLabel = label.replace('*', '').trim()
 
   return (
-    <div className="mb-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#374151]">
+    <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#1f2937]">
       {cleanLabel}
-      {hasRequiredMark ? <span className="text-[#ef4444]"> *</span> : null}
+      {hasRequiredMark ? <span className="font-bold text-[#ef4444]"> *</span> : null}
     </div>
   )
 }
