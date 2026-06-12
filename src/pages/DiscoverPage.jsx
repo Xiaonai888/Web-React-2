@@ -120,7 +120,7 @@ const feedItems = [
 function Header({ hidden }) {
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-100 bg-white/98 shadow-sm backdrop-blur transition-transform duration-200 ease-out"
+      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-100 bg-white shadow-sm transition-transform duration-200 ease-out"
       style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
     >
       <div className="mx-auto flex h-[72px] w-full max-w-[620px] items-center justify-between px-4">
