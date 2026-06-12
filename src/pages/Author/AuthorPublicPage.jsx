@@ -35,6 +35,13 @@ function getStoredReaderUser() {
   }
 }
 
+function getStoredAuthorProfileDetails() {
+  try {
+    return JSON.parse(localStorage.getItem('shadow_author_page_profile_details') || '{}') || {}
+  } catch {
+    return {}
+  }
+}
 
 function getAuthorCartCount() {
   try {
@@ -884,6 +891,7 @@ const { pageUsername } = useParams()
   const coverRef = useRef(null)
   const profileRef = useRef(null)
   const tabsRef = useRef(null)
+  const [profileDetails, setProfileDetails] = useState(getStoredAuthorProfileDetails)
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
@@ -904,6 +912,21 @@ const { pageUsername } = useParams()
     document.body.classList.remove('mobile-popup-open')
   }
 }, [followSettingsOpen])
+
+  useEffect(() => {
+  function syncProfileDetails() {
+    setProfileDetails(getStoredAuthorProfileDetails())
+  }
+
+  syncProfileDetails()
+  window.addEventListener('shadow_author_page_profile_details_updated', syncProfileDetails)
+  window.addEventListener('storage', syncProfileDetails)
+
+  return () => {
+    window.removeEventListener('shadow_author_page_profile_details_updated', syncProfileDetails)
+    window.removeEventListener('storage', syncProfileDetails)
+  }
+}, [])
 
 
 useEffect(() => {
@@ -1787,23 +1810,41 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       </div>
 
       <div className="space-y-4 text-[14px] font-normal text-[#111827]">
-        <div className="flex items-center gap-4">
-          <i className="fa-solid fa-at w-8 text-center text-[21px]" />
-          <span>author contact</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <i className="fa-solid fa-phone w-8 text-center text-[20px]" />
-          <span>Phone number</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <i className="fa-regular fa-envelope w-8 text-center text-[21px]" />
-          <span>Email address</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <i className="fa-brands fa-facebook-messenger w-8 text-center text-[22px]" />
-          <span>Messenger</span>
-        </div>
-      </div>
+  {profileDetails.social_media ? (
+    <div className="flex items-center gap-4">
+      <i className="fa-solid fa-at w-8 text-center text-[18px]" />
+      <span>{profileDetails.social_media}</span>
+    </div>
+  ) : null}
+
+  {profileDetails.phone ? (
+    <div className="flex items-center gap-4">
+      <i className="fa-solid fa-phone w-8 text-center text-[17px]" />
+      <span>{profileDetails.phone}</span>
+    </div>
+  ) : null}
+
+  {profileDetails.email ? (
+    <div className="flex items-center gap-4">
+      <i className="fa-regular fa-envelope w-8 text-center text-[18px]" />
+      <span>{profileDetails.email}</span>
+    </div>
+  ) : null}
+
+  {profileDetails.messenger ? (
+    <div className="flex items-center gap-4">
+      <i className="fa-brands fa-facebook-messenger w-8 text-center text-[18px]" />
+      <span>{profileDetails.messenger}</span>
+    </div>
+  ) : null}
+
+  {profileDetails.telegram ? (
+    <div className="flex items-center gap-4">
+      <i className="fa-brands fa-telegram w-8 text-center text-[18px]" />
+      <span>{profileDetails.telegram}</span>
+    </div>
+  ) : null}
+</div>
     </section>
 
     <AuthorPostsSection
