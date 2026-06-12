@@ -195,7 +195,10 @@ export default function TaskHistoryPage() {
           {!loading && history.length > 0 ? (
   <div className="mt-5 space-y-3">
     {history.map((item) => (
-      <div key={item.id} className="flex items-center justify-between gap-4 rounded-[20px] bg-[#f8fafc] px-4 py-3">
+      <div
+        key={item.id}
+        className="flex items-center justify-between gap-4 rounded-[20px] bg-[#f8fafc] px-4 py-3"
+      >
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d6] text-[#d97706]">
             <i className="fa-solid fa-gift text-[14px]" />
@@ -221,6 +224,11 @@ export default function TaskHistoryPage() {
               +{item.story_cards} Story Card
             </div>
           ) : null}
+        </div>
+      </div>
+    ))}
+  </div>
+) : null}
         </section>
       </main>
     </div>
