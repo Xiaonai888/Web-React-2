@@ -41,6 +41,12 @@ function buildStoryLink(storyId) {
   return `${window.location.origin}/story/${storyId}`
 }
 
+function buildAuthorPostLink(postId, post) {
+  const username = post?.author_page?.page_username || ''
+  const path = username ? `/author/page/${username}?post=${postId}` : `/author/post/${postId}`
+  return `${window.location.origin}${path}`
+}
+
 function ActionButton({ active, icon, title, text, onClick }) {
   return (
     <button
@@ -69,6 +75,8 @@ function ActionButton({ active, icon, title, text, onClick }) {
 export default function EchoPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const { storyId, postId } = useParams()
+  const isAuthorPostEcho = Boolean(postId)
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -76,37 +84,60 @@ export default function EchoPage() {
   const [postText, setPostText] = useState('')
   const [saving, setSaving] = useState(false)
   const user = useMemo(() => getStoredUser(), [])
-  const storyLink = useMemo(() => buildStoryLink(storyId), [storyId])
+  const storyLink = useMemo(() => {
+  if (isAuthorPostEcho) return buildAuthorPostLink(postId, story)
+  return buildStoryLink(storyId)
+}, [isAuthorPostEcho, postId, story, storyId])
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function loadStory() {
-      setLoading(true)
-      setMessage('')
+  async function loadEchoTarget() {
+    setLoading(true)
+    setMessage('')
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/public/stories/${storyId}`)
-        const data = await response.json().catch(() => ({}))
+    try {
+      const url = isAuthorPostEcho
+        ? `${API_BASE_URL}/api/authors/page/posts/${postId}`
+        : `${API_BASE_URL}/api/public/stories/${storyId}`
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load story')
-        }
+      const response = await fetch(url)
+      const data = await response.json().catch(() => ({}))
 
-        if (!ignore) setStory(data.story || null)
-      } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load story')
-      } finally {
-        if (!ignore) setLoading(false)
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load echo target')
       }
-    }
 
-    loadStory()
+      if (ignore) return
 
-    return () => {
-      ignore = true
+      if (isAuthorPostEcho) {
+        const post = data.post || {}
+        setStory({
+          id: post.id,
+          title: post.content || 'Author post',
+          cover_url: post.image_urls?.[0] || '',
+          main_genre: 'Author Post',
+          author_page: post.author_page || null,
+          author_name: post.author_page?.page_name || 'Author',
+          echo_target_type: 'author_post',
+        })
+        return
+      }
+
+      setStory(data.story || null)
+    } catch (error) {
+      if (!ignore) setMessage(error.message || 'Failed to load echo target')
+    } finally {
+      if (!ignore) setLoading(false)
     }
-  }, [storyId])
+  }
+
+  loadEchoTarget()
+
+  return () => {
+    ignore = true
+  }
+}, [isAuthorPostEcho, postId, storyId])
 
   const handleCopyLink = async () => {
     try {
@@ -193,7 +224,7 @@ export default function EchoPage() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black uppercase tracking-[0.08em] text-[#f6a800]">Story</div>
+                {isAuthorPostEcho ? 'Author Post' : 'Story'}
                 <h2 className="mt-1 line-clamp-2 text-[18px] font-black leading-6 text-[#111827]">
                   {loading ? 'Loading story...' : story?.title || 'Untitled Story'}
                 </h2>
@@ -242,7 +273,7 @@ export default function EchoPage() {
               onChange={(event) => setPostText(event.target.value)}
               maxLength={280}
               rows={6}
-              placeholder="Say something about this story..."
+              placeholder={isAuthorPostEcho ? 'Say something about this post...' : 'Say something about this story...'}
               className="mt-3 w-full resize-none rounded-[22px] bg-[#f5f3fa] px-4 py-4 text-[14px] font-semibold leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/10"
             />
             <div className="mt-2 text-right text-[11px] font-bold text-[#98a2b3]">{postText.length}/280</div>
