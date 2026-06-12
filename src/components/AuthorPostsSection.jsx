@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 
@@ -679,6 +680,7 @@ function PostsEmpty({ title, text }) {
 }
 
 export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -837,6 +839,11 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
   const link = `${window.location.origin}${path}`
 
+  function openAuthorPostEcho(post) {
+  if (!post?.id) return
+  navigate(`/author/post/${post.id}/echo`)
+}  
+
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(link)
     onMessage?.('Post link copied.')
@@ -884,6 +891,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               onOpenMenu={setSelectedPost}
               onReact={handlePostReaction}
               onEcho={setEchoPost}
+              onEcho={openAuthorPostEcho}
               onViewImage={setViewImageUrl}
               onMessage={onMessage}
               onComment={setCommentPost}
@@ -906,13 +914,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         onMessage={onMessage}
       />
 
-      <AuthorPostEchoSheet
-  post={echoPost}
-  author={author}
-  onClose={() => setEchoPost(null)}
-  onCopyLink={copyAuthorPostLink}
-  onMessage={onMessage}
-/>
 
       <PostOptionsSheet
         post={selectedPost}
