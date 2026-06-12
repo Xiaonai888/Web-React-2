@@ -885,7 +885,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
               isOwner={Boolean(author?.is_owner)}
               reactionBusyId={reactionBusyId}
               onOpenMenu={setSelectedPost}
-              onReact={handlePostReaction}.
+              onReact={handlePostReaction}
               onEcho={setEchoPost}
               onViewImage={setViewImageUrl}
               onMessage={onMessage}
@@ -900,14 +900,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         />
       )}
 
-      <AuthorPostComposerSheet
-  open={composerOpen}
-  author={author}
-  saving={saving}
-  onClose={() => setComposerOpen(false)}
-  onPublishText={handleCreatePost}
-  onMessage={onMessage}
-/>
 
 <EchoShareSheet
   open={Boolean(echoPost)}
