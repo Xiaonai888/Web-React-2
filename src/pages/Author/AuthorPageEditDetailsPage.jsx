@@ -873,7 +873,7 @@ export default function AuthorPageEditDetailsPage() {
               onClick={() => setActiveModal('facebook')}
               className="flex w-full items-center gap-4 py-3 text-left active:bg-[#f8fafc]"
             >
-              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10"
+              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#f3f4f6] ring-1 ring-black/10">
                 {displayFacebookImage ? (
                   <img src={displayFacebookImage} alt={displayFacebookName} className="h-full w-full object-cover" />
                 ) : null}
