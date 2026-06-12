@@ -413,7 +413,7 @@ function AdminStyleCard({ title, text, children }) {
 function FormDivider({ title }) {
   return (
     <div className="border-t border-[#e6edf5] pt-4">
-      <div className="mb-3 text-[11px] font-black uppercase tracking-[0.09em] text-[#111827]">{title}</div>
+      <div className="mb-3 text-[12px] font-black uppercase tracking-[0.09em] text-[#ef4444]">{title}</div>
     </div>
   )
 }
