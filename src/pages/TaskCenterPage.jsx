@@ -17,18 +17,49 @@ const fallbackRewards = [
   { day: 7, gems: 500, story_cards: 1 },
 ]
 
-const dailyMissions = [
-  { id: 'read-10-min', title: 'Read 10 minutes', reward: 50, progress: 0, target: 10, status: 'start', icon: 'fa-book-open' },
-  { id: 'read-3-episodes', title: 'Read 3 episodes', reward: 100, progress: 1, target: 3, status: 'start', icon: 'fa-list-check' },
-  { id: 'add-library', title: 'Add 1 story to Library', reward: 80, progress: 0, target: 1, status: 'start', icon: 'fa-bookmark' },
-  { id: 'follow-author', title: 'Follow 1 author', reward: 80, progress: 1, target: 1, status: 'claim', icon: 'fa-user-plus' },
-]
-
-const weeklyMissions = [
-  { id: 'read-3-days', title: 'Read 3 different days this week', reward: 200, progress: 1, target: 3, status: 'start', icon: 'fa-calendar-check' },
-  { id: 'finish-10-episodes', title: 'Finish 10 episodes this week', reward: 250, progress: 4, target: 10, status: 'start', icon: 'fa-layer-group' },
-  { id: 'share-story', title: 'Share 1 story', reward: 120, progress: 0, target: 1, status: 'start', icon: 'fa-share-nodes' },
-  { id: 'unlock-paid', title: 'Unlock 1 paid episode', reward: 300, progress: 1, target: 1, status: 'claimed', icon: 'fa-lock-open' },
+const moreRewards = [
+  {
+    id: 'daily-check-in',
+    title: 'Daily Check-in',
+    subtitle: 'Open Task Center and collect today’s reward.',
+    reward: 50,
+    action: 'Claim',
+    status: 'claim',
+    icon: 'fa-calendar-check',
+  },
+  {
+    id: 'read-10-min',
+    title: 'Read 10 minutes',
+    subtitle: 'Read stories for 10 minutes today.',
+    reward: 20,
+    action: 'Go',
+    status: 'go',
+    icon: 'fa-book-open',
+    progress: 0,
+    target: 10,
+  },
+  {
+    id: 'read-30-min',
+    title: 'Read 30 minutes',
+    subtitle: 'Keep reading longer to earn more coins.',
+    reward: 60,
+    action: 'Go',
+    status: 'go',
+    icon: 'fa-clock',
+    progress: 0,
+    target: 30,
+  },
+  {
+    id: 'add-library',
+    title: 'Add story to Library',
+    subtitle: 'Save one story you want to continue reading.',
+    reward: 30,
+    action: 'Go',
+    status: 'go',
+    icon: 'fa-bookmark',
+    progress: 0,
+    target: 1,
+  },
 ]
 
 function getReaderToken() {
@@ -56,148 +87,155 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
-function CoinIcon({ className = 'h-6 w-6' }) {
+function CoinIcon({ className = 'h-5 w-5' }) {
   return (
     <span className={`inline-flex shrink-0 items-center justify-center ${className}`}>
-      <i className="fa-solid fa-coins text-[#D99A00]" />
+      <i className="fa-solid fa-coins text-[#F6B800]" />
     </span>
   )
 }
 
-function StatusPill({ children, tone = 'dark' }) {
+function DiamondIcon({ className = 'h-5 w-5' }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center ${className}`}>
+      <i className="fa-solid fa-gem text-[#38BDF8]" />
+    </span>
+  )
+}
+
+function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   const styles = {
     dark: 'bg-[#111827] text-white',
-    soft: 'bg-[#f5f3fa] text-[#6b7280]',
-    done: 'bg-[#e5e7eb] text-[#6b7280]',
-    gold: 'bg-[#fff7ed] text-[#d97706]',
+    gold: 'bg-[#F6B800] text-[#111827]',
+    soft: 'bg-[#e5e7eb] text-[#6b7280]',
+    outline: 'border border-[#d1d5db] bg-white text-[#111827]',
   }
 
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black ${styles[tone] || styles.dark}`}>
-      {children}
-    </span>
-  )
-}
-
-function RewardCard({ reward, currentDay, claimedToday }) {
-  const isPast = reward.day < currentDay
-  const isToday = reward.day === currentDay
-  const isLocked = reward.day > currentDay
-  const status = isPast || (isToday && claimedToday) ? 'Claimed' : isToday ? 'Ready' : 'Locked'
-
-  return (
-    <div
-      className={`relative min-h-[126px] rounded-[20px] border bg-white p-3 text-center ${
-        isToday && !claimedToday
-          ? 'border-[#111827] shadow-[0_14px_30px_rgba(17,24,39,0.12)]'
-          : 'border-[#e5e7eb]'
-      } ${isLocked ? 'opacity-60' : ''}`}
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`h-10 rounded-full px-5 text-[12px] font-black shadow-sm active:scale-[0.98] disabled:cursor-not-allowed ${styles[tone] || styles.dark}`}
     >
-      <div
-        className={`absolute left-0 right-0 top-0 rounded-t-[19px] py-1.5 text-[11px] font-black ${
-          isPast || (isToday && claimedToday)
-            ? 'bg-[#e5e7eb] text-[#6b7280]'
-            : isToday
-              ? 'bg-[#111827] text-white'
-              : 'bg-[#f5f3fa] text-[#8b93a1]'
-        }`}
-      >
-        Day {reward.day}
-      </div>
-
-      <div className="pt-8">
-        {reward.story_cards ? (
-          <div className="text-[28px] leading-none">🎁</div>
-        ) : (
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#fff7ed]">
-            <CoinIcon className="h-6 w-6" />
-          </div>
-        )}
-
-        <div className="mt-2 text-[18px] font-black text-[#111827]">{reward.gems}</div>
-
-        {reward.story_cards ? (
-          <div className="mt-1 text-[10px] font-black text-[#d97706]">
-            +{reward.story_cards} Story Card
-          </div>
-        ) : null}
-
-        <div className="mt-2">
-          <StatusPill tone={status === 'Ready' ? 'dark' : status === 'Claimed' ? 'done' : 'soft'}>
-            {status}
-          </StatusPill>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ProgressBar({ progress, target }) {
-  const percent = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0
-
-  return (
-    <div className="mt-3">
-      <div className="flex items-center justify-between text-[11px] font-bold text-[#8b93a1]">
-        <span>{progress}/{target}</span>
-        <span>{percent}%</span>
-      </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eef0f4]">
-        <div className="h-full rounded-full bg-[#111827]" style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  )
-}
-
-function MissionButton({ status }) {
-  if (status === 'claimed') {
-    return (
-      <button type="button" disabled className="h-9 rounded-full bg-[#d1d5db] px-4 text-[12px] font-black text-white">
-        Claimed
-      </button>
-    )
-  }
-
-  if (status === 'claim') {
-    return (
-      <button type="button" className="h-9 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-[0.98]">
-        Claim
-      </button>
-    )
-  }
-
-  return (
-    <button type="button" className="h-9 rounded-full border border-[#111827] bg-white px-5 text-[12px] font-black text-[#111827] active:scale-[0.98]">
-      Start
+      {children}
     </button>
   )
 }
 
-function MissionCard({ mission }) {
+function BalanceBox({ label, value, type }) {
   return (
-    <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="flex gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827]">
-          <i className={`fa-solid ${mission.icon} text-[18px]`} />
-        </div>
+    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[22px] bg-white/10 px-4 py-4 ring-1 ring-white/10">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
+        {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-5 w-5" />}
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">
-                {mission.title}
-              </h3>
+      <div className="min-w-0">
+        <div className="text-[11px] font-bold text-white/65">{label}</div>
+        <div className="mt-0.5 text-[22px] font-black leading-none text-white">{formatNumber(value)}</div>
+      </div>
+    </div>
+  )
+}
 
-              <div className="mt-1 flex items-center gap-1 text-[13px] font-black text-[#d97706]">
-                <CoinIcon className="h-4 w-4" />
-                <span>+{mission.reward}</span>
-              </div>
+function DayReward({ reward, currentDay, claimedToday }) {
+  const isPast = reward.day < currentDay
+  const isToday = reward.day === currentDay
+  const isClaimed = isPast || (isToday && claimedToday)
+  const isTomorrow = reward.day === currentDay + 1 && claimedToday
+  const isLocked = reward.day > currentDay && !isTomorrow
+  const label = isClaimed ? 'Claimed' : isToday ? 'Today' : isTomorrow ? 'Tomorrow' : 'Locked'
+
+  return (
+    <div className="min-w-[68px] text-center">
+      <div
+        className={`mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-[20px] border ${
+          isToday && !claimedToday
+            ? 'border-[#F6B800] bg-[#fff7d6] shadow-[0_10px_18px_rgba(246,184,0,0.18)]'
+            : isClaimed
+              ? 'border-[#e5e7eb] bg-[#f4f5f7]'
+              : 'border-[#eef0f4] bg-white'
+        } ${isLocked ? 'opacity-55' : ''}`}
+      >
+        {reward.story_cards ? (
+          <span className="text-[28px] leading-none">🎁</span>
+        ) : (
+          <CoinIcon className="h-6 w-6" />
+        )}
+      </div>
+
+      <div className="mt-2 text-[11px] font-black text-[#111827]">
+        {reward.story_cards ? 'Gift' : reward.gems}
+      </div>
+
+      <div
+        className={`mt-1 text-[10px] font-bold ${
+          isToday && !claimedToday
+            ? 'text-[#d97706]'
+            : isClaimed
+              ? 'text-[#6b7280]'
+              : isTomorrow
+                ? 'text-[#d97706]'
+                : 'text-[#9ca3af]'
+        }`}
+      >
+        {label}
+      </div>
+
+      <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">Day {reward.day}</div>
+    </div>
+  )
+}
+
+function ProgressLine({ progress = 0, target = 1 }) {
+  const percent = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0
+
+  return (
+    <div className="mt-3">
+      <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
+        <div className="h-full rounded-full bg-[#F6B800]" style={{ width: `${percent}%` }} />
+      </div>
+      <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">
+        {progress}/{target}
+      </div>
+    </div>
+  )
+}
+
+function TaskRow({ task, onCheckIn, claimedToday }) {
+  const isCheckIn = task.id === 'daily-check-in'
+  const alreadyDone = isCheckIn && claimedToday
+  const buttonText = alreadyDone ? 'Done' : task.action
+  const buttonTone = alreadyDone ? 'soft' : task.status === 'claim' ? 'gold' : 'outline'
+
+  return (
+    <div className="flex gap-3 border-b border-[#f1f2f5] py-4 last:border-b-0">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f8fafc] text-[#111827] ring-1 ring-black/5">
+        <i className={`fa-solid ${task.icon} text-[15px]`} />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">{task.title}</h3>
+            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[#8b93a1]">{task.subtitle}</p>
+
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+              <CoinIcon className="h-4 w-4" />
+              <span>+{task.reward}</span>
             </div>
-
-            <MissionButton status={mission.status} />
           </div>
 
-          <ProgressBar progress={mission.progress} target={mission.target} />
+          <RewardButton
+            tone={buttonTone}
+            disabled={alreadyDone}
+            onClick={isCheckIn ? onCheckIn : undefined}
+          >
+            {buttonText}
+          </RewardButton>
         </div>
+
+        {task.progress !== undefined ? <ProgressLine progress={task.progress} target={task.target} /> : null}
       </div>
     </div>
   )
@@ -205,8 +243,7 @@ function MissionCard({ mission }) {
 
 export default function TaskCenterPage() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('daily')
-  const [wallet, setWallet] = useState({ gems: 0, diamonds: 0 })
+  const [wallet, setWallet] = useState({ coins: 0, diamonds: 0 })
   const [checkIn, setCheckIn] = useState(null)
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
@@ -231,11 +268,12 @@ export default function TaskCenterPage() {
   const currentDay = Math.min(Math.max(Number(currentCheckIn.current_day || 1), 1), 7)
   const claimedToday = Boolean(currentCheckIn.claimed_today)
   const canClaim = isLoggedIn && !claimedToday && !claiming
+  const streakCount = Number(currentCheckIn.streak_count || (claimedToday ? currentDay : Math.max(currentDay - 1, 0)))
 
   async function loadTaskCenter() {
     if (!token) {
       setLoading(false)
-      setWallet({ gems: 0, diamonds: 0 })
+      setWallet({ coins: 0, diamonds: 0 })
       setCheckIn(null)
       return
     }
@@ -254,7 +292,7 @@ export default function TaskCenterPage() {
 
         if (walletResponse.value.ok && walletData.ok && walletData.wallet) {
           setWallet({
-            gems: Number(walletData.wallet.gem_balance || 0),
+            coins: Number(walletData.wallet.gem_balance || 0),
             diamonds: Number(walletData.wallet.diamond_balance || 0),
           })
         }
@@ -267,14 +305,14 @@ export default function TaskCenterPage() {
           setCheckIn(checkInData.check_in || null)
           if (checkInData.wallet) {
             setWallet({
-              gems: Number(checkInData.wallet.gem_balance || 0),
+              coins: Number(checkInData.wallet.gem_balance || 0),
               diamonds: Number(checkInData.wallet.diamond_balance || 0),
             })
           }
         }
       }
     } catch {
-      setMessage('Could not load task center.')
+      setMessage('Could not load rewards. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -296,21 +334,22 @@ export default function TaskCenterPage() {
         method: 'POST',
         headers: getHeaders(),
       })
+
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Check-in is not available yet.')
+        throw new Error(data.message || 'Reward is not available yet.')
       }
 
       if (data.wallet) {
         setWallet({
-          gems: Number(data.wallet.gem_balance || wallet.gems || 0),
+          coins: Number(data.wallet.gem_balance || wallet.coins || 0),
           diamonds: Number(data.wallet.diamond_balance || wallet.diamonds || 0),
         })
       }
 
       setCheckIn(data.check_in || { ...currentCheckIn, claimed_today: true })
-      setMessage(data.message || 'Daily bonus claimed.')
+      setMessage(data.message || 'Reward claimed successfully.')
     } catch (error) {
       setMessage(error.message || 'Failed to claim reward.')
     } finally {
@@ -326,123 +365,147 @@ export default function TaskCenterPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between px-4">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Go back"
+          >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
           <h1 className="text-[18px] font-black text-[#111827]">Task Center</h1>
 
-          <button type="button" onClick={() => navigate('/tasks/history')} className="rounded-full bg-[#f5f3fa] px-4 py-2 text-[12px] font-black text-[#111827] active:scale-95">
+          <button
+            type="button"
+            onClick={() => navigate('/tasks/history')}
+            className="rounded-full bg-[#f5f3fa] px-4 py-2 text-[12px] font-black text-[#111827] active:scale-95"
+          >
             History
           </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 pt-4">
-        <section className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <section className="relative overflow-hidden rounded-[30px] bg-[#111827] p-5 text-white shadow-[0_18px_45px_rgba(17,24,39,0.22)]">
+          <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#F6B800]/30 blur-2xl" />
+          <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-[#ef4444]/20 blur-2xl" />
+          <div className="absolute right-5 top-6 text-[64px] opacity-20">🎁</div>
+
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-[#F6B800] ring-1 ring-white/10">
+              <i className="fa-solid fa-sparkles" />
+              Daily Rewards
+            </div>
+
+            <h2 className="mt-4 max-w-[320px] text-[26px] font-black leading-[1.08] tracking-[-0.03em]">
+              Earn coins to unlock stories
+            </h2>
+
+            <p className="mt-2 max-w-[380px] text-[12px] font-semibold leading-5 text-white/65">
+              Check in daily and complete simple tasks to collect coins and diamonds.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
+              <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[12px] font-bold text-[#8b93a1]">My Coins</div>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#F4D58D] bg-[#FFF7ED]">
-                  <CoinIcon className="h-6 w-6" />
-                </div>
-                <div className="text-[30px] font-black text-[#111827]">{formatNumber(wallet.gems)}</div>
-              </div>
+              <h2 className="text-[19px] font-black leading-6 text-[#111827]">
+                Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
+              </h2>
+              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+                {claimedToday ? 'Today’s reward has been collected.' : 'Claim today’s reward to keep your streak.'}
+              </p>
             </div>
 
-            <div className="rounded-[22px] bg-[#f8fafc] px-4 py-3 text-right">
-              <div className="text-[12px] font-black text-[#111827]">{isPremium ? 'Premium Reader' : 'Free Reader'}</div>
-              <div className="mt-1 text-[11px] font-semibold leading-5 text-[#8b93a1]">
-                {isPremium ? 'Auto-claim when available.' : 'Missing a day resets your streak.'}
-              </div>
+            <button
+              type="button"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f8fafc] text-[#9ca3af] ring-1 ring-black/5"
+              aria-label="Task rules"
+              onClick={() => setMessage('Coins can be used for story rewards. Come back daily to keep your streak active.')}
+            >
+              <i className="fa-solid fa-circle-info text-[13px]" />
+            </button>
+          </div>
+
+          {message ? (
+            <button
+              type="button"
+              onClick={() => setMessage('')}
+              className="mt-4 w-full rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827]"
+            >
+              {message}
+            </button>
+          ) : null}
+
+          <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
+            {rewards.map((reward) => (
+              <DayReward key={reward.day} reward={reward} currentDay={currentDay} claimedToday={claimedToday} />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={claimToday}
+            disabled={isLoggedIn && !canClaim}
+            className={`mt-5 h-12 w-full rounded-full text-[14px] font-black shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
+              !isLoggedIn || canClaim
+                ? 'bg-[#F6B800] text-[#111827]'
+                : 'bg-[#e5e7eb] text-[#6b7280]'
+            }`}
+          >
+            {!isLoggedIn ? 'Login to Claim' : claiming ? 'Claiming...' : claimedToday ? 'Claimed Today' : 'Claim Reward'}
+          </button>
+
+          <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-[#8b93a1]">
+            {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak alive.'}
+          </p>
+        </section>
+
+        <section className="mt-5 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[19px] font-black text-[#111827]">More Rewards</h2>
+              <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">Complete tasks to earn more coins.</p>
             </div>
+
+            <span className="rounded-full bg-[#fff7d6] px-3 py-1 text-[11px] font-black text-[#d97706]">
+              Daily
+            </span>
+          </div>
+
+          <div className="mt-2">
+            {moreRewards.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                claimedToday={claimedToday}
+                onCheckIn={claimToday}
+              />
+            ))}
           </div>
         </section>
 
-        <section className="mt-4 rounded-[28px] bg-white p-2 shadow-sm ring-1 ring-black/5">
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setActiveTab('daily')} className={`h-12 rounded-[22px] text-[14px] font-black ${activeTab === 'daily' ? 'bg-[#111827] text-white' : 'text-[#8b93a1]'}`}>
-              Daily Bonus
-            </button>
-            <button type="button" onClick={() => setActiveTab('missions')} className={`h-12 rounded-[22px] text-[14px] font-black ${activeTab === 'missions' ? 'bg-[#111827] text-white' : 'text-[#8b93a1]'}`}>
-              Missions
-            </button>
+        <section className="mt-4 rounded-[24px] bg-[#111827] p-4 text-white shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-[#F6B800]">
+              <i className="fa-solid fa-lightbulb text-[14px]" />
+            </div>
+
+            <div>
+              <h3 className="text-[14px] font-black">Reward Rules</h3>
+              <p className="mt-1 text-[11px] font-semibold leading-5 text-white/65">
+                Coins are used for story rewards. Diamonds are premium currency. Rewards may reset if you miss daily check-in.
+              </p>
+            </div>
           </div>
         </section>
-
-        {activeTab === 'daily' ? (
-          <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-[20px] font-black text-[#111827]">Daily Bonus</h2>
-                <p className="mt-1 text-[12px] font-bold text-[#8b93a1]">
-                  Streak Day {currentDay} · {claimedToday ? 'Claimed today' : 'Ready to claim'}
-                </p>
-              </div>
-
-              <StatusPill tone={claimedToday ? 'done' : canClaim ? 'dark' : 'soft'}>
-                {claimedToday ? 'Done' : isLoggedIn ? 'Ready' : 'Login'}
-              </StatusPill>
-            </div>
-
-            {message ? (
-              <button type="button" onClick={() => setMessage('')} className="mt-4 w-full rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827]">
-                {message}
-              </button>
-            ) : null}
-
-            <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-7">
-              {rewards.map((reward) => (
-                <RewardCard key={reward.day} reward={reward} currentDay={currentDay} claimedToday={claimedToday} />
-              ))}
-            </div>
-
-            <button type="button" onClick={claimToday} disabled={isLoggedIn && !canClaim} className={`mt-5 h-12 w-full rounded-full text-[14px] font-black active:scale-[0.99] disabled:cursor-not-allowed ${!isLoggedIn || canClaim ? 'bg-[#111827] text-white' : 'bg-[#e5e7eb] text-[#6b7280]'}`}>
-              {!isLoggedIn ? 'Login to Check In' : claiming ? 'Claiming...' : claimedToday ? 'Claimed Today' : 'Claim Today'}
-            </button>
-
-            <div className="mt-4 rounded-[20px] bg-[#f8fafc] p-4 text-[12px] font-semibold leading-6 text-[#6b7280]">
-              Free readers must open Task Center and claim manually. Premium readers can auto-claim when the reward is available.
-            </div>
-          </section>
-        ) : null}
-
-        {activeTab === 'missions' ? (
-          <>
-            <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-[20px] font-black text-[#111827]">Daily Missions</h2>
-                  <p className="mt-1 text-[12px] font-bold text-[#8b93a1]">Demo missions for the next stage.</p>
-                </div>
-                <StatusPill tone="soft">Demo</StatusPill>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {dailyMissions.map((mission) => (
-                  <MissionCard key={mission.id} mission={mission} />
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-[20px] font-black text-[#111827]">Weekly Missions</h2>
-                  <p className="mt-1 text-[12px] font-bold text-[#8b93a1]">Weekly demo rewards.</p>
-                </div>
-                <StatusPill tone="soft">Demo</StatusPill>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {weeklyMissions.map((mission) => (
-                  <MissionCard key={mission.id} mission={mission} />
-                ))}
-              </div>
-            </section>
-          </>
-        ) : null}
       </main>
     </div>
   )
