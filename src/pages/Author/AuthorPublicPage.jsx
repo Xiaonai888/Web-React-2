@@ -1628,20 +1628,19 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                       
                     </div>
 
-                    {displayAuthor.is_owner ? (
-                    <button
+                   {displayAuthor.is_owner ? (
   <button
-  type="button"
-  onClick={() => setPageSwitcherOpen(true)}
-  className="relative mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
-  aria-label="Switch to Reader account"
->
-  <i className="fa-solid fa-chevron-down text-[12px]" />
-  {readerNotificationCount > 0 ? (
-    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#ef4444] ring-2 ring-white" />
-  ) : null}
-</button>
-                    ) : null}
+    type="button"
+    onClick={() => setPageSwitcherOpen(true)}
+    className="relative mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
+    aria-label="Switch to Reader account"
+  >
+    <i className="fa-solid fa-chevron-down text-[12px]" />
+    {readerNotificationCount > 0 ? (
+      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#ef4444] ring-2 ring-white" />
+    ) : null}
+  </button>
+) : null}
                   </div>
 
                   <div className="-mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-[#111827] sm:text-[12px]">
