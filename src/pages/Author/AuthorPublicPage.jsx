@@ -1536,16 +1536,16 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       type="button"
       onClick={(event) => {
         event.stopPropagation()
-        navigate('/author/page-settings')
+        navigate('/author/page/edit')
       }}
       className="flex h-9 w-9 items-center justify-center text-white drop-shadow active:scale-95"
-      aria-label="Page settings"
+      aria-label="Page setting"
     >
       <i className="fa-solid fa-ellipsis text-[16px]" />
     </button>
   </div>
 ) : null}
-
+            
   {displayAuthor.is_owner ? (
     <button
       type="button"
