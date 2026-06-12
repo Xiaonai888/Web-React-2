@@ -155,8 +155,18 @@ export default function TaskHistoryPage() {
 </section>
 
         <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <h2 className="text-[20px] font-black text-[#111827]">Earned Center</h2>
-          <p className="mt-1 text-[12px] font-bold text-[#8b93a1]">Your real reward history.</p>
+          <div className="flex items-start justify-between gap-4">
+  <div>
+    <h2 className="text-[20px] font-black text-[#111827]">History</h2>
+    <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
+      Your latest reward activity.
+    </p>
+  </div>
+
+  <span className="rounded-full bg-[#fff7d6] px-3 py-1 text-[11px] font-black text-[#d97706]">
+    All
+  </span>
+</div>
 
           {message ? (
             <button type="button" onClick={() => setMessage('')} className="mt-4 w-full rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827]">
@@ -183,31 +193,36 @@ export default function TaskHistoryPage() {
           ) : null}
 
           {!loading && history.length > 0 ? (
-            <div className="mt-5 divide-y divide-[#eef0f4]">
-              {history.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-4 py-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7ed]">
-                      <CrystalShardIcon className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-black text-[#111827]">{item.source_title}</div>
-                      <div className="mt-0.5 text-[11px] font-bold text-[#8b93a1]">{formatDate(item.created_at)}</div>
-                    </div>
-                  </div>
+  <div className="mt-5 space-y-3">
+    {history.map((item) => (
+      <div key={item.id} className="flex items-center justify-between gap-4 rounded-[20px] bg-[#f8fafc] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff7d6] text-[#d97706]">
+            <i className="fa-solid fa-gift text-[14px]" />
+          </div>
 
-                  <div className="shrink-0 text-right">
-                    <div className="text-[15px] font-black text-[#111827]">+{formatNumber(item.amount_gems)}</div>
-                    {item.story_cards ? (
-                      <div className="mt-0.5 text-[10px] font-black text-[#d97706]">+{item.story_cards} Story Card</div>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
+          <div className="min-w-0">
+            <div className="truncate text-[14px] font-black text-[#111827]">
+              {item.source_title || 'Daily Bonus'}
+            </div>
+            <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">
+              {formatDate(item.created_at)}
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="text-[15px] font-black text-[#111827]">
+            +{formatNumber(item.amount_gems)}
+          </div>
+
+          {item.story_cards ? (
+            <div className="mt-0.5 text-[10px] font-black text-[#d97706]">
+              +{item.story_cards} Story Card
             </div>
           ) : null}
-        </section>
-      </main>
-    </div>
-  )
-}
+        </div>
+      </div>
+    ))}
+  </div>
+) : null}
