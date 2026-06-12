@@ -1627,13 +1627,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                     </div>
 
                     {displayAuthor.is_owner ? (
-                     <button
+                    <button
   type="button"
   onClick={() => setPageSwitcherOpen(true)}
-  className="mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
+  className="relative mt-0 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] ring-1 ring-black/5 transition active:scale-95"
   aria-label="Switch to Reader account"
 >
   <i className="fa-solid fa-chevron-down text-[12px]" />
+  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#ef4444] ring-2 ring-white" />
 </button>
                     ) : null}
                   </div>
