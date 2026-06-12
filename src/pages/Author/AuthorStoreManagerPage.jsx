@@ -936,13 +936,8 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   <StatCard label="Net income" value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)} icon="fa-chart-line" />
 </div>
 
-<div className="mt-2 grid grid-cols-2 gap-2">
-  <StatCard label="Gross sales" value={formatMoney(orderSummary.gross_revenue || 0)} icon="fa-sack-dollar" />
-  <StatCard label="Platform fee 10%" value={formatMoney(orderSummary.platform_fee || 0)} icon="fa-percent" />
-</div>
-
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {['Records', 'Orders', 'Settings'].map((tab) => {
+          {['Records', 'Orders'].map((tab) => {
             const active = activeTab === tab
 
             return (
