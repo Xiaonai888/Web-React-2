@@ -12,7 +12,6 @@ import ProfilePage from './pages/ProfilePage'
 import ProfileFollowListPage from './pages/ProfileFollowListPage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import RatingPage from './pages/RatingPage'
-import EchoPage from './pages/EchoPage'
 import ReactionPage from './pages/ReactionPage'
 import LoginPage from './pages/Auth/LoginPage'
 import RegisterPage from './pages/Auth/RegisterPage'
@@ -810,8 +809,6 @@ const shouldShowOpeningAds =
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
-        <Route path="/story/:storyId/echo" element={<EchoPage />} />
-        <Route path="/author/post/:postId/echo" element={<EchoPage />} />
         <Route path="/story/:storyId/reaction" element={<ReactionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
 
