@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
@@ -12,6 +12,9 @@ const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
 const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
+const ORDER_REPORT_LIMIT = 20
+const ORDER_REFRESH_INTERVAL_MS = 60000
+const ORDER_MAX_AUTO_REFRESHES = 10
 
 
 function withSystemCategories(categories) {
@@ -795,6 +798,7 @@ function StoreManagerHome({
   onDeleteProduct,
   loading,
   localError,
+  onRefreshOrders,
   orderSummary,
   orders,
 orderPage,
@@ -824,9 +828,6 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   const [telegramMessage, setTelegramMessage] = useState('')
   const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
   const canCreateCustomCategory = customCategoryCount < 5
-
-
-
   useEffect(() => {
     let ignore = false
 
@@ -1563,10 +1564,23 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
      {activeTab === 'Orders' ? (
   <section className="mt-4 space-y-3">
     <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
-      <h2 className="text-[17px] font-black text-[#111827]">Order history</h2>
-      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-        Approved and paid orders from your author store.
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-[17px] font-black text-[#111827]">Order history</h2>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+            Approved and paid orders from your author store.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onRefreshOrders}
+          disabled={orderLoading}
+          className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-2 text-[11px] font-black text-[#111827] disabled:opacity-40"
+        >
+          Refresh
+        </button>
+      </div>
     </div>
 
     {orderLoading ? (
@@ -2275,6 +2289,39 @@ export default function AuthorStoreManagerPage() {
     total: 0,
     total_pages: 1,
   })
+  const orderAutoRefreshCountRef = useRef(0)
+  const lastOrderReportLoadAtRef = useRef(0)
+
+  const loadOrderReport = useCallback(async ({ silent = false } = {}) => {
+    try {
+      if (!silent) setOrderLoading(true)
+
+      const report = await fetchMyOrderReport(orderPage, ORDER_REPORT_LIMIT)
+      const summary = report.summary || {}
+
+      lastOrderReportLoadAtRef.current = Date.now()
+
+      setOrderSummary({
+        orders_count: Number(summary.orders_count || summary.total_orders || 0),
+        revenue: Number(summary.revenue || summary.author_income || 0),
+        gross_revenue: Number(summary.gross_revenue || 0),
+        platform_fee: Number(summary.platform_fee || 0),
+        author_income: Number(summary.author_income || summary.revenue || 0),
+      })
+
+      setOrders(report.orders || [])
+      setOrderPagination(report.pagination || {
+        page: orderPage,
+        limit: ORDER_REPORT_LIMIT,
+        total: 0,
+        total_pages: 1,
+      })
+    } catch {
+      setOrders([])
+    } finally {
+      setOrderLoading(false)
+    }
+  }, [orderPage])
 
   const filteredProducts = useMemo(() => {
   if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
@@ -2312,56 +2359,52 @@ export default function AuthorStoreManagerPage() {
     }
   }, [])
 
- useEffect(() => {
-  let ignore = false
-  let timer = null
+  useEffect(() => {
+    let timer = null
 
-  async function loadOrderReport(silent = false) {
-    try {
-      if (!silent) setOrderLoading(true)
-
-      const report = await fetchMyOrderReport(orderPage, 20)
-      const summary = report.summary || {}
-
-      if (!ignore) {
-        setOrderSummary({
-          orders_count: Number(summary.orders_count || summary.total_orders || 0),
-          revenue: Number(summary.revenue || summary.author_income || 0),
-          gross_revenue: Number(summary.gross_revenue || 0),
-          platform_fee: Number(summary.platform_fee || 0),
-          author_income: Number(summary.author_income || summary.revenue || 0),
-        })
-
-        setOrders(report.orders || [])
-        setOrderPagination(report.pagination || {
-          page: orderPage,
-          limit: 20,
-          total: 0,
-          total_pages: 1,
-        })
+    if (activeTab !== 'Orders') {
+      if (!lastOrderReportLoadAtRef.current) {
+        loadOrderReport({ silent: true })
       }
-    } catch {
-      if (!ignore) {
-        setOrders([])
+
+      return () => {
+        if (timer) window.clearInterval(timer)
       }
-    } finally {
-      if (!ignore) setOrderLoading(false)
     }
-  }
 
-  loadOrderReport(activeTab !== 'Orders')
+    orderAutoRefreshCountRef.current = 0
+    loadOrderReport({ silent: false })
 
-  if (activeTab === 'Orders') {
     timer = window.setInterval(() => {
-      loadOrderReport(true)
-    }, 10000)
-  }
+      if (document.visibilityState !== 'visible') return
 
-  return () => {
-    ignore = true
-    if (timer) window.clearInterval(timer)
-  }
-}, [activeTab, orderPage])
+      if (orderAutoRefreshCountRef.current >= ORDER_MAX_AUTO_REFRESHES) {
+        window.clearInterval(timer)
+        return
+      }
+
+      orderAutoRefreshCountRef.current += 1
+      loadOrderReport({ silent: true })
+    }, ORDER_REFRESH_INTERVAL_MS)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return
+
+      const lastLoadedAt = lastOrderReportLoadAtRef.current
+      const isStale = !lastLoadedAt || Date.now() - lastLoadedAt >= ORDER_REFRESH_INTERVAL_MS
+
+      if (isStale) {
+        loadOrderReport({ silent: true })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      if (timer) window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [activeTab, loadOrderReport])
   useEffect(() => {
     let ignore = false
 
@@ -2663,6 +2706,7 @@ orderPage={orderPage}
 setOrderPage={setOrderPage}
 orderLoading={orderLoading}
 orderPagination={orderPagination}
+          onRefreshOrders={() => loadOrderReport({ silent: false })}
         />
       )}
 
@@ -2670,3 +2714,4 @@ orderPagination={orderPagination}
     </div>
   )
 }
+
