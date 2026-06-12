@@ -846,9 +846,9 @@ function CoverOptionsSheet({ open, savingSlide, onClose, onSeeCover, onUploadCov
 
           <button type="button" onClick={onChooseCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[#111827]">
-              <i className="fa-solid fa-images text-[17px]" />
+              <i className="fa-regular fa-folder-open text-[17px]" />
             </span>
-            <span className="text-[17px] font-normal text-[#111827]">{savingSlide ? 'Uploading slide...' : 'Upload slide'}</span>
+            <span className="text-[17px] font-normal text-[#111827]">Choose cover</span>
           </button>
         </div>
       </div>
