@@ -221,6 +221,11 @@ export default function TaskHistoryPage() {
               +{item.story_cards} Story Card
             </div>
           ) : null}
+        </section>
+      </main>
+    </div>
+  )
+}
         </div>
       </div>
     ))}
