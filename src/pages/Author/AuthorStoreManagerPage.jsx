@@ -125,12 +125,12 @@ async function fetchMyProducts() {
   return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
 }
 
-async function fetchMyOrderSummary() {
+async function fetchMyOrderReport(page = 1, limit = 20) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders`, {
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/orders?page=${page}&limit=${limit}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -139,15 +139,24 @@ async function fetchMyOrderSummary() {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load order summary')
+    throw new Error(data.message || 'Failed to load orders')
   }
 
-  return data.summary || {
-    orders_count: 0,
-    revenue: 0,
-    gross_revenue: 0,
-    platform_fee: 0,
-    author_income: 0,
+  return {
+    summary: data.summary || {
+      orders_count: 0,
+      revenue: 0,
+      gross_revenue: 0,
+      platform_fee: 0,
+      author_income: 0,
+    },
+    orders: Array.isArray(data.orders) ? data.orders : [],
+    pagination: data.pagination || {
+      page: Number(data.page || page),
+      limit: Number(data.limit || limit),
+      total: Number(data.total || 0),
+      total_pages: Number(data.total_pages || 1),
+    },
   }
 }
 
@@ -708,6 +717,44 @@ function StatCard({ label, value, icon }) {
   )
 }
 
+function OrderHistoryRow({ order }) {
+  const items = Array.isArray(order.items) ? order.items : []
+  const firstItem = items[0] || {}
+  const status = String(order.payment_status || order.status || 'waiting').toLowerCase()
+  const paid = status === 'paid' || status === 'approved' || status === 'confirmed'
+  const title = firstItem.product_title || firstItem.title || order.product_title || 'Order item'
+  const total = order.total_usd || order.product_subtotal_usd || order.amount_usd || 0
+  const buyer = order.buyer_name || order.customer_name || order.reader_name || 'Reader'
+  const dateText = order.created_at ? new Date(order.created_at).toLocaleString() : ''
+
+  return (
+    <article className="rounded-[20px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{title}</div>
+          <div className="mt-1 text-[11px] font-semibold text-[#8b93a1]">
+            Order #{String(order.id || '').slice(0, 8)} · {buyer}
+          </div>
+          {dateText ? <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">{dateText}</div> : null}
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="text-[14px] font-black text-[#111827]">{formatMoney(total)}</div>
+          <div className={`mt-1 rounded-full px-2 py-1 text-[10px] font-black ${paid ? 'bg-[#ecfdf3] text-[#027a48]' : 'bg-[#fff7ed] text-[#9a3412]'}`}>
+            {paid ? 'Approved' : status || 'Waiting'}
+          </div>
+        </div>
+      </div>
+
+      {items.length > 1 ? (
+        <div className="mt-2 text-[11px] font-semibold text-[#6b7280]">
+          {items.length} items
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
 function DeliveryLogo({ type }) {
   const src = type === 'jnt' ? '/assets/Icons/J%26T.svg' : '/assets/Icons/VET.svg'
   const label = type === 'jnt' ? 'J&T' : 'VET'
@@ -749,6 +796,11 @@ function StoreManagerHome({
   loading,
   localError,
   orderSummary,
+  orders,
+orderPage,
+setOrderPage,
+orderLoading,
+orderPagination,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
@@ -1508,19 +1560,64 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   </section>
 ) : null}
 
-      {activeTab === 'Orders' ? (
-        <section className="mt-4">
-          <div className="rounded-[28px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-              <i className="fa-solid fa-receipt text-[22px]" />
-            </div>
-            <h3 className="text-[17px] font-black text-[#111827]">No orders yet</h3>
-            <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-              Orders for paper books and PDF products will appear here after checkout is connected.
-            </p>
+     {activeTab === 'Orders' ? (
+  <section className="mt-4 space-y-3">
+    <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+      <h2 className="text-[17px] font-black text-[#111827]">Order history</h2>
+      <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+        Approved and paid orders from your author store.
+      </p>
+    </div>
+
+    {orderLoading ? (
+      <div className="rounded-[24px] bg-white p-8 text-center text-[13px] font-bold text-[#8b93a1] shadow-sm ring-1 ring-black/5">
+        Loading orders...
+      </div>
+    ) : orders.length ? (
+      <>
+        <div className="space-y-2">
+          {orders.map((order) => (
+            <OrderHistoryRow key={order.id} order={order} />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between rounded-[20px] bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <button
+            type="button"
+            onClick={() => setOrderPage((page) => Math.max(1, page - 1))}
+            disabled={orderPage <= 1}
+            className="rounded-full bg-[#f3f4f6] px-4 py-2 text-[12px] font-black text-[#111827] disabled:opacity-40"
+          >
+            Previous
+          </button>
+
+          <div className="text-[12px] font-bold text-[#6b7280]">
+            Page {orderPage} / {Math.max(Number(orderPagination.total_pages || 1), 1)}
           </div>
-        </section>
-      ) : null}
+
+          <button
+            type="button"
+            onClick={() => setOrderPage((page) => page + 1)}
+            disabled={orderPage >= Number(orderPagination.total_pages || 1)}
+            className="rounded-full bg-[#f3f4f6] px-4 py-2 text-[12px] font-black text-[#111827] disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </>
+    ) : (
+      <div className="rounded-[28px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+          <i className="fa-solid fa-receipt text-[22px]" />
+        </div>
+        <h3 className="text-[17px] font-black text-[#111827]">No orders yet</h3>
+        <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+          Approved orders will appear here after payment is confirmed.
+        </p>
+      </div>
+    )}
+  </section>
+) : null}
     </main>
   )
 }
@@ -2169,6 +2266,15 @@ export default function AuthorStoreManagerPage() {
     platform_fee: 0,
     author_income: 0,
   })
+  const [orders, setOrders] = useState([])
+  const [orderPage, setOrderPage] = useState(1)
+  const [orderLoading, setOrderLoading] = useState(false)
+  const [orderPagination, setOrderPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    total_pages: 1,
+  })
 
   const filteredProducts = useMemo(() => {
   if (activeType === 'All' || activeType === 'Active' || activeType === 'Draft') return products
@@ -2206,42 +2312,56 @@ export default function AuthorStoreManagerPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let ignore = false
+ useEffect(() => {
+  let ignore = false
+  let timer = null
 
-    async function loadOrderSummary() {
-      try {
-        const summary = await fetchMyOrderSummary()
+  async function loadOrderReport(silent = false) {
+    try {
+      if (!silent) setOrderLoading(true)
 
-        if (!ignore) {
-          setOrderSummary({
-            orders_count: Number(summary.orders_count || 0),
-            revenue: Number(summary.revenue || summary.author_income || 0),
-            gross_revenue: Number(summary.gross_revenue || 0),
-            platform_fee: Number(summary.platform_fee || 0),
-            author_income: Number(summary.author_income || summary.revenue || 0),
-          })
-        }
-      } catch {
-        if (!ignore) {
-          setOrderSummary({
-            orders_count: 0,
-            revenue: 0,
-            gross_revenue: 0,
-            platform_fee: 0,
-            author_income: 0,
-          })
-        }
+      const report = await fetchMyOrderReport(orderPage, 20)
+      const summary = report.summary || {}
+
+      if (!ignore) {
+        setOrderSummary({
+          orders_count: Number(summary.orders_count || summary.total_orders || 0),
+          revenue: Number(summary.revenue || summary.author_income || 0),
+          gross_revenue: Number(summary.gross_revenue || 0),
+          platform_fee: Number(summary.platform_fee || 0),
+          author_income: Number(summary.author_income || summary.revenue || 0),
+        })
+
+        setOrders(report.orders || [])
+        setOrderPagination(report.pagination || {
+          page: orderPage,
+          limit: 20,
+          total: 0,
+          total_pages: 1,
+        })
       }
+    } catch {
+      if (!ignore) {
+        setOrders([])
+      }
+    } finally {
+      if (!ignore) setOrderLoading(false)
     }
+  }
 
-    loadOrderSummary()
+  loadOrderReport(activeTab !== 'Orders')
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  if (activeTab === 'Orders') {
+    timer = window.setInterval(() => {
+      loadOrderReport(true)
+    }, 10000)
+  }
 
+  return () => {
+    ignore = true
+    if (timer) window.clearInterval(timer)
+  }
+}, [activeTab, orderPage])
   useEffect(() => {
     let ignore = false
 
@@ -2538,6 +2658,11 @@ const saveCategoryOrder = async () => {
           moveCategory={moveCategory}
           saveCategoryOrder={saveCategoryOrder}
           orderSummary={orderSummary}
+          orders={orders}
+orderPage={orderPage}
+setOrderPage={setOrderPage}
+orderLoading={orderLoading}
+orderPagination={orderPagination}
         />
       )}
 
