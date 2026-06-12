@@ -839,11 +839,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
   const link = `${window.location.origin}${path}`
 
-  function openAuthorPostEcho(post) {
-  if (!post?.id) return
-  navigate(`/author/post/${post.id}/echo`)
-}  
-
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(link)
     onMessage?.('Post link copied.')
