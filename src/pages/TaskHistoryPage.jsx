@@ -234,8 +234,4 @@ export default function TaskHistoryPage() {
     </div>
   )
 }
-        </div>
-      </div>
-    ))}
-  </div>
-) : null}
+       
