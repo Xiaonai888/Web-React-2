@@ -1770,10 +1770,8 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         ) : null}
       </div>
 
-      <div className="flex items-center gap-4 text-[14px] font-normal text-[#111827]">
-        <i className="fa-solid fa-link w-8 text-center text-[22px]" />
         <span>Shadow website</span>
-      </div>
+
     </section>
 
     <section>
