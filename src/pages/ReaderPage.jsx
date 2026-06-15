@@ -1819,15 +1819,14 @@ async function handleLockedDiamondUnlock(packageKey) {
   if (!option?.enabled) return
 
   if (diamondBalance < price) {
-    navigate('/shop', {
-      state: {
-        activeTab: 'Purchase',
-        from: `/story/${storyId}/episode/${episodeId}`,
-      },
-    })
-    return
-  }
-
+  navigate('/shop/mall/purchase', {
+    state: {
+      returnTo: `/story/${storyId}/episode/${episodeId}`,
+    },
+  })
+  return
+}
+  
   try {
     setUnlockingEpisode(true)
 
@@ -1843,14 +1842,13 @@ async function handleLockedDiamondUnlock(packageKey) {
 
     if (!response.ok || data.ok === false) {
       if (data.code === 'INSUFFICIENT_DIAMONDS') {
-        navigate('/shop', {
-          state: {
-            activeTab: 'Purchase',
-            from: `/story/${storyId}/episode/${episodeId}`,
-          },
-        })
-        return
-      }
+  navigate('/shop/mall/purchase', {
+    state: {
+      returnTo: `/story/${storyId}/episode/${episodeId}`,
+    },
+  })
+  return
+}
 
       throw new Error(data.message || 'Failed to unlock episode')
     }
