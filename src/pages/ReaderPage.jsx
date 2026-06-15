@@ -1992,7 +1992,7 @@ return (
   <div className="fixed inset-0 z-[2147483646] bg-black" />
 ) : null}
       
-      <ReaderBottomActionBar
+      visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   visible={bottomActionsVisible && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   story={story}
   episode={episode}
