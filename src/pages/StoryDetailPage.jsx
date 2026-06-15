@@ -503,6 +503,8 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   following={authorFollowing}
   followerCount={authorFollowerCount}
   followLoading={authorFollowLoading}
+  isOwnerPage={Boolean(story.author_page?.is_owner || story.author_page?.is_owner_page)}
+  onManagePage={() => navigate('/author/dashboard')}
   onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
   onFollow={handleToggleAuthorFollow}
 />
