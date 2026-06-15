@@ -60,7 +60,7 @@ function ErrorBlock({ message, onBack }) {
   )
 }
 
-function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoading, onViewPage, onFollow }) {
+function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoading, isOwnerPage = false, onManagePage, onViewPage, onFollow }) {
   if (!authorPage) return null
 
   const followerText =
@@ -109,22 +109,57 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
             @{authorPage.page_username || 'author'} · {followerText}
           </div>
 
-          <div className="mt-3 flex items-center gap-4">
-            <button
-              type="button"
-              onClick={handleFollowClick}
-              disabled={followLoading}
-              className={`h-8 rounded-full px-5 text-[12px] font-black active:scale-95 disabled:opacity-60 ${
-                following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
-              }`}
-            >
-              {following ? 'Following' : 'Follow'}
-            </button>
+          <div className="mt-3 flex items-center gap-3">
+  {isOwnerPage ? (
+    <>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onManagePage?.()
+        }}
+        className="h-8 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-95"
+      >
+        Manage Page
+      </button>
 
-            <span className="text-[12px] font-black text-[#8d94a1]">
-              View Page
-            </span>
-          </div>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onViewPage?.()
+        }}
+        className="h-8 rounded-full bg-[#f5f3fa] px-5 text-[12px] font-black text-[#111827] ring-1 ring-black/10 active:scale-95"
+      >
+        View Page
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        type="button"
+        onClick={handleFollowClick}
+        disabled={followLoading}
+        className={`h-8 rounded-full px-5 text-[12px] font-black active:scale-95 disabled:opacity-60 ${
+          following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
+        }`}
+      >
+        {following ? 'Following' : 'Follow'}
+      </button>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onViewPage?.()
+        }}
+        className="h-8 rounded-full bg-transparent px-1 text-[12px] font-black text-[#8d94a1] active:scale-95"
+      >
+        View Page
+      </button>
+    </>
+  )}
+</div>
         </div>
       </div>
     </section>
