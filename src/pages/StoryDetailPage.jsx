@@ -21,6 +21,23 @@ function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
+function getCurrentReaderId() {
+  try {
+    const raw =
+      localStorage.getItem('shadow_reader_user') ||
+      sessionStorage.getItem('shadow_reader_user') ||
+      ''
+
+    if (!raw) return null
+
+    const user = JSON.parse(raw)
+
+    return user.id || user.user_id || null
+  } catch {
+    return null
+  }
+}
+
 function authHeaders() {
   const token = getReaderToken()
 
@@ -229,8 +246,21 @@ export default function StoryDetailPage() {
         if (ignore) return
 
         const loadedStory = storyData.story || null
-        const loadedAuthorPage = loadedStory?.author_page || null
-        setAuthorIsOwnerPage(Boolean(loadedAuthorPage?.is_owner || loadedAuthorPage?.is_owner_page))
+const loadedAuthorPage = loadedStory?.author_page || null
+const currentReaderId = getCurrentReaderId()
+const authorOwnerId =
+  loadedAuthorPage?.user_id ||
+  loadedAuthorPage?.owner_id ||
+  loadedAuthorPage?.created_by ||
+  loadedStory?.author_user_id ||
+  loadedStory?.user_id ||
+  null
+
+setAuthorIsOwnerPage(Boolean(
+  loadedAuthorPage?.is_owner ||
+  loadedAuthorPage?.is_owner_page ||
+  (currentReaderId && authorOwnerId && String(currentReaderId) === String(authorOwnerId))
+))
 
         setStory(loadedStory)
         setEpisodes(episodesData.episodes || [])
@@ -251,7 +281,20 @@ export default function StoryDetailPage() {
             if (!ignore && authorResponse.ok && authorData.ok !== false) {
               setAuthorFollowing(Boolean(authorData.is_following))
               setAuthorFollowerCount(Number(authorData.total_followers ?? authorData.author_page?.total_followers ?? loadedAuthorPage.total_followers ?? 0))
-              setAuthorIsOwnerPage(Boolean(authorData.is_owner || authorData.author_page?.is_owner || authorData.author_page?.is_owner_page))
+              const detailAuthorPage = authorData.author_page || {}
+const detailOwnerId =
+  detailAuthorPage.user_id ||
+  detailAuthorPage.owner_id ||
+  detailAuthorPage.created_by ||
+  authorData.user_id ||
+  null
+
+setAuthorIsOwnerPage(Boolean(
+  authorData.is_owner ||
+  detailAuthorPage.is_owner ||
+  detailAuthorPage.is_owner_page ||
+  (currentReaderId && detailOwnerId && String(currentReaderId) === String(detailOwnerId))
+))
             }
           } catch {
           }
