@@ -1648,10 +1648,21 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                       <strong>{formatCompactNumber(displayAuthor.works_count)}</strong>{' '}
                       <span className="text-[#6b7280]">Works</span>
                     </span>
-                    <span>
-                      <strong>{formatCompactNumber(displayAuthor.followers_count || displayAuthor.fans_count)}</strong>{' '}
-                      <span className="text-[#6b7280]">Followers</span>
-                    </span>
+                   <button
+  type="button"
+  onClick={() => {
+    if (displayAuthor.is_owner && displayAuthor.page_username) {
+      navigate(`/author/page/${displayAuthor.page_username}/followers`)
+    }
+  }}
+  disabled={!displayAuthor.is_owner}
+  className={`text-left ${
+    displayAuthor.is_owner ? 'cursor-pointer active:opacity-70' : 'cursor-default'
+  }`}
+>
+  <strong>{formatCompactNumber(displayAuthor.followers_count || displayAuthor.fans_count)}</strong>{' '}
+  <span className="text-[#6b7280]">Followers</span>
+</button>
                     <span>
                       <strong>{formatCompactNumber(authorPostsCount)}</strong>{' '}
                       <span className="text-[#6b7280]">Posts</span>
