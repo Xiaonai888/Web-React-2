@@ -825,6 +825,7 @@ const shouldShowOpeningAds =
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
+        <Route path="/author/agreement" element={<TermsPoliciesPage />} />
 
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
