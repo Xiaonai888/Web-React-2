@@ -384,6 +384,27 @@ function CommentItem({
   const replies = Array.isArray(comment.replies) ? comment.replies : []
   const currentUser = getCurrentUser()
 
+  const pageOwnerId =
+  story?.author_page?.user_id ||
+  story?.author_user_id ||
+  story?.user_id ||
+  null
+
+const isPageOwnerComment =
+  pageOwnerId &&
+  comment.user_id &&
+  String(pageOwnerId) === String(comment.user_id)
+
+const displayName =
+  isPageOwnerComment && story?.author_page?.page_name
+    ? story.author_page.page_name
+    : comment.name || 'Reader'
+
+const displayAvatar =
+  isPageOwnerComment && story?.author_page?.avatar_url
+    ? story.author_page.avatar_url
+    : comment.avatar_url || ''
+
   const isOwner =
     comment.user_id &&
     currentUser.id &&
@@ -411,17 +432,16 @@ function CommentItem({
     <article className={`px-4 py-4 ${comment.is_hidden ? 'opacity-60' : ''}`} id={`comment-${comment.id}`}>
       <div className="flex gap-3">
         <Avatar
-          user={{
-            name: comment.name || 'Reader',
-            avatar_url: comment.avatar_url || '',
-          }}
-        />
-
+  user={{
+    name: displayName,
+    avatar_url: displayAvatar,
+  }}
+/>
         <div className="min-w-0 flex-1">
           <div className="relative pr-8">
             <div className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-[13px] font-black text-[#111827]">{comment.name || 'Reader'}</h3>
+                <h3 className="text-[13px] font-black text-[#111827]">{displayName}</h3>
                 <span className="text-[11px] font-semibold text-[#98a2b3]">{formatTime(comment.created_at)}</span>
 
                 {comment.is_pinned ? (
