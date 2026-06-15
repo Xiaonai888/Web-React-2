@@ -945,6 +945,17 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   targetType="author_post"
   targetId={commentPost?.id}
   title="Author post comments"
+  story={{
+    id: commentPost?.id,
+    title: 'Author post comments',
+    user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
+    author_user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
+    author_page: {
+      user_id: author?.user_id || author?.owner_id || author?.created_by || author?.id,
+      page_name: author?.page_name || 'Author',
+      avatar_url: author?.avatar_url || '',
+    },
+  }}
   onClose={() => setCommentPost(null)}
   onCommentChanged={handleAuthorPostCommentChanged}
 />
