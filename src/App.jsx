@@ -114,6 +114,7 @@ const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWit
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
+const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
 
 
 
@@ -798,6 +799,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorPageOptionsPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/:pageUsername/followers"
+  element={
+    <LazyPage>
+      <AuthorFollowersPage />
     </LazyPage>
   }
 />
