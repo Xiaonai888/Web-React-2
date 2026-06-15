@@ -199,6 +199,7 @@ export default function StoryDetailPage() {
   const [authorFollowing, setAuthorFollowing] = useState(false)
   const [authorFollowerCount, setAuthorFollowerCount] = useState(0)
   const [authorFollowLoading, setAuthorFollowLoading] = useState(false)
+  const [authorIsOwnerPage, setAuthorIsOwnerPage] = useState(false)
   const location = useLocation()
 
   useEffect(() => {
@@ -229,6 +230,7 @@ export default function StoryDetailPage() {
 
         const loadedStory = storyData.story || null
         const loadedAuthorPage = loadedStory?.author_page || null
+        setAuthorIsOwnerPage(Boolean(loadedAuthorPage?.is_owner || loadedAuthorPage?.is_owner_page))
 
         setStory(loadedStory)
         setEpisodes(episodesData.episodes || [])
@@ -249,6 +251,7 @@ export default function StoryDetailPage() {
             if (!ignore && authorResponse.ok && authorData.ok !== false) {
               setAuthorFollowing(Boolean(authorData.is_following))
               setAuthorFollowerCount(Number(authorData.total_followers ?? authorData.author_page?.total_followers ?? loadedAuthorPage.total_followers ?? 0))
+              setAuthorIsOwnerPage(Boolean(authorData.is_owner || authorData.author_page?.is_owner || authorData.author_page?.is_owner_page))
             }
           } catch {
           }
@@ -503,7 +506,7 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   following={authorFollowing}
   followerCount={authorFollowerCount}
   followLoading={authorFollowLoading}
-  isOwnerPage={Boolean(story.author_page?.is_owner || story.author_page?.is_owner_page)}
+  isOwnerPage={authorIsOwnerPage}
   onManagePage={() => navigate('/author/dashboard')}
   onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
   onFollow={handleToggleAuthorFollow}
