@@ -622,7 +622,7 @@ export default function EpisodeEditorPage() {
     setCropOpen(true)
   }
 
-  const handleSaveEpisode = async ({ goToPublish = false } = {}) => {
+  const handleSaveEpisode = async ({ goToPublish = false, forceDraft = false } = {}) => {
     setMessage('')
 
     if (!episodeTitle.trim()) {
@@ -630,10 +630,10 @@ export default function EpisodeEditorPage() {
       return null
     }
 
-    if (!content.trim()) {
-      setMessage('Please write some episode content.')
-      return null
-    }
+    if (goToPublish && !content.trim()) {
+  setMessage('Please write some episode content.')
+  return null
+}
 
     if (goToPublish && characterCount < MIN_CHARACTERS) {
   setMessage('Almost there! Episodes need at least 1,500 characters.')
@@ -676,7 +676,7 @@ export default function EpisodeEditorPage() {
           cover_url: episodeCoverUrl,
           content,
           is_adult: false,
-          status: isEditMode ? oldEpisodeStatus : 'draft',
+          status: forceDraft ? 'draft' : isEditMode ? oldEpisodeStatus : 'draft',
         }),
       }
     )
@@ -715,7 +715,7 @@ export default function EpisodeEditorPage() {
   const handleSaveDraft = async () => {
     try {
       setLoading(true)
-      await handleSaveEpisode()
+      await handleSaveEpisode({ forceDraft: true })
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
