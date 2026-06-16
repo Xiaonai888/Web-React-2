@@ -60,7 +60,10 @@ function normalizeStory(story, index = 0) {
     likes: Number(story.total_likes || 0),
     views: Number(story.total_views || 0),
     comments: Number(story.total_comments || 0),
-    image: story.cover_url || `/assets/Trending%20Now/Trending%20${Math.min(index + 1, 18)}.jpg`,
+    image:
+  story.landscape_thumbnail_url ||
+  story.cover_url ||
+  `/assets/Trending%20Now/Trending%20${Math.min(index + 1, 18)}.jpg`,
     genre: story.main_genre || '',
     isAdult: Boolean(story.is_adult),
     isReal: true,
