@@ -42,11 +42,11 @@ export default function StoryInfoSection({ story }) {
     <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:whitespace-normal">
       {tags.map((tag) => (
         <span
-          key={tag}
-          className="shrink-0 rounded-full border border-[#e5e7eb] bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-semibold text-[#374151]"
-        >
-          {tag}
-        </span>
+  key={tag}
+  className="shrink-0 rounded-full bg-[#f3f4f6] px-4 py-2 text-[12px] font-medium text-[#111827]"
+>
+  {tag}
+</span>
       ))}
     </div>
   </div>
