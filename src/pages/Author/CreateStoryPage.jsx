@@ -551,6 +551,11 @@ export default function CreateStoryPage() {
   const [coverOriginal, setCoverOriginal] = useState('')
   const [coverPreview, setCoverPreview] = useState('')
   const [coverChanged, setCoverChanged] = useState(false)
+
+  const [landscapeOriginal, setLandscapeOriginal] = useState('')
+  const [landscapePreview, setLandscapePreview] = useState('')
+  const [landscapeChanged, setLandscapeChanged] = useState(false)
+
   const [slides, setSlides] = useState([])
 
   const [genreOpen, setGenreOpen] = useState(false)
@@ -661,6 +666,10 @@ export default function CreateStoryPage() {
         setCoverPreview(story.cover_url || '')
         setCoverChanged(false)
 
+        setLandscapeOriginal(story.landscape_thumbnail_url || '')
+        setLandscapePreview(story.landscape_thumbnail_url || '')
+        setLandscapeChanged(false)
+
         setSlides(
           (story.slides || []).map((slide, index) => ({
             id: slide.id || `${slide.image_url}-${index}`,
@@ -716,15 +725,38 @@ export default function CreateStoryPage() {
   }
 
   const handleEditCoverCrop = () => {
-    if (!coverOriginal) return
+  if (!coverOriginal) return
 
-    openCropper({
-      mode: 'cover',
-      image: coverOriginal,
-    })
-  }
+  openCropper({
+    mode: 'cover',
+    image: coverOriginal,
+  })
+}
 
-  const handleAddSlide = (file) => {
+const handleLandscapeChange = (file) => {
+  if (!file) return
+
+  const imageUrl = URL.createObjectURL(file)
+
+  setLandscapeOriginal(imageUrl)
+  setLandscapeChanged(true)
+
+  openCropper({
+    mode: 'landscape',
+    image: imageUrl,
+  })
+}
+
+const handleEditLandscapeCrop = () => {
+  if (!landscapeOriginal) return
+
+  openCropper({
+    mode: 'landscape',
+    image: landscapeOriginal,
+  })
+}
+
+const handleAddSlide = (file) => {
     if (!file) return
 
     if (slides.length >= 5) {
@@ -761,13 +793,20 @@ export default function CreateStoryPage() {
       const croppedImage = await getCroppedImage(tempImage, croppedAreaPixels)
 
       if (cropMode === 'cover') {
-        setCoverPreview(croppedImage)
-        setCoverChanged(true)
-        setCropOpen(false)
-        return
-      }
+  setCoverPreview(croppedImage)
+  setCoverChanged(true)
+  setCropOpen(false)
+  return
+}
 
-      if (cropMode === 'slide') {
+if (cropMode === 'landscape') {
+  setLandscapePreview(croppedImage)
+  setLandscapeChanged(true)
+  setCropOpen(false)
+  return
+}
+
+if (cropMode === 'slide') {
         if (editingSlideIndex === null) {
           setSlides((current) => [
             ...current,
@@ -821,6 +860,15 @@ export default function CreateStoryPage() {
         })
       : null
 
+    const landscapeThumbnailUrl = landscapePreview
+      ? await uploadImageToStorage({
+          token,
+          imageDataUrl: landscapeChanged ? landscapePreview : landscapePreview,
+          folder: 'story_landscape_thumbnail',
+          fileName: `story-landscape-${Date.now()}.jpg`,
+        })
+      : null
+
     const uploadedSlides = []
 
     for (let index = 0; index < slides.length; index += 1) {
@@ -844,6 +892,7 @@ export default function CreateStoryPage() {
 
     return {
       coverUrl,
+      landscapeThumbnailUrl,
       uploadedSlides,
     }
   }
@@ -877,7 +926,7 @@ export default function CreateStoryPage() {
     try {
       setLoading(true)
 
-      const { coverUrl, uploadedSlides } = await uploadStoryImages(token)
+      const { coverUrl, landscapeThumbnailUrl, uploadedSlides } = await uploadStoryImages(token)
 
       const response = await fetch(
         isEditMode ? `${API_BASE_URL}/api/stories/${editStoryId}` : `${API_BASE_URL}/api/stories/create`,
@@ -897,6 +946,7 @@ export default function CreateStoryPage() {
             description: description.trim() || null,
             is_adult: isAdult,
             cover_url: coverUrl,
+            landscape_thumbnail_url: landscapeThumbnailUrl,
             slides: uploadedSlides,
           }),
         }
@@ -933,10 +983,19 @@ export default function CreateStoryPage() {
   }
 
   const cropAspect = cropMode === 'cover' ? 2 / 3 : 16 / 9
-  const cropTitle = cropMode === 'cover' ? 'Crop Book Cover' : 'Crop Story Slide'
-  const cropHelper =
-    cropMode === 'cover'
-      ? 'Drag the image to fit the vertical 2:3 book cover.'
+
+const cropTitle =
+  cropMode === 'cover'
+    ? 'Crop Book Cover'
+    : cropMode === 'landscape'
+      ? 'Crop Landscape Thumbnail'
+      : 'Crop Story Slide'
+
+const cropHelper =
+  cropMode === 'cover'
+    ? 'Drag the image to fit the vertical 2:3 book cover.'
+    : cropMode === 'landscape'
+      ? 'Drag the image to fit the horizontal 16:9 thumbnail.'
       : 'Drag the image to fit the 16:9 story slide.'
 
   return (
@@ -1024,50 +1083,126 @@ export default function CreateStoryPage() {
             <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
               <FieldLabel required>Book Cover</FieldLabel>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[112px_1fr] sm:gap-3">
-                {coverPreview ? (
-  <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-    <button
-      type="button"
-      onClick={handleEditCoverCrop}
-      className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
-    >
-      <img
-        src={coverPreview}
-        alt="Book Cover"
-        className="h-full w-full object-cover"
-        draggable="false"
-        onDragStart={(event) => event.preventDefault()}
-      />
-    </button>
-
-    <div className="border-t border-[#eceaf2] bg-white p-2">
-      <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
-        Replace Cover
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(event) => {
-            handleCoverChange(event.target.files?.[0] || null)
-            event.target.value = ''
-          }}
-        />
-      </label>
-    </div>
-  </div>
-) : (
-                  <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                    <div className="px-3">
-                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                        <i className="fa-solid fa-upload text-[14px]" />
-                      </div>
-                      <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
-                      <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
+                  <div>
+                    <div className="mb-2 text-[12px] font-extrabold text-[#111827]">
+                      Portrait Cover
                     </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={(event) => handleCoverChange(event.target.files?.[0] || null)} />
-                  </label>
-                )}
+
+                    {coverPreview ? (
+                      <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                        <button
+                          type="button"
+                          onClick={handleEditCoverCrop}
+                          className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
+                        >
+                          <img
+                            src={coverPreview}
+                            alt="Portrait Book Cover"
+                            className="h-full w-full object-cover"
+                            draggable="false"
+                            onDragStart={(event) => event.preventDefault()}
+                          />
+                        </button>
+
+                        <div className="border-t border-[#eceaf2] bg-white p-2">
+                          <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                            Replace
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(event) => {
+                                handleCoverChange(event.target.files?.[0] || null)
+                                event.target.value = ''
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                        <div className="px-3">
+                          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                            <i className="fa-solid fa-upload text-[14px]" />
+                          </div>
+                          <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
+                          <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
+                        </div>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            handleCoverChange(event.target.files?.[0] || null)
+                            event.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-[12px] font-extrabold text-[#111827]">
+                      Landscape Thumbnail
+                    </div>
+
+                    {landscapePreview ? (
+                      <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                        <button
+                          type="button"
+                          onClick={handleEditLandscapeCrop}
+                          className="block aspect-video w-full overflow-hidden bg-[#fafafe]"
+                        >
+                          <img
+                            src={landscapePreview}
+                            alt="Landscape Thumbnail"
+                            className="h-full w-full object-cover"
+                            draggable="false"
+                            onDragStart={(event) => event.preventDefault()}
+                          />
+                        </button>
+
+                        <div className="border-t border-[#eceaf2] bg-white p-2">
+                          <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                            Replace
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(event) => {
+                                handleLandscapeChange(event.target.files?.[0] || null)
+                                event.target.value = ''
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                        <div className="px-3">
+                          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                            <i className="fa-solid fa-image text-[14px]" />
+                          </div>
+                          <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Add Thumbnail</div>
+                          <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
+                        </div>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            handleLandscapeChange(event.target.files?.[0] || null)
+                            event.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
 
                 <div className="min-w-0">
                   <div className="mb-2 flex items-center justify-between gap-3">
@@ -1128,7 +1263,7 @@ export default function CreateStoryPage() {
               </div>
 
               <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
-                Cover uses 2:3 vertical crop. Slides use 16:9 crop. Tap an image again to adjust crop.
+                Portrait cover uses 2:3 crop. Landscape thumbnail and story slides use 16:9 crop. Tap an image again to adjust crop.
               </div>
             </section>
 
