@@ -44,6 +44,7 @@ import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
 import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
+import VisitorTracker from './components/VisitorTracker'
 
 
 
@@ -204,8 +205,9 @@ const shouldShowOpeningAds =
   location.pathname !== '/forgot-password' &&
   location.pathname !== '/reset-password'
   return (
-    <>
-      <Routes>
+  <>
+    <VisitorTracker />
+    <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/fast" element={<ComingSoon title="Fast" />} />
         <Route path="/discover" element={<DiscoverPage />} />
