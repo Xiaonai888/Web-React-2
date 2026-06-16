@@ -38,19 +38,19 @@ export default function StoryInfoSection({ story }) {
       </button>
 
       {tags.length ? (
-        <div className="mt-4">
-          <div className="flex max-h-[78px] flex-wrap gap-2 overflow-hidden sm:max-h-none">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="max-w-[46%] truncate rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white sm:max-w-none"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
+  <div className="mt-4">
+    <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:whitespace-normal">
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          className="shrink-0 rounded-full border border-[#e5e7eb] bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-semibold text-[#374151]"
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  </div>
+) : null}
     </section>
   )
 }
