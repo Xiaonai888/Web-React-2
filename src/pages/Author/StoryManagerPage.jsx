@@ -230,38 +230,48 @@ function EpisodeActionSheet({
   )
 }
 
-function ConfirmDeleteModal({ episode, onClose }) {
+function ConfirmDeleteModal({ episode, busy, onClose, onConfirm }) {
   if (!episode) return null
 
   return (
     <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
-      <button type="button" aria-label="Close delete modal" onClick={onClose} className="absolute inset-0" />
+      <button
+        type="button"
+        aria-label="Close delete modal"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
 
       <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
           <i className="fa-regular fa-trash-can text-[25px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-black text-[#111827]">Delete this episode?</h2>
+        <h2 className="mt-4 text-[20px] font-black text-[#111827]">
+          Delete this episode?
+        </h2>
+
         <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
-          Delete API is not installed yet. This button is ready for UI flow, but backend delete endpoint must be added next.
+          This episode will be moved to Trash and hidden from readers.
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
+            disabled={busy}
             onClick={onClose}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827]"
+            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] disabled:opacity-60"
           >
             Cancel
           </button>
 
           <button
             type="button"
-            onClick={onClose}
-            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white"
+            disabled={busy}
+            onClick={onConfirm}
+            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white disabled:opacity-60"
           >
-            Delete Later
+            {busy ? 'Deleting...' : 'Delete Episode'}
           </button>
         </div>
       </section>
@@ -565,6 +575,49 @@ export default function StoryManagerPage() {
     setDeleteEpisode(episode)
   }
 
+  const handleConfirmDeleteEpisode = async () => {
+  if (!deleteEpisode) return
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  try {
+    setBusy(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/episodes/${deleteEpisode.id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to delete episode')
+    }
+
+    setEpisodes((current) =>
+      current.filter((episode) => episode.id !== deleteEpisode.id)
+    )
+    setDeleteEpisode(null)
+  } catch (error) {
+    setDeleteEpisode(null)
+    setMessage(error.message || 'Failed to delete episode')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } finally {
+    setBusy(false)
+  }
+}
+
+
   const handleMoveStoryToTrash = async () => {
     const token = getAuthToken()
 
@@ -615,9 +668,11 @@ export default function StoryManagerPage() {
       />
 
       <ConfirmDeleteModal
-        episode={deleteEpisode}
-        onClose={() => setDeleteEpisode(null)}
-      />
+  episode={deleteEpisode}
+  busy={busy}
+  onClose={() => setDeleteEpisode(null)}
+  onConfirm={handleConfirmDeleteEpisode}
+/>
 
       <ConfirmTrashStoryModal
         story={story}
