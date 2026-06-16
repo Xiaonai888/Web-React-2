@@ -3,9 +3,10 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const trendTabs = ['Daily', 'Weekly', 'Monthly']
 const sortOptions = ['Likes', 'Views', 'Comments']
