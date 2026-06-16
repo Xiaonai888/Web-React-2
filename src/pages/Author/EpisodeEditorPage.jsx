@@ -635,10 +635,10 @@ export default function EpisodeEditorPage() {
       return null
     }
 
-    if (characterCount < MIN_CHARACTERS) {
-      setMessage('Almost there! Episodes need at least 1,500 characters.')
-      return null
-    }
+    if (goToPublish && characterCount < MIN_CHARACTERS) {
+  setMessage('Almost there! Episodes need at least 1,500 characters.')
+  return null
+}
 
     if (characterCount > MAX_CHARACTERS) {
       setMessage('This episode is too long. Maximum is 30,000 characters.')
