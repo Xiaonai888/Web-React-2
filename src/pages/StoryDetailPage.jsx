@@ -118,7 +118,7 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="line-clamp-1 text-[16px] font-black leading-5 text-[#111827] sm:text-[17px]">
+          <div className="line-clamp-1 text-[15px] font-bold leading-5 text-[#111827] sm:text-[16px]">
   {authorPage.page_name || 'Author Page'}
 </div>
 
