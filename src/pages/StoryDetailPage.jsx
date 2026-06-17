@@ -118,13 +118,13 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="line-clamp-1 text-[15px] font-black text-[#111827]">
-            {authorPage.page_name || 'Author Page'}
-          </div>
+          <div className="line-clamp-1 text-[16px] font-black leading-5 text-[#111827] sm:text-[17px]">
+  {authorPage.page_name || 'Author Page'}
+</div>
 
-          <div className="mt-0.5 line-clamp-1 text-[12px] font-bold text-[#8d94a1]">
-            @{authorPage.page_username || 'author'} · {followerText}
-          </div>
+<div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1] sm:text-[12px]">
+  @{authorPage.page_username || 'author'} · {followerText}
+</div>
 
           <div className="mt-3 flex items-center gap-3">
   {isOwnerPage ? (
