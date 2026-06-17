@@ -33,18 +33,40 @@ const fallbackWeeklyPicks = [
   },
 ]
 
+const badgeColors = {
+  NEW: 'bg-[#ff2f55] text-white',
+  HOT: 'bg-[#ff7a00] text-white',
+  TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+function parseBadgeTitle(value = '') {
+  const match = String(value).match(/^\s*\[(NEW|HOT|TOP)\]\s*(.*)$/i)
+
+  return match
+    ? { badge: match[1].toUpperCase(), title: match[2].trim() }
+    : { badge: '', title: String(value || '').trim() }
+}
+
+function getBadgeClass(badge) {
+  return badgeColors[badge] || ''
+}
+
 function normalizeSlide(slide, index = 0) {
-  const tagList = ['NEW', 'HOT', 'TOP']
+  const parsedTitle = parseBadgeTitle(slide.title)
+  const directBadge = String(slide.badge || '').trim().toUpperCase()
+  const badge = ['NEW', 'HOT', 'TOP'].includes(directBadge)
+    ? directBadge
+    : parsedTitle.badge
 
   return {
     id: slide.id || `editor-slide-${index}`,
-    title: slide.title || `Editor Weekly Pick ${index + 1}`,
-    subtitle: slide.description || 'A special recommendation chosen for For You readers.',
+    title: parsedTitle.title || `Editor Weekly Pick ${index + 1}`,
+    subtitle: slide.subtitle || slide.description || '',
     image:
       slide.image_url ||
       `/assets/EditorWeeklyPicksSection/EditorWeeklyPicksSection ${Math.min(index + 1, 3)}.jpg`,
     link: slide.link_url || '/story/1',
-    tag: slide.badge || tagList[index % tagList.length],
+    tag: badge,
   }
 }
 
@@ -95,7 +117,7 @@ export default function EditorWeeklyPicksSection() {
     }
   }, [])
 
-  const displayItems = items.length ? items : fallbackWeeklyPicks
+  const displayItems = items
 
   const handleScroll = () => {
     const container = scrollRef.current
@@ -206,9 +228,13 @@ export default function EditorWeeklyPicksSection() {
 
                   <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent p-3">
                     <div className="flex items-center space-x-2">
-                      <span className="rounded bg-[#ff3b5c] px-1.5 py-0.5 text-[8px] font-black text-white shadow-sm">
-                        {item.tag}
-                      </span>
+                      {item.tag ? (
+  <span
+    className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase shadow-sm ${getBadgeClass(item.tag)}`}
+  >
+    {item.tag}
+  </span>
+) : null}
 
                       <h3 className="truncate text-[11px] font-bold text-white">
                         {item.title}
