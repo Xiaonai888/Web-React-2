@@ -123,7 +123,7 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
 </div>
 
 <div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1] sm:text-[12px]">
-  @{authorPage.page_username || 'author'} · {followerText}
+  {followerText}
 </div>
 
           <div className="mt-3 flex items-center gap-3">
