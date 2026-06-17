@@ -127,6 +127,8 @@ function ComingSoonPanel({ title }) {
   )
 }
 
+const SHOW_STORY_TYPE_TABS = false
+
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -449,20 +451,24 @@ export default function ForYou() {
 </div>
           </header>
 
-          <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2">
-            {['novel', 'chat', 'manga'].map((tab) => (
-              <div
-                key={tab}
-                className={`tab-item text-sm capitalize ${activeTab === tab ? 'active' : 'text-gray-400 font-semibold'}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
-              </div>
-            ))}
-          </nav>
+          {SHOW_STORY_TYPE_TABS ? (
+  <nav className="flex px-4 space-x-8 border-b border-gray-100 bg-white pt-2">
+    {['novel', 'chat', 'manga'].map((tab) => (
+      <div
+        key={tab}
+        className={`tab-item text-sm capitalize ${
+          activeTab === tab ? 'active' : 'text-gray-400 font-semibold'
+        }`}
+        onClick={() => setActiveTab(tab)}
+      >
+        {tab === 'novel' ? 'Novel' : tab === 'chat' ? 'Chat Story' : 'Manga'}
+      </div>
+    ))}
+  </nav>
+) : null}
         </div>
 
-        <div style={{ height: '110px' }} />
+        <div style={{ height: SHOW_STORY_TYPE_TABS ? '110px' : '72px' }} />
 
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
