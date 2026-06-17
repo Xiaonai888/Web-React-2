@@ -72,7 +72,7 @@ export default function EpisodePreviewSection({ story, episodes, totalEpisodes, 
   return (
     <section className="mt-0 bg-white px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm">
       <div className="mb-3">
-        <h2 className="text-[18px] font-black text-[#111827]">Episodes</h2>
+        <h2 className="text-[16px] font-bold text-[#111827]">Episodes</h2>
       </div>
 
       {episodes.length ? (
