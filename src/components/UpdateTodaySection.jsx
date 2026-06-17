@@ -21,29 +21,26 @@ const fallbackFeaturedBook = {
 }
 
 const fallbackUpdateBooks = [
-  { id: 202, title: 'Name Novel', cover: '/assets/Update Today/Update Today 2.jpg', badge: 'red', views: '100k', episodes: 'Ep 17' },
-  { id: 203, title: 'Name Novel', cover: '/assets/Update Today/Update Today 3.jpg', badge: 'yellow', views: '100k', episodes: 'Ep 17' },
-  { id: 204, title: 'Name Novel', cover: '/assets/Update Today/Update Today 4.jpg', badge: 'green', views: '100k', episodes: 'Ep 17' },
-  { id: 205, title: 'Name Novel', cover: '/assets/Update Today/Update Today 5.jpg', badge: 'red', views: '100k', episodes: 'Ep 17' },
-  { id: 206, title: 'Name Novel', cover: '/assets/Update Today/Update Today 6.jpg', badge: 'yellow', views: '100k', episodes: 'Ep 17' },
-  { id: 207, title: 'Name Novel', cover: '/assets/Update Today/Update Today 7.jpg', badge: 'green', views: '100k', episodes: 'Ep 17' },
+  { id: 202, title: 'Name Novel', cover: '/assets/Update Today/Update Today 2.jpg', badge: 'new', views: '100k', episodes: 'Ep 17' },
+  { id: 203, title: 'Name Novel', cover: '/assets/Update Today/Update Today 3.jpg', badge: 'up', views: '100k', episodes: 'Ep 17' },
+  { id: 204, title: 'Name Novel', cover: '/assets/Update Today/Update Today 4.jpg', badge: 'end', views: '100k', episodes: 'Ep 17' },
+  { id: 205, title: 'Name Novel', cover: '/assets/Update Today/Update Today 5.jpg', badge: 'new', views: '100k', episodes: 'Ep 17' },
+  { id: 206, title: 'Name Novel', cover: '/assets/Update Today/Update Today 6.jpg', badge: 'up', views: '100k', episodes: 'Ep 17' },
+  { id: 207, title: 'Name Novel', cover: '/assets/Update Today/Update Today 7.jpg', badge: 'end', views: '100k', episodes: 'Ep 17' },
 ]
 
 const badgeConfig = {
-  red: {
-    text: 'END',
-    className:
-      'border border-red-300/80 bg-gradient-to-b from-red-400 to-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.28)]',
-  },
-  yellow: {
-    text: 'UP',
-    className:
-      'border border-orange-200/90 bg-gradient-to-b from-amber-300 to-orange-400 text-[#4a2a00] shadow-[0_4px_10px_rgba(251,146,60,0.28)]',
-  },
-  green: {
+  new: {
     text: 'NEW',
-    className:
-      'border border-lime-200/90 bg-gradient-to-b from-lime-300 to-lime-400 text-[#153300] shadow-[0_4px_10px_rgba(132,204,22,0.28)]',
+    className: 'bg-[#FF4D6D] text-white',
+  },
+  up: {
+    text: 'UP',
+    className: 'bg-[#F6B800] text-[#111827]',
+  },
+  end: {
+    text: 'END',
+    className: 'bg-[#16A34A] text-white',
   },
 }
 
@@ -60,10 +57,10 @@ function formatCompactNumber(value) {
 function getRealBadgeFromStoryStatus(status) {
   const value = String(status || '').trim().toLowerCase()
 
-  if (value === 'completed') return 'red'
-  if (value === 'ongoing') return 'yellow'
+  if (value === 'completed') return 'end'
+  if (value === 'ongoing') return 'up'
 
-  return 'green'
+  return 'new'
 }
 
 function normalizeStory(story, index = 0) {
@@ -86,11 +83,11 @@ function normalizeStory(story, index = 0) {
 }
 
 function StatusBadge({ type }) {
-  const badge = badgeConfig[type] || badgeConfig.green
+  const badge = badgeConfig[type] || badgeConfig.new
 
   return (
     <div
-      className={`absolute right-2.5 top-2.5 rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] sm:right-3 sm:top-3 sm:px-3.5 sm:text-[11px] ${badge.className}`}
+      className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badge.className}`}
     >
       {badge.text}
     </div>
