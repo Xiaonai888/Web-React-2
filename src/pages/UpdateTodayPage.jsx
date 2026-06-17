@@ -18,9 +18,9 @@ const dayTabs = [
 ]
 
 const badgeConfig = {
-  new: 'bg-[#111827] text-white',
-  up: 'bg-[#facc15] text-[#111827]',
-  end: 'bg-[#22c55e] text-[#052e16]',
+  new: 'bg-[#FF4D6D] text-white',
+  up: 'bg-[#F6B800] text-[#111827]',
+  end: 'bg-[#16A34A] text-white',
 }
 
 function formatCompactNumber(value) {
