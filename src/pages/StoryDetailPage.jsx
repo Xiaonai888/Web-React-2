@@ -135,7 +135,7 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
           event.stopPropagation()
           onManagePage?.()
         }}
-        className="h-8 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white active:scale-95"
+        className="h-7 rounded-full bg-[#111827] px-4 text-[11px] font-bold text-white active:scale-95"
       >
         Manage Page
       </button>
@@ -146,7 +146,7 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
           event.stopPropagation()
           onViewPage?.()
         }}
-        className="h-8 rounded-full bg-[#f5f3fa] px-5 text-[12px] font-black text-[#111827] ring-1 ring-black/10 active:scale-95"
+        className="h-7 rounded-full bg-[#f5f3fa] px-4 text-[11px] font-bold text-[#111827] ring-1 ring-black/5 active:scale-95"
       >
         View Page
       </button>
@@ -157,9 +157,9 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
         type="button"
         onClick={handleFollowClick}
         disabled={followLoading}
-        className={`h-8 rounded-full px-5 text-[12px] font-black active:scale-95 disabled:opacity-60 ${
-          following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/10' : 'bg-[#111827] text-white'
-        }`}
+        className={`h-7 rounded-full px-4 text-[11px] font-bold active:scale-95 disabled:opacity-60 ${
+  following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5' : 'bg-[#111827] text-white'
+}`}
       >
         {following ? 'Following' : 'Follow'}
       </button>
@@ -170,7 +170,7 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
           event.stopPropagation()
           onViewPage?.()
         }}
-        className="h-8 rounded-full bg-transparent px-1 text-[12px] font-black text-[#8d94a1] active:scale-95"
+        className="h-7 rounded-full bg-transparent px-1 text-[11px] font-bold text-[#8d94a1] active:scale-95"
       >
         View Page
       </button>
