@@ -181,7 +181,7 @@ export default function RecommendationSection({ story }) {
       {loading || authorSectionStories.length ? (
         <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
           <div className="mb-3">
-            <h2 className="text-[18px] font-black text-[#111827]">More by {authorName}</h2>
+            <h2 className="text-[16px] font-bold text-[#111827]">More by {authorName}</h2>
           </div>
 
           {loading ? (
@@ -204,7 +204,7 @@ export default function RecommendationSection({ story }) {
 
       <div className="bg-white p-4 sm:rounded-[28px] sm:p-5 sm:shadow-sm sm:ring-1 sm:ring-black/5">
         <div className="mb-3">
-          <h2 className="text-[18px] font-black text-[#111827]">You Might Like</h2>
+          <h2 className="text-[16px] font-bold text-[#111827]">You Might Like</h2>
         </div>
 
         {loading ? (
