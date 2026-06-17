@@ -54,6 +54,63 @@ function getSlideBadgeClass(badge) {
   return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
 }
 
+function GridHeaderIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="#111827"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </svg>
+  )
+}
+
+function SearchHeaderIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="#111827"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 4 4" />
+    </svg>
+  )
+}
+
+function BellHeaderIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="#111827"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
+      <path d="M10 19h4" />
+    </svg>
+  )
+}
+
 function ComingSoonPanel({ title }) {
   return (
     <div className="px-4 py-8">
@@ -358,40 +415,37 @@ export default function ForYou() {
 </div>
             </div>
 
-            <div className="flex items-center space-x-5 text-gray-400 text-xl">
+            <div className="flex items-center gap-5">
   <Link
     to="/genres"
     className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
     aria-label="Genres"
   >
-    <img
-      src="/assets/Icons/Genre.svg?v=2"
-      alt="Genres"
-      className="h-5 w-5 object-contain"
-    />
+    <GridHeaderIcon />
   </Link>
 
   <Link
     to="/search"
-    className="flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
+    className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
     aria-label="Search"
   >
-    <i className="fas fa-search" />
+    <SearchHeaderIcon />
   </Link>
 
-<button
-  type="button"
-  onClick={() => setShowNotificationPopup(true)}
-  className="relative flex h-6 w-6 items-center justify-center hover:text-[#111827] transition-colors"
-  aria-label="Notifications"
->
-  <i className="fas fa-bell" />
-  {notificationUnreadCount > 0 ? (
-    <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-black leading-none text-[#111111] shadow-sm">
-      {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
-    </span>
-  ) : null}
-</button>
+  <button
+    type="button"
+    onClick={() => setShowNotificationPopup(true)}
+    className="relative flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+    aria-label="Notifications"
+  >
+    <BellHeaderIcon />
+
+    {notificationUnreadCount > 0 ? (
+      <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F6B800] px-1.5 text-[10px] font-medium leading-none text-[#111827] shadow-sm">
+        {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+      </span>
+    ) : null}
+  </button>
 </div>
           </header>
 
