@@ -212,9 +212,10 @@ const shouldShowOpeningAds =
     <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/fast" element={<ComingSoon title="Fast" />} />
-        <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
+
+      
 
         <Route path="/shop" element={<ShopPage />} />
         <Route
@@ -821,6 +822,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorFollowersPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/discover"
+  element={
+    <LazyPage>
+      <DiscoverPage />
     </LazyPage>
   }
 />
