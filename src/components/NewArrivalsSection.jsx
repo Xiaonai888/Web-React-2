@@ -188,7 +188,7 @@ function LoadingGrid() {
         <div className="h-10 w-32 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible">
+      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
@@ -326,7 +326,7 @@ export default function NewArrivalsSection() {
       </div>
 
       {books.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
           {books.map((book) => (
             <BookCard
               key={book.id}
