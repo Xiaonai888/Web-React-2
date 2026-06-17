@@ -67,7 +67,7 @@ function BookCard({ book }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[42px] text-[15px] font-extrabold leading-[21px] tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[42px] text-[15px] font-bold leading-[21px] tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
