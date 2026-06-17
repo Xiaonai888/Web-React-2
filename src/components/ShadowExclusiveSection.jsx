@@ -151,14 +151,14 @@ export default function ShadowExclusiveSection() {
   return (
     <div className="mb-10 px-4">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="flex items-center text-lg font-black uppercase tracking-tight text-gray-900">
-          <img
-            src="https://img.icons8.com/emoji/48/crown-emoji.png"
-            className="mr-2 h-5 w-5"
-            alt="crown"
-          />
-          Shadow Exclusive
-        </h3>
+        <h3 className="flex items-center text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+  <img
+    src="https://img.icons8.com/emoji/48/crown-emoji.png"
+    className="mr-2 h-5 w-5 lg:h-[21px] lg:w-[21px]"
+    alt="crown"
+  />
+  Shadow Exclusive
+</h3>
 
         <Link
           to="/shadow-exclusive"
