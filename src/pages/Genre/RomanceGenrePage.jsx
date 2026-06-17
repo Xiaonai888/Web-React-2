@@ -107,7 +107,7 @@ const filterOptions = [
   { label: 'Completed', value: 'completed' },
 ]
 
-export default function RomanceGenrePage() {
+export default function RomanceGenrePage({ embedded = false }) {
   const navigate = useNavigate()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -190,35 +190,52 @@ export default function RomanceGenrePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fff7fa] pb-[110px]">
-      <header className="sticky top-0 z-40 border-b border-[#f7dce6] bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
-            aria-label="Back"
-          >
-            <i className="fa-solid fa-chevron-left text-[13px]" />
-          </button>
+    <div
+  className={
+    embedded
+      ? 'bg-[#fff7fa] pb-6'
+      : 'min-h-screen bg-[#fff7fa] pb-[110px]'
+  }
+>
+      <header className="sticky to{!embedded ? (
+  <header className="sticky top-0 z-40 border-b border-[#f7dce6] bg-white/95 px-4 py-3 backdrop-blur">
+    <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
+        aria-label="Back"
+      >
+        <i className="fa-solid fa-chevron-left text-[13px]" />
+      </button>
 
-          <div className="min-w-0 text-center">
-            <h1 className="text-[17px] font-black text-[#111827]">Romance</h1>
-            <p className="text-[11px] font-bold text-[#d66b88]">Love stories and emotional journeys</p>
-          </div>
+      <div className="min-w-0 text-center">
+        <h1 className="text-[17px] font-black text-[#111827]">
+          Romance
+        </h1>
 
-          <button
-            type="button"
-            onClick={() => navigate('/search')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
-            aria-label="Search"
-          >
-            <i className="fa-solid fa-magnifying-glass text-[13px]" />
-          </button>
-        </div>
-      </header>
+        <p className="text-[11px] font-bold text-[#d66b88]">
+          Love stories and emotional journeys
+        </p>
+      </div>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <button
+        type="button"
+        onClick={() => navigate('/search')}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
+        aria-label="Search"
+      >
+        <i className="fa-solid fa-magnifying-glass text-[13px]" />
+      </button>
+    </div>
+  </header>
+) : null}
+
+      <main
+  className={`mx-auto max-w-5xl px-4 ${
+    embedded ? 'pt-1' : 'pt-4'
+  }`}
+>
         <section className="overflow-hidden rounded-[30px] bg-gradient-to-br from-[#ffe4ee] via-white to-[#fff7d6] p-5 shadow-sm ring-1 ring-[#f7dce6]">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-white text-[#d6336c] shadow-sm">
