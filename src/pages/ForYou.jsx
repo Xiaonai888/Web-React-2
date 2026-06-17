@@ -610,16 +610,12 @@ export default function ForYou() {
             </div>
 
             {activeGenre !== 'today' ? (
-              <EmbeddedGenrePage
-                key={activeGenre}
-                genreSlug={activeGenre}
-                genreLabel={
-                  genreTabs.find((tab) => tab.slug === activeGenre)?.label ||
-                  activeGenre
-                }
-              />
-            ) : (
-              <>
+  <EmbeddedGenreRouter
+    key={activeGenre}
+    genreSlug={activeGenre}
+  />
+) : (
+  <>
 
             <div className="swiper-container mySwiper">
               <div className="swiper-wrapper">
