@@ -567,13 +567,13 @@ export default function ForYou() {
 ) : null}
         </div>
 
-        <div style={{ height: SHOW_STORY_TYPE_TABS ? '102px' : '64px' }} />
+        <div style={{ height: SHOW_STORY_TYPE_TABS ? '96px' : '58px' }} />
 
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
           <div id="tab-content-root">
-            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 pb-3 pt-2 no-scrollbar">
+            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 pb-2 pt-0 no-scrollbar">
               {genreTabs.map((tab) => {
   const active = activeGenre === tab.slug
   const pressed = pressedGenre === tab.slug
@@ -583,7 +583,7 @@ export default function ForYou() {
       key={tab.slug}
       type="button"
       onClick={() => handleGenreChange(tab)}
-      className={`relative shrink-0 rounded-full px-3 py-2.5 text-[12px] transition-colors duration-200 ${
+      className={`relative shrink-0 rounded-full px-3 py-2 text-[12px] transition-colors duration-200 ${
         active
           ? 'font-semibold text-[#111827]'
           : 'font-normal text-[#9ca3af]'
