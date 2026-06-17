@@ -163,8 +163,8 @@ export default function YouMightLikeSection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[20px]">🙂</span>
-          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+          <span className="text-[20px] lg:text-[21px]">🙂</span>
+          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
             You Might Like
           </h2>
         </div>
@@ -175,7 +175,7 @@ export default function YouMightLikeSection() {
   className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
   aria-label="Go to You Might Like page"
 >
-  <i className="fas fa-chevron-right text-[15px] text-gray-700" />
+  <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
 </button>
       </div>
 
