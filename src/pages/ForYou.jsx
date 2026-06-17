@@ -306,27 +306,43 @@ export default function ForYou() {
     }
 
     swiperRef.current = new window.Swiper('.mySwiper', {
-      effect: 'coverflow',
-      grabCursor: true,
+  effect: 'coverflow',
+  grabCursor: true,
+
+  // Phone: បង្ហាញតែ 1 slide ពេញទទឹង
+  centeredSlides: false,
+  slidesPerView: 1,
+  spaceBetween: 0,
+
+  coverflowEffect: {
+    rotate: 0,
+    stretch: 0,
+    depth: 80,
+    modifier: 2,
+    slideShadows: false,
+  },
+
+  // Computer: រក្សាទម្រង់ចាស់
+  breakpoints: {
+    768: {
       centeredSlides: true,
       slidesPerView: 'auto',
-      coverflowEffect: {
-        rotate: 0,
-        stretch: 0,
-        depth: 80,
-        modifier: 2,
-        slideShadows: false,
-      },
-      loop: slides.length > 1,
-      autoplay: {
-        delay: 4500,
-        disableOnInteraction: false,
-      },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-      },
-    })
+      spaceBetween: 0,
+    },
+  },
+
+  loop: slides.length > 1,
+
+  autoplay: {
+    delay: 4500,
+    disableOnInteraction: false,
+  },
+
+  pagination: {
+    el: '.swiper-pagination',
+    clickable: true,
+  },
+})
 
     return () => {
       if (swiperRef.current) {
@@ -365,31 +381,93 @@ export default function ForYou() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .swiper-container {
-          width: 100%;
-          padding-top: 10px;
-          padding-bottom: 30px;
-        }
+        /* Phone slider */
+.mySwiper {
+  width: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
 
-        .swiper-slide {
-          width: 85%;
-          border-radius: 20px;
-          overflow: hidden;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-          transition: all 0.3s ease;
-        }
+.mySwiper .swiper-slide {
+  width: 100%;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
 
-        .swiper-slide-next,
-        .swiper-slide-prev {
-          opacity: 0.4;
-          transform: scale(0.9);
-        }
+.mySwiper .swiper-slide-next,
+.mySwiper .swiper-slide-prev {
+  opacity: 1;
+  transform: none;
+}
 
-        .swiper-pagination-bullet-active {
-          background: #111827;
-          width: 20px;
-          border-radius: 5px;
-        }
+/* Phone pagination: small dots at bottom-right */
+.mySwiper .swiper-pagination {
+  left: auto;
+  right: 10px;
+  bottom: 8px;
+  width: auto;
+  text-align: right;
+}
+
+.mySwiper .swiper-pagination-bullet {
+  width: 5px;
+  height: 5px;
+  margin: 0 2px !important;
+  background: rgba(255, 255, 255, 0.65);
+  opacity: 1;
+}
+
+.mySwiper .swiper-pagination-bullet-active {
+  width: 5px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+/* Computer: keep current coverflow design */
+@media (min-width: 768px) {
+  .mySwiper {
+    padding-top: 10px;
+    padding-bottom: 30px;
+  }
+
+  .mySwiper .swiper-slide {
+    width: 58%;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .mySwiper .swiper-slide-next,
+  .mySwiper .swiper-slide-prev {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+
+  .mySwiper .swiper-pagination {
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .mySwiper .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+    margin: 0 4px !important;
+    background: #111827;
+    opacity: 0.2;
+  }
+
+  .mySwiper .swiper-pagination-bullet-active {
+    width: 20px;
+    background: #111827;
+    border-radius: 5px;
+    opacity: 1;
+  }
+}
 
         @media (min-width: 768px) {
           .swiper-slide { width: 58%; }
