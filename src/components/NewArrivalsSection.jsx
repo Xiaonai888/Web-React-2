@@ -65,7 +65,7 @@ function BookCard({ book, onClick }) {
       className="group block h-full w-full text-left"
     >
       <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] bg-gray-100 shadow-sm">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
