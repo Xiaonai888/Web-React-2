@@ -67,6 +67,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
+const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
@@ -169,6 +170,7 @@ function AppShell() {
     '/search',
     '/notifications',
     '/update-today',
+    '/you-might-like',
     '/tasks',
     '/tasks/history',
     '/author/trash',
@@ -343,6 +345,15 @@ const shouldShowOpeningAds =
   }
 />
 
+<Route
+  path="/you-might-like"
+  element={
+    <LazyPage>
+      <YouMightLikePage />
+    </LazyPage>
+  }
+/>
+      
         <Route
   path="/genre/romance"
   element={
