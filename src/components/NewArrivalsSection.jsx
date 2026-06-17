@@ -94,9 +94,9 @@ function BookCard({ book, onClick }) {
         </div>
 
         <div className="mt-3 w-full">
-  <h3 className="truncate text-[14px] font-normal leading-[20px] text-neutral-900 sm:line-clamp-2 sm:min-h-[44px] sm:whitespace-normal">
-    {book.title}
-  </h3>
+  <h3 className="truncate text-[14px] font-medium leading-[20px] text-neutral-900 sm:line-clamp-2 sm:min-h-[44px] sm:whitespace-normal">
+  {book.title}
+</h3>
 
   <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
     {book.author}
