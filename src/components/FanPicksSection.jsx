@@ -70,7 +70,7 @@ function BookCard({ book }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 text-[15px] font-extrabold leading-snug tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[42px] text-[15px] font-extrabold leading-[21px] tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
@@ -98,7 +98,7 @@ function LoadingGrid() {
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+      <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
@@ -170,13 +170,13 @@ export default function FanPicksSection() {
         </h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
         {books.map((book) => (
           <button
             key={book.id}
             type="button"
             onClick={() => navigate(book.link)}
-            className="w-full text-left"
+            className="w-[44%] shrink-0 snap-start text-left sm:w-[30%] lg:w-full"
           >
             <BookCard book={book} />
           </button>
