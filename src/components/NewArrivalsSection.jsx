@@ -8,9 +8,9 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const badgeStyles = {
-  red: 'bg-red-500 text-white',
-  yellow: 'bg-yellow-400 text-black',
-  green: 'bg-lime-400 text-black',
+  new: 'bg-[#FF4D6D] text-white',
+  up: 'bg-[#F6B800] text-[#111827]',
+  end: 'bg-[#16A34A] text-white',
 }
 
 const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
@@ -40,28 +40,30 @@ const createFallbackBook = (
 
 const fallbackNewArrivalsData = {
   Fresh: [
-    createFallbackBook(401, 1, 'Name Book', 'Author Name', 'NEW', 'red', '1000', '100k'),
-    createFallbackBook(402, 2, 'Name Book', 'Author Name', 'UP', 'yellow', '920', '88k'),
-    createFallbackBook(403, 3, 'Name Book', 'Author Name', 'END', 'green', '860', '74k'),
-    createFallbackBook(404, 4, 'Name Book', 'Author Name', 'NEW', 'red', '1.4k', '120k'),
-    createFallbackBook(405, 5, 'Name Book', 'Author Name', 'UP', 'yellow', '980', '93k'),
-    createFallbackBook(406, 6, 'Name Book', 'Author Name', 'END', 'green', '710', '68k'),
+    createFallbackBook(401, 1, 'Name Book', 'Author Name', 'NEW', 'new', '1000', '100k'),
+    createFallbackBook(402, 2, 'Name Book', 'Author Name', 'UP', 'up', '920', '88k'),
+    createFallbackBook(403, 3, 'Name Book', 'Author Name', 'END', 'end', '860', '74k'),
+    createFallbackBook(404, 4, 'Name Book', 'Author Name', 'NEW', 'new', '1.4k', '120k'),
+    createFallbackBook(405, 5, 'Name Book', 'Author Name', 'UP', 'up', '980', '93k'),
+    createFallbackBook(406, 6, 'Name Book', 'Author Name', 'END', 'end', '710', '68k'),
   ],
+
   Popular: [
-    createFallbackBook(407, 7, 'Name Book', 'Author Name', 'NEW', 'red', '2.4k', '210k'),
-    createFallbackBook(408, 8, 'Name Book', 'Author Name', 'UP', 'yellow', '2.1k', '196k'),
-    createFallbackBook(409, 9, 'Name Book', 'Author Name', 'END', 'green', '1.8k', '172k'),
-    createFallbackBook(410, 10, 'Name Book', 'Author Name', 'NEW', 'red', '2.0k', '184k'),
-    createFallbackBook(411, 11, 'Name Book', 'Author Name', 'UP', 'yellow', '1.7k', '160k'),
-    createFallbackBook(412, 12, 'Name Book', 'Author Name', 'END', 'green', '1.5k', '145k'),
+    createFallbackBook(407, 7, 'Name Book', 'Author Name', 'NEW', 'new', '2.4k', '210k'),
+    createFallbackBook(408, 8, 'Name Book', 'Author Name', 'UP', 'up', '2.1k', '196k'),
+    createFallbackBook(409, 9, 'Name Book', 'Author Name', 'END', 'end', '1.8k', '172k'),
+    createFallbackBook(410, 10, 'Name Book', 'Author Name', 'NEW', 'new', '2.0k', '184k'),
+    createFallbackBook(411, 11, 'Name Book', 'Author Name', 'UP', 'up', '1.7k', '160k'),
+    createFallbackBook(412, 12, 'Name Book', 'Author Name', 'END', 'end', '1.5k', '145k'),
   ],
+
   'Recent Complete': [
-    createFallbackBook(413, 13, 'Name Book', 'Author Name', 'END', 'green', '1.3k', '110k'),
-    createFallbackBook(414, 14, 'Name Book', 'Author Name', 'END', 'green', '1.1k', '102k'),
-    createFallbackBook(415, 15, 'Name Book', 'Author Name', 'END', 'green', '980', '95k'),
-    createFallbackBook(416, 16, 'Name Book', 'Author Name', 'END', 'green', '920', '89k'),
-    createFallbackBook(417, 17, 'Name Book', 'Author Name', 'END', 'green', '870', '84k'),
-    createFallbackBook(418, 18, 'Name Book', 'Author Name', 'END', 'green', '810', '79k'),
+    createFallbackBook(413, 13, 'Name Book', 'Author Name', 'END', 'end', '1.3k', '110k'),
+    createFallbackBook(414, 14, 'Name Book', 'Author Name', 'END', 'end', '1.1k', '102k'),
+    createFallbackBook(415, 15, 'Name Book', 'Author Name', 'END', 'end', '980', '95k'),
+    createFallbackBook(416, 16, 'Name Book', 'Author Name', 'END', 'end', '920', '89k'),
+    createFallbackBook(417, 17, 'Name Book', 'Author Name', 'END', 'end', '870', '84k'),
+    createFallbackBook(418, 18, 'Name Book', 'Author Name', 'END', 'end', '810', '79k'),
   ],
 }
 
@@ -83,10 +85,10 @@ function normalizeStory(story, index = 0, tab = 'Fresh') {
   }
 
   const badgeColorByTab = {
-    Fresh: 'red',
-    Popular: 'yellow',
-    'Recent Complete': 'green',
-  }
+  Fresh: 'new',
+  Popular: 'up',
+  'Recent Complete': 'end',
+}
 
   return {
     id: story.id,
@@ -124,14 +126,14 @@ function BookCard({ book, onClick }) {
           />
 
           {book.badge && (
-            <div
-              className={`absolute right-2 top-2 rounded-full px-3 py-1 text-[10px] font-extrabold sm:text-[11px] ${
-                badgeStyles[book.badgeColor] || 'bg-black text-white'
-              }`}
-            >
-              {book.badge}
-            </div>
-          )}
+  <div
+    className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${
+      badgeStyles[book.badgeColor] || badgeStyles.new
+    }`}
+  >
+    {book.badge}
+  </div>
+)}
 
           {book.isAdult ? (
             <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
