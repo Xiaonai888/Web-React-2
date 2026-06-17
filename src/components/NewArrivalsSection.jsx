@@ -109,7 +109,7 @@ function BookCard({ book, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group block w-full text-left"
+      className="group block h-full w-[44%] shrink-0 snap-start text-left sm:w-[30%] lg:w-full"
     >
       <div className="flex flex-col items-start">
         <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
@@ -141,7 +141,7 @@ function BookCard({ book, onClick }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 text-[16px] font-extrabold leading-snug tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[44px] text-[16px] font-extrabold leading-[22px] tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
@@ -149,13 +149,13 @@ function BookCard({ book, onClick }) {
             {book.author}
           </p>
 
-          {book.genre ? (
-            <div className="mt-2">
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
-                {book.genre}
-              </span>
-            </div>
-          ) : null}
+          <div className="mt-2 min-h-[27px]">
+  {book.genre ? (
+    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
+      {book.genre}
+    </span>
+  ) : null}
+</div>
 
           <div className="mt-2 flex items-center gap-4 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
@@ -188,7 +188,7 @@ function LoadingGrid() {
         <div className="h-10 w-32 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+      <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
