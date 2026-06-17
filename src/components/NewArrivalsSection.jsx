@@ -109,7 +109,7 @@ function BookCard({ book, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group block h-full w-[44%] shrink-0 snap-start text-left sm:w-[30%] lg:w-full"
+      className="group block h-full w-full text-left"
     >
       <div className="flex flex-col items-start">
         <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
@@ -326,7 +326,7 @@ export default function NewArrivalsSection() {
       </div>
 
       {books.length ? (
-        <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
           {books.map((book) => (
             <BookCard
               key={book.id}
