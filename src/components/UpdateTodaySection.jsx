@@ -244,7 +244,7 @@ export default function UpdateTodaySection() {
             className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-950 transition hover:bg-black/5 sm:h-10 sm:w-10"
             aria-label="View all update today"
           >
-            <i className="fas fa-chevron-right text-[18px] sm:text-[20px]" />
+            <i className="fas fa-chevron-right translate-x-0.5 text-[18px] sm:translate-x-0 sm:text-[20px]" />
           </Link>
         </div>
 
