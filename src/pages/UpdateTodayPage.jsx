@@ -283,7 +283,13 @@ export default function UpdateTodayPage() {
             Update Today
           </h1>
 
-          <div className="h-9 w-9 shrink-0" />
+          <Link
+  to="/search"
+  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] transition-colors hover:bg-[#f4f5f7]"
+  aria-label="Search"
+>
+  <i className="fas fa-search text-[18px]" />
+</Link>
         </div>
       </header>
 
@@ -306,12 +312,12 @@ export default function UpdateTodayPage() {
                 {day.label}
 
                 <span
-                  className={`absolute bottom-0 left-1/2 h-[4px] -translate-x-1/2 rounded-full transition-all ${
-                    active
-                      ? 'w-7 bg-[#f43f7a]'
-                      : 'w-0 bg-transparent'
-                  }`}
-                />
+  className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-[10px] transition-all ${
+    active
+      ? 'w-7 bg-[#F6B800]'
+      : 'w-0 bg-transparent'
+  }`}
+/>
               </button>
             )
           })}
