@@ -232,22 +232,22 @@ export default function UpdateTodaySection() {
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[18px] sm:text-[20px]">🎉</span>
-            <h2 className="text-[20px] font-extrabold uppercase tracking-[0.04em] text-neutral-950 sm:text-[24px]">
-              UPDATE TODAY
-            </h2>
-          </div>
+        <div className="mb-4 flex items-center justify-between">
+  <div className="flex items-center gap-2">
+    <span className="text-[20px] lg:text-[21px]">🎉</span>
+    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+      Update Today
+    </h2>
+  </div>
 
-          <Link
-  to="/update-today"
-  className="flex h-9 w-9 items-center justify-end rounded-full text-neutral-950 transition hover:bg-black/5 sm:h-10 sm:w-10"
-  aria-label="View all update today"
->
-  <i className="fas fa-chevron-right text-[18px] sm:text-[20px]" />
-</Link>
-        </div>
+  <Link
+    to="/update-today"
+    className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+    aria-label="View all update today"
+  >
+    <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+  </Link>
+</div>
 
         <div className="flex items-start gap-4">
           <Link
