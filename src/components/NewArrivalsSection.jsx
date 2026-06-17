@@ -97,10 +97,9 @@ function BookCard({ book, onClick }) {
   {book.title}
 </h3>
 
-  <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-    {book.author}
-  </p>
-</div>
+<p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+  {book.author}
+</p>
       </div>
     </button>
   )
