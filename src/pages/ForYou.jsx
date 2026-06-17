@@ -132,6 +132,7 @@ const SHOW_STORY_TYPE_TABS = false
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
+  const [pressedGenre, setPressedGenre] = useState('')
   const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
   const [slides, setSlides] = useState([])
   const [slidesLoading, setSlidesLoading] = useState(true)
@@ -474,15 +475,20 @@ export default function ForYou() {
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
           <div id="tab-content-root">
-            <div className="flex space-x-3 px-4 py-5 overflow-x-auto no-scrollbar bg-white">
+            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 py-4 no-scrollbar">
               {genreTabs.map((tab) => {
                 const active = activeGenre === tab.slug
+                const pressed = pressedGenre === tab.slug
 
                 return (
                   <button
                     key={tab.slug}
                     type="button"
                     onClick={() => {
+  setActiveGenre(tab.slug)
+  setPressedGenre(tab.slug)
+  window.setTimeout(() => setPressedGenre(''), 320)
+
   if (tab.slug === 'today') {
     setActiveGenre(tab.slug)
     return
@@ -646,13 +652,22 @@ if (tab.slug === 'gl') {
                       
   setActiveGenre(tab.slug)
 }}
-                    className={
-                      active
-                        ? 'bg-[#111827] text-white px-6 py-1.5 rounded-full text-xs shrink-0 font-bold'
-                        : 'border border-gray-200 px-5 py-1.5 rounded-full text-xs shrink-0 text-gray-600 font-semibold bg-white'
-                    }
+                    className={`relative shrink-0 overflow-hidden px-3 py-2 text-[12px] transition-colors duration-300 ${
+  active ? 'font-semibold text-[#111827]' : 'font-normal text-[#9ca3af]'
+}`}
                   >
-                    {tab.label}
+                    {pressed ? (
+                      <span className="absolute inset-0 rounded-[10px] bg-[#F6B800]/15" />
+                    ) : null}
+
+                    {active ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-[5px] left-1/2 h-[6px] w-[76%] -translate-x-1/2 -skew-x-12 rounded-full bg-[#F6B800]/55"
+                      />
+                    ) : null}
+
+                    <span className="relative z-10">{tab.label}</span>
                   </button>
                 )
               })}
