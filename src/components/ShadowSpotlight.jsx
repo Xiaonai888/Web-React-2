@@ -91,9 +91,9 @@ export default function ShadowSpotlight() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 flex items-center px-4">
-        <h2 className="text-[20px] font-extrabold tracking-tight text-neutral-900">
-          SHADOW SPOTLIGHT
-        </h2>
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+  Shadow Spotlight
+</h2>
       </div>
 
       <div className="swiper shadowSpotlightSwiper !pl-4 !pr-10">
