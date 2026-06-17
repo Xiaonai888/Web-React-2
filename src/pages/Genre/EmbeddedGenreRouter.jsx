@@ -1,5 +1,4 @@
-import { lazy, Suspense } from 'react'
-
+import { Component, lazy, Suspense } from 'react'
 const RomanceGenrePage = lazy(() => import('./RomanceGenrePage'))
 const FantasyGenrePage = lazy(() => import('./FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./ActionGenrePage'))
@@ -66,6 +65,45 @@ const GENRE_COMPONENTS = {
   gl: GLGenrePage,
 }
 
+class GenreErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error) {
+    console.error('Embedded genre render error:', error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-[360px] items-center justify-center bg-white px-5">
+          <div className="rounded-[22px] bg-gray-50 px-6 py-8 text-center">
+            <p className="text-[13px] font-medium text-gray-500">
+              Unable to open this genre.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-full bg-[#111827] px-5 py-2 text-[12px] font-semibold text-white"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 function GenreLoading() {
   return (
     <div className="flex min-h-[360px] items-center justify-center bg-white">
@@ -117,10 +155,12 @@ export default function EmbeddedGenreRouter({ genreSlug }) {
       `}</style>
 
       <div className="embedded-old-genre">
-        <Suspense fallback={<GenreLoading />}>
-          <GenreComponent />
-        </Suspense>
-      </div>
+  <GenreErrorBoundary key={genreSlug}>
+    <Suspense fallback={<GenreLoading />}>
+      <GenreComponent />
+    </Suspense>
+  </GenreErrorBoundary>
+</div>
     </>
   )
 }
