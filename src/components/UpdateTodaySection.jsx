@@ -70,7 +70,10 @@ function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
+    author:
+  story.author_page?.page_name ||
+  story.author_page?.page_username ||
+  'Shadow Author',
     cover: story.cover_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
