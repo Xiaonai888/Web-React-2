@@ -1,64 +1,180 @@
 import { NavLink } from 'react-router-dom'
 
+function HeartIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <path
+        d="M12 20.3 10.6 19C5.4 14.3 2 11.2 2 7.4 2 4.4 4.4 2 7.4 2c1.7 0 3.4.8 4.6 2.1C13.2 2.8 14.9 2 16.6 2 19.6 2 22 4.4 22 7.4c0 3.8-3.4 6.9-8.6 11.6L12 20.3Z"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PlayIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.9"
+      />
+      <path
+        d="m10 8 6 4-6 4V8Z"
+        fill={active ? '#111827' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CompassIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.9"
+      />
+      <path
+        d="m15.8 8.2-2.1 5.5-5.5 2.1 2.1-5.5 5.5-2.1Z"
+        fill={active ? '#111827' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function BookIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <path
+        d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12H7a2 2 0 0 1-2-2V4.5Z"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 19a2 2 0 0 1 0-4h11"
+        fill="none"
+        stroke="#111827"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function SmileIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.9"
+      />
+      <circle cx="9" cy="10" r="1" fill="#111827" />
+      <circle cx="15" cy="10" r="1" fill="#111827" />
+      <path
+        d="M8.5 14c1 1.4 2.2 2 3.5 2s2.5-.6 3.5-2"
+        fill="none"
+        stroke="#111827"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const NAV = [
-  { to: '/', icon: 'fa-heart', label: 'For You' },
-  { to: '/fast', icon: 'fa-circle-play', label: 'Fast' },
-  { to: '/discover', icon: 'fa-compass', label: 'Discover' },
-  { to: '/library', icon: 'fa-book', label: 'Library' },
-  { to: '/me', icon: 'fa-face-smile', label: 'Mine' },
+  { to: '/', label: 'For You', Icon: HeartIcon },
+  { to: '/fast', label: 'Fast', Icon: PlayIcon },
+  { to: '/discover', label: 'Discover', Icon: CompassIcon },
+  { to: '/library', label: 'Library', Icon: BookIcon },
+  { to: '/me', label: 'Mine', Icon: SmileIcon },
 ]
 
 export default function Footer() {
   return (
-    <footer style={{
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      background: 'rgba(255,255,255,0.97)',
-      borderTop: '1px solid #f1f5f9',
-      boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
-      zIndex: 99999,
-      paddingTop: '10px',
-      paddingBottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      transition: 'transform 0.2s ease-out',
-      willChange: 'transform',
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '32px',
-        maxWidth: '480px',
-        margin: '0 auto',
-        padding: '0 8px',
-      }}>
-        {NAV.map((item) => (
+    <footer
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: 'rgba(255,255,255,0.98)',
+        borderTop: '1px solid #eeeeee',
+        boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
+        zIndex: 99999,
+        paddingTop: '7px',
+        paddingBottom: 'calc(7px + env(safe-area-inset-bottom, 0px))',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        transition: 'transform 0.2s ease-out',
+        willChange: 'transform',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          maxWidth: '480px',
+          margin: '0 auto',
+          padding: '0 8px',
+        }}
+      >
+        {NAV.map(({ to, label, Icon }) => (
           <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
+            key={to}
+            to={to}
+            end={to === '/'}
             style={({ isActive }) => ({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              width: '52px',
+              justifyContent: 'center',
+              width: '56px',
+              minHeight: '43px',
               textDecoration: 'none',
               gap: '3px',
-              color: isActive ? '#111827' : '#9ca3af',
+              color: '#111827',
             })}
           >
-            <i className={`fa-solid ${item.icon}`} style={{ fontSize: '20px' }} />
-            <span style={{
-              fontSize: '9px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}>
-              {item.label}
-            </span>
+            {({ isActive }) => (
+              <>
+                <Icon active={isActive} />
+
+                <span
+                  style={{
+                    fontSize: '10px',
+                    lineHeight: 1.15,
+                    fontWeight: isActive ? 500 : 400,
+                    color: '#111827',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {label}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>
