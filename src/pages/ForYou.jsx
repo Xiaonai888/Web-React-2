@@ -686,11 +686,16 @@ export default function ForYou() {
               <div className="swiper-pagination" />
             </div>
 
-            <div className="grid grid-cols-4 gap-4 py-4 px-4 text-center">
+            <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
   {[
     { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
     { icon: 'fa-tasks', label: 'Tasks', path: '/tasks' },
-    { icon: 'fa-trophy', label: 'Ranking', path: '/ranking' },
+    {
+      icon: 'fa-trophy',
+      label: 'Ranking',
+      path: '/ranking',
+      highlight: true,
+    },
     { icon: 'fa-calendar', label: 'Event', path: '/event' },
   ].map((item) => (
     <div
@@ -698,10 +703,21 @@ export default function ForYou() {
       className="group cursor-pointer"
       onClick={() => item.path && navigate(item.path)}
     >
-      <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
-        <i className={`fas ${item.icon} text-[#6b7280]`} />
+      <div
+        className={`mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-[14px] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:bg-[#F6B800] ${
+          item.highlight
+            ? 'bg-[#F6B800]'
+            : 'bg-[#FFF4BF] ring-1 ring-[#F6B800]/30'
+        }`}
+      >
+        <i
+          className={`fas ${item.icon} text-[17px] text-[#111827]`}
+        />
       </div>
-      <span className="text-[10px] font-semibold text-[#111827]">{item.label}</span>
+
+      <span className="text-[10px] font-semibold text-[#111827]">
+        {item.label}
+      </span>
     </div>
   ))}
 </div>
