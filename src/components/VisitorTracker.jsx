@@ -10,6 +10,7 @@ const API_URL =
 const VISITOR_ID_KEY = 'shadow_anonymous_visitor_id'
 const SESSION_ID_KEY = 'shadow_anonymous_session_id'
 const LAST_TRACK_KEY = 'shadow_anonymous_last_track'
+const EVENT_HISTORY_KEY = 'shadow_anonymous_event_history'
 
 function createTrackingId(prefix) {
   const randomValue =
@@ -73,6 +74,78 @@ function rememberTrackedPath(path) {
   }
 }
 
+function readEventHistory() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(EVENT_HISTORY_KEY) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+}
+
+function getBehaviorSnapshot(path) {
+  const now = Date.now()
+  const history = readEventHistory().filter(
+    (item) => now - Number(item?.tracked_at || 0) <= 60_000
+  )
+  const previous = history.at(-1) || null
+
+  return {
+    navigation_count_10s:
+      history.filter((item) => now - Number(item?.tracked_at || 0) <= 10_000).length + 1,
+    rapid_repeat_count_30s: history.filter(
+      (item) =>
+        item?.path === path &&
+        now - Number(item?.tracked_at || 0) <= 30_000
+    ).length,
+    seconds_since_previous_event: previous
+      ? Math.max(0, Math.round((now - Number(previous.tracked_at || now)) / 1000))
+      : null,
+    previous_path: previous?.path || '',
+  }
+}
+
+function rememberNavigationEvent(path) {
+  try {
+    const now = Date.now()
+    const history = readEventHistory()
+      .filter((item) => now - Number(item?.tracked_at || 0) <= 60_000)
+      .slice(-49)
+
+    history.push({
+      path,
+      tracked_at: now,
+    })
+
+    sessionStorage.setItem(EVENT_HISTORY_KEY, JSON.stringify(history))
+  } catch {
+    return
+  }
+}
+
+function getBrowserSignals() {
+  const navigationEntry = performance.getEntriesByType?.('navigation')?.[0]
+
+  return {
+    webdriver_detected: navigator.webdriver === true,
+    language: String(navigator.language || '').slice(0, 40),
+    languages_count: Array.isArray(navigator.languages) ? navigator.languages.length : 0,
+    timezone: String(Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 80),
+    screen_width: Number(window.screen?.width || 0),
+    screen_height: Number(window.screen?.height || 0),
+    color_depth: Number(window.screen?.colorDepth || 0),
+    pixel_ratio: Number(window.devicePixelRatio || 1),
+    touch_points: Number(navigator.maxTouchPoints || 0),
+    hardware_concurrency: Number(navigator.hardwareConcurrency || 0),
+    device_memory: Number(navigator.deviceMemory || 0),
+    cookie_enabled: navigator.cookieEnabled === true,
+    platform: String(navigator.userAgentData?.platform || navigator.platform || '').slice(0, 80),
+    user_agent_mobile: navigator.userAgentData?.mobile === true,
+    plugins_count: Number(navigator.plugins?.length || 0),
+    navigation_type: String(navigationEntry?.type || '').slice(0, 30),
+  }
+}
+
 async function readResponse(response) {
   const text = await response.text()
 
@@ -105,6 +178,8 @@ export default function VisitorTracker() {
     }
 
     const path = location.pathname || '/'
+    const behaviorSignals = getBehaviorSnapshot(path)
+    rememberNavigationEvent(path)
 
     if (!debugEnabled && wasRecentlyTracked(path)) return undefined
 
@@ -132,6 +207,8 @@ export default function VisitorTracker() {
             session_id: sessionId,
             path,
             referrer: document.referrer || '',
+            browser_signals: getBrowserSignals(),
+            behavior_signals: behaviorSignals,
             debug: debugEnabled,
           }),
           keepalive: true,
