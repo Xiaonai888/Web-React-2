@@ -176,7 +176,7 @@ export default function FanPicksSection() {
             key={book.id}
             type="button"
             onClick={() => navigate(book.link)}
-            className="w-[44%] shrink-0 snap-start text-left sm:w-[30%] lg:w-full"
+            className="w-full text-left"
           >
             <BookCard book={book} />
           </button>
