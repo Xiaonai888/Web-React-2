@@ -94,7 +94,7 @@ function BookCard({ book, onClick }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[44px] text-[16px] font-extrabold leading-[22px] tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[44px] text-[15px] font-normal leading-[21px] text-neutral-900">
             {book.title}
           </h3>
 
@@ -135,7 +135,7 @@ function LoadingGrid() {
         <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
@@ -227,7 +227,7 @@ export default function NewArrivalsSection() {
       </div>
 
       {books.length ? (
-        <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
           {books.map((book) => (
             <BookCard
               key={book.id}
