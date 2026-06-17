@@ -63,11 +63,7 @@ function BookCard({ book }) {
             </div>
           ) : null}
 
-          {book.genre ? (
-            <div className="absolute left-2 top-2 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
-              {book.genre}
-            </div>
-          ) : null}
+          
         </div>
 
         <div className="mt-3 w-full">
