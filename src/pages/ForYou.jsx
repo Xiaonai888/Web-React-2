@@ -11,8 +11,8 @@ import EventPerksHubSection from '../components/EventPerksHubSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
-import RomanceGenrePage from './Genre/RomanceGenrePage'
 import NotificationPage from './NotificationPage'
+import EmbeddedGenrePage from './Genre/EmbeddedGenrePage'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -168,6 +168,18 @@ export default function ForYou() {
   const navigate = useNavigate()
   const swiperRef = useRef(null)
   const lastScrollYRef = useRef(0)
+
+  function handleGenreChange(tab) {
+  setPressedGenre(tab.slug)
+
+  window.setTimeout(() => {
+    setPressedGenre((current) =>
+      current === tab.slug ? '' : current
+    )
+  }, 220)
+
+  setActiveGenre(tab.slug)
+}
 
   useEffect(() => {
   refreshNotificationUnreadCount()
@@ -484,206 +496,51 @@ export default function ForYou() {
           <div id="tab-content-root">
             <div className="flex gap-1.5 overflow-x-auto bg-white px-4 py-4 no-scrollbar">
               {genreTabs.map((tab) => {
-                const active = activeGenre === tab.slug
-                const pressed = pressedGenre === tab.slug
+  const active = activeGenre === tab.slug
+  const pressed = pressedGenre === tab.slug
 
-                return (
-                  <button
-                    key={tab.slug}
-                    type="button"
-                    onClick={() => {
-  setActiveGenre(tab.slug)
-  setPressedGenre(tab.slug)
-  window.setTimeout(() => setPressedGenre(''), 320)
+  return (
+    <button
+      key={tab.slug}
+      type="button"
+      onClick={() => handleGenreChange(tab)}
+      className={`relative shrink-0 rounded-full px-3 py-2.5 text-[12px] transition-colors duration-200 ${
+        active
+          ? 'font-semibold text-[#111827]'
+          : 'font-normal text-[#9ca3af]'
+      } ${
+        pressed
+          ? 'bg-[#f1f2f4]'
+          : 'bg-transparent'
+      }`}
+    >
+      <span className="relative z-10">
+        {tab.label}
+      </span>
 
-  if (tab.slug === 'today') {
-    setActiveGenre(tab.slug)
-    return
-  }
-
-  if (tab.slug === 'romance') {
-  setActiveGenre('romance')
-  return
-}
-
-  if (tab.slug === 'fantasy') {
-    navigate('/genre/fantasy')
-    return
-  }
-                      
-  if (tab.slug === 'action') {
-  navigate('/genre/action')
-  return
-}
-
-  if (tab.slug === 'comedy') {
-  navigate('/genre/comedy')
-  return
-}
-
-  if (tab.slug === 'adventure') {
-  navigate('/genre/adventure')
-  return
-}
-
-
-if (tab.slug === 'school-life') {
-  navigate('/genre/school-life')
-  return
-}       
-
-if (tab.slug === 'historical') {
-  navigate('/genre/historical')
-  return
-}    
-
-if (tab.slug === 'mystery') {
-  navigate('/genre/mystery')
-  return
-}        
-
-if (tab.slug === 'horror') {
-  navigate('/genre/horror')
-  return
-}                      
-
-if (tab.slug === 'lgbtq' || tab.slug === 'lgbtq+') {
-  navigate('/genre/lgbtq')
-  return
-}       
-
-if (tab.slug === 'sci-fi' || tab.slug === 'scifi') {
-  navigate('/genre/sci-fi')
-  return
-}        
-
-if (tab.slug === 'drama') {
-  navigate('/genre/drama')
-  return
-}       
-
-if (tab.slug === 'thriller') {
-  navigate('/genre/thriller')
-  return
-}          
-
-if (tab.slug === 'system') {
-  navigate('/genre/system')
-  return
-}       
-
-if (tab.slug === 'isekai') {
-  navigate('/genre/isekai')
-  return
-}                   
-
-if (tab.slug === 'supernatural') {
-  navigate('/genre/supernatural')
-  return
-}
-
-if (tab.slug === 'martial-arts') {
-  navigate('/genre/martial-arts')
-  return
-}           
-
-if (tab.slug === 'revenge') {
-  navigate('/genre/revenge')
-  return
-}
-
-
-if (tab.slug === 'ceo') {
-  navigate('/genre/ceo')
-  return
-}       
-
-
-if (tab.slug === 'slow-burn') {
-  navigate('/genre/slow-burn')
-  return
-}         
-
-if (tab.slug === 'enemies-to-lovers') {
-  navigate('/genre/enemies-to-lovers')
-  return
-}    
-
-if (tab.slug === 'time-travel') {
-  navigate('/genre/time-travel')
-  return
-}      
-                      
-if (tab.slug === 'strong-female-lead') {
-  navigate('/genre/strong-female-lead')
-  return
-}      
-
-if (tab.slug === 'hidden-identity') {
-  navigate('/genre/hidden-identity')
-  return
-}                      
-
-if (tab.slug === 'royalty') {
-  navigate('/genre/royalty')
-  return
-}              
-
-if (tab.slug === 'magic') {
-  navigate('/genre/magic')
-  return
-}                
-
-
-if (tab.slug === 'second-chance') {
-  navigate('/genre/second-chance')
-  return
-}    
-
-if (tab.slug === 'cold-male-lead') {
-  navigate('/genre/cold-male-lead')
-  return
-}
-
-if (tab.slug === 'bl') {
-  navigate('/genre/bl')
-  return
-} 
-
-
-if (tab.slug === 'gl') {
-  navigate('/genre/gl')
-  return
-}                      
-                      
-                      
-  setActiveGenre(tab.slug)
-}}
-                    className={`relative shrink-0 overflow-hidden px-3 py-2 text-[12px] transition-colors duration-300 ${
-  active ? 'font-semibold text-[#111827]' : 'font-normal text-[#9ca3af]'
-}`}
-                  >
-                    {pressed ? (
-                      <span className="absolute inset-0 rounded-[10px] bg-[#F6B800]/15" />
-                    ) : null}
-
-                    {active ? (
-                      <span
-                        aria-hidden="true"
-                        className="absolute bottom-[5px] left-1/2 h-[6px] w-[76%] -translate-x-1/2 -skew-x-12 rounded-full bg-[#F6B800]/55"
-                      />
-                    ) : null}
-
-                    <span className="relative z-10">{tab.label}</span>
-                  </button>
-                )
-              })}
+      <span
+        className={`absolute bottom-[3px] left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#F6B800] transition-all duration-200 ${
+          active
+            ? 'w-[62%] opacity-100'
+            : 'w-0 opacity-0'
+        }`}
+      />
+    </button>
+  )
+})}
             </div>
 
-            {activeGenre === 'romance' ? (
-  <RomanceGenrePage embedded />
-) : (
-  <>
+            {activeGenre !== 'today' ? (
+              <EmbeddedGenrePage
+                key={activeGenre}
+                genreSlug={activeGenre}
+                genreLabel={
+                  genreTabs.find((tab) => tab.slug === activeGenre)?.label ||
+                  activeGenre
+                }
+              />
+            ) : (
+              <>
 
             <div className="swiper-container mySwiper">
               <div className="swiper-wrapper">
