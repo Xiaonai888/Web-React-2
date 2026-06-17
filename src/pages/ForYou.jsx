@@ -12,7 +12,8 @@ import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
 import NotificationPage from './NotificationPage'
-import EmbeddedGenrePage from './Genre/EmbeddedGenrePage'
+import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
+
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
