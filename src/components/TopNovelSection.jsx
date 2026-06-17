@@ -74,7 +74,7 @@ function createFallbackBooks(category) {
     id: `fallback-${category}-${rank}`,
     rank,
     title: `${category} Top ${rank}`,
-    author: 'Shadow Author',
+    author: 'Author Page',
     views: rank === 1 ? '100k' : rank === 2 ? '88k' : '72k',
     likes: rank === 1 ? '1000' : rank === 2 ? '860' : '740',
     description: `Top weekly ${category} story preview.`,
@@ -103,7 +103,10 @@ function normalizeStory(story, index = 0) {
     id: story.id,
     rank,
     title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
+    author:
+  story.author_page?.page_name ||
+  story.author_page?.page_username ||
+  'Author Page',
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
     description: story.description || 'No description yet.',
