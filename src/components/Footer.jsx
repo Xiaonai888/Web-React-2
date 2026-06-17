@@ -123,8 +123,8 @@ export default function Footer() {
         borderTop: '1px solid #eeeeee',
         boxShadow: '0 -2px 12px rgba(0,0,0,0.04)',
         zIndex: 99999,
-        paddingTop: '7px',
-        paddingBottom: 'calc(7px + env(safe-area-inset-bottom, 0px))',
+        paddingTop: '4px',
+        paddingBottom: 'calc(4px + env(safe-area-inset-bottom, 0px))',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         transition: 'transform 0.2s ease-out',
@@ -152,9 +152,9 @@ export default function Footer() {
               alignItems: 'center',
               justifyContent: 'center',
               width: '56px',
-              minHeight: '43px',
+              minHeight: '40px',
               textDecoration: 'none',
-              gap: '3px',
+              gap: '2px',
               color: '#111827',
             })}
           >
