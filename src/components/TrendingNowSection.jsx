@@ -277,9 +277,9 @@ export default function TrendingNowSection() {
     <section className="px-4 pb-2 pt-8 md:pt-10">
       <div className="flex items-center gap-2">
         <span className="text-[28px] leading-none">🔥</span>
-        <h2 className="text-[20px] font-black uppercase tracking-tight text-[#111] md:text-[22px]">
-          TRENDING NOW
-        </h2>
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+  Trending Now
+</h2>
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-4">
