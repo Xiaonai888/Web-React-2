@@ -174,13 +174,13 @@ export default function YouMightLikeSection() {
         </div>
 
         <button
-          type="button"
-          onClick={() => navigate('/you-might-like')}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-          aria-label="Go to You Might Like page"
-        >
-          <i className="fas fa-chevron-right text-[15px] text-gray-700" />
-        </button>
+  type="button"
+  onClick={() => navigate('/you-might-like')}
+  className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+  aria-label="Go to You Might Like page"
+>
+  <i className="fas fa-chevron-right text-[15px] text-gray-700" />
+</button>
       </div>
 
       <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-6">
