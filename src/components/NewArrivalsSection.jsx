@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
 
@@ -10,99 +10,50 @@ const API_BASE_URL =
 const badgeStyles = {
   new: 'bg-[#FF4D6D] text-white',
   up: 'bg-[#F6B800] text-[#111827]',
-  end: 'bg-[#16A34A] text-white',
-}
-
-const newArrivalsTabs = ['Fresh', 'Popular', 'Recent Complete']
-
-const createFallbackBook = (
-  id,
-  imageNumber,
-  title,
-  author,
-  badge,
-  badgeColor,
-  likes,
-  views,
-  link = `/story/${id}`
-) => ({
-  id,
-  title,
-  author,
-  badge,
-  badgeColor,
-  likes,
-  views,
-  link,
-  cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
-  isFallback: true,
-})
-
-const fallbackNewArrivalsData = {
-  Fresh: [
-    createFallbackBook(401, 1, 'Name Book', 'Author Name', 'NEW', 'new', '1000', '100k'),
-    createFallbackBook(402, 2, 'Name Book', 'Author Name', 'UP', 'up', '920', '88k'),
-    createFallbackBook(403, 3, 'Name Book', 'Author Name', 'END', 'end', '860', '74k'),
-    createFallbackBook(404, 4, 'Name Book', 'Author Name', 'NEW', 'new', '1.4k', '120k'),
-    createFallbackBook(405, 5, 'Name Book', 'Author Name', 'UP', 'up', '980', '93k'),
-    createFallbackBook(406, 6, 'Name Book', 'Author Name', 'END', 'end', '710', '68k'),
-  ],
-
-  Popular: [
-    createFallbackBook(407, 7, 'Name Book', 'Author Name', 'NEW', 'new', '2.4k', '210k'),
-    createFallbackBook(408, 8, 'Name Book', 'Author Name', 'UP', 'up', '2.1k', '196k'),
-    createFallbackBook(409, 9, 'Name Book', 'Author Name', 'END', 'end', '1.8k', '172k'),
-    createFallbackBook(410, 10, 'Name Book', 'Author Name', 'NEW', 'new', '2.0k', '184k'),
-    createFallbackBook(411, 11, 'Name Book', 'Author Name', 'UP', 'up', '1.7k', '160k'),
-    createFallbackBook(412, 12, 'Name Book', 'Author Name', 'END', 'end', '1.5k', '145k'),
-  ],
-
-  'Recent Complete': [
-    createFallbackBook(413, 13, 'Name Book', 'Author Name', 'END', 'end', '1.3k', '110k'),
-    createFallbackBook(414, 14, 'Name Book', 'Author Name', 'END', 'end', '1.1k', '102k'),
-    createFallbackBook(415, 15, 'Name Book', 'Author Name', 'END', 'end', '980', '95k'),
-    createFallbackBook(416, 16, 'Name Book', 'Author Name', 'END', 'end', '920', '89k'),
-    createFallbackBook(417, 17, 'Name Book', 'Author Name', 'END', 'end', '870', '84k'),
-    createFallbackBook(418, 18, 'Name Book', 'Author Name', 'END', 'end', '810', '79k'),
-  ],
 }
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
+  }
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  }
 
   return String(number)
 }
 
-function normalizeStory(story, index = 0, tab = 'Fresh') {
-  const badgeByTab = {
-    Fresh: 'NEW',
-    Popular: 'UP',
-    'Recent Complete': 'END',
-  }
-
-  const badgeColorByTab = {
-  Fresh: 'new',
-  Popular: 'up',
-  'Recent Complete': 'end',
+function isCompletedStory(story) {
+  return String(story.story_status || '')
+    .trim()
+    .toLowerCase() === 'completed'
 }
+
+function normalizeStory(story, index = 0) {
+  const totalEpisodes = Number(story.total_episodes || 0)
+  const isNew = totalEpisodes === 1
 
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
-    badge: badgeByTab[tab] || 'NEW',
-    badgeColor: badgeColorByTab[tab] || 'red',
+    author:
+      story.author_page?.page_name ||
+      story.author_page?.page_username ||
+      story.author_name ||
+      'Shadow Author',
+    badge: isNew ? 'NEW' : 'UP',
+    badgeColor: isNew ? 'new' : 'up',
     likes: formatCompactNumber(story.total_likes),
     views: formatCompactNumber(story.total_views),
-    cover: story.cover_url || `/assets/New Arrival/New Arrival ${Math.min(index + 1, 18)}.jpg`,
+    cover:
+      story.cover_url ||
+      `/assets/New Arrival/New Arrival ${Math.min(index + 1, 18)}.jpg`,
     link: `/story/${story.id}`,
     genre: story.main_genre || '',
     isAdult: Boolean(story.is_adult),
-    isFallback: false,
   }
 }
 
@@ -125,15 +76,15 @@ function BookCard({ book, onClick }) {
             }}
           />
 
-          {book.badge && (
-  <div
-    className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${
-      badgeStyles[book.badgeColor] || badgeStyles.new
-    }`}
-  >
-    {book.badge}
-  </div>
-)}
+          {book.badge ? (
+            <div
+              className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${
+                badgeStyles[book.badgeColor] || badgeStyles.new
+              }`}
+            >
+              {book.badge}
+            </div>
+          ) : null}
 
           {book.isAdult ? (
             <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
@@ -152,12 +103,12 @@ function BookCard({ book, onClick }) {
           </p>
 
           <div className="mt-2 min-h-[27px]">
-  {book.genre ? (
-    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
-      {book.genre}
-    </span>
-  ) : null}
-</div>
+            {book.genre ? (
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
+                {book.genre}
+              </span>
+            ) : null}
+          </div>
 
           <div className="mt-2 flex items-center gap-4 text-[13px] text-gray-600">
             <div className="flex items-center gap-1">
@@ -184,14 +135,8 @@ function LoadingGrid() {
         <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="mb-5 flex gap-3 overflow-hidden">
-        <div className="h-10 w-20 animate-pulse rounded-full bg-gray-100" />
-        <div className="h-10 w-24 animate-pulse rounded-full bg-gray-100" />
-        <div className="h-10 w-32 animate-pulse rounded-full bg-gray-100" />
-      </div>
-
       <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
-        {Array.from({ length: 6 }).map((_, index) => (
+        {Array.from({ length: 5 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
             <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
@@ -205,15 +150,10 @@ function LoadingGrid() {
 
 export default function NewArrivalsSection() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Fresh')
-  const [realBooks, setRealBooks] = useState({
-    Fresh: [],
-    Popular: [],
-    'Recent Complete': [],
-  })
+  const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [fetchFailed, setFetchFailed] = useState(false)
-  const [storyLanguage, setStoryLanguage] = useState(() => getStoryLanguageLabel())
+  const [loadFailed, setLoadFailed] = useState(false)
+  const storyLanguage = getStoryLanguageLabel()
 
   useEffect(() => {
     let ignore = false
@@ -221,48 +161,34 @@ export default function NewArrivalsSection() {
     async function fetchNewArrivals() {
       try {
         setLoading(true)
-        setFetchFailed(false)
-        setStoryLanguage(getStoryLanguageLabel())
+        setLoadFailed(false)
 
-        const [freshResponse, popularResponse, recentResponse] = await Promise.all([
-          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=latest`)),
-          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)),
-          fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`)),
-        ])
+        const response = await fetch(
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?limit=48&sort=latest`
+          )
+        )
+        const data = await response.json().catch(() => ({}))
 
-        const freshData = await freshResponse.json().catch(() => ({}))
-        const popularData = await popularResponse.json().catch(() => ({}))
-        const recentData = await recentResponse.json().catch(() => ({}))
-
-        if (!freshResponse.ok || freshData.ok === false) {
-          throw new Error(freshData.message || 'Failed to load fresh stories')
-        }
-
-        if (!popularResponse.ok || popularData.ok === false) {
-          throw new Error(popularData.message || 'Failed to load popular stories')
-        }
-
-        if (!recentResponse.ok || recentData.ok === false) {
-          throw new Error(recentData.message || 'Failed to load recent stories')
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load new arrivals')
         }
 
         if (ignore) return
 
-        setRealBooks({
-          Fresh: (freshData.stories || []).map((story, index) => normalizeStory(story, index, 'Fresh')),
-          Popular: (popularData.stories || []).map((story, index) => normalizeStory(story, index, 'Popular')),
-          'Recent Complete': (recentData.stories || []).map((story, index) => normalizeStory(story, index, 'Recent Complete')),
-        })
+        const newestBooks = (data.stories || [])
+          .filter((story) => Number(story.total_episodes || 0) >= 1)
+          .filter((story) => !isCompletedStory(story))
+          .map(normalizeStory)
+          .slice(0, 5)
+
+        setBooks(newestBooks)
       } catch (error) {
         console.error('NewArrivalsSection fetch error:', error)
 
         if (!ignore) {
-          setFetchFailed(true)
-          setRealBooks({
-            Fresh: [],
-            Popular: [],
-            'Recent Complete': [],
-          })
+          setLoadFailed(true)
+          setBooks([])
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -276,12 +202,6 @@ export default function NewArrivalsSection() {
     }
   }, [])
 
-  const books = useMemo(() => {
-    const list = realBooks[activeTab]
-    if (list?.length) return list
-    return fetchFailed ? fallbackNewArrivalsData[activeTab] || [] : []
-  }, [activeTab, fetchFailed, realBooks])
-
   if (loading) {
     return <LoadingGrid />
   }
@@ -290,8 +210,8 @@ export default function NewArrivalsSection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[20px]">🚀</span>
-          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+          <span className="text-[20px] lg:text-[21px]">🚀</span>
+          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
             New Arrivals
           </h2>
         </div>
@@ -299,32 +219,11 @@ export default function NewArrivalsSection() {
         <button
           type="button"
           onClick={() => navigate('/new-arrivals')}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+          className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
           aria-label="Go to New Arrivals page"
         >
-          <i className="fas fa-chevron-right text-[15px] text-gray-700" />
+          <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
         </button>
-      </div>
-
-      <div className="mb-5 flex gap-3 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {newArrivalsTabs.map((tab) => {
-          const isActive = activeTab === tab
-
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
-                isActive
-                  ? 'border-black bg-black text-white'
-                  : 'border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50'
-              }`}
-            >
-              {tab}
-            </button>
-          )
-        })}
       </div>
 
       {books.length ? (
@@ -340,10 +239,12 @@ export default function NewArrivalsSection() {
       ) : (
         <div className="rounded-[22px] bg-[#f8f8fb] px-4 py-6 text-center">
           <div className="text-[14px] font-extrabold text-[#111827]">
-            No {storyLanguage} stories yet
+            {loadFailed
+              ? 'Could not load new arrivals'
+              : `No ${storyLanguage} new stories yet`}
           </div>
           <div className="mt-1 text-[12px] text-[#8d94a1]">
-            Try another story language from Settings.
+            Only published stories with at least one episode are shown.
           </div>
         </div>
       )}
