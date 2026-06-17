@@ -11,6 +11,7 @@ import EventPerksHubSection from '../components/EventPerksHubSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
+import RomanceGenrePage from './Genre/RomanceGenrePage'
 import NotificationPage from './NotificationPage'
 
 const API_URL =
@@ -279,7 +280,13 @@ export default function ForYou() {
   }, [])
 
   useEffect(() => {
-    if (!window.Swiper || slides.length === 0) return
+  if (
+    activeGenre !== 'today' ||
+    !window.Swiper ||
+    slides.length === 0
+  ) {
+    return
+  }
 
     if (swiperRef.current) {
       swiperRef.current.destroy(true, true)
@@ -315,7 +322,7 @@ export default function ForYou() {
         swiperRef.current = null
       }
     }
-  }, [slides])
+  }, [slides, activeGenre])
 
   return (
     <>
@@ -495,9 +502,9 @@ export default function ForYou() {
   }
 
   if (tab.slug === 'romance') {
-    navigate('/genre/romance')
-    return
-  }
+  setActiveGenre('romance')
+  return
+}
 
   if (tab.slug === 'fantasy') {
     navigate('/genre/fantasy')
@@ -673,6 +680,11 @@ if (tab.slug === 'gl') {
               })}
             </div>
 
+            {activeGenre === 'romance' ? (
+  <RomanceGenrePage embedded />
+) : (
+  <>
+
             <div className="swiper-container mySwiper">
               <div className="swiper-wrapper">
                 {slidesLoading && (
@@ -799,8 +811,10 @@ if (tab.slug === 'gl') {
             </div>
 
             <div className="my-6">
-              <FanPicksSection />
-            </div>
+  <FanPicksSection />
+</div>
+  </>
+)}
           </div>
         )}
       </div>
