@@ -503,7 +503,7 @@ export default function ForYou() {
           className="for-you-top-bars"
           style={{ transform: barsHidden ? 'translateY(-100%)' : 'translateY(0)' }}
         >
-          <header className="flex justify-between items-center px-4 py-4 bg-white shadow-sm">
+          <header className="flex items-center justify-between bg-white px-4 py-3">
             <div className="flex items-center space-x-2">
              <div className="flex h-9 w-[92px] items-center overflow-visible">
   <img
