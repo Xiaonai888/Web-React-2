@@ -98,19 +98,13 @@ function BookCard({ book, onClick }) {
             {book.title}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-[13px] font-medium text-gray-500">
-            {book.author}
-          </p>
+          <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+  {book.author}
+</p>
 
-          <div className="mt-2 min-h-[27px]">
-            {book.genre ? (
-              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10.5px] font-bold text-gray-500">
-                {book.genre}
-              </span>
-            ) : null}
-          </div>
+         
 
-          <div className="mt-2 flex items-center gap-4 text-[13px] text-gray-600">
+          <div className="mt-3 flex items-center gap-4 text-[12px] text-gray-600">
             <div className="flex items-center gap-1">
               <i className="fas fa-heart text-[12px] text-red-500" />
               <span>{book.likes}</span>
