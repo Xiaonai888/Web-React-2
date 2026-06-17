@@ -139,21 +139,22 @@ function LoadingSkeleton() {
   return (
     <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
       <div>
-        <div className="mb-5 flex items-center justify-between">
-          <div className="h-7 w-48 animate-pulse rounded-full bg-gray-100" />
-          <div className="h-9 w-9 animate-pulse rounded-full bg-gray-100" />
-        </div>
+        <div className="mb-4 flex items-center justify-between">
+  <div className="flex items-center gap-2">
+    <span className="text-[20px] lg:text-[21px]">🎉</span>
+    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+      Update Today
+    </h2>
+  </div>
 
-        <div className="flex items-start gap-4">
-          <div className="aspect-[2/3] w-[96px] shrink-0 animate-pulse rounded-2xl bg-gray-100 sm:w-[130px] lg:w-[220px]" />
-
-          <div className="min-w-0 flex-1">
-            <div className="h-7 w-3/4 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-3 h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-4 h-4 w-1/2 animate-pulse rounded-full bg-gray-100" />
-            <div className="mt-4 h-16 w-full animate-pulse rounded-2xl bg-gray-100" />
-          </div>
-        </div>
+  <Link
+    to="/update-today"
+    className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+    aria-label="View all update today"
+  >
+    <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+  </Link>
+</div>
 
         <div className="mt-8 grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
           {Array.from({ length: 6 }).map((_, index) => (
