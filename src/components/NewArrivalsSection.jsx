@@ -65,7 +65,7 @@ function BookCard({ book, onClick }) {
       className="group block h-full w-full text-left"
     >
       <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
@@ -94,32 +94,13 @@ function BookCard({ book, onClick }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[44px] text-[15px] font-normal leading-[21px] text-neutral-900">
-            {book.title}
-          </h3>
-
+          <h3 className="truncate text-[14px] font-normal leading-[20px] text-neutral-900 sm:line-clamp-2 sm:min-h-[44px] sm:whitespace-normal">
+  {book.title}
+</h3>
           <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
   {book.author}
 </p>
 
-         
-
-          <div className="mt-3 flex items-center gap-4 text-[12px] text-gray-600">
-            <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-[12px] text-red-500" />
-              <span>{book.likes}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <i className="fas fa-eye text-[12px]" />
-              <span>{book.views}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </button>
-  )
-}
 
 function LoadingGrid() {
   return (
