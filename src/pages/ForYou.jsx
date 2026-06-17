@@ -567,13 +567,13 @@ export default function ForYou() {
 ) : null}
         </div>
 
-        <div style={{ height: SHOW_STORY_TYPE_TABS ? '110px' : '72px' }} />
+        <div style={{ height: SHOW_STORY_TYPE_TABS ? '102px' : '64px' }} />
 
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
           <div id="tab-content-root">
-            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 py-4 no-scrollbar">
+            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 pb-3 pt-2 no-scrollbar">
               {genreTabs.map((tab) => {
   const active = activeGenre === tab.slug
   const pressed = pressedGenre === tab.slug
