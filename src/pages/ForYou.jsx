@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
+import DailyPicksSection from '../components/DailyPicksSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
 import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
@@ -708,7 +709,11 @@ export default function ForYou() {
             <div className="my-6">
               <ShadowSpotlight />
             </div>
-
+    
+            <div className="my-6">
+              <DailyPicksSection />
+            </div>
+    
             <div className="my-6">
               <ShadowExclusiveSection />
             </div>
