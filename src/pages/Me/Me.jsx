@@ -114,7 +114,7 @@ function BalanceItem({ value, label, to, state }) {
   const content = (
     <div className="text-center">
       <div className="text-[15px] font-extrabold text-[#111827] dark:text-white">{value}</div>
-      <div className="mt-1 text-[10.5px] font-semibold text-[#8d94a1] dark:text-white/50">{label}</div>
+      <div className="mt-1 text-[10.5px] font-normal text-[#8d94a1] dark:text-white/50">{label}</div>
     </div>
   )
 
