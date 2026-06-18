@@ -154,7 +154,7 @@ function LoadingGrid() {
         <div className="h-8 w-8 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[1.42/1] animate-pulse rounded-[8px] bg-gray-100" />
