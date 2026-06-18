@@ -162,9 +162,9 @@ export default function EventPerksHubSection() {
   return (
     <div className="w-full overflow-hidden">
       <div className="mb-3 px-4">
-        <h2 className="text-[18px] font-bold uppercase tracking-tight text-neutral-900">
-          🎉 EVENT & PERKS HUB
-        </h2>
+        <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
+  🎉 Event & Perks Hub
+</h2>
       </div>
 
       <div
@@ -174,7 +174,7 @@ export default function EventPerksHubSection() {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        className="scrollbar-none flex cursor-grab snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 select-none active:cursor-grabbing"
+        className="scrollbar-none flex cursor-grab snap-x snap-mandatory scroll-pl-4 overflow-x-auto scroll-smooth pl-4 pr-10 select-none active:cursor-grabbing"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {loading ? (
