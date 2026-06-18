@@ -2050,7 +2050,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
       if (!image?.url && !image?.file) continue
 
       if (image.file) {
-        setFormError(`Uploading gallery image ${index + 1}...`)
+        setFormError('Saving product...')
         const imageUrl = await uploadGalleryImage(image.file)
 
         uploadedImages.push({
@@ -2109,7 +2109,7 @@ if (!salePrice || Number(salePrice) <= 0) {
 
     try {
       setSaving(true)
-    setFormError(coverFile ? 'Uploading cover to Cloudflare...' : 'Saving product...')
+    setFormError('Saving product...')
 
 const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
@@ -2125,13 +2125,13 @@ if (type === 'PDF') {
   }
 
   if (pdfFile) {
-    setFormError('Uploading PDF file...')
+    setFormError('Saving product...')
     nextPdfFileUrl = await uploadPdfFile(pdfFile)
     setPdfFileUrl(nextPdfFileUrl)
   }
 }
 
-setFormError(productToEdit ? 'Updating product...' : 'Creating product...')
+setFormError('Saving product...')
 
       await onSave({
         type,
