@@ -177,7 +177,8 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
     avatar_url: author.avatar_url || author.profile_image_url || '',
     cover_url: author.cover_url || author.banner_url || '',
     slide_urls: Array.isArray(author.slide_urls) ? author.slide_urls : [],
-    works_count: Number(author.total_stories || author.works_count || 0),
+profile_details: author.profile_details || {},
+works_count: Number(author.total_stories || author.works_count || 0),
     followers_count: Number(author.total_followers || author.followers_count || 0),
     fans_count: Number(author.total_fans || author.fans_count || 0),
     likes_count: Number(author.total_likes || author.likes_count || 0),
@@ -892,7 +893,7 @@ const [loading, setLoading] = useState(true)
   const coverRef = useRef(null)
   const profileRef = useRef(null)
   const tabsRef = useRef(null)
-  const [profileDetails, setProfileDetails] = useState(getStoredAuthorProfileDetails)
+  const profileDetails = author?.profile_details || {}
 
 
   function handleSwitchToReaderAccount() {
@@ -915,20 +916,7 @@ const [loading, setLoading] = useState(true)
   }
 }, [followSettingsOpen])
 
-  useEffect(() => {
-  function syncProfileDetails() {
-    setProfileDetails(getStoredAuthorProfileDetails())
-  }
-
-  syncProfileDetails()
-  window.addEventListener('shadow_author_page_profile_details_updated', syncProfileDetails)
-  window.addEventListener('storage', syncProfileDetails)
-
-  return () => {
-    window.removeEventListener('shadow_author_page_profile_details_updated', syncProfileDetails)
-    window.removeEventListener('storage', syncProfileDetails)
-  }
-}, [])
+  
 
 
 useEffect(() => {
@@ -1081,6 +1069,12 @@ async function handleUnfollowFromSettings() {
   await handleToggleFollow()
 }
   
+function handleOpenMessage() {
+  const value = String(author?.profile_details?.message_url || author?.profile_details?.messenger || '').trim()
+  if (!value) return setMessage('Message link is not available.')
+  window.open(/^https?:\/\//i.test(value) ? value : `https://${value}`, '_blank', 'noopener,noreferrer')
+}
+  
  const actionButtons = useMemo(() => {
   if (author?.is_owner) {
     return [
@@ -1102,7 +1096,7 @@ async function handleUnfollowFromSettings() {
         label: 'Message',
         icon: 'fa-comment',
         type: 'secondary',
-        onClick: () => setMessage('Message is coming soon.'),
+        onClick: handleOpenMessage,
       },
     ]
   }
@@ -1116,7 +1110,7 @@ async function handleUnfollowFromSettings() {
       disabled: followLoading,
     },
   ]
-}, [author?.is_owner, author?.is_following, followLoading, navigate])
+}, [author?.is_owner, author?.is_following, author?.profile_details, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -1845,12 +1839,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
     </div>
   ) : null}
 
-  {profileDetails.messenger ? (
-    <div className="flex items-center gap-4">
-      <i className="fa-brands fa-facebook-messenger w-8 text-center text-[18px]" />
-      <span>{profileDetails.messenger}</span>
-    </div>
-  ) : null}
+  
 
   {profileDetails.telegram ? (
     <div className="flex items-center gap-4">
