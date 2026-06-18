@@ -583,6 +583,9 @@ export default function AuthorPageEditDetailsPage() {
         setBio(data.author_page.bio || '')
         setAvatarUrl(data.author_page.avatar_url || '')
         setCoverUrl(data.author_page.cover_url || '')
+        const nextDetails = { ...DEFAULT_DETAILS, ...(data.author_page.profile_details || {}) }
+        setDetails(nextDetails)
+        writeStoredDetails(nextDetails)
 
         localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
       } catch (error) {
@@ -705,6 +708,7 @@ export default function AuthorPageEditDetailsPage() {
           page_name: nextPageName,
           page_username: nextPageUsername,
           bio: nextBio,
+profile_details: details,
         }),
       })
 
