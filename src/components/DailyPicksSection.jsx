@@ -126,26 +126,21 @@ function DailyPickCard({ book }) {
           {book.title}
         </h3>
 
-        <div className="mt-1.5 flex min-h-[22px] items-center justify-between gap-2">
-          <div className="min-w-0">
-            {book.genre ? (
-              <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700]">
-                {book.genre}
-              </span>
-            ) : null}
-          </div>
+        <div className="mt-1.5 flex min-h-[22px] items-center gap-2">
+  {book.genre ? (
+    <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700]">
+      {book.genre}
+    </span>
+  ) : null}
 
-          <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
-            <span className="text-[#EF4444]">
-              <FireOutlineIcon />
-            </span>
-            <span>{book.heat}</span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
-}
+  <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
+    <span className="text-[#EF4444]">
+      <FireOutlineIcon />
+    </span>
+
+    <span>{book.heat}</span>
+  </div>
+</div>
 
 function LoadingGrid() {
   return (
@@ -226,9 +221,13 @@ export default function DailyPicksSection() {
   return (
     <section className="px-3 pb-2 md:px-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-          Daily Picks
-        </h2>
+  <div className="flex items-center gap-2">
+    <span className="text-[20px] lg:text-[21px]">📚</span>
+
+    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+      Daily Picks
+    </h2>
+  </div>
 
         <Link
           to="/discover"
