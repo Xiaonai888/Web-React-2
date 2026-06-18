@@ -208,7 +208,7 @@ export default function TrendingNowSection() {
         onMouseMove={handleMouseMove}
         onMouseUp={stopMouseDrag}
         onMouseLeave={stopMouseDrag}
-        className="scrollbar-none mt-4 grid grid-cols-3 gap-x-2 gap-y-6 md:flex md:cursor-grab md:gap-3 md:overflow-x-auto md:select-none md:active:cursor-grabbing"
+        className="scrollbar-none mt-4 grid grid-cols-3 gap-x-2 gap-y-4 md:flex md:cursor-grab md:gap-3 md:overflow-x-auto md:select-none md:active:cursor-grabbing"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {books.map((book) => (
