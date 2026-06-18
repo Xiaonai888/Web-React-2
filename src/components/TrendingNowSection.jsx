@@ -63,16 +63,23 @@ function TrendingBookCard({ book }) {
           </div>
         ) : null}
 
-        {book.genre ? (
-          <div className="absolute bottom-2 left-2 rounded-full bg-black/45 px-2 py-1 text-[9px] font-semibold text-white backdrop-blur">
-            {book.genre}
-          </div>
-        ) : null}
+        
+      
       </div>
 
-      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-        {book.title}
-      </h3>
+      <div className="mt-2 min-w-0">
+  <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+    {book.title}
+  </h3>
+
+  <div className="mt-1 min-h-[18px]">
+    {book.genre ? (
+      <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-none text-[#6B7280]">
+        {book.genre}
+      </span>
+    ) : null}
+  </div>
+</div>
     </Link>
   )
 }
