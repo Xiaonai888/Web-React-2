@@ -242,7 +242,7 @@ export default function DailyPicksSection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
         {stories.map((book) => (
           <DailyPickCard key={book.id} book={book} />
         ))}
