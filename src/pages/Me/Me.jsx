@@ -132,9 +132,9 @@ function QuickAction({ icon, title, subtitle, to, onClick }) {
         <i className={`${icon} text-[14px]`} />
       </div>
       <div className="min-w-0">
-        <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">{title}</div>
-        <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{subtitle}</div>
-      </div>
+        <div className="line-clamp-1 text-[13.5px] font-normal text-[#111827] dark:text-white">
+  {title}
+</div>
     </div>
   )
 
@@ -164,9 +164,9 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
         </div>
         <div className="min-w-0">
           <div
-            className={`line-clamp-1 text-[13.5px] font-extrabold ${
-              dark ? 'text-white' : danger ? 'text-[#e5484d]' : 'text-[#111827] dark:text-white'
-            }`}
+            className={`line-clamp-1 text-[13.5px] font-normal ${
+  dark ? 'text-white' : danger ? 'text-[#e5484d]' : 'text-[#111827] dark:text-white'
+}`}
           >
             {title}
           </div>
@@ -196,7 +196,7 @@ function ThemeSwitchRow({ darkMode, onChange, tx }) {
           <i className={`${darkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun'} text-[14px]`} />
         </div>
         <div className="min-w-0">
-          <div className="line-clamp-1 text-[13.5px] font-extrabold text-[#111827] dark:text-white">
+          <div className="line-clamp-1 text-[13.5px] font-normal text-[#111827] dark:text-white">
             {darkMode ? tx('darkMode') : tx('lightMode')}
           </div>
           <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
