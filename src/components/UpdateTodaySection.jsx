@@ -86,8 +86,8 @@ function StatusBadge({ type }) {
 function SmallBookCard({ book }) {
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="overflow-hidden rounded-2xl bg-[#1e1e22] shadow-sm">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-2xl">
+      <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
+  <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
             alt={book.title}
@@ -142,10 +142,10 @@ function LoadingSkeleton() {
   </Link>
 </div>
 
-        <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3 md:gap-y-8">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index}>
-              <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
+              <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
               <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
               <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
             </div>
@@ -212,7 +212,7 @@ export default function UpdateTodaySection() {
   }
 
   return (
-    <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
+    <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
   <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export default function UpdateTodaySection() {
 
 
 
-        <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3 md:gap-y-8">
           {updateBooks.map((book) => (
             <SmallBookCard key={book.id} book={book} />
           ))}
