@@ -985,7 +985,7 @@ useEffect(() => {
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
-                <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827] dark:text-white">{tx('authorDashboard')}</div>
+                <div className="line-clamp-1 text-[14px] font-normal text-[#111827] dark:text-white">{tx('authorDashboard')}</div>
                 <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">{tx('authorDashboardSub')}</div>
               </div>
             </div>
