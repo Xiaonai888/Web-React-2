@@ -162,7 +162,7 @@ export default function ShadowSpotlight() {
           })}
         </div>
 
-        <div className="shadow-spotlight-pagination mt-4 flex justify-center" />
+        <div className="shadow-spotlight-pagination mt-4 flex justify-center [&_.swiper-pagination-bullet-active]:!bg-black" />
       </div>
     </div>
   )
