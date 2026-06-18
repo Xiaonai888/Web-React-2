@@ -709,13 +709,13 @@ export default function ForYou() {
             <div className="my-6">
               <ShadowSpotlight />
             </div>
-    
-            <div className="my-6">
-              <DailyPicksSection />
-            </div>
-    
+             
             <div className="my-6">
               <ShadowExclusiveSection />
+            </div>
+
+            <div className="my-6">
+              <DailyPicksSection />
             </div>
 
             <div className="my-6">
