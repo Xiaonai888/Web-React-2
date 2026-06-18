@@ -234,10 +234,10 @@ export default function DailyPicksSection() {
   </div>
 
         <Link
-          to="/discover"
-          className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-          aria-label="View more recommendations"
-        >
+  to="/daily-picks"
+  className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+  aria-label="View all Daily Picks"
+>
           <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
         </Link>
       </div>
