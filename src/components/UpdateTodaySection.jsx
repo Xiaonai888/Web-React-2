@@ -123,7 +123,7 @@ function SmallBookCard({ book }) {
 
 function LoadingSkeleton() {
   return (
-    <section className="px-4 pb-8 pt-8 sm:px-5 lg:px-6">
+    <section className="px-4 pb-8 pt-0 sm:px-5 lg:px-6">
       <div>
         <div className="mb-4 flex items-center justify-between">
   <div className="flex items-center gap-2">
