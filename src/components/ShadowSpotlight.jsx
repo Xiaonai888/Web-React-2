@@ -100,7 +100,7 @@ export default function ShadowSpotlight() {
         <div className="swiper-wrapper">
           {loading ? (
             <div className="swiper-slide">
-              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm">
                 <span className="text-[12px] font-bold text-gray-400">Loading spotlight...</span>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function ShadowSpotlight() {
 
           {!loading && spotlights.length === 0 ? (
             <div className="swiper-slide">
-              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 shadow-sm">
+              <div className="flex aspect-[3/1] w-full items-center justify-center rounded-[12px] border border-dashed border-gray-200 bg-gray-50 shadow-sm">
                 <span className="text-[12px] font-bold text-gray-400">No spotlight yet</span>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function ShadowSpotlight() {
             return (
               <div key={item.id} className="swiper-slide">
                 <div
-                  className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm"
+                  className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm"
                   onClick={() => {
                     if (item.link_url) navigate(item.link_url)
                   }}
