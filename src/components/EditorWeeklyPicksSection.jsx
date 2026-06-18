@@ -185,7 +185,7 @@ export default function EditorWeeklyPicksSection() {
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="mb-3 px-4">
+      <div className="mb-3 px-3">
         <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
           💥 EDITOR’S WEEKLY PICKS
         </h2>
@@ -198,12 +198,12 @@ export default function EditorWeeklyPicksSection() {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        className="scrollbar-none flex cursor-grab snap-x snap-mandatory overflow-x-auto scroll-smooth pl-4 pr-10 select-none active:cursor-grabbing"
+        className="scrollbar-none flex cursor-grab snap-x snap-mandatory overflow-x-auto scroll-smooth pl-3 pr-10 select-none active:cursor-grabbing"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {loading ? (
           <div className="mr-3 w-[88%] shrink-0 snap-start">
-            <div className="aspect-[3/1] w-full animate-pulse rounded-2xl bg-gray-100" />
+            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-gray-100" />
           </div>
         ) : (
           displayItems.map((item) => (
