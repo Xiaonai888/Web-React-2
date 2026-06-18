@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL =
@@ -9,78 +9,66 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const fallbackTrendingStories = [
-  { id: 201, title: 'Royal Betrothal', image: '/assets/Trending%20Now/Trending%207.jpg', genre: 'Romance' },
-  { id: 202, title: 'My Cold-Hearted Prince', image: '/assets/Trending%20Now/Trending%208.jpg', genre: 'Romance' },
-  { id: 203, title: 'The Last Summer Promise', image: '/assets/Trending%20Now/Trending%209.jpg', genre: 'Drama' },
-  { id: 204, title: 'Her Dangerous Roommate', image: '/assets/Trending%20Now/Trending%2010.jpg', genre: 'Romance' },
-  { id: 205, title: "Softly, Don't Leave", image: '/assets/Trending%20Now/Trending%2011.jpg', genre: 'Romance' },
-  { id: 206, title: 'Second Chance Bride', image: '/assets/Trending%20Now/Trending%2012.jpg', genre: 'Romance' },
-]
+const fallbackTrendingStories = Array.from({ length: 9 }).map((_, index) => ({
+  id: 201 + index,
+  title: 'Trending Story',
+  image: `/assets/New Arrival/New Arrival ${index + 1}.jpg`,
+  genre: index % 2 === 0 ? 'Romance' : 'Fantasy',
+  isAdult: false,
+}))
 
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
     image:
-      story.landscape_thumbnail_url ||
       story.cover_url ||
-      `/assets/Trending%20Now/Trending%20${Math.min(index + 1, 18)}.jpg`,
+      story.landscape_thumbnail_url ||
+      `/assets/New Arrival/New Arrival ${Math.min(index + 1, 18)}.jpg`,
     genre: story.main_genre || '',
     isAdult: Boolean(story.is_adult),
   }
 }
 
-function BlankCover() {
-  return <div className="h-full w-full bg-[#202124]" />
-}
-
-function TrendingBookCard({ book }) {
-  const hasImage =
-    typeof book.image === 'string' && book.image.trim() !== ''
-
+function TrendingBookCard({ book, onOpen }) {
   return (
-    <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="relative aspect-[1.42/1] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
-        {hasImage ? (
-          <img
-            src={book.image}
-            alt={book.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            loading="lazy"
-            decoding="async"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none'
-            }}
-          />
-        ) : (
-          <BlankCover />
-        )}
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group block w-full min-w-0 border-0 bg-transparent p-0 text-left"
+    >
+      <div className="relative aspect-[2/3] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
+        <img
+          src={book.image}
+          alt={book.title}
+          className="pointer-events-none h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          loading="lazy"
+          decoding="async"
+          draggable="false"
+          onError={(event) => {
+            event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
+          }}
+        />
 
         {book.isAdult ? (
-          <div className="absolute left-2 top-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+          <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
             18+
           </div>
         ) : null}
-
-        
-      
       </div>
 
-      <div className="mt-2 min-w-0">
-  <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-    {book.title}
-  </h3>
+      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+        {book.title}
+      </h3>
 
-  <div className="mt-1 min-h-[18px]">
-    {book.genre ? (
-      <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-none text-[#6B7280]">
-        {book.genre}
-      </span>
-    ) : null}
-  </div>
-</div>
-    </Link>
+      <div className="mt-1 min-h-[18px]">
+        {book.genre ? (
+          <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-none text-[#6B7280]">
+            {book.genre}
+          </span>
+        ) : null}
+      </div>
+    </button>
   )
 }
 
@@ -92,11 +80,15 @@ function LoadingGrid() {
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index}>
-            <div className="aspect-[1.42/1] animate-pulse rounded-[8px] bg-gray-100" />
+      <div className="mt-4 grid grid-cols-3 gap-x-2 gap-y-6 md:flex md:gap-3 md:overflow-hidden">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <div
+            key={index}
+            className="min-w-0 md:w-[calc((100%_-_60px)/6)] md:shrink-0"
+          >
+            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
             <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
+            <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
           </div>
         ))}
       </div>
@@ -105,6 +97,13 @@ function LoadingGrid() {
 }
 
 export default function TrendingNowSection() {
+  const navigate = useNavigate()
+  const scrollRef = useRef(null)
+  const isDraggingRef = useRef(false)
+  const dragMovedRef = useRef(false)
+  const startXRef = useRef(0)
+  const scrollLeftRef = useRef(0)
+
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -117,10 +116,9 @@ export default function TrendingNowSection() {
 
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=6&sort=popular`
+            `${API_BASE_URL}/api/public/stories?limit=9&sort=popular`
           )
         )
-
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
@@ -128,7 +126,7 @@ export default function TrendingNowSection() {
         }
 
         if (!ignore) {
-          setStories((data.stories || []).map(normalizeStory))
+          setStories((data.stories || []).map(normalizeStory).slice(0, 9))
         }
       } catch (error) {
         console.error('TrendingNowSection fetch error:', error)
@@ -150,6 +148,45 @@ export default function TrendingNowSection() {
     }
   }, [])
 
+  const handleMouseDown = (event) => {
+    const container = scrollRef.current
+    if (!container || window.innerWidth < 768) return
+
+    isDraggingRef.current = true
+    dragMovedRef.current = false
+    startXRef.current = event.pageX - container.offsetLeft
+    scrollLeftRef.current = container.scrollLeft
+  }
+
+  const handleMouseMove = (event) => {
+    const container = scrollRef.current
+    if (!container || !isDraggingRef.current) return
+
+    event.preventDefault()
+
+    const x = event.pageX - container.offsetLeft
+    const walk = x - startXRef.current
+
+    if (Math.abs(walk) > 4) {
+      dragMovedRef.current = true
+    }
+
+    container.scrollLeft = scrollLeftRef.current - walk * 1.4
+  }
+
+  const stopMouseDrag = () => {
+    isDraggingRef.current = false
+  }
+
+  const handleBookOpen = (bookId) => {
+    if (dragMovedRef.current) {
+      dragMovedRef.current = false
+      return
+    }
+
+    navigate(`/story/${bookId}`)
+  }
+
   if (loading) {
     return <LoadingGrid />
   }
@@ -165,9 +202,25 @@ export default function TrendingNowSection() {
         </h2>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3">
+      <div
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={stopMouseDrag}
+        onMouseLeave={stopMouseDrag}
+        className="scrollbar-none mt-4 grid grid-cols-3 gap-x-2 gap-y-6 md:flex md:cursor-grab md:gap-3 md:overflow-x-auto md:select-none md:active:cursor-grabbing"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
         {books.map((book) => (
-          <TrendingBookCard key={book.id} book={book} />
+          <div
+            key={book.id}
+            className="min-w-0 md:w-[calc((100%_-_60px)/6)] md:shrink-0"
+          >
+            <TrendingBookCard
+              book={book}
+              onOpen={() => handleBookOpen(book.id)}
+            />
+          </div>
         ))}
       </div>
     </section>
