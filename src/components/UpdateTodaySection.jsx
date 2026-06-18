@@ -142,7 +142,7 @@ function LoadingSkeleton() {
   </Link>
 </div>
 
-        <div className="grid grid-cols-3 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3 md:gap-y-8">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index}>
               <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
