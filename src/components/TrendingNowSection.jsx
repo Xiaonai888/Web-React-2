@@ -80,7 +80,7 @@ function LoadingGrid() {
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-x-2 gap-y-6 md:flex md:gap-3 md:overflow-hidden">
+      <div className="mt-4 grid grid-cols-3 gap-x-2 gap-y-4 md:flex md:gap-3 md:overflow-hidden">
         {Array.from({ length: 9 }).map((_, index) => (
           <div
             key={index}
