@@ -67,6 +67,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
+const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
@@ -170,6 +171,7 @@ function AppShell() {
     '/search',
     '/notifications',
     '/update-today',
+    '/daily-picks',
     '/you-might-like',
     '/tasks',
     '/tasks/history',
@@ -342,6 +344,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <UpdateTodayPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/daily-picks"
+  element={
+    <LazyPage>
+      <DailyPicksPage />
     </LazyPage>
   }
 />
