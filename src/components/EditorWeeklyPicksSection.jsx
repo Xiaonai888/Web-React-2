@@ -209,7 +209,7 @@ export default function EditorWeeklyPicksSection() {
               <button
                 type="button"
                 onClick={(event) => handleCardClick(event, item.link)}
-                className="group block w-full text-left"
+                className="group block w-full border-0 bg-transparent p-0 text-left"
               >
                 <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
                   <img
@@ -259,7 +259,7 @@ export default function EditorWeeklyPicksSection() {
                 aria-label={`Go to slide ${index + 1}`}
                 className={`rounded-full transition-all duration-300 ${
                   isActive
-                    ? 'h-2.5 w-6 bg-blue-600'
+                    ? 'h-2.5 w-6 bg-black'
                     : 'h-2.5 w-2.5 bg-neutral-300 hover:bg-neutral-400'
                 }`}
               />
