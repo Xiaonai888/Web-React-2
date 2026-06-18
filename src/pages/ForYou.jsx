@@ -15,6 +15,8 @@ import FanPicksSection from '../components/FanPicksSection'
 import NotificationPage from './NotificationPage'
 import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
 
+const SHOW_SHADOW_EXCLUSIVE = false
+
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -710,9 +712,11 @@ export default function ForYou() {
               <ShadowSpotlight />
             </div>
              
-            <div className="my-6">
-              <ShadowExclusiveSection />
-            </div>
+            {SHOW_SHADOW_EXCLUSIVE ? (
+  <div className="my-6">
+    <ShadowExclusiveSection />
+  </div>
+) : null}
 
             <div className="my-6">
               <DailyPicksSection />
