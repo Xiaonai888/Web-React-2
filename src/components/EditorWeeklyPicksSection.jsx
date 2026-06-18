@@ -149,6 +149,7 @@ export default function EditorWeeklyPicksSection() {
     dragMovedRef.current = false
     startXRef.current = event.pageX - container.offsetLeft
     scrollLeftRef.current = container.scrollLeft
+    container.style.scrollSnapType = 'none'
   }
 
   const handleMouseMove = (event) => {
@@ -163,16 +164,13 @@ export default function EditorWeeklyPicksSection() {
       dragMovedRef.current = true
     }
 
-    container.scrollLeft = scrollLeftRef.current - walk
+    container.scrollLeft = scrollLeftRef.current - walk * 1.6
   }
 
-  const handleMouseUp = () => {
-    isDraggingRef.current = false
-  }
-
-  const handleMouseLeave = () => {
-    isDraggingRef.current = false
-  }
+  const stopMouseDrag = () => {
+  isDraggingRef.current = false
+  if (scrollRef.current) scrollRef.current.style.scrollSnapType = ''
+}
 
   const handleCardClick = (event, link) => {
     if (dragMovedRef.current) {
@@ -196,8 +194,8 @@ export default function EditorWeeklyPicksSection() {
         onScroll={handleScroll}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
+        onMouseUp={stopMouseDrag}
+        onMouseLeave={stopMouseDrag}
         className="scrollbar-none flex cursor-grab snap-x snap-mandatory overflow-x-auto scroll-smooth pl-3 pr-10 select-none active:cursor-grabbing"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
