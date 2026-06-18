@@ -226,7 +226,7 @@ export default function DailyPicksSection() {
     <section className="px-3 pb-2 md:px-4">
       <div className="mb-4 flex items-center justify-between">
   <div className="flex items-center gap-2">
-    <span className="text-[20px] lg:text-[21px]">📚</span>
+    <span className="text-[20px] lg:text-[21px]">📖</span>
 
     <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
       Daily Picks
