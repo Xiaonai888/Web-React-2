@@ -183,7 +183,7 @@ export default function EditorWeeklyPicksSection() {
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="mb-3 px-3">
+      <div className="mb-3 px-4">
         <h2 className="text-[18px] font-bold tracking-tight text-neutral-900">
           💥 EDITOR’S WEEKLY PICKS
         </h2>
@@ -196,7 +196,7 @@ export default function EditorWeeklyPicksSection() {
         onMouseMove={handleMouseMove}
         onMouseUp={stopMouseDrag}
         onMouseLeave={stopMouseDrag}
-        className="scrollbar-none flex cursor-grab snap-x snap-mandatory overflow-x-auto scroll-smooth pl-3 pr-10 select-none active:cursor-grabbing"
+        className="scrollbar-none flex cursor-grab snap-x snap-mandatory scroll-pl-4 overflow-x-auto scroll-smooth pl-4 pr-10 select-none active:cursor-grabbing"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {loading ? (
