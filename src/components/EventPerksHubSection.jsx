@@ -179,7 +179,7 @@ export default function EventPerksHubSection() {
       >
         {loading ? (
           <div className="mr-3 w-[88%] shrink-0 snap-start">
-            <div className="aspect-[3/1] w-full animate-pulse rounded-2xl bg-gray-100" />
+            <div className="aspect-[3/1] w-full animate-pulse rounded-[12px] bg-gray-100" />
           </div>
         ) : (
           displayItems.map((item) => (
@@ -187,9 +187,9 @@ export default function EventPerksHubSection() {
               <button
                 type="button"
                 onClick={(event) => handleCardClick(event, item.link)}
-                className="group block w-full text-left"
+                className="group block w-full border-0 bg-transparent p-0 text-left"
               >
-                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+                <div className="relative aspect-[3/1] w-full overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm">
                   <img
                     src={item.image}
                     alt={item.title}
@@ -232,7 +232,7 @@ export default function EventPerksHubSection() {
                 aria-label={`Go to slide ${index + 1}`}
                 className={`rounded-full transition-all duration-300 ${
                   isActive
-                    ? 'h-2.5 w-6 bg-blue-600'
+                    ? 'h-2.5 w-6 bg-black'
                     : 'h-2.5 w-2.5 bg-neutral-300 hover:bg-neutral-400'
                 }`}
               />
