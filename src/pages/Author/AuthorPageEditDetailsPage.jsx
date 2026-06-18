@@ -583,9 +583,14 @@ export default function AuthorPageEditDetailsPage() {
         setBio(data.author_page.bio || '')
         setAvatarUrl(data.author_page.avatar_url || '')
         setCoverUrl(data.author_page.cover_url || '')
-        const nextDetails = { ...DEFAULT_DETAILS, ...(data.author_page.profile_details || {}) }
-        setDetails(nextDetails)
-        writeStoredDetails(nextDetails)
+        const databaseDetails = data.author_page.profile_details || {}
+const storedDetails = readStoredDetails()
+const nextDetails = Object.keys(databaseDetails).length
+  ? { ...DEFAULT_DETAILS, ...databaseDetails }
+  : { ...DEFAULT_DETAILS, ...storedDetails }
+
+setDetails(nextDetails)
+writeStoredDetails(nextDetails)
 
         localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
       } catch (error) {
