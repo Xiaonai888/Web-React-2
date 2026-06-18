@@ -7,17 +7,6 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-
-
-const fallbackUpdateBooks = [
-  { id: 202, title: 'Name Novel', cover: '/assets/Update Today/Update Today 2.jpg', badge: 'new', views: '100k', episodes: 'Ep 17' },
-  { id: 203, title: 'Name Novel', cover: '/assets/Update Today/Update Today 3.jpg', badge: 'up', views: '100k', episodes: 'Ep 17' },
-  { id: 204, title: 'Name Novel', cover: '/assets/Update Today/Update Today 4.jpg', badge: 'end', views: '100k', episodes: 'Ep 17' },
-  { id: 205, title: 'Name Novel', cover: '/assets/Update Today/Update Today 5.jpg', badge: 'new', views: '100k', episodes: 'Ep 17' },
-  { id: 206, title: 'Name Novel', cover: '/assets/Update Today/Update Today 6.jpg', badge: 'up', views: '100k', episodes: 'Ep 17' },
-  { id: 207, title: 'Name Novel', cover: '/assets/Update Today/Update Today 7.jpg', badge: 'end', views: '100k', episodes: 'Ep 17' },
-]
-
 const badgeConfig = {
   new: {
     text: 'NEW',
@@ -33,16 +22,6 @@ const badgeConfig = {
   },
 }
 
-function formatCompactNumber(value) {
-  const number = Number(value || 0)
-
-  if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
-
-  return String(number)
-}
-
 function getRealBadgeFromStoryStatus(status) {
   const value = String(status || '').trim().toLowerCase()
 
@@ -52,22 +31,27 @@ function getRealBadgeFromStoryStatus(status) {
   return 'new'
 }
 
+function getFirstDifferentTag(mainGenre, tags = []) {
+  const genre = String(mainGenre || '').trim().toLowerCase()
+  const normalizedTags = Array.isArray(tags) ? tags : []
+
+  return (
+    normalizedTags
+      .map((tag) => String(tag || '').trim())
+      .find((tag) => tag && tag.toLowerCase() !== genre) || ''
+  )
+}
+
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author:
-  story.author_page?.page_name ||
-  story.author_page?.page_username ||
-  'Shadow Author',
-    cover: story.cover_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
-    views: formatCompactNumber(story.total_views),
-    likes: formatCompactNumber(story.total_likes),
-    episodes: `Ep ${Number(story.total_episodes || 0)}`,
-    genres: [story.main_genre, ...(story.tags || [])].filter(Boolean).slice(0, 4),
-    description: story.description || 'No description yet.',
+    cover:
+      story.cover_url ||
+      `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
+    genre: String(story.main_genre || '').trim(),
+    firstTag: getFirstDifferentTag(story.main_genre, story.tags),
     badge: getRealBadgeFromStoryStatus(story.story_status),
-    isReal: true,
   }
 }
 
@@ -87,11 +71,13 @@ function SmallBookCard({ book }) {
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
       <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
-  <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
+        <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
             alt={book.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            loading="lazy"
+            decoding="async"
             onError={(event) => {
               event.currentTarget.src = '/assets/Update Today/Update Today 2.jpg'
             }}
@@ -101,21 +87,13 @@ function SmallBookCard({ book }) {
       </div>
 
       <div className="pt-2.5 sm:pt-3">
-        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
           {book.title}
         </h3>
 
-        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-neutral-800 sm:mt-2 sm:gap-3 sm:text-[11px] lg:text-[12px]">
-          <div className="flex min-w-0 items-center gap-1">
-            <i className="fas fa-eye text-[10px] text-black sm:text-[11px]" />
-            <span className="leading-none">{book.views}</span>
-          </div>
-
-          <div className="flex min-w-0 items-center gap-1">
-            <i className="fas fa-list text-[10px] text-black sm:text-[11px]" />
-            <span className="leading-none">{book.episodes}</span>
-          </div>
-        </div>
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+          {[book.genre, book.firstTag].filter(Boolean).join(' / ')}
+        </p>
       </div>
     </Link>
   )
@@ -126,21 +104,21 @@ function LoadingSkeleton() {
     <section className="px-4 pb-8 pt-0 sm:px-5 lg:px-6">
       <div>
         <div className="mb-4 flex items-center justify-between">
-  <div className="flex items-center gap-2">
-    <span className="text-[20px] lg:text-[21px]">🎉</span>
-    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-      Update Today
-    </h2>
-  </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[20px] lg:text-[21px]">🎉</span>
+            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+              Update Today
+            </h2>
+          </div>
 
-  <Link
-    to="/update-today"
-    className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-    aria-label="View all update today"
-  >
-    <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
-  </Link>
-</div>
+          <Link
+            to="/update-today"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+            aria-label="View all update today"
+          >
+            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+          </Link>
+        </div>
 
         <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -168,8 +146,10 @@ export default function UpdateTodaySection() {
         setLoading(true)
 
         const response = await fetch(
-  addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=7&sort=updated`)
-)
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?limit=7&sort=updated`
+          )
+        )
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
@@ -199,13 +179,7 @@ export default function UpdateTodaySection() {
     }
   }, [])
 
-  const updateBooks = useMemo(() => {
-  if (stories.length) {
-    return stories.slice(0, 6)
-  }
-
-  return fallbackUpdateBooks
-}, [stories])
+  const updateBooks = useMemo(() => stories.slice(0, 6), [stories])
 
   if (loading) {
     return <LoadingSkeleton />
@@ -215,25 +189,23 @@ export default function UpdateTodaySection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
-  <div className="flex items-center gap-2">
-    <span className="text-[20px] lg:text-[21px]">🎉</span>
-    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-      Update Today
-    </h2>
-  </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[20px] lg:text-[21px]">🎉</span>
+            <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+              Update Today
+            </h2>
+          </div>
 
-  <Link
-    to="/update-today"
-    className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-    aria-label="View all update today"
-  >
-    <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
-  </Link>
-</div>
+          <Link
+            to="/update-today"
+            className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+            aria-label="View all update today"
+          >
+            <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
+          </Link>
+        </div>
 
-
-
-        <div className="grid grid-cols-3 gap-x-2 gap-y-6 md:grid-cols-6 md:gap-x-3 md:gap-y-8">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
           {updateBooks.map((book) => (
             <SmallBookCard key={book.id} book={book} />
           ))}
