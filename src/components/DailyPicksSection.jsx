@@ -141,6 +141,10 @@ function DailyPickCard({ book }) {
     <span>{book.heat}</span>
   </div>
 </div>
+              </div>
+    </Link>
+  )
+}
 
 function LoadingGrid() {
   return (
