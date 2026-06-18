@@ -101,7 +101,7 @@ function SmallBookCard({ book }) {
       </div>
 
       <div className="pt-2.5 sm:pt-3">
-        <h3 className="line-clamp-1 text-[13px] font-extrabold tracking-tight text-neutral-950 sm:text-[15px] lg:text-[16px]">
+        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
           {book.title}
         </h3>
 
