@@ -74,7 +74,7 @@ function TrendingBookCard({ book, onOpen }) {
 
 function LoadingGrid() {
   return (
-    <section className="px-3 pb-2 pt-8 md:px-4 md:pt-10">
+    <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
         <span className="text-[24px] leading-none">🔥</span>
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
@@ -194,7 +194,7 @@ export default function TrendingNowSection() {
   const books = stories.length ? stories : fallbackTrendingStories
 
   return (
-    <section className="px-3 pb-2 pt-8 md:px-4 md:pt-10">
+    <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
         <span className="text-[24px] leading-none">🔥</span>
         <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
