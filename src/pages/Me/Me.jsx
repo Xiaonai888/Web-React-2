@@ -131,19 +131,34 @@ function QuickAction({ icon, title, subtitle, to, onClick }) {
       <div className={iconBox}>
         <i className={`${icon} text-[14px]`} />
       </div>
+
       <div className="min-w-0">
         <div className="line-clamp-1 text-[13.5px] font-normal text-[#111827] dark:text-white">
-  {title}
-</div>
+          {title}
+        </div>
+
+        <div className="mt-0.5 line-clamp-1 text-[11.5px] text-[#8d94a1] dark:text-white/50">
+          {subtitle}
+        </div>
+      </div>
     </div>
   )
 
-  const className = 'min-w-0 flex-1 px-3.5 py-3.5 text-left active:scale-[0.99]'
+  const className =
+    'min-w-0 flex-1 px-3.5 py-3.5 text-left active:scale-[0.99]'
 
   return to ? (
-    <Link to={to} className={className}>{body}</Link>
+    <Link to={to} className={className}>
+      {body}
+    </Link>
   ) : (
-    <button type="button" onClick={onClick} className={className}>{body}</button>
+    <button
+      type="button"
+      onClick={onClick}
+      className={className}
+    >
+      {body}
+    </button>
   )
 }
 
