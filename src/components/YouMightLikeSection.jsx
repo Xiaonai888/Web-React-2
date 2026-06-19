@@ -19,23 +19,13 @@ const fallbackBooks = Array.from({ length: 6 }).map((_, index) => ({
   genre: '',
 }))
 
-function formatCompactNumber(value) {
-  const number = Number(value || 0)
 
-  if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
-
-  return String(number)
-}
 
 function normalizeStory(story, index = 0) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
     cover: story.cover_url || `/assets/YouMightLike/YouMightLike ${Math.min(index + 1, 6)}.jpg`,
-    likes: formatCompactNumber(story.total_likes),
-    episodes: `Ep ${Number(story.total_episodes || 0)}`,
     link: `/story/${story.id}`,
     isAdult: Boolean(story.is_adult),
     genre: story.main_genre || '',
@@ -46,7 +36,7 @@ function BookCard({ book }) {
   return (
     <div className="group block w-full">
       <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
@@ -62,26 +52,16 @@ function BookCard({ book }) {
               18+
             </div>
           ) : null}
-
-          
         </div>
 
-        <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[42px] text-[15px] font-bold leading-[21px] tracking-tight text-neutral-900">
+        <div className="mt-2 w-full">
+          <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
             {book.title}
           </h3>
 
-          <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
-            <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-[12px] text-red-500" />
-              <span className="font-medium">{book.likes}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <i className="fas fa-list text-[12px]" />
-              <span className="font-medium">{book.episodes}</span>
-            </div>
-          </div>
+          <p className="mt-1 truncate text-[11.5px] font-normal text-gray-400">
+            {book.genre}
+          </p>
         </div>
       </div>
     </div>
@@ -99,7 +79,7 @@ function LoadingGrid() {
       <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-4 lg:overflow-visible">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
-            <div className="aspect-[2/3] animate-pulse rounded-2xl bg-gray-100" />
+            <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
             <div className="mt-3 h-4 animate-pulse rounded-full bg-gray-100" />
             <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
           </div>
