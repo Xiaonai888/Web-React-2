@@ -141,9 +141,9 @@ function RankingBookCard({ item, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex h-[116px] w-full items-center gap-3 text-left md:h-[116px]"
+      className="group flex h-[108px] w-full items-center gap-2.5 text-left md:h-[116px] md:gap-3"
     >
-      <div className="relative h-[116px] w-[80px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm md:h-[116px] md:w-[80px]">
+      <div className="relative h-[108px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm md:h-[116px] md:w-[80px]">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
@@ -186,7 +186,7 @@ function LoadingRanking() {
           {Array.from({ length: 2 }).map((_, groupIndex) => (
             <div
               key={groupIndex}
-              className="grid w-[70vw] max-w-[320px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
+              className="grid w-[56vw] max-w-[250px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
             >
               {Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="flex h-[108px] items-center gap-3 md:h-[112px]">
