@@ -53,16 +53,12 @@ function getActiveTabConfig(label) {
   return rankingTabs.find((tab) => tab.label === label) || rankingTabs[0]
 }
 
-function getRankLabel(rank) {
-  return String(rank).padStart(2, '0')
-}
+function getRankAccent(rank) {
+  if (rank === 1) return 'border-[#facc15] bg-black/80 text-white'
+  if (rank === 2) return 'border-[#cbd5e1] bg-black/75 text-white'
+  if (rank === 3) return 'border-[#d97706] bg-black/75 text-white'
 
-function getRankBadgeClass(rank) {
-  if (rank === 1) return 'bg-[#facc15] text-[#111827]'
-  if (rank === 2) return 'bg-[#ef4444] text-white'
-  if (rank === 3) return 'bg-[#f97316] text-white'
-
-  return 'bg-[#6b7280] text-white'
+  return 'border-white/40 bg-black/65 text-white'
 }
 
 function createFallbackBooks(category) {
@@ -91,8 +87,8 @@ function normalizeStory(story, index = 0) {
 
 function RankBadge({ rank }) {
   return (
-    <div className={`absolute -left-px -top-px z-10 flex h-[26px] min-w-[28px] items-center justify-center rounded-tl-[8px] rounded-br-[10px] px-1.5 text-[10px] font-extrabold leading-none shadow-sm ${getRankBadgeClass(rank)}`}>
-      {getRankLabel(rank)}
+    <div className={`absolute left-1.5 top-1.5 z-10 rounded-[6px] border-l-[3px] px-1.5 py-1 text-[10px] font-extrabold leading-none shadow-sm backdrop-blur-sm ${getRankAccent(rank)}`}>
+      #{rank}
     </div>
   )
 }
@@ -123,30 +119,25 @@ function SafeBookCover({ src, title, rank }) {
 
 function RankingBookCard({ item, onOpen }) {
   return (
-    <button type="button" onClick={onOpen} className="group flex h-[104px] w-full items-center gap-3 text-left">
-  <div className="relative h-[104px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group block min-w-0 text-left"
+    >
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
 
-      <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 whitespace-normal break-words text-[14px] font-[640] leading-[18px] text-neutral-900">
+      <div className="pt-2.5">
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
           {item.title}
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
           {item.genre || 'Ranking'}
         </p>
       </div>
-    </button>
-  )
-}
-
-function CompactRankingCover({ item, onOpen }) {
-  return (
-    <button type="button" onClick={onOpen} className="group relative block h-[104px] w-[72px] overflow-hidden rounded-[8px] bg-gray-100 shadow-sm active:scale-[0.98]">
-      <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
-      <RankBadge rank={item.rank} />
     </button>
   )
 }
@@ -245,12 +236,6 @@ export default function TopNovelSection() {
     return realDataByCategory[activeCategory] || createFallbackBooks(activeCategory)
   }, [activeCategory, realDataByCategory])
 
-  const rankingGroups = useMemo(() => {
-  const items = filteredData.slice(0, 6)
-
-  return [items.slice(0, 3), items.slice(3, 6)].filter((group) => group.length)
-}, [filteredData])
-
   if (loading && !realDataByCategory[activeCategory]) {
     return <LoadingRanking />
   }
@@ -276,47 +261,37 @@ export default function TopNovelSection() {
           </button>
         </div>
 
-        <div className="mb-5 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-y_pan-x] [&::-webkit-scrollbar]:hidden">
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {rankingTabs.map((tab) => {
             const isActive = activeCategory === tab.label
 
             return (
               <button
-  key={tab.label}
-  type="button"
-  onClick={() => setActiveCategory(tab.label)}
-  className={`relative inline-flex h-[34px] shrink-0 items-center px-1.5 text-[13px] leading-none transition-colors active:scale-[0.98] ${
-    isActive
-      ? 'font-extrabold text-[#111827]'
-      : 'font-[560] text-[#6b7280]'
-  }`}
->
-  {tab.label}
-  <span
-    className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#facc15] transition-all duration-200 ${
-      isActive ? 'w-[70%] opacity-100' : 'w-0 opacity-0'
-    }`}
-  />
-</button>
+                key={tab.label}
+                type="button"
+                onClick={() => setActiveCategory(tab.label)}
+                className={`inline-flex h-[34px] shrink-0 items-center rounded-full px-3.5 text-[12px] leading-none active:scale-[0.98] ${
+                  isActive
+                    ? 'bg-[#111827] font-extrabold text-white'
+                    : 'bg-[#f5f3fa] font-[640] text-[#111827]'
+                }`}
+              >
+                {tab.label}
+              </button>
             )
           })}
         </div>
 
-       <div className="-mr-4 flex snap-x gap-3 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] sm:-mr-5 lg:-mr-6 [&::-webkit-scrollbar]:hidden">
-  {rankingGroups.map((group, groupIndex) => (
-    <div key={groupIndex} className="grid w-[86vw] max-w-[360px] shrink-0 snap-start grid-rows-3 gap-1.5">
-      {group.map((item) => (
-        <RankingBookCard
-          key={item.id}
-          item={item}
-          onOpen={() => {
-            if (!item.isFallback) navigate(item.link)
-          }}
-        />
-      ))}
-    </div>
-  ))}
-</div>
+        <div className="grid grid-cols-3 gap-x-2 gap-y-5 md:grid-cols-6 md:gap-x-3">
+          {filteredData.map((item) => (
+            <RankingBookCard
+              key={item.id}
+              item={item}
+              onOpen={() => {
+                if (!item.isFallback) navigate(item.link)
+              }}
+            />
+          ))}
         </div>
       </div>
     </section>
