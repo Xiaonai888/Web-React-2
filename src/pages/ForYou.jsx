@@ -751,10 +751,6 @@ export default function ForYou() {
             </div>
 
             <div className="my-6">
-              <CompletedSection />
-            </div>
-
-            <div className="my-6">
               <YouMightLikeSection />
             </div>
   </>
