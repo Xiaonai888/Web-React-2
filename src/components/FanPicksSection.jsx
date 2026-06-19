@@ -60,7 +60,7 @@ function LoadingGrid() {
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
+      <div className="scrollbar-none flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-x-3 lg:gap-y-6 lg:overflow-visible lg:pb-0"
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index}>
             <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
