@@ -45,16 +45,15 @@ function BookCard({ book }) {
   return (
     <div className="group block w-full">
       <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
-          <img
-            src={book.cover}
-            alt={book.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            loading="lazy"
-            onError={(event) => {
-              event.currentTarget.src = '/assets/FanPicksSection/FanPicksSection 1.jpg'
-            }}
-          />
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+          <img src={book.cover} alt={book.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" onError={(event) => { event.currentTarget.src = '/assets/FanPicksSection/FanPicksSection 1.jpg' }} />
+        </div>
+        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">{book.title}</h3>
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">{book.genre || 'Discover More'}</p>
+      </div>
+    </div>
+  )
+}
 
           {book.isAdult ? (
             <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
@@ -124,7 +123,7 @@ export default function FanPicksSection() {
         setLoading(true)
 
         const response = await fetch(
-  addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=likes`)
+  addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=updated`)
 )
         const data = await response.json().catch(() => ({}))
 
@@ -164,13 +163,13 @@ export default function FanPicksSection() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-[20px]">😍</span>
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-          Fan Picks
-        </h2>
+        <span className="text-[20px]">💎</span>
+<h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+  Discover More
+</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-x-4 gap-y-6 lg:grid-cols-5">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
         {books.map((book) => (
           <button
             key={book.id}
