@@ -245,8 +245,11 @@ export default function TopNovelSection() {
     return realDataByCategory[activeCategory] || createFallbackBooks(activeCategory)
   }, [activeCategory, realDataByCategory])
 
-  const topThreeStories = useMemo(() => filteredData.slice(0, 3), [filteredData])
-const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
+  const rankingGroups = useMemo(() => {
+  const items = filteredData.slice(0, 6)
+
+  return [items.slice(0, 3), items.slice(3, 6)].filter((group) => group.length)
+}, [filteredData])
 
   if (loading && !realDataByCategory[activeCategory]) {
     return <LoadingRanking />
@@ -299,22 +302,21 @@ const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
           })}
         </div>
 
-       <div className="-mr-4 grid grid-cols-[minmax(0,1fr)_72px] gap-2 sm:-mr-5 lg:-mr-6">
-  <div className="grid grid-rows-3 gap-1.5">
-    {topThreeStories.map((item) => (
-      <RankingBookCard key={item.id} item={item} onOpen={() => {
-        if (!item.isFallback) navigate(item.link)
-      }} />
-    ))}
-  </div>
-
-  <div className="grid grid-rows-3 gap-1.5">
-    {sideStories.map((item) => (
-      <CompactRankingCover key={item.id} item={item} onOpen={() => {
-        if (!item.isFallback) navigate(item.link)
-      }} />
-    ))}
-  </div>
+       <div className="-mr-4 flex snap-x gap-3 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] sm:-mr-5 lg:-mr-6 [&::-webkit-scrollbar]:hidden">
+  {rankingGroups.map((group, groupIndex) => (
+    <div key={groupIndex} className="grid w-[86vw] max-w-[360px] shrink-0 snap-start grid-rows-3 gap-1.5">
+      {group.map((item) => (
+        <RankingBookCard
+          key={item.id}
+          item={item}
+          onOpen={() => {
+            if (!item.isFallback) navigate(item.link)
+          }}
+        />
+      ))}
+    </div>
+  ))}
+</div>
         </div>
       </div>
     </section>
