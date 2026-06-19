@@ -315,7 +315,8 @@ const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
       }} />
     ))}
   </div>
-</div>
+        </div>
+      </div>
     </section>
   )
 }
