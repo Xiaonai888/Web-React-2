@@ -893,7 +893,11 @@ const [loading, setLoading] = useState(true)
   const coverRef = useRef(null)
   const profileRef = useRef(null)
   const tabsRef = useRef(null)
-  const profileDetails = author?.profile_details || {}
+  const databaseProfileDetails = author?.profile_details || {}
+  const storedProfileDetails = getStoredAuthorProfileDetails()
+  const profileDetails = author?.is_owner
+  ? { ...storedProfileDetails, ...databaseProfileDetails }
+  : databaseProfileDetails
 
 
   function handleSwitchToReaderAccount() {
