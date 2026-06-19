@@ -59,10 +59,10 @@ function getRankLabel(rank) {
 
 function getRankBadgeClass(rank) {
   if (rank === 1) return 'bg-[#facc15] text-[#111827]'
-  if (rank === 2) return 'bg-[#cbd5e1] text-[#111827]'
+  if (rank === 2) return 'bg-[#ef4444] text-white'
   if (rank === 3) return 'bg-[#f97316] text-white'
 
-  return 'bg-[#111827] text-white'
+  return 'bg-[#6b7280] text-white'
 }
 
 function createFallbackBooks(category) {
@@ -293,9 +293,9 @@ export default function TopNovelSection() {
           })}
         </div>
 
-        <div className="flex snap-x gap-4 overflow-x-auto pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+       <div className="flex snap-x gap-3 overflow-x-auto pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-4">
   {rankingGroups.map((group, groupIndex) => (
-    <div key={groupIndex} className="grid w-[88vw] max-w-[360px] shrink-0 snap-start grid-rows-3 gap-3">
+    <div key={groupIndex} className="grid w-[62vw] max-w-[300px] shrink-0 snap-start grid-rows-3 gap-3 md:w-[360px] md:max-w-[360px]">
       {group.map((item) => (
         <RankingBookCard
           key={item.id}
