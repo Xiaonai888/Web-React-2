@@ -118,6 +118,7 @@ const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchas
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
+const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'))
 
 
 
@@ -842,6 +843,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <DiscoverPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/new-arrivals"
+  element={
+    <LazyPage>
+      <NewArrivalsPage />
     </LazyPage>
   }
 />
