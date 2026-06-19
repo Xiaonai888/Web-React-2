@@ -141,11 +141,11 @@ function BookCard({ book }) {
       </div>
 
       <div className="mt-2.5 min-w-0">
-        <h3 className="line-clamp-1 text-[13px] font-bold tracking-tight text-[#111827] sm:text-[15px]">
+        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900"
           {book.title}
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-[11px] font-medium text-[#6b7280] sm:text-[12px]">
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500"
           {book.author}
         </p>
 
