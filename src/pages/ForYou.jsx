@@ -757,10 +757,6 @@ export default function ForYou() {
             <div className="my-6">
               <YouMightLikeSection />
             </div>
-
-            <div className="my-6">
-  <FanPicksSection />
-</div>
   </>
 )}
           </div>
