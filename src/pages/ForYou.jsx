@@ -739,7 +739,7 @@ export default function ForYou() {
             </div>
 
             <div className="my-6">
-              <YouMightLikeSection />
+              <FanPicksSection />
             </div>
 
             <div className="my-6">
@@ -752,6 +752,10 @@ export default function ForYou() {
 
             <div className="my-6">
               <CompletedSection />
+            </div>
+
+            <div className="my-6">
+              <YouMightLikeSection />
             </div>
 
             <div className="my-6">
