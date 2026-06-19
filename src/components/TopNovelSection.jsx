@@ -123,8 +123,8 @@ function SafeBookCover({ src, title, rank }) {
 
 function RankingBookCard({ item, onOpen }) {
   return (
-    <button type="button" onClick={onOpen} className="group flex h-[108px] w-full items-center gap-3 text-left">
-      <div className="relative h-[104px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+    <button type="button" onClick={onOpen} className="group flex h-[118px] w-full items-center gap-3 text-left">
+  <div className="relative h-[116px] w-[80px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
@@ -295,7 +295,7 @@ export default function TopNovelSection() {
 
        <div className="flex snap-x gap-3 overflow-x-auto pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-4">
   {rankingGroups.map((group, groupIndex) => (
-    <div key={groupIndex} className="grid w-[62vw] max-w-[300px] shrink-0 snap-start grid-rows-3 gap-3 md:w-[360px] md:max-w-[360px]">
+    <div key={groupIndex} className="grid w-[78vw] max-w-[360px] shrink-0 snap-start grid-rows-3 gap-2 md:w-[360px] md:max-w-[360px]">
       {group.map((item) => (
         <RankingBookCard
           key={item.id}
