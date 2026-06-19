@@ -626,7 +626,8 @@ writeStoredDetails(nextDetails)
     }, 260)
   }, [sectionFromUrl, loading])
 
-  async function updateDetails(patch) {
+ 
+async function updateDetails(patch) {
   const nextDetails = { ...details, ...patch }
 
   setDetails(nextDetails)
@@ -634,10 +635,13 @@ writeStoredDetails(nextDetails)
   window.dispatchEvent(new Event('shadow_author_page_profile_details_updated'))
 
   const token = getAuthToken()
-  if (!token) return
+  if (!token) {
+    setMessage('Please login again before saving contact info.')
+    return
+  }
 
   try {
-    await fetch(`${API_BASE_URL}/api/authors/me`, {
+    const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -647,8 +651,23 @@ writeStoredDetails(nextDetails)
         profile_details: nextDetails,
       }),
     })
-  } catch {}
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to save contact info')
+    }
+
+    if (data.author_page) {
+      localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
+    }
+
+    setMessage('Contact info saved to database.')
+  } catch (error) {
+    setMessage(error.message || 'Failed to save contact info')
+  }
 }
+
 
   function openImagePicker(mode) {
     setImageMode(mode)
