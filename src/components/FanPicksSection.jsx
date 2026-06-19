@@ -60,9 +60,12 @@ function LoadingGrid() {
         <div className="h-6 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
 
-      <div className="scrollbar-none flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-x-3 lg:gap-y-6 lg:overflow-visible lg:pb-0"
+      <div className="scrollbar-none flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-x-3 lg:gap-y-6 lg:overflow-visible lg:pb-0">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index}>
+          <div
+            key={index}
+            className="w-[calc((100%_-_24px)/3)] shrink-0 lg:w-full lg:shrink"
+          >
             <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
             <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
             <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
@@ -126,19 +129,19 @@ export default function FanPicksSection() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center gap-2">
-  <span className="text-[20px]">💎</span>
-  <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-    Hidden Gems
-  </h2>
-</div>
+        <span className="text-[20px]">💎</span>
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+          Hidden Gems
+        </h2>
+      </div>
 
-      <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
+      <div className="scrollbar-none flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-5 lg:gap-x-3 lg:gap-y-6 lg:overflow-visible lg:pb-0">
         {books.map((book) => (
           <button
             key={book.id}
             type="button"
             onClick={() => navigate(book.link)}
-            className="w-full text-left"
+            className="w-[calc((100%_-_24px)/3)] shrink-0 text-left lg:w-full lg:shrink"
           >
             <BookCard book={book} />
           </button>
