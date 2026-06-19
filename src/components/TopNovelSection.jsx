@@ -57,6 +57,14 @@ function getRankLabel(rank) {
   return String(rank).padStart(2, '0')
 }
 
+function getRankBadgeClass(rank) {
+  if (rank === 1) return 'bg-[#facc15] text-[#111827]'
+  if (rank === 2) return 'bg-[#cbd5e1] text-[#111827]'
+  if (rank === 3) return 'bg-[#f97316] text-white'
+
+  return 'bg-[#111827] text-white'
+}
+
 function createFallbackBooks(category) {
   return Array.from({ length: 6 }).map((_, index) => ({
     id: `fallback-${category}-${index + 1}`,
@@ -115,22 +123,18 @@ function SafeBookCover({ src, title, rank }) {
 
 function RankingBookCard({ item, onOpen }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group block min-w-0 text-left"
-    >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+    <button type="button" onClick={onOpen} className="group flex h-[108px] w-full items-center gap-3 text-left">
+      <div className="relative h-[104px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
 
-      <div className="pt-2.5">
-        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-2 text-[15px] font-[640] leading-[20px] text-neutral-900">
           {item.title}
         </h3>
 
-        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
           {item.genre || 'Ranking'}
         </p>
       </div>
@@ -232,6 +236,12 @@ export default function TopNovelSection() {
     return realDataByCategory[activeCategory] || createFallbackBooks(activeCategory)
   }, [activeCategory, realDataByCategory])
 
+  const rankingGroups = useMemo(() => {
+  const items = filteredData.slice(0, 6)
+
+  return [items.slice(0, 3), items.slice(3, 6)].filter((group) => group.length)
+}, [filteredData])
+
   if (loading && !realDataByCategory[activeCategory]) {
     return <LoadingRanking />
   }
@@ -283,17 +293,21 @@ export default function TopNovelSection() {
           })}
         </div>
 
-        <div className="grid grid-cols-3 gap-x-2 gap-y-5 md:grid-cols-6 md:gap-x-3">
-          {filteredData.map((item) => (
-            <RankingBookCard
-              key={item.id}
-              item={item}
-              onOpen={() => {
-                if (!item.isFallback) navigate(item.link)
-              }}
-            />
-          ))}
-        </div>
+        <div className="flex snap-x gap-4 overflow-x-auto pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  {rankingGroups.map((group, groupIndex) => (
+    <div key={groupIndex} className="grid w-[88vw] max-w-[360px] shrink-0 snap-start grid-rows-3 gap-3">
+      {group.map((item) => (
+        <RankingBookCard
+          key={item.id}
+          item={item}
+          onOpen={() => {
+            if (!item.isFallback) navigate(item.link)
+          }}
+        />
+      ))}
+    </div>
+  ))}
+</div>
       </div>
     </section>
   )
