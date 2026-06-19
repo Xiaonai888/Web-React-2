@@ -126,11 +126,11 @@ export default function FanPicksSection() {
   return (
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-[20px]">💎</span>
-        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
-          Discover More
-        </h2>
-      </div>
+  <span className="text-[20px]">💎</span>
+  <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">
+    Hidden Gems
+  </h2>
+</div>
 
       <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
         {books.map((book) => (
