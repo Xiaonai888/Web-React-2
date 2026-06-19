@@ -123,8 +123,8 @@ function SafeBookCover({ src, title, rank }) {
 
 function RankingBookCard({ item, onOpen }) {
   return (
-    <button type="button" onClick={onOpen} className="group flex h-[96px] w-full items-center gap-3 text-left">
-  <div className="relative h-[96px] w-[66px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+    <button type="button" onClick={onOpen} className="group flex h-[104px] w-full items-center gap-3 text-left">
+  <div className="relative h-[104px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
@@ -144,7 +144,7 @@ function RankingBookCard({ item, onOpen }) {
 
 function CompactRankingCover({ item, onOpen }) {
   return (
-    <button type="button" onClick={onOpen} className="group relative block h-[96px] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm active:scale-[0.98]">
+    <button type="button" onClick={onOpen} className="group relative block h-[104px] w-[72px] overflow-hidden rounded-[8px] bg-gray-100 shadow-sm active:scale-[0.98]">
       <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
       <RankBadge rank={item.rank} />
     </button>
@@ -299,8 +299,8 @@ const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
           })}
         </div>
 
-       <div className="grid grid-cols-[minmax(0,1fr)_78px] gap-3">
-  <div className="grid grid-rows-3 gap-2">
+       <div className="-mr-4 grid grid-cols-[minmax(0,1fr)_72px] gap-2 sm:-mr-5 lg:-mr-6">
+  <div className="grid grid-rows-3 gap-1.5">
     {topThreeStories.map((item) => (
       <RankingBookCard key={item.id} item={item} onOpen={() => {
         if (!item.isFallback) navigate(item.link)
@@ -308,7 +308,7 @@ const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
     ))}
   </div>
 
-  <div className="grid grid-rows-3 gap-2">
+  <div className="grid grid-rows-3 gap-1.5">
     {sideStories.map((item) => (
       <CompactRankingCover key={item.id} item={item} onOpen={() => {
         if (!item.isFallback) navigate(item.link)
