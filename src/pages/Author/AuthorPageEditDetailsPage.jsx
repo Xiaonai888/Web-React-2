@@ -626,16 +626,29 @@ writeStoredDetails(nextDetails)
     }, 260)
   }, [sectionFromUrl, loading])
 
-  function updateDetails(patch) {
-    const nextDetails = {
-      ...details,
-      ...patch,
-    }
+  async function updateDetails(patch) {
+  const nextDetails = { ...details, ...patch }
 
-    setDetails(nextDetails)
-    writeStoredDetails(nextDetails)
-    window.dispatchEvent(new Event('shadow_author_page_profile_details_updated'))
-  }
+  setDetails(nextDetails)
+  writeStoredDetails(nextDetails)
+  window.dispatchEvent(new Event('shadow_author_page_profile_details_updated'))
+
+  const token = getAuthToken()
+  if (!token) return
+
+  try {
+    await fetch(`${API_BASE_URL}/api/authors/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        page_name: pageName.trim(),
+        page_username: normalizeUsername(pageUsername),
+        bio: bio.trim(),
+        profile_details: nextDetails,
+      }),
+    })
+  } catch {}
+}
 
   function openImagePicker(mode) {
     setImageMode(mode)
