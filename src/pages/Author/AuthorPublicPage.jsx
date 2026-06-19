@@ -1774,6 +1774,13 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       </div>
     </section>
 
+    <div className="rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">
+  TEST profile_details:{' '}
+  {Object.keys(profileDetails || {}).length
+    ? JSON.stringify(profileDetails)
+    : 'EMPTY'}
+</div>
+
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
