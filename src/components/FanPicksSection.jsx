@@ -55,40 +55,6 @@ function BookCard({ book }) {
   )
 }
 
-          {book.isAdult ? (
-            <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
-              18+
-            </div>
-          ) : null}
-
-          {book.genre ? (
-            <div className="absolute left-2 top-2 rounded-full bg-black/45 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
-              {book.genre}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 min-h-[42px] text-[15px] font-extrabold leading-[21px] tracking-tight text-neutral-900">
-            {book.title}
-          </h3>
-
-          <div className="mt-2 flex items-center gap-3 text-[13px] text-gray-600">
-            <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-[12px] text-red-500" />
-              <span className="font-medium">{book.likes}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <i className="fas fa-list text-[12px]" />
-              <span className="font-medium text-[#2b57c7]">{book.episodes}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function LoadingGrid() {
   return (
