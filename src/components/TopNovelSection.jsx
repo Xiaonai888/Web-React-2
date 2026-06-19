@@ -273,7 +273,7 @@ const sideStories = useMemo(() => filteredData.slice(3, 6), [filteredData])
           </button>
         </div>
 
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mb-5 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-y_pan-x] [&::-webkit-scrollbar]:hidden">
           {rankingTabs.map((tab) => {
             const isActive = activeCategory === tab.label
 
