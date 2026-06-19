@@ -121,7 +121,7 @@ function BookCard({ book }) {
 
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-[16px] bg-[#202124] shadow-sm">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.cover}
           alt={book.title}
@@ -149,17 +149,7 @@ function BookCard({ book }) {
           {book.author}
         </p>
 
-        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#111827] sm:text-[11px]">
-          <span className="inline-flex items-center gap-1">
-            <i className="fas fa-eye text-[10px]" />
-            {book.views}
-          </span>
-
-          <span className="inline-flex items-center gap-1 text-[#1d4ed8]">
-            <i className="fas fa-list text-[10px] text-[#111827]" />
-            {book.episodes}
-          </span>
-        </div>
+        
       </div>
     </Link>
   )
@@ -170,7 +160,7 @@ function LoadingGrid() {
     <div className="grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-6 md:gap-x-5 md:gap-y-9">
       {Array.from({ length: 12 }).map((_, index) => (
         <div key={index}>
-          <div className="aspect-[2/3] animate-pulse rounded-[16px] bg-[#f3f4f6]" />
+          <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-[#f3f4f6]" />
           <div className="mt-3 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
           <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-[#f3f4f6]" />
         </div>
