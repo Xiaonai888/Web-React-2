@@ -53,12 +53,8 @@ function getActiveTabConfig(label) {
   return rankingTabs.find((tab) => tab.label === label) || rankingTabs[0]
 }
 
-function getRankAccent(rank) {
-  if (rank === 1) return 'border-[#facc15] bg-black/80 text-white'
-  if (rank === 2) return 'border-[#cbd5e1] bg-black/75 text-white'
-  if (rank === 3) return 'border-[#d97706] bg-black/75 text-white'
-
-  return 'border-white/40 bg-black/65 text-white'
+function getRankLabel(rank) {
+  return String(rank).padStart(2, '0')
 }
 
 function createFallbackBooks(category) {
@@ -87,8 +83,8 @@ function normalizeStory(story, index = 0) {
 
 function RankBadge({ rank }) {
   return (
-    <div className={`absolute left-1.5 top-1.5 z-10 rounded-[6px] border-l-[3px] px-1.5 py-1 text-[10px] font-extrabold leading-none shadow-sm backdrop-blur-sm ${getRankAccent(rank)}`}>
-      #{rank}
+    <div className="absolute left-0 top-0 z-10 flex h-7 min-w-7 items-center justify-center rounded-br-[10px] bg-white/90 px-1.5 text-[10px] font-extrabold leading-none text-[#111827] shadow-sm ring-1 ring-black/5 backdrop-blur">
+      {getRankLabel(rank)}
     </div>
   )
 }
@@ -267,17 +263,22 @@ export default function TopNovelSection() {
 
             return (
               <button
-                key={tab.label}
-                type="button"
-                onClick={() => setActiveCategory(tab.label)}
-                className={`inline-flex h-[34px] shrink-0 items-center rounded-full px-3.5 text-[12px] leading-none active:scale-[0.98] ${
-                  isActive
-                    ? 'bg-[#111827] font-extrabold text-white'
-                    : 'bg-[#f5f3fa] font-[640] text-[#111827]'
-                }`}
-              >
-                {tab.label}
-              </button>
+  key={tab.label}
+  type="button"
+  onClick={() => setActiveCategory(tab.label)}
+  className={`relative inline-flex h-[34px] shrink-0 items-center px-1.5 text-[13px] leading-none transition-colors active:scale-[0.98] ${
+    isActive
+      ? 'font-extrabold text-[#111827]'
+      : 'font-[560] text-[#6b7280]'
+  }`}
+>
+  {tab.label}
+  <span
+    className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#facc15] transition-all duration-200 ${
+      isActive ? 'w-[70%] opacity-100' : 'w-0 opacity-0'
+    }`}
+  />
+</button>
             )
           })}
         </div>
