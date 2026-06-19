@@ -91,7 +91,7 @@ function normalizeStory(story, index = 0) {
 
 function RankBadge({ rank }) {
   return (
-    <div className="absolute left-0 top-0 z-10 flex h-7 min-w-7 items-center justify-center rounded-br-[10px] bg-white/90 px-1.5 text-[10px] font-extrabold leading-none text-[#111827] shadow-sm ring-1 ring-black/5 backdrop-blur">
+    <div className={`absolute -left-px -top-px z-10 flex h-[26px] min-w-[28px] items-center justify-center rounded-tl-[8px] rounded-br-[10px] px-1.5 text-[10px] font-extrabold leading-none shadow-sm ${getRankBadgeClass(rank)}`}>
       {getRankLabel(rank)}
     </div>
   )
