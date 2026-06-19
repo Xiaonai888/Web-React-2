@@ -119,6 +119,7 @@ const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
 const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'))
+const CompletedPage = lazy(() => import('./pages/CompletedPage'))
 
 
 
@@ -852,6 +853,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <NewArrivalsPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/completed"
+  element={
+    <LazyPage>
+      <CompletedPage />
     </LazyPage>
   }
 />
