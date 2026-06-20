@@ -46,24 +46,112 @@ function createSeededRandom(seed) {
   }
 }
 
-function selectDailyStories(stories, limit = 6) {
-  const eligibleStories = stories.filter(
-    (story) => Number(story.total_episodes || 0) >= 1
-  )
+function seededShuffle(items, seed = createDailySeed()) {
+  const selectedItems = [...items]
+  const random = createSeededRandom(seed)
 
-  const selectedStories = [...eligibleStories]
-  const random = createSeededRandom(createDailySeed())
-
-  for (let index = selectedStories.length - 1; index > 0; index -= 1) {
+  for (let index = selectedItems.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(random() * (index + 1))
-
-    ;[selectedStories[index], selectedStories[randomIndex]] = [
-      selectedStories[randomIndex],
-      selectedStories[index],
+    ;[selectedItems[index], selectedItems[randomIndex]] = [
+      selectedItems[randomIndex],
+      selectedItems[index],
     ]
   }
 
-  return selectedStories.slice(0, limit)
+  return selectedItems
+}
+
+function getStoryViews(story) {
+  return Number(story.total_views || 0)
+}
+
+function getStoryLikes(story) {
+  return Number(story.total_likes || 0)
+}
+
+function getStoryEpisodes(story) {
+  return Number(story.total_episodes || 0)
+}
+
+function hasStoryCover(story) {
+  return Boolean(story.cover_url || story.landscape_thumbnail_url)
+}
+
+function isEligibleStory(story) {
+  return getStoryEpisodes(story) >= 1 && hasStoryCover(story)
+}
+
+function uniqueStories(stories) {
+  const seenIds = new Set()
+
+  return stories.filter((story) => {
+    if (!story?.id || seenIds.has(story.id)) return false
+    seenIds.add(story.id)
+    return true
+  })
+}
+
+function pickUnique(source, count, usedIds) {
+  const picked = []
+
+  for (const story of source) {
+    if (!story?.id || usedIds.has(story.id)) continue
+
+    usedIds.add(story.id)
+    picked.push(story)
+
+    if (picked.length >= count) break
+  }
+
+  return picked
+}
+
+function selectDailyStories(allStories, limit = 6) {
+  const eligibleStories = uniqueStories(allStories).filter(isEligibleStory)
+  const usedIds = new Set()
+
+  const popularStories = seededShuffle(
+    [...eligibleStories].sort((a, b) => getStoryLikes(b) - getStoryLikes(a)),
+    createDailySeed() + 11
+  )
+
+  const hiddenGemStories = seededShuffle(
+    [...eligibleStories]
+      .filter((story) => getStoryViews(story) <= 250 || getStoryLikes(story) <= 5)
+      .sort((a, b) => {
+        const viewDiff = getStoryViews(a) - getStoryViews(b)
+        if (viewDiff !== 0) return viewDiff
+        return getStoryLikes(b) - getStoryLikes(a)
+      }),
+    createDailySeed() + 22
+  )
+
+  const freshStories = seededShuffle(
+    [...eligibleStories].sort((a, b) => {
+      const dateA = new Date(a.updated_at || a.created_at || 0).getTime()
+      const dateB = new Date(b.updated_at || b.created_at || 0).getTime()
+      return dateB - dateA
+    }),
+    createDailySeed() + 33
+  )
+
+  const pickedStories = [
+    ...pickUnique(popularStories, 3, usedIds),
+    ...pickUnique(hiddenGemStories, 2, usedIds),
+    ...pickUnique(freshStories, 1, usedIds),
+  ]
+
+  if (pickedStories.length < limit) {
+    pickedStories.push(
+      ...pickUnique(
+        seededShuffle(eligibleStories, createDailySeed() + 44),
+        limit - pickedStories.length,
+        usedIds
+      )
+    )
+  }
+
+  return pickedStories.slice(0, limit)
 }
 
 function normalizeStory(story, index = 0) {
@@ -127,21 +215,21 @@ function DailyPickCard({ book }) {
         </h3>
 
         <div className="mt-1.5 flex min-h-[22px] items-center gap-2">
-  {book.genre ? (
-    <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700]">
-      {book.genre}
-    </span>
-  ) : null}
+          {book.genre ? (
+            <span className="inline-flex max-w-full truncate rounded-[4px] bg-[#FFF4BF] px-2 py-1 text-[10px] font-medium leading-none text-[#9A6700]">
+              {book.genre}
+            </span>
+          ) : null}
 
-  <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
-    <span className="text-[#EF4444]">
-      <FireOutlineIcon />
-    </span>
+          <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
+            <span className="text-[#EF4444]">
+              <FireOutlineIcon />
+            </span>
 
-    <span>{book.heat}</span>
-  </div>
-</div>
-              </div>
+            <span>{book.heat}</span>
+          </div>
+        </div>
+      </div>
     </Link>
   )
 }
@@ -178,20 +266,38 @@ export default function DailyPicksSection() {
       try {
         setLoading(true)
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=24&sort=likes`
-          )
-        )
+        const [popularResponse, updatedResponse] = await Promise.all([
+          fetch(
+            addStoryLanguageParam(
+              `${API_BASE_URL}/api/public/stories?limit=36&sort=likes`
+            )
+          ),
+          fetch(
+            addStoryLanguageParam(
+              `${API_BASE_URL}/api/public/stories?limit=60&sort=updated`
+            )
+          ),
+        ])
 
-        const data = await response.json().catch(() => ({}))
+        const [popularData, updatedData] = await Promise.all([
+          popularResponse.json().catch(() => ({})),
+          updatedResponse.json().catch(() => ({})),
+        ])
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load daily picks')
+        if (!popularResponse.ok || popularData.ok === false) {
+          throw new Error(popularData.message || 'Failed to load popular daily picks')
+        }
+
+        if (!updatedResponse.ok || updatedData.ok === false) {
+          throw new Error(updatedData.message || 'Failed to load updated daily picks')
         }
 
         if (!ignore) {
-          const dailyStories = selectDailyStories(data.stories || [], 6)
+          const dailyStories = selectDailyStories(
+            [...(popularData.stories || []), ...(updatedData.stories || [])],
+            6
+          )
+
           setStories(dailyStories.map(normalizeStory))
         }
       } catch (error) {
@@ -225,19 +331,19 @@ export default function DailyPicksSection() {
   return (
     <section className="px-3 pb-2 md:px-4">
       <div className="mb-4 flex items-center justify-between">
-  <div className="flex items-center gap-2">
-    <span className="text-[20px] lg:text-[21px]">📖</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[20px] lg:text-[21px]">📖</span>
 
-    <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-      Daily Picks
-    </h2>
-  </div>
+          <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
+            Daily Picks
+          </h2>
+        </div>
 
         <Link
-  to="/daily-picks"
-  className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
-  aria-label="View all Daily Picks"
->
+          to="/daily-picks"
+          className="flex h-8 w-8 items-center justify-end rounded-full transition-colors hover:bg-gray-100"
+          aria-label="View all Daily Picks"
+        >
           <i className="fas fa-chevron-right text-[15px] text-gray-700 lg:text-[16px]" />
         </Link>
       </div>
