@@ -739,15 +739,11 @@ export default function ForYou() {
             </div>
 
             <div className="my-6">
-              <FanPicksSection />
+              <NewArrivalsSection />
             </div>
 
             <div className="my-6">
               <EventPerksHubSection />
-            </div>
-
-            <div className="my-6">
-              <NewArrivalsSection />
             </div>
 
             <div className="my-6">
