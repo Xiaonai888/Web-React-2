@@ -90,16 +90,19 @@ function createFallbackBooks(category) {
   }))
 }
 
-function normalizeStory(story, index = 0) {
-  return {
-    id: story.id,
-    rank: index + 1,
-    title: story.title || 'Untitled Story',
-    image: story.cover_url || '',
-    link: `/story/${story.id}`,
-    genre: story.main_genre || '',
-    isFallback: false,
+async function fetchRankingItems(tab, categoryLabel) {
+  const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${tab.endpoint}`))
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || `Failed to load ${categoryLabel}`)
   }
+
+  const rows = Array.isArray(data.stories) ? data.stories : []
+  const filteredRows = tab.filter ? rows.filter(tab.filter) : rows
+  const stories = filteredRows.slice(0, 6).map(normalizeStory)
+
+  return stories.length ? stories : createFallbackBooks(categoryLabel)
 }
 
 function RankBadge({ rank }) {
@@ -214,6 +217,65 @@ export default function TopNovelSection() {
   useEffect(() => {
     let ignore = false
 
+    async function preloadRankingTabs() {
+      const firstTab = rankingTabs[0]
+
+      try {
+        setLoading(true)
+
+        const firstItems = await fetchRankingItems(firstTab, firstTab.label)
+
+        if (ignore) return
+
+        setRealDataByCategory({
+          [firstTab.label]: firstItems,
+        })
+      } catch (error) {
+        console.error('Ranking first tab fetch error:', error)
+
+        if (ignore) return
+
+        setRealDataByCategory({
+          [firstTab.label]: createFallbackBooks(firstTab.label),
+        })
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+
+      const restTabs = rankingTabs.slice(1)
+      const entries = await Promise.all(
+        restTabs.map(async (tab) => {
+          try {
+            const items = await fetchRankingItems(tab, tab.label)
+            return [tab.label, items]
+          } catch (error) {
+            console.error(`Ranking preload error: ${tab.label}`, error)
+            return [tab.label, createFallbackBooks(tab.label)]
+          }
+        })
+      )
+
+      if (!ignore) {
+        setRealDataByCategory((current) => ({
+          ...current,
+          ...Object.fromEntries(entries),
+        }))
+      }
+    }
+
+    preloadRankingTabs()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+  const [activeCategory, setActiveCategory] = useState(rankingTabs[0].label)
+  const [realDataByCategory, setRealDataByCategory] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
     async function fetchRankingCategory() {
       try {
         if (realDataByCategory[activeCategory]) return
@@ -261,7 +323,11 @@ export default function TopNovelSection() {
   }, [activeCategory, realDataByCategory])
 
   const filteredData = useMemo(() => {
-    return realDataByCategory[activeCategory] || createFallbackBooks(activeCategory)
+    const activeData = realDataByCategory[activeCategory]
+
+    if (activeData) return activeData
+
+    return realDataByCategory[rankingTabs[0].label] || createFallbackBooks(activeCategory)
   }, [activeCategory, realDataByCategory])
 
   const rankingGroups = useMemo(() => {
@@ -270,7 +336,7 @@ export default function TopNovelSection() {
     return [items.slice(0, 3), items.slice(3, 6)].filter((group) => group.length)
   }, [filteredData])
 
-  if (loading && !realDataByCategory[activeCategory]) {
+  if (loading && !realDataByCategory[rankingTabs[0].label]) {
     return <LoadingRanking />
   }
 
