@@ -130,7 +130,7 @@ export default function AuthorFollowersPage() {
         <section className="bg-white sm:overflow-hidden sm:rounded-[24px] sm:shadow-sm sm:ring-1 sm:ring-black/5">
           <button
             type="button"
-            onClick={() => setMessage('Top fans page is coming soon.')}
+            onClick={() => navigate(`/author/page/${pageUsername}/top-fans`)}
             className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eef6ff] text-[22px]">
