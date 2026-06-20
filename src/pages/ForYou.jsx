@@ -726,13 +726,13 @@ export default function ForYou() {
               <TrendingNowSection />
             </div>
 
-           <div className="mt-6 mb-5">
-              <UpdateTodaySection />
-            </div>
+           <div className="my-6">
+  <UpdateTodaySection />
+</div>
 
-            <div className="mt-0 mb-6">
-              <EditorWeeklyPicksSection />
-            </div>
+<div className="my-6">
+  <EditorWeeklyPicksSection />
+</div>
 
             <div className="my-6">
               <NewArrivalsSection />
