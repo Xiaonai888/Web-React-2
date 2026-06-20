@@ -45,7 +45,7 @@ import InboxPage from './pages/InboxPage'
 import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import VisitorTracker from './components/VisitorTracker'
-
+import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 
 
 
@@ -105,7 +105,6 @@ const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
-const AuthorPageEditDetailsPage = lazy(() => import('./pages/Author/AuthorPageEditDetailsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
 const AuthorCheckoutPage = lazy(() => import('./pages/Author/AuthorCheckoutPage'))
 const AuthorOrderHistoryPage = lazy(() => import('./pages/Author/AuthorOrderHistoryPage'))
