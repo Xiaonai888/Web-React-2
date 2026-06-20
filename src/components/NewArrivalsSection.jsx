@@ -62,45 +62,43 @@ function BookCard({ book, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group block h-full w-full text-left"
+      className="group block h-full w-full shrink-0 text-left"
     >
-      <div className="flex flex-col items-start">
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
-          <img
-            src={book.cover}
-            alt={book.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            loading="lazy"
-            onError={(event) => {
-              event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
-            }}
-          />
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[8px] bg-gray-100 shadow-sm">
+        <img
+          src={book.cover}
+          alt={book.title}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
+          }}
+        />
 
-          {book.badge ? (
-            <div
-              className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${
-                badgeStyles[book.badgeColor] || badgeStyles.new
-              }`}
-            >
-              {book.badge}
-            </div>
-          ) : null}
+        {book.badge ? (
+          <div
+            className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${
+              badgeStyles[book.badgeColor] || badgeStyles.new
+            }`}
+          >
+            {book.badge}
+          </div>
+        ) : null}
 
-          {book.isAdult ? (
-            <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
-              18+
-            </div>
-          ) : null}
-        </div>
-
-        <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-  {book.title}
-</h3>
-
-<p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-  {book.author}
-</p>
+        {book.isAdult ? (
+          <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+            18+
+          </div>
+        ) : null}
       </div>
+
+      <h3 className="mt-2 block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
+        {book.title}
+      </h3>
+
+      <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+        {book.genre || 'New Arrival'}
+      </p>
     </button>
   )
 }
@@ -158,7 +156,7 @@ export default function NewArrivalsSection() {
           .filter((story) => Number(story.total_episodes || 0) >= 1)
           .filter((story) => !isCompletedStory(story))
           .map(normalizeStory)
-          .slice(0, 5)
+          .slice(0, 12)
 
         setBooks(newestBooks)
       } catch (error) {
@@ -205,15 +203,16 @@ export default function NewArrivalsSection() {
       </div>
 
       {books.length ? (
-        <div className="grid grid-cols-3 gap-x-2 gap-y-6 lg:grid-cols-5 lg:gap-x-3">
-          {books.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onClick={() => navigate(book.link)}
-            />
-          ))}
-        </div>
+        <div className="-mr-4 flex gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] sm:-mr-5 sm:pr-5 lg:mr-0 lg:grid lg:grid-cols-6 lg:gap-3 lg:overflow-visible lg:pb-0 lg:pr-0 [&::-webkit-scrollbar]:hidden">
+  {books.map((book) => (
+    <div key={book.id} className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)] lg:w-auto lg:min-w-0">
+      <BookCard
+        book={book}
+        onClick={() => navigate(book.link)}
+      />
+    </div>
+  ))}
+</div>
       ) : (
         <div className="rounded-[22px] bg-[#f8f8fb] px-4 py-6 text-center">
           <div className="text-[14px] font-extrabold text-[#111827]">
