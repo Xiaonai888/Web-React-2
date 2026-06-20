@@ -339,3 +339,7 @@ export default function TopNovelSection() {
             </div>
           ))}
         </div>
+              </div>
+    </section>
+  )
+}
