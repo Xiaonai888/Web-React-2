@@ -141,9 +141,9 @@ function RankingBookCard({ item, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex h-[108px] w-full items-center gap-2.5 text-left md:h-[116px] md:gap-3"
+      className="group flex h-[120px] w-full items-center gap-3 text-left md:h-[116px]"
     >
-      <div className="relative h-[108px] w-[72px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm md:h-[116px] md:w-[80px]">
+      <div className="relative h-[120px] w-[82px] shrink-0 overflow-hidden rounded-[8px] bg-gray-100 shadow-sm md:h-[116px] md:w-[80px]">
         <SafeBookCover src={item.image} title={item.title} rank={item.rank} />
         <RankBadge rank={item.rank} />
       </div>
@@ -321,11 +321,11 @@ export default function TopNovelSection() {
           })}
         </div>
 
-        <div className="-mr-4 flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] md:mr-0 md:grid md:max-w-[760px] md:grid-cols-2 md:gap-5 md:overflow-visible md:pb-0 md:pr-0 [&::-webkit-scrollbar]:hidden">
+                <div className="-mr-4 flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] md:mr-0 md:grid md:max-w-[760px] md:grid-cols-2 md:gap-5 md:overflow-visible md:pb-0 md:pr-0 [&::-webkit-scrollbar]:hidden">
           {rankingGroups.map((group, groupIndex) => (
             <div
               key={groupIndex}
-              className="grid w-[70vw] max-w-[320px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
+              className="grid w-[calc(100vw-106px)] max-w-[330px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
             >
               {group.map((item) => (
                 <RankingBookCard
@@ -339,7 +339,3 @@ export default function TopNovelSection() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  )
-}
