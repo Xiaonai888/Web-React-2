@@ -726,7 +726,7 @@ export default function ForYou() {
               <TrendingNowSection />
             </div>
 
-            <div className="mt-6 mb-3">
+           <div className="mt-6 mb-5">
               <UpdateTodaySection />
             </div>
 
