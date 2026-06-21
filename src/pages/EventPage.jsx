@@ -92,22 +92,24 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
     <button
       type="button"
       onClick={() => onOpen(author)}
-      className={`relative min-w-[132px] overflow-hidden rounded-[18px] border px-3 py-4 text-center shadow-sm active:scale-[0.98] ${
-        isFirst
-          ? 'border-[#f6b800] bg-gradient-to-b from-[#fff8df] to-white shadow-[0_10px_24px_rgba(246,184,0,0.18)]'
-          : 'border-[#f3df9a] bg-[#fffdf7]'
-      }`}
+      className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 py-4 text-center shadow-sm active:scale-[0.98]"
     >
-      <div className="absolute left-2 top-2 rounded-full bg-[#111827] px-2 py-0.5 text-[10px] font-black text-[#f6b800]">
-        #{rank}
-      </div>
-
-      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-black text-white ring-2 ring-[#f6b800]/70">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+      <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
+        {isFirst ? (
+          <i className="fas fa-crown absolute -top-3 left-1/2 z-10 -translate-x-1/2 -rotate-12 text-[17px] text-[#111827] drop-shadow-sm" />
         ) : (
-          String(name || 'A').slice(0, 1).toUpperCase()
+          <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#f3f4f6] px-1 text-[10px] font-black text-[#6b7280] ring-2 ring-white">
+            {String(rank).padStart(2, '0')}
+          </span>
         )}
+
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f4f5f7] text-[18px] font-black text-[#111827] ring-1 ring-[#e5e7eb]">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+          ) : (
+            String(name || 'A').slice(0, 1).toUpperCase()
+          )}
+        </div>
       </div>
 
       <div className="line-clamp-1 text-[12px] font-black text-[#111827]">{name}</div>
@@ -116,40 +118,25 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       <div className="mt-1 text-[10px] font-semibold text-[#6b7280]">{worksLabel}</div>
 
       <button
-  type="button"
-  disabled={loading}
-  onClick={(event) => {
-    event.stopPropagation()
-
-    if (author?.is_owner || author?.is_following) {
-      onOpen(author)
-      return
-    }
-
-    onFollow(author)
-  }}
-  className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
-    author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
-  }`}
->
-  {loading ? '...' : buttonLabel}
-</button>
-    </button>
-  )
-}
-
-function SectionHeader({ title, onMore }) {
-  return (
-    <div className="mt-8 flex items-center justify-between">
-      <h3 className="text-[19px] font-extrabold text-[#111827]">{title}</h3>
-      <button
         type="button"
-        onClick={onMore}
-        className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95"
+        disabled={loading}
+        onClick={(event) => {
+          event.stopPropagation()
+
+          if (author?.is_owner || author?.is_following) {
+            onOpen(author)
+            return
+          }
+
+          onFollow(author)
+        }}
+        className={`mt-3 w-full rounded-full py-2 text-[10px] font-black active:scale-95 disabled:opacity-60 ${
+          author?.is_following ? 'bg-[#f3f4f6] text-[#111827]' : 'bg-black text-white'
+        }`}
       >
-        <i className="fas fa-chevron-right text-[15px]" />
+        {loading ? '...' : buttonLabel}
       </button>
-    </div>
+    </button>
   )
 }
 
