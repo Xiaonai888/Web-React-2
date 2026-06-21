@@ -108,7 +108,7 @@ export default function AuthorFollowersPage() {
           </button>
 
           <div className="min-w-0 flex-1 px-3 text-center">
-            <h1 className="truncate text-[17px] font-black text-[#111827]">Followers</h1>
+            <h1 className="truncate text-[17px] font-bold text-[#111827]">Followers</h1>
             <p className="truncate text-[11px] font-semibold text-[#8b93a1]">@{pageUsername}</p>
           </div>
 
@@ -148,9 +148,9 @@ export default function AuthorFollowersPage() {
           </button>
 
           <div className="px-4 pb-2 pt-3">
-            <div className="text-[20px] font-black text-[#111827]">
-              {loading ? 'Loading followers...' : `${followers.length} followers`}
-            </div>
+            <div className="text-[17px] font-bold tracking-[-0.01em] text-[#111827]">
+  {loading ? 'Loading followers...' : `${followers.length} followers`}
+</div>
           </div>
 
           {loading ? (
