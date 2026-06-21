@@ -68,12 +68,26 @@ const progressFilters = [
   { label: 'Completed', value: 'completed' },
 ]
 
+function getFirstDifferentTag(mainGenre, tags = []) {
+  const genre = String(mainGenre || '').trim().toLowerCase()
+  const normalizedTags = Array.isArray(tags) ? tags : String(tags || '').split(',')
+
+  return (
+    normalizedTags
+      .map((tag) => String(tag || '').trim())
+      .find((tag) => tag && tag.toLowerCase() !== genre) || ''
+  )
+}
+
 function normalizeBook(story, index = 0) {
+  const genre = String(story.main_genre || story.genre || story.category || '').trim()
+
   return {
     id: story.id || story.story_id,
     title: story.title || 'Untitled Story',
     cover: story.cover_url || story.coverUrl || story.image_url || `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
-    genre: story.main_genre || story.genre || story.category || '',
+    genre,
+    firstTag: getFirstDifferentTag(genre, story.tags),
     status: story.status || story.story_status || '',
     hasFreeEpisode: Boolean(story.has_free_episode),
     hasWaitFreeEpisode: Boolean(story.has_wait_free_episode),
@@ -235,13 +249,17 @@ function FilterSheet({
 
 function BookCard({ book, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(book)} className="block min-w-0 text-left active:scale-[0.99]">
-      <div className="overflow-hidden rounded-[16px] bg-[#202124] shadow-sm">
-        <div className="aspect-[2/3] overflow-hidden">
+    <button
+      type="button"
+      onClick={() => onOpen(book)}
+      className="group block min-w-0 text-left active:scale-[0.99]"
+    >
+      <div className="overflow-hidden rounded-[8px] bg-[#1e1e22] shadow-sm">
+        <div className="relative aspect-[2/3] overflow-hidden rounded-[8px]">
           <img
             src={book.cover}
             alt={book.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             onError={(event) => {
               event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
             }}
@@ -249,9 +267,15 @@ function BookCard({ book, onOpen }) {
         </div>
       </div>
 
-      <h3 className="mt-2 line-clamp-2 text-[12px] font-black leading-4 text-[#111827] sm:text-[14px] sm:leading-5">
-        {book.title}
-      </h3>
+      <div className="pt-2.5 sm:pt-3">
+        <h3 className="block w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[640] leading-[20px] text-neutral-900">
+          {book.title}
+        </h3>
+
+        <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+          {[book.genre, book.firstTag].filter(Boolean).join(' / ')}
+        </p>
+      </div>
     </button>
   )
 }
