@@ -744,7 +744,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
             <section className="mt-6">
               <EventSlideBanner />
 
-              <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+              <div className="no-scrollbar mt-4 md:mt-2 flex gap-2 overflow-x-auto pb-1">
                 {shortcutItems.map((item) => (
                   <button
                     key={item.label}
