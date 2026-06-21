@@ -92,6 +92,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
     3: 'bg-[#FFD400] text-[#111827] shadow-[0_8px_18px_rgba(255,212,0,0.25)]',
     4: 'bg-[#8A2BE2] text-white shadow-[0_8px_18px_rgba(138,43,226,0.24)]',
     5: 'bg-[#A0A7B4] text-white shadow-[0_8px_18px_rgba(160,167,180,0.22)]',
+    6: 'bg-[#A0A7B4] text-white shadow-[0_8px_18px_rgba(160,167,180,0.22)]',
   }
 
   return (
@@ -470,7 +471,7 @@ export default function EventPage() {
 
         const token = getReaderToken()
 
-const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
+const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   headers: token
     ? {
         Authorization: `Bearer ${token}`,
@@ -828,7 +829,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
 
               {topAuthorsLoading ? (
                 <div className="mt-5 flex gap-3 overflow-hidden pb-2">
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
                       className="min-w-[132px] rounded-[18px] border border-[#f3df9a] bg-[#fffdf7] px-3 py-4 text-center"
@@ -842,7 +843,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
                 </div>
               ) : topAuthors.length ? (
                 <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
-                  {topAuthors.slice(0, 5).map((author, index) => (
+                  {topAuthors.slice(0, 6).map((author, index) => (
                     <TopAuthorCard
   key={author.id}
   rank={index + 1}
