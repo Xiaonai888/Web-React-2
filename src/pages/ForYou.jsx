@@ -568,49 +568,52 @@ export default function ForYou() {
     ))}
   </nav>
 ) : null}
+
+          {activeTab === 'novel' ? (
+            <div className="flex gap-1.5 overflow-x-auto border-t border-gray-50 bg-white px-4 pb-2 pt-0 no-scrollbar">
+              {genreTabs.map((tab) => {
+                const active = activeGenre === tab.slug
+                const pressed = pressedGenre === tab.slug
+
+                return (
+                  <button
+                    key={tab.slug}
+                    type="button"
+                    onClick={() => handleGenreChange(tab)}
+                    className={`relative shrink-0 rounded-full px-3 py-2 text-[12px] transition-colors duration-200 ${
+                      active
+                        ? 'font-semibold text-[#111827]'
+                        : 'font-normal text-[#9ca3af]'
+                    } ${
+                      pressed
+                        ? 'bg-[#f1f2f4]'
+                        : 'bg-transparent'
+                    }`}
+                  >
+                    <span className="relative z-10">
+                      {tab.label}
+                    </span>
+
+                    <span
+                      className={`absolute bottom-[3px] left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#F6B800] transition-all duration-200 ${
+                        active
+                          ? 'w-[62%] opacity-100'
+                          : 'w-0 opacity-0'
+                      }`}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
 
-        <div style={{ height: SHOW_STORY_TYPE_TABS ? '96px' : '58px' }} />
+        <div style={{ height: activeTab === 'novel' ? '104px' : SHOW_STORY_TYPE_TABS ? '96px' : '58px' }} />
 
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
           <div id="tab-content-root">
-            <div className="flex gap-1.5 overflow-x-auto bg-white px-4 pb-2 pt-0 no-scrollbar">
-              {genreTabs.map((tab) => {
-  const active = activeGenre === tab.slug
-  const pressed = pressedGenre === tab.slug
-
-  return (
-    <button
-      key={tab.slug}
-      type="button"
-      onClick={() => handleGenreChange(tab)}
-      className={`relative shrink-0 rounded-full px-3 py-2 text-[12px] transition-colors duration-200 ${
-        active
-          ? 'font-semibold text-[#111827]'
-          : 'font-normal text-[#9ca3af]'
-      } ${
-        pressed
-          ? 'bg-[#f1f2f4]'
-          : 'bg-transparent'
-      }`}
-    >
-      <span className="relative z-10">
-        {tab.label}
-      </span>
-
-      <span
-        className={`absolute bottom-[3px] left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#F6B800] transition-all duration-200 ${
-          active
-            ? 'w-[62%] opacity-100'
-            : 'w-0 opacity-0'
-        }`}
-      />
-    </button>
-  )
-})}
-            </div>
 
             {activeGenre !== 'today' ? (
   <EmbeddedGenreRouter
