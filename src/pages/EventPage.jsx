@@ -111,7 +111,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
         style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
       >
         <span className="text-[8px] font-black uppercase leading-none tracking-wide">Top</span>
-        <span className="mt-1 text-[18px] font-black leading-none">{rank}</span>
+        <span className="mt-1 text-[15px] font-bold leading-none">{rank}</span>
       </div>
 
       <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
@@ -172,6 +172,15 @@ function normalizeMostReadStory(story, index = 0) {
 }
 
 function MostReadBookCard({ book, rank, onOpen }) {
+  const rankBadgeClasses = {
+    1: 'bg-[#FF3B30] text-white',
+    2: 'bg-[#FF8C00] text-white',
+    3: 'bg-[#FFD400] text-[#111827]',
+    4: 'bg-[#8A2BE2] text-white',
+    5: 'bg-[#A0A7B4] text-white',
+    6: 'bg-[#A0A7B4] text-white',
+  }
+
   return (
     <button
       type="button"
@@ -191,19 +200,19 @@ function MostReadBookCard({ book, rank, onOpen }) {
         />
 
         <div
-          className="absolute right-2 top-0 flex h-[34px] w-[28px] items-center justify-center bg-[#ff4b55] text-[15px] font-black text-white shadow-[0_6px_12px_rgba(255,75,85,0.28)]"
+          className={`absolute right-2 top-0 flex h-[34px] w-[28px] items-center justify-center text-[14px] font-bold shadow-[0_6px_12px_rgba(0,0,0,0.16)] ${rankBadgeClasses[rank] || rankBadgeClasses[6]}`}
           style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
         >
           {rank}
         </div>
       </div>
 
-      <h3 className="mt-2 line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
+      <h3 className="mt-2 block w-full overflow-hidden whitespace-nowrap text-ellipsis text-[13px] font-extrabold leading-[19px] text-[#111827]">
         {book.title}
       </h3>
 
       <div className="mt-1 flex items-center gap-1 text-[12px] font-black text-[#ef4444]">
-        <span>🔥</span>
+        <i className="fas fa-fire text-[11px] text-[#ef4444]" />
         <span>{formatCompactNumber(book.likes)}</span>
       </div>
     </button>
@@ -253,16 +262,17 @@ function MostReadThisWeekSection() {
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between">
+        <h3 className="flex min-w-0 items-center gap-1 text-[19px] font-extrabold text-[#111827]">
+          <i className="fas fa-fire text-[18px] text-[#ef4444]" />
+          <span className="truncate">Most Read This Week</span>
+        </h3>
+
         <button
           type="button"
           onClick={() => navigate('/ranking')}
-          className="flex min-w-0 items-center gap-1 text-left active:scale-[0.99]"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95"
         >
-          <span className="text-[22px] leading-none">🔥</span>
-          <h2 className="truncate text-[20px] font-black tracking-tight text-[#111827]">
-            Most Read This Week
-          </h2>
-          <i className="fas fa-chevron-right ml-1 text-[15px] text-[#111827]" />
+          <i className="fas fa-chevron-right text-[15px]" />
         </button>
       </div>
 
