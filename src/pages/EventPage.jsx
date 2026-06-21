@@ -79,7 +79,6 @@ function formatCompactNumber(value) {
 }
 
 function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
-  const isFirst = rank === 1
   const name = author?.page_name || 'Author'
   const username = author?.page_username || 'author'
   const avatarUrl = author?.avatar_url || ''
@@ -87,21 +86,28 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
   const worksCount = Number(author?.total_stories || 0)
   const worksLabel = worksCount === 0 ? 'No works yet' : worksCount === 1 ? '1 work' : `${formatCompactNumber(worksCount)} works`
   const buttonLabel = author?.is_owner ? 'View' : author?.is_following ? 'Following' : 'Follow'
+  const rankBadgeClasses = {
+    1: 'bg-[#111827] text-white',
+    2: 'bg-[#2563eb] text-white',
+    3: 'bg-[#7c3aed] text-white',
+    4: 'bg-[#0f766e] text-white',
+    5: 'bg-[#6b7280] text-white',
+  }
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onOpen(author)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') onOpen(author)
+      }}
       className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 py-4 text-center shadow-sm active:scale-[0.98]"
     >
       <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
-        {isFirst ? (
-          <i className="fas fa-crown absolute -top-3 left-1/2 z-10 -translate-x-1/2 -rotate-12 text-[17px] text-[#111827] drop-shadow-sm" />
-        ) : (
-          <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#f3f4f6] px-1 text-[10px] font-black text-[#6b7280] ring-2 ring-white">
-            {String(rank).padStart(2, '0')}
-          </span>
-        )}
+        <span className={`absolute -right-2 -top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[10px] font-black ring-2 ring-white ${rankBadgeClasses[rank] || 'bg-[#6b7280] text-white'}`}>
+          {rank}
+        </span>
 
         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f4f5f7] text-[18px] font-black text-[#111827] ring-1 ring-[#e5e7eb]">
           {avatarUrl ? (
@@ -136,7 +142,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       >
         {loading ? '...' : buttonLabel}
       </button>
-    </button>
+    </div>
   )
 }
 
