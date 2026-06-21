@@ -171,6 +171,21 @@ function normalizeMostReadStory(story, index = 0) {
   }
 }
 
+function FireSolidIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 22c4.4 0 8-3.1 8-8 0-2.3-.9-4.3-2.4-5.9-.2 2.2-1.5 3.7-3.1 4.4.8-4.5-1.8-8.1-5.5-10.5.2 3.6-1.7 5.2-3.1 6.8C4.6 10.3 4 12 4 14c0 4.9 3.6 8 8 8Z" />
+      <path d="M9.2 17.6c0 1.7 1.2 2.9 2.8 2.9s2.8-1.2 2.8-2.9c0-1.1-.5-2-1.4-2.8-.1 1-.7 1.7-1.5 2 .2-1.7-.7-3.1-2.1-4.1.1 1.8-.6 2.7-.6 4.9Z" />
+    </svg>
+  )
+}
+
 function MostReadBookCard({ book, rank, onOpen }) {
   const rankBadgeClasses = {
     1: 'bg-[#FF3B30] text-white',
@@ -211,8 +226,10 @@ function MostReadBookCard({ book, rank, onOpen }) {
         {book.title}
       </h3>
 
-      <div className="mt-1 flex items-center gap-1 text-[12px] font-black text-[#ef4444]">
-        <i className="fas fa-fire text-[11px] text-[#ef4444]" />
+      <div className="mt-1 flex items-center gap-1 text-[12px] font-medium text-[#111827]">
+        <span className="text-[#EF4444]">
+          <FireSolidIcon />
+        </span>
         <span>{formatCompactNumber(book.likes)}</span>
       </div>
     </button>
@@ -221,6 +238,11 @@ function MostReadBookCard({ book, rank, onOpen }) {
 
 function MostReadThisWeekSection() {
   const navigate = useNavigate()
+  const scrollRef = useRef(null)
+  const isDraggingRef = useRef(false)
+  const dragMovedRef = useRef(false)
+  const startXRef = useRef(0)
+  const scrollLeftRef = useRef(0)
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -257,15 +279,51 @@ function MostReadThisWeekSection() {
     }
   }, [])
 
+  const handleMouseDown = (event) => {
+    const container = scrollRef.current
+    if (!container || window.innerWidth < 768) return
+
+    isDraggingRef.current = true
+    dragMovedRef.current = false
+    startXRef.current = event.pageX - container.offsetLeft
+    scrollLeftRef.current = container.scrollLeft
+  }
+
+  const handleMouseMove = (event) => {
+    const container = scrollRef.current
+    if (!container || !isDraggingRef.current) return
+
+    event.preventDefault()
+
+    const x = event.pageX - container.offsetLeft
+    const walk = x - startXRef.current
+
+    if (Math.abs(walk) > 4) {
+      dragMovedRef.current = true
+    }
+
+    container.scrollLeft = scrollLeftRef.current - walk * 1.4
+  }
+
+  const stopMouseDrag = () => {
+    isDraggingRef.current = false
+  }
+
+  const handleBookOpen = (bookId) => {
+    if (dragMovedRef.current) {
+      dragMovedRef.current = false
+      return
+    }
+
+    navigate(`/story/${bookId}`)
+  }
+
   const visibleBooks = books.length ? books : fallbackMostReadStories
 
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between">
-        <h3 className="flex min-w-0 items-center gap-1 text-[19px] font-extrabold text-[#111827]">
-          <i className="fas fa-fire text-[18px] text-[#ef4444]" />
-          <span className="truncate">Most Read This Week</span>
-        </h3>
+        <h3 className="text-[19px] font-extrabold text-[#111827]">Most Read This Week</h3>
 
         <button
           type="button"
@@ -287,13 +345,20 @@ function MostReadThisWeekSection() {
           ))}
         </div>
       ) : (
-        <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-2">
+        <div
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={stopMouseDrag}
+          onMouseLeave={stopMouseDrag}
+          className="no-scrollbar mt-4 flex cursor-grab gap-3 overflow-x-auto pb-2 select-none active:cursor-grabbing"
+        >
           {visibleBooks.slice(0, 6).map((book, index) => (
             <MostReadBookCard
               key={book.id}
               book={book}
               rank={index + 1}
-              onOpen={() => navigate(`/story/${book.id}`)}
+              onOpen={() => handleBookOpen(book.id)}
             />
           ))}
         </div>
@@ -301,6 +366,7 @@ function MostReadThisWeekSection() {
     </section>
   )
 }
+
 
 function SectionHeader({ title, onMore }) {
   return (
@@ -992,7 +1058,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
                   ))}
                 </div>
               ) : topAuthors.length ? (
-                <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
+                <div className="no-scrollbar mt-5 flex cursor-grab gap-3 overflow-x-auto pb-2 select-none active:cursor-grabbing">
                   {topAuthors.slice(0, 6).map((author, index) => (
                     <TopAuthorCard
   key={author.id}
@@ -1013,9 +1079,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
                 </div>
               )}
 
-              <p className="mt-6 text-center text-[12px] font-semibold text-[#a0a6b2]">
-                More author programs are coming soon.
-              </p>
+             
               <MostReadThisWeekSection />
             </section>
           </>
