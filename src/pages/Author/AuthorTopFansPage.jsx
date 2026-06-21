@@ -211,7 +211,7 @@ export default function AuthorTopFansPage() {
           >
             <div className="mx-auto mb-6 h-1 w-14 rounded-full bg-[#9ca3af]" />
 
-            <h2className="mb-4 text-[20px] font-bold tracking-[-0.01em] text-[#111827]">
+            <h2 className="mb-4 text-[20px] font-bold tracking-[-0.01em] text-[#111827]">
               {getFanName(selectedFan)}
             </h2>
 
