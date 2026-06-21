@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'.
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
@@ -151,6 +152,145 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
   )
 }
 
+const fallbackMostReadStories = Array.from({ length: 6 }, (_, index) => ({
+  id: `most-read-${index + 1}`,
+  title: 'Most Read Story',
+  image: `/assets/New Arrival/New Arrival ${index + 1}.jpg`,
+  likes: [18000, 4299, 3494, 2800, 2200, 1900][index],
+}))
+
+function normalizeMostReadStory(story, index = 0) {
+  return {
+    id: story.id,
+    title: story.title || 'Untitled Story',
+    image:
+      story.cover_url ||
+      story.landscape_thumbnail_url ||
+      `/assets/New Arrival/New Arrival ${Math.min(index + 1, 18)}.jpg`,
+    likes: Number(story.total_likes || story.likes || 0),
+  }
+}
+
+function MostReadBookCard({ book, rank, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="block w-[116px] shrink-0 bg-transparent p-0 text-left active:scale-[0.98] sm:w-[130px]"
+    >
+      <div className="relative aspect-[2/3] overflow-hidden rounded-[10px] bg-[#202124] shadow-sm">
+        <img
+          src={book.image}
+          alt={book.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          onError={(event) => {
+            event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
+          }}
+        />
+
+        <div
+          className="absolute right-2 top-0 flex h-[34px] w-[28px] items-center justify-center bg-[#ff4b55] text-[15px] font-black text-white shadow-[0_6px_12px_rgba(255,75,85,0.28)]"
+          style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
+        >
+          {rank}
+        </div>
+      </div>
+
+      <h3 className="mt-2 line-clamp-2 min-h-[38px] text-[13px] font-extrabold leading-[19px] text-[#111827]">
+        {book.title}
+      </h3>
+
+      <div className="mt-1 flex items-center gap-1 text-[12px] font-black text-[#ef4444]">
+        <span>🔥</span>
+        <span>{formatCompactNumber(book.likes)}</span>
+      </div>
+    </button>
+  )
+}
+
+function MostReadThisWeekSection() {
+  const navigate = useNavigate()
+  const [books, setBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchMostReadStories() {
+      try {
+        setLoading(true)
+
+        const response = await fetch(
+          addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=popular`)
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load most read stories')
+        }
+
+        if (!ignore) {
+          setBooks((data.stories || []).map(normalizeMostReadStory).slice(0, 6))
+        }
+      } catch {
+        if (!ignore) setBooks([])
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    fetchMostReadStories()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const visibleBooks = books.length ? books : fallbackMostReadStories
+
+  return (
+    <section className="mt-8">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate('/ranking')}
+          className="flex min-w-0 items-center gap-1 text-left active:scale-[0.99]"
+        >
+          <span className="text-[22px] leading-none">🔥</span>
+          <h2 className="truncate text-[20px] font-black tracking-tight text-[#111827]">
+            Most Read This Week
+          </h2>
+          <i className="fas fa-chevron-right ml-1 text-[15px] text-[#111827]" />
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="w-[116px] shrink-0 sm:w-[130px]">
+              <div className="aspect-[2/3] animate-pulse rounded-[10px] bg-[#f3f4f6]" />
+              <div className="mt-2 h-4 animate-pulse rounded-full bg-[#f3f4f6]" />
+              <div className="mt-2 h-3 w-16 animate-pulse rounded-full bg-[#f3f4f6]" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-2">
+          {visibleBooks.slice(0, 6).map((book, index) => (
+            <MostReadBookCard
+              key={book.id}
+              book={book}
+              rank={index + 1}
+              onOpen={() => navigate(`/story/${book.id}`)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
 
 function SectionHeader({ title, onMore }) {
   return (
@@ -866,6 +1006,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
               <p className="mt-6 text-center text-[12px] font-semibold text-[#a0a6b2]">
                 More author programs are coming soon.
               </p>
+              <MostReadThisWeekSection />
             </section>
           </>
         ) : (
