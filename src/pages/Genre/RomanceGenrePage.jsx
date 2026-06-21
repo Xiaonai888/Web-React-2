@@ -7,17 +7,31 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const quickButtons = [
+  { label: 'Latest', icon: 'fa-regular fa-calendar-plus' },
+  { label: 'Updates', icon: 'fa-regular fa-star' },
+  { label: 'Completed', icon: 'fa-regular fa-circle-check' },
+]
+
 function normalizeStory(item) {
+  const status = item.story_status || item.status || ''
+  const totalEpisodes = Number(item.total_episodes || item.episodes_count || item.episode_count || 0)
+
   return {
     id: item.id || item.story_id,
     title: item.title || 'Untitled Story',
     description: item.description || item.summary || item.synopsis || '',
     cover: item.cover_url || item.coverUrl || item.image_url || '',
+    landscape: item.landscape_thumbnail_url || item.banner_url || item.thumbnail_url || item.cover_url || '',
     genre: item.genre || item.category || item.main_genre || 'Romance',
-    status: item.status || item.story_status || '',
+    status,
+    tags: Array.isArray(item.tags) ? item.tags : [],
     views: Number(item.views || item.total_views || item.view_count || 0),
     likes: Number(item.likes || item.total_likes || item.like_count || 0),
     rating: Number(item.rating || item.average_rating || item.avg_rating || 0),
+    totalEpisodes,
+    isCompleted: Boolean(item.is_completed) || String(status).trim().toLowerCase().includes('complete'),
+    createdAt: item.created_at || '',
     updatedAt: item.updated_at || item.published_at || item.created_at || '',
   }
 }
@@ -36,84 +50,164 @@ function isRomanceStory(item) {
   return values.some((value) => String(value || '').toLowerCase().includes('romance'))
 }
 
-
-function isEmotionalStory(story) {
-  const text = `${story.title || ''} ${story.description || ''} ${story.status || ''}`.toLowerCase()
-
-  return ['emotional', 'sad', 'heart', 'heartbreak', 'love', 'pain', 'tears', 'cry', 'second chance'].some((word) => text.includes(word))
+function getTime(value) {
+  const time = new Date(value || 0).getTime()
+  return Number.isFinite(time) ? time : 0
 }
 
-function isCompletedStory(story) {
-  const status = String(story.status || '').toLowerCase()
-
-  return status.includes('complete') || status.includes('completed') || status.includes('end') || status.includes('finished')
+function getStoryScore(story) {
+  return story.views + story.likes * 4 + story.rating * 25 + story.totalEpisodes
 }
 
-function StoryCard({ story, onOpen }) {
+function getTrendingScore(story) {
+  const ageDays = Math.max(1, (Date.now() - getTime(story.updatedAt)) / 86400000)
+  const recencyBoost = Math.max(0, 30 - ageDays) * 12
+  return story.views + story.likes * 5 + recencyBoost
+}
+
+function sortByLatest(list) {
+  return [...list].sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt))
+}
+
+function sortByTop(list) {
+  return [...list].sort((a, b) => getStoryScore(b) - getStoryScore(a))
+}
+
+function sortByTrending(list) {
+  return [...list].sort((a, b) => getTrendingScore(b) - getTrendingScore(a))
+}
+
+function formatNumber(value) {
+  const number = Number(value || 0)
+
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}m`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+
+  return String(number)
+}
+
+function getEpisodeLabel(story) {
+  const count = Number(story.totalEpisodes || 0)
+
+  if (!count) return story.isCompleted ? 'Completed' : 'Updating'
+  if (story.isCompleted) return `${count} Episodes`
+
+  return `Up to Ep ${count}`
+}
+
+function getTagLine(story) {
+  const tags = story.tags
+    .map((tag) => String(tag || '').trim())
+    .filter((tag) => tag && tag.toLowerCase() !== 'romance')
+    .slice(0, 2)
+
+  return tags.join(' / ')
+}
+
+function SectionTitle({ icon, title }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(story)}
-      className="group flex gap-3 rounded-[22px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
-    >
-      <div className="h-[116px] w-[86px] shrink-0 overflow-hidden rounded-[16px] bg-[#f3f4f6]">
-        {story.cover ? (
-          <img src={story.cover} alt={story.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[#d66b88]">
-            <i className="fa-solid fa-heart text-[24px]" />
-          </div>
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1 py-1">
-        <div className="line-clamp-2 text-[15px] font-black leading-5 text-[#111827]">{story.title}</div>
-        <p className="mt-1 line-clamp-2 text-[12px] font-semibold leading-5 text-[#8d94a1]">
-          {story.description || 'A romance story full of emotion, love, and unforgettable moments.'}
-        </p>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[10.5px] font-black text-[#98a2b3]">
-          <span className="rounded-full bg-[#fff1f6] px-2.5 py-1 text-[#d6336c]">Romance</span>
-          {story.status ? <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1">{story.status}</span> : null}
-        </div>
-
-        <div className="mt-3 flex items-center gap-4 text-[11px] font-bold text-[#98a2b3]">
-          <span><i className="fa-regular fa-eye mr-1" />{story.views}</span>
-          <span><i className="fa-regular fa-heart mr-1" />{story.likes}</span>
-          <span><i className="fa-solid fa-star mr-1" />{story.rating.toFixed(1)}</span>
-        </div>
-      </div>
-    </button>
-  )
-}
-
-function SectionTitle({ title, subtitle }) {
-  return (
-    <div className="mb-3 flex items-end justify-between gap-3 px-1">
-      <div>
-        <h2 className="text-[18px] font-black text-[#111827]">{title}</h2>
-        {subtitle ? <p className="mt-0.5 text-[12px] font-semibold text-[#98a2b3]">{subtitle}</p> : null}
-      </div>
+    <div className="mb-3 flex items-center justify-between px-4">
+      <button
+        type="button"
+        className="flex min-w-0 items-center gap-1 text-left active:scale-[0.99]"
+      >
+        <span className="shrink-0 text-[20px] leading-none">{icon}</span>
+        <h2 className="min-w-0 truncate text-[20px] font-black leading-7 text-[#111827]">{title}</h2>
+        <i className="fa-solid fa-chevron-right shrink-0 text-[15px] text-[#111827]" />
+      </button>
     </div>
   )
 }
 
+function ImageFrame({ src, title, className, fallbackClassName = 'text-[#d6336c]' }) {
+  return (
+    <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
+      {src ? (
+        <img
+          src={src}
+          alt={title}
+          className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div className={`flex h-full w-full items-center justify-center ${fallbackClassName}`}>
+          <i className="fa-solid fa-heart text-[24px]" />
+        </div>
+      )}
+    </div>
+  )
+}
 
-const filterOptions = [
-  { label: 'All Romance', value: 'all' },
-  { label: 'Latest', value: 'latest' },
-  { label: 'Popular', value: 'popular' },
-  { label: 'Emotional', value: 'emotional' },
-  { label: 'Completed', value: 'completed' },
-]
+function TopRomanceCard({ story, onOpen }) {
+  return (
+    <button type="button" onClick={() => onOpen(story)} className="min-w-0 text-left active:scale-[0.99]">
+      <ImageFrame src={story.landscape || story.cover} title={story.title} className="aspect-[1.42/1] rounded-[9px]" />
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">{story.title}</h3>
+      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-gray-400">{getEpisodeLabel(story)}</p>
+    </button>
+  )
+}
+
+function TrendingRomanceCard({ story, onOpen }) {
+  return (
+    <button type="button" onClick={() => onOpen(story)} className="min-w-0 text-left active:scale-[0.99]">
+      <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
+      <h3 className="mt-2 line-clamp-2 text-[13px] font-[640] leading-[17px] text-neutral-900">{story.title}</h3>
+      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-gray-400">
+        <span className="text-[#ef4444]">🔥</span> {formatNumber(story.likes)}
+      </p>
+    </button>
+  )
+}
+
+function LatestRomanceCard({ story, onOpen }) {
+  return (
+    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px]">
+      <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
+      <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">{story.title}</h3>
+    </button>
+  )
+}
+
+function AllRomanceCard({ story, onOpen }) {
+  const tagLine = getTagLine(story)
+
+  return (
+    <button type="button" onClick={() => onOpen(story)} className="min-w-0 text-left active:scale-[0.99]">
+      <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">{story.title}</h3>
+      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">{tagLine || 'Romance'}</p>
+    </button>
+  )
+}
+
+function LoadingGrid() {
+  return (
+    <div className="space-y-7 px-4 pt-5">
+      {Array.from({ length: 3 }).map((_, sectionIndex) => (
+        <section key={sectionIndex}>
+          <div className="mb-3 h-6 w-44 animate-pulse rounded-full bg-gray-100" />
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5">
+            {Array.from({ length: 4 }).map((__, index) => (
+              <div key={index}>
+                <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
+                <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
+                <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
 
 export default function RomanceGenrePage({ embedded = false }) {
   const navigate = useNavigate()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [activeFilter, setActiveFilter] = useState('all')
-
 
   useEffect(() => {
     let ignore = false
@@ -123,7 +217,7 @@ export default function RomanceGenrePage({ embedded = false }) {
       setMessage('')
 
       try {
-        const response = await fetch(`${API_URL}/api/public/stories?genre=Romance&limit=80`)
+        const response = await fetch(`${API_URL}/api/public/stories?genre=Romance&limit=48`)
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
@@ -133,7 +227,9 @@ export default function RomanceGenrePage({ embedded = false }) {
         const rawStories = data.stories || data.items || data.results || []
         const filtered = rawStories.filter(isRomanceStory).map(normalizeStory)
 
-        if (!ignore) setStories(filtered.length ? filtered : rawStories.map(normalizeStory))
+        if (!ignore) {
+          setStories(filtered.length ? filtered : rawStories.map(normalizeStory))
+        }
       } catch (error) {
         if (!ignore) {
           setStories([])
@@ -151,182 +247,142 @@ export default function RomanceGenrePage({ embedded = false }) {
     }
   }, [])
 
-  const latestStories = useMemo(() => {
-    return [...stories]
-      .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
-      .slice(0, 6)
-  }, [stories])
-
-  const popularStories = useMemo(() => {
-    return [...stories]
-      .sort((a, b) => (b.views + b.likes * 3 + b.rating * 20) - (a.views + a.likes * 3 + a.rating * 20))
-      .slice(0, 6)
-  }, [stories])
-
-  const filteredStories = useMemo(() => {
-    if (activeFilter === 'latest') return latestStories
-    if (activeFilter === 'popular') return popularStories
-    if (activeFilter === 'emotional') return stories.filter(isEmotionalStory)
-    if (activeFilter === 'completed') return stories.filter(isCompletedStory)
-
-    return stories
-  }, [activeFilter, latestStories, popularStories, stories])
-
-  const filteredTitle = useMemo(() => {
-    if (activeFilter === 'latest') return 'Latest Romance'
-    if (activeFilter === 'popular') return 'Popular Romance'
-    if (activeFilter === 'emotional') return 'Emotional Romance'
-    if (activeFilter === 'completed') return 'Completed Romance'
-
-    return 'All Romance Stories'
-  }, [activeFilter])
-
-  const filteredSubtitle = useMemo(() => {
-    return `${filteredStories.length} stories`
-  }, [filteredStories.length])
+  const topStories = useMemo(() => sortByTop(stories).slice(0, 6), [stories])
+  const trendingStories = useMemo(() => sortByTrending(stories).slice(0, 6), [stories])
+  const latestStories = useMemo(() => sortByLatest(stories).slice(0, 6), [stories])
+  const allStories = useMemo(() => stories.slice(0, 20), [stories])
+  const heroImage = useMemo(() => {
+    const found = topStories.find((story) => story.landscape || story.cover)
+    return found?.landscape || found?.cover || ''
+  }, [topStories])
 
   const openStory = (story) => {
     if (story?.id) navigate(`/story/${story.id}`)
   }
 
   return (
-    <div
-  className={
-    embedded
-      ? 'bg-[#fff7fa] pb-6'
-      : 'min-h-screen bg-[#fff7fa] pb-[110px]'
-  }
->
+    <div className={embedded ? 'bg-white pb-6' : 'min-h-screen bg-white pb-[110px]'}>
       {!embedded ? (
-  <header className="sticky top-0 z-40 border-b border-[#f7dce6] bg-white/95 px-4 py-3 backdrop-blur">
-    <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
-        aria-label="Back"
-      >
-        <i className="fa-solid fa-chevron-left text-[13px]" />
-      </button>
+        <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+              aria-label="Back"
+            >
+              <i className="fa-solid fa-chevron-left text-[13px]" />
+            </button>
 
-      <div className="min-w-0 text-center">
-        <h1 className="text-[17px] font-black text-[#111827]">
-          Romance
-        </h1>
-
-        <p className="text-[11px] font-bold text-[#d66b88]">
-          Love stories and emotional journeys
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => navigate('/search')}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f6] text-[#111827] active:scale-95"
-        aria-label="Search"
-      >
-        <i className="fa-solid fa-magnifying-glass text-[13px]" />
-      </button>
-    </div>
-  </header>
-) : null}
-
-      <main
-  className={`mx-auto max-w-5xl px-4 ${
-    embedded ? 'pt-1' : 'pt-4'
-  }`}
->
-        <section className="overflow-hidden rounded-[30px] bg-gradient-to-br from-[#ffe4ee] via-white to-[#fff7d6] p-5 shadow-sm ring-1 ring-[#f7dce6]">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-white text-[#d6336c] shadow-sm">
-              <i className="fa-solid fa-heart text-[28px]" />
+            <div className="min-w-0 text-center">
+              <h1 className="text-[17px] font-black text-[#111827]">Romance</h1>
+              <p className="text-[11px] font-semibold text-gray-400">Love stories and emotional journeys</p>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-black uppercase tracking-[0.12em] text-[#d66b88]">Genre</div>
-              <h2 className="mt-1 text-[28px] font-black leading-8 text-[#111827]">Romance</h2>
-              <p className="mt-2 max-w-[520px] text-[13px] font-semibold leading-6 text-[#667085]">
-                Sweet love, heartbreak, second chances, and emotional stories made for readers who love romance.
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/search')}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+              aria-label="Search"
+            >
+              <i className="fa-solid fa-magnifying-glass text-[13px]" />
+            </button>
           </div>
+        </header>
+      ) : null}
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {filterOptions.map((item) => {
-              const active = activeFilter === item.value
-
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setActiveFilter(item.value)}
-                  className={`rounded-full px-4 py-2 text-[12px] font-black active:scale-95 ${
-                    active ? 'bg-[#111827] text-white' : 'bg-white text-[#d6336c] ring-1 ring-[#f7dce6]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
+      <main className={`mx-auto max-w-5xl ${embedded ? 'pt-0' : 'pt-4'}`}>
+        <section className="px-4">
+          <div className="relative aspect-[4.25/1] overflow-hidden rounded-[14px] bg-gradient-to-r from-[#ff5eb8] to-[#ffb1d5]">
+            {heroImage ? (
+              <img
+                src={heroImage}
+                alt="Romance"
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-between px-5">
+                <div className="text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
+                <i className="fa-solid fa-heart text-[42px] text-white/85" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#ec4899]/45 via-transparent to-transparent" />
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
           </div>
         </section>
 
-        {loading ? (
-          <section className="mt-5 rounded-[26px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#f7dce6] border-t-[#111827]" />
-            <div className="text-[13px] font-black text-[#667085]">Opening romance...</div>
-          </section>
-        ) : null}
+        <section className="mt-4 px-4">
+          <div className="grid grid-cols-3 gap-2">
+            {quickButtons.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white text-[13px] font-[640] text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.98]"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#facc15] text-[12px] text-[#111827]">
+                  <i className={item.icon} />
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {loading ? <LoadingGrid /> : null}
 
         {!loading && message ? (
-          <section className="mt-5 rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-            <div className="text-[13px] font-black text-[#e5484d]">{message}</div>
+          <section className="mx-4 mt-5 rounded-[18px] bg-gray-50 p-6 text-center">
+            <div className="text-[13px] font-[640] text-[#e5484d]">{message}</div>
           </section>
         ) : null}
 
         {!loading && !message ? (
-          <>
-            {activeFilter === 'all' ? (
-              <>
-                <section className="mt-6">
-                  <SectionTitle title="Latest Romance" subtitle="Recently updated romance stories" />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {latestStories.map((story) => (
-                      <StoryCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
-                    ))}
-                  </div>
-                </section>
+          <div className="pt-7">
+            <section>
+              <SectionTitle icon="🏆" title="Top Romance" />
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 sm:grid-cols-3">
+                {topStories.map((story) => (
+                  <TopRomanceCard key={`top-${story.id}`} story={story} onOpen={openStory} />
+                ))}
+              </div>
+            </section>
 
-                <section className="mt-7">
-                  <SectionTitle title="Popular Romance" subtitle="Stories readers are watching now" />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {popularStories.map((story) => (
-                      <StoryCard key={`popular-${story.id}`} story={story} onOpen={openStory} />
-                    ))}
-                  </div>
-                </section>
-              </>
-            ) : null}
+            <section className="mt-8">
+              <SectionTitle icon="🔥" title="Trending Romance" />
+              <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 px-4">
+                {trendingStories.map((story) => (
+                  <TrendingRomanceCard key={`trending-${story.id}`} story={story} onOpen={openStory} />
+                ))}
+              </div>
+            </section>
 
-            <section className="mt-7">
-              <SectionTitle title={filteredTitle} subtitle={filteredSubtitle} />
-              {filteredStories.length ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {filteredStories.map((story) => (
-                    <StoryCard key={`${activeFilter}-${story.id}`} story={story} onOpen={openStory} />
+            <section className="mt-8">
+              <SectionTitle icon="🆕" title="Latest Romance" />
+              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {latestStories.map((story) => (
+                  <LatestRomanceCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <SectionTitle icon="📖" title="All Romance" />
+              {allStories.length ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4">
+                  {allStories.map((story) => (
+                    <AllRomanceCard key={`all-${story.id}`} story={story} onOpen={openStory} />
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f6] text-[#d6336c]">
-                    <i className="fa-regular fa-heart text-[22px]" />
-                  </div>
-                  <h3 className="mt-4 text-[17px] font-black text-[#111827]">No stories found</h3>
-                  <p className="mt-2 text-[13px] font-semibold text-[#98a2b3]">Try another romance filter.</p>
+                <div className="mx-4 rounded-[18px] bg-gray-50 p-8 text-center">
+                  <h3 className="text-[16px] font-black text-[#111827]">No stories found</h3>
+                  <p className="mt-2 text-[13px] font-normal text-gray-400">Romance stories will appear here after publishing.</p>
                 </div>
               )}
             </section>
-          </>
+          </div>
         ) : null}
       </main>
     </div>
