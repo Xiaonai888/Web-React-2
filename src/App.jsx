@@ -120,7 +120,7 @@ const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPag
 const AuthorTopFansPage = lazy(() => import('./pages/Author/AuthorTopFansPage'))
 const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'))
 const CompletedPage = lazy(() => import('./pages/CompletedPage'))
-
+const MostReadThisWeekPage = lazy(() => import('./pages/MostReadThisWeekPage'))
 
 
 function ComingSoon({ title }) {
@@ -186,6 +186,7 @@ function AppShell() {
     '/author/cart',
     '/author/checkout',
     '/author/orders',
+    '/most-read-this-week',
     
   ]
 
@@ -871,6 +872,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <CompletedPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/most-read-this-week"
+  element={
+    <LazyPage>
+      <MostReadThisWeekPage />
     </LazyPage>
   }
 />
