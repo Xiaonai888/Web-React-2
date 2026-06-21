@@ -321,7 +321,7 @@ function AuthorCenterBannerSlider() {
 
   return (
     <div className="mt-4 w-full overflow-hidden">
-  <div className="swiper-container authorCenterSwiper !pl-4 !pr-10">
+  <div className="swiper authorCenterSwiper !pl-4 !pr-10">
     <div className="swiper-wrapper">
       {banners.map((banner) => {
         const parsedTitle = parseBannerTitle(banner.title)
@@ -329,7 +329,7 @@ function AuthorCenterBannerSlider() {
         return (
           <div
             key={banner.id}
-            className="swiper-slide relative aspect-[3/1] !w-[88%] cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-black text-white shadow-sm"
+            className="swiper-slide relative aspect-[3/1] cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-black text-white shadow-sm"
                 onClick={() => {
                   if (banner.link_url) navigate(banner.link_url)
                 }}
