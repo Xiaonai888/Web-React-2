@@ -78,6 +78,18 @@ function getRankBadgeClass(rank) {
   return 'bg-[#6b7280] text-white'
 }
 
+function normalizeStory(story, index = 0) {
+  return {
+    id: story.id,
+    rank: index + 1,
+    title: story.title || 'Untitled Story',
+    image: story.cover_url || story.coverUrl || story.image_url || '',
+    link: `/story/${story.id}`,
+    genre: story.main_genre || story.genre || 'Ranking',
+    isFallback: false,
+  }
+}
+
 async function fetchRankingItems(tab, categoryLabel) {
   const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${tab.endpoint}`))
   const data = await response.json().catch(() => ({}))
