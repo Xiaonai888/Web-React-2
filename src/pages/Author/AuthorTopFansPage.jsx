@@ -23,11 +23,11 @@ function Avatar({ user }) {
   const avatar = user?.avatar_url || user?.profile_image || ''
 
   if (avatar) {
-    return <img src={avatar} alt={name} className="h-14 w-14 rounded-full object-cover" />
+    return <img src={avatar} alt={name} className="h-12 w-12 rounded-full object-cover" />
   }
 
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#111827] text-[18px] font-black text-white">
+    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#111827] text-[16px] font-black text-white">
       {name.slice(0, 1).toUpperCase()}
     </div>
   )
@@ -121,10 +121,10 @@ export default function AuthorTopFansPage() {
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
-            <i className="fa-solid fa-chevron-left text-[23px]" />
+            <i className="fa-solid fa-chevron-left text-[16px]" />
           </button>
 
-          <h1 className="text-[20px] font-black text-[#111827]">Top fans</h1>
+          <h1 className="text-[17px] font-bold text-[#111827]">Top fans</h1>
 
           <div className="h-10 w-10" />
         </div>
@@ -173,12 +173,12 @@ export default function AuthorTopFansPage() {
               return (
                 <div
                   key={getFanId(fan)}
-                  className="flex min-h-[72px] items-center gap-4 rounded-[14px] px-1 py-1"
+                  className="flex min-h-[60px] items-center gap-3 rounded-[14px] px-4 py-2"
                 >
                   <Avatar user={fan} />
 
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[20px] font-medium text-[#111827]">
+                    <div className="truncate text-[14px] font-bold text-[#111827]">
                       {name}
                     </div>
                     {fan.top_fan_streak ? (
@@ -194,7 +194,7 @@ export default function AuthorTopFansPage() {
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
                     aria-label={`Open ${name} options`}
                   >
-                    <i className="fa-solid fa-ellipsis text-[22px]" />
+                    <i className="fa-solid fa-ellipsis text-[16px]" />
                   </button>
                 </div>
               )
@@ -206,12 +206,12 @@ export default function AuthorTopFansPage() {
       {selectedFan ? (
         <div className="fixed inset-0 z-[300] bg-black/40" onClick={() => setSelectedFan(null)}>
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-[22px] bg-white px-5 pb-8 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
+            className="absolute bottom-0 left-0 right-0 rounded-t-[22px] bg-white px-4 pb-6 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mx-auto mb-6 h-1 w-14 rounded-full bg-[#9ca3af]" />
 
-            <h2 className="mb-5 text-[30px] font-black tracking-tight text-[#111827]">
+            <h2className="mb-4 text-[20px] font-bold tracking-[-0.01em] text-[#111827]">
               {getFanName(selectedFan)}
             </h2>
 
@@ -223,7 +223,7 @@ export default function AuthorTopFansPage() {
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-black text-white">
                 <i className="fa-solid fa-xmark text-[17px]" />
               </span>
-              <span className="text-[21px] font-normal text-[#111827]">Remove Top Fan Badge</span>
+              <span className="text-[15px] font-medium text-[#111827]">Remove Top Fan Badge</span>
             </button>
 
             <button
