@@ -204,15 +204,17 @@ function MostReadBookCard({ book, rank, onOpen }) {
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-[10px] bg-[#202124] shadow-sm">
         <img
-          src={book.image}
-          alt={book.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-          decoding="async"
-          onError={(event) => {
-            event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
-          }}
-        />
+  src={book.image}
+  alt={book.title}
+  className="pointer-events-none h-full w-full select-none object-cover"
+  loading="lazy"
+  decoding="async"
+  draggable="false"
+  onDragStart={(event) => event.preventDefault()}
+  onError={(event) => {
+    event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
+  }}
+/>
 
         <div
           className={`absolute right-2 top-0 flex h-[34px] w-[28px] items-center justify-center text-[14px] font-bold shadow-[0_6px_12px_rgba(0,0,0,0.16)] ${rankBadgeClasses[rank] || rankBadgeClasses[6]}`}
