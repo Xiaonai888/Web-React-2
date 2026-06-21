@@ -140,6 +140,17 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
   )
 }
 
+function SectionHeader({ title, onMore }) {
+  return (
+    <div className="mt-8 flex items-center justify-between">
+      <h3 className="text-[19px] font-extrabold text-[#111827]">{title}</h3>
+      <button type="button" onClick={onMore} className="flex h-7 w-7 items-center justify-center rounded-full text-[#9ca3af] active:scale-95">
+        <i className="fas fa-chevron-right text-[15px]" />
+      </button>
+    </div>
+  )
+}
+
 function EventSlideBanner() {
   const navigate = useNavigate()
   const swiperRef = useRef(null)
