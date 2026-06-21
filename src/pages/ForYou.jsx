@@ -692,11 +692,7 @@ function handleContentTouchEnd(event) {
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
-          <div
-  id="tab-content-root"
-  onTouchStart={handleContentTouchStart}
-  onTouchEnd={handleContentTouchEnd}
->
+         <div id="tab-content-root">
 
             {activeGenre !== 'today' ? (
   <EmbeddedGenreRouter
