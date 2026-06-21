@@ -168,17 +168,13 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-function FireOutlineIcon() {
+function FireSolidIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       width="14"
       height="14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
       aria-hidden="true"
     >
       <path d="M12 22c4.4 0 8-3.1 8-8 0-2.1-.8-4.1-2-5.5 0 2.5-1.5 4-3 4.5.5-4-2-8-6-11 0 3.5-2 5.5-3.5 7C4 10.5 4 12.5 4 14c0 4.9 3.6 8 8 8Z" />
@@ -223,7 +219,7 @@ function DailyPickCard({ book }) {
 
           <div className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-[#4B5563]">
             <span className="text-[#EF4444]">
-              <FireOutlineIcon />
+              <FireSolidIcon />
             </span>
 
             <span>{book.heat}</span>
