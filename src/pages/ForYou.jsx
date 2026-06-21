@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
@@ -137,6 +137,8 @@ const SHOW_STORY_TYPE_TABS = false
 export default function ForYou() {
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
+  const [contentGenre, setContentGenre] = useState('today')
+  const [, startGenreTransition] = useTransition()
   const [pressedGenre, setPressedGenre] = useState('')
   const [genreTabs, setGenreTabs] = useState(fallbackGenreTabs)
   const [slides, setSlides] = useState([])
@@ -176,6 +178,7 @@ export default function ForYou() {
 
   function handleGenreChange(tab) {
   setPressedGenre(tab.slug)
+  setActiveGenre(tab.slug)
 
   window.setTimeout(() => {
     setPressedGenre((current) =>
@@ -183,7 +186,9 @@ export default function ForYou() {
     )
   }, 220)
 
-  setActiveGenre(tab.slug)
+  startGenreTransition(() => {
+    setContentGenre(tab.slug)
+  })
 }
 
   function isSwipeBlockedTarget(target) {
@@ -342,6 +347,7 @@ export default function ForYou() {
 
           setGenreTabs(finalTabs)
           setActiveGenre((current) => (finalTabs.some((tab) => tab.slug === current) ? current : 'today'))
+          setContentGenre((current) => (finalTabs.some((tab) => tab.slug === current) ? current : 'today'))
         }
       } catch (error) {
         console.error('Fetch genre tabs error:', error)
@@ -376,7 +382,7 @@ export default function ForYou() {
 
   useEffect(() => {
   if (
-    activeGenre !== 'today' ||
+    contentGenre !== 'today' ||
     !window.Swiper ||
     slides.length === 0
   ) {
@@ -431,7 +437,7 @@ export default function ForYou() {
         swiperRef.current = null
       }
     }
-  }, [slides, activeGenre])
+  }, [slides, contentGenre])
 
   return (
     <>
@@ -693,10 +699,10 @@ export default function ForYou() {
            onTouchEnd={handleContentTouchEnd}
          >
 
-            {activeGenre !== 'today' ? (
+           {contentGenre !== 'today' ? (
   <EmbeddedGenreRouter
-    key={activeGenre}
-    genreSlug={activeGenre}
+    key={contentGenre}
+    genreSlug={contentGenre}
   />
 ) : (
   <>
