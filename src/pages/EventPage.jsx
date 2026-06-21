@@ -169,10 +169,20 @@ function EventSlideBanner() {
     }
 
     swiperRef.current = new window.Swiper('.eventSwiper', {
-      effect: 'coverflow',
-      grabCursor: true,
-      centeredSlides: true,
+  slidesPerView: 1.08,
+  spaceBetween: 12,
+  centeredSlides: false,
+  loop: slides.length > 1,
+  speed: 650,
+  autoplay: {
+    delay: 5000,
+    disableOnInteraction: false,
+  },
+  breakpoints: {
+    768: {
       slidesPerView: 'auto',
+      centeredSlides: true,
+      effect: 'coverflow',
       coverflowEffect: {
         rotate: 0,
         stretch: 0,
@@ -180,17 +190,13 @@ function EventSlideBanner() {
         modifier: 2,
         slideShadows: false,
       },
-      loop: slides.length > 1,
-      speed: 650,
-      autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-      },
-      pagination: {
-        el: '.event-swiper-pagination',
-        clickable: true,
-      },
-    })
+    },
+  },
+  pagination: {
+    el: '.event-swiper-pagination',
+    clickable: true,
+  },
+})
 
     return () => {
       if (swiperRef.current) {
@@ -217,13 +223,13 @@ function EventSlideBanner() {
   }
 
   return (
-    <div className="event-swiper-wrap">
-      <div className="swiper-container eventSwiper">
+    <div className="-mx-4 w-[calc(100%+2rem)] overflow-hidden md:mx-0 md:w-full">
+  <div className="swiper eventSwiper !pl-4 !pr-10 md:!pl-0 md:!pr-0">
         <div className="swiper-wrapper">
           {slides.map((slide) => (
             <div
               key={slide.id}
-              className="swiper-slide aspect-[16/9] cursor-pointer"
+              className="swiper-slide aspect-[3/1] cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm md:aspect-[16/9] md:rounded-[20px]"
               onClick={() => {
                 if (slide.link_url) navigate(slide.link_url)
               }}
@@ -527,18 +533,23 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
         }
 
         .eventSwiper .swiper-slide {
-          width: 85%;
-          border-radius: 20px;
-          overflow: hidden;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-          transition: all 0.3s ease;
-        }
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
 
-        .eventSwiper .swiper-slide-next,
-        .eventSwiper .swiper-slide-prev {
-          opacity: 0.4;
-          transform: scale(0.9);
-        }
+        @media (min-width: 768px) {
+  .eventSwiper .swiper-slide {
+    width: 58%;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+
+  .eventSwiper .swiper-slide-next,
+  .eventSwiper .swiper-slide-prev {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+}
 
         @media (min-width: 768px) {
           .eventSwiper .swiper-slide {
