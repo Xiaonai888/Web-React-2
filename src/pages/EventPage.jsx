@@ -43,6 +43,32 @@ function parseBannerTitle(value = '') {
   }
 }
 
+const eventSlideBadgeColors = {
+  NEW: 'bg-[#ff2f55] text-white',
+  HOT: 'bg-[#ff7a00] text-white',
+  TOP: 'bg-[#f6b800] text-[#111827]',
+}
+
+function getEventSlideBadge(slide) {
+  const directBadge = String(slide.badge || slide.badge_label || slide.tag || '').trim().toUpperCase()
+  const titleBadge = String(slide.title || '').match(/^\s*\[(HOT|NEW|TOP)\]\s*/i)?.[1]?.toUpperCase() || ''
+  const badge = directBadge || titleBadge
+
+  return ['HOT', 'NEW', 'TOP'].includes(badge) ? badge : ''
+}
+
+function getEventSlideTitle(slide) {
+  return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
+}
+
+function getEventSlideSubtitle(slide) {
+  return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
+}
+
+function getEventSlideBadgeClass(badge) {
+  return eventSlideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
+}
+
 function formatCompactNumber(value) {
   const number = Number(value || 0)
 
@@ -169,20 +195,11 @@ function EventSlideBanner() {
     }
 
     swiperRef.current = new window.Swiper('.eventSwiper', {
-  slidesPerView: 1.08,
-  spaceBetween: 12,
-  centeredSlides: false,
-  loop: slides.length > 1,
-  speed: 650,
-  autoplay: {
-    delay: 5000,
-    disableOnInteraction: false,
-  },
-  breakpoints: {
-    768: {
-      slidesPerView: 'auto',
-      centeredSlides: true,
       effect: 'coverflow',
+      grabCursor: true,
+      centeredSlides: false,
+      slidesPerView: 1,
+      spaceBetween: 0,
       coverflowEffect: {
         rotate: 0,
         stretch: 0,
@@ -190,13 +207,24 @@ function EventSlideBanner() {
         modifier: 2,
         slideShadows: false,
       },
-    },
-  },
-  pagination: {
-    el: '.event-swiper-pagination',
-    clickable: true,
-  },
-})
+      breakpoints: {
+        768: {
+          centeredSlides: true,
+          slidesPerView: 'auto',
+          spaceBetween: 0,
+        },
+      },
+      loop: slides.length > 1,
+      speed: 650,
+      autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.event-swiper-pagination',
+        clickable: true,
+      },
+    })
 
     return () => {
       if (swiperRef.current) {
@@ -208,41 +236,77 @@ function EventSlideBanner() {
 
   if (loading) {
     return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-[20px] bg-[#f4f5f7] text-[14px] font-bold text-[#8d94a1]">
-        Loading slides...
+      <div className="-mx-4 w-[calc(100%+2rem)] overflow-hidden md:mx-0 md:w-full">
+        <div className="flex aspect-[16/9] w-full items-center justify-center bg-[#f4f5f7] text-[14px] font-bold text-[#8d94a1] md:rounded-[20px]">
+          Loading slides...
+        </div>
       </div>
     )
   }
 
   if (!slides.length) {
     return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-[20px] bg-black text-[34px] font-extrabold text-white/80">
-        Cover
+      <div className="-mx-4 w-[calc(100%+2rem)] overflow-hidden md:mx-0 md:w-full">
+        <div className="flex aspect-[16/9] w-full items-center justify-center bg-black text-[20px] font-extrabold text-white/80 md:rounded-[20px]">
+          No slides yet
+        </div>
       </div>
     )
   }
 
   return (
     <div className="-mx-4 w-[calc(100%+2rem)] overflow-hidden md:mx-0 md:w-full">
-  <div className="swiper eventSwiper !pl-4 !pr-10 md:!pl-0 md:!pr-0">
+      <div className="swiper eventSwiper">
         <div className="swiper-wrapper">
-          {slides.map((slide) => (
-            <div
-              key={slide.id}
-              className="swiper-slide aspect-[3/1] cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm md:aspect-[16/9] md:rounded-[20px]"
-              onClick={() => {
-                if (slide.link_url) navigate(slide.link_url)
-              }}
-            >
-              <img
-                src={slide.image_url}
-                alt={slide.title || 'Event slide'}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          ))}
+          {slides.map((slide) => {
+            const slideBadge = getEventSlideBadge(slide)
+            const slideTitle = getEventSlideTitle(slide)
+            const slideSubtitle = getEventSlideSubtitle(slide)
+
+            return (
+              <div
+                key={slide.id}
+                className="swiper-slide relative aspect-[16/9] cursor-pointer"
+                onClick={() => {
+                  if (slide.link_url) navigate(slide.link_url)
+                }}
+              >
+                <img
+                  src={slide.image_url}
+                  alt={slideTitle || 'Event slide'}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+
+                {(slideBadge || slideTitle || slideSubtitle) ? (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {slideBadge ? (
+                        <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getEventSlideBadgeClass(slideBadge)}`}>
+                          {slideBadge}
+                        </span>
+                      ) : null}
+
+                      {slideTitle ? (
+                        <h2 className="min-w-0 truncate text-[16px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+                          {slideTitle}
+                        </h2>
+                      ) : null}
+                    </div>
+
+                    {slideSubtitle ? (
+                      <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
+                        {slideSubtitle}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
-        <div className="event-swiper-pagination mt-3 text-center" />
+        <div className="event-swiper-pagination swiper-pagination" />
       </div>
     </div>
   )
@@ -528,32 +592,85 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
           width: 100%;
           max-width: 100%;
           overflow: hidden;
-          padding-top: 10px;
-          padding-bottom: 30px;
+          padding-top: 0;
+          padding-bottom: 0;
         }
 
         .eventSwiper .swiper-slide {
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
+          width: 100%;
+          border-radius: 0;
+          overflow: hidden;
+          box-shadow: none;
+          transition: all 0.3s ease;
+        }
+
+        .eventSwiper .swiper-slide-next,
+        .eventSwiper .swiper-slide-prev {
+          opacity: 1;
+          transform: none;
+        }
+
+        .event-swiper-pagination {
+          left: auto !important;
+          right: 10px !important;
+          bottom: 8px !important;
+          width: auto !important;
+          text-align: right;
+        }
+
+        .event-swiper-pagination .swiper-pagination-bullet {
+          width: 5px;
+          height: 5px;
+          margin: 0 2px !important;
+          background: rgba(255, 255, 255, 0.65);
+          opacity: 1;
+        }
+
+        .event-swiper-pagination .swiper-pagination-bullet-active {
+          width: 5px;
+          background: #ffffff;
+          border-radius: 50%;
+        }
 
         @media (min-width: 768px) {
-  .eventSwiper .swiper-slide {
-    width: 58%;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  }
+          .eventSwiper {
+            padding-top: 10px;
+            padding-bottom: 30px;
+          }
 
-  .eventSwiper .swiper-slide-next,
-  .eventSwiper .swiper-slide-prev {
-    opacity: 0.4;
-    transform: scale(0.9);
-  }
-}
-
-        @media (min-width: 768px) {
           .eventSwiper .swiper-slide {
             width: 58%;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+          }
+
+          .eventSwiper .swiper-slide-next,
+          .eventSwiper .swiper-slide-prev {
+            opacity: 0.4;
+            transform: scale(0.9);
+          }
+
+          .event-swiper-pagination {
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 10px !important;
+            width: 100% !important;
+            text-align: center;
+          }
+
+          .event-swiper-pagination .swiper-pagination-bullet {
+            width: 8px;
+            height: 8px;
+            margin: 0 4px !important;
+            background: #111827;
+            opacity: 0.2;
+          }
+
+          .event-swiper-pagination .swiper-pagination-bullet-active {
+            width: 20px;
+            background: #111827;
+            border-radius: 5px;
+            opacity: 1;
           }
         }
 
@@ -565,7 +682,6 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
           padding-bottom: 26px;
         }
 
-        .event-swiper-pagination .swiper-pagination-bullet,
         .author-center-pagination .swiper-pagination-bullet {
           width: 7px;
           height: 7px;
@@ -573,7 +689,6 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=5`, {
           background: #d1d5db;
         }
 
-        .event-swiper-pagination .swiper-pagination-bullet-active,
         .author-center-pagination .swiper-pagination-bullet-active {
           background: #111827;
           width: 22px;
