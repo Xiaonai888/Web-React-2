@@ -284,15 +284,16 @@ function AuthorCenterBannerSlider() {
     }
 
     swiperRef.current = new window.Swiper('.authorCenterSwiper', {
-      slidesPerView: 'auto',
-      spaceBetween: 12,
-      speed: 650,
-      loop: banners.length > 2,
-      pagination: {
-        el: '.author-center-pagination',
-        clickable: true,
-      },
-    })
+  slidesPerView: 1.08,
+  spaceBetween: 12,
+  centeredSlides: false,
+  speed: 650,
+  loop: banners.length > 1,
+  pagination: {
+    el: '.author-center-pagination',
+    clickable: true,
+  },
+})
 
     return () => {
       if (swiperRef.current) {
