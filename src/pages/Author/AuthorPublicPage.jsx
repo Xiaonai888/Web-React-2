@@ -882,6 +882,8 @@ const { pageUsername } = useParams()
 })
 const [myReview, setMyReview] = useState(null)
 const [reviewLoading, setReviewLoading] = useState(false)
+const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
+const [savingReview, setSavingReview] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [cropMode, setCropMode] = useState('avatar')
   const [rawImage, setRawImage] = useState('')
@@ -1063,6 +1065,177 @@ useEffect(() => {
   useEffect(() => {
     loadAuthor()
   }, [pageUsername])
+
+  const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
+const [savingReview, setSavingReview] = useState(false)
+
+function handleOpenReviewSheet() {
+  const token = getAuthToken()
+
+  if (displayAuthor.is_owner) {
+    setMessage('Readers can review this page.')
+    return
+  }
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  setReviewSheetOpen(true)
+}
+
+async function handleSaveReview(isRecommended) {
+  const token = getAuthToken()
+  const username = author?.page_username || pageUsername
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!username || displayAuthor.is_owner || savingReview) return
+
+  try {
+    setSavingReview(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        is_recommended: isRecommended,
+        review_text: myReview?.review_text || '',
+      }),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to save review')
+    }
+
+    await loadAuthorReviews(username)
+    setReviewSheetOpen(false)
+  } catch (error) {
+    setMessage(error.message || 'Failed to save review')
+  } finally {
+    setSavingReview(false)
+  }
+}
+
+async function handleRemoveReview() {
+  const token = getAuthToken()
+  const username = author?.page_username || pageUsername
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!username || !myReview || savingReview) return
+
+  try {
+    setSavingReview(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to remove review')
+    }
+
+    await loadAuthorReviews(username)
+    setReviewSheetOpen(false)
+  } catch (error) {
+    setMessage(error.message || 'Failed to remove review')
+  } finally {
+    setSavingReview(false)
+  }
+}
+
+{reviewSheetOpen ? (
+  <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35">
+    <button
+      type="button"
+      aria-label="Close review options"
+      onClick={() => setReviewSheetOpen(false)}
+      className="absolute inset-0"
+    />
+
+    <div className="relative w-full rounded-t-[24px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
+      <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#c7ccd5]" />
+
+      <h2 className="text-[17px] font-bold text-[#111827]">Review this page</h2>
+      <p className="mt-1 text-[12px] font-medium text-[#8b93a1]">
+        Tell readers whether you recommend this author page.
+      </p>
+
+      <div className="mt-4 space-y-2">
+        <button
+          type="button"
+          disabled={savingReview}
+          onClick={() => handleSaveReview(true)}
+          className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#111827] px-4 text-left text-[14px] font-bold text-white active:scale-[0.99] disabled:opacity-60"
+        >
+          <i className="fa-solid fa-star text-[14px]" />
+          Recommend
+        </button>
+
+        <button
+          type="button"
+          disabled={savingReview}
+          onClick={() => handleSaveReview(false)}
+          className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#f3f4f6] px-4 text-left text-[14px] font-bold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+        >
+          <i className="fa-regular fa-star text-[14px]" />
+          Not recommend
+        </button>
+
+        {myReview ? (
+          <button
+            type="button"
+            disabled={savingReview}
+            onClick={handleRemoveReview}
+            className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#fff1f1] px-4 text-left text-[14px] font-bold text-[#e5484d] active:scale-[0.99] disabled:opacity-60"
+          >
+            <i className="fa-solid fa-trash-can text-[13px]" />
+            Remove my review
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setReviewSheetOpen(false)}
+          className="h-10 w-full text-[14px] font-medium text-[#111827] active:opacity-70"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+
+<button
+  type="button"
+  onClick={handleOpenReviewSheet}
+  className="flex w-full items-center gap-4 text-left active:opacity-70"
+>
+  <i className={`${myReview?.is_recommended ? 'fa-solid' : 'fa-regular'} fa-star w-8 text-center text-[23px] text-[#111827]`} />
+  <span>
+    {reviewLoading
+      ? 'Loading reviews...'
+      : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
+  </span>
+</button>
 
 
   async function handleToggleFollow() {
@@ -1968,3 +2141,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
     </div>
   )
 }
+
+<div className="flex items-center gap-4">
+  <i className="fa-regular fa-star w-8 text-center text-[23px] text-[#111827]" />
+  <span>
+    {reviewLoading
+      ? 'Loading reviews...'
+      : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
+  </span>
+</div>
+
+{reviewSheetOpen ? (
