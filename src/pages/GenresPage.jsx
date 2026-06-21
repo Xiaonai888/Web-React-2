@@ -141,9 +141,9 @@ function FilterChip({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
-        active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
-      }`}
+      className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-medium active:scale-[0.98] ${
+  active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827] ring-1 ring-[#e4e7ec]'
+}`}
     >
       {children}
     </button>
@@ -187,7 +187,7 @@ function FilterSheet({
 
           <div className="space-y-6">
             <section>
-              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Story Access</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Story Access</h3>
               <div className="flex flex-wrap gap-2.5">
                 {accessFilters.map((item) => (
                   <FilterChip key={item.value} active={access === item.value} onClick={() => setAccess(item.value)}>
@@ -198,7 +198,7 @@ function FilterSheet({
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Story Type</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Story Type</h3>
               <div className="flex flex-wrap gap-2.5">
                 {typeFilters.map((item) => (
                   <FilterChip key={item.value} active={type === item.value} onClick={() => setType(item.value)}>
@@ -209,7 +209,7 @@ function FilterSheet({
             </section>
 
             <section>
-              <h3 className="mb-3 text-[14px] font-black text-[#8d94a1]">Progress</h3>
+              <h3 className="mb-3 text-[14px] font-bold text-[#8d94a1]">Progress</h3>
               <div className="flex flex-wrap gap-2.5">
                 {progressFilters.map((item) => (
                   <FilterChip key={item.value} active={progress === item.value} onClick={() => setProgress(item.value)}>
@@ -228,7 +228,7 @@ function FilterSheet({
                 setType('all')
                 setProgress('all')
               }}
-              className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-black text-[#111827] active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#f5f3fa] text-[13px] font-semibold text-[#111827] active:scale-[0.99]"
             >
               Clear
             </button>
@@ -236,7 +236,7 @@ function FilterSheet({
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-full bg-[#111827] text-[13px] font-black text-white active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99]"
             >
               Apply Filters
             </button>
