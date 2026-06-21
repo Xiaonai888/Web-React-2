@@ -677,6 +677,11 @@ export default function EventPage() {
   const [message, setMessage] = useState('')
   const [topAuthors, setTopAuthors] = useState([])
   const [followLoadingId, setFollowLoadingId] = useState('')
+  const topAuthorsScrollRef = useRef(null)
+  const topAuthorsDraggingRef = useRef(false)
+  const topAuthorsDragMovedRef = useRef(false)
+  const topAuthorsStartXRef = useRef(0)
+  const topAuthorsScrollLeftRef = useRef(0)
 
   useEffect(() => {
     let ignore = false
@@ -767,7 +772,46 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
     navigate(`/author/page/${author.page_username}`)
   }
 
- const handleFollowTopAuthor = async (author) => {
+  const handleTopAuthorsMouseDown = (event) => {
+    const container = topAuthorsScrollRef.current
+    if (!container || window.innerWidth < 768) return
+
+    topAuthorsDraggingRef.current = true
+    topAuthorsDragMovedRef.current = false
+    topAuthorsStartXRef.current = event.pageX - container.offsetLeft
+    topAuthorsScrollLeftRef.current = container.scrollLeft
+  }
+
+  const handleTopAuthorsMouseMove = (event) => {
+    const container = topAuthorsScrollRef.current
+    if (!container || !topAuthorsDraggingRef.current) return
+
+    event.preventDefault()
+
+    const x = event.pageX - container.offsetLeft
+    const walk = x - topAuthorsStartXRef.current
+
+    if (Math.abs(walk) > 4) {
+      topAuthorsDragMovedRef.current = true
+    }
+
+    container.scrollLeft = topAuthorsScrollLeftRef.current - walk * 1.4
+  }
+
+  const stopTopAuthorsMouseDrag = () => {
+    topAuthorsDraggingRef.current = false
+  }
+
+  const handleOpenTopAuthor = (author) => {
+    if (topAuthorsDragMovedRef.current) {
+      topAuthorsDragMovedRef.current = false
+      return
+    }
+
+    handleOpenAuthor(author)
+  }
+
+  const handleFollowTopAuthor = async (author) => {
   const token = getReaderToken()
 
   if (!token) {
@@ -1058,13 +1102,20 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
                   ))}
                 </div>
               ) : topAuthors.length ? (
-                <div className="no-scrollbar mt-5 flex cursor-grab gap-3 overflow-x-auto pb-2 select-none active:cursor-grabbing">
+                <div
+  ref={topAuthorsScrollRef}
+  onMouseDown={handleTopAuthorsMouseDown}
+  onMouseMove={handleTopAuthorsMouseMove}
+  onMouseUp={stopTopAuthorsMouseDrag}
+  onMouseLeave={stopTopAuthorsMouseDrag}
+  className="no-scrollbar mt-5 flex cursor-grab gap-3 overflow-x-auto pb-2 select-none active:cursor-grabbing"
+>
                   {topAuthors.slice(0, 6).map((author, index) => (
                     <TopAuthorCard
   key={author.id}
   rank={index + 1}
   author={author}
-  onOpen={handleOpenAuthor}
+  onOpen={handleOpenTopAuthor}
   onFollow={handleFollowTopAuthor}
   loading={followLoadingId === author.id}
 />
