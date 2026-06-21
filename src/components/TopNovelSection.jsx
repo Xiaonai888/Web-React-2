@@ -78,18 +78,6 @@ function getRankBadgeClass(rank) {
   return 'bg-[#6b7280] text-white'
 }
 
-function createFallbackBooks(category) {
-  return Array.from({ length: 6 }).map((_, index) => ({
-    id: `fallback-${category}-${index + 1}`,
-    rank: index + 1,
-    title: `${category} ${index + 1}`,
-    image: '',
-    link: '/',
-    genre: category,
-    isFallback: true,
-  }))
-}
-
 async function fetchRankingItems(tab, categoryLabel) {
   const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${tab.endpoint}`))
   const data = await response.json().catch(() => ({}))
@@ -100,9 +88,8 @@ async function fetchRankingItems(tab, categoryLabel) {
 
   const rows = Array.isArray(data.stories) ? data.stories : []
   const filteredRows = tab.filter ? rows.filter(tab.filter) : rows
-  const stories = filteredRows.slice(0, 6).map(normalizeStory)
 
-  return stories.length ? stories : createFallbackBooks(categoryLabel)
+  return filteredRows.slice(0, 6).map(normalizeStory)
 }
 
 function RankBadge({ rank }) {
@@ -236,8 +223,8 @@ export default function TopNovelSection() {
         if (ignore) return
 
         setRealDataByCategory({
-          [firstTab.label]: createFallbackBooks(firstTab.label),
-        })
+  [firstTab.label]: [],
+})
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -250,7 +237,7 @@ export default function TopNovelSection() {
             return [tab.label, items]
           } catch (error) {
             console.error(`Ranking preload error: ${tab.label}`, error)
-            return [tab.label, createFallbackBooks(tab.label)]
+            return [tab.label, []]
           }
         })
       )
@@ -291,7 +278,7 @@ export default function TopNovelSection() {
         const rows = Array.isArray(data.stories) ? data.stories : []
         const filteredRows = tab.filter ? rows.filter(tab.filter) : rows
         const stories = filteredRows.slice(0, 6).map(normalizeStory)
-        const nextStories = stories.length ? stories : createFallbackBooks(activeCategory)
+        const nextStories = stories
 
         if (!ignore) {
           setRealDataByCategory((current) => ({
@@ -305,7 +292,7 @@ export default function TopNovelSection() {
         if (!ignore) {
           setRealDataByCategory((current) => ({
             ...current,
-            [activeCategory]: createFallbackBooks(activeCategory),
+            [activeCategory]: [],
           }))
         }
       } finally {
@@ -325,7 +312,7 @@ export default function TopNovelSection() {
 
     if (activeData) return activeData
 
-    return realDataByCategory[rankingTabs[0].label] || createFallbackBooks(activeCategory)
+    return []
   }, [activeCategory, realDataByCategory])
 
   const rankingGroups = useMemo(() => {
