@@ -200,7 +200,7 @@ function MostReadBookCard({ book, rank, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="block w-[116px] shrink-0 bg-transparent p-0 text-left active:scale-[0.98] sm:w-[130px]"
+      className="block w-[calc((100%-24px)/2.5)] shrink-0 bg-transparent p-0 text-left active:scale-[0.98] sm:w-[130px]"
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-[10px] bg-[#202124] shadow-sm">
         <img
