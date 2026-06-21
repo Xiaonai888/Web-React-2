@@ -105,11 +105,11 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 pb-4 pt-5 text-center shadow-sm active:scale-[0.98]"
     >
       <div
-        className={`absolute left-3 top-0 z-10 flex h-[52px] w-[34px] flex-col items-center justify-start pt-2 ${rankBadgeClasses[rank] || 'bg-[#A0A7B4] text-white'}`}
+        className={`absolute left-0 top-0 z-10 flex h-[48px] w-[30px] flex-col items-center justify-start pt-2 ${rankBadgeClasses[rank] || 'bg-[#A0A7B4] text-white'}`}
         style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
       >
         <span className="text-[8px] font-black uppercase leading-none tracking-wide">Top</span>
-        <span className="mt-1 text-[20px] font-black leading-none">{rank}</span>
+        <span className="mt-1 text-[18px] font-black leading-none">{rank}</span>
       </div>
 
       <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
