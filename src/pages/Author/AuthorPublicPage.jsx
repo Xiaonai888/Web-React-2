@@ -186,7 +186,12 @@ works_count: Number(author.total_stories || author.works_count || 0),
     works: Array.isArray(author.works) ? author.works : [],
     created_at: author.created_at || '',
     updated_at: author.updated_at || '',
-    is_owner: forceOwner || Boolean(myPage?.id && author.id && myPage.id === author.id),
+    is_owner:
+      forceOwner ||
+      Boolean(
+        (myPage?.id && author.id && myPage.id === author.id) ||
+          (myPage?.page_username && author.page_username && myPage.page_username === author.page_username)
+      ),
   }
 }
 
@@ -865,8 +870,9 @@ const { pageUsername } = useParams()
   const [activeTab, setActiveTab] = useState('Posts')
   const [tabsFrozen, setTabsFrozen] = useState(false)
   const [readerCartCount, setReaderCartCount] = useState(() => getAuthorCartCount())
-const [readerNotificationCount, setReaderNotificationCount] = useState(0)
-const [loading, setLoading] = useState(true)
+  const [readerNotificationCount, setReaderNotificationCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [ownerResolved, setOwnerResolved] = useState(false)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
   const [cropModalOpen, setCropModalOpen] = useState(false)
@@ -925,14 +931,14 @@ const [loading, setLoading] = useState(true)
 
 useEffect(() => {
   if (sessionStorage.getItem('shadow_open_author_menu') !== '1') return
-  if (loading) return
+  if (!ownerResolved) return
 
   sessionStorage.removeItem('shadow_open_author_menu')
 
   if (author?.is_owner) {
     setAuthorMenuOpen(true)
   }
-}, [loading, author?.is_owner])
+}, [ownerResolved, author?.is_owner])
   
   useEffect(() => {
   if (!authorMenuOpen) return undefined
@@ -972,7 +978,9 @@ useEffect(() => {
   async function loadAuthor() {
     try {
       setLoading(true)
+      setOwnerResolved(false)
       setPageError('')
+      setAuthor(null)
 
       if (!pageUsername) {
         const myPage = await fetchMyAuthorPage()
@@ -983,19 +991,22 @@ useEffect(() => {
 
         setAuthor(normalizeAuthor(myPage, myPage.page_username, myPage, true))
         localStorage.setItem('shadow_author_page', JSON.stringify(myPage))
+        setOwnerResolved(true)
+        setLoading(false)
         return
       }
 
-      const [publicPage, myPage] = await Promise.all([
-        fetchPublicAuthorPage(pageUsername),
-        fetchMyAuthorPage().catch(() => null),
-      ])
+      const publicPage = await fetchPublicAuthorPage(pageUsername)
+      setAuthor(normalizeAuthor(publicPage, pageUsername, null, false))
+      setLoading(false)
 
+      const myPage = await fetchMyAuthorPage().catch(() => null)
       setAuthor(normalizeAuthor(publicPage, pageUsername, myPage))
+      setOwnerResolved(true)
     } catch (loadError) {
       setAuthor(null)
+      setOwnerResolved(true)
       setPageError(loadError.message || 'Author page not found')
-    } finally {
       setLoading(false)
     }
   }
@@ -1080,6 +1091,8 @@ function handleOpenMessage() {
 }
   
  const actionButtons = useMemo(() => {
+  if (!ownerResolved || !author) return []
+
   if (author?.is_owner) {
     return [
       { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/page/dashboard') },
@@ -1114,7 +1127,7 @@ function handleOpenMessage() {
       disabled: followLoading,
     },
   ]
-}, [author?.is_owner, author?.is_following, author?.profile_details, followLoading, navigate])
+}, [ownerResolved, author?.is_owner, author?.is_following, author?.profile_details, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -1271,27 +1284,28 @@ function handleOpenMessage() {
   }
 
   useEffect(() => {
-    if (author?.is_owner) {
-  setReaderHeaderSolid(false)
-  setReaderHeaderTitle(false)
-  return undefined
-}
+    if (!ownerResolved || author?.is_owner) {
+      setReaderHeaderSolid(false)
+      setReaderHeaderTitle(false)
+      setTabsFrozen(false)
+      return undefined
+    }
 
     function syncReaderHeader() {
       const coverBottom = coverRef.current?.getBoundingClientRect().bottom ?? 0
-const profileBottom = profileRef.current?.getBoundingClientRect().bottom ?? 0
-const tabsTop = tabsRef.current?.getBoundingClientRect().top ?? 999
+      const profileBottom = profileRef.current?.getBoundingClientRect().bottom ?? 0
+      const tabsTop = tabsRef.current?.getBoundingClientRect().top ?? 999
 
-setReaderHeaderSolid(coverBottom <= 54)
-setReaderHeaderTitle(profileBottom <= 58)
-setTabsFrozen(tabsTop <= 55)
+      setReaderHeaderSolid(coverBottom <= 54)
+      setReaderHeaderTitle(profileBottom <= 58)
+      setTabsFrozen(tabsTop <= 55)
     }
 
     syncReaderHeader()
     window.addEventListener('scroll', syncReaderHeader, { passive: true })
 
     return () => window.removeEventListener('scroll', syncReaderHeader)
-  }, [author?.id, author?.is_owner])
+  }, [ownerResolved, author?.id, author?.is_owner])
 
  useEffect(() => {
   function handleTabsStickyState() {
@@ -1299,7 +1313,7 @@ setTabsFrozen(tabsTop <= 55)
     if (!tabsElement) return
 
     const rect = tabsElement.getBoundingClientRect()
-    const freezeTop = author?.is_owner ? 0 : 54
+    const freezeTop = !ownerResolved || author?.is_owner ? 0 : 54
 
     setTabsFrozen(rect.top <= freezeTop && window.scrollY > 20)
   }
@@ -1312,7 +1326,7 @@ setTabsFrozen(tabsTop <= 55)
     window.removeEventListener('scroll', handleTabsStickyState)
     window.removeEventListener('resize', handleTabsStickyState)
   }
-}, [author?.is_owner])
+}, [ownerResolved, author?.is_owner])
   
 
 if (!loading && pageError) {
@@ -1436,7 +1450,7 @@ onOpenStoreSetting={() => {
 }}
 />
 
-      {!loading && !displayAuthor.is_owner ? (
+      {ownerResolved && !displayAuthor.is_owner ? (
  <header className={`fixed left-0 right-0 top-0 z-[120] transition ${
   readerHeaderSolid ? 'bg-white shadow-sm' : 'bg-transparent'
 }`}>
@@ -1677,42 +1691,43 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                 </p>
               ) : null}
 
-    <div className="mt-4 space-y-2">
-  <div className="flex items-center gap-2">
-    {actionButtons.map((button) => (
-  <button
-    key={button.label}
-    type="button"
-    onClick={button.onClick}
-    disabled={button.disabled}
-    className={`h-10 flex-1 rounded-[12px] text-[13px] font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-      button.type === 'primary'
-        ? 'bg-[#111827] text-white'
-        : 'bg-[#f3f4f6] text-[#111827]'
-    }`}
-  >
-    <i className={`fa-solid ${button.icon} mr-2 text-[12px]`} />
-    {button.disabled ? 'Loading...' : button.label}
-  </button>
-))}
+    {ownerResolved ? (
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center gap-2">
+          {actionButtons.map((button) => (
+            <button
+              key={button.label}
+              type="button"
+              onClick={button.onClick}
+              disabled={button.disabled}
+              className={`h-10 flex-1 rounded-[12px] text-[13px] font-normal transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                button.type === 'primary'
+                  ? 'bg-[#111827] text-white'
+                  : 'bg-[#f3f4f6] text-[#111827]'
+              }`}
+            >
+              <i className={`fa-solid ${button.icon} mr-2 text-[12px]`} />
+              {button.disabled ? 'Loading...' : button.label}
+            </button>
+          ))}
+        </div>
 
-  </div>
-
-  {displayAuthor.is_owner ? (
-    <button
-      type="button"
-      onClick={() => setMessage('Add to story is coming soon.')}
-      className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
-    >
-     <img
-  src="/assets/Icons/Add Story.svg"
-  alt=""
-  className="mr-2 h-4 w-4 object-contain"
-/>
-      Add to story
-    </button>
-  ) : null}
-</div>
+        {displayAuthor.is_owner ? (
+          <button
+            type="button"
+            onClick={() => setMessage('Add to story is coming soon.')}
+            className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+          >
+            <img
+              src="/assets/Icons/Add Story.svg"
+              alt=""
+              className="mr-2 h-4 w-4 object-contain"
+            />
+            Add to story
+          </button>
+        ) : null}
+      </div>
+    ) : null}
             </div>
           </div>
 
@@ -1722,7 +1737,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   id="author-page-tabs"
   ref={tabsRef}
   className={`sticky z-50 border-b border-[#eef0f3] bg-white ${
-    displayAuthor.is_owner ? 'top-0' : 'top-[54px]'
+    !ownerResolved || displayAuthor.is_owner ? 'top-0' : 'top-[54px]'
   } ${tabsFrozen ? 'shadow-sm' : ''}`}
 >
   <div className="mx-auto h-[50px] max-w-[980px] px-4">
@@ -1894,7 +1909,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           
         </section>
       </main>
-      {displayAuthor.is_owner ? (
+      {ownerResolved && displayAuthor.is_owner ? (
         <AuthorPageFooter active="Page" onComingSoon={handleAuthorFooterComingSoon} />
       ) : null}
     </div>
