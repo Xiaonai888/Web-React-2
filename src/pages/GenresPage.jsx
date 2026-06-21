@@ -403,13 +403,13 @@ export default function GenresPage() {
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section>
           <div className={`relative ${genresExpanded || query ? '' : 'max-h-[128px] overflow-hidden'}`}>
-            <div className="flex flex-wrap gap-x-2 gap-y-2">
+           <div className="flex flex-wrap gap-x-2 gap-y-1.5">
   {filteredGenres.map((genre) => (
     <button
       key={genre.label}
       type="button"
       onClick={() => openGenre(genre)}
-      className={`rounded-full px-3.5 py-1.5 text-[13px] leading-5 active:scale-[0.98] ${
+      className={`rounded-full px-3.5 py-1.5 text-[13px] leading-[18px] active:scale-[0.98] ${
         activeGenre === genre.label
           ? 'bg-[#facc15] font-semibold text-[#111827]'
           : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec]'
@@ -456,11 +456,11 @@ export default function GenresPage() {
                 key={item.value}
                 type="button"
                 onClick={() => setActiveQuickFilter((current) => (current === item.value ? '' : item.value))}
-                className={`shrink-0 rounded-full px-4 py-2.5 text-[12px] font-black active:scale-[0.98] ${
-                  activeQuickFilter === item.value
-                    ? 'bg-[#111827] text-white'
-                    : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] leading-[18px] active:scale-[0.98] ${
+  activeQuickFilter === item.value
+    ? 'bg-[#111827] font-semibold text-white'
+    : 'bg-[#f5f3fa] font-medium text-[#8d94a1]'
+}`}
               >
                 {item.label}
               </button>
