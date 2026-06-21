@@ -269,9 +269,7 @@ export default function TopNovelSection() {
       ignore = true
     }
   }, [])
-  const [activeCategory, setActiveCategory] = useState(rankingTabs[0].label)
-  const [realDataByCategory, setRealDataByCategory] = useState({})
-  const [loading, setLoading] = useState(true)
+  
 
   useEffect(() => {
     let ignore = false
