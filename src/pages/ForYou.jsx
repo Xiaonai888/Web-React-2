@@ -186,6 +186,83 @@ export default function ForYou() {
   setActiveGenre(tab.slug)
 }
 
+  function isSwipeBlockedTarget(target) {
+    const element =
+      typeof Element !== 'undefined' && target instanceof Element
+        ? target
+        : target?.parentElement
+
+    if (!element) return true
+
+    return Boolean(
+      element.closest(
+        [
+          'button',
+          'a',
+          'input',
+          'textarea',
+          'select',
+          '[role="button"]',
+          '.mySwiper',
+          '.swiper',
+          '.swiper-container',
+          '.swiper-wrapper',
+          '.swiper-slide',
+          '.overflow-x-auto',
+          '.no-scrollbar',
+          '.snap-x',
+          '[data-swipe-block="true"]',
+        ].join(',')
+      )
+    )
+  }
+
+  function moveGenreBySwipe(direction) {
+    const currentIndex = genreTabs.findIndex((tab) => tab.slug === activeGenre)
+
+    if (currentIndex === -1) return
+
+    const nextIndex = direction === 'left' ? currentIndex + 1 : currentIndex - 1
+    const nextTab = genreTabs[nextIndex]
+
+    if (!nextTab) return
+
+    handleGenreChange(nextTab)
+  }
+
+  function handleContentTouchStart(event) {
+    if (event.touches.length !== 1 || isSwipeBlockedTarget(event.target)) {
+      swipeStartRef.current = null
+      return
+    }
+
+    const touch = event.touches[0]
+
+    swipeStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  function handleContentTouchEnd(event) {
+    const start = swipeStartRef.current
+    swipeStartRef.current = null
+
+    if (!start || event.changedTouches.length !== 1) return
+
+    const touch = event.changedTouches[0]
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+
+    if (absX < 70) return
+    if (absY > 45) return
+    if (absX < absY * 1.3) return
+
+    moveGenreBySwipe(deltaX < 0 ? 'left' : 'right')
+  }
+
   useEffect(() => {
   refreshNotificationUnreadCount()
 
@@ -195,83 +272,6 @@ export default function ForYou() {
     }
   }
 
-    function isSwipeBlockedTarget(target) {
-  const element = target instanceof Element ? target : target?.parentElement
-
-  if (!element) return true
-
-  return Boolean(
-    element.closest(
-      [
-        'button',
-        'a',
-        'input',
-        'textarea',
-        'select',
-        '[role="button"]',
-        '.mySwiper',
-        '.swiper',
-        '.swiper-container',
-        '.swiper-wrapper',
-        '.swiper-slide',
-        '.overflow-x-auto',
-        '.no-scrollbar',
-        '.snap-x',
-        '[data-swipe-block="true"]',
-      ].join(',')
-    )
-  )
-}
-
-function moveGenreBySwipe(direction) {
-  const currentIndex = genreTabs.findIndex((tab) => tab.slug === activeGenre)
-
-  if (currentIndex === -1) return
-
-  const nextIndex = direction === 'left' ? currentIndex + 1 : currentIndex - 1
-  const nextTab = genreTabs[nextIndex]
-
-  if (!nextTab) return
-
-  handleGenreChange(nextTab)
-}
-
-function handleContentTouchStart(event) {
-  if (event.touches.length !== 1 || isSwipeBlockedTarget(event.target)) {
-    swipeStartRef.current = null
-    return
-  }
-
-  const touch = event.touches[0]
-
-  swipeStartRef.current = {
-    x: touch.clientX,
-    y: touch.clientY,
-  }
-}
-
-function handleContentTouchEnd(event) {
-  const start = swipeStartRef.current
-  swipeStartRef.current = null
-
-  if (!start || event.changedTouches.length !== 1) return
-
-  const touch = event.changedTouches[0]
-  const deltaX = touch.clientX - start.x
-  const deltaY = touch.clientY - start.y
-  const absX = Math.abs(deltaX)
-  const absY = Math.abs(deltaY)
-
-  if (absX < 70) return
-  if (absY > 45) return
-  if (absX < absY * 1.3) return
-
-  if (deltaX < 0) {
-    moveGenreBySwipe('left')
-  } else {
-    moveGenreBySwipe('right')
-  }
-}
 
   function handleFocus() {
     refreshNotificationUnreadCount()
@@ -392,7 +392,6 @@ function handleContentTouchEnd(event) {
   effect: 'coverflow',
   grabCursor: true,
 
-  // Phone: បង្ហាញតែ 1 slide ពេញទទឹង
   centeredSlides: false,
   slidesPerView: 1,
   spaceBetween: 0,
@@ -405,7 +404,6 @@ function handleContentTouchEnd(event) {
     slideShadows: false,
   },
 
-  // Computer: រក្សាទម្រង់ចាស់
   breakpoints: {
     768: {
       centeredSlides: true,
@@ -464,7 +462,6 @@ function handleContentTouchEnd(event) {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Phone slider */
 .mySwiper {
   width: 100%;
   padding-top: 0;
@@ -486,7 +483,6 @@ function handleContentTouchEnd(event) {
   transform: none;
 }
 
-/* Phone pagination: small dots at bottom-right */
 .mySwiper .swiper-pagination {
   left: auto;
   right: 10px;
@@ -509,7 +505,6 @@ function handleContentTouchEnd(event) {
   border-radius: 50%;
 }
 
-/* Computer: keep current coverflow design */
 @media (min-width: 768px) {
   .mySwiper {
     padding-top: 10px;
@@ -692,7 +687,11 @@ function handleContentTouchEnd(event) {
         {activeTab !== 'novel' ? (
           <ComingSoonPanel title={activeTab === 'chat' ? 'Chat Story' : 'Manga'} />
         ) : (
-         <div id="tab-content-root">
+         <div
+           id="tab-content-root"
+           onTouchStart={handleContentTouchStart}
+           onTouchEnd={handleContentTouchEnd}
+         >
 
             {activeGenre !== 'today' ? (
   <EmbeddedGenreRouter
