@@ -433,7 +433,7 @@ export default function GenresPage() {
       key={genre.label}
       type="button"
       onClick={() => openGenre(genre)}
-      className={`rounded-full px-3 py-1 text-[13px] leading-[18px] active:scale-[0.98] ${
+      className={`rounded-full px-3 py-1 text-[12.5px] leading-[18px] active:scale-[0.98] ${
         activeGenre === genre.label
           ? 'bg-[#facc15] font-semibold text-[#111827]'
           : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec]'
@@ -480,7 +480,7 @@ export default function GenresPage() {
                 key={item.value}
                 type="button"
                 onClick={() => setActiveQuickFilter((current) => (current === item.value ? '' : item.value))}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] leading-[18px] active:scale-[0.98] ${
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] leading-[18px] active:scale-[0.98] ${
   activeQuickFilter === item.value
     ? 'bg-[#111827] font-semibold text-white'
     : 'bg-[#f5f3fa] font-medium text-[#8d94a1]'
@@ -495,7 +495,7 @@ export default function GenresPage() {
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="shrink-0 rounded-full bg-[#f5f3fa] px-4 py-2.5 text-[12px] font-black text-[#111827] active:scale-[0.98]"
+              className="shrink-0 px-2 py-1 text-[12.5px] font-semibold leading-[18px] text-[#111827] active:scale-[0.98]"
             >
               Filters
               <i className="fa-solid fa-chevron-down ml-2 text-[10px]" />
