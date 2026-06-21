@@ -875,6 +875,13 @@ const { pageUsername } = useParams()
   const [ownerResolved, setOwnerResolved] = useState(false)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
+  const [reviewSummary, setReviewSummary] = useState({
+  total_count: 0,
+  recommend_count: 0,
+  recommend_percent: 0,
+})
+const [myReview, setMyReview] = useState(null)
+const [reviewLoading, setReviewLoading] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [cropMode, setCropMode] = useState('avatar')
   const [rawImage, setRawImage] = useState('')
@@ -904,6 +911,7 @@ const { pageUsername } = useParams()
   const profileDetails = author?.is_owner
   ? { ...storedProfileDetails, ...databaseProfileDetails }
   : databaseProfileDetails
+  
 
 
   function handleSwitchToReaderAccount() {
@@ -1010,6 +1018,47 @@ useEffect(() => {
       setLoading(false)
     }
   }
+
+  async function loadAuthorReviews(username) {
+    if (!username) return
+
+    try {
+      setReviewLoading(true)
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load reviews')
+      }
+
+      setReviewSummary(data.summary || {
+        total_count: 0,
+        recommend_count: 0,
+        recommend_percent: 0,
+      })
+      setMyReview(data.my_review || null)
+    } catch {
+      setReviewSummary({
+        total_count: 0,
+        recommend_count: 0,
+        recommend_percent: 0,
+      })
+      setMyReview(null)
+    } finally {
+      setReviewLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const username = author?.page_username || pageUsername
+
+    if (!username || loading) return
+
+    loadAuthorReviews(username)
+  }, [author?.page_username, pageUsername, loading])
 
   useEffect(() => {
     loadAuthor()
@@ -1780,7 +1829,11 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       <div className="space-y-4 text-[14px] font-normal text-[#111827]">
         <div className="flex items-center gap-4">
           <i className="fa-regular fa-star w-8 text-center text-[23px] text-[#111827]" />
-          <span>92% recommend (23 Reviews)</span>
+          <span>
+  {reviewLoading
+    ? 'Loading reviews...'
+    : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
+</span>
         </div>
         <div className="flex items-center gap-4">
           <i className="fa-solid fa-book w-8 text-center text-[20px] text-[#111827]" />
