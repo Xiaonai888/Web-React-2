@@ -220,16 +220,16 @@ export default function AuthorTopFansPage() {
               onClick={removeSelectedFanBadge}
               className="mb-5 flex w-full items-center gap-4 text-left active:opacity-70"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-black text-white">
-                <i className="fa-solid fa-xmark text-[17px]" />
-              </span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-[#111827] text-white">
+  <i className="fa-solid fa-xmark text-[11px]" />
+</span>
               <span className="text-[15px] font-medium text-[#111827]">Remove Top Fan Badge</span>
             </button>
 
             <button
               type="button"
               onClick={() => setSelectedFan(null)}
-              className="text-[21px] font-normal text-[#111827] active:opacity-70"
+              className="text-[14px] font-medium text-[#111827] active:opacity-70"
             >
               Cancel
             </button>
