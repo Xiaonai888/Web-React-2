@@ -619,7 +619,7 @@ function AuthorCenterBannerSlider() {
 
   return (
     <div className="mt-4 w-full overflow-hidden">
-  <div className="swiper authorCenterSwiper !pl-4 !pr-10">
+  <div className="swiper authorCenterSwiper !pr-10">
     <div className="swiper-wrapper">
       {banners.map((banner) => {
         const parsedTitle = parseBannerTitle(banner.title)
@@ -1079,7 +1079,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
             </section>
 
             <section className="pb-8">
-              <h2 className="text-[24px] font-extrabold text-[#111827]">Author Center</h2>
+              <h2 className="text-[19px] font-extrabold text-[#111827]">Author Center</h2>
 
               <AuthorCenterBannerSlider />
 
