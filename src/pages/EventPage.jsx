@@ -87,11 +87,11 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
   const worksLabel = worksCount === 0 ? 'No works yet' : worksCount === 1 ? '1 work' : `${formatCompactNumber(worksCount)} works`
   const buttonLabel = author?.is_owner ? 'View' : author?.is_following ? 'Following' : 'Follow'
   const rankBadgeClasses = {
-    1: 'bg-[#111827] text-white',
-    2: 'bg-[#2563eb] text-white',
-    3: 'bg-[#7c3aed] text-white',
-    4: 'bg-[#0f766e] text-white',
-    5: 'bg-[#6b7280] text-white',
+    1: 'bg-[#FF3B30] text-white shadow-[0_8px_18px_rgba(255,59,48,0.28)]',
+    2: 'bg-[#FF8C00] text-white shadow-[0_8px_18px_rgba(255,140,0,0.25)]',
+    3: 'bg-[#FFD400] text-[#111827] shadow-[0_8px_18px_rgba(255,212,0,0.25)]',
+    4: 'bg-[#8A2BE2] text-white shadow-[0_8px_18px_rgba(138,43,226,0.24)]',
+    5: 'bg-[#A0A7B4] text-white shadow-[0_8px_18px_rgba(160,167,180,0.22)]',
   }
 
   return (
@@ -102,13 +102,17 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
       onKeyDown={(event) => {
         if (event.key === 'Enter') onOpen(author)
       }}
-      className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 py-4 text-center shadow-sm active:scale-[0.98]"
+      className="relative min-w-[132px] overflow-hidden rounded-[18px] border border-[#e9edf3] bg-white px-3 pb-4 pt-5 text-center shadow-sm active:scale-[0.98]"
     >
-      <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
-        <span className={`absolute -right-2 -top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[10px] font-black ring-2 ring-white ${rankBadgeClasses[rank] || 'bg-[#6b7280] text-white'}`}>
-          {rank}
-        </span>
+      <div
+        className={`absolute left-3 top-0 z-10 flex h-[52px] w-[34px] flex-col items-center justify-start pt-2 ${rankBadgeClasses[rank] || 'bg-[#A0A7B4] text-white'}`}
+        style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
+      >
+        <span className="text-[8px] font-black uppercase leading-none tracking-wide">Top</span>
+        <span className="mt-1 text-[20px] font-black leading-none">{rank}</span>
+      </div>
 
+      <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center">
         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#f4f5f7] text-[18px] font-black text-[#111827] ring-1 ring-[#e5e7eb]">
           {avatarUrl ? (
             <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
@@ -145,6 +149,7 @@ function TopAuthorCard({ rank, author, onOpen, onFollow, loading }) {
     </div>
   )
 }
+
 
 function SectionHeader({ title, onMore }) {
   return (
