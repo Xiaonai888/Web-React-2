@@ -884,6 +884,10 @@ const [myReview, setMyReview] = useState(null)
 const [reviewLoading, setReviewLoading] = useState(false)
 const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
 const [savingReview, setSavingReview] = useState(false)
+const [reviewDraftText, setReviewDraftText] = useState('')
+const [reviewDraftRecommended, setReviewDraftRecommended] = useState(true)
+const [reviewDraftError, setReviewDraftError] = useState('')
+const [reviewDiscardOpen, setReviewDiscardOpen] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [cropMode, setCropMode] = useState('avatar')
   const [rawImage, setRawImage] = useState('')
@@ -1067,98 +1071,142 @@ useEffect(() => {
   }, [pageUsername])
 
 
-  function handleOpenReviewSheet() {
-    const token = getAuthToken()
+  function handleOpenReviewSheet(isRecommended = true) {
+  const token = getAuthToken()
 
-    if (displayAuthor.is_owner) {
-      setMessage('Readers can review this page.')
-      return
-    }
-
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    setReviewSheetOpen(true)
+  if (displayAuthor.is_owner) {
+    setMessage('Readers can review this page.')
+    return
   }
 
-  async function handleSaveReview(isRecommended) {
-    const token = getAuthToken()
-    const username = author?.page_username || pageUsername
-
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    if (!username || displayAuthor.is_owner || savingReview) return
-
-    try {
-      setSavingReview(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          is_recommended: isRecommended,
-          review_text: myReview?.review_text || '',
-        }),
-      })
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to save review')
-      }
-
-      await loadAuthorReviews(username)
-      setReviewSheetOpen(false)
-    } catch (error) {
-      setMessage(error.message || 'Failed to save review')
-    } finally {
-      setSavingReview(false)
-    }
+  if (!token) {
+    navigate('/login')
+    return
   }
 
-  async function handleRemoveReview() {
-    const token = getAuthToken()
-    const username = author?.page_username || pageUsername
+  const nextRecommended =
+    typeof isRecommended === 'boolean'
+      ? isRecommended
+      : myReview?.is_recommended ?? true
 
-    if (!token) {
-      navigate('/login')
-      return
-    }
+  setReviewDraftRecommended(nextRecommended)
+  setReviewDraftText(myReview?.review_text || '')
+  setReviewDraftError('')
+  setReviewDiscardOpen(false)
+  setReviewSheetOpen(true)
+}
 
-    if (!username || !myReview || savingReview) return
+function handleCloseReviewSheet() {
+  const originalText = String(myReview?.review_text || '')
+  const hasDraftChanges =
+    reviewDraftText !== originalText &&
+    (reviewDraftText.trim().length > 0 || originalText.trim().length > 0)
 
-    try {
-      setSavingReview(true)
-      setMessage('')
-
-      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to remove review')
-      }
-
-      await loadAuthorReviews(username)
-      setReviewSheetOpen(false)
-    } catch (error) {
-      setMessage(error.message || 'Failed to remove review')
-    } finally {
-      setSavingReview(false)
-    }
+  if (hasDraftChanges && !savingReview) {
+    setReviewDiscardOpen(true)
+    return
   }
+
+  setReviewSheetOpen(false)
+  setReviewDraftError('')
+}
+
+function handleDiscardReviewDraft() {
+  setReviewDiscardOpen(false)
+  setReviewSheetOpen(false)
+  setReviewDraftText('')
+  setReviewDraftError('')
+}
+
+async function handleSaveReview() {
+  const token = getAuthToken()
+  const username = author?.page_username || pageUsername
+  const reviewText = reviewDraftText.trim()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!username || displayAuthor.is_owner || savingReview) return
+
+  if (reviewText.length < 25) {
+    setReviewDraftError('Review must be at least 25 characters.')
+    return
+  }
+
+  try {
+    setSavingReview(true)
+    setReviewDraftError('')
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        is_recommended: reviewDraftRecommended,
+        review_text: reviewText,
+      }),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to save review')
+    }
+
+    await loadAuthorReviews(username)
+    setReviewSheetOpen(false)
+    setReviewDraftText('')
+    setReviewDraftError('')
+  } catch (error) {
+    setReviewDraftError(error.message || 'Failed to save review')
+  } finally {
+    setSavingReview(false)
+  }
+}
+
+async function handleRemoveReview() {
+  const token = getAuthToken()
+  const username = author?.page_username || pageUsername
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!username || !myReview || savingReview) return
+
+  try {
+    setSavingReview(true)
+    setReviewDraftError('')
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to remove review')
+    }
+
+    await loadAuthorReviews(username)
+    setReviewSheetOpen(false)
+    setReviewDraftText('')
+    setReviewDraftError('')
+  } catch (error) {
+    setReviewDraftError(error.message || 'Failed to remove review')
+  } finally {
+    setSavingReview(false)
+  }
+}
+
 
   async function handleToggleFollow() {
   const token = getAuthToken()
@@ -1596,67 +1644,157 @@ onOpenStoreSetting={() => {
 
 
       
-      {reviewSheetOpen ? (
-        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35">
-          <button
-            type="button"
-            aria-label="Close review options"
-            onClick={() => setReviewSheetOpen(false)}
-            className="absolute inset-0"
+    {reviewSheetOpen ? (
+  <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/55 px-6">
+    <button
+      type="button"
+      aria-label="Close review editor"
+      onClick={handleCloseReviewSheet}
+      className="absolute inset-0"
+    />
+
+    <div className="relative w-full max-w-[500px] rounded-[18px] bg-white px-4 pb-4 pt-6 shadow-2xl">
+      <h2 className="mx-auto max-w-[360px] text-center text-[18px] font-medium leading-6 text-[#111827]">
+        What do you think about <span className="font-bold">{displayAuthor.page_name}</span>?
+      </h2>
+
+      <div className="mt-4 flex justify-center">
+        <div className="inline-flex items-center gap-2 rounded-[10px] bg-[#eef0f4] px-4 py-2 text-[13px] font-semibold text-[#111827]">
+          <i className="fa-solid fa-globe text-[12px]" />
+          Public
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setReviewDraftRecommended(true)}
+          className={`h-10 rounded-[12px] text-[14px] font-bold active:scale-[0.99] ${
+            reviewDraftRecommended
+              ? 'bg-[#111827] text-white'
+              : 'bg-[#eef0f4] text-[#111827]'
+          }`}
+        >
+          Recommend
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setReviewDraftRecommended(false)}
+          className={`h-10 rounded-[12px] text-[14px] font-bold active:scale-[0.99] ${
+            !reviewDraftRecommended
+              ? 'bg-[#111827] text-white'
+              : 'bg-[#eef0f4] text-[#111827]'
+          }`}
+        >
+          Don&apos;t recommend
+        </button>
+      </div>
+
+      <div className="mt-4 flex gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-bold text-white">
+          {readerAvatar ? (
+            <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
+          ) : (
+            readerLetter
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <textarea
+            value={reviewDraftText}
+            onChange={(event) => {
+              setReviewDraftText(event.target.value)
+              if (reviewDraftError) setReviewDraftError('')
+            }}
+            placeholder="Write your review..."
+            className="h-[300px] w-full resize-none rounded-[16px] border border-[#d4d8e0] bg-white px-3 py-3 text-[15px] font-normal leading-6 text-[#111827] outline-none focus:border-[#2563eb]"
           />
 
-          <div className="relative w-full rounded-t-[24px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
-            <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#c7ccd5]" />
+          <div className="mt-2 flex items-center justify-between gap-3 text-[12px] font-medium">
+            <span className={reviewDraftText.trim().length < 25 ? 'text-[#e5484d]' : 'text-[#8b93a1]'}>
+              {reviewDraftText.trim().length} / 25 · Reviews must be at least 25 characters
+            </span>
 
-            <h2 className="text-[17px] font-bold text-[#111827]">Review this page</h2>
-            <p className="mt-1 text-[12px] font-medium text-[#8b93a1]">
-              Tell readers whether you recommend this author page.
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#6b7280] active:bg-[#f3f4f6]"
+              aria-label="Add image"
+            >
+              <i className="fa-regular fa-image text-[18px]" />
+            </button>
+          </div>
+
+          {reviewDraftError ? (
+            <div className="mt-2 text-[12px] font-bold text-[#e5484d]">
+              {reviewDraftError}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={savingReview || reviewDraftText.trim().length < 25}
+          onClick={handleSaveReview}
+          className="h-11 rounded-[12px] bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99] disabled:bg-[#e2e5ea] disabled:text-[#a5adba]"
+        >
+          {savingReview ? 'Posting...' : 'Post Review'}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCloseReviewSheet}
+          className="h-11 rounded-[12px] bg-[#eef0f4] text-[14px] font-bold text-[#111827] active:scale-[0.99]"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {myReview ? (
+        <button
+          type="button"
+          disabled={savingReview}
+          onClick={handleRemoveReview}
+          className="mt-3 h-10 w-full text-[13px] font-bold text-[#e5484d] active:opacity-70 disabled:opacity-60"
+        >
+          Remove my review
+        </button>
+      ) : null}
+
+      {reviewDiscardOpen ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[18px] bg-black/45 px-8">
+          <div className="w-full rounded-[10px] bg-white px-6 py-5 shadow-2xl">
+            <h3 className="text-[17px] font-medium text-[#111827]">Discard review?</h3>
+            <p className="mt-3 text-[16px] font-normal leading-6 text-[#4b5563]">
+              Your review has not been posted yet. Are you sure you want to discard your draft?
             </p>
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-5 flex justify-end gap-5">
               <button
                 type="button"
-                disabled={savingReview}
-                onClick={() => handleSaveReview(true)}
-                className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#111827] px-4 text-left text-[14px] font-bold text-white active:scale-[0.99] disabled:opacity-60"
+                onClick={handleDiscardReviewDraft}
+                className="text-[15px] font-medium text-[#6b7280] active:opacity-70"
               >
-                <i className="fa-solid fa-star text-[14px]" />
-                Recommend
+                Discard
               </button>
 
               <button
                 type="button"
-                disabled={savingReview}
-                onClick={() => handleSaveReview(false)}
-                className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#f3f4f6] px-4 text-left text-[14px] font-bold text-[#111827] active:scale-[0.99] disabled:opacity-60"
+                onClick={() => setReviewDiscardOpen(false)}
+                className="text-[15px] font-medium text-[#2563eb] active:opacity-70"
               >
-                <i className="fa-regular fa-star text-[14px]" />
-                Not recommend
-              </button>
-
-              {myReview ? (
-                <button
-                  type="button"
-                  disabled={savingReview}
-                  onClick={handleRemoveReview}
-                  className="flex h-11 w-full items-center gap-3 rounded-[14px] bg-[#fff1f1] px-4 text-left text-[14px] font-bold text-[#e5484d] active:scale-[0.99] disabled:opacity-60"
-                >
-                  <i className="fa-solid fa-trash-can text-[13px]" />
-                  Remove my review
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={() => setReviewSheetOpen(false)}
-                className="h-10 w-full text-[14px] font-medium text-[#111827] active:opacity-70"
-              >
-                Cancel
+                Keep editing
               </button>
             </div>
           </div>
         </div>
       ) : null}
+    </div>
+  </div>
+) : null}
+
 
       {ownerResolved && !displayAuthor.is_owner ? (
  <header className={`fixed left-0 right-0 top-0 z-[120] transition ${
@@ -1988,7 +2126,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       <div className="space-y-4 text-[14px] font-normal text-[#111827]">
         <button
           type="button"
-          onClick={handleOpenReviewSheet}
+          onClick={() => handleOpenReviewSheet(myReview?.is_recommended ?? true)}
           className="flex w-full items-center gap-4 text-left active:opacity-70"
         >
           <i className={`${myReview?.is_recommended ? 'fa-solid' : 'fa-regular'} fa-star w-8 text-center text-[23px] text-[#111827]`} />
