@@ -71,27 +71,35 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
     }
 
     swiperRef.current = new window.Swiper('.shadowMallSwiper', {
-      effect: 'coverflow',
-      grabCursor: true,
+  effect: 'coverflow',
+  grabCursor: true,
+  centeredSlides: false,
+  slidesPerView: 1,
+  spaceBetween: 0,
+  coverflowEffect: {
+    rotate: 0,
+    stretch: 0,
+    depth: 80,
+    modifier: 2,
+    slideShadows: false,
+  },
+  breakpoints: {
+    768: {
       centeredSlides: true,
       slidesPerView: 'auto',
-      coverflowEffect: {
-        rotate: 0,
-        stretch: 0,
-        depth: 80,
-        modifier: 2,
-        slideShadows: false,
-      },
-      loop: slides.length > 1,
-      autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-      },
-      pagination: {
-        el: '.shadow-mall-pagination',
-        clickable: true,
-      },
-    })
+      spaceBetween: 0,
+    },
+  },
+  loop: slides.length > 1,
+  autoplay: {
+    delay: 5000,
+    disableOnInteraction: false,
+  },
+  pagination: {
+    el: '.shadow-mall-pagination',
+    clickable: true,
+  },
+})
 
     return () => {
       if (swiperRef.current) {
@@ -129,7 +137,7 @@ function ShadowMallSwiperSlide({ slides, loading, onSlideClick }) {
             <button
               type="button"
               onClick={() => onSlideClick(slide)}
-              className="relative h-full w-full overflow-hidden rounded-[20px] bg-[#111827]"
+              className="relative h-full w-full overflow-hidden bg-[#111827] md:rounded-[20px]"
             >
               <img
                 src={slide.image_url}
@@ -553,11 +561,95 @@ export default function ShadowMallSection({ setActiveTab, showSearch = false }) 
   return (
     <section className="space-y-5 pb-4">
       <style>{`
-        .shadow-mall-swiper-container { width: 100%; padding-top: 10px; padding-bottom: 30px; overflow: hidden; }
-        .shadow-mall-swiper-container .swiper-slide { width: 85%; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .shadow-mall-swiper-container .swiper-slide-next, .shadow-mall-swiper-container .swiper-slide-prev { opacity: 0.4; transform: scale(0.9); }
-        .shadow-mall-swiper-container .swiper-pagination-bullet-active { background: #111827; width: 20px; border-radius: 5px; }
-        @media (min-width: 768px) { .shadow-mall-swiper-container .swiper-slide { width: 58%; } }
+        .shadow-mall-swiper-container {
+  width: calc(100% + 2rem);
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.shadow-mall-swiper-container .swiper-slide {
+  width: 100%;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.shadow-mall-swiper-container .swiper-slide-next,
+.shadow-mall-swiper-container .swiper-slide-prev {
+  opacity: 1;
+  transform: none;
+}
+
+.shadow-mall-pagination {
+  left: auto !important;
+  right: 10px !important;
+  bottom: 8px !important;
+  width: auto !important;
+  text-align: right;
+}
+
+.shadow-mall-pagination .swiper-pagination-bullet {
+  width: 5px;
+  height: 5px;
+  margin: 0 2px !important;
+  background: rgba(255, 255, 255, 0.65);
+  opacity: 1;
+}
+
+.shadow-mall-pagination .swiper-pagination-bullet-active {
+  width: 5px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+@media (min-width: 768px) {
+  .shadow-mall-swiper-container {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-top: 10px;
+    padding-bottom: 30px;
+  }
+
+  .shadow-mall-swiper-container .swiper-slide {
+    width: 58%;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+
+  .shadow-mall-swiper-container .swiper-slide-next,
+  .shadow-mall-swiper-container .swiper-slide-prev {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+
+  .shadow-mall-pagination {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 10px !important;
+    width: 100% !important;
+    text-align: center;
+  }
+
+  .shadow-mall-pagination .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+    margin: 0 4px !important;
+    background: #111827;
+    opacity: 0.2;
+  }
+
+  .shadow-mall-pagination .swiper-pagination-bullet-active {
+    width: 20px;
+    background: #111827;
+    border-radius: 5px;
+    opacity: 1;
+  }
+}
       `}</style>
 
       {showSearch ? (
