@@ -7,7 +7,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Sold out', 'Author Picks', 'New Release']
+const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Books', 'Pre-order', 'Author Picks', 'New Release']
 const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
@@ -2070,6 +2070,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
 
   const saveProduct = async () => {
     const qualityNumber = Number(qualityPercent)
+const stockNumber = Number(stock || 0)
 
     if (saving) return
 
@@ -2098,8 +2099,8 @@ if (!salePrice || Number(salePrice) <= 0) {
   return
 }
 
-   if (type === 'Book' && !productToEdit && (!stock || Number(stock) < 1)) {
-  setFormError('Stock quantity must be at least 1.')
+   if (type === 'Book' && (Number.isNaN(stockNumber) || stockNumber < 0)) {
+  setFormError('Stock quantity cannot be negative.')
   return
 }
     if (type === 'Book' && condition === 'Second Hand' && (!qualityPercent || Number.isNaN(qualityNumber) || qualityNumber < 1 || qualityNumber > 100)) {
@@ -2306,7 +2307,9 @@ accessRule,
     <FieldLabel>Category *</FieldLabel>
     <SelectInput value={category} onChange={setCategory}>
   <option value="">Select category</option>
-  {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+  {categories
+  .filter((item) => item !== 'Sold out')
+  .map((item) => <option key={item} value={item}>{item}</option>)}
 </SelectInput>
   </div>
 </div>
