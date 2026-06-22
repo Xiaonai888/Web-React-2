@@ -1208,6 +1208,7 @@ async function handleRemoveReview() {
 }
 
 
+
   async function handleToggleFollow() {
   const token = getAuthToken()
 
@@ -1654,14 +1655,15 @@ onOpenStoreSetting={() => {
     />
 
     <div className="relative w-full max-w-[500px] rounded-[18px] bg-white px-4 pb-4 pt-6 shadow-2xl">
-      <h2 className="mx-auto max-w-[360px] text-center text-[18px] font-medium leading-6 text-[#111827]">
-        What do you think about <span className="font-bold">{displayAuthor.page_name}</span>?
+      <h2 className="mx-auto max-w-[370px] text-center text-[18px] font-normal leading-6 text-[#111827]">
+        What would you like to say about <span className="font-bold">{displayAuthor.page_name}</span>?
       </h2>
 
       <div className="mt-4 flex justify-center">
         <div className="inline-flex items-center gap-2 rounded-[10px] bg-[#eef0f4] px-4 py-2 text-[13px] font-semibold text-[#111827]">
           <i className="fa-solid fa-globe text-[12px]" />
           Public
+          <i className="fa-solid fa-caret-down text-[11px]" />
         </div>
       </div>
 
@@ -1692,7 +1694,7 @@ onOpenStoreSetting={() => {
       </div>
 
       <div className="mt-4 flex gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-bold text-white">
+        <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-bold text-white">
           {readerAvatar ? (
             <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
           ) : (
@@ -1707,22 +1709,14 @@ onOpenStoreSetting={() => {
               setReviewDraftText(event.target.value)
               if (reviewDraftError) setReviewDraftError('')
             }}
-            placeholder="Write your review..."
-            className="h-[300px] w-full resize-none rounded-[16px] border border-[#d4d8e0] bg-white px-3 py-3 text-[15px] font-normal leading-6 text-[#111827] outline-none focus:border-[#2563eb]"
+            placeholder="Your review"
+            className="h-[390px] w-full resize-none rounded-[16px] border border-[#d4d8e0] bg-white px-3 py-3 text-[15px] font-normal leading-6 text-[#111827] outline-none focus:border-[#2563eb]"
           />
 
-          <div className="mt-2 flex items-center justify-between gap-3 text-[12px] font-medium">
+          <div className="mt-2 text-[12px] font-medium">
             <span className={reviewDraftText.trim().length < 25 ? 'text-[#e5484d]' : 'text-[#8b93a1]'}>
               {reviewDraftText.trim().length} / 25 · Reviews must be at least 25 characters
             </span>
-
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#6b7280] active:bg-[#f3f4f6]"
-              aria-label="Add image"
-            >
-              <i className="fa-regular fa-image text-[18px]" />
-            </button>
           </div>
 
           {reviewDraftError ? (
@@ -1730,6 +1724,71 @@ onOpenStoreSetting={() => {
               {reviewDraftError}
             </div>
           ) : null}
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={savingReview || reviewDraftText.trim().length < 25}
+          onClick={handleSaveReview}
+          className="h-11 rounded-[12px] bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99] disabled:bg-[#e2e5ea] disabled:text-[#a5adba]"
+        >
+          {savingReview ? 'Sharing...' : 'Share Review'}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCloseReviewSheet}
+          className="h-11 rounded-[12px] bg-[#eef0f4] text-[14px] font-bold text-[#111827] active:scale-[0.99]"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {myReview ? (
+        <button
+          type="button"
+          disabled={savingReview}
+          onClick={handleRemoveReview}
+          className="mt-3 h-10 w-full text-[13px] font-bold text-[#e5484d] active:opacity-70 disabled:opacity-60"
+        >
+          Remove my review
+        </button>
+      ) : null}
+
+      {reviewDiscardOpen ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[18px] bg-black/45 px-8">
+          <div className="w-full rounded-[10px] bg-white px-6 py-5 shadow-2xl">
+            <h3 className="text-[17px] font-normal text-[#111827]">Discard review?</h3>
+            <p className="mt-3 text-[16px] font-normal leading-6 text-[#4b5563]">
+              Reviews help other readers understand this page. Are you sure you want to discard your draft?
+            </p>
+
+            <div className="mt-5 flex justify-end gap-5">
+              <button
+                type="button"
+                onClick={handleDiscardReviewDraft}
+                className="text-[15px] font-medium text-[#6b7280] active:opacity-70"
+              >
+                Discard
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReviewDiscardOpen(false)}
+                className="text-[15px] font-medium text-[#2563eb] active:opacity-70"
+              >
+                Keep Writing
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  </div>
+) : null}
+
         </div>
       </div>
 
