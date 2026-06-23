@@ -53,6 +53,8 @@ export default function AuthorTopFansPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [message, setMessage] = useState('')
+  const [isOwner, setIsOwner] = useState(false)
+  const [selectedTopFan, setSelectedTopFan] = useState(null)
 
   async function fetchTopFans(offset = 0) {
     const response = await fetch(
@@ -78,6 +80,7 @@ export default function AuthorTopFansPage() {
 
       setTopFans(data.followers || [])
       setHasMore(Boolean(data.has_more))
+      setIsOwner(Boolean(data.is_owner))
     } catch (error) {
       setMessage(error.message || 'Failed to load top fans')
     } finally {
@@ -163,19 +166,30 @@ export default function AuthorTopFansPage() {
         {!loading && topFans.length > 0 ? (
           <div className="px-4">
             {topFans.map((fan) => (
-              <div
-                key={getFanId(fan)}
-                className="flex min-h-[66px] items-center gap-4 px-1 py-2"
-              >
-                <Avatar user={fan} />
+  <div
+    key={getFanId(fan)}
+    className="flex min-h-[66px] items-center gap-4 px-1 py-2"
+  >
+    <Avatar user={fan} />
 
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[18px] font-normal text-[#111827]">
-                    {getFanName(fan)}
-                  </div>
-                </div>
-              </div>
-            ))}
+    <div className="min-w-0 flex-1">
+      <div className="truncate text-[16px] font-normal text-[#111827]">
+        {getFanName(fan)}
+      </div>
+    </div>
+
+    {isOwner ? (
+      <button
+        type="button"
+        onClick={() => setSelectedTopFan(fan)}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6b7280] active:bg-[#f3f4f6]"
+        aria-label={`Open ${getFanName(fan)} actions`}
+      >
+        <i className="fa-solid fa-ellipsis text-[16px]" />
+      </button>
+    ) : null}
+  </div>
+))}
 
             {hasMore ? (
               <div className="py-4">
@@ -191,7 +205,47 @@ export default function AuthorTopFansPage() {
             ) : null}
           </div>
         ) : null}
-      </main>
+           </main>
+
+      {isOwner && selectedTopFan ? (
+        <div className="fixed inset-0 z-[300] bg-black/35" onClick={() => setSelectedTopFan(null)}>
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-white px-5 pb-7 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#c7ccd5]" />
+
+            <div className="mb-4 truncate text-[18px] font-semibold text-[#111827]">
+              {getFanName(selectedTopFan)}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const name = getFanName(selectedTopFan)
+                setSelectedTopFan(null)
+                setMessage(`Remove Top Fan Badge for ${name} is coming soon.`)
+              }}
+              className="flex h-12 w-full items-center gap-4 rounded-[14px] text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#111827] text-white">
+                <i className="fa-solid fa-xmark text-[15px]" />
+              </span>
+              <span className="text-[15px] font-medium text-[#111827]">
+                Remove Top Fan Badge
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedTopFan(null)}
+              className="mt-2 h-11 text-[15px] font-normal text-[#111827] active:opacity-70"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
