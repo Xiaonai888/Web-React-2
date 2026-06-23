@@ -1985,8 +1985,16 @@ onOpenStoreSetting={() => {
         </div>
 
         <div className="flex items-center gap-4">
-          <svg className="h-8 w-8 shrink-0 text-[#111827]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-  <path d="M12 3.4l2.55 5.17 5.7.83-4.12 4.02.97 5.68L12 16.42 6.9 19.1l.97-5.68L3.75 9.4l5.7-.83L12 3.4z" />
+          <svg
+  className="h-[34px] w-[34px] shrink-0 text-[#111827]"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="2"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+>
+  <path d="M12 3.75l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.73 7.3 18.2l.9-5.23-3.8-3.7 5.25-.76L12 3.75z" />
 </svg>
           <div>
             <div className="text-[15px] font-normal leading-5 text-[#111827]">
