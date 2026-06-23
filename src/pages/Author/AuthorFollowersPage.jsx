@@ -430,16 +430,16 @@ export default function AuthorFollowersPage() {
               </button>
             ) : null}
 
-            {mutualCount > 0 ? (
+            {!isOwner && mutualCount > 0 ? (
               <div className="border-b border-[#eef0f4] px-4 py-5">
                 <button
                   type="button"
                   onClick={openMutualFollowers}
                   className="mb-4 flex w-full items-center justify-between text-left active:opacity-70"
                 >
-                  <h2 className="text-[23px] font-bold text-[#111827]">
-                    {formatCompactNumber(mutualCount)} mutual
-                  </h2>
+                  <h2 className="text-[18px] font-semibold text-[#111827]">
+  {formatCompactNumber(mutualCount)} mutual
+</h2>
                   <i className="fa-solid fa-chevron-right text-[18px] text-[#6b7280]" />
                 </button>
 
@@ -482,9 +482,9 @@ export default function AuthorFollowersPage() {
             ) : null}
 
             <div className="flex items-start justify-between gap-4 px-4 pb-2 pt-5">
-              <div className="text-[23px] font-bold tracking-[-0.01em] text-[#111827]">
-                {formatCompactNumber(followersCount)} followers
-              </div>
+              <div className="text-[18px] font-semibold text-[#111827]">
+  {formatCompactNumber(followersCount)} followers
+</div>
             </div>
 
             {followers.length === 0 ? (
