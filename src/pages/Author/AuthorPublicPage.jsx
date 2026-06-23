@@ -2688,4 +2688,4 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       ) : null}
     </div>
   )
-
+}
