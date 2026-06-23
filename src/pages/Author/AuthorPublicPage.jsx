@@ -1954,52 +1954,6 @@ onOpenStoreSetting={() => {
   </div>
 ) : null}
 
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setMessage('Review options are coming soon.')}
-                        className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:opacity-70"
-                        aria-label="Review options"
-                      >
-                        <i className="fa-solid fa-ellipsis text-[16px]" />
-                      </button>
-                    </div>
-
-                    {text ? (
-                      <p className="mt-3 whitespace-pre-line text-[18px] font-normal leading-7 text-[#111827]">
-                        {text}
-                      </p>
-                    ) : null}
-
-                    <div className="mt-5 flex items-center gap-7 text-[#6b7280]">
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-regular fa-thumbs-up text-[23px]" />
-                      </button>
-
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-regular fa-comment text-[23px]" />
-                      </button>
-
-                      <button type="button" className="flex items-center gap-1 active:opacity-70">
-                        <i className="fa-solid fa-share text-[22px]" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            )
-          })
-        ) : (
-          <div className="px-4 py-8 text-[14px] font-medium text-[#8b93a1]">
-            No reviews yet.
-          </div>
-        )}
-      </div>
-    </main>
-  </div>
-) : null}
-
 
       {reviewsOverviewOpen ? (
   <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/45">
