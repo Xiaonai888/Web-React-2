@@ -25,6 +25,8 @@ const DEFAULT_DETAILS = {
   telegram: '',
   address: '',
   hours: '',
+  hours_type: 'always_open',
+  hours_schedule: null,
 }
 
 function getAuthToken() {
@@ -130,6 +132,123 @@ function makePinnedDetailsText(details, keys) {
     .map((key) => options.find((option) => option.key === key)?.display)
     .filter(Boolean)
     .join(' · ')
+}
+
+const HOUR_TYPES = [
+  {
+    value: 'daily_hours',
+    title: 'Daily hours',
+    text: 'Set specific opening hours for your page.',
+  },
+  {
+    value: 'temporarily_closed',
+    title: 'Temporarily closed',
+    text: 'Use this if your page is not available for a short time.',
+  },
+  {
+    value: 'permanently_closed',
+    title: 'Permanently closed',
+    text: 'Use this if this page is no longer active.',
+  },
+  {
+    value: 'always_open',
+    title: 'Always open',
+    text: 'Use this if readers can contact or view your page anytime.',
+  },
+  {
+    value: 'not_applicable',
+    title: 'Not applicable',
+    text: 'Use this if opening hours do not apply to your page.',
+  },
+]
+
+const WEEK_DAYS = [
+  { key: 'monday', short: 'M', label: 'Monday' },
+  { key: 'tuesday', short: 'Tu', label: 'Tuesday' },
+  { key: 'wednesday', short: 'W', label: 'Wednesday' },
+  { key: 'thursday', short: 'Th', label: 'Thursday' },
+  { key: 'friday', short: 'F', label: 'Friday' },
+  { key: 'saturday', short: 'Sa', label: 'Saturday' },
+  { key: 'sunday', short: 'Su', label: 'Sunday' },
+]
+
+function makeDefaultHoursSchedule() {
+  return WEEK_DAYS.reduce((result, day) => {
+    result[day.key] = {
+      closed: true,
+      open_24_hours: false,
+      ranges: [{ open: '', close: '' }],
+    }
+    return result
+  }, {})
+}
+
+function getHoursTypeLabel(type) {
+  return HOUR_TYPES.find((item) => item.value === type)?.title || 'Always open'
+}
+
+function normalizeHoursType(value) {
+  return HOUR_TYPES.some((item) => item.value === value) ? value : 'always_open'
+}
+
+function normalizeHoursSchedule(value) {
+  const base = makeDefaultHoursSchedule()
+  const source = value && typeof value === 'object' ? value : {}
+
+  WEEK_DAYS.forEach((day) => {
+    const current = source[day.key] || {}
+    const ranges = Array.isArray(current.ranges) && current.ranges.length
+      ? current.ranges.map((range) => ({
+          open: String(range.open || ''),
+          close: String(range.close || ''),
+        }))
+      : [{ open: '', close: '' }]
+
+    base[day.key] = {
+      closed: current.closed !== false,
+      open_24_hours: Boolean(current.open_24_hours),
+      ranges,
+    }
+  })
+
+  return base
+}
+
+function summarizeDayHours(dayData) {
+  if (!dayData) return 'Closed'
+  if (dayData.open_24_hours) return 'Open 24 hours'
+  if (dayData.closed) return 'Closed'
+
+  const ranges = Array.isArray(dayData.ranges) ? dayData.ranges : []
+  const validRanges = ranges.filter((range) => range.open && range.close)
+
+  if (!validRanges.length) return 'Closed'
+
+  return validRanges.map((range) => `${range.open} – ${range.close}`).join(', ')
+}
+
+function summarizeHours(type, schedule) {
+  if (type === 'always_open') return 'Always open'
+  if (type === 'temporarily_closed') return 'Temporarily closed'
+  if (type === 'permanently_closed') return 'Permanently closed'
+  if (type === 'not_applicable') return ''
+  if (type !== 'daily_hours') return 'Always open'
+
+  const openDays = WEEK_DAYS
+    .map((day) => {
+      const text = summarizeDayHours(schedule?.[day.key])
+      return text !== 'Closed' ? `${day.label}: ${text}` : ''
+    })
+    .filter(Boolean)
+
+  return openDays.length ? openDays.join('\n') : 'Closed'
+}
+
+function makeTimeOptions() {
+  const hours = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'))
+  const minutes = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, '0'))
+
+  return { hours, minutes, periods: ['AM', 'PM'] }
 }
 
 function FieldRow({ icon, title, value, placeholder, onClick }) {
@@ -352,6 +471,357 @@ function ReviewsModal({ open, value, onClose, onSave }) {
           </button>
         </div>
       </div>
+    </ModalShell>
+  )
+}
+
+function HoursModal({ open, details, onClose, onSave }) {
+  const currentType = normalizeHoursType(details?.hours_type)
+  const currentSchedule = normalizeHoursSchedule(details?.hours_schedule)
+
+  const [draftType, setDraftType] = useState(currentType)
+  const [draftSchedule, setDraftSchedule] = useState(currentSchedule)
+  const [selectOpen, setSelectOpen] = useState(false)
+  const [editDayOpen, setEditDayOpen] = useState(false)
+  const [activeDay, setActiveDay] = useState('monday')
+  const [timePicker, setTimePicker] = useState(null)
+  const [timeDraft, setTimeDraft] = useState({ hour: '12', minute: '00', period: 'AM' })
+
+  const timeOptions = useMemo(() => makeTimeOptions(), [])
+
+  useEffect(() => {
+    if (!open) return
+    setDraftType(currentType)
+    setDraftSchedule(currentSchedule)
+    setSelectOpen(false)
+    setEditDayOpen(false)
+    setActiveDay('monday')
+    setTimePicker(null)
+  }, [open, currentType, JSON.stringify(currentSchedule)])
+
+  if (!open) return null
+
+  const currentSummary = summarizeHours(currentType, currentSchedule)
+  const draftSummary = summarizeHours(draftType, draftSchedule)
+  const canSave =
+    draftType !== currentType ||
+    JSON.stringify(draftSchedule) !== JSON.stringify(currentSchedule) ||
+    draftSummary !== currentSummary
+
+  function updateDay(dayKey, patch) {
+    setDraftSchedule((current) => ({
+      ...current,
+      [dayKey]: {
+        ...current[dayKey],
+        ...patch,
+      },
+    }))
+  }
+
+  function updateRange(dayKey, index, patch) {
+    setDraftSchedule((current) => {
+      const dayData = current[dayKey] || { closed: true, open_24_hours: false, ranges: [{ open: '', close: '' }] }
+      const ranges = Array.isArray(dayData.ranges) && dayData.ranges.length ? [...dayData.ranges] : [{ open: '', close: '' }]
+      ranges[index] = {
+        ...ranges[index],
+        ...patch,
+      }
+
+      return {
+        ...current,
+        [dayKey]: {
+          ...dayData,
+          closed: false,
+          open_24_hours: false,
+          ranges,
+        },
+      }
+    })
+  }
+
+  function openTimePicker(field, rangeIndex = 0) {
+    const value = draftSchedule?.[activeDay]?.ranges?.[rangeIndex]?.[field] || '12:00 AM'
+    const match = String(value).match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i)
+
+    setTimeDraft({
+      hour: match ? match[1].padStart(2, '0') : '12',
+      minute: match ? match[2] : '00',
+      period: match ? match[3].toUpperCase() : 'AM',
+    })
+
+    setTimePicker({ field, rangeIndex })
+  }
+
+  function saveTimePicker() {
+    if (!timePicker) return
+
+    updateRange(activeDay, timePicker.rangeIndex, {
+      [timePicker.field]: `${timeDraft.hour}:${timeDraft.minute} ${timeDraft.period}`,
+    })
+
+    setTimePicker(null)
+  }
+
+  function handleTypeSelect(type) {
+    setDraftType(type)
+    setSelectOpen(false)
+
+    if (type !== 'daily_hours') {
+      setEditDayOpen(false)
+    }
+  }
+
+  function handleSave() {
+    onSave({
+      hours_type: draftType,
+      hours_schedule: draftType === 'daily_hours' ? draftSchedule : null,
+      hours: draftSummary,
+    })
+  }
+
+  if (editDayOpen) {
+    const dayData = draftSchedule[activeDay] || { closed: true, open_24_hours: false, ranges: [{ open: '', close: '' }] }
+    const ranges = Array.isArray(dayData.ranges) && dayData.ranges.length ? dayData.ranges : [{ open: '', close: '' }]
+
+    return (
+      <ModalShell title="Edit hours" onClose={() => setEditDayOpen(false)}>
+        <div className="mx-auto w-full max-w-[520px]">
+          <div className="mb-5 grid grid-cols-7 gap-2">
+            {WEEK_DAYS.map((day) => {
+              const active = activeDay === day.key
+
+              return (
+                <button
+                  key={day.key}
+                  type="button"
+                  onClick={() => setActiveDay(day.key)}
+                  className={`h-14 rounded-[12px] border text-[16px] font-medium ${
+                    active
+                      ? 'border-[#f5c542] bg-[#fff7d6] text-[#111827]'
+                      : 'border-[#e5e7eb] bg-white text-[#111827]'
+                  }`}
+                >
+                  {day.short}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="space-y-4">
+            {ranges.map((range, index) => (
+              <div key={index} className="space-y-4">
+                <button
+                  type="button"
+                  disabled={dayData.closed || dayData.open_24_hours}
+                  onClick={() => openTimePicker('open', index)}
+                  className="flex h-[72px] w-full items-center rounded-[16px] border border-[#d1d5db] px-4 text-left text-[18px] font-normal text-[#111827] disabled:text-[#9ca3af]"
+                >
+                  {range.open || 'Open'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={dayData.closed || dayData.open_24_hours}
+                  onClick={() => openTimePicker('close', index)}
+                  className="flex h-[72px] w-full items-center rounded-[16px] border border-[#d1d5db] px-4 text-left text-[18px] font-normal text-[#111827] disabled:text-[#9ca3af]"
+                >
+                  {range.close || 'Close'}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 space-y-5">
+            <button
+              type="button"
+              onClick={() => updateDay(activeDay, { closed: !dayData.closed, open_24_hours: false, ranges: dayData.ranges || [{ open: '', close: '' }] })}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="text-[18px] font-normal text-[#111827]">Closed</span>
+              <span className={`flex h-7 w-12 items-center rounded-full p-0.5 ${dayData.closed ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
+                <span className={`h-6 w-6 rounded-full bg-white transition ${dayData.closed ? 'translate-x-5' : 'translate-x-0'}`} />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateDay(activeDay, { open_24_hours: !dayData.open_24_hours, closed: false, ranges: [{ open: '', close: '' }] })}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="text-[18px] font-normal text-[#111827]">Open 24 hours</span>
+              <span className={`flex h-7 w-12 items-center rounded-full p-0.5 ${dayData.open_24_hours ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
+                <span className={`h-6 w-6 rounded-full bg-white transition ${dayData.open_24_hours ? 'translate-x-5' : 'translate-x-0'}`} />
+              </span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            disabled={dayData.closed || dayData.open_24_hours}
+            onClick={() => updateDay(activeDay, { ranges: [...ranges, { open: '', close: '' }] })}
+            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-[12px] bg-[#e5e7eb] text-[17px] font-medium text-[#111827] disabled:opacity-50"
+          >
+            <i className="fa-solid fa-plus text-[16px]" />
+            Add more
+          </button>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
+          <div className="mx-auto w-full max-w-[520px]">
+            <button
+              type="button"
+              onClick={() => setEditDayOpen(false)}
+              className="h-11 w-full rounded-full bg-[#111827] text-[14px] font-semibold text-white"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
+        {timePicker ? (
+          <div className="fixed inset-0 z-[320] flex items-center justify-center bg-black/55 px-8">
+            <div className="w-full max-w-[370px] rounded-[4px] bg-white px-6 pb-5 pt-6 shadow-2xl">
+              <h3 className="text-[22px] font-normal text-[#111827]">Set time</h3>
+
+              <div className="mt-8 grid grid-cols-3 gap-4">
+                <select
+                  value={timeDraft.hour}
+                  onChange={(event) => setTimeDraft((current) => ({ ...current, hour: event.target.value }))}
+                  className="h-12 border-b border-[#6b7280] bg-white text-center text-[18px] outline-none"
+                >
+                  {timeOptions.hours.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={timeDraft.minute}
+                  onChange={(event) => setTimeDraft((current) => ({ ...current, minute: event.target.value }))}
+                  className="h-12 border-b border-[#6b7280] bg-white text-center text-[18px] outline-none"
+                >
+                  {timeOptions.minutes.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={timeDraft.period}
+                  onChange={(event) => setTimeDraft((current) => ({ ...current, period: event.target.value }))}
+                  className="h-12 border-b border-[#6b7280] bg-white text-center text-[18px] outline-none"
+                >
+                  {timeOptions.periods.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-10 flex justify-end gap-8">
+                <button
+                  type="button"
+                  onClick={() => setTimePicker(null)}
+                  className="text-[14px] font-semibold uppercase text-[#111827]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={saveTimePicker}
+                  className="text-[14px] font-semibold uppercase text-[#111827]"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </ModalShell>
+    )
+  }
+
+  return (
+    <ModalShell title="Hours" onClose={onClose}>
+      <div className="mx-auto w-full max-w-[520px]">
+        <button
+          type="button"
+          onClick={() => setSelectOpen(true)}
+          className="flex h-[88px] w-full items-center justify-between rounded-[16px] border border-[#d1d5db] px-4 text-left"
+        >
+          <span>
+            <span className="block text-[14px] font-normal text-[#6b7280]">Select hours</span>
+            <span className="mt-1 block text-[20px] font-normal text-[#111827]">
+              {getHoursTypeLabel(draftType)}
+            </span>
+          </span>
+
+          <i className="fa-solid fa-caret-down text-[18px] text-[#6b7280]" />
+        </button>
+
+        {draftType === 'daily_hours' ? (
+          <div className="mt-5 space-y-5">
+            {WEEK_DAYS.map((day) => (
+              <button
+                key={day.key}
+                type="button"
+                onClick={() => {
+                  setActiveDay(day.key)
+                  setEditDayOpen(true)
+                }}
+                className="flex w-full items-center justify-between text-left"
+              >
+                <span>
+                  <span className="block text-[18px] font-normal text-[#111827]">{day.label}</span>
+                  <span className="mt-1 block text-[14px] font-normal text-[#6b7280]">
+                    {summarizeDayHours(draftSchedule[day.key])}
+                  </span>
+                </span>
+
+                <i className="fa-regular fa-pen-to-square text-[22px] text-[#6b7280]" />
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
+        <div className="mx-auto w-full max-w-[520px]">
+          <button
+            type="button"
+            disabled={!canSave}
+            onClick={handleSave}
+            className="h-11 w-full rounded-[12px] bg-[#111827] text-[14px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#b4bbc6]"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+
+      {selectOpen ? (
+        <div className="fixed inset-0 z-[300] bg-black/45" onClick={() => setSelectOpen(false)}>
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-[#f5f6fb] px-6 pb-7 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto mb-8 h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+
+            <h3 className="mb-5 text-center text-[20px] font-normal text-[#111827]">Select hours</h3>
+
+            <div className="rounded-[12px] bg-white py-2">
+              {HOUR_TYPES.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleTypeSelect(option.value)}
+                  className="w-full px-5 py-3 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="block text-[18px] font-normal text-[#111827]">{option.title}</span>
+                  <span className="mt-1 block text-[14px] font-normal leading-5 text-[#6b7280]">{option.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ModalShell>
   )
 }
@@ -1061,17 +1531,12 @@ updateDetails({
   }}
 />
 
-<TextEditModal
+<HoursModal
   open={activeModal === 'hours'}
-  title="Edit hours"
-  label="Hours"
-  value={details.hours}
-  multiline
-  maxLength={180}
-  placeholder="Example: Mon–Fri · 9:00 AM – 5:00 PM"
+  details={details}
   onClose={() => setActiveModal('')}
   onSave={(value) => {
-    updateDetails({ hours: value })
+    updateDetails(value)
     setActiveModal('')
   }}
 />
