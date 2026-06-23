@@ -884,6 +884,7 @@ const { pageUsername } = useParams()
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewItems, setReviewItems] = useState([])
   const [reviewsOverviewOpen, setReviewsOverviewOpen] = useState(false)
+  const [reviewsListOpen, setReviewsListOpen] = useState(false)
   const [reviewSettingsOpen, setReviewSettingsOpen] = useState(false)
   const [allowReviewsDraft, setAllowReviewsDraft] = useState(true)
   const [allowReviewsSaved, setAllowReviewsSaved] = useState(true)
@@ -1742,6 +1743,115 @@ onOpenStoreSetting={() => {
   </div>
 ) : null}
 
+      {reviewsListOpen ? (
+  <div className="fixed inset-0 z-[280] bg-white">
+    <header className="sticky top-0 z-10 flex h-[54px] items-center border-b border-[#e5e7eb] bg-white px-3">
+      <button
+        type="button"
+        onClick={() => setReviewsListOpen(false)}
+        className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-70"
+        aria-label="Back to reviews"
+      >
+        <i className="fa-solid fa-chevron-left text-[20px]" />
+      </button>
+
+      <h1 className="ml-2 text-[22px] font-normal text-[#111827]">Reviews</h1>
+    </header>
+
+    <main className="pb-8">
+      <div className="px-4 py-4 text-[19px] font-bold leading-6 text-[#111827]">
+        {reviewSummary.recommend_percent || 0}% recommend ({reviewSummary.total_count || 0} Reviews)
+        <i className="fa-solid fa-circle-info ml-2 text-[16px] text-[#6b7280]" />
+      </div>
+
+      <div className="divide-y-[6px] divide-[#d1d5db]">
+        {reviewItems.length ? (
+          reviewItems.map((review) => {
+            const reviewer = review.reviewer || review.user || review.reader || {}
+            const name = review.reviewer_name || reviewer.name || review.name || 'Reader'
+            const avatarUrl = review.reviewer_avatar_url || reviewer.avatar_url || review.avatar_url || ''
+            const text = review.review_text || review.text || ''
+            const recommended = review.is_recommended !== false
+            const dateText = review.created_at
+              ? new Date(review.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+              : ''
+
+            return (
+              <article key={review.id || `${name}-${text}`} className="bg-white px-4 py-4">
+                <div className="flex gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[16px] font-bold text-[#111827]">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+                    ) : (
+                      String(name || 'R').slice(0, 1).toUpperCase()
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[17px] leading-6 text-[#111827]">
+                          <span className="font-bold">{name}</span>
+                          <span className="ml-2 font-normal text-[#6b7280]">
+                            {recommended ? 'recommends' : "doesn't recommend"}
+                          </span>
+                        </div>
+
+                        <div className="text-[15px] font-bold leading-5 text-[#111827]">
+                          {displayAuthor.page_name}
+                        </div>
+
+                        {dateText ? (
+                          <div className="mt-0.5 text-[13px] font-normal text-[#6b7280]">
+                            {dateText} · <i className="fa-solid fa-earth-asia text-[12px]" />
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setMessage('Review options are coming soon.')}
+                        className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:opacity-70"
+                        aria-label="Review options"
+                      >
+                        <i className="fa-solid fa-ellipsis text-[16px]" />
+                      </button>
+                    </div>
+
+                    {text ? (
+                      <p className="mt-3 whitespace-pre-line text-[18px] font-normal leading-7 text-[#111827]">
+                        {text}
+                      </p>
+                    ) : null}
+
+                    <div className="mt-5 flex items-center gap-7 text-[#6b7280]">
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-regular fa-thumbs-up text-[23px]" />
+                      </button>
+
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-regular fa-comment text-[23px]" />
+                      </button>
+
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-solid fa-share text-[22px]" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        ) : (
+          <div className="px-4 py-8 text-[14px] font-medium text-[#8b93a1]">
+            No reviews yet.
+          </div>
+        )}
+      </div>
+    </main>
+  </div>
+) : null}
+
 
       {reviewsOverviewOpen ? (
   <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/45">
@@ -1799,13 +1909,7 @@ onOpenStoreSetting={() => {
       <section className="mt-4 rounded-[14px] bg-white px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-[17px] font-bold text-[#111827]">Recent reviews</h3>
-          <button
-            type="button"
-            onClick={() => setMessage('See all reviews is coming soon.')}
-            className="text-[16px] font-medium text-[#2563eb] active:opacity-70"
-          >
-            See all
-          </button>
+          className="text-[14px] font-medium text-[#374151] active:opacity-70"
         </div>
 
         {!displayAuthor.is_owner ? (
