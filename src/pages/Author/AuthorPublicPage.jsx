@@ -1761,7 +1761,10 @@ onOpenStoreSetting={() => {
           {displayAuthor.is_owner ? (
             <button
               type="button"
-              onClick={() => setMessage('Review settings are coming soon.')}
+              onClick={() => {
+  setAllowReviewsDraft(allowReviewsSaved)
+  setReviewSettingsOpen(true)
+}}
               className="text-[14px] font-medium text-[#374151] active:opacity-70"
             >
               Edit
