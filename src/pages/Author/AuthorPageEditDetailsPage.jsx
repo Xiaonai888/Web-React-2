@@ -258,42 +258,52 @@ function PriceModal({ open, value, onClose, onSave }) {
     { value: '$', title: '$', text: 'Basic' },
     { value: '$$', title: '$$', text: 'Standard' },
     { value: '$$$', title: '$$$', text: 'Premium' },
+    { value: '$$$$', title: '$$$$', text: 'Exclusive' },
     { value: '', title: 'Do not show price', text: 'Hide price range from your public page' },
   ]
 
   return (
     <ModalShell title="Edit price" onClose={onClose}>
-      <div className="space-y-3">
-        {options.map((option) => {
-          const active = draft === option.value
+      <div className="mx-auto w-full max-w-[520px] pt-2">
+        <div className="space-y-1">
+          {options.map((option) => {
+            const active = draft === option.value
 
-          return (
-            <button
-              key={option.title}
-              type="button"
-              onClick={() => setDraft(option.value)}
-              className="flex w-full items-center justify-between gap-4 rounded-[18px] px-1 py-3 text-left active:bg-[#f3f4f6]"
-            >
-              <span>
-                <span className="block text-[22px] font-normal leading-6 text-[#111827]">{option.title}</span>
-                <span className="mt-1 block text-[16px] font-normal text-[#6b7280]">{option.text}</span>
-              </span>
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 ${active ? 'border-[#1877f2]' : 'border-[#6b7280]'}`}>
-                {active ? <span className="h-4 w-4 rounded-full bg-[#1877f2]" /> : null}
-              </span>
-            </button>
-          )
-        })}
+            return (
+              <button
+                key={option.title}
+                type="button"
+                onClick={() => setDraft(option.value)}
+                className="flex w-full items-center justify-between gap-4 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[16px] font-normal leading-5 text-[#111827]">
+                    {option.title}
+                  </span>
+                  <span className="mt-1 block text-[13px] font-normal leading-5 text-[#6b7280]">
+                    {option.text}
+                  </span>
+                </span>
+
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${active ? 'border-[#1877f2]' : 'border-[#6b7280]'}`}>
+                  {active ? <span className="h-3.5 w-3.5 rounded-full bg-[#1877f2]" /> : null}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
-        <button
-          type="button"
-          onClick={() => onSave(draft)}
-          className="h-13 w-full rounded-[14px] bg-[#111827] text-[16px] font-semibold text-white"
-        >
-          Save
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
+        <div className="mx-auto w-full max-w-[520px]">
+          <button
+            type="button"
+            onClick={() => onSave(draft)}
+            className="h-11 w-full rounded-full bg-[#111827] text-[14px] font-semibold text-white active:scale-[0.99]"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </ModalShell>
   )
