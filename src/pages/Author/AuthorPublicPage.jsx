@@ -2571,7 +2571,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
   <path d="M8.3 7.25h5.65" />
   <path d="M8.3 10.15h4.4" />
 </svg>
-          <span>Book · $$</span>
+          <span>{profileDetails.price_range ? `Book · ${profileDetails.price_range}` : 'Book'}</span>
         </div>
       </div>
     </section>
