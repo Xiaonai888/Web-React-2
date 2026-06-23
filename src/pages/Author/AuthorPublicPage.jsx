@@ -883,7 +883,9 @@ const { pageUsername } = useParams()
   const [myReview, setMyReview] = useState(null)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewItems, setReviewItems] = useState([])
-  const [reviewsOverviewOpen, setReviewsOverviewOpen] = useState(false)
+  const reviewsOverviewDragStartRef = useRef(null)
+  const reviewsOverviewDragCurrentRef = useRef(0)
+  const [reviewsOverviewDragY, setReviewsOverviewDragY] = useState(0)
   const [reviewsListOpen, setReviewsListOpen] = useState(false)
   const [reviewInfoOpen, setReviewInfoOpen] = useState(false)
   const [reviewOptionsOpen, setReviewOptionsOpen] = useState(false)
@@ -1085,6 +1087,45 @@ useEffect(() => {
 
 function handleOpenReviewsOverview() {
   setReviewsOverviewOpen(true)
+  setReviewsOverviewDragY(0)
+}
+
+function handleCloseReviewsOverview() {
+  reviewsOverviewDragStartRef.current = null
+  reviewsOverviewDragCurrentRef.current = 0
+  setReviewsOverviewDragY(0)
+  setReviewsOverviewOpen(false)
+}
+
+function handleReviewsOverviewPointerDown(event) {
+  reviewsOverviewDragStartRef.current = event.clientY
+  reviewsOverviewDragCurrentRef.current = 0
+  setReviewsOverviewDragY(0)
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function handleReviewsOverviewPointerMove(event) {
+  if (reviewsOverviewDragStartRef.current === null) return
+
+  const nextY = Math.max(0, event.clientY - reviewsOverviewDragStartRef.current)
+  reviewsOverviewDragCurrentRef.current = nextY
+  setReviewsOverviewDragY(nextY)
+}
+
+function handleReviewsOverviewPointerEnd() {
+  if (reviewsOverviewDragStartRef.current === null) return
+
+  const shouldClose = reviewsOverviewDragCurrentRef.current > 90
+
+  reviewsOverviewDragStartRef.current = null
+  reviewsOverviewDragCurrentRef.current = 0
+
+  if (shouldClose) {
+    handleCloseReviewsOverview()
+    return
+  }
+
+  setReviewsOverviewDragY(0)
 }
 
 function handleOpenReviewSheet(isRecommended = true) {
@@ -1971,15 +2012,31 @@ onOpenStoreSetting={() => {
 
       {reviewsOverviewOpen ? (
   <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/45">
-    <button
-      type="button"
-      aria-label="Close reviews"
-      onClick={() => setReviewsOverviewOpen(false)}
-      className="absolute inset-0"
-    />
+  <button
+    type="button"
+    aria-label="Close reviews"
+    onClick={handleCloseReviewsOverview}
+    className="absolute inset-0"
+  />
 
-    <div className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-[26px] bg-[#f3f4f6] px-4 pb-5 pt-3 shadow-2xl md:max-w-[520px] md:rounded-[26px]">
-      <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+  <div
+    className="relative max-h-[86vh] w-full overflow-y-auto rounded-t-[26px] bg-[#f3f4f6] px-4 pb-5 pt-0 shadow-2xl md:max-w-[520px] md:rounded-[26px]"
+    style={{
+      transform: `translateY(${reviewsOverviewDragY}px)`,
+      transition: reviewsOverviewDragY ? 'none' : 'transform 180ms ease',
+    }}
+  >
+    <div
+      role="button"
+      tabIndex={0}
+      onPointerDown={handleReviewsOverviewPointerDown}
+      onPointerMove={handleReviewsOverviewPointerMove}
+      onPointerUp={handleReviewsOverviewPointerEnd}
+      onPointerCancel={handleReviewsOverviewPointerEnd}
+      className="mx-auto mb-2 flex h-10 w-24 touch-none cursor-grab items-center justify-center active:cursor-grabbing"
+    >
+      <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+    </div>
 
       <section className="rounded-[14px] bg-white px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
