@@ -1699,12 +1699,12 @@ onOpenStoreSetting={() => {
 
       <section className="rounded-[14px] bg-white px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[20px] font-bold text-[#111827]">Reviews</h2>
+          <h2 className="text-[17px] font-bold text-[#111827]">Reviews</h2>
           {displayAuthor.is_owner ? (
             <button
               type="button"
               onClick={() => setMessage('Review settings are coming soon.')}
-              className="text-[16px] font-medium text-[#2563eb] active:opacity-70"
+              className="text-[14px] font-medium text-[#2563eb] active:opacity-70"
             >
               Edit
             </button>
@@ -1714,10 +1714,10 @@ onOpenStoreSetting={() => {
         <div className="flex items-center gap-4">
           <i className="fa-regular fa-star w-8 text-center text-[31px] text-[#111827]" />
           <div>
-            <div className="text-[22px] font-normal leading-7 text-[#111827]">
+            <div className="text-[13px] font-normal leading-5 text-[#111827]">
               {reviewLoading ? 'Loading...' : `${reviewSummary.recommend_percent || 0}% recommended`}
             </div>
-            <div className="text-[17px] font-normal leading-6 text-[#111827]">
+            <div className="text-[13px] font-normal leading-5 text-[#111827]">
               Based on the opinions of {reviewSummary.total_count || 0} people
             </div>
           </div>
@@ -1737,7 +1737,7 @@ onOpenStoreSetting={() => {
 
       <section className="mt-4 rounded-[14px] bg-white px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-[20px] font-bold text-[#111827]">Recent reviews</h3>
+          <h3 className="text-[17px] font-bold text-[#111827]">Recent reviews</h3>
           <button
             type="button"
             onClick={() => setMessage('See all reviews is coming soon.')}
@@ -1793,7 +1793,7 @@ onOpenStoreSetting={() => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-[17px] leading-6 text-[#111827]">
+                    <divclassName="text-[14px] leading-5 text-[#111827]">
                       <span className="font-medium">{name}</span>{' '}
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e] align-middle text-white">
                         <i className="fa-solid fa-star text-[9px]" />
@@ -1804,7 +1804,7 @@ onOpenStoreSetting={() => {
                     </div>
 
                     {text ? (
-                      <p className="line-clamp-2 text-[15px] font-normal leading-5 text-[#6b7280]">
+                      <p className="line-clamp-2 text-[13px] font-normal leading-5 text-[#6b7280]">
                         {text}
                       </p>
                     ) : null}
