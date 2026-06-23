@@ -885,6 +885,9 @@ const { pageUsername } = useParams()
   const [reviewItems, setReviewItems] = useState([])
   const [reviewsOverviewOpen, setReviewsOverviewOpen] = useState(false)
   const [reviewsListOpen, setReviewsListOpen] = useState(false)
+  const [reviewInfoOpen, setReviewInfoOpen] = useState(false)
+  const [reviewOptionsOpen, setReviewOptionsOpen] = useState(false)
+  const [selectedReviewOption, setSelectedReviewOption] = useState(null)
   const [reviewSettingsOpen, setReviewSettingsOpen] = useState(false)
   const [allowReviewsDraft, setAllowReviewsDraft] = useState(true)
   const [allowReviewsSaved, setAllowReviewsSaved] = useState(true)
@@ -1744,7 +1747,7 @@ onOpenStoreSetting={() => {
 ) : null}
 
       {reviewsListOpen ? (
-  <div className="fixed inset-0 z-[280] bg-white">
+  <div className="fixed inset-0 z-[280] bg-[#f3f4f6]">
     <header className="sticky top-0 z-10 flex h-[54px] items-center border-b border-[#e5e7eb] bg-white px-3">
       <button
         type="button"
@@ -1759,12 +1762,19 @@ onOpenStoreSetting={() => {
     </header>
 
     <main className="pb-8">
-      <div className="px-4 py-4 text-[19px] font-bold leading-6 text-[#111827]">
-        {reviewSummary.recommend_percent || 0}% recommend ({reviewSummary.total_count || 0} Reviews)
-        <i className="fa-solid fa-circle-info ml-2 text-[16px] text-[#6b7280]" />
+      <div className="flex items-center gap-2 bg-white px-4 py-3 text-[16px] font-bold leading-6 text-[#111827]">
+        <span>{reviewSummary.recommend_percent || 0}% recommend ({reviewSummary.total_count || 0} Reviews)</span>
+        <button
+          type="button"
+          onClick={() => setReviewInfoOpen(true)}
+          className="flex h-6 w-6 items-center justify-center text-[#6b7280] active:opacity-70"
+          aria-label="About review score"
+        >
+          <i className="fa-solid fa-circle-info text-[15px]" />
+        </button>
       </div>
 
-      <div className="divide-y-[6px] divide-[#d1d5db]">
+      <div className="space-y-3 px-3 pt-3">
         {reviewItems.length ? (
           reviewItems.map((review) => {
             const reviewer = review.reviewer || review.user || review.reader || {}
@@ -1777,7 +1787,10 @@ onOpenStoreSetting={() => {
               : ''
 
             return (
-              <article key={review.id || `${name}-${text}`} className="bg-white px-4 py-4">
+              <article
+                key={review.id || `${name}-${text}`}
+                className="rounded-[14px] bg-white px-3 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+              >
                 <div className="flex gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[16px] font-bold text-[#111827]">
                     {avatarUrl ? (
@@ -1790,7 +1803,7 @@ onOpenStoreSetting={() => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-[17px] leading-6 text-[#111827]">
+                        <div className="text-[16px] leading-6 text-[#111827]">
                           <span className="font-bold">{name}</span>
                           <span className="ml-2 font-normal text-[#6b7280]">
                             {recommended ? 'recommends' : "doesn't recommend"}
@@ -1806,6 +1819,141 @@ onOpenStoreSetting={() => {
                             {dateText} · <i className="fa-solid fa-earth-asia text-[12px]" />
                           </div>
                         ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReviewOption(review)
+                          setReviewOptionsOpen(true)
+                        }}
+                        className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:opacity-70"
+                        aria-label="Review options"
+                      >
+                        <i className="fa-solid fa-ellipsis text-[16px]" />
+                      </button>
+                    </div>
+
+                    {text ? (
+                      <p className="mt-3 whitespace-pre-line text-[17px] font-normal leading-7 text-[#111827]">
+                        {text}
+                      </p>
+                    ) : null}
+
+                    <div className="mt-5 flex items-center gap-7 text-[#6b7280]">
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-regular fa-thumbs-up text-[22px]" />
+                      </button>
+
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-regular fa-comment text-[22px]" />
+                      </button>
+
+                      <button type="button" className="flex items-center gap-1 active:opacity-70">
+                        <i className="fa-solid fa-share text-[21px]" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        ) : (
+          <div className="rounded-[14px] bg-white px-4 py-8 text-[14px] font-medium text-[#8b93a1]">
+            No reviews yet.
+          </div>
+        )}
+      </div>
+    </main>
+
+    {reviewInfoOpen ? (
+      <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/35">
+        <button
+          type="button"
+          aria-label="Close review info"
+          onClick={() => setReviewInfoOpen(false)}
+          className="absolute inset-0"
+        />
+
+        <div className="relative w-full rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
+          <div className="mx-auto mb-5 h-1 w-11 rounded-full bg-[#9ca3af]" />
+
+          <div className="text-center text-[16px] font-bold text-[#111827]">
+            {reviewSummary.recommend_percent || 0}%
+          </div>
+
+          <p className="mt-1 text-center text-[12px] font-normal text-[#6b7280]">
+            Based on {reviewSummary.total_count || 0} reader reviews
+          </p>
+
+          <div className="mt-5 border-t border-[#eef0f3] pt-4">
+            <h2 className="text-[14px] font-bold text-[#111827]">How Shadow reviews work</h2>
+            <p className="mt-2 text-[13px] font-normal leading-5 text-[#374151]">
+              This score is based on reader reviews for this author page. Readers can choose whether they recommend the page and leave a public review. The percentage shows how many active reviews recommend it.
+            </p>
+          </div>
+        </div>
+      </div>
+    ) : null}
+
+    {reviewOptionsOpen ? (
+      <div className="fixed inset-0 z-[310] flex items-end justify-center bg-black/35">
+        <button
+          type="button"
+          aria-label="Close review options"
+          onClick={() => setReviewOptionsOpen(false)}
+          className="absolute inset-0"
+        />
+
+        <div className="relative w-full rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-2xl md:max-w-[420px] md:rounded-[18px]">
+          <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#9ca3af]" />
+
+          <button
+            type="button"
+            onClick={() => {
+              setReviewOptionsOpen(false)
+              setMessage('Report review is coming soon.')
+            }}
+            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[#111827] active:opacity-70"
+          >
+            <i className="fa-regular fa-flag w-6 text-center text-[17px]" />
+            Report review
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const reviewId = selectedReviewOption?.id || ''
+              const link = `${window.location.origin}${window.location.pathname}${reviewId ? `?review=${reviewId}` : ''}`
+
+              try {
+                await navigator.clipboard.writeText(link)
+                setMessage('Review link copied.')
+              } catch {
+                setMessage(link)
+              }
+
+              setReviewOptionsOpen(false)
+            }}
+            className="flex h-12 w-full items-center gap-3 text-left text-[15px] font-medium text-[#111827] active:opacity-70"
+          >
+            <i className="fa-regular fa-copy w-6 text-center text-[17px]" />
+            Copy review link
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setReviewOptionsOpen(false)}
+            className="mt-2 h-11 w-full rounded-[10px] bg-[#f3f4f6] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ) : null}
+  </div>
+) : null}
+
                       </div>
 
                       <button
