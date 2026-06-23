@@ -1595,6 +1595,13 @@ if (!loading && pageError) {
       ? displayAuthor.works
       : []
 
+function ReviewStarIcon({ className = 'h-[34px] w-[34px]' }) {
+  return (
+    <svg className={`${className} shrink-0 text-[#111827]`} viewBox="0 0 24 24" fill="none" stroke="currentColor" <ReviewStarIcon /> strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.75l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.73 7.3 18.2l.9-5.23-3.8-3.7 5.25-.76L12 3.75z" />
+    </svg>
+  )
+}
   
 
   return (
@@ -1990,7 +1997,7 @@ onOpenStoreSetting={() => {
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
-  strokeWidth="2"
+  <ReviewStarIcon />
   strokeLinecap="round"
   strokeLinejoin="round"
 >
@@ -2545,7 +2552,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           onClick={handleOpenReviewsOverview}
           className="flex w-full items-center gap-4 text-left active:opacity-70"
         >
-          <i className={`${myReview?.is_recommended ? 'fa-solid' : 'fa-regular'} fa-star w-8 text-center text-[23px] text-[#111827]`} />
+          <ReviewStarIcon className="h-[31px] w-[31px]" />
           <span>
             {reviewLoading
               ? 'Loading reviews...'
