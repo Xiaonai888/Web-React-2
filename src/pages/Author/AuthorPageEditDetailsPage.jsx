@@ -804,14 +804,7 @@ profile_details: details,
           </button>
 
          <h1 className="text-[16px] font-semibold text-[#111827]">Edit Page</h1>
-<button
-  type="button"
-  onClick={handleSaveMainPage}
-  disabled={saving}
-  className="h-9 rounded-full bg-[#111827] px-4 text-[12px] font-semibold text-white disabled:opacity-50"
->
-  {saving ? 'Saving...' : 'Save'}
-</button>
+<div className="h-10 w-10" />
         </div>
       </header>
 
