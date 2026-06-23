@@ -1610,8 +1610,6 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
     </svg>
   )
 }
-}
-  
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
