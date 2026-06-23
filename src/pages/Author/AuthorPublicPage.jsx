@@ -2636,20 +2636,46 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
    
 
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
-        {displayAuthor.is_owner ? (
-          <button type="button" onClick={() => navigate('/author/page/edit?section=links')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
-            <i className="fa-solid fa-pen text-[14px]" />
-          </button>
-        ) : null}
-      </div>
+    {profileDetails.website_url ? (
+  <section>
+    <div className="mb-3 flex items-center justify-between">
+      <h2 className="text-[17px] font-semibold text-[#111827]">Links</h2>
+      {displayAuthor.is_owner ? (
+        <button type="button" onClick={() => navigate('/author/page/edit?section=links')} className="flex h-8 w-8 items-center justify-center text-[#6b7280] active:scale-95">
+          <i className="fa-solid fa-pen text-[14px]" />
+        </button>
+      ) : null}
+    </div>
 
-        <span>Shadow website</span>
+    <a
+      href={
+        String(profileDetails.website_url).startsWith('http://') ||
+        String(profileDetails.website_url).startsWith('https://')
+          ? profileDetails.website_url
+          : `https://${profileDetails.website_url}`
+      }
+      target="_blank"
+      rel="noreferrer"
+      className="flex w-full items-center gap-4 text-left text-[14px] font-normal text-[#111827] active:opacity-70"
+    >
+      <svg
+        className="h-[22px] w-8 shrink-0 text-[#111827]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M10.2 13.8a3.2 3.2 0 0 1 0-4.52l2.15-2.15a3.2 3.2 0 0 1 4.52 4.52l-1.05 1.05" />
+        <path d="M13.8 10.2a3.2 3.2 0 0 1 0 4.52l-2.15 2.15a3.2 3.2 0 0 1-4.52-4.52l1.05-1.05" />
+      </svg>
 
-    </section>
-
+      <span>{profileDetails.website_label || 'Website'}</span>
+    </a>
+  </section>
+) : null}
+    
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold text-[#111827]">Facebook Page</h2>
