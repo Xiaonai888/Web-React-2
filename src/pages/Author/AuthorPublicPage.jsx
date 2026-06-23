@@ -1854,7 +1854,7 @@ onOpenStoreSetting={() => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <divclassName="text-[14px] leading-5 text-[#111827]">
+                    <div className="text-[14px] leading-5 text-[#111827]">
                       <span className="font-medium">{name}</span>{' '}
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e] align-middle text-white">
                         <i className="fa-solid fa-star text-[9px]" />
