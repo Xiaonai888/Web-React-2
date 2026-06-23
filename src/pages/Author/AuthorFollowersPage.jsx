@@ -530,7 +530,7 @@ export default function AuthorFollowersPage() {
         ) : null}
       </main>
 
-      {selectedFollower ? (
+      {isOwner && selectedFollower ? (
         <div className="fixed inset-0 z-[300] bg-black/35" onClick={() => setSelectedFollower(null)}>
           <div
             className="absolute bottom-0 left-0 right-0 rounded-t-[22px] bg-white px-4 pb-6 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
