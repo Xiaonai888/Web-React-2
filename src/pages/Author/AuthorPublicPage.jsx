@@ -2428,14 +2428,11 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                    <button
   type="button"
   onClick={() => {
-    if (displayAuthor.is_owner && displayAuthor.page_username) {
+    if (displayAuthor.page_username) {
       navigate(`/author/page/${displayAuthor.page_username}/followers`)
     }
   }}
-  disabled={!displayAuthor.is_owner}
-  className={`text-left ${
-    displayAuthor.is_owner ? 'cursor-pointer active:opacity-70' : 'cursor-default'
-  }`}
+  className="-mx-1 rounded-md px-1.5 py-1 text-left cursor-pointer active:bg-[#f3f4f6] active:opacity-70"
 >
   <strong>{formatCompactNumber(displayAuthor.followers_count || displayAuthor.fans_count)}</strong>{' '}
   <span className="text-[#6b7280]">Followers</span>
