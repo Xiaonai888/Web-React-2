@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const PAGE_LIMIT = 30
 
 function getAuthToken() {
   return (
@@ -14,8 +16,17 @@ function getAuthToken() {
   )
 }
 
+function getHeaders() {
+  const token = getAuthToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 function getFanName(user) {
   return user?.name || user?.display_name || user?.username || 'Reader'
+}
+
+function getFanId(user) {
+  return String(user?.id || user?.user_id || user?.username || user?.reader_username || '')
 }
 
 function Avatar({ user }) {
@@ -27,7 +38,7 @@ function Avatar({ user }) {
   }
 
   return (
-    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#111827] text-[16px] font-black text-white">
+    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-black text-[#6b7280]">
       {name.slice(0, 1).toUpperCase()}
     </div>
   )
@@ -36,80 +47,65 @@ function Avatar({ user }) {
 export default function AuthorTopFansPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
-  const [followers, setFollowers] = useState([])
-  const [removedFanIds, setRemovedFanIds] = useState([])
-  const [selectedFan, setSelectedFan] = useState(null)
+
+  const [topFans, setTopFans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [message, setMessage] = useState('')
 
+  async function fetchTopFans(offset = 0) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/followers?section=top&limit=${PAGE_LIMIT}&offset=${offset}`,
+      { headers: getHeaders() }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to load top fans')
+    }
+
+    return data
+  }
+
+  async function loadTopFans() {
+    try {
+      setLoading(true)
+      setMessage('')
+
+      const data = await fetchTopFans(0)
+
+      setTopFans(data.followers || [])
+      setHasMore(Boolean(data.has_more))
+    } catch (error) {
+      setMessage(error.message || 'Failed to load top fans')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadMoreTopFans() {
+    if (loadingMore || !hasMore) return
+
+    try {
+      setLoadingMore(true)
+
+      const data = await fetchTopFans(topFans.length)
+
+      setTopFans((current) => [...current, ...(data.followers || [])])
+      setHasMore(Boolean(data.has_more))
+    } catch (error) {
+      setMessage(error.message || 'Failed to load more top fans')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   useEffect(() => {
-    let ignore = false
-
-    async function loadTopFans() {
-      const token = getAuthToken()
-
-      if (!token) {
-        navigate('/login')
-        return
-      }
-
-      try {
-        setLoading(true)
-        setMessage('')
-
-        const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/followers`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load top fans')
-        }
-
-        if (ignore) return
-
-        setFollowers(data.followers || data.items || [])
-      } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load top fans')
-      } finally {
-        if (!ignore) setLoading(false)
-      }
-    }
-
+    if (!pageUsername) return
     loadTopFans()
-
-    return () => {
-      ignore = true
-    }
-  }, [pageUsername, navigate])
-
-  const topFans = useMemo(() => {
-    return followers
-      .filter((fan) => {
-        const id = String(fan.id || fan.user_id || fan.username || fan.reader_username || '')
-        return !removedFanIds.includes(id)
-      })
-      .slice(0, 20)
-  }, [followers, removedFanIds])
-
-  function getFanId(fan) {
-    return String(fan?.id || fan?.user_id || fan?.username || fan?.reader_username || '')
-  }
-
-  function removeSelectedFanBadge() {
-    if (!selectedFan) return
-    const fanId = getFanId(selectedFan)
-
-    if (fanId) {
-      setRemovedFanIds((current) => (current.includes(fanId) ? current : [...current, fanId]))
-    }
-
-    setMessage(`Removed Top Fan Badge from ${getFanName(selectedFan)}.`)
-    setSelectedFan(null)
-  }
+  }, [pageUsername])
 
   return (
     <div className="min-h-screen bg-white pb-10">
@@ -121,7 +117,7 @@ export default function AuthorTopFansPage() {
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
-            <i className="fa-solid fa-chevron-left text-[16px]" />
+            <i className="fa-solid fa-chevron-left text-[20px]" />
           </button>
 
           <h1 className="text-[17px] font-bold text-[#111827]">Top fans</h1>
@@ -140,14 +136,13 @@ export default function AuthorTopFansPage() {
         </button>
       ) : null}
 
-      <main className="mx-auto max-w-[720px] pt-12">
+      <main className="mx-auto max-w-[720px] pt-3">
         {loading ? (
-          <div className="space-y-6 px-6">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="space-y-5 px-6 pt-4">
+            {Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className="flex items-center gap-4">
-                <div className="h-14 w-14 animate-pulse rounded-full bg-[#eef0f4]" />
+                <div className="h-12 w-12 animate-pulse rounded-full bg-[#eef0f4]" />
                 <div className="h-5 flex-1 animate-pulse rounded-full bg-[#eef0f4]" />
-                <div className="h-8 w-8 animate-pulse rounded-full bg-[#eef0f4]" />
               </div>
             ))}
           </div>
@@ -166,76 +161,37 @@ export default function AuthorTopFansPage() {
         ) : null}
 
         {!loading && topFans.length > 0 ? (
-          <div className="space-y-2 px-4">
-            {topFans.map((fan) => {
-              const name = getFanName(fan)
+          <div className="px-4">
+            {topFans.map((fan) => (
+              <div
+                key={getFanId(fan)}
+                className="flex min-h-[66px] items-center gap-4 px-1 py-2"
+              >
+                <Avatar user={fan} />
 
-              return (
-                <div
-                  key={getFanId(fan)}
-                  className="flex min-h-[60px] items-center gap-3 rounded-[14px] px-4 py-2"
-                >
-                  <Avatar user={fan} />
-
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-bold text-[#111827]">
-                      {name}
-                    </div>
-                    {fan.top_fan_streak ? (
-                      <div className="mt-0.5 truncate text-[16px] font-normal text-[#6b7280]">
-                        {fan.top_fan_streak}
-                      </div>
-                    ) : null}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[18px] font-normal text-[#111827]">
+                    {getFanName(fan)}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedFan(fan)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-                    aria-label={`Open ${name} options`}
-                  >
-                    <i className="fa-solid fa-ellipsis text-[16px]" />
-                  </button>
                 </div>
-              )
-            })}
+              </div>
+            ))}
+
+            {hasMore ? (
+              <div className="py-4">
+                <button
+                  type="button"
+                  onClick={loadMoreTopFans}
+                  disabled={loadingMore}
+                  className="h-11 w-full rounded-[12px] bg-[#f3f4f6] text-[14px] font-bold text-[#111827] disabled:opacity-60"
+                >
+                  {loadingMore ? 'Loading...' : 'Load more'}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </main>
-
-      {selectedFan ? (
-        <div className="fixed inset-0 z-[300] bg-black/40" onClick={() => setSelectedFan(null)}>
-          <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-[22px] bg-white px-4 pb-6 pt-3 shadow-[0_-12px_40px_rgba(15,23,42,0.18)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mx-auto mb-6 h-1 w-14 rounded-full bg-[#9ca3af]" />
-
-            <h2 className="mb-4 text-[20px] font-bold tracking-[-0.01em] text-[#111827]">
-              {getFanName(selectedFan)}
-            </h2>
-
-            <button
-              type="button"
-              onClick={removeSelectedFanBadge}
-              className="mb-5 flex w-full items-center gap-4 text-left active:opacity-70"
-            >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-[#111827] text-white">
-  <i className="fa-solid fa-xmark text-[11px]" />
-</span>
-              <span className="text-[15px] font-medium text-[#111827]">Remove Top Fan Badge</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSelectedFan(null)}
-              className="text-[14px] font-medium text-[#111827] active:opacity-70"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
