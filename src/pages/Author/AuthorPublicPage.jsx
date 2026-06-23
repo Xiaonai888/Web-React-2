@@ -2635,14 +2635,35 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
   {profileDetails.phone ? (
     <div className="flex items-center gap-4">
-      <i className="fa-solid fa-phone w-8 text-center text-[17px]" />
+      <svg
+  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+>
+  <path d="M7.2 4.6l2.25-.55c.45-.11.92.11 1.11.53l1.02 2.26c.17.38.08.82-.22 1.11L10.05 9.2c.86 1.86 2.38 3.38 4.24 4.24l1.25-1.31c.29-.3.73-.39 1.11-.22l2.26 1.02c.42.19.64.66.53 1.11l-.55 2.25c-.12.5-.57.86-1.08.86C11.72 17.15 6.35 11.78 6.35 5.69c0-.51.35-.96.85-1.09z" />
+</svg>
       <span>{profileDetails.phone}</span>
     </div>
   ) : null}
 
   {profileDetails.email ? (
     <div className="flex items-center gap-4">
-      <i className="fa-regular fa-envelope w-8 text-center text-[18px]" />
+      <svg
+  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+>
+  <path d="M4.8 6.7h14.4c.55 0 1 .45 1 1v9.1c0 .55-.45 1-1 1H4.8c-.55 0-1-.45-1-1V7.7c0-.55.45-1 1-1z" />
+  <path d="M4.2 7.3l7.8 6.1 7.8-6.1" />
+</svg>
       <span>{profileDetails.email}</span>
     </div>
   ) : null}
@@ -2651,7 +2672,19 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
   {profileDetails.telegram ? (
     <div className="flex items-center gap-4">
-      <i className="fa-brands fa-telegram w-8 text-center text-[18px]" />
+      <svg
+  className="h-[22px] w-8 shrink-0 text-[#111827]"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+>
+  <path d="M20.2 4.8L4.6 10.85c-.58.22-.56 1.05.03 1.24l4.15 1.31 1.6 4.92c.19.58.96.69 1.31.19l2.29-3.25 4.2 3.08c.52.38 1.26.08 1.37-.55l2.1-11.85c.12-.69-.78-1.39-1.45-1.14z" />
+  <path d="M8.95 13.35l6.95-4.55" />
+  <path d="M10.38 18.15l.22-4.22 8.95-8.33" />
+</svg>
       <span>{profileDetails.telegram}</span>
     </div>
   ) : null}
