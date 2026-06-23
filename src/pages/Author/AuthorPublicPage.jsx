@@ -1704,7 +1704,7 @@ onOpenStoreSetting={() => {
             <button
               type="button"
               onClick={() => setMessage('Review settings are coming soon.')}
-              className="text-[14px] font-medium text-[#2563eb] active:opacity-70"
+              className="text-[14px] font-medium text-[#374151] active:opacity-70"
             >
               Edit
             </button>
