@@ -884,6 +884,9 @@ const { pageUsername } = useParams()
   const [reviewLoading, setReviewLoading] = useState(false)
   const [reviewItems, setReviewItems] = useState([])
   const [reviewsOverviewOpen, setReviewsOverviewOpen] = useState(false)
+  const [reviewSettingsOpen, setReviewSettingsOpen] = useState(false)
+  const [allowReviewsDraft, setAllowReviewsDraft] = useState(true)
+  const [allowReviewsSaved, setAllowReviewsSaved] = useState(true)
   const [reviewSheetOpen, setReviewSheetOpen] = useState(false)
   const [savingReview, setSavingReview] = useState(false)
   const [reviewDraftText, setReviewDraftText] = useState('')
@@ -1683,6 +1686,61 @@ onOpenStoreSetting={() => {
   handleUploadSlide()
 }}
 />
+
+      {reviewSettingsOpen ? (
+  <div className="fixed inset-0 z-[290] bg-white">
+    <header className="flex h-[52px] items-center justify-center border-b border-[#eef0f3] px-4">
+      <button
+        type="button"
+        onClick={() => setReviewSettingsOpen(false)}
+        className="absolute left-3 flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-70"
+        aria-label="Close review settings"
+      >
+        <i className="fa-solid fa-xmark text-[18px]" />
+      </button>
+
+      <h1 className="text-[15px] font-bold text-[#111827]">Reviews</h1>
+    </header>
+
+    <main className="px-4 pt-8">
+      <h2 className="text-[17px] font-normal leading-6 text-[#111827]">
+        Allow readers to view and write reviews on your page?
+      </h2>
+
+      <p className="mt-2 text-[13px] font-normal leading-5 text-[#6b7280]">
+        Reviews help readers decide whether your page is worth following. You can turn reviews off anytime. Existing reviews will be hidden from your page until you turn them on again.
+      </p>
+
+      <label className="mt-8 flex items-center justify-between gap-4">
+        <span className="text-[15px] font-normal text-[#111827]">
+          Allow reviews on this page
+        </span>
+
+        <input
+          type="checkbox"
+          checked={allowReviewsDraft}
+          onChange={(event) => setAllowReviewsDraft(event.target.checked)}
+          className="h-5 w-5 accent-[#111827]"
+        />
+      </label>
+    </main>
+
+    <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f3] bg-white px-4 py-3">
+      <button
+        type="button"
+        disabled={allowReviewsDraft === allowReviewsSaved}
+        onClick={() => {
+          setAllowReviewsSaved(allowReviewsDraft)
+          setReviewSettingsOpen(false)
+          setMessage('Review settings saved.')
+        }}
+        className="h-12 w-full rounded-[10px] bg-[#111827] text-[14px] font-medium text-white active:scale-[0.99] disabled:bg-[#e2e5ea] disabled:text-[#a5adba]"
+      >
+        Save
+      </button>
+    </div>
+  </div>
+) : null}
 
 
       {reviewsOverviewOpen ? (
