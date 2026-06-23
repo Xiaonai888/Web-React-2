@@ -1597,8 +1597,16 @@ if (!loading && pageError) {
 
 function ReviewStarIcon({ className = 'h-[34px] w-[34px]' }) {
   return (
-    <svg className={`${className} shrink-0 text-[#111827]`} viewBox="0 0 24 24" fill="none" stroke="currentColor" <ReviewStarIcon /> strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3.75l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.73 7.3 18.2l.9-5.23-3.8-3.7 5.25-.76L12 3.75z" />
+    <svg
+      className={`${className} shrink-0 text-[#111827]`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3.8l2.35 4.75 5.24.77-3.79 3.69.89 5.22L12 15.77 7.31 18.23l.89-5.22-3.79-3.69 5.24-.77L12 3.8z" />
     </svg>
   )
 }
@@ -1992,17 +2000,7 @@ onOpenStoreSetting={() => {
         </div>
 
         <div className="flex items-center gap-4">
-          <svg
-  className="h-[34px] w-[34px] shrink-0 text-[#111827]"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  <ReviewStarIcon />
-  strokeLinecap="round"
-  strokeLinejoin="round"
->
-  <path d="M12 3.75l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.73 7.3 18.2l.9-5.23-3.8-3.7 5.25-.76L12 3.75z" />
-</svg>
+          <ReviewStarIcon />
           <div>
             <div className="text-[15px] font-normal leading-5 text-[#111827]">
               {reviewLoading ? 'Loading...' : `${reviewSummary.recommend_percent || 0}% recommended`}
