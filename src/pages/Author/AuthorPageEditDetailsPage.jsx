@@ -310,34 +310,37 @@ function ReviewsModal({ open, value, onClose, onSave }) {
 
   return (
     <ModalShell title="Reviews" onClose={onClose}>
-      <div className="mt-4">
-        <h3 className="text-[22px] font-normal leading-7 text-[#111827]">
+      <div className="mx-auto w-full max-w-[520px] pt-3">
+        <h3 className="text-[20px] font-semibold leading-7 text-[#111827] sm:text-[21px]">
           Let readers leave reviews on your Author Page?
         </h3>
-        <p className="mt-3 text-[17px] font-normal leading-6 text-[#6b7280]">
+
+        <p className="mt-3 text-[14px] font-normal leading-6 text-[#6b7280] sm:text-[15px]">
           Reviews help readers decide whether to follow your page and read your works. You can turn this off anytime.
         </p>
 
         <button
           type="button"
           onClick={() => setDraft((current) => !current)}
-          className="mt-8 flex w-full items-center justify-between gap-4 rounded-[18px] py-3 text-left active:bg-[#f3f4f6]"
+          className="mt-7 flex w-full items-center justify-between gap-4 rounded-[14px] py-3 text-left active:bg-[#f3f4f6]"
         >
-          <span className="text-[18px] font-normal text-[#111827]">Allow reviews</span>
-          <span className={`flex h-7 w-7 items-center justify-center rounded-[7px] ${draft ? 'bg-[#1877f2]' : 'border-2 border-[#6b7280]'}`}>
-            {draft ? <i className="fa-solid fa-check text-[14px] text-white" /> : null}
+          <span className="text-[15px] font-normal text-[#111827] sm:text-[16px]">Allow reviews</span>
+          <span className={`flex h-6 w-6 items-center justify-center rounded-[7px] ${draft ? 'bg-[#1877f2]' : 'border border-[#6b7280]'}`}>
+            {draft ? <i className="fa-solid fa-check text-[12px] text-white" /> : null}
           </span>
         </button>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)]">
-        <button
-          type="button"
-          onClick={() => onSave(draft)}
-          className="h-13 w-full rounded-[14px] bg-[#111827] text-[16px] font-semibold text-white"
-        >
-          Save
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
+        <div className="mx-auto w-full max-w-[520px]">
+          <button
+            type="button"
+            onClick={() => onSave(draft)}
+            className="h-11 w-full rounded-full bg-[#111827] text-[14px] font-semibold text-white active:scale-[0.99]"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </ModalShell>
   )
