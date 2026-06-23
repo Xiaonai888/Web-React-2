@@ -1595,20 +1595,21 @@ if (!loading && pageError) {
       ? displayAuthor.works
       : []
 
-function ReviewStarIcon({ className = 'h-[34px] w-[34px]' }) {
+function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   return (
     <svg
       className={`${className} shrink-0 text-[#111827]`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.9"
+      strokeWidth="1.25"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M12 3.8l2.35 4.75 5.24.77-3.79 3.69.89 5.22L12 15.77 7.31 18.23l.89-5.22-3.79-3.69 5.24-.77L12 3.8z" />
+      <path d="M12 3.95c.2 0 .37.11 .46.29l2.18 4.42c.07.15.22.26.38.28l4.88.71c.41.06.57.56.28.85l-3.53 3.44c-.12.12-.18.29-.15.46l.83 4.86c.07.41-.36.72-.73.53l-4.36-2.29c-.15-.08-.33-.08-.48 0L7.4 19.79c-.37.19-.8-.12-.73-.53l.83-4.86c.03-.17-.03-.34-.15-.46L3.82 10.5c-.29-.29-.13-.79.28-.85l4.88-.71c.16-.02.31-.13.38-.28l2.18-4.42c.09-.18.26-.29.46-.29z" />
     </svg>
   )
+}
 }
   
 
