@@ -476,7 +476,7 @@ function ReviewsModal({ open, value, onClose, onSave }) {
 }
 
 function HoursModal({ open, details, onClose, onSave }) {
-  const [exitConfirmOpen, setExitConfirmOpen] = useState(false)
+  
   const currentType = normalizeHoursType(details?.hours_type)
   const currentSchedule = normalizeHoursSchedule(details?.hours_schedule)
 
@@ -509,14 +509,7 @@ function HoursModal({ open, details, onClose, onSave }) {
     JSON.stringify(draftSchedule) !== JSON.stringify(currentSchedule) ||
     draftSummary !== currentSummary
 
-  function handleRequestClose() {
-  if (canSave) {
-    setExitConfirmOpen(true)
-    return
-  }
-
-  onClose()
-}
+  
 
   function updateDay(dayKey, patch) {
     setDraftSchedule((current) => ({
@@ -750,7 +743,7 @@ function HoursModal({ open, details, onClose, onSave }) {
   }
 
   return (
-    <ModalShell title="Hours" onClose={handleRequestClose}>
+    <ModalShell title="Hours" onClose={onClose}>
       <div className="mx-auto w-full max-w-[520px]">
         <button
           type="button"
