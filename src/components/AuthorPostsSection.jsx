@@ -159,12 +159,12 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
         <h3 className="text-[16px] font-semibold text-[#111827]">Author Posts</h3>
 
         <button
-          type="button"
-          onClick={onOpenFilter}
-          className="text-[13px] font-medium text-[#2563eb] active:opacity-70"
-        >
-          Filter
-        </button>
+  type="button"
+  onClick={onOpenFilter}
+  className="text-[14px] font-medium text-[#374151] active:opacity-70"
+>
+  Filter
+</button>
       </div>
 
       <button
