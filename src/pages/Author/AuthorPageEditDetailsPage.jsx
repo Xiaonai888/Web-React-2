@@ -476,6 +476,7 @@ function ReviewsModal({ open, value, onClose, onSave }) {
 }
 
 function HoursModal({ open, details, onClose, onSave }) {
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false)
   const currentType = normalizeHoursType(details?.hours_type)
   const currentSchedule = normalizeHoursSchedule(details?.hours_schedule)
 
@@ -507,6 +508,15 @@ function HoursModal({ open, details, onClose, onSave }) {
     draftType !== currentType ||
     JSON.stringify(draftSchedule) !== JSON.stringify(currentSchedule) ||
     draftSummary !== currentSummary
+
+  function handleRequestClose() {
+  if (canSave) {
+    setExitConfirmOpen(true)
+    return
+  }
+
+  onClose()
+}
 
   function updateDay(dayKey, patch) {
     setDraftSchedule((current) => ({
@@ -740,7 +750,7 @@ function HoursModal({ open, details, onClose, onSave }) {
   }
 
   return (
-    <ModalShell title="Hours" onClose={onClose}>
+    <ModalShell title="Hours" onClose={handleRequestClose}>
       <div className="mx-auto w-full max-w-[520px]">
         <button
           type="button"
@@ -1540,6 +1550,38 @@ updateDetails({
     setActiveModal('')
   }}
 />
+
+      {exitConfirmOpen ? (
+  <div className="fixed inset-0 z-[340] flex items-center justify-center bg-black/55 px-8">
+    <div className="w-full max-w-[420px] rounded-[4px] bg-white px-6 py-5 shadow-2xl">
+      <h3 className="text-[20px] font-normal text-[#111827]">
+        Leave without saving hours?
+      </h3>
+
+      <p className="mt-4 text-[16px] font-normal leading-6 text-[#374151]">
+        Your changes haven’t been saved yet. If you leave now, the hours you edited will not appear on your Author Page.
+      </p>
+
+      <div className="mt-8 flex justify-end gap-7">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[14px] font-medium text-[#e5484d]"
+        >
+          Leave
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setExitConfirmOpen(false)}
+          className="text-[14px] font-medium text-[#2563eb]"
+        >
+          Keep editing
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
       
       <ReviewsModal
         open={activeModal === 'reviews'}
