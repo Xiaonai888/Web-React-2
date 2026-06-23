@@ -1968,6 +1968,45 @@ async function handleLockedDiamondUnlock(packageKey) {
   }
 }
 
+  async function handleLockedAccessUnlock(method) {
+  const endpointMap = {
+    coin: 'gem',
+    gem: 'gem',
+    voucher: 'voucher',
+    story_card: 'story-card',
+    ad: 'ad',
+  }
+
+  const endpoint = endpointMap[method]
+
+  if (!endpoint) return
+
+  const body = method === 'story_card' ? { card_type: 'simple' } : {}
+
+  try {
+    setUnlockingEpisode(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/${endpoint}`, {
+      method: 'POST',
+      headers: readerJsonHeaders(),
+      body: JSON.stringify(body),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to unlock episode')
+    }
+
+    window.location.reload()
+  } catch (error) {
+    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
+  } finally {
+    setUnlockingEpisode(false)
+  }
+}
+
   const handleResetSettings = () => {
     setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
     setFontKey('noto-sans-khmer')
