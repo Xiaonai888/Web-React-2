@@ -1908,9 +1908,15 @@ onOpenStoreSetting={() => {
 
       <section className="mt-4 rounded-[14px] bg-white px-4 py-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-[17px] font-bold text-[#111827]">Recent reviews</h3>
-          className="text-[14px] font-medium text-[#374151] active:opacity-70"
-        </div>
+  <h3 className="text-[17px] font-bold text-[#111827]">Recent reviews</h3>
+  <button
+    type="button"
+    onClick={() => setReviewsListOpen(true)}
+    className="text-[14px] font-medium text-[#374151] active:opacity-70"
+  >
+    See all
+  </button>
+</div>
 
         {!displayAuthor.is_owner ? (
           <div className="mb-5 rounded-[14px] bg-[#f8fafc] px-4 py-4">
