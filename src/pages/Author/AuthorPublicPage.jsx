@@ -1985,12 +1985,14 @@ onOpenStoreSetting={() => {
         </div>
 
         <div className="flex items-center gap-4">
-          <i className="fa-regular fa-star w-8 text-center text-[31px] text-[#111827]" />
+          <svg className="h-8 w-8 shrink-0 text-[#111827]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M12 3.4l2.55 5.17 5.7.83-4.12 4.02.97 5.68L12 16.42 6.9 19.1l.97-5.68L3.75 9.4l5.7-.83L12 3.4z" />
+</svg>
           <div>
-            <div className="text-[13px] font-normal leading-5 text-[#111827]">
+            <div className="text-[15px] font-normal leading-5 text-[#111827]">
               {reviewLoading ? 'Loading...' : `${reviewSummary.recommend_percent || 0}% recommended`}
             </div>
-            <div className="text-[13px] font-normal leading-5 text-[#111827]">
+            <div className="text-[15px] font-normal leading-5 text-[#111827]">
               Based on the opinions of {reviewSummary.total_count || 0} people
             </div>
           </div>
@@ -2000,9 +2002,9 @@ onOpenStoreSetting={() => {
           <button
             type="button"
             onClick={handleOpenMessage}
-            className="mt-6 flex h-12 w-full items-center justify-center rounded-[10px] bg-[#e5e7eb] text-[18px] font-medium text-[#111827] active:scale-[0.99]"
+            className="mt-5 flex h-10 w-full items-center justify-center rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
           >
-            <i className="fa-brands fa-facebook-messenger mr-2 text-[18px]" />
+            <i className="fa-brands fa-facebook-messenger mr-2 text-[15px]" />
             Message {displayAuthor.page_name}
           </button>
         ) : null}
@@ -2021,8 +2023,8 @@ onOpenStoreSetting={() => {
 </div>
 
         {!displayAuthor.is_owner ? (
-          <div className="mb-5 rounded-[14px] bg-[#f8fafc] px-4 py-4">
-            <div className="text-[20px] font-normal leading-7 text-[#111827]">
+          <div className="mb-4 rounded-[14px] bg-[#f8fafc] px-4 py-3">
+            <div className="text-[16px] font-normal leading-6 text-[#111827]">
               Do you recommend {displayAuthor.page_name}?
             </div>
 
@@ -2030,7 +2032,7 @@ onOpenStoreSetting={() => {
               <button
                 type="button"
                 onClick={() => handleOpenReviewSheet(true)}
-                className="h-12 rounded-[10px] bg-[#e5e7eb] text-[18px] font-medium text-[#111827] active:scale-[0.99]"
+                className="h-9 rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
               >
                 Yes
               </button>
@@ -2038,7 +2040,7 @@ onOpenStoreSetting={() => {
               <button
                 type="button"
                 onClick={() => handleOpenReviewSheet(false)}
-                className="h-12 rounded-[10px] bg-[#e5e7eb] text-[18px] font-medium text-[#111827] active:scale-[0.99]"
+                className="h-9 rounded-[9px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:scale-[0.99]"
               >
                 No
               </button>
