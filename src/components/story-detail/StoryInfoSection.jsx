@@ -2,7 +2,19 @@ import { useState } from 'react'
 
 function getUpdateDaysLabel(days) {
   if (!Array.isArray(days) || days.length === 0) return ''
-  return days.join(', ')
+
+  const selectedDays = days
+    .map((day) => String(day || '').trim())
+    .filter(Boolean)
+    .map((day) => day.slice(0, 3))
+
+  const count = selectedDays.length
+
+  if (count <= 0) return ''
+  if (count === 7) return 'Everyday'
+  if (count >= 3) return `${count} days/week`
+
+  return selectedDays.join(', ')
 }
 
 export default function StoryInfoSection({ story }) {
