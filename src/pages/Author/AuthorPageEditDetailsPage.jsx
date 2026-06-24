@@ -481,6 +481,7 @@ function HoursModal({ open, details, onClose, onSave }) {
   const [selectOpen, setSelectOpen] = useState(false)
   const [editDayOpen, setEditDayOpen] = useState(false)
   const [activeDay, setActiveDay] = useState('monday')
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false)
   const [timePicker, setTimePicker] = useState(null)
   const [timeDraft, setTimeDraft] = useState({ hour: '12', minute: '00', period: 'AM' })
 
@@ -493,6 +494,7 @@ function HoursModal({ open, details, onClose, onSave }) {
     setSelectOpen(false)
     setEditDayOpen(false)
     setActiveDay('monday')
+    setExitConfirmOpen(false)
     setTimePicker(null)
   }, [open, currentType, JSON.stringify(currentSchedule)])
 
@@ -504,6 +506,15 @@ function HoursModal({ open, details, onClose, onSave }) {
     draftType !== currentType ||
     JSON.stringify(draftSchedule) !== JSON.stringify(currentSchedule) ||
     draftSummary !== currentSummary
+
+  function handleRequestClose() {
+    if (canSave) {
+      setExitConfirmOpen(true)
+      return
+    }
+
+    onClose()
+  }
 
   
 
@@ -592,6 +603,7 @@ function HoursModal({ open, details, onClose, onSave }) {
   }
 
   function handleSave() {
+    setExitConfirmOpen(false)
     onSave({
       hours_type: draftType,
       hours_schedule: draftType === 'daily_hours' ? draftSchedule : null,
@@ -770,7 +782,7 @@ function HoursModal({ open, details, onClose, onSave }) {
   }
 
   return (
-    <ModalShell title="Hours" onClose={onClose}>
+    <ModalShell title="Hours" onClose={handleRequestClose}>
       <div className="mx-auto w-full max-w-[520px]">
         <button
   type="button"
@@ -854,6 +866,42 @@ function HoursModal({ open, details, onClose, onSave }) {
           </div>
         </div>
       ) : null}
+
+{exitConfirmOpen ? (
+  <div className="fixed inset-0 z-[340] flex items-center justify-center bg-black/55 px-8">
+    <div className="w-full max-w-[420px] rounded-[4px] bg-white px-6 py-5 shadow-2xl">
+      <h3 className="text-[20px] font-normal text-[#111827]">
+        Leave without saving hours?
+      </h3>
+
+      <p className="mt-4 text-[16px] font-normal leading-6 text-[#374151]">
+        Your hours changes are not saved yet. If you leave now, they will not be shown on your Author Page.
+      </p>
+
+      <div className="mt-8 flex justify-end gap-7">
+        <button
+          type="button"
+          onClick={() => {
+            setExitConfirmOpen(false)
+            onClose()
+          }}
+          className="text-[14px] font-medium text-[#e5484d]"
+        >
+          Leave
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setExitConfirmOpen(false)}
+          className="text-[14px] font-medium text-[#2563eb]"
+        >
+          Keep editing
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
+      
     </ModalShell>
   )
 }
