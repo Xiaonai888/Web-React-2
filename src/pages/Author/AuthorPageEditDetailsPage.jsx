@@ -613,29 +613,39 @@ function HoursModal({ open, details, onClose, onSave }) {
             })}
           </div>
 
-          <div className="space-y-4">
-            {ranges.map((range, index) => (
-              <div key={index} className="space-y-4">
-                <button
-                  type="button"
-                  disabled={dayData.closed || dayData.open_24_hours}
-                  onClick={() => openTimePicker('open', index)}
-                  className="flex h-[72px] w-full items-center rounded-[16px] border border-[#d1d5db] px-4 text-left text-[18px] font-normal text-[#111827] disabled:text-[#9ca3af]"
-                >
-                  {range.open || 'Open'}
-                </button>
+          <div className="space-y-3">
+  {ranges.map((range, index) => (
+    <div key={index} className="space-y-3">
+      <button
+        type="button"
+        disabled={dayData.closed || dayData.open_24_hours}
+        onClick={() => openTimePicker('open', index)}
+        className="flex h-[56px] w-full items-center rounded-[13px] border border-[#d1d5db] px-4 text-left text-[15px] font-normal text-[#111827] disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
+      >
+        {range.open || 'Open'}
+      </button>
 
-                <button
-                  type="button"
-                  disabled={dayData.closed || dayData.open_24_hours}
-                  onClick={() => openTimePicker('close', index)}
-                  className="flex h-[72px] w-full items-center rounded-[16px] border border-[#d1d5db] px-4 text-left text-[18px] font-normal text-[#111827] disabled:text-[#9ca3af]"
-                >
-                  {range.close || 'Close'}
-                </button>
-              </div>
-            ))}
-          </div>
+      <button
+        type="button"
+        disabled={dayData.closed || dayData.open_24_hours}
+        onClick={() => openTimePicker('close', index)}
+        className="flex h-[56px] w-full items-center rounded-[13px] border border-[#d1d5db] px-4 text-left text-[15px] font-normal text-[#111827] disabled:bg-[#f3f4f6] disabled:text-[#9ca3af]"
+      >
+        {range.close || 'Close'}
+      </button>
+
+      {ranges.length > 1 ? (
+        <button
+          type="button"
+          onClick={() => removeRange(activeDay, index)}
+          className="flex h-10 w-full items-center justify-center rounded-[11px] bg-[#e5e7eb] text-[14px] font-medium text-[#111827] active:bg-[#d8dde5]"
+        >
+          Remove hours
+        </button>
+      ) : null}
+    </div>
+  ))}
+</div>
 
           <div className="mt-6 space-y-5">
             <button
@@ -644,9 +654,9 @@ function HoursModal({ open, details, onClose, onSave }) {
               className="flex w-full items-center justify-between text-left"
             >
               <span className="text-[18px] font-normal text-[#111827]">Closed</span>
-              <span className={`flex h-7 w-12 items-center rounded-full p-0.5 ${dayData.closed ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
-                <span className={`h-6 w-6 rounded-full bg-white transition ${dayData.closed ? 'translate-x-5' : 'translate-x-0'}`} />
-              </span>
+              <span className={`relative flex h-8 w-14 items-center rounded-full p-1 shadow-inner transition ${dayData.closed ? 'bg-[#111827]' : 'bg-[#cfd5df]'}`}>
+  <span className={`h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(15,23,42,0.25)] ring-1 ring-black/5 transition-transform duration-200 ${dayData.closed ? 'translate-x-6' : 'translate-x-0'}`} />
+</span>
             </button>
 
             <button
@@ -655,21 +665,21 @@ function HoursModal({ open, details, onClose, onSave }) {
               className="flex w-full items-center justify-between text-left"
             >
               <span className="text-[18px] font-normal text-[#111827]">Open 24 hours</span>
-              <span className={`flex h-7 w-12 items-center rounded-full p-0.5 ${dayData.open_24_hours ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
-                <span className={`h-6 w-6 rounded-full bg-white transition ${dayData.open_24_hours ? 'translate-x-5' : 'translate-x-0'}`} />
-              </span>
+              <span className={`relative flex h-8 w-14 items-center rounded-full p-1 shadow-inner transition ${dayData.open_24_hours ? 'bg-[#111827]' : 'bg-[#cfd5df]'}`}>
+  <span className={`h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(15,23,42,0.25)] ring-1 ring-black/5 transition-transform duration-200 ${dayData.open_24_hours ? 'translate-x-6' : 'translate-x-0'}`} />
+</span>
             </button>
           </div>
 
-          <button
-            type="button"
-            disabled={dayData.closed || dayData.open_24_hours}
-            onClick={() => updateDay(activeDay, { ranges: [...ranges, { open: '', close: '' }] })}
-            className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-[12px] bg-[#e5e7eb] text-[17px] font-medium text-[#111827] disabled:opacity-50"
-          >
-            <i className="fa-solid fa-plus text-[16px]" />
-            Add more
-          </button>
+         <button
+  type="button"
+  disabled={dayData.closed || dayData.open_24_hours || ranges.length >= 2}
+  onClick={() => updateDay(activeDay, { ranges: [...ranges, { open: '', close: '' }] })}
+  className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-[11px] bg-[#e5e7eb] text-[14px] font-medium text-[#111827] active:bg-[#d8dde5] disabled:opacity-50"
+>
+  <i className="fa-solid fa-plus text-[13px]" />
+  Add more
+</button>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
