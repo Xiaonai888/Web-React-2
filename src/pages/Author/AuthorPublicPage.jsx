@@ -1218,44 +1218,7 @@ async function handleSaveReview() {
   }
 }
 
-async function handleRemoveReview() {
-  const token = getAuthToken()
-  const username = author?.page_username || pageUsername
 
-  if (!token) {
-    navigate('/login')
-    return
-  }
-
-  if (!username || !myReview || savingReview) return
-
-  try {
-    setSavingReview(true)
-    setReviewDraftError('')
-    setMessage('')
-
-    const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/reviews/me`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to remove review')
-    }
-
-    await loadAuthorReviews(username)
-    setReviewSheetOpen(false)
-    setReviewDraftText('')
-    setReviewDraftError('')
-  } catch (error) {
-    setReviewDraftError(error.message || 'Failed to remove review')
-  } finally {
-    setSavingReview(false)
-  }
-}
 
 
 async function handleRemoveReview() {
