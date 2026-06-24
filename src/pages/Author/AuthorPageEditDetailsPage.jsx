@@ -365,10 +365,10 @@ function TextEditModal({ open, title, label, value, multiline, placeholder, maxL
 }
 
 function PriceModal({ open, value, onClose, onSave }) {
-  const [draft, setDraft] = useState(value || '$$')
+  const [draft, setDraft] = useState(typeof value === 'string' ? value : '$$')
 
   useEffect(() => {
-    if (open) setDraft(value || '$$')
+    if (open) setDraft(typeof value === 'string' ? value : '$$')
   }, [open, value])
 
   if (!open) return null
@@ -386,33 +386,26 @@ function PriceModal({ open, value, onClose, onSave }) {
       <div className="mx-auto w-full max-w-[520px] pt-2">
         <div className="space-y-1">
           {options.map((option) => {
-  const active = selectedKeys.includes(option.key)
+            const active = draft === option.value
 
-  return (
-    <button
-      key={option.key}
-      type="button"
-      onClick={() => toggleKey(option.key)}
-      className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[#f3f4f6]"
-    >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${option.icon} text-[22px]`} />
-      </span>
+            return (
+              <button
+                key={option.title}
+                type="button"
+                onClick={() => setDraft(option.value)}
+                className="flex w-full items-center justify-between gap-4 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[16px] font-normal text-[#111827]">{option.title}</span>
+                  <span className="mt-0.5 block text-[13px] font-normal text-[#6b7280]">{option.text}</span>
+                </span>
 
-      <span className="min-w-0 flex-1">
-        <span className="block text-[16px] font-normal text-[#111827]">{option.title}</span>
-        <span className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-[#6b7280]">
-          <i className="fa-solid fa-earth-asia text-[10px]" />
-          {option.text}
-        </span>
-      </span>
-
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] border-2 ${active ? 'border-[#1877f2] bg-[#1877f2]' : 'border-[#9ca3af]'}`}>
-        {active ? <i className="fa-solid fa-check text-[12px] text-white" /> : null}
-      </span>
-    </button>
-  )
-})}
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${active ? 'border-[#1877f2]' : 'border-[#6b7280]'}`}>
+                  {active ? <span className="h-4 w-4 rounded-full bg-[#1877f2]" /> : null}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -540,6 +533,27 @@ function HoursModal({ open, details, onClose, onSave }) {
           closed: false,
           open_24_hours: false,
           ranges,
+        },
+      }
+    })
+  }
+
+  function removeRange(dayKey, index) {
+    setDraftSchedule((current) => {
+      const dayData = current[dayKey] || {
+        closed: true,
+        open_24_hours: false,
+        ranges: [{ open: '', close: '' }],
+      }
+
+      const ranges = Array.isArray(dayData.ranges) ? dayData.ranges : []
+      const nextRanges = ranges.filter((_, rangeIndex) => rangeIndex !== index)
+
+      return {
+        ...current,
+        [dayKey]: {
+          ...dayData,
+          ranges: nextRanges.length ? nextRanges : [{ open: '', close: '' }],
         },
       }
     })
