@@ -697,15 +697,17 @@ function HoursModal({ open, details, onClose, onSave }) {
             </button>
           </div>
 
-         <button
-  type="button"
-  disabled={dayData.closed || dayData.open_24_hours || ranges.length >= 2}
-  onClick={() => updateDay(activeDay, { ranges: [...ranges, { open: '', close: '' }] })}
-  className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-[11px] bg-[#e5e7eb] text-[14px] font-medium text-[#111827] active:bg-[#d8dde5] disabled:opacity-50"
->
-  <i className="fa-solid fa-plus text-[13px]" />
-  Add more
-</button>
+         {ranges.length < 2 ? (
+  <button
+    type="button"
+    disabled={dayData.closed || dayData.open_24_hours}
+    onClick={() => updateDay(activeDay, { ranges: [...ranges, { open: '', close: '' }] })}
+    className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-[11px] bg-[#e5e7eb] text-[14px] font-medium text-[#111827] active:bg-[#d8dde5] disabled:opacity-50"
+  >
+    <i className="fa-solid fa-plus text-[13px]" />
+    Add more
+  </button>
+) : null}
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 border-t border-[#eef0f4] bg-white px-4 py-3">
