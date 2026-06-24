@@ -2601,37 +2601,60 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         ) : null}
       </div>
 
-      <div className="space-y-4 text-[14px] font-normal text-[#111827]">
-        <button
-          type="button"
-          onClick={handleOpenReviewsOverview}
-          className="flex w-full items-center gap-4 text-left active:opacity-70"
-        >
-          <ReviewStarIcon className="h-[31px] w-[31px]" />
-          <span>
-            {reviewLoading
-              ? 'Loading reviews...'
-              : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
-          </span>
-        </button>
-        <div className="flex items-center gap-4">
-          <svg
-  className="h-[26px] w-8 shrink-0 text-[#111827]"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="1.8"
-  strokeLinecap="round"
-  strokeLinejoin="round"
->
-  <path d="M5.8 4.5h8.7c1.25 0 2.25 1 2.25 2.25v12.75H7.2c-1.05 0-1.9-.85-1.9-1.9V5c0-.28.22-.5.5-.5z" />
-  <path d="M7.2 19.5c-1.05 0-1.9-.85-1.9-1.9s.85-1.9 1.9-1.9h9.55" />
-  <path d="M8.3 7.25h5.65" />
-  <path d="M8.3 10.15h4.4" />
-</svg>
-          <span>{profileDetails.price_range ? `Book · ${profileDetails.price_range}` : 'Book'}</span>
-        </div>
-      </div>
+     <div className="space-y-4 text-[14px] font-normal text-[#111827]">
+  <button
+    type="button"
+    onClick={handleOpenReviewsOverview}
+    className="flex w-full items-center gap-4 text-left active:opacity-70"
+  >
+    <ReviewStarIcon className="h-[31px] w-[31px]" />
+    <span>
+      {reviewLoading
+        ? 'Loading reviews...'
+        : `${reviewSummary.recommend_percent || 0}% recommend (${reviewSummary.total_count || 0} Reviews)`}
+    </span>
+  </button>
+
+  <div className="flex items-center gap-4">
+    <svg
+      className="h-[26px] w-8 shrink-0 text-[#111827]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5.8 4.5h8.7c1.25 0 2.25 1 2.25 2.25v12.75H7.2c-1.05 0-1.9-.85-1.9-1.9V5c0-.28.22-.5.5-.5z" />
+      <path d="M7.2 19.5c-1.05 0-1.9-.85-1.9-1.9s.85-1.9 1.9-1.9h9.55" />
+      <path d="M8.3 7.25h5.65" />
+      <path d="M8.3 10.15h4.4" />
+    </svg>
+    <span>{profileDetails.price_range ? `Book · ${profileDetails.price_range}` : 'Book'}</span>
+  </div>
+
+  {profileDetails.address ? (
+    <div className="flex items-start gap-4">
+      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]">
+        <i className="fa-solid fa-location-dot text-[16px]" />
+      </span>
+      <span className="whitespace-pre-wrap break-words leading-5">
+        {profileDetails.address}
+      </span>
+    </div>
+  ) : null}
+
+  {profileDetails.hours ? (
+    <div className="flex items-start gap-4">
+      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]">
+        <i className="fa-regular fa-clock text-[16px]" />
+      </span>
+      <span className="whitespace-pre-wrap break-words leading-5">
+        {profileDetails.hours}
+      </span>
+    </div>
+  ) : null}
+</div>
     </section>
 
    
