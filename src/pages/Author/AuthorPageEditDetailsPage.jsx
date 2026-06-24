@@ -1227,7 +1227,7 @@ async function updateDetails(patch) {
       localStorage.setItem('shadow_author_page', JSON.stringify(data.author_page))
     }
 
-    setMessage('Contact info saved to database.')
+    setMessage('Saved.')
   } catch (error) {
     setMessage(error.message || 'Failed to save contact info')
   }
@@ -1448,19 +1448,20 @@ profile_details: details,
     onClick={() => setActiveModal('price')}
   />
   <FieldRow
-    icon="fa-solid fa-location-dot"
-    title={details.address || 'Address'}
-    value={details.address ? 'Shown on your public page' : ''}
-    placeholder="Add address"
-    onClick={() => setActiveModal('address')}
+  icon="fa-solid fa-location-dot"
+  title="Address"
+  value={details.address}
+  placeholder="Add address"
+  onClick={() => setActiveModal('address')}
+/>
   />
   <FieldRow
-    icon="fa-regular fa-clock"
-    title={details.hours || 'Hours'}
-    value={details.hours ? 'Shown on your public page' : ''}
-    placeholder="Add opening hours"
-    onClick={() => setActiveModal('hours')}
-  />
+  icon="fa-regular fa-clock"
+  title="Hours"
+  value={details.hours}
+  placeholder="Add opening hours"
+  onClick={() => setActiveModal('hours')}
+/>
 </SectionBlock>
 
           <SectionBlock id="links" title="Links" sectionRef={linksRef}>
