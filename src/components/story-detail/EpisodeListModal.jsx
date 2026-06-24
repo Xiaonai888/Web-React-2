@@ -32,13 +32,18 @@ function formatStatus(value) {
 function formatUpdateDays(days) {
   if (!Array.isArray(days) || !days.length) return 'All Episodes'
 
-  const shortDays = days
+  const selectedDays = days
     .map((day) => String(day || '').trim())
     .filter(Boolean)
     .map((day) => day.slice(0, 3))
-    .join(' & ')
 
-  return shortDays ? `Updates ${shortDays}` : 'All Episodes'
+  const count = selectedDays.length
+
+  if (count <= 0) return 'All Episodes'
+  if (count === 7) return 'Updates Everyday'
+  if (count >= 3) return `Updates ${count} days/week`
+
+  return `Updates ${selectedDays.join(' & ')}`
 }
 
 function ReverseIcon() {
