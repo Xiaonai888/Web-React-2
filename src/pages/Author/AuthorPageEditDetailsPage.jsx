@@ -782,7 +782,9 @@ function HoursModal({ open, details, onClose, onSave }) {
       </span>
     </span>
 
-    <i className="fa-regular fa-pen-to-square text-[18px] text-[#6b7280]" />
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#6b7280]">
+  <i className="fa-solid fa-pen text-[12px]" />
+</span>
   </button>
 ))}
           </div>
