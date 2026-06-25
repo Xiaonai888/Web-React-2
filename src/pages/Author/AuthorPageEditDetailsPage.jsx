@@ -234,46 +234,84 @@ function summarizeHours(type, schedule) {
   if (type === 'not_applicable') return ''
   if (type !== 'daily_hours') return 'Always open'
 
-  const openDays = WEEK_DAYS
-    .map((day) => {
-      const text = summarizeDayHours(schedule?.[day.key])
-      return text !== 'Closed' ? `${day.label}: ${text}` : ''
+  const dayShortLabels = {
+    monday: 'Mon',
+    tuesday: 'Tue',
+    wednesday: 'Wed',
+    thursday: 'Thu',
+    friday: 'Fri',
+    saturday: 'Sat',
+    sunday: 'Sun',
+  }
+
+  const openDays = WEEK_DAYS.map((day, index) => {
+    const text = summarizeDayHours(schedule?.[day.key])
+
+    return {
+      ...day,
+      index,
+      text,
+      isOpen: text !== 'Closed',
+    }
+  }).filter((day) => day.isOpen)
+
+  if (!openDays.length) return 'Closed'
+
+  const firstHours = openDays[0].text
+  const allSevenDaysOpen = openDays.length === 7
+  const allSameHours = openDays.every((day) => day.text === firstHours)
+
+  if (allSevenDaysOpen && allSameHours) {
+    return `Everyday: ${firstHours}`
+  }
+
+  const groups = []
+
+  openDays.forEach((day) => {
+    const lastGroup = groups[groups.length - 1]
+
+    if (
+      lastGroup &&
+      lastGroup.text === day.text &&
+      lastGroup.endIndex + 1 === day.index
+    ) {
+      lastGroup.endIndex = day.index
+      return
+    }
+
+    groups.push({
+      startIndex: day.index,
+      endIndex: day.index,
+      text: day.text,
     })
-    .filter(Boolean)
+  })
 
-  return openDays.length ? openDays.join('\n') : 'Closed'
-}
+  function getDayRangeLabel(startIndex, endIndex) {
+    const startDay = WEEK_DAYS[startIndex]
+    const endDay = WEEK_DAYS[endIndex]
 
-function makeTimeOptions() {
-  const hours = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'))
-  const minutes = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, '0'))
+    if (startIndex === 0 && endIndex === 6) return 'Everyday'
+    if (startIndex === 0 && endIndex === 4) return 'Mon–Fri'
+    if (startIndex === 5 && endIndex === 6) return 'Sat–Sun'
 
-  return { hours, minutes, periods: ['AM', 'PM'] }
-}
+    if (startIndex === endIndex) {
+      return startDay.label
+    }
 
-function FieldRow({ icon, title, value, placeholder, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-start gap-2.5 py-2 text-left active:bg-[#f8fafc]"
-    >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${icon} text-[15px]`} />
-      </span>
+    return `${dayShortLabels[startDay.key]}–${dayShortLabels[endDay.key]}`
+  }
 
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-normal leading-5 text-[#111827]">{title}</span>
-        <span className={`mt-0.5 block whitespace-pre-wrap break-words text-[11px] font-normal leading-4 ${value ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>
-          {value || placeholder}
-        </span>
-      </span>
+  return groups
+    .map((group) => {
+      const label = getDayRangeLabel(group.startIndex, group.endIndex)
 
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#6b7280]">
-        <i className="fa-solid fa-pen text-[12px]" />
-      </span>
-    </button>
-  )
+      if (label === 'Everyday') {
+        return `Everyday: ${group.text}`
+      }
+
+      return `Open ${label}: ${group.text}`
+    })
+    .join('\n')
 }
 
 function SectionBlock({ id, title, children, sectionRef }) {
