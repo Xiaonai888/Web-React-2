@@ -461,10 +461,8 @@ export default function TaskCenterPage() {
           </button>
 
           <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-[#8b93a1]">
-            {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak alive.'}
-          </p>
-                </section>
-      </div>
+  {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak active.'}
+</p>
 
         <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
