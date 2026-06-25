@@ -387,14 +387,14 @@ export default function TaskCenterPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[760px] px-4 pt-4">
-        <section
-  className="relative overflow-hidden rounded-[30px] bg-cover bg-center p-5 text-white shadow-[0_18px_45px_rgba(244,63,94,0.28)]"
-  style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background.webp')" }}
->
-  <div className="absolute inset-0 bg-black/10" />
+      <main className="mx-auto max-w-[760px] px-4 pt-0">
+  <section
+    className="relative -mx-4 overflow-hidden bg-cover bg-center px-4 pb-5 pt-5 text-white"
+    style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background.webp')" }}
+  >
+    <div className="absolute inset-0 bg-black/5" />
 
-          <div className="relative">
+    <div className="relative">
             
 
             <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em]">
