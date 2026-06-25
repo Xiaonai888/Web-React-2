@@ -572,11 +572,11 @@ function HoursModal({ open, details, onClose, onSave }) {
   if (!open) return null
 
   const draftSummary = summarizeHours(draftType, draftSchedule)
-  const savedHoursText = String(details?.hours || '')
+  const currentSummary = summarizeHours(currentType, currentSchedule)
   const canSave =
   draftType !== currentType ||
   JSON.stringify(draftSchedule) !== JSON.stringify(currentSchedule) ||
-  savedHoursText !== draftSummary
+  draftSummary !== currentSummary
 
   function handleRequestClose() {
     if (canSave) {
