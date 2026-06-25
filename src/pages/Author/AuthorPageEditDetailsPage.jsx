@@ -314,6 +314,14 @@ function summarizeHours(type, schedule) {
     .join('\n')
 }
 
+
+function makeTimeOptions() {
+  const hours = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'))
+  const minutes = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, '0'))
+
+  return { hours, minutes, periods: ['AM', 'PM'] }
+}
+
 function FieldRow({ icon, title, value, placeholder, onClick }) {
   return (
     <button
