@@ -184,19 +184,28 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
           Share an update...
         </span>
 
-       <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#22c55e]" aria-hidden="true">
+       <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#31a84f]" aria-hidden="true">
   <svg
-    className="h-[25px] w-[20px]"
-    viewBox="0 0 20 26"
+    className="h-[25px] w-[21px]"
+    viewBox="0 0 22 26"
     fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
   >
-    <rect x="3" y="3" width="14" height="20" rx="2.5" />
-    <circle cx="7.2" cy="8.2" r="1.35" fill="currentColor" stroke="none" />
-    <path d="M4.8 19.5l4.1-4.2 2.7 2.9 2.2-2.4 3.2 3.7" />
+    <rect
+      x="2.5"
+      y="3"
+      width="17"
+      height="20"
+      rx="3"
+      fill="currentColor"
+    />
+    <circle cx="7.2" cy="8.2" r="1.55" fill="white" />
+    <path
+      d="M4.9 18.5l4.1-4.4 3.1 3.4 2.1-2.4 3.3 3.4"
+      stroke="white"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 </span>
       </button>
