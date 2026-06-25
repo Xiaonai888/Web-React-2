@@ -314,6 +314,31 @@ function summarizeHours(type, schedule) {
     .join('\n')
 }
 
+function FieldRow({ icon, title, value, placeholder, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-start gap-2.5 py-2 text-left active:bg-[#f8fafc]"
+    >
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[15px]`} />
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-normal leading-5 text-[#111827]">{title}</span>
+        <span className={`mt-0.5 block whitespace-pre-wrap break-words text-[11px] font-normal leading-4 ${value ? 'text-[#4b5563]' : 'text-[#9ca3af]'}`}>
+          {value || placeholder}
+        </span>
+      </span>
+
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#6b7280]">
+        <i className="fa-solid fa-pen text-[12px]" />
+      </span>
+    </button>
+  )
+}
+
 function SectionBlock({ id, title, children, sectionRef }) {
   return (
     <section ref={sectionRef} id={id} className="scroll-mt-20">
