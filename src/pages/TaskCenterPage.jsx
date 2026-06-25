@@ -464,7 +464,6 @@ export default function TaskCenterPage() {
   {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak active.'}
 </p>
 </section>
-</div>
 
 <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
