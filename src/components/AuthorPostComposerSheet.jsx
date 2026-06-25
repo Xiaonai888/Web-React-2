@@ -512,9 +512,29 @@ export default function AuthorPostComposerSheet({
                   onClick={() => fileInputRef.current?.click()}
                   className="flex h-11 items-center gap-3 rounded-[14px] px-2 text-[14px] font-normal text-[#111827] active:bg-[#f3f4f6]"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#f4f5f7] text-[#111827]">
-                    <i className="fa-regular fa-image text-[17px]" />
-                  </span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#f4f5f7] text-[#111827]" aria-hidden="true">
+  <svg
+    className="h-[23px] w-[19px]"
+    viewBox="0 0 22 26"
+    fill="none"
+  >
+    <rect
+      x="3"
+      y="3"
+      width="16"
+      height="20"
+      rx="3"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+    />
+    <circle cx="7.5" cy="8.8" r="1.45" fill="currentColor" />
+    <path
+      d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
+      fill="currentColor"
+    />
+  </svg>
+</span>
                   Add photo
                 </button>
               </div>
