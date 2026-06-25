@@ -365,7 +365,7 @@ export default function TaskCenterPage() {
       <main className="mx-auto max-w-[760px] pt-0">
   <div
     className="bg-cover bg-center pb-3 pt-0"
-    style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background.webp')" }}
+    style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background%202.webp')" }}
   >
     <header className="relative z-10 flex h-14 items-center justify-between px-4 text-white">
       <button
