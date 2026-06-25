@@ -614,21 +614,47 @@ function LockedEpisodeCard({
   episode,
   wallet,
   packageOptions,
+  unlockStatus,
   autoUnlock,
   setAutoUnlock,
   showAutoHint,
   setShowAutoHint,
   unlocking,
   onUnlock,
-  onTopUp,
+  onAccessUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
+  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
+  const voucherBalance = Number(wallet?.voucher_balance || 0)
+  const storyCardBalance = Number(wallet?.story_card_balance || 0)
   const singleOption = packageOptions.find((option) => option.key === 'single')
   const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
+  const coinAccess = unlockStatus?.coin_access || unlockStatus?.gem_access
+  const voucherAccess = unlockStatus?.voucher_access
+  const storyCardAccess = unlockStatus?.story_card_access
+  const adAccess = unlockStatus?.ad_access
+
+  const accessWaitText = (access) => {
+    if (access?.available) return ''
+    const waitText = formatWaitTime(access?.wait_seconds)
+
+    return waitText ? `Wait ${waitText}` : 'Not available yet'
+  }
+
+  const accessButtonClass = 'flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:bg-[#F4F5F7] disabled:text-[#9CA3AF] disabled:opacity-70'
+
+  const coinPrice = Number(coinAccess?.amount || 0)
+  const voucherPrice = Number(voucherAccess?.amount || 0)
+  const storyCardPrice = Number(storyCardAccess?.amount || 0)
+
+  const coinDisabled = unlocking || !coinAccess?.available || coinBalance < coinPrice
+  const voucherDisabled = unlocking || !voucherAccess?.available || voucherBalance < voucherPrice
+  const storyCardDisabled = unlocking || !storyCardAccess?.available || storyCardBalance < storyCardPrice
+  const adDisabled = unlocking || !adAccess?.available
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-[#F3F4F6]/85 px-0 pb-0">
-      <section className="max-h-[82vh] min-h-[360px] w-screen overflow-y-auto rounded-t-[30px] bg-[#FFFDF7] px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.18)] ring-1 ring-[#E7C56A]/35">
+      <section className="max-h-[82vh] min-h-[390px] w-screen overflow-y-auto rounded-t-[30px] bg-[#FFFDF7] px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.18)] ring-1 ring-[#E7C56A]/35">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D8B94E]" />
 
         <div className="text-center">
@@ -659,6 +685,74 @@ function LockedEpisodeCard({
             </button>
           ) : null}
 
+          <button
+            type="button"
+            onClick={() => onAccessUnlock('coin')}
+            disabled={coinDisabled}
+            className={accessButtonClass}
+          >
+            <span className="flex items-center gap-3 text-[14px] font-black">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2FF]">
+                <i className="fa-solid fa-coins text-[12px]" />
+              </span>
+              {formatNumber(coinPrice)} Coins
+            </span>
+            <span className="text-[11px] font-black">
+              {accessWaitText(coinAccess) || `My ${formatNumber(coinBalance)}`}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onAccessUnlock('voucher')}
+            disabled={voucherDisabled}
+            className={accessButtonClass}
+          >
+            <span className="flex items-center gap-3 text-[14px] font-black">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0FDF4]">
+                <i className="fa-solid fa-ticket text-[12px]" />
+              </span>
+              {formatNumber(voucherPrice)} Vouchers
+            </span>
+            <span className="text-[11px] font-black">
+              {accessWaitText(voucherAccess) || `My ${formatNumber(voucherBalance)}`}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onAccessUnlock('story_card')}
+            disabled={storyCardDisabled}
+            className={accessButtonClass}
+          >
+            <span className="flex items-center gap-3 text-[14px] font-black">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF7ED]">
+                <i className="fa-solid fa-id-card text-[12px]" />
+              </span>
+              {formatNumber(storyCardPrice)} Story Cards
+            </span>
+            <span className="text-[11px] font-black">
+              {accessWaitText(storyCardAccess) || `My ${formatNumber(storyCardBalance)}`}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onAccessUnlock('ad')}
+            disabled={adDisabled}
+            className={accessButtonClass}
+          >
+            <span className="flex items-center gap-3 text-[14px] font-black">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
+                <i className="fa-solid fa-play text-[12px]" />
+              </span>
+              Watch Ad
+            </span>
+            <span className="text-[11px] font-black">
+              {accessWaitText(adAccess) || 'Unlock'}
+            </span>
+          </button>
+
           {next30Option ? (
             <button
               type="button"
@@ -671,7 +765,7 @@ function LockedEpisodeCard({
                   <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-[#FFF9E8]">
                     <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                   </span>
-                  {formatNumber(next30Option.price)} Diamonds for 30 Ep.
+                  {formatNumber(next30Option.price)} to unlock 30 Ep.
                 </span>
                 <span className="ml-11 mt-1 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111827]">
                   Discount {next30Option.discount_percent || 20}%
@@ -682,51 +776,42 @@ function LockedEpisodeCard({
           ) : null}
         </div>
 
-        <div className="mt-5 rounded-[18px] bg-white/70 px-4 py-4 ring-1 ring-[#E5E7EB]">
+        <div className="mt-4 px-1">
           <div className="flex items-center justify-between gap-4">
-            <div className="text-[13px] font-semibold text-[#8D94A1]">
+            <div className="text-[13px] font-normal text-[#9CA3AF]">
               My Diamonds: {formatNumber(diamondBalance)}
             </div>
-
-            <button
-              type="button"
-              onClick={onTopUp}
-              className="h-9 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white shadow-sm active:scale-95"
-            >
-              Top Up
-            </button>
-          </div>
-
-          <div className="relative mt-4 flex items-center justify-end gap-2 text-[13px] font-normal text-[#9CA3AF]">
-            <button
-              type="button"
-              onClick={() => setShowAutoHint((value) => !value)}
-              className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
-              aria-label="Auto unlock info"
-            >
-              ?
-            </button>
-
-            {showAutoHint ? (
+            <div className="relative flex items-center gap-2 text-[13px] font-normal text-[#9CA3AF]">
               <button
                 type="button"
-                onClick={() => setShowAutoHint(false)}
-                className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+                onClick={() => setShowAutoHint((value) => !value)}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
+                aria-label="Auto unlock info"
               >
-                Auto-unlock uses Diamonds only.
+                ?
               </button>
-            ) : null}
 
-            <button
-              type="button"
-              onClick={() => setAutoUnlock((value) => !value)}
-              className="flex items-center gap-2"
-            >
-              Auto unlock
-              <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
-                <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
-              </span>
-            </button>
+              {showAutoHint ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAutoHint(false)}
+                  className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+                >
+                  Auto-unlock uses Diamonds only. Coins, Vouchers, Story Cards, and Ads are manual unlock methods.
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => setAutoUnlock((value) => !value)}
+                className="flex items-center gap-2"
+              >
+                Auto unlock
+                <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
+                  <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -737,7 +822,6 @@ function LockedEpisodeCard({
     </div>
   )
 }
-
 
 function ReaderIconButton({ icon, label, onClick, className = '', disabled = false }) {
 
@@ -2106,7 +2190,8 @@ return (
 
         {!loading && lockedEpisode && episode ? (
   <LockedEpisodeCard
-
+    unlockStatus={unlockStatus}
+    onAccessUnlock={handleLockedAccessUnlock}
     theme={theme}
     episode={episode}
     wallet={unlockWallet}
@@ -2117,13 +2202,6 @@ return (
     setShowAutoHint={setUnlockAutoHintOpen}
     unlocking={unlockingEpisode}
     onUnlock={handleLockedDiamondUnlock}
-    onTopUp={() =>
-  navigate('/shop/mall/purchase', {
-    state: {
-      returnTo: `/story/${storyId}/episode/${episodeId}`,
-    },
-  })
-}
   />
 ) : null}
 
