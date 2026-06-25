@@ -107,11 +107,11 @@ function DiamondIcon({ className = 'h-5 w-5' }) {
 
 function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   const styles = {
-    dark: 'bg-[#111827] text-white',
-    gold: 'bg-[#F6B800] text-[#111827]',
-    soft: 'bg-[#e5e7eb] text-[#6b7280]',
-    outline: 'border border-[#d1d5db] bg-white text-[#111827]',
-  }
+  dark: 'bg-[#111827] text-white',
+  gold: 'bg-[#ff3f62] text-white',
+  soft: 'bg-[#e5e7eb] text-[#8b93a1]',
+  outline: 'bg-[#ff3f62] text-white',
+}
 
   return (
     <button
