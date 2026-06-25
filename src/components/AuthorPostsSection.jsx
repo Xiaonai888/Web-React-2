@@ -184,10 +184,21 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
           Share an update...
         </span>
 
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#22c55e]">
-          <i className="fa-regular fa-image text-[20px]" />
-        </span>
-      </button>
+        <span className="flex h-8 w-10 shrink-0 items-center justify-center text-[#22c55e]" aria-hidden="true">
+  <svg
+    className="h-[19px] w-[22px]"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.1"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
+    <circle cx="8.3" cy="9.2" r="1.4" fill="currentColor" stroke="none" />
+    <path d="M5.5 16.7l4.1-4.1 3 3 2.3-2.3 3.6 3.4" />
+  </svg>
+</span>
 
       <button
         type="button"
