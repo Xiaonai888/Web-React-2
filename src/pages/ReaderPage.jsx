@@ -19,13 +19,6 @@ function readerAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-function readerJsonHeaders() {
-  return {
-    ...readerAuthHeaders(),
-    'Content-Type': 'application/json',
-  }
-}
-
 const REVIEW_READ_PROGRESS_PERCENT = 85
 const PAGING_LINES_PER_PAGE = 20
 
@@ -265,22 +258,6 @@ function formatDate(value) {
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
-
-function formatWaitTime(seconds) {
-  const value = Number(seconds || 0)
-
-  if (value <= 0) return ''
-
-  const days = Math.floor(value / 86400)
-  const hours = Math.ceil(value / 3600)
-  const minutes = Math.ceil(value / 60)
-
-  if (days > 0) return `${days}d`
-  if (hours > 0) return `${hours}h`
-
-  return `${minutes}m`
-}
-
 
 function splitParagraphs(content) {
   const text = String(content || '').trim()
@@ -614,43 +591,16 @@ function LockedEpisodeCard({
   episode,
   wallet,
   packageOptions,
-  unlockStatus,
   autoUnlock,
   setAutoUnlock,
   showAutoHint,
   setShowAutoHint,
   unlocking,
   onUnlock,
-  onAccessUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
-  const voucherBalance = Number(wallet?.voucher_balance || 0)
-  const storyCardBalance = Number(wallet?.story_card_balance || 0)
   const singleOption = packageOptions.find((option) => option.key === 'single')
   const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
-  const coinAccess = unlockStatus?.coin_access || unlockStatus?.gem_access
-  const voucherAccess = unlockStatus?.voucher_access
-  const storyCardAccess = unlockStatus?.story_card_access
-  const adAccess = unlockStatus?.ad_access
-
-  const accessWaitText = (access) => {
-    if (access?.available) return ''
-    const waitText = formatWaitTime(access?.wait_seconds)
-
-    return waitText ? `Wait ${waitText}` : 'Not available yet'
-  }
-
-  const accessButtonClass = 'flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:bg-[#F4F5F7] disabled:text-[#9CA3AF] disabled:opacity-70'
-
-  const coinPrice = Number(coinAccess?.amount || 0)
-  const voucherPrice = Number(voucherAccess?.amount || 0)
-  const storyCardPrice = Number(storyCardAccess?.amount || 0)
-
-  const coinDisabled = unlocking || !coinAccess?.available || coinBalance < coinPrice
-  const voucherDisabled = unlocking || !voucherAccess?.available || voucherBalance < voucherPrice
-  const storyCardDisabled = unlocking || !storyCardAccess?.available || storyCardBalance < storyCardPrice
-  const adDisabled = unlocking || !adAccess?.available
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-[#F3F4F6]/85 px-0 pb-0">
@@ -679,7 +629,7 @@ function LockedEpisodeCard({
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-white">
                   <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                 </span>
-                {formatNumber(singleOption.price)} Diamonds
+                {formatNumber(singleOption.price)} to unlock this Ep.
               </span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
             </button>
@@ -687,60 +637,8 @@ function LockedEpisodeCard({
 
           <button
             type="button"
-            onClick={() => onAccessUnlock('coin')}
-            disabled={coinDisabled}
-            className={accessButtonClass}
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2FF]">
-                <i className="fa-solid fa-coins text-[12px]" />
-              </span>
-              {formatNumber(coinPrice)} Coins
-            </span>
-            <span className="text-[11px] font-black">
-              {accessWaitText(coinAccess) || `My ${formatNumber(coinBalance)}`}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onAccessUnlock('voucher')}
-            disabled={voucherDisabled}
-            className={accessButtonClass}
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0FDF4]">
-                <i className="fa-solid fa-ticket text-[12px]" />
-              </span>
-              {formatNumber(voucherPrice)} Vouchers
-            </span>
-            <span className="text-[11px] font-black">
-              {accessWaitText(voucherAccess) || `My ${formatNumber(voucherBalance)}`}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onAccessUnlock('story_card')}
-            disabled={storyCardDisabled}
-            className={accessButtonClass}
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF7ED]">
-                <i className="fa-solid fa-id-card text-[12px]" />
-              </span>
-              {formatNumber(storyCardPrice)} Story Cards
-            </span>
-            <span className="text-[11px] font-black">
-              {accessWaitText(storyCardAccess) || `My ${formatNumber(storyCardBalance)}`}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onAccessUnlock('ad')}
-            disabled={adDisabled}
-            className={accessButtonClass}
+            disabled
+            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
           >
             <span className="flex items-center gap-3 text-[14px] font-black">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
@@ -748,9 +646,7 @@ function LockedEpisodeCard({
               </span>
               Watch Ad
             </span>
-            <span className="text-[11px] font-black">
-              {accessWaitText(adAccess) || 'Unlock'}
-            </span>
+            <span className="text-[11px] font-black">Coming soon</span>
           </button>
 
           {next30Option ? (
@@ -777,10 +673,10 @@ function LockedEpisodeCard({
         </div>
 
         <div className="mt-4 px-1">
-          <div className="flex items-center justify-between gap-4">
+  <div className="flex items-center justify-between gap-4">
             <div className="text-[13px] font-normal text-[#9CA3AF]">
-              My Diamonds: {formatNumber(diamondBalance)}
-            </div>
+  My Diamonds: {formatNumber(diamondBalance)}
+</div>
             <div className="relative flex items-center gap-2 text-[13px] font-normal text-[#9CA3AF]">
               <button
                 type="button"
@@ -797,7 +693,7 @@ function LockedEpisodeCard({
                   onClick={() => setShowAutoHint(false)}
                   className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
                 >
-                  Auto-unlock uses Diamonds only. Coins, Vouchers, Story Cards, and Ads are manual unlock methods.
+                  Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
                 </button>
               ) : null}
 
@@ -1534,7 +1430,6 @@ export default function ReaderPage() {
   const [lockedEpisode, setLockedEpisode] = useState(false)
   const [unlockWallet, setUnlockWallet] = useState(null)
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
-  const [unlockStatus, setUnlockStatus] = useState(null)
   const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
   const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
   const [unlockingEpisode, setUnlockingEpisode] = useState(false)
@@ -1694,7 +1589,6 @@ async function loadReaderAdStatus() {
   } catch {
     setUnlockWallet(null)
     setUnlockPackageOptions([])
-    setUnlockStatus(null)
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1915,7 +1809,6 @@ setReaderGateReady(true)
   setUnlockWallet(data.wallet || null)
   setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
   setUnlockPackageOptions(Array.isArray(data.package_options) ? data.package_options : [])
-  setUnlockStatus(data || null)
 }
 
 async function handleLockedDiamondUnlock(packageKey) {
@@ -1939,7 +1832,7 @@ async function handleLockedDiamondUnlock(packageKey) {
 
     const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/package`, {
       method: 'POST',
-      headers: readerJsonHeaders(),
+      headers: readerAuthHeaders(),
       body: JSON.stringify({
         package_key: packageKey,
       }),
@@ -1957,45 +1850,6 @@ async function handleLockedDiamondUnlock(packageKey) {
   return
 }
 
-      throw new Error(data.message || 'Failed to unlock episode')
-    }
-
-    window.location.reload()
-  } catch (error) {
-    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
-  } finally {
-    setUnlockingEpisode(false)
-  }
-}
-
-  async function handleLockedAccessUnlock(method) {
-  const endpointMap = {
-    coin: 'gem',
-    gem: 'gem',
-    voucher: 'voucher',
-    story_card: 'story-card',
-    ad: 'ad',
-  }
-
-  const endpoint = endpointMap[method]
-
-  if (!endpoint) return
-
-  const body = method === 'story_card' ? { card_type: 'simple' } : {}
-
-  try {
-    setUnlockingEpisode(true)
-    setMessage('')
-
-    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/${endpoint}`, {
-      method: 'POST',
-      headers: readerJsonHeaders(),
-      body: JSON.stringify(body),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
       throw new Error(data.message || 'Failed to unlock episode')
     }
 
@@ -2190,8 +2044,6 @@ return (
 
         {!loading && lockedEpisode && episode ? (
   <LockedEpisodeCard
-    unlockStatus={unlockStatus}
-    onAccessUnlock={handleLockedAccessUnlock}
     theme={theme}
     episode={episode}
     wallet={unlockWallet}
@@ -2356,43 +2208,4 @@ return (
       </main>
     </div>
   )
-
-  async function handleLockedAccessUnlock(method) {
-  const endpointMap = {
-    coin: 'gem',
-    gem: 'gem',
-    voucher: 'voucher',
-    story_card: 'story-card',
-    ad: 'ad',
-  }
-
-  const endpoint = endpointMap[method]
-
-  if (!endpoint) return
-
-  const body = method === 'story_card' ? { card_type: 'simple' } : {}
-
-  try {
-    setUnlockingEpisode(true)
-    setMessage('')
-
-    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/${endpoint}`, {
-      method: 'POST',
-      headers: readerJsonHeaders(),
-      body: JSON.stringify(body),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to unlock episode')
-    }
-
-    window.location.reload()
-  } catch (error) {
-    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
-  } finally {
-    setUnlockingEpisode(false)
-  }
-}
 }
