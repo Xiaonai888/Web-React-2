@@ -71,9 +71,11 @@ function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
 
 function CoinIcon({ size = 'h-9 w-9' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full border border-[#F4D58D] bg-[#FFF7ED] ${size}`}>
-      <i className="fa-solid fa-coins text-[15px] text-[#D99A00]" />
-    </span>
+    <img
+      src="/assets/Icons/Shadow%20Coin.svg"
+      alt="Shadow Coin"
+      className={`shrink-0 object-contain ${size}`}
+    />
   )
 }
 
