@@ -127,17 +127,17 @@ function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
 
 function BalanceBox({ label, value, type }) {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[22px] bg-white/85 px-4 py-4 shadow-[0_12px_28px_rgba(244,63,94,0.18)] ring-1 ring-white/60 backdrop-blur">
+    <div className="flex min-w-0 flex-1 items-center gap-3 px-4 py-4">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center">
         {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-6 w-6" />}
       </div>
 
       <div className="min-w-0">
-        <div className="flex items-center gap-1 text-[11px] font-bold text-[#6b7280]">
+        <div className="flex items-center gap-1 text-[12px] font-bold text-[#6b7280]">
           <span>{label}</span>
           <i className="fa-solid fa-chevron-right text-[9px]" />
         </div>
-        <div className="mt-0.5 text-[22px] font-black leading-none text-[#f43f5e]">{formatNumber(value)}</div>
+        <div className="mt-1 text-[24px] font-black leading-none text-[#f43f5e]">{formatNumber(value)}</div>
       </div>
     </div>
   )
@@ -362,9 +362,9 @@ export default function TaskCenterPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       
 
-      <main className="mx-auto max-w-[760px] pt-0">
+<main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
   <div
-    className="bg-cover bg-center pb-3 pt-0"
+    className="bg-cover bg-center pb-8 pt-0"
     style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background%202.webp')" }}
   >
     <header className="relative z-10 flex h-14 items-center justify-between px-4 text-white">
@@ -387,26 +387,30 @@ export default function TaskCenterPage() {
         <i className="fa-solid fa-ellipsis text-[16px]" />
       </button>
     </header>
-  <section className="relative overflow-hidden px-4 pb-2 pt-2 text-white">
-  <div className="relative">
-            
 
-            <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em]">
-              Earn coins to unlock stories
-            </h2>
+    <section className="relative overflow-hidden px-4 pb-8 pt-2 text-white">
+      <div className="relative">
+        <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em] drop-shadow">
+          Earn coins to unlock stories
+        </h2>
 
-            <p className="mt-2 max-w-[380px] text-[12px] font-semibold leading-5 text-white/65">
-              Check in daily and complete simple tasks to collect coins and diamonds.
-            </p>
+        <p className="mt-2 max-w-[380px] text-[12px] font-semibold leading-5 text-white/80 drop-shadow">
+          Check in daily and complete simple tasks to collect coins and diamonds.
+        </p>
+      </div>
+    </section>
+  </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
-              <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
-            </div>
-          </div>
-        </section>
+  <section className="-mt-7 px-4">
+    <div className="overflow-hidden rounded-t-[24px] rounded-b-[18px] bg-white shadow-[0_10px_28px_rgba(17,24,39,0.10)] ring-1 ring-black/5">
+      <div className="grid grid-cols-2 divide-x divide-[#eef0f4]">
+        <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
+        <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
+      </div>
+    </div>
+  </section>
 
-        <section className="mt-3 bg-white p-5 shadow-sm">
+  <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[19px] font-black leading-6 text-[#111827]">
