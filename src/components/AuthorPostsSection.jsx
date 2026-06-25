@@ -197,8 +197,9 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
     <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
     <circle cx="8.3" cy="9.2" r="1.4" fill="currentColor" stroke="none" />
     <path d="M5.5 16.7l4.1-4.1 3 3 2.3-2.3 3.6 3.4" />
-  </svg>
+    </svg>
 </span>
+      </button>
 
       <button
         type="button"
