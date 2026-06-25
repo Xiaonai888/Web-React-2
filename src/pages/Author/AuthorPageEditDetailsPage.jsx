@@ -1492,7 +1492,6 @@ profile_details: details,
   placeholder="Add address"
   onClick={() => setActiveModal('address')}
 />
-  />
   <FieldRow
   icon="fa-regular fa-clock"
   title="Hours"
