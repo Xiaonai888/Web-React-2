@@ -376,8 +376,7 @@ export default function TaskCenterPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[18px] font-black text-[#111827]">Task Center</h1>
-
+          <h1 className="text-[16px] font-bold text-[#111827]">Task Center</h1>
           <button
             type="button"
             onClick={() => navigate('/tasks/history')}
@@ -396,12 +395,9 @@ export default function TaskCenterPage() {
   <div className="absolute inset-0 bg-black/10" />
 
           <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-black text-[#F6B800] ring-1 ring-white/10">
-              <i className="fa-solid fa-sparkles" />
-              Daily Rewards
-            </div>
+            
 
-            <h2 className="mt-4 max-w-[320px] text-[26px] font-black leading-[1.08] tracking-[-0.03em]">
+            <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em]">
               Earn coins to unlock stories
             </h2>
 
