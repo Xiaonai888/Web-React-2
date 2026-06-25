@@ -2686,9 +2686,20 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
   {profileDetails.address ? (
     <div className="flex items-start gap-4">
-      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]">
-        <i className="fa-solid fa-location-dot text-[16px]" />
-      </span>
+      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]" aria-hidden="true">
+  <svg
+    className="h-[18px] w-[18px]"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 21s6-5.35 6-11a6 6 0 0 0-12 0c0 5.65 6 11 6 11z" />
+    <circle cx="12" cy="10" r="2.2" />
+  </svg>
+</span>
       <span className="whitespace-pre-wrap break-words leading-5">
         {profileDetails.address}
       </span>
