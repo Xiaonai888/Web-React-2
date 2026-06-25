@@ -628,7 +628,7 @@ function LockedEpisodeCard({
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-[#F3F4F6]/85 px-0 pb-0">
-      <section className="max-h-[82vh] min-h-[390px] w-screen overflow-y-auto rounded-t-[30px] bg-[#FFFDF7] px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.18)] ring-1 ring-[#E7C56A]/35">
+      <section className="max-h-[82vh] min-h-[360px] w-screen overflow-y-auto rounded-t-[30px] bg-[#FFFDF7] px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.18)] ring-1 ring-[#E7C56A]/35">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D8B94E]" />
 
         <div className="text-center">
@@ -653,25 +653,11 @@ function LockedEpisodeCard({
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-white">
                   <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                 </span>
-                {formatNumber(singleOption.price)} to unlock this Ep.
+                {formatNumber(singleOption.price)} Diamonds
               </span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
             </button>
           ) : null}
-
-          <button
-            type="button"
-            disabled
-            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
-                <i className="fa-solid fa-play text-[12px]" />
-              </span>
-              Watch Ad
-            </span>
-            <span className="text-[11px] font-black">Coming soon</span>
-          </button>
 
           {next30Option ? (
             <button
@@ -685,7 +671,7 @@ function LockedEpisodeCard({
                   <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-[#FFF9E8]">
                     <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                   </span>
-                  {formatNumber(next30Option.price)} to unlock 30 Ep.
+                  {formatNumber(next30Option.price)} Diamonds for 30 Ep.
                 </span>
                 <span className="ml-11 mt-1 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111827]">
                   Discount {next30Option.discount_percent || 20}%
@@ -696,22 +682,22 @@ function LockedEpisodeCard({
           ) : null}
         </div>
 
-        <div className="mt-4 px-1">
+        <div className="mt-5 rounded-[18px] bg-white/70 px-4 py-4 ring-1 ring-[#E5E7EB]">
           <div className="flex items-center justify-between gap-4">
-            <div className="text-[13px] font-normal text-[#9CA3AF]">
+            <div className="text-[13px] font-semibold text-[#8D94A1]">
               My Diamonds: {formatNumber(diamondBalance)}
             </div>
 
             <button
               type="button"
               onClick={onTopUp}
-              className="h-8 rounded-full bg-[#111827] px-4 text-[12px] font-black text-white active:scale-95"
+              className="h-9 rounded-full bg-[#111827] px-5 text-[12px] font-black text-white shadow-sm active:scale-95"
             >
               Top Up
             </button>
           </div>
 
-          <div className="mt-3 flex items-center justify-end gap-2 text-[13px] font-normal text-[#9CA3AF]">
+          <div className="relative mt-4 flex items-center justify-end gap-2 text-[13px] font-normal text-[#9CA3AF]">
             <button
               type="button"
               onClick={() => setShowAutoHint((value) => !value)}
@@ -725,9 +711,9 @@ function LockedEpisodeCard({
               <button
                 type="button"
                 onClick={() => setShowAutoHint(false)}
-                className="absolute bottom-20 right-5 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
+                className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
               >
-                Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
+                Auto-unlock uses Diamonds only.
               </button>
             ) : null}
 
