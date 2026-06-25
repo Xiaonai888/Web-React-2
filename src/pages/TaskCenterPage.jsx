@@ -89,9 +89,11 @@ function formatNumber(value) {
 
 function CoinIcon({ className = 'h-5 w-5' }) {
   return (
-    <span className={`inline-flex shrink-0 items-center justify-center ${className}`}>
-      <i className="fa-solid fa-coins text-[#F6B800]" />
-    </span>
+    <img
+      src="/assets/icons/Shadow%20Coin.svg"
+      alt="Shadow Coin"
+      className={`shrink-0 object-contain ${className}`}
+    />
   )
 }
 
