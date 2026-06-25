@@ -388,13 +388,12 @@ export default function TaskCenterPage() {
       </header>
 
       <main className="mx-auto max-w-[760px] px-4 pt-0">
-  <section
-    className="relative -mx-4 overflow-hidden bg-cover bg-center px-4 pb-5 pt-5 text-white"
+  <div
+    className="-mx-4 bg-cover bg-center px-4 pb-5 pt-0"
     style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background.webp')" }}
   >
-    <div className="absolute inset-0 bg-black/5" />
-
-    <div className="relative">
+  <section className="relative overflow-hidden pb-5 pt-5 text-white">
+  <div className="relative">
             
 
             <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em]">
@@ -465,7 +464,8 @@ export default function TaskCenterPage() {
           <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-[#8b93a1]">
             {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak alive.'}
           </p>
-        </section>
+                </section>
+      </div>
 
         <section className="mt-5 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div className="flex items-center justify-between gap-3">
