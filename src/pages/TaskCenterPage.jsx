@@ -127,14 +127,17 @@ function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
 
 function BalanceBox({ label, value, type }) {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[22px] bg-white/10 px-4 py-4 ring-1 ring-white/10">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
-        {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-5 w-5" />}
+    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[22px] bg-white/85 px-4 py-4 shadow-[0_12px_28px_rgba(244,63,94,0.18)] ring-1 ring-white/60 backdrop-blur">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+        {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-6 w-6" />}
       </div>
 
       <div className="min-w-0">
-        <div className="text-[11px] font-bold text-white/65">{label}</div>
-        <div className="mt-0.5 text-[22px] font-black leading-none text-white">{formatNumber(value)}</div>
+        <div className="flex items-center gap-1 text-[11px] font-bold text-[#6b7280]">
+          <span>{label}</span>
+          <i className="fa-solid fa-chevron-right text-[9px]" />
+        </div>
+        <div className="mt-0.5 text-[22px] font-black leading-none text-[#f43f5e]">{formatNumber(value)}</div>
       </div>
     </div>
   )
@@ -150,21 +153,13 @@ function DayReward({ reward, currentDay, claimedToday }) {
 
   return (
     <div className="min-w-[68px] text-center">
-      <div
-        className={`mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-[20px] border ${
-          isToday && !claimedToday
-            ? 'border-[#F6B800] bg-[#fff7d6] shadow-[0_10px_18px_rgba(246,184,0,0.18)]'
-            : isClaimed
-              ? 'border-[#e5e7eb] bg-[#f4f5f7]'
-              : 'border-[#eef0f4] bg-white'
-        } ${isLocked ? 'opacity-55' : ''}`}
-      >
-        {reward.story_cards ? (
-          <span className="text-[28px] leading-none">🎁</span>
-        ) : (
-          <CoinIcon className="h-6 w-6" />
-        )}
-      </div>
+      <div className={`mx-auto flex h-9 w-9 items-center justify-center ${isLocked ? 'opacity-55' : ''}`}>
+  {reward.story_cards ? (
+    <span className="text-[28px] leading-none">🎁</span>
+  ) : (
+    <CoinIcon className="h-8 w-8" />
+  )}
+</div>
 
       <div className="mt-2 text-[11px] font-black text-[#111827]">
         {reward.story_cards ? 'Gift' : reward.gems}
@@ -365,34 +360,34 @@ export default function TaskCenterPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+      
 
-          <h1 className="text-[16px] font-bold text-[#111827]">Task Center</h1>
-          <button
-            type="button"
-            onClick={() => navigate('/tasks/history')}
-            className="rounded-full bg-[#f5f3fa] px-4 py-2 text-[12px] font-black text-[#111827] active:scale-95"
-          >
-            History
-          </button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[760px] px-4 pt-0">
+      <main className="mx-auto max-w-[760px] pt-0">
   <div
-    className="-mx-4 bg-cover bg-center px-4 pb-5 pt-0"
+    className="bg-cover bg-center pb-3 pt-0"
     style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background.webp')" }}
   >
-  <section className="relative overflow-hidden pb-5 pt-5 text-white">
+    <header className="relative z-10 flex h-14 items-center justify-between px-4 text-white">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white shadow-sm active:scale-95"
+        aria-label="Go back"
+      >
+        <i className="fa-solid fa-chevron-left text-[14px]" />
+      </button>
+
+      <h1 className="text-[16px] font-bold drop-shadow">Task Center</h1>
+
+      <button
+        type="button"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white shadow-sm active:scale-95"
+        aria-label="More"
+      >
+        <i className="fa-solid fa-ellipsis text-[16px]" />
+      </button>
+    </header>
+  <section className="relative overflow-hidden px-4 pb-2 pt-2 text-white">
   <div className="relative">
             
 
@@ -411,7 +406,7 @@ export default function TaskCenterPage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[19px] font-black leading-6 text-[#111827]">
@@ -467,7 +462,7 @@ export default function TaskCenterPage() {
                 </section>
       </div>
 
-        <section className="mt-5 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-[19px] font-black text-[#111827]">More Rewards</h2>
