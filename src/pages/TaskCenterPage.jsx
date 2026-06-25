@@ -90,7 +90,7 @@ function formatNumber(value) {
 function CoinIcon({ className = 'h-5 w-5' }) {
   return (
     <img
-      src="/assets/icons/Shadow%20Coin.svg"
+      src="/assets/Icons/Shadow%20Coin.svg"
       alt="Shadow Coin"
       className={`shrink-0 object-contain ${className}`}
     />
