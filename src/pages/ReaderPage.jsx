@@ -1669,15 +1669,14 @@ setReaderGateReady(true)
     }
 
     const characterCount = Number(episode.character_count || episode.content?.length || 0)
-    const isShortEpisode = characterCount > 0 && characterCount < 3000
-    const requiredSeconds = isShortEpisode ? 30 : 60
-    const requiredProgress = isShortEpisode ? 60 : 20
-    let activeSeconds = 0
+const isShortEpisode = characterCount > 0 && characterCount < 3000
+const requiredSeconds = isShortEpisode ? 10 : 20
+const progressRuleEnabled = false
+const requiredProgress = isShortEpisode ? 60 : 20
+let activeSeconds = 0
 
     async function sendQualifiedView() {
-        console.log('QUALIFIED VIEW TRIGGERED')
-
-      if (qualifiedViewSentRef.current) return
+  if (qualifiedViewSentRef.current) return
 
       qualifiedViewSentRef.current = true
 
@@ -1692,10 +1691,12 @@ setReaderGateReady(true)
 
       activeSeconds += 1
 
-      if (activeSeconds >= requiredSeconds && readingProgressRef.current >= requiredProgress) {
-        window.clearInterval(timer)
-        sendQualifiedView()
-      }
+      const progressPassed = !progressRuleEnabled || readingProgressRef.current >= requiredProgress
+
+if (activeSeconds >= requiredSeconds && progressPassed) {
+  window.clearInterval(timer)
+  sendQualifiedView()
+}
     }, 1000)
 
     return () => {
