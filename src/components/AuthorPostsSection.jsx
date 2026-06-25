@@ -191,20 +191,19 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
     fill="none"
   >
     <rect
-      x="2.5"
-      y="3"
-      width="17"
-      height="20"
+      x="2.8"
+      y="3.2"
+      width="16.4"
+      height="19.6"
       rx="3"
-      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
     />
-    <circle cx="7.2" cy="8.2" r="1.55" fill="white" />
+    <circle cx="7.4" cy="8.7" r="1.55" fill="currentColor" />
     <path
-      d="M4.9 18.5l4.1-4.4 3.1 3.4 2.1-2.4 3.3 3.4"
-      stroke="white"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d="M4.9 18.9l4.2-4.5 3.1 3.3 2.1-2.4 3.2 3.6H4.9z"
+      fill="currentColor"
     />
   </svg>
 </span>
