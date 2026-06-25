@@ -164,6 +164,94 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
+function getCompactHoursText(details = {}) {
+  const type = String(details?.hours_type || '').trim()
+  const text = String(details?.hours || '').trim()
+
+  if (!text || type === 'not_applicable') return ''
+  if (type === 'always_open' || /^always open$/i.test(text)) return 'Always open'
+  if (type === 'temporarily_closed' || /^temporarily closed$/i.test(text)) return 'Temporarily closed'
+  if (type === 'permanently_closed' || /^permanently closed$/i.test(text)) return 'Permanently closed'
+  if (/^closed$/i.test(text)) return 'Closed'
+
+  const oneLine = text.replace(/\s+/g, ' ').trim()
+
+  if (!text.includes('\n')) {
+    if (/^everyday:\s*/i.test(oneLine)) {
+      return oneLine.replace(/^everyday:\s*/i, 'Open · Everyday ')
+    }
+
+    if (/^open\s+/i.test(oneLine)) {
+      return oneLine.replace(/^open\s+([^:]+):\s*/i, 'Open · $1 ')
+    }
+
+    return oneLine
+  }
+
+  const dayOrder = [
+    ['monday', 'Monday', 0],
+    ['tuesday', 'Tuesday', 1],
+    ['wednesday', 'Wednesday', 2],
+    ['thursday', 'Thursday', 3],
+    ['friday', 'Friday', 4],
+    ['saturday', 'Saturday', 5],
+    ['sunday', 'Sunday', 6],
+  ]
+
+  const dayMap = new Map(dayOrder.map(([key, label, index]) => [label.toLowerCase(), { key, label, index }]))
+
+  const entries = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const match = line.match(/^([A-Za-z]+):\s*(.+)$/)
+      if (!match) return null
+
+      const day = dayMap.get(match[1].toLowerCase())
+      if (!day) return null
+
+      return {
+        ...day,
+        hours: match[2].trim(),
+      }
+    })
+    .filter(Boolean)
+
+  if (!entries.length) return 'Hours available'
+
+  const openEntries = entries.filter((item) => !/^closed$/i.test(item.hours))
+
+  if (!openEntries.length) return 'Closed'
+
+  const uniqueHours = [...new Set(openEntries.map((item) => item.hours))]
+  const openIndexes = openEntries.map((item) => item.index).sort((a, b) => a - b)
+
+  if (uniqueHours.length === 1) {
+    const hours = uniqueHours[0]
+    const indexesText = openIndexes.join(',')
+
+    if (indexesText === '0,1,2,3,4,5,6') {
+      if (/open 24 hours/i.test(hours)) return 'Open 24 hours'
+      return `Open · Everyday ${hours}`
+    }
+
+    if (indexesText === '0,1,2,3,4') {
+      return `Open · Mon–Fri ${hours}`
+    }
+
+    if (indexesText === '5,6') {
+      return `Open · Sat–Sun ${hours}`
+    }
+
+    if (openEntries.length === 1) {
+      return `Open · ${openEntries[0].label} ${hours}`
+    }
+  }
+
+  return 'Hours vary by day'
+}
+
 function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) {
   const author = page || {}
 
@@ -2607,16 +2695,16 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
     </div>
   ) : null}
 
-  {profileDetails.hours ? (
-    <div className="flex items-start gap-4">
-      <span className="flex w-8 shrink-0 items-center justify-center pt-0.5 text-[#111827]">
-        <i className="fa-regular fa-clock text-[16px]" />
-      </span>
-      <span className="whitespace-pre-wrap break-words leading-5">
-        {profileDetails.hours}
-      </span>
-    </div>
-  ) : null}
+  {getCompactHoursText(profileDetails) ? (
+  <div className="flex items-center gap-4">
+    <span className="flex w-8 shrink-0 items-center justify-center text-[#111827]">
+      <i className="fa-regular fa-clock text-[16px]" />
+    </span>
+    <span className="line-clamp-1 break-words leading-5">
+      {getCompactHoursText(profileDetails)}
+    </span>
+  </div>
+) : null}
 </div>
     </section>
 
