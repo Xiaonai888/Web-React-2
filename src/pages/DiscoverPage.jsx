@@ -117,13 +117,42 @@ const feedItems = [
   },
 ]
 
+function GridHeaderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </svg>
+  )
+}
+
+function SearchHeaderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 4 4" />
+    </svg>
+  )
+}
+
+function BellHeaderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
+      <path d="M10 19h4" />
+    </svg>
+  )
+}
+
 function Header({ hidden }) {
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-100 bg-white shadow-sm transition-transform duration-200 ease-out"
+      className="fixed left-0 right-0 top-0 z-[100000] border-b border-gray-50 bg-white transition-transform duration-200 ease-out"
       style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
     >
-      <div className="mx-auto flex h-[72px] w-full max-w-[620px] items-center justify-between px-4">
+      <div className="mx-auto flex h-[58px] w-full max-w-[620px] items-center justify-between px-4">
         <Link to="/" className="flex h-9 w-[92px] items-center overflow-visible">
           <img
             src="/assets/Icons/Logo Shadow 2.svg"
@@ -134,17 +163,29 @@ function Header({ hidden }) {
           />
         </Link>
 
-        <div className="flex items-center space-x-5 text-xl text-gray-400">
-          <Link to="/genres" className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95" aria-label="Genres">
-            <img src="/assets/Icons/Genre.svg?v=2" alt="Genres" className="h-5 w-5 object-contain" />
+        <div className="flex items-center gap-5">
+          <Link
+            to="/genres"
+            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+            aria-label="Genres"
+          >
+            <GridHeaderIcon />
           </Link>
 
-          <Link to="/search" className="flex h-6 w-6 items-center justify-center transition-colors hover:text-[#111827]" aria-label="Search">
-            <i className="fas fa-search" />
+          <Link
+            to="/search"
+            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+            aria-label="Search"
+          >
+            <SearchHeaderIcon />
           </Link>
 
-          <Link to="/notifications" className="flex h-6 w-6 items-center justify-center transition-colors hover:text-[#111827]" aria-label="Notifications">
-            <i className="fas fa-bell" />
+          <Link
+            to="/notifications"
+            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
+            aria-label="Notifications"
+          >
+            <BellHeaderIcon />
           </Link>
         </div>
       </div>
