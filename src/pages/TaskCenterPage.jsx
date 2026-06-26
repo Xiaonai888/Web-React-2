@@ -438,11 +438,7 @@ useEffect(() => {
 </button>
   </header>
 
-  <section className="relative z-10 flex h-full flex-col justify-end px-4 pb-14 pt-16 text-white">
-    <h2 className="max-w-[310px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em] drop-shadow">
-      Earn coins to unlock stories
-    </h2>
-  </section>
+  <div className="absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-white/55 via-white/25 to-transparent backdrop-blur-[1px]" />
 </div>
 
   <section className="relative z-20 -mt-11">
