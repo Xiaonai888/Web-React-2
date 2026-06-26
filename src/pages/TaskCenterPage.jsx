@@ -409,29 +409,29 @@ useEffect(() => {
     }`}
   >
     <button
-      type="button"
-      onClick={() => navigate(-1)}
-      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
-        scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
-      }`}
-      aria-label="Go back"
-    >
-      <i className="fa-solid fa-chevron-left text-[14px]" />
-    </button>
+  type="button"
+  onClick={() => navigate(-1)}
+  className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
+    scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+  }`}
+  aria-label="Go back"
+>
+  <i className="fa-solid fa-chevron-left text-[14px]" />
+</button>
 
     <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
       Task Center
     </h1>
 
     <button
-      type="button"
-      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
-        scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
-      }`}
-      aria-label="More"
-    >
-      <i className="fa-solid fa-ellipsis text-[16px]" />
-    </button>
+  type="button"
+  className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
+    scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+  }`}
+  aria-label="More"
+>
+  <i className="fa-solid fa-ellipsis text-[16px]" />
+</button>
   </header>
 
   <section className="relative z-10 flex h-full flex-col justify-end px-4 pb-8 pt-16 text-white">
