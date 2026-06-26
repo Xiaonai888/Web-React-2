@@ -115,7 +115,7 @@ function getTagLine(story) {
 
 function SectionTitle({ icon, title }) {
   return (
-    <div className="mb-3 flex items-center justify-between px-4">
+    <div className="mb-3 grid grid-cols-[1fr_auto] items-center gap-3 px-4">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="shrink-0 text-[18px] leading-none">{icon}</span>
         <h2 className="min-w-0 truncate text-[18px] font-bold leading-6 text-[#111827]">{title}</h2>
