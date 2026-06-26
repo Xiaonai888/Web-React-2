@@ -156,16 +156,16 @@ function DayReward({ reward, currentDay, claimedToday }) {
   const label = isClaimed ? 'Claimed' : isToday ? 'Today' : isTomorrow ? 'Tomorrow' : 'Locked'
 
   return (
-    <div className="min-w-[68px] text-center">
-      <div className={`mx-auto flex h-9 w-9 items-center justify-center ${isLocked ? 'opacity-55' : ''}`}>
-  {reward.story_cards ? (
-    <span className="text-[28px] leading-none">🎁</span>
-  ) : (
-    <CoinIcon className="h-8 w-8" />
-  )}
-</div>
+    <div className="min-w-0 text-center">
+      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isLocked ? 'opacity-55' : ''}`}>
+        {reward.story_cards ? (
+          <span className="text-[21px] leading-none sm:text-[28px]">🎁</span>
+        ) : (
+          <CoinIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+        )}
+      </div>
 
-      <div className="mt-2 text-[11px] font-black text-[#111827]">
+      <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
         {reward.story_cards ? 'Gift' : reward.gems}
       </div>
 
