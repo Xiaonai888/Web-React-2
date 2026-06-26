@@ -125,9 +125,13 @@ function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   )
 }
 
-function BalanceBox({ label, value, type }) {
+function BalanceBox({ label, value, type, onClick }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 px-5 py-4">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-w-0 items-center gap-3 px-5 py-4 text-left active:scale-[0.99]"
+    >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center">
         {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-7 w-7" />}
       </div>
@@ -139,7 +143,7 @@ function BalanceBox({ label, value, type }) {
         </div>
         <div className="mt-1 text-[30px] font-black leading-none text-[#ff3f62]">{formatNumber(value)}</div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -444,8 +448,18 @@ useEffect(() => {
   <section className="relative z-20 -mt-11">
   <div className="overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
     <div className="grid grid-cols-2">
-      <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
-      <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
+      <BalanceBox
+  label="My Coins"
+  value={wallet.coins}
+  type="coin"
+  onClick={() => navigate('/tasks/history')}
+/>
+<BalanceBox
+  label="My Diamonds"
+  value={wallet.diamonds}
+  type="diamond"
+  onClick={() => navigate('/shop/mall/purchase')}
+/>
     </div>
 
     <div className="bg-white px-5 pb-4 pt-0">
