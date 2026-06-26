@@ -86,6 +86,15 @@ function formatNumber(value) {
   return String(number)
 }
 
+function FireSolidIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M12 22c4.4 0 8-3.1 8-8 0-2.1-.8-4.1-2-5.5 0 2.5-1.5 4-3 4.5.5-4-2-8-6-11 0 3.5-2 5.5-3.5 7C4 10.5 4 12.5 4 14c0 4.9 3.6 8 8 8Z" />
+      <path d="M9.5 17.5c0 1.5 1.1 2.5 2.5 2.5s2.5-1 2.5-2.5c0-1-.5-1.9-1.3-2.6 0 1-.6 1.6-1.2 1.8.1-1.5-.8-2.8-2.1-3.8.1 1.5-.4 2.4-.4 4.6Z" />
+    </svg>
+  )
+}
+
 function getEpisodeLabel(story) {
   const count = Number(story.totalEpisodes || 0)
 
@@ -151,11 +160,14 @@ function TopRomanceCard({ story, onOpen }) {
 
 function TrendingRomanceCard({ story, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(story)} className="min-w-0 text-left active:scale-[0.99]">
+    <button type="button" onClick={() => onOpen(story)} className="flex h-full min-w-0 flex-col text-left active:scale-[0.99]">
       <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
-      <h3 className="mt-2 line-clamp-2 text-[13px] font-[640] leading-[17px] text-neutral-900">{story.title}</h3>
-      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-gray-400">
-        <span className="text-[#ef4444]">🔥</span> {formatNumber(story.likes)}
+      <h3 className="mt-2 h-[34px] line-clamp-2 text-[12.5px] font-[640] leading-[17px] text-neutral-900 sm:text-[13px]">{story.title}</h3>
+      <p className="mt-1 flex h-[18px] items-center gap-1 text-[11.5px] font-medium leading-none text-[#4B5563]">
+        <span className="text-[#EF4444]">
+          <FireSolidIcon />
+        </span>
+        <span>{formatNumber(story.likes)}</span>
       </p>
     </button>
   )
@@ -256,9 +268,11 @@ export default function RomanceGenrePage({ embedded = false }) {
     return found?.landscape || found?.cover || ''
   }, [topStories])
 
-  const openStory = (story) => {
-    if (story?.id) navigate(`/story/${story.id}`)
-  }
+  const returnToPath = embedded ? '/?genre=romance' : '/genre/romance'
+
+const openStory = (story) => {
+  if (story?.id) navigate(`/story/${story.id}`, { state: { returnTo: returnToPath } })
+}
 
   return (
     <div className={embedded ? 'bg-white pb-6' : 'min-h-screen bg-white pb-[110px]'}>
@@ -351,7 +365,7 @@ export default function RomanceGenrePage({ embedded = false }) {
 
             <section className="mt-8">
               <SectionTitle icon="🔥" title="Trending Romance" />
-              <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 px-4 lg:grid-cols-6 lg:gap-x-3">
+              <div className="grid grid-cols-3 items-start gap-x-2.5 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
                 {trendingStories.map((story) => (
                   <TrendingRomanceCard key={`trending-${story.id}`} story={story} onOpen={openStory} />
                 ))}
