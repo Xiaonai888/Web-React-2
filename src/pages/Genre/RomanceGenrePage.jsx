@@ -175,7 +175,7 @@ function TrendingRomanceCard({ story, onOpen }) {
 
 function LatestRomanceCard({ story, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px] lg:w-auto lg:max-w-none lg:shrink">
+    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px]">
       <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
       <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">{story.title}</h3>
     </button>
@@ -374,7 +374,7 @@ const openStory = (story) => {
 
             <section className="mt-8">
               <SectionTitle icon="🆕" title="Latest Romance" />
-              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-6 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {latestStories.map((story) => (
                   <LatestRomanceCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
                 ))}
