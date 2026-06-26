@@ -454,7 +454,7 @@ useEffect(() => {
   label="My Diamonds"
   value={wallet.diamonds}
   type="diamond"
-  onClick={() => navigate('/shop/mall/purchase')}
+  onClick={() => navigate('/shop', { state: { activeTab: 'Purchase', returnTo: '/tasks' } })}
 />
     </div>
 
