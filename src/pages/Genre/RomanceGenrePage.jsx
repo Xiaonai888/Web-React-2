@@ -107,13 +107,13 @@ function getTagLine(story) {
 function SectionTitle({ icon, title }) {
   return (
     <div className="mb-3 flex items-center justify-between px-4">
-      <button
-        type="button"
-        className="flex min-w-0 items-center gap-1 text-left active:scale-[0.99]"
-      >
-        <span className="shrink-0 text-[20px] leading-none">{icon}</span>
-        <h2 className="min-w-0 truncate text-[20px] font-black leading-7 text-[#111827]">{title}</h2>
-        <i className="fa-solid fa-chevron-right shrink-0 text-[15px] text-[#111827]" />
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="shrink-0 text-[18px] leading-none">{icon}</span>
+        <h2 className="min-w-0 truncate text-[18px] font-bold leading-6 text-[#111827]">{title}</h2>
+      </div>
+
+      <button type="button" className="flex h-7 w-7 shrink-0 items-center justify-end text-[#111827] active:scale-95">
+        <i className="fa-solid fa-chevron-right text-[13px]" />
       </button>
     </div>
   )
@@ -163,7 +163,7 @@ function TrendingRomanceCard({ story, onOpen }) {
 
 function LatestRomanceCard({ story, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px]">
+    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px] lg:w-auto lg:max-w-none lg:shrink">
       <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
       <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">{story.title}</h3>
     </button>
@@ -342,7 +342,7 @@ export default function RomanceGenrePage({ embedded = false }) {
           <div className="pt-7">
             <section>
               <SectionTitle icon="🏆" title="Top Romance" />
-              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 sm:grid-cols-3 lg:grid-cols-6">
                 {topStories.map((story) => (
                   <TopRomanceCard key={`top-${story.id}`} story={story} onOpen={openStory} />
                 ))}
@@ -351,7 +351,7 @@ export default function RomanceGenrePage({ embedded = false }) {
 
             <section className="mt-8">
               <SectionTitle icon="🔥" title="Trending Romance" />
-              <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 px-4">
+              <div className="grid grid-cols-3 gap-x-2.5 gap-y-5 px-4 lg:grid-cols-6 lg:gap-x-3">
                 {trendingStories.map((story) => (
                   <TrendingRomanceCard key={`trending-${story.id}`} story={story} onOpen={openStory} />
                 ))}
@@ -360,7 +360,7 @@ export default function RomanceGenrePage({ embedded = false }) {
 
             <section className="mt-8">
               <SectionTitle icon="🆕" title="Latest Romance" />
-              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-6 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
                 {latestStories.map((story) => (
                   <LatestRomanceCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
                 ))}
@@ -370,7 +370,7 @@ export default function RomanceGenrePage({ embedded = false }) {
             <section className="mt-8">
               <SectionTitle icon="📖" title="All Romance" />
               {allStories.length ? (
-                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4 sm:grid-cols-3 lg:grid-cols-6">
                   {allStories.map((story) => (
                     <AllRomanceCard key={`all-${story.id}`} story={story} onOpen={openStory} />
                   ))}
