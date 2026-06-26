@@ -441,8 +441,8 @@ useEffect(() => {
   </section>
 </div>
 
-  <section className="relative z-20 mt-3">
-  <div className="overflow-hidden rounded-t-[24px] bg-white shadow-[0_8px_22px_rgba(17,24,39,0.08)]">
+  <section className="relative z-20 -mt-7 px-2">
+  <div className="overflow-hidden rounded-t-[26px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
     <div className="grid grid-cols-2">
       <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
       <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
