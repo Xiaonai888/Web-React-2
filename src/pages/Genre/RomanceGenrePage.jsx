@@ -420,7 +420,7 @@ const stopLatestDrag = () => {
             <section className="mt-8">
               <SectionTitle icon="📖" title="All Romance" />
               {allStories.length ? (
-                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4 md:grid-cols-6 md:gap-x-3">
                   {allStories.map((story) => (
                     <AllRomanceCard key={`all-${story.id}`} story={story} onOpen={openStory} />
                   ))}
