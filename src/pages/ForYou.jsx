@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import DailyPicksSection from '../components/DailyPicksSection'
@@ -16,6 +16,7 @@ import NotificationPage from './NotificationPage'
 import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
 
 const SHOW_SHADOW_EXCLUSIVE = false
+const [searchParams] = useSearchParams()
 
 
 const API_URL =
@@ -191,6 +192,18 @@ export default function ForYou() {
   })
 }
 
+useEffect(() => {
+  const requestedGenre = String(searchParams.get('genre') || '').trim().toLowerCase()
+
+  if (!requestedGenre || requestedGenre === activeGenre) return
+
+  const foundTab = genreTabs.find((tab) => tab.slug === requestedGenre)
+
+  if (!foundTab) return
+
+  handleGenreChange(foundTab)
+}, [searchParams, genreTabs, activeGenre])
+  
   function isSwipeBlockedTarget(target) {
     const element =
       typeof Element !== 'undefined' && target instanceof Element
