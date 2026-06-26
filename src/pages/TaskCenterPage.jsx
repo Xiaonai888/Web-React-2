@@ -438,7 +438,7 @@ useEffect(() => {
 </button>
   </header>
 
-  <div className="absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-white/55 via-white/25 to-transparent backdrop-blur-[1px]" />
+  <div className="absolute inset-x-0 bottom-0 z-10 h-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa]/75 to-transparent" />
 </div>
 
   <section className="relative z-20 -mt-11">
