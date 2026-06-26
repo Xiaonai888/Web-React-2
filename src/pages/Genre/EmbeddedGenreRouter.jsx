@@ -168,7 +168,7 @@ export default function EmbeddedGenreRouter({ genreSlug }) {
       <div className="embedded-old-genre">
   <GenreErrorBoundary key={genreSlug}>
     <Suspense fallback={<GenreLoading />}>
-      <GenreComponent />
+      <GenreComponent embedded />
     </Suspense>
   </GenreErrorBoundary>
 </div>
