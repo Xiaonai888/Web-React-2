@@ -456,7 +456,7 @@ useEffect(() => {
   </div>
 </section>
 
-  <section className="mt-0 bg-white p-5 shadow-sm">
+  <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
