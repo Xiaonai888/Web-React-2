@@ -501,11 +501,11 @@ useEffect(() => {
             </button>
           ) : null}
 
-          <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2">
-            {rewards.map((reward) => (
-              <DayReward key={reward.day} reward={reward} currentDay={currentDay} claimedToday={claimedToday} />
-            ))}
-          </div>
+          <div className="mt-5 grid grid-cols-7 gap-1 pb-2 sm:gap-3">
+  {rewards.map((reward) => (
+    <DayReward key={reward.day} reward={reward} currentDay={currentDay} claimedToday={claimedToday} />
+  ))}
+</div>
 
           <button
             type="button"
