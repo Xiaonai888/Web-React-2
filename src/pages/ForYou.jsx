@@ -16,7 +16,6 @@ import NotificationPage from './NotificationPage'
 import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
 
 const SHOW_SHADOW_EXCLUSIVE = false
-const [searchParams] = useSearchParams()
 
 
 const API_URL =
@@ -136,6 +135,7 @@ function ComingSoonPanel({ title }) {
 const SHOW_STORY_TYPE_TABS = false
 
 export default function ForYou() {
+  const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
   const [contentGenre, setContentGenre] = useState('today')
