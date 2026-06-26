@@ -364,9 +364,14 @@ export default function TaskCenterPage() {
 
 <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
   <div
-    className="bg-cover bg-center pb-8 pt-0"
-    style={{ backgroundImage: "url('/assets/Task%20Center/Task%20background%202.webp')" }}
-  >
+  className="bg-no-repeat pb-8 pt-0"
+  style={{
+    backgroundImage: "url('/assets/Task%20Center/Task%20background%202.webp')",
+    backgroundSize: '100% auto',
+    backgroundPosition: 'center 22px',
+    backgroundColor: '#ff6f86',
+  }}
+>
     <header className="relative z-10 flex h-14 items-center justify-between px-4 text-white">
       <button
         type="button"
@@ -394,21 +399,18 @@ export default function TaskCenterPage() {
           Earn coins to unlock stories
         </h2>
 
-        <p className="mt-2 max-w-[380px] text-[12px] font-semibold leading-5 text-white/80 drop-shadow">
-          Check in daily and complete simple tasks to collect coins and diamonds.
-        </p>
       </div>
     </section>
   </div>
 
   <section className="-mt-7">
-  <div className="overflow-hidden rounded-t-[24px] bg-white/95 shadow-[0_10px_28px_rgba(17,24,39,0.10)] ring-1 ring-black/5 backdrop-blur">
-    <div className="grid grid-cols-2 divide-x divide-[#eef0f4]">
+  <div className="overflow-hidden rounded-t-[24px] bg-white shadow-[0_8px_22px_rgba(17,24,39,0.08)]">
+    <div className="grid grid-cols-2">
       <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
       <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
     </div>
 
-    <div className="border-t border-[#eef0f4] bg-[#f7f7f8] px-5 py-3">
+    <div className="bg-white px-5 pb-4 pt-0">
       <p className="text-[12px] font-medium leading-5 text-[#7b8190]">
         Use Coins to unlock and read any stories on Shadow.
       </p>
@@ -471,7 +473,7 @@ export default function TaskCenterPage() {
 </p>
 </section>
 
-<section className="mt-3 bg-white p-5 shadow-sm">
+<section className="mt-2 bg-white p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-[19px] font-black text-[#111827]">More Rewards</h2>
