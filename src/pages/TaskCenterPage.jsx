@@ -245,6 +245,7 @@ export default function TaskCenterPage() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
+const [scrolledPastCover, setScrolledPastCover] = useState(false)
 
   const token = getReaderToken()
   const storedUser = getStoredUser()
@@ -355,9 +356,19 @@ export default function TaskCenterPage() {
   }
 
   useEffect(() => {
-    loadTaskCenter()
-  }, [])
+  loadTaskCenter()
+}, [])
 
+useEffect(() => {
+  function handleScroll() {
+    setScrolledPastCover(window.scrollY > 150)
+  }
+
+  handleScroll()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+
+  return () => window.removeEventListener('scroll', handleScroll)
+}, [])
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       
@@ -372,26 +383,38 @@ export default function TaskCenterPage() {
     backgroundColor: '#ff6f86',
   }}
 >
-    <header className="relative z-10 flex h-14 items-center justify-between px-4 text-white">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white shadow-sm active:scale-95"
-        aria-label="Go back"
-      >
-        <i className="fa-solid fa-chevron-left text-[14px]" />
-      </button>
+    <header
+  className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
+    scrolledPastCover
+      ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
+      : 'bg-transparent text-white'
+  }`}
+>
+  <button
+    type="button"
+    onClick={() => navigate(-1)}
+    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
+      scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
+    }`}
+    aria-label="Go back"
+  >
+    <i className="fa-solid fa-chevron-left text-[14px]" />
+  </button>
 
-      <h1 className="text-[16px] font-bold drop-shadow">Task Center</h1>
+  <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
+    Task Center
+  </h1>
 
-      <button
-        type="button"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white shadow-sm active:scale-95"
-        aria-label="More"
-      >
-        <i className="fa-solid fa-ellipsis text-[16px]" />
-      </button>
-    </header>
+  <button
+    type="button"
+    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
+      scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
+    }`}
+    aria-label="More"
+  >
+    <i className="fa-solid fa-ellipsis text-[16px]" />
+  </button>
+</header>
 
     <section className="relative overflow-hidden px-4 pb-8 pt-2 text-white">
       <div className="relative">
@@ -421,7 +444,7 @@ export default function TaskCenterPage() {
   <section className="mt-0 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[19px] font-black leading-6 text-[#111827]">
+              <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
                 Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
               </h2>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
@@ -473,10 +496,10 @@ export default function TaskCenterPage() {
 </p>
 </section>
 
-<section className="mt-2 bg-white p-5">
+<section className="mt-3 bg-white p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[19px] font-black text-[#111827]">More Rewards</h2>
+              <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
               <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">Complete tasks to earn more coins.</p>
             </div>
 
