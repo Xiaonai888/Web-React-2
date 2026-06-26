@@ -134,36 +134,38 @@ export default function TaskHistoryPage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
       <header className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+         <button
+  type="button"
+  onClick={() => navigate(-1)}
+  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
+  aria-label="Go back"
+>
+  <i className="fa-solid fa-chevron-left text-[15px] font-black" />
+</button>
 
-          <h1 className="text-[17px] font-black text-[#111827]">Reward History</h1>
+          <h1 className="text-[17px] font-black tracking-[-0.01em] text-[#111827]">Reward History</h1>
 
           <button
-            type="button"
-            onClick={() => setMessage('Reward details and coin rules will be added later.')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Hint"
-          >
-            <i className="fa-solid fa-circle-info text-[14px]" />
-          </button>
+  type="button"
+  onClick={() => setMessage('Reward details and coin rules will be added later.')}
+  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
+  aria-label="Hint"
+>
+  <span className="flex h-[19px] w-[19px] items-center justify-center rounded-full border-2 border-[#111827] text-[12px] font-black leading-none">
+    i
+  </span>
+</button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[760px] px-2 pt-3 sm:px-4 sm:pt-4">
-        <section className="grid grid-cols-3 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5 sm:rounded-[26px]">
+      <main className="mx-auto max-w-[760px] px-0 pt-0 sm:px-4 sm:pt-4">
+        <section className="grid grid-cols-3 overflow-hidden bg-white shadow-sm sm:rounded-[26px] sm:ring-1 sm:ring-black/5">
           <SummaryItem label="Today" value={summary.today} />
           <SummaryItem label="This Week" value={summary.this_week} />
           <SummaryItem label="This Month" value={summary.this_month} />
         </section>
 
-        <section className="mt-3 rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5 sm:mt-4 sm:p-5 sm:rounded-[28px]">
+        <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[18px] font-black text-[#111827] sm:text-[20px]">History</h2>
