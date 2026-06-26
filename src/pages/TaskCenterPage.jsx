@@ -245,7 +245,8 @@ export default function TaskCenterPage() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
-const [scrolledPastCover, setScrolledPastCover] = useState(false)
+  const [taskCoverUrl, setTaskCoverUrl] = useState('')
+  const [scrolledPastCover, setScrolledPastCover] = useState(false)
 
   const token = getReaderToken()
   const storedUser = getStoredUser()
@@ -267,6 +268,19 @@ const [scrolledPastCover, setScrolledPastCover] = useState(false)
   const claimedToday = Boolean(currentCheckIn.claimed_today)
   const canClaim = isLoggedIn && !claimedToday && !claiming
   const streakCount = Number(currentCheckIn.streak_count || (claimedToday ? currentDay : Math.max(currentDay - 1, 0)))
+
+  async function loadTaskCover() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/task-center/public`)
+    const data = await response.json().catch(() => ({}))
+
+    if (response.ok && data.ok && data.settings?.cover_url) {
+      setTaskCoverUrl(data.settings.cover_url)
+    }
+  } catch {
+    setTaskCoverUrl('')
+  }
+}
 
   async function loadTaskCenter() {
     if (!token) {
@@ -356,9 +370,10 @@ const [scrolledPastCover, setScrolledPastCover] = useState(false)
   }
 
   useEffect(() => {
+  loadTaskCover()
   loadTaskCenter()
 }, [])
-
+  
 useEffect(() => {
   function handleScroll() {
     setScrolledPastCover(window.scrollY > 150)
@@ -377,7 +392,7 @@ useEffect(() => {
   <div
   className="bg-no-repeat pb-8 pt-0"
   style={{
-    backgroundImage: "url('/assets/Task%20Center/Task%20background%202.webp')",
+    backgroundImage: taskCoverUrl ? `url("${taskCoverUrl}")` : "url('/assets/Task%20Center/Task%20background%202.webp')",
     backgroundSize: '100% auto',
     backgroundPosition: 'center 22px',
     backgroundColor: '#ff6f86',
