@@ -1,5 +1,14 @@
 import { Component, lazy, Suspense } from 'react'
-const RomanceGenrePage = lazy(() => import('./RomanceGenrePage'))
+
+function lazyWithRetry(importer) {
+  return lazy(() =>
+    importer().catch((error) =>
+      new Promise((resolve) => setTimeout(resolve, 600)).then(importer).catch(() => Promise.reject(error))
+    )
+  )
+}
+
+const RomanceGenrePage = lazyWithRetry(() => import('./RomanceGenrePage'))
 const FantasyGenrePage = lazy(() => import('./FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./ActionGenrePage'))
 const ComedyGenrePage = lazy(() => import('./ComedyGenrePage'))
@@ -29,6 +38,8 @@ const SecondChanceGenrePage = lazy(() => import('./SecondChanceGenrePage'))
 const ColdMaleLeadGenrePage = lazy(() => import('./ColdMaleLeadGenrePage'))
 const BLGenrePage = lazy(() => import('./BLGenrePage'))
 const GLGenrePage = lazy(() => import('./GLGenrePage'))
+
+
 
 const GENRE_COMPONENTS = {
   romance: RomanceGenrePage,
