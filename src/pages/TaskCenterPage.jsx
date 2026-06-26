@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -247,6 +247,7 @@ export default function TaskCenterPage() {
   const [message, setMessage] = useState('')
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
   const [scrolledPastCover, setScrolledPastCover] = useState(false)
+  const coverRef = useRef(null)
 
   const token = getReaderToken()
   const storedUser = getStoredUser()
@@ -268,6 +269,7 @@ export default function TaskCenterPage() {
   const claimedToday = Boolean(currentCheckIn.claimed_today)
   const canClaim = isLoggedIn && !claimedToday && !claiming
   const streakCount = Number(currentCheckIn.streak_count || (claimedToday ? currentDay : Math.max(currentDay - 1, 0)))
+  const coverImageUrl = taskCoverUrl || '/assets/Task%20Center/Task%20background%202.webp'
 
   async function loadTaskCover() {
   try {
@@ -376,8 +378,9 @@ export default function TaskCenterPage() {
   
 useEffect(() => {
   function handleScroll() {
-    setScrolledPastCover(window.scrollY > 150)
-  }
+  const coverHeight = coverRef.current?.offsetHeight || 220
+  setScrolledPastCover(window.scrollY > coverHeight - 56)
+}
 
   handleScroll()
   window.addEventListener('scroll', handleScroll, { passive: true })
@@ -389,59 +392,56 @@ useEffect(() => {
       
 
 <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
-  <div
-  className="bg-no-repeat pb-8 pt-0"
-  style={{
-    backgroundImage: taskCoverUrl ? `url("${taskCoverUrl}")` : "url('/assets/Task%20Center/Task%20background%202.webp')",
-    backgroundSize: '100% auto',
-    backgroundPosition: 'center 22px',
-    backgroundColor: '#ff6f86',
-  }}
->
-    <header
-  className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
-    scrolledPastCover
-      ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
-      : 'bg-transparent text-white'
-  }`}
->
-  <button
-    type="button"
-    onClick={() => navigate(-1)}
-    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
-      scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
+ <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
+  <img
+    src={coverImageUrl}
+    alt="Task Center Cover"
+    className="absolute inset-0 h-full w-full object-cover"
+  />
+
+  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/5 to-black/20" />
+
+  <header
+    className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
+      scrolledPastCover
+        ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
+        : 'bg-transparent text-white'
     }`}
-    aria-label="Go back"
   >
-    <i className="fa-solid fa-chevron-left text-[14px]" />
-  </button>
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
+        scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
+      }`}
+      aria-label="Go back"
+    >
+      <i className="fa-solid fa-chevron-left text-[14px]" />
+    </button>
 
-  <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
-    Task Center
-  </h1>
+    <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
+      Task Center
+    </h1>
 
-  <button
-    type="button"
-    className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
-      scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
-    }`}
-    aria-label="More"
-  >
-    <i className="fa-solid fa-ellipsis text-[16px]" />
-  </button>
-</header>
+    <button
+      type="button"
+      className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm active:scale-95 ${
+        scrolledPastCover ? 'bg-[#f5f3fa] text-[#111827]' : 'bg-white/20 text-white'
+      }`}
+      aria-label="More"
+    >
+      <i className="fa-solid fa-ellipsis text-[16px]" />
+    </button>
+  </header>
 
-    <section className="relative overflow-hidden px-4 pb-8 pt-2 text-white">
-      <div className="relative">
-        <h2 className="max-w-[300px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em] drop-shadow">
-          Earn coins to unlock stories
-        </h2>
+  <section className="relative z-10 flex h-full flex-col justify-end px-4 pb-8 pt-16 text-white">
+    <h2 className="max-w-[310px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em] drop-shadow">
+      Earn coins to unlock stories
+    </h2>
+  </section>
+</div>
 
-      </div>
-    </section>
-  </div>
-
-  <section className="-mt-7">
+  <section className="relative z-20 mt-3">
   <div className="overflow-hidden rounded-t-[24px] bg-white shadow-[0_8px_22px_rgba(17,24,39,0.08)]">
     <div className="grid grid-cols-2">
       <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
