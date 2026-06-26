@@ -356,7 +356,7 @@ const openStory = (story) => {
           <div className="pt-7">
             <section>
               <SectionTitle icon="🏆" title="Top Romance" />
-              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
                 {topStories.map((story) => (
                   <TopRomanceCard key={`top-${story.id}`} story={story} onOpen={openStory} />
                 ))}
