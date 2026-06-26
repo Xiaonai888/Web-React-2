@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_URL =
@@ -133,12 +133,13 @@ function ImageFrame({ src, title, className, fallbackClassName = 'text-[#d6336c]
     <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
       {src ? (
         <img
-          src={src}
-          alt={title}
-          className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-          loading="lazy"
-          decoding="async"
-        />
+  src={src}
+  alt={title}
+  draggable={false}
+  className="h-full w-full select-none object-cover transition-transform duration-300 hover:scale-[1.03]"
+  loading="lazy"
+  decoding="async"
+/>
       ) : (
         <div className={`flex h-full w-full items-center justify-center ${fallbackClassName}`}>
           <i className="fa-solid fa-heart text-[24px]" />
@@ -220,6 +221,8 @@ export default function RomanceGenrePage({ embedded = false }) {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const latestScrollRef = useRef(null)
+  const latestDragRef = useRef({ active: false, startX: 0, scrollLeft: 0 })
 
   useEffect(() => {
     let ignore = false
@@ -272,6 +275,32 @@ export default function RomanceGenrePage({ embedded = false }) {
 
 const openStory = (story) => {
   if (story?.id) navigate(`/story/${story.id}`, { state: { returnTo: returnToPath } })
+}
+
+  const handleLatestMouseDown = (event) => {
+  const element = latestScrollRef.current
+  if (!element) return
+
+  latestDragRef.current = {
+    active: true,
+    startX: event.pageX - element.offsetLeft,
+    scrollLeft: element.scrollLeft,
+  }
+}
+
+const handleLatestMouseMove = (event) => {
+  const element = latestScrollRef.current
+  if (!element || !latestDragRef.current.active) return
+
+  event.preventDefault()
+
+  const x = event.pageX - element.offsetLeft
+  const walk = x - latestDragRef.current.startX
+  element.scrollLeft = latestDragRef.current.scrollLeft - walk
+}
+
+const stopLatestDrag = () => {
+  latestDragRef.current.active = false
 }
 
   return (
@@ -374,7 +403,14 @@ const openStory = (story) => {
 
             <section className="mt-8">
               <SectionTitle icon="🆕" title="Latest Romance" />
-              <div className="flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div
+  ref={latestScrollRef}
+  onMouseDown={handleLatestMouseDown}
+  onMouseMove={handleLatestMouseMove}
+  onMouseUp={stopLatestDrag}
+  onMouseLeave={stopLatestDrag}
+  className="flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-1 active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
                 {latestStories.map((story) => (
                   <LatestRomanceCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
                 ))}
