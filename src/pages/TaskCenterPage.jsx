@@ -434,15 +434,15 @@ useEffect(() => {
 </button>
   </header>
 
-  <section className="relative z-10 flex h-full flex-col justify-end px-4 pb-8 pt-16 text-white">
+  <section className="relative z-10 flex h-full flex-col justify-end px-4 pb-14 pt-16 text-white">
     <h2 className="max-w-[310px] text-[22px] font-bold leading-[1.08] tracking-[-0.02em] drop-shadow">
       Earn coins to unlock stories
     </h2>
   </section>
 </div>
 
-  <section className="relative z-20 -mt-7 px-2">
-  <div className="overflow-hidden rounded-t-[26px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
+  <section className="relative z-20 -mt-11">
+  <div className="overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
     <div className="grid grid-cols-2">
       <BalanceBox label="My Coins" value={wallet.coins} type="coin" />
       <BalanceBox label="My Diamonds" value={wallet.diamonds} type="diamond" />
