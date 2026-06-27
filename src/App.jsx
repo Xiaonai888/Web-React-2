@@ -213,7 +213,10 @@ const shouldShowOpeningAds =
   location.pathname !== '/reset-password'
   return (
   <>
-    <VisitorTracker />
+    <div style={{position:'fixed',top:0,left:0,zIndex:999999,background:'red',color:'white',padding:8}}>
+  TEST APP DEPLOY 2026
+</div>
+<VisitorTracker />
     <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/fast" element={<ComingSoon title="Fast" />} />
