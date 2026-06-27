@@ -683,7 +683,7 @@ function LockedEpisodeCard({
       </span>
       <span>
         <span className="block text-[14px] font-black">
-  Coins — {formatNumber(coinBalance)} remaining
+  TEST-READER-2026 — Coins — {formatNumber(coinBalance)} remaining
 </span>
         <span className="mt-0.5 block text-[11px] font-bold">
           {formatNumber(coinAmount)} Coins unlock for {coinAccessDays} days.
