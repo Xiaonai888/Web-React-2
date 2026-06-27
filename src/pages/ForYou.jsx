@@ -787,24 +787,31 @@ useEffect(() => {
 
             <div className="grid grid-cols-4 gap-4 px-4 py-4 text-center">
   {[
-    { icon: 'fa-shopping-bag', label: 'Shop', path: '/shop' },
-    { icon: 'fa-tasks', label: 'Tasks', path: '/tasks' },
-    { icon: 'fa-trophy', label: 'Ranking', path: '/ranking' },
-    { icon: 'fa-calendar', label: 'Event', path: '/event' },
+    { icon: '/assets/Shortcut/Store.svg', label: 'Shop', path: '/shop' },
+    { icon: '/assets/Shortcut/Task.svg', label: 'Tasks', path: '/tasks' },
+    { icon: '/assets/Shortcut/Ranking.svg', label: 'Ranking', path: '/ranking' },
+    { icon: '/assets/Shortcut/Event.svg', label: 'Event', path: '/event' },
   ].map((item) => (
-    <div
+    <button
       key={item.label}
+      type="button"
       className="group cursor-pointer"
       onClick={() => item.path && navigate(item.path)}
     >
       <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
-        <i className={`fas ${item.icon} text-[#6b7280]`} />
+        <img
+          src={item.icon}
+          alt={item.label}
+          className="h-7 w-7 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
 
       <span className="text-[10px] font-semibold text-[#111827]">
         {item.label}
       </span>
-    </div>
+    </button>
   ))}
 </div>
 
