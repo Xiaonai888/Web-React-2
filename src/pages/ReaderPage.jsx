@@ -615,6 +615,7 @@ function LockedEpisodeCard({
   episode,
   wallet,
   coinAccess,
+  voucherAccess,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
@@ -623,9 +624,13 @@ function LockedEpisodeCard({
   unlocking,
   onUnlock,
   onCoinUnlock,
+  onVoucherUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
+  const voucherBalance = Number(wallet?.voucher_balance || 0)
+  const voucherAmount = Number(voucherAccess?.amount || 0)
+  const voucherDisabled = unlocking || !voucherAccess?.available
   const coinAmount = Number(coinAccess?.amount || 0)
   const coinAccessDays = Number(coinAccess?.access_days || 7)
   const coinWaitSeconds = Number(coinAccess?.wait_seconds || 0)
@@ -690,7 +695,37 @@ function LockedEpisodeCard({
     </span>
   </button>
 ) : null}
-  
+
+{voucherAccess ? (
+  <button
+    type="button"
+    onClick={onVoucherUnlock}
+    disabled={voucherDisabled}
+    className={`flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
+      voucherDisabled
+        ? 'border-[#E5E7EB] bg-[#F4F5F7] text-[#9CA3AF]'
+        : 'border-[#BFD7FF] bg-[#F4F8FF] text-[#111827]'
+    }`}
+  >
+    <span className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
+        <i className="fa-solid fa-ticket text-[15px] text-[#2563EB]" />
+      </span>
+      <span>
+        <span className="block text-[14px] font-black">
+          Vouchers — {formatNumber(voucherBalance)} remaining
+        </span>
+        <span className="mt-0.5 block text-[11px] font-bold">
+          Permanent unlock for this episode.
+        </span>
+      </span>
+    </span>
+    <span className={`rounded-full px-3 py-2 text-[11px] font-black ${voucherDisabled ? 'bg-[#D0D5DD] text-white' : 'bg-[#111827] text-white'}`}>
+      {voucherDisabled ? 'Locked' : 'Access'}
+    </span>
+  </button>
+) : null}
+   
           {singleOption ? (
             <button
               type="button"
@@ -1503,7 +1538,9 @@ export default function ReaderPage() {
   const [lockedEpisode, setLockedEpisode] = useState(false)
   const [unlockWallet, setUnlockWallet] = useState(null)
   const [unlockCoinAccess, setUnlockCoinAccess] = useState(null)
+  const [unlockVoucherAccess, setUnlockVoucherAccess] = useState(null)
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
+
   const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
   const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
   const [unlockingEpisode, setUnlockingEpisode] = useState(false)
@@ -1663,6 +1700,7 @@ async function loadReaderAdStatus() {
   } catch {
   setUnlockWallet(null)
   setUnlockCoinAccess(null)
+  setUnlockVoucherAccess(null)
   setUnlockPackageOptions([])
 }
 
@@ -1884,6 +1922,7 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
 
   setUnlockWallet(data.wallet || null)
   setUnlockCoinAccess(data.coin_access || data.gem_access || null)
+  setUnlockVoucherAccess(data.voucher_access || null)
   setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
   setUnlockPackageOptions(Array.isArray(data.package_options) ? data.package_options : [])
 }
@@ -1922,6 +1961,43 @@ async function handleLockedCoinUnlock() {
     setUnlockingEpisode(false)
   }
 }
+
+  async function handleLockedVoucherUnlock() {
+  if (!unlockVoucherAccess?.available) return
+
+  const voucherBalance = Number(unlockWallet?.voucher_balance || 0)
+  const price = Number(unlockVoucherAccess?.amount || 0)
+
+  if (voucherBalance < price) {
+    setMessage('Not enough Vouchers.')
+    return
+  }
+
+  try {
+    setUnlockingEpisode(true)
+
+    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/voucher`, {
+      method: 'POST',
+      headers: {
+        ...readerAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to unlock episode with Voucher')
+    }
+
+    window.location.reload()
+  } catch (error) {
+    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode with Voucher')
+  } finally {
+    setUnlockingEpisode(false)
+  }
+}
+  
   
 async function handleLockedDiamondUnlock(packageKey) {
   const option = unlockPackageOptions.find((item) => item.key === packageKey)
@@ -2163,6 +2239,7 @@ return (
   episode={episode}
   wallet={unlockWallet}
   coinAccess={unlockCoinAccess}
+  voucherAccess={unlockVoucherAccess}
   packageOptions={unlockPackageOptions}
   autoUnlock={unlockAutoUnlock}
   setAutoUnlock={setUnlockAutoUnlock}
@@ -2171,6 +2248,7 @@ return (
   unlocking={unlockingEpisode}
   onUnlock={handleLockedDiamondUnlock}
   onCoinUnlock={handleLockedCoinUnlock}
+  onVoucherUnlock={handleLockedVoucherUnlock}
 />
 ) : null}
 
