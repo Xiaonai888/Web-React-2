@@ -88,24 +88,28 @@ function buildFallbackPackageOptions(price = FALLBACK_DIAMOND_PRICE) {
   ]
 }
 
-function DiamondIcon({ selected = false, size = 'h-8 w-8' }) {
+function DiamondIcon({ size = 'h-7 w-7' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full border ${size} ${selected ? 'border-[#C59B2D] bg-[#FFF7DF]' : 'border-[#E5E7EB] bg-[#F8F8F8]'}`}>
-      <i className={`fas fa-gem text-[13px] ${selected ? 'text-[#3B0764]' : 'text-[#111111]'}`} />
-    </span>
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt="Diamond"
+      className={`${size} shrink-0 object-contain`}
+      loading="lazy"
+      decoding="async"
+    />
   )
 }
 
 function GemIcon({ size = 'h-12 w-12' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-[12px] border border-[#F4D58D] bg-[#FFF7ED] ${size}`}>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 2.6 19.2 7 17.4 17.2 12 21.4 6.6 17.2 4.8 7 12 2.6Z" fill="#F59E0B" />
-        <path d="M12 2.6 9.1 8.2 12 21.4 14.9 8.2 12 2.6Z" fill="#FDBA74" />
-        <path d="M4.8 7 9.1 8.2 6.6 17.2 4.8 7Z" fill="#D97706" />
-        <path d="M19.2 7 14.9 8.2 17.4 17.2 19.2 7Z" fill="#B45309" />
-        <path d="M9.1 8.2h5.8L12 21.4 9.1 8.2Z" fill="#FDE68A" opacity=".8" />
-      </svg>
+    <span className={`flex shrink-0 items-center justify-center ${size}`}>
+      <img
+        src="/assets/Icons/Shadow Coin.svg"
+        alt="Coin"
+        className="h-full w-full object-contain"
+        loading="lazy"
+        decoding="async"
+      />
     </span>
   )
 }
