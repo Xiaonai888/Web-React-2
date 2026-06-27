@@ -256,6 +256,7 @@ export default function TaskCenterPage() {
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
+  const [showCheckInRules, setShowCheckInRules] = useState(false)
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
@@ -487,6 +488,40 @@ if (!response.ok || data.ok === false) {
   `}
 </style>
 
+      {showCheckInRules ? (
+  <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/45 px-6">
+    <button
+      type="button"
+      aria-label="Close check-in rules"
+      className="absolute inset-0"
+      onClick={() => setShowCheckInRules(false)}
+    />
+
+    <div className="relative w-full max-w-[340px] rounded-[26px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.22)]">
+      <h3 className="text-[20px] font-black leading-7 text-[#111827]">
+        Check-in Rules
+      </h3>
+
+      <p className="mt-4 text-[14px] font-semibold leading-6 text-[#4b5563]">
+        Check in every day to keep your streak and collect rewards.
+        If you miss a day, your streak will reset.
+      </p>
+
+      <p className="mt-3 text-[13px] font-semibold leading-5 text-[#8b93a1]">
+        Premium readers can auto-claim daily rewards.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setShowCheckInRules(false)}
+        className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+      >
+        Got it
+      </button>
+    </div>
+  </div>
+) : null}
+
 {toast ? (
   <div
     className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-black/55 px-4 py-2.5 text-center text-[12px] font-normal text-white/95 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md"
@@ -574,13 +609,13 @@ if (!response.ok || data.ok === false) {
   <span className="text-[#ff3f62]">{streakCount || 0}</span>-Day Streak
 </h2>
                 <button
-                  type="button"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
-                  aria-label="Task rules"
-                  onClick={() => setMessage('Coins can be used for story rewards.')}
-                >
-                  <i className="fa-regular fa-circle-question text-[15px]" />
-                </button>
+  type="button"
+  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
+  aria-label="Check-in rules"
+  onClick={() => setShowCheckInRules(true)}
+>
+  <i className="fa-regular fa-circle-question text-[15px]" />
+</button>
               </div>
             </div>
 
