@@ -557,9 +557,8 @@ export default function TaskCenterPage() {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
-                  Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
-                </h2>
-
+  <span className="text-[#ff3f62]">{streakCount || 0}</span>-Day Streak
+</h2>
                 <button
                   type="button"
                   className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
