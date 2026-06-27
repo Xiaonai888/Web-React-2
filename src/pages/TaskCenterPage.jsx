@@ -8,13 +8,13 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const fallbackRewards = [
-  { day: 1, gems: 50, story_cards: 0 },
-  { day: 2, gems: 100, story_cards: 0 },
-  { day: 3, gems: 150, story_cards: 0 },
-  { day: 4, gems: 200, story_cards: 0 },
-  { day: 5, gems: 250, story_cards: 0 },
-  { day: 6, gems: 300, story_cards: 0 },
-  { day: 7, gems: 500, story_cards: 1 },
+  { day: 1, gems: 50, coins: 50, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 2, gems: 100, coins: 100, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 3, gems: 150, coins: 150, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 4, gems: 200, coins: 200, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 5, gems: 250, coins: 250, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 6, gems: 300, coins: 300, vouchers: 0, gift: false, story_cards: 0 },
+  { day: 7, gems: 0, coins: 0, vouchers: 1, gift: true, story_cards: 0 },
 ]
 
 const moreRewards = [
@@ -68,7 +68,7 @@ function getReaderToken() {
 
 function getStoredUser() {
   try {
-    return JSON.parse(localStorage.getItem('shadow_reader_user') || sessionStorage.getItem('shadow_reader_user') || 'null')
+    return JSON.parse(sessionStorage.getItem('shadow_reader_user') || localStorage.getItem('shadow_reader_user') || 'null')
   } catch {
     return null
   }
@@ -161,6 +161,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
   const isToday = reward.day === currentDay
   const isClaimed = isPast || (isToday && claimedToday)
   const canTap = isToday && !claimedToday && !claiming
+  const isGift = Boolean(reward.gift || Number(reward.vouchers || 0) > 0 || Number(reward.story_cards || 0) > 0)
   const label = isClaimed ? 'Claimed' : `Day ${reward.day}`
 
   return (
@@ -172,7 +173,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
       aria-label={canTap ? 'Tap to claim reward' : label}
     >
       <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? 'opacity-55' : ''}`}>
-        {reward.story_cards ? (
+        {isGift ? (
           <img
             src="/assets/Icons/Gift.svg"
             alt="Gift"
@@ -184,7 +185,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
       </div>
 
       <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
-        {reward.story_cards ? 'Gift' : reward.gems}
+        {isGift ? 'Gift' : reward.coins || reward.gems}
       </div>
 
       <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706]' : isClaimed ? 'text-[#f59e0b]' : 'text-[#9ca3af]'}`}>
@@ -250,13 +251,14 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
 
 export default function TaskCenterPage() {
   const navigate = useNavigate()
-  const [wallet, setWallet] = useState({ coins: 0, diamonds: 0 })
+  const [wallet, setWallet] = useState({ coins: 0, diamonds: 0, vouchers: 0 })
   const [checkIn, setCheckIn] = useState(null)
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
   const [showCheckInRules, setShowCheckInRules] = useState(false)
+  const [giftReward, setGiftReward] = useState(null)
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
@@ -300,7 +302,7 @@ export default function TaskCenterPage() {
   async function loadTaskCenter() {
     if (!token) {
       setLoading(false)
-      setWallet({ coins: 0, diamonds: 0 })
+      setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
       setCheckIn(null)
       return
     }
@@ -317,10 +319,18 @@ export default function TaskCenterPage() {
       if (walletResponse.status === 'fulfilled') {
         const walletData = await walletResponse.value.json().catch(() => ({}))
 
+        if (walletResponse.value.status === 401 || walletResponse.value.status === 403) {
+          clearReaderSession()
+          setToast('Please log in again')
+          navigate('/login')
+          return
+        }
+
         if (walletResponse.value.ok && walletData.ok && walletData.wallet) {
           setWallet({
-            coins: Number(walletData.wallet.gem_balance || 0),
-            diamonds: Number(walletData.wallet.diamond_balance || 0),
+            coins: Number(walletData.wallet.coin_balance ?? walletData.wallet.gem_balance ?? 0),
+            diamonds: Number(walletData.wallet.diamond_balance ?? 0),
+            vouchers: Number(walletData.wallet.voucher_balance ?? 0),
           })
         }
       }
@@ -328,18 +338,27 @@ export default function TaskCenterPage() {
       if (checkInResponse.status === 'fulfilled') {
         const checkInData = await checkInResponse.value.json().catch(() => ({}))
 
+        if (checkInResponse.value.status === 401 || checkInResponse.value.status === 403) {
+          clearReaderSession()
+          setToast('Please log in again')
+          navigate('/login')
+          return
+        }
+
         if (checkInResponse.value.ok && checkInData.ok) {
           setCheckIn(checkInData.check_in || null)
+
           if (checkInData.wallet) {
             setWallet({
-              coins: Number(checkInData.wallet.gem_balance || 0),
-              diamonds: Number(checkInData.wallet.diamond_balance || 0),
+              coins: Number(checkInData.wallet.coin_balance ?? checkInData.wallet.gem_balance ?? 0),
+              diamonds: Number(checkInData.wallet.diamond_balance ?? 0),
+              vouchers: Number(checkInData.wallet.voucher_balance ?? 0),
             })
           }
         }
       }
     } catch {
-      setMessage('Could not load rewards. Please try again.')
+      setToast('Could not load rewards')
     } finally {
       setLoading(false)
     }
@@ -388,14 +407,21 @@ export default function TaskCenterPage() {
 
       const data = await response.json().catch(() => ({}))
 
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast('Please log in again')
+        navigate('/login')
+        return
+      }
+
       if (!response.ok || !data.ok) {
-        throw new Error(data.message || 'Failed to update reminder.')
+        throw new Error(data.message || 'Failed to update reminder')
       }
 
       setReminderEnabled(Boolean(data.enabled))
       setToast(data.enabled ? 'Check-in reminder set for 9:00 AM' : 'Check-in reminder turned off')
     } catch (error) {
-    setToast(error.message || 'Failed to claim reward')
+      setToast(error.message || 'Failed to update reminder')
     } finally {
       setReminderLoading(false)
     }
@@ -421,27 +447,41 @@ export default function TaskCenterPage() {
       const data = await response.json().catch(() => ({}))
 
       if (response.status === 401 || response.status === 403) {
-  clearReaderSession()
-  setToast('Please log in again to claim coins')
-  navigate('/login')
-  return
-}
+        clearReaderSession()
+        setToast('Please log in again to claim coins')
+        navigate('/login')
+        return
+      }
 
-if (!response.ok || data.ok === false) {
-  throw new Error(data.message || 'Reward is not available yet.')
-}
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Reward is not available yet')
+      }
 
       if (data.wallet) {
         setWallet({
-          coins: Number(data.wallet.gem_balance || wallet.coins || 0),
-          diamonds: Number(data.wallet.diamond_balance || wallet.diamonds || 0),
+          coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? wallet.coins ?? 0),
+          diamonds: Number(data.wallet.diamond_balance ?? wallet.diamonds ?? 0),
+          vouchers: Number(data.wallet.voucher_balance ?? wallet.vouchers ?? 0),
         })
       }
 
       setCheckIn(data.check_in || { ...currentCheckIn, claimed_today: true })
-      setMessage(data.message || 'Reward claimed successfully.')
+
+      const rewardCoins = Number(data.reward?.coins ?? data.reward?.gems ?? data.history_item?.amount_coins ?? data.history_item?.amount_gems ?? 0)
+      const rewardVouchers = Number(data.reward?.vouchers ?? data.history_item?.amount_vouchers ?? 0)
+      const storyCards = Number(data.reward?.story_cards ?? data.history_item?.story_cards ?? 0)
+      const isGiftReward = Boolean(data.reward?.gift || rewardVouchers > 0 || storyCards > 0)
+
+      if (isGiftReward) {
+        setGiftReward({
+          coins: rewardCoins,
+          vouchers: rewardVouchers,
+        })
+      } else {
+        setToast(data.message || 'Coins added to your wallet')
+      }
     } catch (error) {
-      setMessage(error.message || 'Failed to claim reward.')
+      setToast(error.message || 'Failed to claim reward')
     } finally {
       setClaiming(false)
     }
@@ -454,14 +494,14 @@ if (!response.ok || data.ok === false) {
   }, [])
 
   useEffect(() => {
-  if (!toast) return undefined
+    if (!toast) return undefined
 
-  const timer = window.setTimeout(() => {
-    setToast('')
-  }, 2200)
+    const timer = window.setTimeout(() => {
+      setToast('')
+    }, 2200)
 
-  return () => window.clearTimeout(timer)
-}, [toast])
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     function handleScroll() {
@@ -478,58 +518,117 @@ if (!response.ok || data.ok === false) {
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
       <style>
-  {`
-    @keyframes shadowToast {
-      0% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
-      12% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-      82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
-    }
-  `}
-</style>
+        {`
+          @keyframes shadowToast {
+            0% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
+            12% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
+          }
+        `}
+      </style>
+
+      {giftReward ? (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <span className="absolute left-[18%] top-[28%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
+            <span className="absolute right-[22%] top-[30%] h-2 w-2 animate-ping rounded-full bg-[#ff3f62]" />
+            <span className="absolute left-[25%] bottom-[32%] h-2 w-2 animate-pulse rounded-full bg-white" />
+            <span className="absolute right-[28%] bottom-[34%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
+          </div>
+
+          <div className="relative w-full max-w-[340px] rounded-[28px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.24)]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#fff7d6]">
+              <img
+                src="/assets/Icons/Gift.svg"
+                alt="Gift"
+                className="h-12 w-12 object-contain"
+              />
+            </div>
+
+            <h3 className="mt-4 text-[20px] font-black text-[#111827]">
+              Gift Opened!
+            </h3>
+
+            <p className="mt-2 text-[13px] font-semibold leading-5 text-[#8b93a1]">
+              Your Day 7 reward has been added to your wallet.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-[20px] bg-[#fff7d6] px-3 py-4">
+                <CoinIcon className="mx-auto h-8 w-8" />
+                <div className="mt-2 text-[18px] font-black text-[#111827]">
+                  +{formatNumber(giftReward.coins)}
+                </div>
+                <div className="mt-1 text-[11px] font-bold text-[#8b93a1]">Coins</div>
+              </div>
+
+              <div className="rounded-[20px] bg-[#f8fafc] px-3 py-4">
+                <i className="fa-solid fa-ticket text-[28px] text-[#111827]" />
+                <div className="mt-2 text-[18px] font-black text-[#111827]">
+                  +{formatNumber(giftReward.vouchers)}
+                </div>
+                <div className="mt-1 text-[11px] font-bold text-[#8b93a1]">Voucher</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setGiftReward(null)
+                setToast('Reward added to your wallet')
+              }}
+              className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+            >
+              Claim
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {showCheckInRules ? (
-  <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/45 px-6">
-    <button
-      type="button"
-      aria-label="Close check-in rules"
-      className="absolute inset-0"
-      onClick={() => setShowCheckInRules(false)}
-    />
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/45 px-6">
+          <button
+            type="button"
+            aria-label="Close check-in rules"
+            className="absolute inset-0"
+            onClick={() => setShowCheckInRules(false)}
+          />
 
-    <div className="relative w-full max-w-[340px] rounded-[26px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.22)]">
-      <h3 className="text-[20px] font-black leading-7 text-[#111827]">
-        Check-in Rules
-      </h3>
+          <div className="relative w-full max-w-[340px] rounded-[26px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.22)]">
+            <h3 className="text-[20px] font-black leading-7 text-[#111827]">
+              Check-in Rules
+            </h3>
 
-      <p className="mt-4 text-[14px] font-semibold leading-6 text-[#4b5563]">
-        Check in every day to keep your streak and collect rewards.
-        If you miss a day, your streak will reset.
-      </p>
+            <p className="mt-4 text-[14px] font-semibold leading-6 text-[#4b5563]">
+              Check in every day to keep your streak and collect rewards.
+              If you miss a day, your streak will reset.
+            </p>
 
-      <p className="mt-3 text-[13px] font-semibold leading-5 text-[#8b93a1]">
-        Premium readers can auto-claim daily rewards.
-      </p>
+            <p className="mt-3 text-[13px] font-semibold leading-5 text-[#8b93a1]">
+              Premium readers can auto-claim daily rewards.
+            </p>
 
-      <button
-        type="button"
-        onClick={() => setShowCheckInRules(false)}
-        className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
-      >
-        Got it
-      </button>
-    </div>
-  </div>
-) : null}
+            <button
+              type="button"
+              onClick={() => setShowCheckInRules(false)}
+              className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      ) : null}
 
-{toast ? (
-  <div
-    className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-black/55 px-4 py-2.5 text-center text-[12px] font-normal text-white/95 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md"
-    style={{ animation: 'shadowToast 2.2s ease forwards' }}
-  >
-    {toast}
-  </div>
-) : null}
+      {toast ? (
+        <div
+          className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-black/55 px-4 py-2.5 text-center text-[12px] font-normal text-white/95 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md"
+          style={{ animation: 'shadowToast 2.2s ease forwards' }}
+        >
+          {toast}
+        </div>
+      ) : null}
+
       <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
         <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
           <img
@@ -606,42 +705,43 @@ if (!response.ok || data.ok === false) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
-  <span className="text-[#ff3f62]">{streakCount || 0}</span>-Day Streak
-</h2>
+                  <span className="text-[#ff3f62]">{streakCount || 0}</span>-Day Streak
+                </h2>
+
                 <button
-  type="button"
-  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
-  aria-label="Check-in rules"
-  onClick={() => setShowCheckInRules(true)}
->
-  <i className="fa-regular fa-circle-question text-[15px]" />
-</button>
+                  type="button"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
+                  aria-label="Check-in rules"
+                  onClick={() => setShowCheckInRules(true)}
+                >
+                  <i className="fa-regular fa-circle-question text-[15px]" />
+                </button>
               </div>
             </div>
 
             <button
-  type="button"
-  className="group flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
-  aria-label="Reminder"
-  aria-pressed={reminderEnabled}
-  disabled={reminderLoading}
-  onClick={toggleReminder}
->
-  <span>Reminder</span>
-  <span
-    className={`relative h-[22px] w-[42px] rounded-full p-[2px] transition-all duration-300 ${
-      reminderEnabled
-        ? 'bg-[#F6B800] shadow-[0_0_0_4px_rgba(246,184,0,0.14),inset_0_1px_2px_rgba(255,255,255,0.35)]'
-        : 'bg-[#d1d5db] shadow-inner'
-    }`}
-  >
-    <span
-      className={`absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_2px_7px_rgba(17,24,39,0.22)] transition-all duration-300 ${
-        reminderEnabled ? 'left-[22px]' : 'left-[2px]'
-      }`}
-    />
-  </span>
-</button>
+              type="button"
+              className="group flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
+              aria-label="Reminder"
+              aria-pressed={reminderEnabled}
+              disabled={reminderLoading}
+              onClick={toggleReminder}
+            >
+              <span>Reminder</span>
+              <span
+                className={`relative h-[22px] w-[42px] rounded-full p-[2px] transition-all duration-300 ${
+                  reminderEnabled
+                    ? 'bg-[#F6B800] shadow-[0_0_0_4px_rgba(246,184,0,0.14),inset_0_1px_2px_rgba(255,255,255,0.35)]'
+                    : 'bg-[#d1d5db] shadow-inner'
+                }`}
+              >
+                <span
+                  className={`absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_2px_7px_rgba(17,24,39,0.22)] transition-all duration-300 ${
+                    reminderEnabled ? 'left-[22px]' : 'left-[2px]'
+                  }`}
+                />
+              </span>
+            </button>
           </div>
 
           {message ? (
