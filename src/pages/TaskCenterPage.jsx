@@ -335,6 +335,7 @@ function FloatingRewardChest({ chest, onClick, claiming }) {
   const isReady = availableChests > 0
   const isFull = Boolean(chest?.is_full)
   const label = isFull ? 'Full' : availableChests > 1 ? `x${availableChests}` : 'Ready'
+  const timeText = formatDuration(chest?.ms_until_next || 0)
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[106px] z-[80] mx-auto h-[116px] max-w-[760px]">
@@ -360,6 +361,13 @@ function FloatingRewardChest({ chest, onClick, claiming }) {
             {label}
           </span>
         ) : null}
+
+        {!isReady && Number(chest?.ms_until_next || 0) > 0 ? (
+  <span className="absolute bottom-0 right-2 z-20 rounded-full bg-gradient-to-r from-[#ff3f62] to-[#ff8a00] px-3 py-1 text-[12px] font-black text-white shadow-[0_8px_18px_rgba(255,63,98,0.25)]">
+    {timeText}
+  </span>
+) : null}
+        
       </button>
     </div>
   )
