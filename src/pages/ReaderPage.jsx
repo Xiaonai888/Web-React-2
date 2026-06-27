@@ -626,6 +626,9 @@ function LockedEpisodeCard({
   onCoinUnlock,
   onVoucherUnlock,
 }) {
+
+  throw new Error('TEST ReaderPage LockedEpisodeCard is loaded')
+  
   const diamondBalance = Number(wallet?.diamond_balance || 0)
   const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
   const voucherBalance = Number(wallet?.voucher_balance || 0)
