@@ -61,20 +61,26 @@ function clearSavedPendingPayment() {
   localStorage.removeItem(PENDING_KEY)
 }
 
-function DiamondIcon({ selected = false, size = 'h-10 w-10' }) {
+function DiamondIcon({ size = 'h-8 w-8' }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full border ${size} ${selected ? 'border-[#C59B2D] bg-[#FFF7DF]' : 'border-[#E5E7EB] bg-[#F8F8F8]'}`}>
-      <i className={`fas fa-gem text-[15px] ${selected ? 'text-[#3B0764]' : 'text-[#111111]'}`} />
-    </span>
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt="Diamond"
+      className={`${size} shrink-0 object-contain`}
+      loading="lazy"
+      decoding="async"
+    />
   )
 }
 
-function CoinIcon({ size = 'h-9 w-9' }) {
+function CoinIcon({ size = 'h-8 w-8' }) {
   return (
     <img
-      src="/assets/Icons/Shadow%20Coin.svg"
+      src="/assets/Icons/Shadow Coin.svg"
       alt="Shadow Coin"
       className={`shrink-0 object-contain ${size}`}
+      loading="lazy"
+      decoding="async"
     />
   )
 }
@@ -503,10 +509,10 @@ export default function PurchaseSection() {
 
           <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
             <div className="flex items-center gap-3">
-              <CoinIcon />
+              <CoinIcon size="h-8 w-8" />
               <div>
                 <p className="text-[12px] font-bold text-[#6B7280]">Coins</p>
-                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.gem_balance)}</p>
+                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.coin_balance ?? wallet?.gem_balance)}</p>
               </div>
             </div>
           </div>
