@@ -55,9 +55,7 @@ function getSlideGenre(slide) {
   return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
 }
 
-function getSlideGenre(slide) {
-  return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
-}
+
 
 function getSlideBadgeClass(badge) {
   return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
@@ -742,7 +740,6 @@ useEffect(() => {
                   const slideBadge = getSlideBadge(slide)
                   const slideTitle = getSlideTitle(slide)
                   const slideSubtitle = getSlideSubtitle(slide)
-                  const slideGenre = getSlideGenre(slide)
                   const slideGenre = getSlideGenre(slide)
 
                   return (
