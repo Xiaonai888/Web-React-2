@@ -1943,12 +1943,15 @@ async function handleLockedDiamondUnlock(packageKey) {
     setUnlockingEpisode(true)
 
     const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/package`, {
-      method: 'POST',
-      headers: readerAuthHeaders(),
-      body: JSON.stringify({
-        package_key: packageKey,
-      }),
-    })
+  method: 'POST',
+  headers: {
+    ...readerAuthHeaders(),
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    package_key: packageKey,
+  }),
+})
 
     const data = await response.json().catch(() => ({}))
 
