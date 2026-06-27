@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
+const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 
 const quickButtons = [
   { label: 'Latest', icon: 'fa-regular fa-calendar-plus' },
@@ -133,13 +129,14 @@ function ImageFrame({ src, title, className, fallbackClassName = 'text-[#d6336c]
     <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
       {src ? (
         <img
-  src={src}
-  alt={title}
-  draggable={false}
-  className="h-full w-full select-none object-cover transition-transform duration-300 hover:scale-[1.03]"
-  loading="lazy"
-  decoding="async"
-/>
+          src={src}
+          alt={title}
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+          className="h-full w-full select-none object-cover transition-transform duration-300 hover:scale-[1.03]"
+          loading="lazy"
+          decoding="async"
+        />
       ) : (
         <div className={`flex h-full w-full items-center justify-center ${fallbackClassName}`}>
           <i className="fa-solid fa-heart text-[24px]" />
@@ -176,7 +173,7 @@ function TrendingRomanceCard({ story, onOpen }) {
 
 function LatestRomanceCard({ story, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 text-left active:scale-[0.99] sm:w-[170px]">
+    <button type="button" onClick={() => onOpen(story)} className="w-[42vw] max-w-[170px] shrink-0 select-none text-left active:scale-[0.99] sm:w-[170px]">
       <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
       <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">{story.title}</h3>
     </button>
@@ -190,7 +187,7 @@ function AllRomanceCard({ story, onOpen }) {
     <button type="button" onClick={() => onOpen(story)} className="min-w-0 text-left active:scale-[0.99]">
       <ImageFrame src={story.cover} title={story.title} className="aspect-[2/3] rounded-[8px]" />
       <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">{story.title}</h3>
-      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">{tagLine || 'Romance'}</p>
+      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">{tagLine}</p>
     </button>
   )
 }
@@ -219,10 +216,11 @@ function LoadingGrid() {
 export default function RomanceGenrePage({ embedded = false }) {
   const navigate = useNavigate()
   const [stories, setStories] = useState([])
+  const [genreInfo, setGenreInfo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const latestScrollRef = useRef(null)
-  const latestDragRef = useRef({ active: false, startX: 0, scrollLeft: 0 })
+  const latestDragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false, blockClick: false })
 
   useEffect(() => {
     let ignore = false
@@ -262,6 +260,28 @@ export default function RomanceGenrePage({ embedded = false }) {
     }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+
+    async function loadGenreInfo() {
+      try {
+        const response = await fetch(`${API_URL}/api/genres?include_inactive=true`)
+        const data = await response.json().catch(() => ({}))
+        const found = (data.genres || []).find((genre) => String(genre.slug || '').toLowerCase() === 'romance')
+
+        if (!ignore) setGenreInfo(found || null)
+      } catch {
+        if (!ignore) setGenreInfo(null)
+      }
+    }
+
+    loadGenreInfo()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const topStories = useMemo(() => sortByTop(stories).slice(0, 6), [stories])
   const trendingStories = useMemo(() => sortByTrending(stories).slice(0, 6), [stories])
   const latestStories = useMemo(() => sortByLatest(stories).slice(0, 6), [stories])
@@ -271,37 +291,67 @@ export default function RomanceGenrePage({ embedded = false }) {
     return found?.landscape || found?.cover || ''
   }, [topStories])
 
+  const genreDesktopImage = genreInfo?.banner_image_url || genreInfo?.mobile_banner_image_url || heroImage
+  const genreMobileImage = genreInfo?.mobile_banner_image_url || genreInfo?.banner_image_url || heroImage
   const returnToPath = embedded ? '/?genre=romance' : '/genre/romance'
 
-const openStory = (story) => {
-  if (story?.id) navigate(`/story/${story.id}`, { state: { returnTo: returnToPath } })
-}
+  const openStory = (story) => {
+    if (latestDragRef.current.blockClick) {
+      latestDragRef.current.blockClick = false
+      return
+    }
+
+    if (story?.id) navigate(`/story/${story.id}`, { state: { returnTo: returnToPath } })
+  }
 
   const handleLatestMouseDown = (event) => {
-  const element = latestScrollRef.current
-  if (!element) return
+    if (event.button !== 0) return
 
-  latestDragRef.current = {
-    active: true,
-    startX: event.pageX - element.offsetLeft,
-    scrollLeft: element.scrollLeft,
+    const element = latestScrollRef.current
+    if (!element) return
+
+    latestDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: element.scrollLeft,
+      moved: false,
+      blockClick: false,
+    }
   }
-}
 
-const handleLatestMouseMove = (event) => {
-  const element = latestScrollRef.current
-  if (!element || !latestDragRef.current.active) return
+  const handleLatestMouseMove = (event) => {
+    const element = latestScrollRef.current
+    const drag = latestDragRef.current
 
-  event.preventDefault()
+    if (!element || !drag.active) return
 
-  const x = event.pageX - element.offsetLeft
-  const walk = x - latestDragRef.current.startX
-  element.scrollLeft = latestDragRef.current.scrollLeft - walk
-}
+    if (event.buttons !== 1) {
+      latestDragRef.current.active = false
+      return
+    }
 
-const stopLatestDrag = () => {
-  latestDragRef.current.active = false
-}
+    const walk = event.clientX - drag.startX
+
+    if (Math.abs(walk) > 5) {
+      latestDragRef.current.moved = true
+      event.preventDefault()
+    }
+
+    element.scrollLeft = drag.scrollLeft - walk
+  }
+
+  const stopLatestDrag = () => {
+    const drag = latestDragRef.current
+
+    if (drag.active && drag.moved) {
+      latestDragRef.current.blockClick = true
+      window.setTimeout(() => {
+        latestDragRef.current.blockClick = false
+      }, 180)
+    }
+
+    latestDragRef.current.active = false
+  }
 
   return (
     <div className={embedded ? 'bg-white pb-6' : 'min-h-screen bg-white pb-[110px]'}>
@@ -335,16 +385,21 @@ const stopLatestDrag = () => {
       ) : null}
 
       <main className={`mx-auto max-w-5xl ${embedded ? 'pt-0' : 'pt-4'}`}>
-        <section className="px-4">
-          <div className="relative aspect-[4.25/1] overflow-hidden rounded-[14px] bg-gradient-to-r from-[#ff5eb8] to-[#ffb1d5]">
-            {heroImage ? (
-              <img
-                src={heroImage}
-                alt="Romance"
-                className="h-full w-full object-cover"
-                loading="eager"
-                decoding="async"
-              />
+        <section className="px-0 sm:px-4">
+          <div className="relative aspect-[4.25/1] overflow-hidden rounded-none bg-gradient-to-r from-[#ff5eb8] to-[#ffb1d5] sm:rounded-[14px]">
+            {genreDesktopImage || genreMobileImage ? (
+              <picture>
+                {genreMobileImage ? <source media="(max-width: 639px)" srcSet={genreMobileImage} /> : null}
+                <img
+                  src={genreDesktopImage || genreMobileImage}
+                  alt="Romance"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                  className="h-full w-full select-none object-cover"
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             ) : (
               <div className="flex h-full w-full items-center justify-between px-5">
                 <div className="text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
@@ -404,13 +459,13 @@ const stopLatestDrag = () => {
             <section className="mt-8">
               <SectionTitle icon="🆕" title="Latest Romance" />
               <div
-  ref={latestScrollRef}
-  onMouseDown={handleLatestMouseDown}
-  onMouseMove={handleLatestMouseMove}
-  onMouseUp={stopLatestDrag}
-  onMouseLeave={stopLatestDrag}
-  className="flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-1 active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
->
+                ref={latestScrollRef}
+                onMouseDown={handleLatestMouseDown}
+                onMouseMove={handleLatestMouseMove}
+                onMouseUp={stopLatestDrag}
+                onMouseLeave={stopLatestDrag}
+                className="flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-1 active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 {latestStories.map((story) => (
                   <LatestRomanceCard key={`latest-${story.id}`} story={story} onOpen={openStory} />
                 ))}
