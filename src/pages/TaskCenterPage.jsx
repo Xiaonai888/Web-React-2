@@ -521,16 +521,11 @@ useEffect(() => {
 </section>
 
 <section className="mt-3 bg-white p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
-              <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">Complete tasks to earn more coins.</p>
-            </div>
-
-            <span className="rounded-full bg-[#fff7d6] px-3 py-1 text-[11px] font-black text-[#d97706]">
-              Daily
-            </span>
-          </div>
+  <div className="flex items-center justify-between gap-3">
+    <div>
+      <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
+    </div>
+  </div>
 
           <div className="mt-2">
             {moreRewards.map((task) => (
