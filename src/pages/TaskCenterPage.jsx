@@ -164,7 +164,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
       className={`min-w-0 text-center active:scale-95 ${canTap ? 'cursor-pointer' : 'cursor-default'}`}
       aria-label={canTap ? 'Tap to claim reward' : label}
     >
-      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? 'opacity-45 grayscale' : ''}`}>
+      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? 'opacity-55' : ''}`}>
         {reward.story_cards ? (
           <img
             src="/assets/Icons/Gif.svg"
@@ -176,7 +176,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
         )}
       </div>
 
-      <div className={`mt-1 text-[10px] font-black sm:mt-2 sm:text-[11px] ${isClaimed ? 'text-[#9ca3af]' : 'text-[#111827]'}`}>
+      <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
         {reward.story_cards ? 'Gift' : reward.gems}
       </div>
 
