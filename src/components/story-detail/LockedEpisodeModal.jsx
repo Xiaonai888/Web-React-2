@@ -364,7 +364,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
     }
 
     if (!hasEnoughGems) {
-      setMessage(`Not enough Gems. Need ${Number(gemAccess.amount || FALLBACK_GEM_PRICE) - gemBalance} more.`)
+      setMessage(`Not enough Coins. Need ${Number(gemAccess.amount || FALLBACK_GEM_PRICE) - gemBalance} more.`)
       return
     }
 
@@ -382,7 +382,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
       if (!response.ok || data.ok === false) {
         if (data.code === 'INSUFFICIENT_GEMS') {
           setWallet(data.wallet || wallet)
-          setMessage(`Not enough Gems. Need ${data.need || 0} more.`)
+          setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock with Coins')
           return
         }
 
@@ -579,7 +579,7 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                 />
                 <FreeAccessRow
                   iconType="gems"
-                  title={`Gems — ${formatNumber(gemBalance)} remaining`}
+                   'Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.'
                   subtitle={`Access lasts ${Number(gemAccess.access_days || 7)} days.`}
                   buttonText={hasEnoughGems ? 'Access' : 'Not enough'}
                   disabled={unlocking || !hasEnoughGems}
