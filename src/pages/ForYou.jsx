@@ -51,8 +51,8 @@ function getSlideTitle(slide) {
   return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
 }
 
-function getSlideSubtitle(slide) {
-  return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
+function getSlideGenre(slide) {
+  return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
 }
 
 function getSlideGenre(slide) {
@@ -742,6 +742,7 @@ useEffect(() => {
                   const slideBadge = getSlideBadge(slide)
                   const slideTitle = getSlideTitle(slide)
                   const slideSubtitle = getSlideSubtitle(slide)
+                  const slideGenre = getSlideGenre(slide)
                   const slideGenre = getSlideGenre(slide)
 
                   return (
