@@ -246,6 +246,8 @@ export default function TaskCenterPage() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
+  const [reminderEnabled, setReminderEnabled] = useState(false)
+  const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
   const [scrolledPastCover, setScrolledPastCover] = useState(false)
   const coverRef = useRef(null)
@@ -339,6 +341,62 @@ export default function TaskCenterPage() {
       return
     }
 
+    async function loadReminderSetting() {
+  if (!isLoggedIn) {
+    setReminderEnabled(false)
+    return
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
+      headers: getHeaders(),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (response.ok && data.ok) {
+      setReminderEnabled(Boolean(data.enabled))
+    }
+  } catch {
+    setReminderEnabled(false)
+  }
+}
+
+async function toggleReminder() {
+  if (!isLoggedIn) {
+    navigate('/login')
+    return
+  }
+
+  if (reminderLoading) return
+
+  try {
+    setReminderLoading(true)
+    setMessage('')
+
+    const nextEnabled = !reminderEnabled
+
+    const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ enabled: nextEnabled }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || 'Failed to update reminder.')
+    }
+
+    setReminderEnabled(Boolean(data.enabled))
+    setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 7:00 AM.' : 'Reminder turned off.')
+  } catch (error) {
+    setMessage(error.message || 'Failed to update reminder.')
+  } finally {
+    setReminderLoading(false)
+  }
+}
+
     if (claiming || claimedToday) return
 
     try {
@@ -375,6 +433,7 @@ export default function TaskCenterPage() {
   useEffect(() => {
   loadTaskCover()
   loadTaskCenter()
+  loadReminderSetting()
 }, [])
   
 useEffect(() => {
@@ -483,16 +542,18 @@ useEffect(() => {
   </div>
 
   <button
-    type="button"
-    className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95"
-    aria-label="Reminder"
-    onClick={() => setMessage('Reminder notification will be added later.')}
-  >
-    <span>Reminder</span>
-    <span className="relative h-5 w-9 rounded-full bg-[#d1d5db]">
-      <span className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm" />
-    </span>
-  </button>
+  type="button"
+  className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
+  aria-label="Reminder"
+  aria-pressed={reminderEnabled}
+  disabled={reminderLoading}
+  onClick={toggleReminder}
+>
+  <span>Reminder</span>
+  <span className={`relative h-5 w-9 rounded-full transition-colors ${reminderEnabled ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
+    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${reminderEnabled ? 'left-[18px]' : 'left-0.5'}`} />
+  </span>
+</button>
 </div>
 
           {message ? (
