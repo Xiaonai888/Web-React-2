@@ -174,7 +174,7 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
       <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? 'opacity-55' : ''}`}>
         {reward.story_cards ? (
           <img
-            src="/assets/Icons/Gif.svg"
+            src="/assets/Icons/Gift.svg"
             alt="Gift"
             className="h-6 w-6 object-contain sm:h-8 sm:w-8"
           />
