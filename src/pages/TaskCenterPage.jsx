@@ -98,15 +98,22 @@ function CoinIcon({ className = 'h-5 w-5' }) {
 }
 
 function DiamondIcon({ className = 'h-5 w-5' }) {
-
+  return (
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt="Diamond"
+      className={`shrink-0 object-contain ${className}`}
+    />
+  )
+}
 
 function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   const styles = {
-  dark: 'bg-[#111827] text-white',
-  gold: 'bg-[#ff3f62] text-white',
-  soft: 'bg-[#e5e7eb] text-[#8b93a1]',
-  outline: 'bg-[#ff3f62] text-white',
-}
+    dark: 'bg-[#111827] text-white',
+    gold: 'bg-[#ff3f62] text-white',
+    soft: 'bg-[#e5e7eb] text-[#8b93a1]',
+    outline: 'bg-[#ff3f62] text-white',
+  }
 
   return (
     <button
@@ -265,22 +272,21 @@ export default function TaskCenterPage() {
   const rewards = currentCheckIn.rewards || fallbackRewards
   const currentDay = Math.min(Math.max(Number(currentCheckIn.current_day || 1), 1), 7)
   const claimedToday = Boolean(currentCheckIn.claimed_today)
-  const canClaim = isLoggedIn && !claimedToday && !claiming
   const streakCount = Number(currentCheckIn.streak_count || (claimedToday ? currentDay : Math.max(currentDay - 1, 0)))
   const coverImageUrl = taskCoverUrl || '/assets/Task%20Center/Task%20background%202.webp'
 
   async function loadTaskCover() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/task-center/public`)
-    const data = await response.json().catch(() => ({}))
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/task-center/public`)
+      const data = await response.json().catch(() => ({}))
 
-    if (response.ok && data.ok && data.settings?.cover_url) {
-      setTaskCoverUrl(data.settings.cover_url)
+      if (response.ok && data.ok && data.settings?.cover_url) {
+        setTaskCoverUrl(data.settings.cover_url)
+      }
+    } catch {
+      setTaskCoverUrl('')
     }
-  } catch {
-    setTaskCoverUrl('')
   }
-}
 
   async function loadTaskCenter() {
     if (!token) {
@@ -330,67 +336,67 @@ export default function TaskCenterPage() {
     }
   }
 
-  async function claimToday() {
+  async function loadReminderSetting() {
+    if (!isLoggedIn) {
+      setReminderEnabled(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
+        headers: getHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok && data.ok) {
+        setReminderEnabled(Boolean(data.enabled))
+      }
+    } catch {
+      setReminderEnabled(false)
+    }
+  }
+
+  async function toggleReminder() {
     if (!isLoggedIn) {
       navigate('/login')
       return
     }
 
-    async function loadReminderSetting() {
-  if (!isLoggedIn) {
-    setReminderEnabled(false)
-    return
-  }
+    if (reminderLoading) return
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
-      headers: getHeaders(),
-    })
+    try {
+      setReminderLoading(true)
+      setMessage('')
 
-    const data = await response.json().catch(() => ({}))
+      const nextEnabled = !reminderEnabled
 
-    if (response.ok && data.ok) {
+      const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ enabled: nextEnabled }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to update reminder.')
+      }
+
       setReminderEnabled(Boolean(data.enabled))
+      setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 9:00 AM.' : 'Reminder turned off.')
+    } catch (error) {
+      setMessage(error.message || 'Failed to update reminder.')
+    } finally {
+      setReminderLoading(false)
     }
-  } catch {
-    setReminderEnabled(false)
-  }
-}
-
-async function toggleReminder() {
-  if (!isLoggedIn) {
-    navigate('/login')
-    return
   }
 
-  if (reminderLoading) return
-
-  try {
-    setReminderLoading(true)
-    setMessage('')
-
-    const nextEnabled = !reminderEnabled
-
-    const response = await fetch(`${API_BASE_URL}/api/mails/daily-checkin-reminder`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify({ enabled: nextEnabled }),
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.message || 'Failed to update reminder.')
+  async function claimToday() {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
     }
-
-    setReminderEnabled(Boolean(data.enabled))
-    setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 9:00 AM.' : 'Reminder turned off.')
-  } catch (error) {
-    setMessage(error.message || 'Failed to update reminder.')
-  } finally {
-    setReminderLoading(false)
-  }
-}
 
     if (claiming || claimedToday) return
 
@@ -426,130 +432,129 @@ async function toggleReminder() {
   }
 
   useEffect(() => {
-  loadTaskCover()
-  loadTaskCenter()
-  loadReminderSetting()
-}, [])
-  
-useEffect(() => {
-  function handleScroll() {
-  const coverHeight = coverRef.current?.offsetHeight || 220
-  setScrolledPastCover(window.scrollY > coverHeight - 56)
-}
+    loadTaskCover()
+    loadTaskCenter()
+    loadReminderSetting()
+  }, [])
 
-  handleScroll()
-  window.addEventListener('scroll', handleScroll, { passive: true })
+  useEffect(() => {
+    function handleScroll() {
+      const coverHeight = coverRef.current?.offsetHeight || 220
+      setScrolledPastCover(window.scrollY > coverHeight - 56)
+    }
 
-  return () => window.removeEventListener('scroll', handleScroll)
-}, [])
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      
+      <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
+        <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
+          <img
+            src={coverImageUrl}
+            alt="Task Center Cover"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
 
-<main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
- <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
-  <img
-    src={coverImageUrl}
-    alt="Task Center Cover"
-    className="absolute inset-0 h-full w-full object-cover"
-  />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/5 to-black/20" />
 
-  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/5 to-black/20" />
+          <header
+            className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
+              scrolledPastCover
+                ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
+                : 'bg-transparent text-white'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
+                scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+              }`}
+              aria-label="Go back"
+            >
+              <i className="fa-solid fa-chevron-left text-[14px]" />
+            </button>
 
-  <header
-    className={`fixed left-1/2 top-0 z-50 flex h-14 w-full max-w-[760px] -translate-x-1/2 items-center justify-between px-4 transition-all duration-200 ${
-      scrolledPastCover
-        ? 'border-b border-[#eef0f4] bg-white/95 text-[#111827] shadow-sm backdrop-blur'
-        : 'bg-transparent text-white'
-    }`}
-  >
-    <button
-  type="button"
-  onClick={() => navigate(-1)}
-  className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
-    scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
-  }`}
-  aria-label="Go back"
->
-  <i className="fa-solid fa-chevron-left text-[14px]" />
-</button>
+            <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
+              Task Center
+            </h1>
 
-    <h1 className={`text-[16px] font-bold ${scrolledPastCover ? 'text-[#111827]' : 'text-white drop-shadow'}`}>
-      Task Center
-    </h1>
+            <button
+              type="button"
+              className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
+                scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
+              }`}
+              aria-label="More"
+            >
+              <i className="fa-solid fa-ellipsis text-[16px]" />
+            </button>
+          </header>
 
-    <button
-  type="button"
-  className={`flex h-9 w-9 items-center justify-center rounded-full active:scale-95 ${
-    scrolledPastCover ? 'bg-transparent text-[#111827]' : 'bg-white/20 text-white shadow-sm'
-  }`}
-  aria-label="More"
->
-  <i className="fa-solid fa-ellipsis text-[16px]" />
-</button>
-  </header>
+          <div className="absolute inset-x-0 bottom-0 z-10 h-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa]/75 to-transparent" />
+        </div>
 
-  <div className="absolute inset-x-0 bottom-0 z-10 h-40 bg-gradient-to-t from-[#f5f3fa] via-[#f5f3fa]/75 to-transparent" />
-</div>
+        <section className="relative z-20 -mt-11">
+          <div className="overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
+            <div className="grid grid-cols-2">
+              <BalanceBox
+                label="My Coins"
+                value={wallet.coins}
+                type="coin"
+                onClick={() => navigate('/tasks/history')}
+              />
+              <BalanceBox
+                label="My Diamonds"
+                value={wallet.diamonds}
+                type="diamond"
+                onClick={() => navigate('/shop', { state: { activeTab: 'Purchase', returnTo: '/tasks' } })}
+              />
+            </div>
 
-  <section className="relative z-20 -mt-11">
-  <div className="overflow-hidden rounded-t-[28px] bg-white/95 shadow-[0_-6px_22px_rgba(17,24,39,0.08)] ring-1 ring-white/70 backdrop-blur">
-    <div className="grid grid-cols-2">
-      <BalanceBox
-  label="My Coins"
-  value={wallet.coins}
-  type="coin"
-  onClick={() => navigate('/tasks/history')}
-/>
-<BalanceBox
-  label="My Diamonds"
-  value={wallet.diamonds}
-  type="diamond"
-  onClick={() => navigate('/shop', { state: { activeTab: 'Purchase', returnTo: '/tasks' } })}
-/>
-    </div>
+            <div className="bg-white px-5 pb-4 pt-0">
+              <p className="text-[12px] font-medium leading-5 text-[#7b8190]">
+                Use Coins to unlock and read any stories on Shadow.
+              </p>
+            </div>
+          </div>
+        </section>
 
-    <div className="bg-white px-5 pb-4 pt-0">
-      <p className="text-[12px] font-medium leading-5 text-[#7b8190]">
-        Use Coins to unlock and read any stories on Shadow.
-      </p>
-    </div>
-  </div>
-</section>
-
-  <section className="mt-3 bg-white p-5 shadow-sm">
+        <section className="mt-3 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
-  <div className="min-w-0">
-    <div className="flex items-center gap-1.5">
-      <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
-        Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
-      </h2>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
+                  Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
+                </h2>
 
-      <button
-        type="button"
-        className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
-        aria-label="Task rules"
-        onClick={() => setMessage('Coins can be used for story rewards.')}
-      >
-        <i className="fa-regular fa-circle-question text-[15px]" />
-      </button>
-    </div>
-  </div>
+                <button
+                  type="button"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
+                  aria-label="Task rules"
+                  onClick={() => setMessage('Coins can be used for story rewards.')}
+                >
+                  <i className="fa-regular fa-circle-question text-[15px]" />
+                </button>
+              </div>
+            </div>
 
-  <button
-  type="button"
-  className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
-  aria-label="Reminder"
-  aria-pressed={reminderEnabled}
-  disabled={reminderLoading}
-  onClick={toggleReminder}
->
-  <span>Reminder</span>
-  <span className={`relative h-5 w-9 rounded-full transition-colors ${reminderEnabled ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
-    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${reminderEnabled ? 'left-[18px]' : 'left-0.5'}`} />
-  </span>
-</button>
-</div>
+            <button
+              type="button"
+              className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
+              aria-label="Reminder"
+              aria-pressed={reminderEnabled}
+              disabled={reminderLoading}
+              onClick={toggleReminder}
+            >
+              <span>Reminder</span>
+              <span className={`relative h-5 w-9 rounded-full transition-colors ${reminderEnabled ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${reminderEnabled ? 'left-[18px]' : 'left-0.5'}`} />
+              </span>
+            </button>
+          </div>
 
           {message ? (
             <button
@@ -562,26 +567,25 @@ useEffect(() => {
           ) : null}
 
           <div className="mt-4 grid grid-cols-7 gap-1 pb-1 sm:gap-3">
-  {rewards.map((reward) => (
-    <DayReward
-      key={reward.day}
-      reward={reward}
-      currentDay={currentDay}
-      claimedToday={claimedToday}
-      onClaim={claimToday}
-      claiming={claiming}
-    />
-  ))}
-</div>
-          
-</section>
+            {rewards.map((reward) => (
+              <DayReward
+                key={reward.day}
+                reward={reward}
+                currentDay={currentDay}
+                claimedToday={claimedToday}
+                onClaim={claimToday}
+                claiming={claiming}
+              />
+            ))}
+          </div>
+        </section>
 
-<section className="mt-3 bg-white p-5">
-  <div className="flex items-center justify-between gap-3">
-    <div>
-      <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
-    </div>
-  </div>
+        <section className="mt-3 bg-white p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
+            </div>
+          </div>
 
           <div className="mt-2">
             {moreRewards.map((task) => (
