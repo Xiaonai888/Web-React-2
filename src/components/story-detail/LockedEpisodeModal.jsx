@@ -10,7 +10,7 @@ const API_BASE_URL =
 const FALLBACK_DIAMOND_PRICE = 10
 const FALLBACK_GEM_PRICE = 1000
 const AUTO_UNLOCK_HINT =
-  'Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.'
+  'Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.'
 
 function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
@@ -578,13 +578,13 @@ export default function LockedEpisodeModal({ episode, storyId, onClose, onUnlock
                   disabled
                 />
                 <FreeAccessRow
-                  iconType="gems"
-                   'Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.'
-                  subtitle={`Access lasts ${Number(gemAccess.access_days || 7)} days.`}
-                  buttonText={hasEnoughGems ? 'Access' : 'Not enough'}
-                  disabled={unlocking || !hasEnoughGems}
-                  onClick={handleGemAccess}
-                />
+  iconType="gems"
+  title={`Coins — ${formatNumber(gemBalance)} remaining`}
+  subtitle={`Access lasts ${Number(gemAccess.access_days || 7)} days.`}
+  buttonText={hasEnoughGems ? 'Access' : 'Not enough'}
+  disabled={unlocking || !hasEnoughGems}
+  onClick={handleGemAccess}
+/>
                 <FreeAccessRow
                   iconType="voucher"
                   title="Vouchers — Coming soon"
