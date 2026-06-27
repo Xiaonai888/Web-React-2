@@ -678,8 +678,8 @@ function LockedEpisodeCard({
       </span>
       <span>
         <span className="block text-[14px] font-black">
-          Coins — {formatNumber(coinBalance)} remaining
-        </span>
+  Coins — {formatNumber(coinBalance)} remaining
+</span>
         <span className="mt-0.5 block text-[11px] font-bold">
           {formatNumber(coinAmount)} Coins unlock for {coinAccessDays} days.
         </span>
@@ -700,7 +700,7 @@ function LockedEpisodeCard({
             >
               <span className="flex items-center gap-3 text-[14px] font-black text-[#111827]">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-white">
-                  <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
+                  <img src="/assets/Icons/Shadow Coin.svg" alt="Coin" className="h-7 w-7 object-contain" />
                 </span>
                 Use Diamonds Instead — {formatNumber(singleOption.price)} Diamonds
               </span>
