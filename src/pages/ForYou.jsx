@@ -51,6 +51,10 @@ function getSlideTitle(slide) {
   return String(slide.title || '').replace(/^\s*\[(HOT|NEW|TOP)\]\s*/i, '').trim()
 }
 
+function getSlideSubtitle(slide) {
+  return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
+}
+
 function getSlideGenre(slide) {
   return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
 }
