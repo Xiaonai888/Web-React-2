@@ -350,7 +350,7 @@ function FloatingRewardChest({ chest, onClick, claiming }) {
         <span className={`absolute bottom-1 h-16 w-16 rounded-full ${isReady ? 'bg-[#ffb800]/30 blur-xl' : 'bg-black/10 blur-lg'}`} />
 
         <img
-          src="/assets/TaskCenter/Chest/chest-closed.png"
+          src="/assets/Task%20Center/Chest/chest-closed.png"
           alt="Reward Chest"
           className="relative z-10 h-[92px] w-[104px] object-contain drop-shadow-[0_12px_18px_rgba(17,24,39,0.22)]"
         />
@@ -388,7 +388,7 @@ function RewardChestPopup({ reward, onClaim }) {
 
         <div className="relative z-10 mx-auto mt-4 flex h-[190px] items-center justify-center">
           <img
-            src="/assets/TaskCenter/Chest/chest-open.png"
+            src="/assets/Task%20Center/Chest/chest-open.png"
             alt="Opened Reward Chest"
             className="shadowChestOpen h-[178px] w-[240px] object-contain drop-shadow-[0_16px_25px_rgba(17,24,39,0.25)]"
           />
@@ -1129,9 +1129,8 @@ export default function TaskCenterPage() {
     </li>
 
     <li>
-      All events are organized and promoted by Shadow only and are not related to
-      any individual authors. Shadow reserves the right to make the final decision
-      on all event-related matters.
+      All events are organized, promoted, and managed by Shadow only.
+Shadow reserves the right to make the final decision on all event-related matters.
     </li>
 
     <li>
@@ -1140,7 +1139,7 @@ export default function TaskCenterPage() {
         href="https://web.facebook.com/AlphaCentauri12226/"
         target="_blank"
         rel="noreferrer"
-        className="font-black text-[#ff3f62] underline decoration-[#ff3f62]/40 underline-offset-2"
+        className="font-black text-[#1877F2] underline decoration-[#1877F2]/40 underline-offset-2"
       >
         “ប្រលោមលោកស្នេហា”
       </a>
