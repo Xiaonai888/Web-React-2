@@ -115,49 +115,54 @@ export default function ShadowSpotlight() {
           ) : null}
 
           {!loading && spotlights.map((item) => {
-            const badge = getBadge(item)
-            const title = getTitle(item)
-            const subtitle = getSubtitle(item)
+  const badge = getBadge(item)
+  const title = getTitle(item)
+  const subtitle = getSubtitle(item)
 
-            return (
-              <div key={item.id} className="swiper-slide">
-                <div
-                  className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm"
-                  onClick={() => {
-                    if (item.link_url) navigate(item.link_url)
-                  }}
-                >
-                  <img
-                    src={item.image_url}
-                    className="h-full w-full object-cover"
-                    alt={title || `Shadow Spotlight ${item.order_index}`}
-                  />
+  return (
+    <div key={item.id} className="swiper-slide">
+      <div
+        className="relative aspect-[3/1] w-full cursor-pointer overflow-hidden rounded-[12px] border border-gray-100 bg-gray-50 shadow-sm"
+        onClick={() => {
+          if (item.link_url) navigate(item.link_url)
+        }}
+      >
+        <img
+          src={item.image_url}
+          className="h-full w-full object-cover"
+          alt={title || `Shadow Spotlight ${item.order_index}`}
+        />
 
-                  {(badge || title || subtitle) ? (
-  <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3">
-    {title ? (
-      <h2 className="truncate text-[12px] font-black leading-tight text-white drop-shadow sm:text-[16px]">
-        {title}
-      </h2>
-    ) : null}
+        {(badge || title || subtitle) ? (
+          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3">
+            {title ? (
+              <h2 className="truncate text-[12px] font-black leading-tight text-white drop-shadow sm:text-[16px]">
+                {title}
+              </h2>
+            ) : null}
 
-    {(badge || subtitle) ? (
-      <div className="mt-1 flex min-w-0 items-center gap-2">
-        {badge ? (
-          <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getBadgeClass(badge)}`}>
-            {badge}
-          </span>
-        ) : null}
+            {(badge || subtitle) ? (
+              <div className="mt-1 flex min-w-0 items-center gap-2">
+                {badge ? (
+                  <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getBadgeClass(badge)}`}>
+                    {badge}
+                  </span>
+                ) : null}
 
-        {subtitle ? (
-          <p className="min-w-0 truncate text-[9.5px] font-semibold leading-4 text-white/90 sm:text-[11px]">
-            {subtitle}
-          </p>
+                {subtitle ? (
+                  <p className="min-w-0 truncate text-[9.5px] font-semibold leading-4 text-white/90 sm:text-[11px]">
+                    {subtitle}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
-    ) : null}
-  </div>
-) : null}
+    </div>
+  )
+})}
+        </div>
 
         <div className="shadow-spotlight-pagination mt-4 flex justify-center [&_.swiper-pagination-bullet-active]:!bg-black" />
       </div>
