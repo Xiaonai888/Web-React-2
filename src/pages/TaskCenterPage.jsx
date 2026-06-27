@@ -248,6 +248,7 @@ export default function TaskCenterPage() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [message, setMessage] = useState('')
+  const [toast, setToast] = useState('')
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
@@ -384,7 +385,7 @@ export default function TaskCenterPage() {
       }
 
       setReminderEnabled(Boolean(data.enabled))
-      setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 9:00 AM.' : 'Reminder turned off.')
+      setToast(data.enabled ? 'Check-in reminder set for 9:00 AM' : 'Check-in reminder turned off')
     } catch (error) {
       setMessage(error.message || 'Failed to update reminder.')
     } finally {
@@ -438,6 +439,16 @@ export default function TaskCenterPage() {
   }, [])
 
   useEffect(() => {
+  if (!toast) return undefined
+
+  const timer = window.setTimeout(() => {
+    setToast('')
+  }, 2200)
+
+  return () => window.clearTimeout(timer)
+}, [toast])
+
+  useEffect(() => {
     function handleScroll() {
       const coverHeight = coverRef.current?.offsetHeight || 220
       setScrolledPastCover(window.scrollY > coverHeight - 56)
@@ -451,6 +462,25 @@ export default function TaskCenterPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+      <style>
+  {`
+    @keyframes shadowToast {
+      0% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
+      12% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
+    }
+  `}
+</style>
+
+{toast ? (
+  <div
+    className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-[#111827]/95 px-4 py-2.5 text-center text-[12px] font-bold text-white shadow-[0_10px_30px_rgba(17,24,39,0.28)] backdrop-blur"
+    style={{ animation: 'shadowToast 2.2s ease forwards' }}
+  >
+    {toast}
+  </div>
+) : null}
       <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
         <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
           <img
@@ -542,18 +572,28 @@ export default function TaskCenterPage() {
             </div>
 
             <button
-              type="button"
-              className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
-              aria-label="Reminder"
-              aria-pressed={reminderEnabled}
-              disabled={reminderLoading}
-              onClick={toggleReminder}
-            >
-              <span>Reminder</span>
-              <span className={`relative h-5 w-9 rounded-full transition-colors ${reminderEnabled ? 'bg-[#111827]' : 'bg-[#d1d5db]'}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${reminderEnabled ? 'left-[18px]' : 'left-0.5'}`} />
-              </span>
-            </button>
+  type="button"
+  className="group flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95 disabled:opacity-60"
+  aria-label="Reminder"
+  aria-pressed={reminderEnabled}
+  disabled={reminderLoading}
+  onClick={toggleReminder}
+>
+  <span>Reminder</span>
+  <span
+    className={`relative h-[22px] w-[42px] rounded-full p-[2px] transition-all duration-300 ${
+      reminderEnabled
+        ? 'bg-[#F6B800] shadow-[0_0_0_4px_rgba(246,184,0,0.14),inset_0_1px_2px_rgba(255,255,255,0.35)]'
+        : 'bg-[#d1d5db] shadow-inner'
+    }`}
+  >
+    <span
+      className={`absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_2px_7px_rgba(17,24,39,0.22)] transition-all duration-300 ${
+        reminderEnabled ? 'left-[22px]' : 'left-[2px]'
+      }`}
+    />
+  </span>
+</button>
           </div>
 
           {message ? (
