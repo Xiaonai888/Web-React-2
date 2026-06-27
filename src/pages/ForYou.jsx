@@ -55,6 +55,10 @@ function getSlideSubtitle(slide) {
   return String(slide.subtitle || slide.sub_title || slide.description || '').trim()
 }
 
+function getSlideGenre(slide) {
+  return String(slide.genre_label || slide.genre || slide.genre_name || slide.category || '').trim()
+}
+
 function getSlideBadgeClass(badge) {
   return slideBadgeColors[badge] || 'bg-[#ff2f55] text-white'
 }
@@ -738,6 +742,7 @@ useEffect(() => {
                   const slideBadge = getSlideBadge(slide)
                   const slideTitle = getSlideTitle(slide)
                   const slideSubtitle = getSlideSubtitle(slide)
+                  const slideGenre = getSlideGenre(slide)
 
                   return (
                     <div
@@ -755,29 +760,37 @@ useEffect(() => {
                         decoding="async"
                       />
 
-                      {(slideBadge || slideTitle || slideSubtitle) ? (
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
-                          <div className="flex min-w-0 items-center gap-2">
-                            {slideBadge ? (
-                              <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[8px] font-black uppercase leading-none ${getSlideBadgeClass(slideBadge)}`}>
-                                {slideBadge}
-                              </span>
-                            ) : null}
+                      {(slideBadge || slideTitle || slideSubtitle || slideGenre) ? (
+  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-14">
+    {slideTitle ? (
+      <h2 className="truncate text-[16px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
+        {slideTitle}
+      </h2>
+    ) : null}
 
-                            {slideTitle ? (
-                              <h2 className="min-w-0 truncate text-[16px] font-black leading-tight text-white drop-shadow sm:text-[24px]">
-                                {slideTitle}
-                              </h2>
-                            ) : null}
-                          </div>
+    {slideSubtitle ? (
+      <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
+        {slideSubtitle}
+      </p>
+    ) : null}
 
-                          {slideSubtitle ? (
-                            <p className="mt-1 truncate text-[10px] font-semibold leading-4 text-white/90 sm:text-[12px]">
-                              {slideSubtitle}
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
+    {(slideBadge || slideGenre) ? (
+      <div className="mt-2 flex items-center gap-2">
+        {slideBadge ? (
+          <span className={`shrink-0 rounded-[5px] px-2 py-1 text-[9px] font-black uppercase leading-none ${getSlideBadgeClass(slideBadge)}`}>
+            {slideBadge}
+          </span>
+        ) : null}
+
+        {slideGenre ? (
+          <span className="truncate text-[11px] font-black text-white/95">
+            {slideGenre}
+          </span>
+        ) : null}
+      </div>
+    ) : null}
+  </div>
+) : null}
                     </div>
                   )
                 })}
