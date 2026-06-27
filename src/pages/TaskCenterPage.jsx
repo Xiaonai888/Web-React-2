@@ -164,10 +164,14 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
     >
       <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? '' : reward.day > currentDay ? 'opacity-60' : ''}`}>
         {reward.story_cards ? (
-          <span className="text-[21px] leading-none sm:text-[28px]">🎁</span>
-        ) : (
-          <CoinIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-        )}
+  <img
+    src="/assets/Icons/Gif.svg"
+    alt="Gift"
+    className="h-6 w-6 object-contain sm:h-8 sm:w-8"
+  />
+) : (
+  <CoinIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+)}
       </div>
 
       <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
