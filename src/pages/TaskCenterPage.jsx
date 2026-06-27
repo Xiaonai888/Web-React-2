@@ -147,17 +147,22 @@ function BalanceBox({ label, value, type, onClick }) {
   )
 }
 
-function DayReward({ reward, currentDay, claimedToday }) {
+function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
   const isPast = reward.day < currentDay
   const isToday = reward.day === currentDay
   const isClaimed = isPast || (isToday && claimedToday)
-  const isTomorrow = reward.day === currentDay + 1 && claimedToday
-  const isLocked = reward.day > currentDay && !isTomorrow
-  const label = isClaimed ? 'Claimed' : isToday ? 'Today' : isTomorrow ? 'Tomorrow' : 'Locked'
+  const canTap = isToday && !claimedToday && !claiming
+  const label = isClaimed ? 'Claimed' : `Day ${reward.day}`
 
   return (
-    <div className="min-w-0 text-center">
-      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isLocked ? 'opacity-55' : ''}`}>
+    <button
+      type="button"
+      onClick={canTap ? onClaim : undefined}
+      disabled={!canTap}
+      className={`min-w-0 text-center active:scale-95 ${canTap ? 'cursor-pointer' : 'cursor-default'}`}
+      aria-label={canTap ? 'Tap to claim reward' : label}
+    >
+      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? '' : reward.day > currentDay ? 'opacity-60' : ''}`}>
         {reward.story_cards ? (
           <span className="text-[21px] leading-none sm:text-[28px]">🎁</span>
         ) : (
@@ -169,22 +174,10 @@ function DayReward({ reward, currentDay, claimedToday }) {
         {reward.story_cards ? 'Gift' : reward.gems}
       </div>
 
-      <div
-        className={`mt-1 text-[10px] font-bold ${
-          isToday && !claimedToday
-            ? 'text-[#d97706]'
-            : isClaimed
-              ? 'text-[#6b7280]'
-              : isTomorrow
-                ? 'text-[#d97706]'
-                : 'text-[#9ca3af]'
-        }`}
-      >
-        {label}
+      <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706]' : isClaimed ? 'text-[#6b7280]' : 'text-[#9ca3af]'}`}>
+        {canTap ? 'Tap' : label}
       </div>
-
-      <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">Day {reward.day}</div>
-    </div>
+    </button>
   )
 }
 
@@ -467,25 +460,36 @@ useEffect(() => {
 </section>
 
   <section className="mt-3 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
-                Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
-              </h2>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                {claimedToday ? 'Today’s reward has been collected.' : 'Claim today’s reward to keep your streak.'}
-              </p>
-            </div>
+          <div className="flex items-start justify-between gap-3">
+  <div className="min-w-0">
+    <div className="flex items-center gap-1.5">
+      <h2 className="text-[17px] font-bold leading-6 text-[#111827]">
+        Checked in {streakCount || 0} day{Number(streakCount) === 1 ? '' : 's'} in a row
+      </h2>
 
-            <button
-              type="button"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f8fafc] text-[#9ca3af] ring-1 ring-black/5"
-              aria-label="Task rules"
-              onClick={() => setMessage('Coins can be used for story rewards. Come back daily to keep your streak active.')}
-            >
-              <i className="fa-solid fa-circle-info text-[13px]" />
-            </button>
-          </div>
+      <button
+        type="button"
+        className="flex h-5 w-5 shrink-0 items-center justify-center bg-transparent text-[#b3bac6] active:scale-95"
+        aria-label="Task rules"
+        onClick={() => setMessage('Coins can be used for story rewards.')}
+      >
+        <i className="fa-regular fa-circle-question text-[15px]" />
+      </button>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    className="flex shrink-0 items-center gap-2 bg-transparent text-[12px] font-semibold text-[#6b7280] active:scale-95"
+    aria-label="Reminder"
+    onClick={() => setMessage('Reminder notification will be added later.')}
+  >
+    <span>Reminder</span>
+    <span className="relative h-5 w-9 rounded-full bg-[#d1d5db]">
+      <span className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm" />
+    </span>
+  </button>
+</div>
 
           {message ? (
             <button
@@ -497,28 +501,19 @@ useEffect(() => {
             </button>
           ) : null}
 
-          <div className="mt-5 grid grid-cols-7 gap-1 pb-2 sm:gap-3">
+          <div className="mt-4 grid grid-cols-7 gap-1 pb-1 sm:gap-3">
   {rewards.map((reward) => (
-    <DayReward key={reward.day} reward={reward} currentDay={currentDay} claimedToday={claimedToday} />
+    <DayReward
+      key={reward.day}
+      reward={reward}
+      currentDay={currentDay}
+      claimedToday={claimedToday}
+      onClaim={claimToday}
+      claiming={claiming}
+    />
   ))}
 </div>
-
-          <button
-            type="button"
-            onClick={claimToday}
-            disabled={isLoggedIn && !canClaim}
-            className={`mt-5 h-12 w-full rounded-full text-[14px] font-black shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
-              !isLoggedIn || canClaim
-                ? 'bg-[#F6B800] text-[#111827]'
-                : 'bg-[#e5e7eb] text-[#6b7280]'
-            }`}
-          >
-            {!isLoggedIn ? 'Login to Claim' : claiming ? 'Claiming...' : claimedToday ? 'Claimed Today' : 'Claim Reward'}
-          </button>
-
-          <p className="mt-3 text-center text-[11px] font-semibold leading-5 text-[#8b93a1]">
-  {loading ? 'Loading your rewards...' : isPremium ? 'Premium readers may receive extra reward support.' : 'Come back daily to keep your streak active.'}
-</p>
+          
 </section>
 
 <section className="mt-3 bg-white p-5">
