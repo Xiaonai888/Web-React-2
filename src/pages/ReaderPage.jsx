@@ -259,6 +259,30 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
+function formatUnlockDateTime(value) {
+  const date = value ? new Date(value) : null
+  if (!date || Number.isNaN(date.getTime())) return ''
+  return date.toLocaleString('en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function formatWaitSeconds(value) {
+  const total = Math.max(0, Number(value || 0))
+  const days = Math.floor(total / 86400)
+  const hours = Math.floor((total % 86400) / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+
+  if (days > 0) return `${days} days ${hours} hours`
+  if (hours > 0) return `${hours} hours ${minutes} minutes`
+  return `${minutes} minutes`
+}
+
 function splitParagraphs(content) {
   const text = String(content || '').trim()
 
@@ -590,6 +614,7 @@ function LockedEpisodeCard({
   theme,
   episode,
   wallet,
+  coinAccess,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
@@ -597,8 +622,17 @@ function LockedEpisodeCard({
   setShowAutoHint,
   unlocking,
   onUnlock,
+  onCoinUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
+  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
+  const coinAmount = Number(coinAccess?.amount || 0)
+  const coinAccessDays = Number(coinAccess?.access_days || 7)
+  const coinWaitSeconds = Number(coinAccess?.wait_seconds || 0)
+  const coinAvailableAt = coinAccess?.available_at || ''
+  const coinDisabled = unlocking || !coinAccess?.available
+  const coinWaitText = formatWaitSeconds(coinWaitSeconds)
+  const coinUnlockDate = formatUnlockDateTime(coinAvailableAt)
   const singleOption = packageOptions.find((option) => option.key === 'single')
   const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
 
@@ -617,7 +651,46 @@ function LockedEpisodeCard({
           ) : null}
         </div>
 
-        <div className="mt-6 space-y-3">
+{coinAccess && !coinAccess.available && coinWaitSeconds > 0 ? (
+  <div className="mt-4 rounded-[18px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-extrabold leading-5 text-[#E5484D]">
+    <div>New episode access is limited.</div>
+    <div>Coins unlock will be available in {coinWaitText}.</div>
+    {coinUnlockDate ? <div>Unlocks on {coinUnlockDate}.</div> : null}
+  </div>
+) : null}
+
+<div className="mt-6 space-y-3">
+
+  {coinAccess ? (
+  <button
+    type="button"
+    onClick={onCoinUnlock}
+    disabled={coinDisabled}
+    className={`flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
+      coinDisabled
+        ? 'border-[#E5E7EB] bg-[#F4F5F7] text-[#9CA3AF]'
+        : 'border-[#E7C56A] bg-[#FFF9E8] text-[#111827]'
+    }`}
+  >
+    <span className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
+        <img src="/assets/Icons/Shadow Coin.svg" alt="Coin" className="h-7 w-7 object-contain" />
+      </span>
+      <span>
+        <span className="block text-[14px] font-black">
+          Coins — {formatNumber(coinBalance)} remaining
+        </span>
+        <span className="mt-0.5 block text-[11px] font-bold">
+          {formatNumber(coinAmount)} Coins unlock for {coinAccessDays} days.
+        </span>
+      </span>
+    </span>
+    <span className={`rounded-full px-3 py-2 text-[11px] font-black ${coinDisabled ? 'bg-[#D0D5DD] text-white' : 'bg-[#111827] text-white'}`}>
+      {coinDisabled ? 'Locked' : 'Access'}
+    </span>
+  </button>
+) : null}
+  
           {singleOption ? (
             <button
               type="button"
@@ -629,7 +702,7 @@ function LockedEpisodeCard({
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-white">
                   <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                 </span>
-                {formatNumber(singleOption.price)} to unlock this Ep.
+                Use Diamonds Instead — {formatNumber(singleOption.price)} Diamonds
               </span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
             </button>
@@ -661,7 +734,7 @@ function LockedEpisodeCard({
                   <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-[#FFF9E8]">
                     <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
                   </span>
-                  {formatNumber(next30Option.price)} to unlock 30 Ep.
+                  Use Diamonds Instead — {formatNumber(next30Option.price)} Diamonds / 30 Ep.
                 </span>
                 <span className="ml-11 mt-1 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111827]">
                   Discount {next30Option.discount_percent || 20}%
@@ -693,7 +766,7 @@ function LockedEpisodeCard({
                   onClick={() => setShowAutoHint(false)}
                   className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
                 >
-                  Auto-unlock with Diamonds only. Free methods like Gems, Vouchers, or Story Cards won’t apply.
+                  Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
                 </button>
               ) : null}
 
@@ -1429,6 +1502,7 @@ export default function ReaderPage() {
   const [message, setMessage] = useState('')
   const [lockedEpisode, setLockedEpisode] = useState(false)
   const [unlockWallet, setUnlockWallet] = useState(null)
+  const [unlockCoinAccess, setUnlockCoinAccess] = useState(null)
   const [unlockPackageOptions, setUnlockPackageOptions] = useState([])
   const [unlockAutoUnlock, setUnlockAutoUnlock] = useState(false)
   const [unlockAutoHintOpen, setUnlockAutoHintOpen] = useState(false)
@@ -1587,9 +1661,10 @@ async function loadReaderAdStatus() {
   try {
     await loadLockedUnlockStatus()
   } catch {
-    setUnlockWallet(null)
-    setUnlockPackageOptions([])
-  }
+  setUnlockWallet(null)
+  setUnlockCoinAccess(null)
+  setUnlockPackageOptions([])
+}
 
   window.scrollTo({ top: 0, behavior: 'smooth' })
   return
@@ -1808,10 +1883,46 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
   }
 
   setUnlockWallet(data.wallet || null)
+  setUnlockCoinAccess(data.coin_access || data.gem_access || null)
   setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
   setUnlockPackageOptions(Array.isArray(data.package_options) ? data.package_options : [])
 }
+async function handleLockedCoinUnlock() {
+  if (!unlockCoinAccess?.available) return
 
+  const coinBalance = Number(unlockWallet?.coin_balance ?? unlockWallet?.gem_balance ?? 0)
+  const price = Number(unlockCoinAccess?.amount || 0)
+
+  if (coinBalance < price) {
+    setMessage('Not enough Coins.')
+    return
+  }
+
+  try {
+    setUnlockingEpisode(true)
+
+    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/gem`, {
+      method: 'POST',
+      headers: {
+        ...readerAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to unlock episode with Coins')
+    }
+
+    window.location.reload()
+  } catch (error) {
+    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode with Coins')
+  } finally {
+    setUnlockingEpisode(false)
+  }
+}
+  
 async function handleLockedDiamondUnlock(packageKey) {
   const option = unlockPackageOptions.find((item) => item.key === packageKey)
   const diamondBalance = Number(unlockWallet?.diamond_balance || 0)
@@ -2045,17 +2156,19 @@ return (
 
         {!loading && lockedEpisode && episode ? (
   <LockedEpisodeCard
-    theme={theme}
-    episode={episode}
-    wallet={unlockWallet}
-    packageOptions={unlockPackageOptions}
-    autoUnlock={unlockAutoUnlock}
-    setAutoUnlock={setUnlockAutoUnlock}
-    showAutoHint={unlockAutoHintOpen}
-    setShowAutoHint={setUnlockAutoHintOpen}
-    unlocking={unlockingEpisode}
-    onUnlock={handleLockedDiamondUnlock}
-  />
+  theme={theme}
+  episode={episode}
+  wallet={unlockWallet}
+  coinAccess={unlockCoinAccess}
+  packageOptions={unlockPackageOptions}
+  autoUnlock={unlockAutoUnlock}
+  setAutoUnlock={setUnlockAutoUnlock}
+  showAutoHint={unlockAutoHintOpen}
+  setShowAutoHint={setUnlockAutoHintOpen}
+  unlocking={unlockingEpisode}
+  onUnlock={handleLockedDiamondUnlock}
+  onCoinUnlock={handleLockedCoinUnlock}
+/>
 ) : null}
 
         {!loading && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
