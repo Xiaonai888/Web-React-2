@@ -22,22 +22,27 @@ function formatNumber(value) {
 
 function DiamondIcon() {
   return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-[#F8F8F8]">
-      <i className="fas fa-gem text-[15px] text-[#111111]" />
-    </span>
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt="Diamond"
+      className="h-9 w-9 shrink-0 object-contain"
+      loading="lazy"
+      decoding="async"
+    />
   )
 }
 
 function CrystalShardIcon() {
   return (
     <img
-      src="/assets/Icons/Shadow%20Coin.svg"
+      src="/assets/Icons/Shadow Coin.svg"
       alt="Shadow Coin"
-      className="h-10 w-10 shrink-0 object-contain"
+      className="h-8 w-8 shrink-0 object-contain"
+      loading="lazy"
+      decoding="async"
     />
   )
 }
-
 function SmallAssetIcon({ type }) {
   const icon = type === 'voucher' ? 'fas fa-ticket-alt' : 'fas fa-book-open'
 
@@ -231,7 +236,7 @@ export default function WalletPage() {
 
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <BalanceCard icon={<DiamondIcon />} label="Diamonds" value={loading ? '...' : formatNumber(wallet?.diamond_balance)} />
-            <BalanceCard icon={<CrystalShardIcon />} label="Gems" value={loading ? '...' : formatNumber(wallet?.gem_balance)} />
+            <BalanceCard icon={<CrystalShardIcon />} label="Coins" value={loading ? '...' : formatNumber(wallet?.coin_balance ?? wallet?.gem_balance)} />
             <BalanceCard icon={<SmallAssetIcon type="voucher" />} label="Voucher" value="0" />
             <BalanceCard icon={<SmallAssetIcon type="story" />} label="Story Card" value="0" />
           </div>
