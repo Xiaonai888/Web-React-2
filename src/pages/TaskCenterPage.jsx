@@ -63,7 +63,7 @@ const moreRewards = [
 ]
 
 function getReaderToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
 function getStoredUser() {
@@ -72,6 +72,13 @@ function getStoredUser() {
   } catch {
     return null
   }
+}
+
+function clearReaderSession() {
+  localStorage.removeItem('shadow_reader_token')
+  sessionStorage.removeItem('shadow_reader_token')
+  localStorage.removeItem('shadow_reader_user')
+  sessionStorage.removeItem('shadow_reader_user')
 }
 
 function getHeaders() {
@@ -387,7 +394,7 @@ export default function TaskCenterPage() {
       setReminderEnabled(Boolean(data.enabled))
       setToast(data.enabled ? 'Check-in reminder set for 9:00 AM' : 'Check-in reminder turned off')
     } catch (error) {
-      setMessage(error.message || 'Failed to update reminder.')
+    setToast(error.message || 'Failed to claim reward')
     } finally {
       setReminderLoading(false)
     }
@@ -412,9 +419,16 @@ export default function TaskCenterPage() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Reward is not available yet.')
-      }
+      if (response.status === 401 || response.status === 403) {
+  clearReaderSession()
+  setToast('Please log in again to claim coins')
+  navigate('/login')
+  return
+}
+
+if (!response.ok || data.ok === false) {
+  throw new Error(data.message || 'Reward is not available yet.')
+}
 
       if (data.wallet) {
         setWallet({
@@ -475,7 +489,7 @@ export default function TaskCenterPage() {
 
 {toast ? (
   <div
-    className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-[#111827]/95 px-4 py-2.5 text-center text-[12px] font-bold text-white shadow-[0_10px_30px_rgba(17,24,39,0.28)] backdrop-blur"
+    className="fixed bottom-[92px] left-1/2 z-[9999] max-w-[320px] rounded-full bg-black/55 px-4 py-2.5 text-center text-[12px] font-normal text-white/95 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md"
     style={{ animation: 'shadowToast 2.2s ease forwards' }}
   >
     {toast}
