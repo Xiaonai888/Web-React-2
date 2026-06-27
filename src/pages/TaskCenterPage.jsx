@@ -162,23 +162,23 @@ function DayReward({ reward, currentDay, claimedToday, onClaim, claiming }) {
       className={`min-w-0 text-center active:scale-95 ${canTap ? 'cursor-pointer' : 'cursor-default'}`}
       aria-label={canTap ? 'Tap to claim reward' : label}
     >
-      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? '' : reward.day > currentDay ? 'opacity-60' : ''}`}>
+      <div className={`mx-auto flex h-7 w-7 items-center justify-center sm:h-9 sm:w-9 ${isClaimed ? 'opacity-45 grayscale' : ''}`}>
         {reward.story_cards ? (
-  <img
-    src="/assets/Icons/Gif.svg"
-    alt="Gift"
-    className="h-6 w-6 object-contain sm:h-8 sm:w-8"
-  />
-) : (
-  <CoinIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-)}
+          <img
+            src="/assets/Icons/Gif.svg"
+            alt="Gift"
+            className="h-6 w-6 object-contain sm:h-8 sm:w-8"
+          />
+        ) : (
+          <CoinIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+        )}
       </div>
 
-      <div className="mt-1 text-[10px] font-black text-[#111827] sm:mt-2 sm:text-[11px]">
+      <div className={`mt-1 text-[10px] font-black sm:mt-2 sm:text-[11px] ${isClaimed ? 'text-[#9ca3af]' : 'text-[#111827]'}`}>
         {reward.story_cards ? 'Gift' : reward.gems}
       </div>
 
-      <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706]' : isClaimed ? 'text-[#6b7280]' : 'text-[#9ca3af]'}`}>
+      <div className={`mt-1 text-[10px] font-bold ${canTap ? 'text-[#d97706]' : isClaimed ? 'text-[#f59e0b]' : 'text-[#9ca3af]'}`}>
         {canTap ? 'Tap' : label}
       </div>
     </button>
