@@ -150,7 +150,7 @@ function BalanceBox({ label, value, type, onClick }) {
           <span>{label}</span>
           <i className="fa-solid fa-chevron-right text-[9px] text-[#6b7280]" />
         </div>
-        <div className="mt-1 text-[30px] font-black leading-none text-[#ff3f62]">{formatNumber(value)}</div>
+        <div className="mt-1 text-[24px] font-bold leading-none text-[#ff3f62]">{formatNumber(value)}</div>
       </div>
     </button>
   )
