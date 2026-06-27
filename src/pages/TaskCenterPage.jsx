@@ -98,12 +98,7 @@ function CoinIcon({ className = 'h-5 w-5' }) {
 }
 
 function DiamondIcon({ className = 'h-5 w-5' }) {
-  return (
-    <span className={`inline-flex shrink-0 items-center justify-center ${className}`}>
-      <i className="fa-solid fa-gem text-[#38BDF8]" />
-    </span>
-  )
-}
+
 
 function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
   const styles = {
@@ -133,7 +128,7 @@ function BalanceBox({ label, value, type, onClick }) {
       className="flex min-w-0 items-center gap-3 px-5 py-4 text-left active:scale-[0.99]"
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-        {type === 'diamond' ? <DiamondIcon className="h-5 w-5" /> : <CoinIcon className="h-7 w-7" />}
+        {type === 'diamond' ? <DiamondIcon className="h-6 w-6" /> : <CoinIcon className="h-7 w-7" />}
       </div>
 
       <div className="min-w-0">
@@ -389,7 +384,7 @@ async function toggleReminder() {
     }
 
     setReminderEnabled(Boolean(data.enabled))
-    setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 7:00 AM.' : 'Reminder turned off.')
+    setMessage(data.enabled ? 'Reminder is on. System mail will arrive at 9:00 AM.' : 'Reminder turned off.')
   } catch (error) {
     setMessage(error.message || 'Failed to update reminder.')
   } finally {
