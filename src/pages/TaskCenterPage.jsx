@@ -7,6 +7,9 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const CHEST_COOLDOWN_MS = 4 * 60 * 60 * 1000
+const CHEST_MAX_STORAGE = 2
+
 const fallbackRewards = [
   { day: 1, gems: 50, coins: 50, vouchers: 0, gift: false, story_cards: 0 },
   { day: 2, gems: 100, coins: 100, vouchers: 0, gift: false, story_cards: 0 },
@@ -92,6 +95,83 @@ function getHeaders() {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+function getLiveChest(chest) {
+  if (!chest) {
+    return {
+      available_chests: 0,
+      max_chests: CHEST_MAX_STORAGE,
+      is_full: false,
+      next_chest_at: null,
+      ms_until_next: 0,
+    }
+  }
+
+  const maxChests = Number(chest.max_chests || CHEST_MAX_STORAGE)
+  const baseAvailable = Math.min(maxChests, Math.max(0, Number(chest.available_chests || 0)))
+
+  if (baseAvailable >= maxChests) {
+    return {
+      ...chest,
+      available_chests: maxChests,
+      is_full: true,
+      next_chest_at: null,
+      ms_until_next: 0,
+    }
+  }
+
+  if (!chest.next_chest_at) {
+    return {
+      ...chest,
+      available_chests: baseAvailable,
+      is_full: baseAvailable >= maxChests,
+      ms_until_next: Number(chest.ms_until_next || 0),
+    }
+  }
+
+  const nowMs = Date.now()
+  const nextMs = new Date(chest.next_chest_at).getTime()
+
+  if (!Number.isFinite(nextMs)) {
+    return {
+      ...chest,
+      available_chests: baseAvailable,
+      is_full: false,
+      ms_until_next: Number(chest.ms_until_next || 0),
+    }
+  }
+
+  if (nowMs < nextMs) {
+    return {
+      ...chest,
+      available_chests: baseAvailable,
+      is_full: false,
+      ms_until_next: nextMs - nowMs,
+    }
+  }
+
+  const gained = 1 + Math.floor((nowMs - nextMs) / CHEST_COOLDOWN_MS)
+  const liveAvailable = Math.min(maxChests, baseAvailable + gained)
+  const isFull = liveAvailable >= maxChests
+  const liveNextMs = isFull ? null : nextMs + gained * CHEST_COOLDOWN_MS
+
+  return {
+    ...chest,
+    available_chests: liveAvailable,
+    is_full: isFull,
+    next_chest_at: liveNextMs ? new Date(liveNextMs).toISOString() : null,
+    ms_until_next: liveNextMs ? Math.max(0, liveNextMs - nowMs) : 0,
+  }
 }
 
 function CoinIcon({ className = 'h-5 w-5' }) {
@@ -249,6 +329,90 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
   )
 }
 
+
+function FloatingRewardChest({ chest, onClick, claiming }) {
+  const availableChests = Number(chest?.available_chests || 0)
+  const isReady = availableChests > 0
+  const isFull = Boolean(chest?.is_full)
+  const label = isFull ? 'Full' : availableChests > 1 ? `x${availableChests}` : 'Ready'
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-[106px] z-[80] mx-auto h-[116px] max-w-[760px]">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={claiming}
+        className={`pointer-events-auto absolute bottom-0 right-2 flex h-[112px] w-[112px] items-end justify-center active:scale-95 disabled:opacity-70 sm:right-4 ${
+          isReady ? 'shadowChestReady' : 'opacity-90'
+        }`}
+        aria-label="Reward Chest"
+      >
+        <span className={`absolute bottom-1 h-16 w-16 rounded-full ${isReady ? 'bg-[#ffb800]/30 blur-xl' : 'bg-black/10 blur-lg'}`} />
+
+        <img
+          src="/assets/TaskCenter/Chest/chest-closed.png"
+          alt="Reward Chest"
+          className="relative z-10 h-[92px] w-[104px] object-contain drop-shadow-[0_12px_18px_rgba(17,24,39,0.22)]"
+        />
+
+        {isReady ? (
+          <span className="absolute bottom-0 right-2 z-20 rounded-full bg-gradient-to-r from-[#ff3f62] to-[#ff8a00] px-3 py-1 text-[12px] font-black text-white shadow-[0_8px_18px_rgba(255,63,98,0.25)]">
+            {label}
+          </span>
+        ) : null}
+      </button>
+    </div>
+  )
+}
+
+function RewardChestPopup({ reward, onClaim }) {
+  if (!reward) return null
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-6">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <CoinIcon className="shadowCoinBurst shadowCoinBurstOne absolute left-[18%] top-[30%] h-9 w-9" />
+        <CoinIcon className="shadowCoinBurst shadowCoinBurstTwo absolute right-[19%] top-[28%] h-8 w-8" />
+        <CoinIcon className="shadowCoinBurst shadowCoinBurstThree absolute left-[26%] bottom-[31%] h-7 w-7" />
+        <CoinIcon className="shadowCoinBurst shadowCoinBurstFour absolute right-[27%] bottom-[32%] h-7 w-7" />
+        <span className="absolute left-[16%] top-[42%] h-2 w-2 animate-ping rounded-full bg-[#F6B800]" />
+        <span className="absolute right-[18%] top-[44%] h-2 w-2 animate-ping rounded-full bg-white" />
+      </div>
+
+      <div className="relative w-full max-w-[360px] rounded-[30px] bg-white px-6 py-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+        <div className="absolute left-1/2 top-[86px] h-28 w-28 -translate-x-1/2 rounded-full bg-[#ffcd3c]/45 blur-2xl" />
+
+        <h3 className="relative z-10 text-[22px] font-black leading-7 text-[#ffcc32] drop-shadow-[0_2px_0_rgba(143,86,0,0.28)]">
+          Hooray! You’ve got
+        </h3>
+
+        <div className="relative z-10 mx-auto mt-4 flex h-[190px] items-center justify-center">
+          <img
+            src="/assets/TaskCenter/Chest/chest-open.png"
+            alt="Opened Reward Chest"
+            className="shadowChestOpen h-[178px] w-[240px] object-contain drop-shadow-[0_16px_25px_rgba(17,24,39,0.25)]"
+          />
+        </div>
+
+        <div className="relative z-10 -mt-3 flex items-center justify-center gap-2">
+          <CoinIcon className="h-10 w-10" />
+          <span className="text-[38px] font-black leading-none text-[#111827]">
+            +{formatNumber(reward.coins)}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClaim}
+          className="relative z-10 mt-7 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+        >
+          Claim
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function TaskCenterPage() {
   const navigate = useNavigate()
   const [wallet, setWallet] = useState({ coins: 0, diamonds: 0, vouchers: 0 })
@@ -259,6 +423,10 @@ export default function TaskCenterPage() {
   const [toast, setToast] = useState('')
   const [showCheckInRules, setShowCheckInRules] = useState(false)
   const [giftReward, setGiftReward] = useState(null)
+  const [rewardChest, setRewardChest] = useState(null)
+  const [chestReward, setChestReward] = useState(null)
+  const [chestClaiming, setChestClaiming] = useState(false)
+  const [chestTick, setChestTick] = useState(Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
@@ -285,6 +453,10 @@ export default function TaskCenterPage() {
   const claimedToday = Boolean(currentCheckIn.claimed_today)
   const streakCount = Number(currentCheckIn.streak_count || (claimedToday ? currentDay : Math.max(currentDay - 1, 0)))
   const coverImageUrl = taskCoverUrl || '/assets/Task%20Center/Task%20background%202.webp'
+  const liveRewardChest = useMemo(() => {
+    chestTick
+    return getLiveChest(rewardChest)
+  }, [rewardChest, chestTick])
 
   async function loadTaskCover() {
     try {
@@ -304,6 +476,7 @@ export default function TaskCenterPage() {
       setLoading(false)
       setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
       setCheckIn(null)
+      setRewardChest(null)
       return
     }
 
@@ -311,9 +484,10 @@ export default function TaskCenterPage() {
       setLoading(true)
       setMessage('')
 
-      const [walletResponse, checkInResponse] = await Promise.allSettled([
+      const [walletResponse, checkInResponse, chestResponse] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/check-in`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/tasks/reward-chest`, { headers: getHeaders() }),
       ])
 
       if (walletResponse.status === 'fulfilled') {
@@ -355,6 +529,21 @@ export default function TaskCenterPage() {
               vouchers: Number(checkInData.wallet.voucher_balance ?? 0),
             })
           }
+        }
+      }
+
+      if (chestResponse.status === 'fulfilled') {
+        const chestData = await chestResponse.value.json().catch(() => ({}))
+
+        if (chestResponse.value.status === 401 || chestResponse.value.status === 403) {
+          clearReaderSession()
+          setToast('Please log in again')
+          navigate('/login')
+          return
+        }
+
+        if (chestResponse.value.ok && chestData.ok && chestData.chest) {
+          setRewardChest(chestData.chest)
         }
       }
     } catch {
@@ -487,6 +676,67 @@ export default function TaskCenterPage() {
     }
   }
 
+  async function claimRewardChest() {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    const liveChest = getLiveChest(rewardChest)
+    const availableChests = Number(liveChest.available_chests || 0)
+
+    if (availableChests < 1) {
+      const waitText = liveChest.ms_until_next > 0 ? `Next chest in ${formatDuration(liveChest.ms_until_next)}` : 'Chest is not ready yet'
+      setToast(waitText)
+      return
+    }
+
+    if (chestClaiming) return
+
+    try {
+      setChestClaiming(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/reward-chest/claim`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast('Please log in again')
+        navigate('/login')
+        return
+      }
+
+      if (!response.ok || data.ok === false) {
+        if (data.chest) setRewardChest(data.chest)
+        throw new Error(data.message || 'Chest is not ready yet')
+      }
+
+      if (data.wallet) {
+        setWallet({
+          coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? wallet.coins ?? 0),
+          diamonds: Number(data.wallet.diamond_balance ?? wallet.diamonds ?? 0),
+          vouchers: Number(data.wallet.voucher_balance ?? wallet.vouchers ?? 0),
+        })
+      }
+
+      if (data.chest) {
+        setRewardChest(data.chest)
+      }
+
+      setChestReward({
+        coins: Number(data.reward?.coins ?? data.reward?.gems ?? data.history_item?.amount_coins ?? data.history_item?.amount_gems ?? 0),
+      })
+    } catch (error) {
+      setToast(error.message || 'Failed to claim reward chest')
+    } finally {
+      setChestClaiming(false)
+    }
+  }
+
   useEffect(() => {
     loadTaskCover()
     loadTaskCenter()
@@ -502,6 +752,14 @@ export default function TaskCenterPage() {
 
     return () => window.clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setChestTick(Date.now())
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     function handleScroll() {
@@ -525,8 +783,74 @@ export default function TaskCenterPage() {
             82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
             100% { opacity: 0; transform: translate(-50%, 12px) scale(0.98); }
           }
+
+          @keyframes shadowChestReady {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(-2deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-4px) rotate(2deg); }
+          }
+
+          @keyframes shadowChestOpen {
+            0% { opacity: 0; transform: scale(0.82) translateY(16px); }
+            55% { opacity: 1; transform: scale(1.08) translateY(-4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+          }
+
+          @keyframes shadowCoinBurstOne {
+            0% { opacity: 0; transform: translate(36px, 72px) scale(0.4) rotate(0deg); }
+            20% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-24px, -56px) scale(1) rotate(-28deg); }
+          }
+
+          @keyframes shadowCoinBurstTwo {
+            0% { opacity: 0; transform: translate(-36px, 72px) scale(0.4) rotate(0deg); }
+            20% { opacity: 1; }
+            100% { opacity: 0; transform: translate(26px, -54px) scale(1) rotate(28deg); }
+          }
+
+          @keyframes shadowCoinBurstThree {
+            0% { opacity: 0; transform: translate(40px, -10px) scale(0.4) rotate(0deg); }
+            20% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-32px, 36px) scale(0.9) rotate(22deg); }
+          }
+
+          @keyframes shadowCoinBurstFour {
+            0% { opacity: 0; transform: translate(-40px, -10px) scale(0.4) rotate(0deg); }
+            20% { opacity: 1; }
+            100% { opacity: 0; transform: translate(32px, 36px) scale(0.9) rotate(-22deg); }
+          }
+
+          .shadowChestReady {
+            animation: shadowChestReady 1.65s ease-in-out infinite;
+          }
+
+          .shadowChestOpen {
+            animation: shadowChestOpen 0.48s ease-out both;
+          }
+
+          .shadowCoinBurst {
+            animation-duration: 1.25s;
+            animation-timing-function: ease-out;
+            animation-iteration-count: infinite;
+          }
+
+          .shadowCoinBurstOne { animation-name: shadowCoinBurstOne; }
+          .shadowCoinBurstTwo { animation-name: shadowCoinBurstTwo; animation-delay: 0.12s; }
+          .shadowCoinBurstThree { animation-name: shadowCoinBurstThree; animation-delay: 0.2s; }
+          .shadowCoinBurstFour { animation-name: shadowCoinBurstFour; animation-delay: 0.28s; }
         `}
       </style>
+
+      {chestReward ? (
+        <RewardChestPopup
+          reward={chestReward}
+          onClaim={() => {
+            setChestReward(null)
+            setToast('Reward added to your wallet')
+          }}
+        />
+      ) : null}
 
       {giftReward ? (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6">
@@ -628,6 +952,12 @@ export default function TaskCenterPage() {
           {toast}
         </div>
       ) : null}
+
+      <FloatingRewardChest
+        chest={liveRewardChest}
+        claiming={chestClaiming}
+        onClick={claimRewardChest}
+      />
 
       <main className="mx-auto max-w-[760px] bg-[#f5f3fa] pt-0">
         <div ref={coverRef} className="relative aspect-[16/9] overflow-hidden bg-[#ff6f86]">
