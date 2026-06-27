@@ -787,20 +787,37 @@ export default function TaskCenterPage() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff7d6] text-[#F6B800]">
-              <i className="fa-solid fa-lightbulb text-[14px]" />
-            </div>
+        <section className="mt-1.5 bg-white px-5 py-5">
+  <h3 className="text-[16px] font-black leading-6 text-[#111827]">
+    Notes:
+  </h3>
 
-            <div>
-              <h3 className="text-[14px] font-black text-[#111827]">Reward Rules</h3>
-              <p className="mt-1 text-[11px] font-semibold leading-5 text-[#8b93a1]">
-                Coins are used for story rewards. Diamonds are premium currency. Rewards may reset if you miss daily check-in.
-              </p>
-            </div>
-          </div>
-        </section>
+  <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] font-semibold leading-6 text-[#111827]">
+    <li>
+      Shadow may suspend or restrict users who are involved in fraud, abuse, or
+      violations of the rules.
+    </li>
+
+    <li>
+      All events are organized and promoted by Shadow only and are not related to
+      any individual authors. Shadow reserves the right to make the final decision
+      on all event-related matters.
+    </li>
+
+    <li>
+      If you have any questions, please contact us via{' '}
+      <a
+        href="https://web.facebook.com/AlphaCentauri12226/"
+        target="_blank"
+        rel="noreferrer"
+        className="font-black text-[#ff3f62] underline decoration-[#ff3f62]/40 underline-offset-2"
+      >
+        “ប្រលោមលោកស្នេហា”
+      </a>
+      .
+    </li>
+  </ol>
+</section>
       </main>
     </div>
   )
