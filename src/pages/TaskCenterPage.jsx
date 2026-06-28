@@ -377,42 +377,45 @@ function RewardChestPopup({ reward, onClaim }) {
   if (!reward) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 px-6">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/65 px-6">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <CoinIcon className="shadowCoinBurst shadowCoinBurstOne absolute left-[18%] top-[30%] h-9 w-9" />
         <CoinIcon className="shadowCoinBurst shadowCoinBurstTwo absolute right-[19%] top-[28%] h-8 w-8" />
         <CoinIcon className="shadowCoinBurst shadowCoinBurstThree absolute left-[26%] bottom-[31%] h-7 w-7" />
         <CoinIcon className="shadowCoinBurst shadowCoinBurstFour absolute right-[27%] bottom-[32%] h-7 w-7" />
-        <span className="absolute left-[16%] top-[42%] h-2 w-2 animate-ping rounded-full bg-[#F6B800]" />
-        <span className="absolute right-[18%] top-[44%] h-2 w-2 animate-ping rounded-full bg-white" />
+        <span className="absolute left-[17%] top-[40%] h-2 w-2 animate-ping rounded-full bg-[#F6B800]" />
+        <span className="absolute right-[18%] top-[43%] h-2 w-2 animate-ping rounded-full bg-white" />
+        <span className="absolute left-[42%] top-[25%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
+        <span className="absolute right-[40%] bottom-[28%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
       </div>
 
-      <div className="relative w-full max-w-[360px] rounded-[30px] bg-white px-6 py-7 text-center shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-        <div className="absolute left-1/2 top-[86px] h-28 w-28 -translate-x-1/2 rounded-full bg-[#ffcd3c]/45 blur-2xl" />
-
-        <h3 className="relative z-10 text-[22px] font-black leading-7 text-[#ffcc32] drop-shadow-[0_2px_0_rgba(143,86,0,0.28)]">
-          Hooray! You’ve got
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center text-center">
+        <h3 className="text-[25px] font-black leading-8 text-[#ffcc32] drop-shadow-[0_3px_0_rgba(108,65,0,0.35)]">
+          Woohoo! You’ve got
         </h3>
 
-        <div className="relative z-10 mx-auto mt-4 flex h-[190px] items-center justify-center">
+        <div className="shadowRewardPop mt-3 flex items-center justify-center gap-2">
+          <CoinIcon className="h-12 w-12" />
+          <span className="text-[46px] font-black leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+            +{formatNumber(reward.coins)}
+          </span>
+        </div>
+
+        <div className="relative mt-5 flex h-[235px] w-full items-center justify-center">
+          <span className="shadowPopupGlow absolute h-[210px] w-[210px] rounded-full bg-[#ffbd28]/35 blur-3xl" />
+          <span className="absolute h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(255,230,115,0.35)_0%,rgba(255,184,0,0.12)_42%,rgba(255,184,0,0)_70%)]" />
+
           <img
             src="/assets/Task%20Center/Chest/chest-open.png?v=2"
             alt="Opened Reward Chest"
-            className="shadowChestOpen h-[178px] w-[240px] object-contain drop-shadow-[0_16px_25px_rgba(17,24,39,0.25)]"
+            className="shadowChestOpen relative z-10 h-[220px] w-[300px] object-contain drop-shadow-[0_20px_28px_rgba(0,0,0,0.38)]"
           />
-        </div>
-
-        <div className="relative z-10 -mt-3 flex items-center justify-center gap-2">
-          <CoinIcon className="h-10 w-10" />
-          <span className="text-[38px] font-black leading-none text-[#111827]">
-            +{formatNumber(reward.coins)}
-          </span>
         </div>
 
         <button
           type="button"
           onClick={onClaim}
-          className="relative z-10 mt-7 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
+          className="mt-5 flex h-12 w-[260px] items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_12px_26px_rgba(255,63,98,0.34)] active:scale-[0.98]"
         >
           Claim
         </button>
@@ -793,11 +796,15 @@ export default function TaskCenterPage() {
           }
 
           @keyframes shadowChestReady {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-5px) rotate(-2deg); }
-            50% { transform: translateY(0) rotate(0deg); }
-            75% { transform: translateY(-4px) rotate(2deg); }
-          }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  10% { transform: translateY(-13px) rotate(0deg); }
+  18% { transform: translateY(-13px) rotate(-7deg); }
+  26% { transform: translateY(-13px) rotate(7deg); }
+  34% { transform: translateY(-13px) rotate(-6deg); }
+  42% { transform: translateY(-13px) rotate(6deg); }
+  52% { transform: translateY(-13px) rotate(0deg); }
+  68% { transform: translateY(0) rotate(0deg); }
+}
 
           @keyframes shadowChestOpen {
             0% { opacity: 0; transform: scale(0.82) translateY(16px); }
@@ -830,12 +837,31 @@ export default function TaskCenterPage() {
           }
 
           .shadowChestReady {
-            animation: shadowChestReady 1.65s ease-in-out infinite;
-          }
+  animation: shadowChestReady 2.35s ease-in-out infinite;
+}
 
           .shadowChestOpen {
             animation: shadowChestOpen 0.48s ease-out both;
           }
+
+          @keyframes shadowPopupGlow {
+  0% { opacity: 0.55; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes shadowRewardPop {
+  0% { opacity: 0; transform: scale(0.72) translateY(10px); }
+  65% { opacity: 1; transform: scale(1.12) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.shadowPopupGlow {
+  animation: shadowPopupGlow 1.15s ease-in-out infinite alternate;
+}
+
+.shadowRewardPop {
+  animation: shadowRewardPop 0.42s ease-out both;
+}
 
           .shadowCoinBurst {
             animation-duration: 1.25s;
