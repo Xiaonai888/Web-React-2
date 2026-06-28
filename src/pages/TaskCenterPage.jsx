@@ -732,9 +732,9 @@ export default function TaskCenterPage() {
       }
 
       if (data.chest) {
-        setRewardChest(data.chest)
-      }
-
+  setRewardChest(data.chest)
+  setChestTick(Date.now())
+}
       setChestReward({
         coins: Number(data.reward?.coins ?? data.reward?.gems ?? data.history_item?.amount_coins ?? data.history_item?.amount_gems ?? 0),
       })
@@ -854,9 +854,11 @@ export default function TaskCenterPage() {
         <RewardChestPopup
           reward={chestReward}
           onClaim={() => {
-            setChestReward(null)
-            setToast('Reward added to your wallet')
-          }}
+  setChestReward(null)
+  setToast('Reward added to your wallet')
+  setChestTick(Date.now())
+  loadTaskCenter()
+}}
         />
       ) : null}
 
