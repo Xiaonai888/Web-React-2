@@ -369,6 +369,17 @@ function EditProfileModal({
 
           <div className="space-y-4">
             <div>
+  <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Display Name</label>
+  <input
+    value={form.name}
+    onChange={(event) => onChange('name', event.target.value)}
+    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+    placeholder="Your display name"
+  />
+  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change display name once every 2 weeks.</div>
+</div>
+
+<div>
   <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Username</label>
   <input
     value={form.username}
