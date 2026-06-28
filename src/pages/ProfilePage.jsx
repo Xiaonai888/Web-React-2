@@ -728,6 +728,7 @@ following: String(user?.following_count || 0),
   work: editForm.work,
   location: editForm.location,
 }),
+})
 
       const data = await response.json().catch(() => ({}))
 
