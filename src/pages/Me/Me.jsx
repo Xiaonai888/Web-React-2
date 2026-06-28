@@ -833,18 +833,26 @@ useEffect(() => {
   }
 
   const handleOpenProfileArea = () => {
-    if (!isLoggedIn) {
-      navigate('/login')
-      return
-    }
-
-    if (hasAuthorPage) {
-      setProfileSwitcherOpen(true)
-      return
-    }
-
-    navigate('/profile')
+  if (!isLoggedIn) {
+    navigate('/login')
+    return
   }
+
+  navigate('/profile')
+}
+
+const handleOpenProfileSwitcher = (event) => {
+  event.stopPropagation()
+
+  if (!isLoggedIn) {
+    navigate('/login')
+    return
+  }
+
+  if (hasAuthorPage) {
+    setProfileSwitcherOpen(true)
+  }
+}
 
   const handleViewAuthorPage = () => {
   if (!authorPage?.page_username) return
@@ -918,50 +926,64 @@ useEffect(() => {
             <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
           </div>
 
-          <button type="button" onClick={handleOpenProfileArea} className="mt-3 flex w-full items-center gap-4 text-left active:scale-[0.99]">
-            <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-              {isLoggedIn && avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-              ) : isLoggedIn ? (
-                <span className="text-[26px] font-extrabold">{avatarLetter}</span>
-              ) : (
-                <i className="far fa-user text-[26px]" />
-              )}
-            </div>
+          <div className="mt-3 flex w-full items-center gap-4 text-left">
+  <button
+    type="button"
+    onClick={handleOpenProfileArea}
+    className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white active:scale-[0.99]"
+  >
+    {isLoggedIn && avatarUrl ? (
+      <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+    ) : isLoggedIn ? (
+      <span className="text-[26px] font-extrabold">{avatarLetter}</span>
+    ) : (
+      <i className="far fa-user text-[26px]" />
+    )}
+  </button>
 
-            <div className="min-w-0 flex-1 pt-1.5">
-              <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
-                {isLoggedIn ? (
-                  <>
-                    {checkingUser ? tx('loadingAccount') : displayName}
-                    {isPremium ? (
-                      <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
-                        <i className="fa-solid fa-crown text-[15px]" />
-                      </span>
-                    ) : null}
-                  </>
-                ) : (
-                  tx('clickToLogin')
-                )}
-              </h1>
+  <div className="min-w-0 flex-1 pt-1.5">
+    <button type="button" onClick={handleOpenProfileArea} className="block max-w-full text-left active:scale-[0.99]">
+      <h1 className="line-clamp-1 text-[21px] font-extrabold tracking-tight text-[#111827] dark:text-white">
+        {isLoggedIn ? (
+          <>
+            {checkingUser ? tx('loadingAccount') : displayName}
+            {isPremium ? (
+              <span className="ml-2 inline-flex translate-y-[-1px] items-center justify-center text-[#f6b800]">
+                <i className="fa-solid fa-crown text-[15px]" />
+              </span>
+            ) : null}
+          </>
+        ) : (
+          tx('clickToLogin')
+        )}
+      </h1>
+    </button>
 
-              {!isLoggedIn ? (
-                <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
-                  {tx('loginToSave')}
-                </p>
-              ) : hasAuthorPage ? (
-                <div className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] dark:text-white/50">
-  <span>Switch Profile</span>
-  <i className="fa-solid fa-chevron-down text-[9px]" />
+    {!isLoggedIn ? (
+      <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
+        {tx('loginToSave')}
+      </p>
+    ) : hasAuthorPage ? (
+      <button
+        type="button"
+        onClick={handleOpenProfileSwitcher}
+        className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
+      >
+        <span>Switch Profile</span>
+        <i className="fa-solid fa-chevron-down text-[9px]" />
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={handleOpenProfileArea}
+        className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
+      >
+        <span>{tx('viewProfile')}</span>
+        <i className="fa-solid fa-chevron-right text-[9px]" />
+      </button>
+    )}
+  </div>
 </div>
-              ) : (
-                <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">
-                  <span>{tx('viewProfile')}</span>
-                  <i className="fa-solid fa-chevron-right text-[9px]" />
-                </div>
-              )}
-            </div>
-          </button>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
             <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
