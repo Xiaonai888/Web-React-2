@@ -735,9 +735,10 @@ export default function TaskCenterPage() {
       }
 
       if (data.chest) {
-  setRewardChest(data.chest)
-  setChestTick(Date.now())
-}
+        setRewardChest(data.chest)
+        setChestTick(Date.now())
+      }
+
       setChestReward({
         coins: Number(data.reward?.coins ?? data.reward?.gems ?? data.history_item?.amount_coins ?? data.history_item?.amount_gems ?? 0),
       })
@@ -813,15 +814,17 @@ export default function TaskCenterPage() {
           }
 
           @keyframes shadowChestReady {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  10% { transform: translateY(-13px) rotate(0deg); }
-  18% { transform: translateY(-13px) rotate(-7deg); }
-  26% { transform: translateY(-13px) rotate(7deg); }
-  34% { transform: translateY(-13px) rotate(-6deg); }
-  42% { transform: translateY(-13px) rotate(6deg); }
-  52% { transform: translateY(-13px) rotate(0deg); }
-  68% { transform: translateY(0) rotate(0deg); }
-}
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            8% { transform: translateY(-14px) rotate(0deg); }
+            15% { transform: translateY(-14px) rotate(-8deg); }
+            22% { transform: translateY(-14px) rotate(8deg); }
+            29% { transform: translateY(-14px) rotate(-7deg); }
+            36% { transform: translateY(-14px) rotate(7deg); }
+            43% { transform: translateY(-14px) rotate(-4deg); }
+            50% { transform: translateY(-14px) rotate(4deg); }
+            58% { transform: translateY(-14px) rotate(0deg); }
+            72% { transform: translateY(0) rotate(0deg); }
+          }
 
           @keyframes shadowChestOpen {
             0% { opacity: 0; transform: scale(0.82) translateY(16px); }
@@ -854,8 +857,10 @@ export default function TaskCenterPage() {
           }
 
           .shadowChestReady {
-  animation: shadowChestReady 2.35s ease-in-out infinite;
-}
+            animation: shadowChestReady 2.4s ease-in-out infinite;
+            transform-origin: 50% 78%;
+            will-change: transform;
+          }
 
           .shadowChestOpen {
             animation: shadowChestOpen 0.48s ease-out both;
@@ -897,11 +902,11 @@ export default function TaskCenterPage() {
         <RewardChestPopup
           reward={chestReward}
           onClaim={() => {
-  setChestReward(null)
-  setToast('Reward added to your wallet')
-  setChestTick(Date.now())
-  loadTaskCenter()
-}}
+            setChestReward(null)
+            setToast('Reward added to your wallet')
+            setChestTick(Date.now())
+            loadTaskCenter()
+          }}
         />
       ) : null}
 
