@@ -39,6 +39,17 @@ function saveStoredUser(user) {
   sessionStorage.setItem('shadow_reader_user', JSON.stringify(user))
 }
 
+function saveAuthToken(token) {
+  if (!token) return
+
+  if (localStorage.getItem('shadow_reader_token')) {
+    localStorage.setItem('shadow_reader_token', token)
+    return
+  }
+
+  sessionStorage.setItem('shadow_reader_token', token)
+}
+
 async function fetchPublicUserProfile(username) {
   const token = getAuthToken()
 
@@ -358,14 +369,15 @@ function EditProfileModal({
 
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Display Name</label>
-              <input
-                value={form.name}
-                onChange={(event) => onChange('name', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
-                placeholder="Your display name"
-              />
-            </div>
+  <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Username</label>
+  <input
+    value={form.username}
+    onChange={(event) => onChange('username', event.target.value)}
+    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
+    placeholder="username"
+  />
+  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change username once every 1 week.</div>
+</div>
 
             <div>
               <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">Work / Job</label>
@@ -494,11 +506,12 @@ export default function ProfilePage() {
   const [avatarMessage, setAvatarMessage] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
   const [editForm, setEditForm] = useState({
-    name: user?.name || '',
-    bio: user?.bio || '',
-    work: user?.work || '',
-    location: user?.location || '',
-  })
+  name: user?.name || '',
+  username: user?.username || '',
+  bio: user?.bio || '',
+  work: user?.work || '',
+  location: user?.location || '',
+})
 
   const isOwnProfile = true
 
@@ -585,11 +598,12 @@ following: String(user?.following_count || 0),
   const openEditProfile = () => {
     setProfileMessage('')
     setEditForm({
-      name: user?.name || '',
-      bio: user?.bio || '',
-      work: user?.work || '',
-      location: user?.location || '',
-    })
+  name: user?.name || '',
+  username: user?.username || '',
+  bio: user?.bio || '',
+  work: user?.work || '',
+  location: user?.location || '',
+})
     setEditProfileOpen(true)
   }
 
@@ -708,12 +722,12 @@ following: String(user?.following_count || 0),
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: editForm.name,
-          bio: editForm.bio,
-          work: editForm.work,
-          location: editForm.location,
-        }),
-      })
+  name: editForm.name,
+  username: editForm.username,
+  bio: editForm.bio,
+  work: editForm.work,
+  location: editForm.location,
+}),
 
       const data = await response.json().catch(() => ({}))
 
@@ -722,6 +736,7 @@ following: String(user?.following_count || 0),
       }
 
       saveStoredUser(data.user)
+      if (data.token) saveAuthToken(data.token)
       setUser(data.user)
       setEditProfileOpen(false)
     } catch (error) {
