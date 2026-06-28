@@ -567,6 +567,7 @@ export default function Me() {
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
   const [authorPage, setAuthorPage] = useState(null)
+  const [checkingAuthorPage, setCheckingAuthorPage] = useState(Boolean(getReaderToken()))
   const [switchingProfile, setSwitchingProfile] = useState(false)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
@@ -689,10 +690,13 @@ useEffect(() => {
 
     if (!currentToken) {
       setAuthorPage(null)
+      setCheckingAuthorPage(false)
       return
     }
 
     try {
+      setCheckingAuthorPage(true)
+
       const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
         headers: {
           Authorization: `Bearer ${currentToken}`,
@@ -708,6 +712,8 @@ useEffect(() => {
       }
     } catch {
       if (!ignore) setAuthorPage(null)
+    } finally {
+      if (!ignore) setCheckingAuthorPage(false)
     }
   }
 
@@ -960,28 +966,30 @@ const handleOpenProfileSwitcher = (event) => {
     </button>
 
     {!isLoggedIn ? (
-      <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
-        {tx('loginToSave')}
-      </p>
-    ) : hasAuthorPage ? (
-      <button
-        type="button"
-        onClick={handleOpenProfileSwitcher}
-        className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
-      >
-        <span>Switch Profile</span>
-        <i className="fa-solid fa-chevron-down text-[9px]" />
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={handleOpenProfileArea}
-        className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
-      >
-        <span>{tx('viewProfile')}</span>
-        <i className="fa-solid fa-chevron-right text-[9px]" />
-      </button>
-    )}
+  <p className="mt-1 line-clamp-1 text-[12px] text-[#8d94a1] dark:text-white/50">
+    {tx('loginToSave')}
+  </p>
+) : checkingAuthorPage ? (
+  <div className="mt-2 h-3 w-24 rounded-full bg-[#eef0f4] dark:bg-white/10" />
+) : hasAuthorPage ? (
+  <button
+    type="button"
+    onClick={handleOpenProfileSwitcher}
+    className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
+  >
+    <span>Switch Profile</span>
+    <i className="fa-solid fa-chevron-down text-[9px]" />
+  </button>
+) : (
+  <button
+    type="button"
+    onClick={handleOpenProfileArea}
+    className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50 active:scale-[0.99]"
+  >
+    <span>{tx('viewProfile')}</span>
+    <i className="fa-solid fa-chevron-right text-[9px]" />
+  </button>
+)}
   </div>
 </div>
 
