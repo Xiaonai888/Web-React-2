@@ -351,7 +351,7 @@ function FloatingRewardChest({ chest, onClick, claiming }) {
         <span className={`absolute bottom-1 h-16 w-16 rounded-full ${isReady ? 'bg-[#ffb800]/30 blur-xl' : 'bg-black/10 blur-lg'}`} />
 
         <img
-          src="/assets/Task%20Center/Chest/chest-closed.png"
+          src="/assets/Task%20Center/Chest/chest-closed.png?v=2"
           alt="Reward Chest"
           className="relative z-10 h-[92px] w-[104px] object-contain drop-shadow-[0_12px_18px_rgba(17,24,39,0.22)]"
         />
@@ -396,7 +396,7 @@ function RewardChestPopup({ reward, onClaim }) {
 
         <div className="relative z-10 mx-auto mt-4 flex h-[190px] items-center justify-center">
           <img
-            src="/assets/Task%20Center/Chest/chest-open.png"
+            src="/assets/Task%20Center/Chest/chest-open.png?v=2"
             alt="Opened Reward Chest"
             className="shadowChestOpen h-[178px] w-[240px] object-contain drop-shadow-[0_16px_25px_rgba(17,24,39,0.25)]"
           />
