@@ -396,9 +396,9 @@ function RewardChestPopup({ reward, onClaim }) {
 
         <div className="shadowRewardPop mt-3 flex items-center justify-center gap-2">
           <CoinIcon className="h-12 w-12" />
-          <span className="text-[46px] font-black leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
-            +{formatNumber(reward.coins)}
-          </span>
+          <span className="text-[40px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+  +{formatNumber(reward.coins)}
+</span>
         </div>
 
         <div className="relative mt-5 flex h-[235px] w-full items-center justify-center">
@@ -753,6 +753,23 @@ export default function TaskCenterPage() {
     loadTaskCenter()
     loadReminderSetting()
   }, [])
+
+  useEffect(() => {
+  const shouldLock = Boolean(chestReward)
+
+  if (!shouldLock) return undefined
+
+  const previousBodyOverflow = document.body.style.overflow
+  const previousHtmlOverflow = document.documentElement.style.overflow
+
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
+
+  return () => {
+    document.body.style.overflow = previousBodyOverflow
+    document.documentElement.style.overflow = previousHtmlOverflow
+  }
+}, [chestReward])
 
   useEffect(() => {
     if (!toast) return undefined
