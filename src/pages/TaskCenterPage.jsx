@@ -174,7 +174,7 @@ function RewardButton({ children, disabled = false, tone = 'dark', onClick }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`h-10 rounded-full px-5 text-[12px] font-black shadow-sm active:scale-[0.98] disabled:cursor-not-allowed ${styles[tone] || styles.dark}`}
+      className={`min-w-[96px] shrink-0 whitespace-nowrap h-10 rounded-full px-5 text-[12px] font-black leading-none shadow-sm active:scale-[0.98] disabled:cursor-not-allowed ${styles[tone] || styles.dark}`}
     >
       {children}
     </button>
@@ -262,13 +262,16 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
   const alreadyDone = isCheckIn && claimedToday
   const buttonText = alreadyDone ? 'Done' : task.action
   const buttonTone = alreadyDone ? 'soft' : task.status === 'claim' ? 'gold' : 'outline'
+  const iconWrapClass = isCheckIn
+    ? 'bg-[#eef4ff] text-[#4f7cff] ring-1 ring-[#4f7cff]/10'
+    : 'bg-[#f8fafc] text-[#111827] ring-1 ring-black/5'
 
   return (
     <div className="flex gap-3 border-b border-[#f1f2f5] py-4 last:border-b-0">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f8fafc] text-[#111827] ring-1 ring-black/5">
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconWrapClass}`}>
         <i className={`fa-solid ${task.icon} text-[15px]`} />
       </div>
-
+      
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
