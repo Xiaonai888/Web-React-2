@@ -750,12 +750,8 @@ export default function TaskCenterPage() {
   }, [toast])
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setChestTick(Date.now())
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [])
+  setChestTick(Date.now())
+}, [rewardChest])
 
   useEffect(() => {
     function handleScroll() {
