@@ -754,9 +754,9 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         <button
           type="button"
           onClick={goPurchase}
-          className="mx-auto mb-3 flex min-h-[68px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-2 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
+          className="mx-auto mb-3 flex h-[56px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-1 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
         >
-          <span className="-my-3 -ml-1 flex h-[86px] w-[86px] shrink-0 items-center justify-center overflow-visible">
+          <span className="-my-5 -ml-2 flex h-[94px] w-[94px] shrink-0 items-center justify-center overflow-visible">
             <img
              src="/assets/Icons/Diamond%20box.png?v=box-new-1"
               alt=""
