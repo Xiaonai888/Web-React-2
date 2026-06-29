@@ -895,6 +895,61 @@ export default function TaskCenterPage() {
   animation: shadowGiftOpen 0.5s ease-out both;
 }
 
+@keyframes shadowFirework {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(0.65);
+  }
+  55% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+.shadowFirework {
+  position: absolute;
+  height: 92px;
+  width: 92px;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle, rgba(255,255,255,0.98) 0 3px, transparent 4px),
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255,220,70,0.95) 0deg 4deg,
+      transparent 4deg 18deg
+    );
+  filter: drop-shadow(0 0 12px rgba(255,205,55,0.8));
+  mix-blend-mode: screen;
+  animation: shadowFirework 2.8s ease-out both;
+}
+
+.shadowFireworkLeft {
+  left: 10%;
+  top: 17%;
+  animation-delay: 0.05s;
+}
+
+.shadowFireworkRight {
+  right: 10%;
+  top: 18%;
+  animation-delay: 0.35s;
+}
+
+.shadowFireworkTop {
+  left: 50%;
+  top: 10%;
+  transform-origin: center;
+  animation-delay: 0.65s;
+}
+
           .shadowCoinBurst {
             animation-duration: 1.25s;
             animation-timing-function: ease-out;
@@ -923,6 +978,9 @@ export default function TaskCenterPage() {
       {giftReward ? (
   <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/65 px-6">
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <span className="shadowFirework shadowFireworkLeft" />
+      <span className="shadowFirework shadowFireworkRight" />
+      <span className="shadowFirework shadowFireworkTop" />
       <CoinIcon className="shadowCoinBurst shadowCoinBurstOne absolute left-[18%] top-[30%] h-9 w-9" />
       <CoinIcon className="shadowCoinBurst shadowCoinBurstTwo absolute right-[19%] top-[29%] h-8 w-8" />
 
@@ -951,7 +1009,7 @@ export default function TaskCenterPage() {
           <img
   src="/assets/Icons/Voucher.svg"
   alt="Voucher"
-  className="h-10 w-10 object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.22)]"
+  className="h-[46px] w-[64px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
 />
           <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
             +{formatNumber(giftReward.vouchers)}
