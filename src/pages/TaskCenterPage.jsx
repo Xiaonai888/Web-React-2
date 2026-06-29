@@ -1000,9 +1000,9 @@ export default function TaskCenterPage() {
       <div className="shadowRewardPop mt-3 flex items-center justify-center gap-5">
         <div className="flex items-center gap-2">
           <CoinIcon className="h-10 w-10" />
-          <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
-            +{formatNumber(giftReward.coins)}
-          </span>
+          <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+  +{formatNumber(giftReward.coins)}
+</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1011,9 +1011,9 @@ export default function TaskCenterPage() {
   alt="Voucher"
   className="h-[46px] w-[64px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
 />
-          <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
-            +{formatNumber(giftReward.vouchers)}
-          </span>
+          <span className="text-[28px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+  +{formatNumber(giftReward.vouchers)}
+</span>
         </div>
       </div>
 
