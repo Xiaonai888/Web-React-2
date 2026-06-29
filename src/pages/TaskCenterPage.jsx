@@ -1425,11 +1425,11 @@ export default function TaskCenterPage() {
 
           <div className="mt-2">
             <ReadingRewardCard
-              readingReward={readingReward}
-              claiming={readingClaiming}
-              onRead={() => navigate('/discover')}
-              onClaim={claimReadingReward}
-            />
+  readingReward={readingReward}
+  claiming={readingClaiming}
+  onRead={() => navigate('/')}
+  onClaim={claimReadingReward}
+/>
 
             {adminReadingTask?.is_active ? (
               <AdminReadingMissionCard
