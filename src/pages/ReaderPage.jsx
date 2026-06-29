@@ -627,12 +627,11 @@ const [showAutoHint, setShowAutoHint] = useState(false)
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
 
   const diamondBoxSources = [
-    '/assets/Icons/Diamond%20box.png',
-    '/assets/Icons/Diamond box.png',
-    '/assets/icons/Diamond%20box.png',
-    '/assets/icons/Diamond box.png',
-    '/assets/Icons/Diamond.svg',
-  ]
+  '/assets/Icons/Diamond box 2.png',
+  '/assets/Icons/Diamond%20box%202.png',
+  '/assets/Icons/Diamond box.png',
+  '/assets/Icons/Diamond.svg',
+]
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
