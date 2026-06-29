@@ -1424,7 +1424,7 @@ export default function TaskCenterPage() {
           </div>
 
           <div className="mt-2">
-            <ReadingRewardCard
+           <ReadingRewardCard
   readingReward={readingReward}
   claiming={readingClaiming}
   onRead={() => navigate('/')}
