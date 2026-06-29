@@ -277,9 +277,9 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
   const buttonText = alreadyDone ? 'Done' : task.action
   const buttonTone = alreadyDone ? 'soft' : task.status === 'claim' ? 'gold' : 'outline'
   const iconWrapClass = isCheckIn
-    ? 'bg-[#eef4ff] text-[#4f7cff] ring-1 ring-[#4f7cff]/10'
+    ? 'bg-[#fff3df] text-[#ff9f1c] ring-1 ring-[#ff9f1c]/15'
     : 'bg-[#f8fafc] text-[#111827] ring-1 ring-black/5'
-
+  
   return (
     <div className="flex gap-3 border-b border-[#f1f2f5] py-4 last:border-b-0">
       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconWrapClass}`}>
@@ -410,7 +410,7 @@ function AdminReadingMissionCard({ task, readingReward, onGo }) {
 
   return (
     <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef4ff] text-[#4f7cff] ring-1 ring-[#4f7cff]/10">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
         <i className="fa-regular fa-clock text-[15px]" />
       </div>
 
