@@ -758,7 +758,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         >
           <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[10px]">
             <img
-              src={diamondBoxSources[Math.min(diamondBoxIndex, diamondBoxSources.length - 1)]}
+              src="/assets/Icons/Diamond%20box%202.png?v=2"
               alt=""
               className="h-full w-full object-contain"
               loading="eager"
