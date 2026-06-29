@@ -455,8 +455,6 @@ function AdminReadingMissionCard({ task, readingReward, onGo }) {
 }
 
 function FloatingRewardChest({ chest, onClick, claiming }) {
-
-function FloatingRewardChest({ chest, onClick, claiming }) {
   const availableChests = Number(chest?.available_chests || 0)
   const isReady = availableChests > 0
   const isFull = Boolean(chest?.is_full)
