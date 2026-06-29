@@ -64,6 +64,24 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
 
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString()
+}
+
+function normalizeTaskLink(link) {
+  const value = String(link || '').trim()
+
+  if (!value) return '/discover'
+
+  try {
+    const url = new URL(value)
+
+    return `${url.pathname}${url.search || ''}${url.hash || ''}` || '/discover'
+  } catch {
+    return value.startsWith('/') ? value : '/discover'
+  }
+}
+
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000))
   const hours = Math.floor(totalSeconds / 3600)
@@ -385,6 +403,59 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   )
 }
 
+function AdminReadingMissionCard({ task, readingReward, onGo }) {
+  if (!task?.is_active) return null
+
+  const targetMinutes = Number(task.target_minutes || 1)
+  const targetSeconds = targetMinutes * 60
+  const activeSeconds = Math.min(targetSeconds, Number(readingReward?.active_seconds || 0))
+  const progressMinutes = Math.min(targetMinutes, Math.floor(activeSeconds / 60))
+  const percent = targetSeconds > 0 ? Math.min(100, (activeSeconds / targetSeconds) * 100) : 0
+
+  return (
+    <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef4ff] text-[#4f7cff] ring-1 ring-[#4f7cff]/10">
+        <i className="fa-regular fa-clock text-[15px]" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">
+              {task.title || `Read ${targetMinutes} minutes`}
+            </h3>
+
+            <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+              {task.subtitle || 'Keep reading longer to earn more coins.'}
+            </p>
+
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+              <CoinIcon className="h-4 w-4" />
+              <span>+{formatNumber(task.reward_coins || 0)}</span>
+            </div>
+          </div>
+
+          <RewardButton tone="gold" onClick={onGo}>
+            {task.button_text || 'Go'}
+          </RewardButton>
+        </div>
+
+        <div className="mt-3">
+          <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
+            <div className="h-full rounded-full bg-[#F6B800]" style={{ width: `${percent}%` }} />
+          </div>
+
+          <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">
+            {progressMinutes}/{targetMinutes}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FloatingRewardChest({ chest, onClick, claiming }) {
+
 function FloatingRewardChest({ chest, onClick, claiming }) {
   const availableChests = Number(chest?.available_chests || 0)
   const isReady = availableChests > 0
@@ -498,6 +569,7 @@ export default function TaskCenterPage() {
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
+  const [adminReadingTask, setAdminReadingTask] = useState(null)
   const [scrolledPastCover, setScrolledPastCover] = useState(false)
   const coverRef = useRef(null)
 
@@ -531,8 +603,9 @@ export default function TaskCenterPage() {
       const response = await fetch(`${API_BASE_URL}/api/task-center/public`)
       const data = await response.json().catch(() => ({}))
 
-      if (response.ok && data.ok && data.settings?.cover_url) {
-        setTaskCoverUrl(data.settings.cover_url)
+      if (response.ok && data.ok) {
+        setTaskCoverUrl(data.settings?.cover_url || '')
+        setAdminReadingTask(data.settings?.reading_task || null)
       }
     } catch {
       setTaskCoverUrl('')
@@ -1357,12 +1430,13 @@ export default function TaskCenterPage() {
           </div>
 
           <div className="mt-2">
-            <ReadingRewardCard
-              readingReward={readingReward}
-              claiming={readingClaiming}
-              onRead={() => navigate('/discover')}
-              onClaim={claimReadingReward}
-            />
+            {adminReadingTask?.is_active ? (
+              <AdminReadingMissionCard
+                task={adminReadingTask}
+                readingReward={readingReward}
+                onGo={() => navigate(normalizeTaskLink(adminReadingTask.story_link))}
+              />
+            ) : null}
 
             {moreRewards.map((task) => (
               <TaskRow
