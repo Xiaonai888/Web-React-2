@@ -112,8 +112,11 @@ export function SmartRefreshProvider({ children }) {
 
       const hasKnownOldVersion = keys.some((key) => oldVersions[key])
       const hasChanged = hasKnownOldVersion && keys.some((key) => {
-        return oldVersions[key] && data.versions[key] && oldVersions[key] !== data.versions[key]
-      })
+      const oldVersion = Number(oldVersions[key]?.version || 0)
+      const nextVersion = Number(data.versions[key]?.version || 0)
+
+  return oldVersion > 0 && nextVersion > 0 && oldVersion !== nextVersion
+})
 
       versionsRef.current = nextVersions
       saveStoredVersions(nextVersions)
