@@ -22,7 +22,7 @@ function getRouteRefreshKeys(pathname) {
   if (pathname === '/library') return ['library']
   if (pathname === '/notifications' || pathname.startsWith('/notifications/')) return ['notifications']
   if (pathname === '/comments') return ['comments']
-  if (pathname === '/tasks' || pathname.startsWith('/tasks/')) return ['tasks']
+  if (pathname === '/tasks' || pathname.startsWith('/tasks/')) return []
   if (pathname === '/ranking' || pathname === '/top-novel') return ['ranking', 'stories']
   if (pathname === '/me' || pathname.startsWith('/profile')) return ['me']
 
