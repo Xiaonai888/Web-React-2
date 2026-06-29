@@ -390,9 +390,9 @@ function RewardChestPopup({ reward, onClaim }) {
       </div>
 
       <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center text-center">
-        <h3 className="text-[25px] font-black leading-8 text-[#ffcc32] drop-shadow-[0_3px_0_rgba(108,65,0,0.35)]">
-          Woohoo! You’ve got
-        </h3>
+        <h3 className="text-[22px] font-bold leading-7 text-[#ffcc32] drop-shadow-[0_3px_0_rgba(108,65,0,0.35)]">
+  Surprise! You’ve got
+</h3>
 
         <div className="shadowRewardPop mt-3 flex items-center justify-center gap-2">
           <CoinIcon className="h-12 w-12" />
