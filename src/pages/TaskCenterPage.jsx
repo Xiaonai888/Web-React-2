@@ -293,9 +293,94 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
         {task.progress !== undefined ? <ProgressLine progress={task.progress} target={task.target} /> : null}
       </div>
     </div>
-  )
+   )
 }
 
+function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
+  const fallbackMilestones = [
+    { seconds: 60, minutes: 1, coins: 5, completed: false, claimed: false, claimable: false },
+    { seconds: 300, minutes: 5, coins: 5, completed: false, claimed: false, claimable: false },
+    { seconds: 600, minutes: 10, coins: 10, completed: false, claimed: false, claimable: false },
+    { seconds: 1200, minutes: 20, coins: 15, completed: false, claimed: false, claimable: false },
+    { seconds: 1800, minutes: 30, coins: 15, completed: false, claimed: false, claimable: false },
+  ]
+
+  const activeSeconds = Number(readingReward?.active_seconds || 0)
+  const targetSeconds = Number(readingReward?.target_seconds || 1800)
+  const earnedCoins = Number(readingReward?.total_earned_coins || 0)
+  const claimableCoins = Number(readingReward?.claimable_coins || 0)
+  const milestones = readingReward?.milestones?.length ? readingReward.milestones : fallbackMilestones
+  const progressPercent = targetSeconds > 0 ? Math.min(100, (activeSeconds / targetSeconds) * 100) : 0
+  const buttonText = claimableCoins > 0 ? `Claim +${claimableCoins}` : readingReward?.done_today ? 'Done' : 'Read now'
+
+  return (
+    <div className="border-b border-[#f1f2f5] py-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10">
+          <i className="fa-solid fa-book-open-reader text-[15px]" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-[15px] font-black leading-5 text-[#111827]">
+                <span className="text-[#ff8a00]">{formatNumber(earnedCoins)}</span> Coins Earned
+              </h3>
+              <p className="mt-1 text-[13px] font-black leading-5 text-[#111827]">Read & Earn</p>
+              <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+                Read any story today and collect coins at each time goal.
+              </p>
+            </div>
+
+            <RewardButton
+              tone={claimableCoins > 0 ? 'gold' : readingReward?.done_today ? 'soft' : 'outline'}
+              disabled={claiming || Boolean(readingReward?.done_today)}
+              onClick={claimableCoins > 0 ? onClaim : onRead}
+            >
+              {claiming ? 'Claiming...' : buttonText}
+            </RewardButton>
+          </div>
+
+          <div className="mt-4">
+            <div className="relative h-2 rounded-full bg-[#edf0f5]">
+              <div className="h-full rounded-full bg-[#ffd58a]" style={{ width: `${progressPercent}%` }} />
+
+              {milestones.map((item) => {
+                const left = targetSeconds > 0 ? Math.min(100, (Number(item.seconds || 0) / targetSeconds) * 100) : 0
+
+                return (
+                  <span
+                    key={item.seconds}
+                    className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white ${
+                      item.claimed ? 'bg-[#ff3f62]' : item.completed ? 'bg-[#ffb800]' : 'bg-[#dbe1ea]'
+                    }`}
+                    style={{ left: `${left}%` }}
+                  />
+                )
+              })}
+            </div>
+
+            <div className="relative mt-2 h-4">
+              {milestones.map((item) => {
+                const left = targetSeconds > 0 ? Math.min(100, (Number(item.seconds || 0) / targetSeconds) * 100) : 0
+
+                return (
+                  <span
+                    key={item.seconds}
+                    className="absolute -translate-x-1/2 text-[10px] font-bold text-[#8b93a1]"
+                    style={{ left: `${left}%` }}
+                  >
+                    {item.minutes}m
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function FloatingRewardChest({ chest, onClick, claiming }) {
   const availableChests = Number(chest?.available_chests || 0)
@@ -404,6 +489,8 @@ export default function TaskCenterPage() {
   const [rewardChest, setRewardChest] = useState(null)
   const [chestReward, setChestReward] = useState(null)
   const [chestClaiming, setChestClaiming] = useState(false)
+  const [readingReward, setReadingReward] = useState(null)
+  const [readingClaiming, setReadingClaiming] = useState(false)
   const [chestTick, setChestTick] = useState(Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
@@ -455,6 +542,7 @@ export default function TaskCenterPage() {
       setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
       setCheckIn(null)
       setRewardChest(null)
+      setReadingReward(null)
       return
     }
 
@@ -462,10 +550,11 @@ export default function TaskCenterPage() {
       setLoading(true)
       setMessage('')
 
-      const [walletResponse, checkInResponse, chestResponse] = await Promise.allSettled([
+      const [walletResponse, checkInResponse, chestResponse, readingResponse] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/check-in`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/reward-chest`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/tasks/reading-reward`, { headers: getHeaders() }),
       ])
 
       if (walletResponse.status === 'fulfilled') {
@@ -522,6 +611,21 @@ export default function TaskCenterPage() {
 
         if (chestResponse.value.ok && chestData.ok && chestData.chest) {
           setRewardChest(chestData.chest)
+        }
+      }
+
+      if (readingResponse.status === 'fulfilled') {
+        const readingData = await readingResponse.value.json().catch(() => ({}))
+
+        if (readingResponse.value.status === 401 || readingResponse.value.status === 403) {
+          clearReaderSession()
+          setToast('Please log in again')
+          navigate('/login')
+          return
+        }
+
+        if (readingResponse.value.ok && readingData.ok && readingData.reading_reward) {
+          setReadingReward(readingData.reading_reward)
         }
       }
     } catch {
@@ -711,8 +815,57 @@ export default function TaskCenterPage() {
       })
     } catch (error) {
       setToast(error.message || 'Failed to claim reward chest')
-    } finally {
+       } finally {
       setChestClaiming(false)
+    }
+  }
+
+  async function claimReadingReward() {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    if (readingClaiming) return
+
+    try {
+      setReadingClaiming(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-reward/claim`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast('Please log in again')
+        navigate('/login')
+        return
+      }
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'No reading reward available')
+      }
+
+      if (data.wallet) {
+        setWallet({
+          coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? wallet.coins ?? 0),
+          diamonds: Number(data.wallet.diamond_balance ?? wallet.diamonds ?? 0),
+          vouchers: Number(data.wallet.voucher_balance ?? wallet.vouchers ?? 0),
+        })
+      }
+
+      if (data.reading_reward) {
+        setReadingReward(data.reading_reward)
+      }
+
+      setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
+    } catch (error) {
+      setToast(error.message || 'Failed to claim reading reward')
+    } finally {
+      setReadingClaiming(false)
     }
   }
 
@@ -1201,6 +1354,13 @@ export default function TaskCenterPage() {
           </div>
 
           <div className="mt-2">
+            <ReadingRewardCard
+              readingReward={readingReward}
+              claiming={readingClaiming}
+              onRead={() => navigate('/discover')}
+              onClaim={claimReadingReward}
+            />
+
             {moreRewards.map((task) => (
               <TaskRow
                 key={task.id}
