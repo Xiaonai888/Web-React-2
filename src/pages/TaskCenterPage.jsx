@@ -755,8 +755,8 @@ export default function TaskCenterPage() {
     loadReminderSetting()
   }, [])
 
-  useEffect(() => {
-  const shouldLock = Boolean(chestReward)
+ useEffect(() => {
+  const shouldLock = Boolean(chestReward || giftReward)
 
   if (!shouldLock) return undefined
 
@@ -770,7 +770,7 @@ export default function TaskCenterPage() {
     document.body.style.overflow = previousBodyOverflow
     document.documentElement.style.overflow = previousHtmlOverflow
   }
-}, [chestReward])
+}, [chestReward, giftReward])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -885,6 +885,16 @@ export default function TaskCenterPage() {
   animation: shadowRewardPop 0.42s ease-out both;
 }
 
+@keyframes shadowGiftOpen {
+  0% { opacity: 0; transform: scale(0.78) translateY(18px); }
+  55% { opacity: 1; transform: scale(1.08) translateY(-5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.shadowGiftOpen {
+  animation: shadowGiftOpen 0.5s ease-out both;
+}
+
           .shadowCoinBurst {
             animation-duration: 1.25s;
             animation-timing-function: ease-out;
@@ -911,62 +921,66 @@ export default function TaskCenterPage() {
       ) : null}
 
       {giftReward ? (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 px-6">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <span className="absolute left-[18%] top-[28%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
-            <span className="absolute right-[22%] top-[30%] h-2 w-2 animate-ping rounded-full bg-[#ff3f62]" />
-            <span className="absolute left-[25%] bottom-[32%] h-2 w-2 animate-pulse rounded-full bg-white" />
-            <span className="absolute right-[28%] bottom-[34%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
-          </div>
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/65 px-6">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <CoinIcon className="shadowCoinBurst shadowCoinBurstOne absolute left-[18%] top-[30%] h-9 w-9" />
+      <CoinIcon className="shadowCoinBurst shadowCoinBurstTwo absolute right-[19%] top-[29%] h-8 w-8" />
 
-          <div className="relative w-full max-w-[340px] rounded-[28px] bg-white px-6 py-7 text-center shadow-[0_18px_50px_rgba(17,24,39,0.24)]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#fff7d6]">
-              <img
-                src="/assets/Icons/Gift.svg"
-                alt="Gift"
-                className="h-12 w-12 object-contain"
-              />
-            </div>
+      <span className="absolute left-[16%] top-[38%] h-2 w-2 animate-ping rounded-full bg-[#F6B800]" />
+      <span className="absolute right-[18%] top-[42%] h-2 w-2 animate-ping rounded-full bg-white" />
+      <span className="absolute left-[35%] top-[24%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
+      <span className="absolute right-[35%] bottom-[28%] h-1.5 w-1.5 animate-pulse rounded-full bg-[#fff1a8]" />
+      <span className="absolute left-[22%] bottom-[34%] h-2 w-2 animate-bounce rounded-full bg-[#ff3f62]" />
+      <span className="absolute right-[23%] bottom-[35%] h-2 w-2 animate-bounce rounded-full bg-[#F6B800]" />
+    </div>
 
-            <h3 className="mt-4 text-[20px] font-black text-[#111827]">
-              Gift Opened!
-            </h3>
+    <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center text-center">
+      <h3 className="text-[25px] font-black leading-8 text-[#ffcc32] drop-shadow-[0_3px_0_rgba(108,65,0,0.35)]">
+        Surprise! You’ve got
+      </h3>
 
-            <p className="mt-2 text-[13px] font-semibold leading-5 text-[#8b93a1]">
-              Your Day 7 reward has been added to your wallet.
-            </p>
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-[20px] bg-[#fff7d6] px-3 py-4">
-                <CoinIcon className="mx-auto h-8 w-8" />
-                <div className="mt-2 text-[18px] font-black text-[#111827]">
-                  +{formatNumber(giftReward.coins)}
-                </div>
-                <div className="mt-1 text-[11px] font-bold text-[#8b93a1]">Coins</div>
-              </div>
-
-              <div className="rounded-[20px] bg-[#f8fafc] px-3 py-4">
-                <i className="fa-solid fa-ticket text-[28px] text-[#111827]" />
-                <div className="mt-2 text-[18px] font-black text-[#111827]">
-                  +{formatNumber(giftReward.vouchers)}
-                </div>
-                <div className="mt-1 text-[11px] font-bold text-[#8b93a1]">Voucher</div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setGiftReward(null)
-                setToast('Reward added to your wallet')
-              }}
-              className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_10px_22px_rgba(255,63,98,0.24)] active:scale-[0.98]"
-            >
-              Claim
-            </button>
-          </div>
+      <div className="shadowRewardPop mt-3 flex items-center justify-center gap-5">
+        <div className="flex items-center gap-2">
+          <CoinIcon className="h-10 w-10" />
+          <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+            +{formatNumber(giftReward.coins)}
+          </span>
         </div>
-      ) : null}
+
+        <div className="flex items-center gap-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-[0_6px_14px_rgba(0,0,0,0.22)]">
+            <i className="fa-solid fa-ticket text-[19px]" />
+          </span>
+          <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
+            +{formatNumber(giftReward.vouchers)}
+          </span>
+        </div>
+      </div>
+
+      <div className="relative mt-5 flex h-[245px] w-full items-center justify-center">
+        <span className="shadowPopupGlow absolute h-[220px] w-[220px] rounded-full bg-[#ffbd28]/35 blur-3xl" />
+        <span className="absolute h-[270px] w-[270px] rounded-full bg-[radial-gradient(circle,rgba(255,230,115,0.35)_0%,rgba(255,184,0,0.12)_42%,rgba(255,184,0,0)_70%)]" />
+
+        <img
+          src="/assets/Task%20Center/gift-open.png?v=1"
+          alt="Opened Gift"
+          className="shadowGiftOpen relative z-10 h-[230px] w-[300px] object-contain drop-shadow-[0_20px_28px_rgba(0,0,0,0.38)]"
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setGiftReward(null)
+          setToast('Reward added to your wallet')
+        }}
+        className="mt-5 flex h-12 w-[260px] items-center justify-center rounded-full bg-[#ff3f62] text-[15px] font-black text-white shadow-[0_12px_26px_rgba(255,63,98,0.34)] active:scale-[0.98]"
+      >
+        Claim
+      </button>
+    </div>
+  </div>
+) : null}
 
       {showCheckInRules ? (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/45 px-6">
