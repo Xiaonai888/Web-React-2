@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
@@ -953,7 +954,9 @@ const shouldShowOpeningAds =
 export default function App() {
   return (
     <Router>
-      <AppShell />
+      <SmartRefreshProvider>
+        <AppShell />
+      </SmartRefreshProvider>
     </Router>
   )
 }
