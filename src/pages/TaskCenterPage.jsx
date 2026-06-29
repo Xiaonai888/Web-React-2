@@ -1424,12 +1424,14 @@ export default function TaskCenterPage() {
           </div>
 
           <div className="mt-2">
-           <ReadingRewardCard
-  readingReward={readingReward}
-  claiming={readingClaiming}
-  onRead={() => navigate('/')}
-  onClaim={claimReadingReward}
-/>
+            {moreRewards.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                claimedToday={claimedToday}
+                onCheckIn={claimToday}
+              />
+            ))}
 
             {adminReadingTask?.is_active ? (
               <AdminReadingMissionCard
@@ -1439,14 +1441,12 @@ export default function TaskCenterPage() {
               />
             ) : null}
 
-            {moreRewards.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                claimedToday={claimedToday}
-                onCheckIn={claimToday}
-              />
-            ))}
+            <ReadingRewardCard
+              readingReward={readingReward}
+              claiming={readingClaiming}
+              onRead={() => navigate('/')}
+              onClaim={claimReadingReward}
+            />
           </div>
         </section>
 
