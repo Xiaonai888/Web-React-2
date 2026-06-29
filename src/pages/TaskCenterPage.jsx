@@ -948,9 +948,11 @@ export default function TaskCenterPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[#111827] shadow-[0_6px_14px_rgba(0,0,0,0.22)]">
-            <i className="fa-solid fa-ticket text-[19px]" />
-          </span>
+          <img
+  src="/assets/Icons/Voucher.svg"
+  alt="Voucher"
+  className="h-10 w-10 object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.22)]"
+/>
           <span className="text-[34px] font-bold leading-none text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]">
             +{formatNumber(giftReward.vouchers)}
           </span>
