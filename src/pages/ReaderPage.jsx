@@ -614,218 +614,205 @@ function LockedEpisodeCard({
   theme,
   episode,
   wallet,
-  coinAccess,
-  voucherAccess,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
-  showAutoHint,
-  setShowAutoHint,
   unlocking,
   onUnlock,
-  onCoinUnlock,
-  onVoucherUnlock,
 }) {
-
- 
-  
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
-  const voucherBalance = Number(wallet?.voucher_balance || 0)
-  const voucherAmount = Number(voucherAccess?.amount || 0)
-  const voucherDisabled = unlocking || !voucherAccess?.available
-  const coinAmount = Number(coinAccess?.amount || 0)
-  const coinAccessDays = Number(coinAccess?.access_days || 7)
-  const coinWaitSeconds = Number(coinAccess?.wait_seconds || 0)
-  const coinAvailableAt = coinAccess?.available_at || ''
-  const coinDisabled = unlocking || !coinAccess?.available
-  const coinWaitText = formatWaitSeconds(coinWaitSeconds)
-  const coinUnlockDate = formatUnlockDateTime(coinAvailableAt)
   const singleOption = packageOptions.find((option) => option.key === 'single')
-  const next30Option = packageOptions.find((option) => option.key === 'next30' && option.enabled)
+
+  const multiPackagePriority = ['all_released', 'next50', 'next30', 'next10']
+  const bestMultiOption = multiPackagePriority
+    .map((key) => packageOptions.find((option) => option.key === key && option.enabled))
+    .find(Boolean)
+
+  const goPurchase = () => {
+    window.location.assign('/shop/mall/purchase')
+  }
+
+  const getPackageTitle = (option) => {
+    if (!option) return ''
+    if (option.key === 'all_released') return 'All Released Episodes'
+    return option.label || 'Next Episodes'
+  }
+
+  const getPackageSubtitle = (option) => {
+    if (!option) return ''
+    const count = Number(option.requested_count || 0)
+
+    if (option.key === 'single') return 'Unlock current episode'
+    if (option.key === 'all_released') return 'Unlock all released paid episodes'
+    if (count > 0) return `Unlock ${count} episodes from here`
+
+    return 'Unlock more episodes'
+  }
+
+  const handlePackageClick = (option) => {
+    if (!option || unlocking || !option.enabled) return
+
+    const requestedCount = Number(option.requested_count || 0)
+    const isMultiPackage =
+      requestedCount >= 10 ||
+      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
+
+    if (isMultiPackage && diamondBalance < Number(option.price || 0)) {
+      goPurchase()
+      return
+    }
+
+    onUnlock(option.key)
+  }
+
+  const PackageButton = ({ option, primary = false }) => {
+    if (!option) return null
+
+    const price = Number(option.price || 0)
+    const discount = Number(option.discount_percent || 0)
+    const requestedCount = Number(option.requested_count || 0)
+    const isMultiPackage =
+      requestedCount >= 10 ||
+      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
+    const needsTopUp = isMultiPackage && diamondBalance < price
+
+    return (
+      <button
+        type="button"
+        onClick={() => handlePackageClick(option)}
+        disabled={unlocking || !option.enabled}
+        className={`relative flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left active:scale-[0.99] disabled:opacity-55 ${
+          primary
+            ? 'border-[#7DD3FC] bg-[#EAF8FF]'
+            : 'border-[#E5E7EB] bg-white'
+        }`}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            {discount > 0 ? (
+              <span className="rounded-full bg-[#FF4D5E] px-2 py-0.5 text-[10px] font-black text-white">
+                {discount}% OFF
+              </span>
+            ) : null}
+
+            <p className="truncate text-[15px] font-black text-[#111827]">
+              {getPackageTitle(option)}
+            </p>
+          </div>
+
+          <p className="mt-1 text-[11px] font-bold text-[#8D94A1]">
+            {getPackageSubtitle(option)}
+          </p>
+        </div>
+
+        <div className="ml-3 flex shrink-0 items-center gap-1.5">
+          <img
+            src="/assets/Icons/Diamond.svg"
+            alt="Diamond"
+            className="h-6 w-6 object-contain"
+          />
+          <span className="text-[16px] font-black text-[#111827]">
+            {formatNumber(price)}
+          </span>
+
+          {needsTopUp ? (
+            <span className="ml-1 rounded-full bg-[#111827] px-2.5 py-1 text-[10px] font-black text-white">
+              Top Up
+            </span>
+          ) : (
+            <i className="fa-solid fa-chevron-right ml-1 text-[11px] text-[#9CA3AF]" />
+          )}
+        </div>
+      </button>
+    )
+  }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-[#F3F4F6]/85 px-0 pb-0">
-      <section className="max-h-[82vh] min-h-[390px] w-screen overflow-y-auto rounded-t-[30px] bg-[#FFFDF7] px-5 pb-[calc(34px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-18px_50px_rgba(17,24,39,0.18)] ring-1 ring-[#E7C56A]/35">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D8B94E]" />
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/50 px-3 pb-0 backdrop-blur-[2px]">
+      <div className="w-full max-w-[480px] pb-[env(safe-area-inset-bottom)]">
+        <button
+          type="button"
+          onClick={goPurchase}
+          className="mb-3 flex min-h-[76px] w-full items-center gap-3 rounded-[18px] bg-[#5F6675]/92 px-3 py-2 text-left shadow-[0_14px_35px_rgba(0,0,0,0.22)] backdrop-blur"
+        >
+          <img
+            src="/assets/Icons/Diamond box.png"
+            alt="Diamond deal"
+            className="h-14 w-14 shrink-0 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
 
-        <div className="text-center">
-          <h2 className="text-[22px] font-black text-[#111827]">Continue reading?</h2>
-
-          {episode?.title ? (
-            <p className="mt-2 line-clamp-1 text-[13px] font-semibold text-[#8D94A1]">
-              {episode.title}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-black italic text-white">
+              Don’t miss this amazing deal
             </p>
-          ) : null}
-        </div>
-
-{coinAccess && !coinAccess.available && coinWaitSeconds > 0 ? (
-  <div className="mt-4 rounded-[18px] bg-[#FFF1F1] px-4 py-3 text-left text-[12px] font-extrabold leading-5 text-[#E5484D]">
-    <div>New episode access is limited.</div>
-    <div>Coins unlock will be available in {coinWaitText}.</div>
-    {coinUnlockDate ? <div>Unlocks on {coinUnlockDate}.</div> : null}
-  </div>
-) : null}
-
-<div className="mt-6 space-y-3">
-
-  {coinAccess ? (
-  <button
-    type="button"
-    onClick={onCoinUnlock}
-    disabled={coinDisabled}
-    className={`flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
-      coinDisabled
-        ? 'border-[#E5E7EB] bg-[#F4F5F7] text-[#9CA3AF]'
-        : 'border-[#E7C56A] bg-[#FFF9E8] text-[#111827]'
-    }`}
-  >
-    <span className="flex items-center gap-3">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-        <img src="/assets/Icons/Shadow Coin.svg" alt="Coin" className="h-7 w-7 object-contain" />
-      </span>
-      <span>
-        <span className="block text-[14px] font-black">
-  TEST-READER-2026 — Coins — {formatNumber(coinBalance)} remaining
-</span>
-        <span className="mt-0.5 block text-[11px] font-bold">
-          {formatNumber(coinAmount)} Coins unlock for {coinAccessDays} days.
-        </span>
-      </span>
-    </span>
-    <span className={`rounded-full px-3 py-2 text-[11px] font-black ${coinDisabled ? 'bg-[#D0D5DD] text-white' : 'bg-[#111827] text-white'}`}>
-      {coinDisabled ? 'Locked' : 'Access'}
-    </span>
-  </button>
-) : null}
-
-{voucherAccess ? (
-  <button
-    type="button"
-    onClick={onVoucherUnlock}
-    disabled={voucherDisabled}
-    className={`flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left shadow-sm active:scale-[0.99] disabled:cursor-not-allowed ${
-      voucherDisabled
-        ? 'border-[#E5E7EB] bg-[#F4F5F7] text-[#9CA3AF]'
-        : 'border-[#BFD7FF] bg-[#F4F8FF] text-[#111827]'
-    }`}
-  >
-    <span className="flex items-center gap-3">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
-        <i className="fa-solid fa-ticket text-[15px] text-[#2563EB]" />
-      </span>
-      <span>
-        <span className="block text-[14px] font-black">
-          Vouchers — {formatNumber(voucherBalance)} remaining
-        </span>
-        <span className="mt-0.5 block text-[11px] font-bold">
-          Permanent unlock for this episode.
-        </span>
-      </span>
-    </span>
-    <span className={`rounded-full px-3 py-2 text-[11px] font-black ${voucherDisabled ? 'bg-[#D0D5DD] text-white' : 'bg-[#111827] text-white'}`}>
-      {voucherDisabled ? 'Locked' : 'Access'}
-    </span>
-  </button>
-) : null}
-   
-          {singleOption ? (
-            <button
-              type="button"
-              onClick={() => onUnlock('single')}
-              disabled={unlocking || !singleOption.enabled}
-              className="flex min-h-[62px] w-full items-center justify-between rounded-[18px] border border-[#E7C56A] bg-[#FFF9E8] px-4 py-3 text-left shadow-[0_12px_28px_rgba(197,155,45,0.12)] active:scale-[0.99] disabled:opacity-60"
-            >
-              <span className="flex items-center gap-3 text-[14px] font-black text-[#111827]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-white">
-                  <img src="/assets/Icons/Shadow Coin.svg" alt="Coin" className="h-7 w-7 object-contain" />
-                </span>
-                Use Diamonds Instead — {formatNumber(singleOption.price)} Diamonds
-              </span>
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            disabled
-            className="flex min-h-[58px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
-          >
-            <span className="flex items-center gap-3 text-[14px] font-black">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
-                <i className="fa-solid fa-play text-[12px]" />
-              </span>
-              Watch Ad
-            </span>
-            <span className="text-[11px] font-black">Coming soon</span>
-          </button>
-
-          {next30Option ? (
-            <button
-              type="button"
-              onClick={() => onUnlock('next30')}
-              disabled={unlocking}
-              className="flex min-h-[68px] w-full items-center justify-between rounded-[18px] border border-[#E7C56A] bg-white px-4 py-3 text-left shadow-sm active:scale-[0.99]"
-            >
-              <span>
-                <span className="flex items-center gap-3 text-[14px] font-black text-[#111827]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7C56A] bg-[#FFF9E8]">
-                    <i className="fa-solid fa-gem text-[13px] text-[#111827]" />
-                  </span>
-                  Use Diamonds Instead — {formatNumber(next30Option.price)} Diamonds / 30 Ep.
-                </span>
-                <span className="ml-11 mt-1 inline-flex rounded-full bg-[#F5C542] px-2.5 py-1 text-[11px] font-black text-[#111827]">
-                  Discount {next30Option.discount_percent || 20}%
-                </span>
-              </span>
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#C59B2D]" />
-            </button>
-          ) : null}
-        </div>
-
-        <div className="mt-4 px-1">
-  <div className="flex items-center justify-between gap-4">
-            <div className="text-[13px] font-normal text-[#9CA3AF]">
-  My Diamonds: {formatNumber(diamondBalance)}
-</div>
-            <div className="relative flex items-center gap-2 text-[13px] font-normal text-[#9CA3AF]">
-              <button
-                type="button"
-                onClick={() => setShowAutoHint((value) => !value)}
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#CFD4DF] text-[12px]"
-                aria-label="Auto unlock info"
-              >
-                ?
-              </button>
-
-              {showAutoHint ? (
-                <button
-                  type="button"
-                  onClick={() => setShowAutoHint(false)}
-                  className="absolute bottom-9 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-medium leading-5 text-white shadow-xl"
-                >
-                  Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={() => setAutoUnlock((value) => !value)}
-                className="flex items-center gap-2"
-              >
-                Auto unlock
-                <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
-                  <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
-                </span>
-              </button>
-            </div>
+            <p className="mt-0.5 text-[12px] font-black tracking-wide text-white/85">
+              GET <span className="text-[#FFE36E]">330</span> DIAMONDS!
+            </p>
           </div>
-        </div>
 
-        {unlocking ? (
-          <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">Unlocking...</div>
-        ) : null}
-      </section>
+          <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
+        </button>
+
+        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[30px] bg-white px-5 pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.22)]">
+          <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
+
+          <div className="text-center">
+            <h2 className="text-[22px] font-black text-[#111827]">
+              Continue reading?
+            </h2>
+
+            {episode?.title ? (
+              <p className="mt-2 line-clamp-1 text-[13px] font-semibold text-[#8D94A1]">
+                {episode.title}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <PackageButton option={singleOption} primary />
+            <PackageButton option={bestMultiOption} />
+
+            <button
+              type="button"
+              disabled
+              className="flex min-h-[56px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
+            >
+              <span className="flex items-center gap-3 text-[14px] font-black">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
+                  <i className="fa-solid fa-play text-[12px]" />
+                </span>
+                Watch Ad
+              </span>
+              <span className="text-[11px] font-black">Coming soon</span>
+            </button>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-4 px-1">
+            <div className="text-[13px] font-normal text-[#9CA3AF]">
+              My Diamonds: {formatNumber(diamondBalance)}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setAutoUnlock((value) => !value)}
+              className="flex items-center gap-2 text-[13px] font-normal text-[#9CA3AF]"
+            >
+              Auto unlock
+              <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
+                <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
+              </span>
+            </button>
+          </div>
+
+          {unlocking ? (
+            <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
+              Unlocking...
+            </div>
+          ) : null}
+        </section>
+      </div>
     </div>
   )
 }
