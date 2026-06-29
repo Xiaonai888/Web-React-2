@@ -684,11 +684,12 @@ function LockedEpisodeCard({
           type="button"
           onClick={() => handlePackageClick(option)}
           disabled={unlocking || !option.enabled}
-          className="flex min-h-[96px] w-full items-center justify-center bg-[#FFD200] px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
+          className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
         >
-          <span className="text-[22px] font-semibold text-[#4B5563]">
-            💎{formatNumber(price)} to Unlock This Ep.
-          </span>
+          <span className="flex items-center justify-center gap-2 text-[18px] font-semibold text-[#4B5563]">
+  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+  {formatNumber(price)} to Unlock This Ep.
+</span>
         </button>
       )
     }
@@ -726,34 +727,29 @@ function LockedEpisodeCard({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/20 px-0 pb-0 backdrop-blur-[1px]">
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/5 px-0 pb-0">
       <div className="w-full max-w-[480px] pb-[env(safe-area-inset-bottom)]">
         <button
           type="button"
           onClick={goPurchase}
-          className="flex min-h-[70px] w-full items-center gap-3 rounded-none bg-gradient-to-r from-[#3E424C]/95 via-[#555B66]/95 to-[#3B3F49]/95 px-3 py-2 text-left shadow-[0_14px_35px_rgba(0,0,0,0.22)]"
+          className="mx-3 mb-3 flex min-h-[68px] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/95 via-[#565C68]/95 to-[#343842]/95 px-3 py-2 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)]"
         >
           <img
-            src="/assets/Icons/Diamond%20box.png"
-            alt="Diamond deal"
-            className="h-14 w-14 shrink-0 object-contain"
-            loading="lazy"
-            decoding="async"
-          />
-
+  src="/assets/Icons/Diamond box.png"
+  alt=""
+  className="h-14 w-14 shrink-0 object-contain"
+  loading="lazy"
+  decoding="async"
+/>
+្
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-black italic text-white">
-              Don’t miss this amazing deal
-            </p>
-            <p className="mt-0.5 text-[12px] font-black italic tracking-wide text-white">
-              GET <span className="text-[#FFE36E]">330</span> DIAMONDS!
-            </p>
+            <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]">
           </div>
 
           <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
         </button>
 
-        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[30px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.22)]">
+        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]">
           <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
 
           <div className="px-5 text-center">
