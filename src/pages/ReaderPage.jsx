@@ -652,12 +652,13 @@ function LockedEpisodeCard({
   const handlePackageClick = (option) => {
     if (!option || unlocking || !option.enabled) return
 
+    const price = Number(option.price || 0)
     const requestedCount = Number(option.requested_count || 0)
     const isMultiPackage =
       requestedCount >= 10 ||
       ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
 
-    if (isMultiPackage && diamondBalance < Number(option.price || 0)) {
+    if (isMultiPackage && diamondBalance < price) {
       goPurchase()
       return
     }
@@ -669,6 +670,7 @@ function LockedEpisodeCard({
     if (!option) return null
 
     const price = Number(option.price || 0)
+    const originalPrice = Number(option.original_price || 0)
     const discount = Number(option.discount_percent || 0)
     const requestedCount = Number(option.requested_count || 0)
     const isMultiPackage =
@@ -676,67 +678,63 @@ function LockedEpisodeCard({
       ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
     const needsTopUp = isMultiPackage && diamondBalance < price
 
+    if (primary) {
+      return (
+        <button
+          type="button"
+          onClick={() => handlePackageClick(option)}
+          disabled={unlocking || !option.enabled}
+          className="flex min-h-[96px] w-full items-center justify-center bg-[#FFD200] px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
+        >
+          <span className="text-[22px] font-semibold text-[#4B5563]">
+            💎{formatNumber(price)} to Unlock This Ep.
+          </span>
+        </button>
+      )
+    }
+
     return (
       <button
         type="button"
         onClick={() => handlePackageClick(option)}
         disabled={unlocking || !option.enabled}
-        className={`relative flex min-h-[70px] w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left active:scale-[0.99] disabled:opacity-55 ${
-          primary
-            ? 'border-[#7DD3FC] bg-[#EAF8FF]'
-            : 'border-[#E5E7EB] bg-white'
-        }`}
+        className="relative flex min-h-[96px] w-full items-center justify-center border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
       >
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            {discount > 0 ? (
-              <span className="rounded-full bg-[#FF4D5E] px-2 py-0.5 text-[10px] font-black text-white">
-                {discount}% OFF
-              </span>
-            ) : null}
-
-            <p className="truncate text-[15px] font-black text-[#111827]">
-              {getPackageTitle(option)}
-            </p>
-          </div>
-
-          <p className="mt-1 text-[11px] font-bold text-[#8D94A1]">
-            {getPackageSubtitle(option)}
-          </p>
-        </div>
-
-        <div className="ml-3 flex shrink-0 items-center gap-1.5">
-          <img
-            src="/assets/Icons/Diamond.svg"
-            alt="Diamond"
-            className="h-6 w-6 object-contain"
-          />
-          <span className="text-[16px] font-black text-[#111827]">
-            {formatNumber(price)}
+        {discount > 0 ? (
+          <span className="absolute right-8 top-2 rounded-full bg-[#FF4D5E] px-3 py-1 text-[12px] font-black text-white">
+            {discount}% OFF
           </span>
+        ) : null}
 
-          {needsTopUp ? (
-            <span className="ml-1 rounded-full bg-[#111827] px-2.5 py-1 text-[10px] font-black text-white">
-              Top Up
+        <span className="text-[20px] font-semibold text-[#4B5563]">
+          💎 {formatNumber(price)}
+          {originalPrice > price ? (
+            <span className="ml-1 text-[16px] text-[#A0A6B0] line-through">
+              {formatNumber(originalPrice)}
             </span>
-          ) : (
-            <i className="fa-solid fa-chevron-right ml-1 text-[11px] text-[#9CA3AF]" />
-          )}
-        </div>
+          ) : null}
+          {' '}to unlock {requestedCount || 'all'} Chs.
+        </span>
+
+        {needsTopUp ? (
+          <span className="absolute bottom-2 text-[11px] font-black text-[#111827]">
+            Tap to top up Diamonds
+          </span>
+        ) : null}
       </button>
     )
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/50 px-3 pb-0 backdrop-blur-[2px]">
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/20 px-0 pb-0 backdrop-blur-[1px]">
       <div className="w-full max-w-[480px] pb-[env(safe-area-inset-bottom)]">
         <button
           type="button"
           onClick={goPurchase}
-          className="mb-3 flex min-h-[76px] w-full items-center gap-3 rounded-[18px] bg-[#5F6675]/92 px-3 py-2 text-left shadow-[0_14px_35px_rgba(0,0,0,0.22)] backdrop-blur"
+          className="flex min-h-[70px] w-full items-center gap-3 rounded-none bg-gradient-to-r from-[#3E424C]/95 via-[#555B66]/95 to-[#3B3F49]/95 px-3 py-2 text-left shadow-[0_14px_35px_rgba(0,0,0,0.22)]"
         >
           <img
-            src="/assets/Icons/Diamond box.png"
+            src="/assets/Icons/Diamond%20box.png"
             alt="Diamond deal"
             className="h-14 w-14 shrink-0 object-contain"
             loading="lazy"
@@ -747,7 +745,7 @@ function LockedEpisodeCard({
             <p className="truncate text-[15px] font-black italic text-white">
               Don’t miss this amazing deal
             </p>
-            <p className="mt-0.5 text-[12px] font-black tracking-wide text-white/85">
+            <p className="mt-0.5 text-[12px] font-black italic tracking-wide text-white">
               GET <span className="text-[#FFE36E]">330</span> DIAMONDS!
             </p>
           </div>
@@ -755,41 +753,21 @@ function LockedEpisodeCard({
           <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
         </button>
 
-        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[30px] bg-white px-5 pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.22)]">
+        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[30px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.22)]">
           <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
 
-          <div className="text-center">
+          <div className="px-5 text-center">
             <h2 className="text-[22px] font-black text-[#111827]">
               Continue reading?
             </h2>
-
-            {episode?.title ? (
-              <p className="mt-2 line-clamp-1 text-[13px] font-semibold text-[#8D94A1]">
-                {episode.title}
-              </p>
-            ) : null}
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 overflow-hidden border-y border-[#E5E7EB]">
             <PackageButton option={singleOption} primary />
             <PackageButton option={bestMultiOption} />
-
-            <button
-              type="button"
-              disabled
-              className="flex min-h-[56px] w-full items-center justify-between rounded-[18px] border border-[#E5E7EB] bg-[#F4F5F7] px-4 py-3 text-[#9CA3AF]"
-            >
-              <span className="flex items-center gap-3 text-[14px] font-black">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9ECF2]">
-                  <i className="fa-solid fa-play text-[12px]" />
-                </span>
-                Watch Ad
-              </span>
-              <span className="text-[11px] font-black">Coming soon</span>
-            </button>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-4 px-1">
+          <div className="mt-4 flex items-center justify-between gap-4 px-5">
             <div className="text-[13px] font-normal text-[#9CA3AF]">
               My Diamonds: {formatNumber(diamondBalance)}
             </div>
