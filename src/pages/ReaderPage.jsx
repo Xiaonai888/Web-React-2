@@ -758,7 +758,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         >
           <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[10px]">
             <img
-              src="/assets/Icons/Diamond%20box%202.png?v=2"
+              src="/assets/Task%20Center/Chest/chest-open.png?v=test1"
               alt=""
               className="h-full w-full object-contain"
               loading="eager"
