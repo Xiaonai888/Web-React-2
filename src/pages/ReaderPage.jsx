@@ -611,43 +611,57 @@ const handlePointerEnd = () => {
 }
 
 function LockedEpisodeCard({
-  theme,
+  story,
   episode,
   wallet,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
   unlocking,
+  onPurchase,
   onUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-  const singleOption = packageOptions.find((option) => option.key === 'single')
+const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
+const [showAutoHint, setShowAutoHint] = useState(false)
+  const backgroundImage = episode?.cover_url || story?.cover_url || ''
+
+  const diamondBoxSources = [
+    '/assets/Icons/Diamond%20box.png',
+    '/assets/Icons/Diamond box.png',
+    '/assets/icons/Diamond%20box.png',
+    '/assets/icons/Diamond box.png',
+    '/assets/Icons/Diamond.svg',
+  ]
+
+  const singleOption =
+    packageOptions.find((option) => option.key === 'single') || {
+      key: 'single',
+      label: '1 Episode',
+      price: 10,
+      requested_count: 1,
+      enabled: true,
+    }
 
   const multiPackagePriority = ['all_released', 'next50', 'next30', 'next10']
   const bestMultiOption = multiPackagePriority
     .map((key) => packageOptions.find((option) => option.key === key && option.enabled))
     .find(Boolean)
 
+  const displayMultiOption =
+    bestMultiOption || {
+      key: 'next10',
+      label: 'Next 10 Eps',
+      price: 90,
+      original_price: 100,
+      discount_percent: 10,
+      requested_count: 10,
+      enabled: true,
+    }
+
   const goPurchase = () => {
-    window.location.assign('/shop/mall/purchase')
-  }
-
-  const getPackageTitle = (option) => {
-    if (!option) return ''
-    if (option.key === 'all_released') return 'All Released Episodes'
-    return option.label || 'Next Episodes'
-  }
-
-  const getPackageSubtitle = (option) => {
-    if (!option) return ''
-    const count = Number(option.requested_count || 0)
-
-    if (option.key === 'single') return 'Unlock current episode'
-    if (option.key === 'all_released') return 'Unlock all released paid episodes'
-    if (count > 0) return `Unlock ${count} episodes from here`
-
-    return 'Unlock more episodes'
-  }
+  onPurchase?.()
+}
 
   const handlePackageClick = (option) => {
     if (!option || unlocking || !option.enabled) return
@@ -682,13 +696,14 @@ function LockedEpisodeCard({
       return (
         <button
           type="button"
-          onClick={() => handlePackageClick(option)}
+          onClick={goPurchase}
           disabled={unlocking || !option.enabled}
           className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
         >
-          <span className="flex items-center justify-center gap-2 text-[18px] font-semibold text-[#4B5563]">
+          <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
   <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-  {formatNumber(price)} to Unlock This Ep.
+  <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
+  <span>to unlock this Ep.</span>
 </span>
         </button>
       )
@@ -699,91 +714,135 @@ function LockedEpisodeCard({
         type="button"
         onClick={() => handlePackageClick(option)}
         disabled={unlocking || !option.enabled}
-        className="relative flex min-h-[96px] w-full items-center justify-center border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
+        className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
       >
         {discount > 0 ? (
-          <span className="absolute right-8 top-2 rounded-full bg-[#FF4D5E] px-3 py-1 text-[12px] font-black text-white">
-            {discount}% OFF
-          </span>
+      <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
+  {discount}% OFF
+</span>
         ) : null}
 
-        <span className="text-[20px] font-semibold text-[#4B5563]">
-          💎 {formatNumber(price)}
+        <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
+  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+  <span className="text-[#111827]">{formatNumber(price)}</span>
           {originalPrice > price ? (
-            <span className="ml-1 text-[16px] text-[#A0A6B0] line-through">
+            <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
               {formatNumber(originalPrice)}
             </span>
           ) : null}
-          {' '}to unlock {requestedCount || 'all'} Chs.
+          <span>to unlock {requestedCount || 'all'} Eps.</span>
         </span>
 
-        {needsTopUp ? (
-          <span className="absolute bottom-2 text-[11px] font-black text-[#111827]">
-            Tap to top up Diamonds
-          </span>
-        ) : null}
+        
       </button>
     )
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] flex items-end justify-center bg-black/5 px-0 pb-0">
-      <div className="w-full max-w-[480px] pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] overflow-hidden px-0 pb-0">
+      {backgroundImage ? (
+        <img
+          src={backgroundImage}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-45 blur-[1px]"
+        />
+      ) : null}
+
+      <div className="absolute inset-0 bg-black/45" />
+
+      <div className="relative z-10 flex h-full items-end justify-center md:items-center">
+        <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
         <button
           type="button"
           onClick={goPurchase}
-          className="mx-3 mb-3 flex min-h-[68px] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/95 via-[#565C68]/95 to-[#343842]/95 px-3 py-2 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)]"
+          className="mx-auto mb-3 flex min-h-[68px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-2 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
         >
-         <img
-  src="/assets/Icons/Diamond box.png"
-  alt=""
-  className="h-14 w-14 shrink-0 object-contain"
-  loading="lazy"
-  decoding="async"
-/>
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[10px]">
+            <img
+              src={diamondBoxSources[Math.min(diamondBoxIndex, diamondBoxSources.length - 1)]}
+              alt=""
+              className="h-full w-full object-contain"
+              loading="eager"
+              decoding="async"
+              onError={() => {
+                setDiamondBoxIndex((current) => Math.min(current + 1, diamondBoxSources.length - 1))
+              }}
+            />
+          </span>
 
-<div className="min-w-0 flex-1">
-  <div className="text-[15px] font-black leading-5 text-white">
-    Not enough Diamonds
-  </div>
-  <div className="mt-1 text-[12px] font-semibold leading-4 text-white/70">
-    Tap to top up and continue reading.
-  </div>
-</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[16px] font-black italic leading-5 text-white">
+              Don’t Miss Out
+            </div>
 
-<i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
+            <div className="mt-0.5 flex items-baseline gap-1 leading-4">
+              <span className="text-[15px] font-black italic text-[#FFE36E]">330</span>
+              <span className="text-[11px] font-medium italic text-white/90">Diamonds Await!</span>
+            </div>
+          </div>
+
+          <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
         </button>
 
-        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]">
-          <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#D1D5DB]" />
-
+        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
           <div className="px-5 text-center">
-            <h2 className="text-[22px] font-black text-[#111827]">
-              Continue reading?
-            </h2>
+            <h2 className="text-[16px] font-semibold text-[#4B5563]">
+  Continue reading?
+</h2>
           </div>
 
           <div className="mt-5 overflow-hidden border-y border-[#E5E7EB]">
             <PackageButton option={singleOption} primary />
-            <PackageButton option={bestMultiOption} />
+            <PackageButton option={displayMultiOption} />
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-4 px-5">
-            <div className="text-[13px] font-normal text-[#9CA3AF]">
-              My Diamonds: {formatNumber(diamondBalance)}
-            </div>
+          <div className="mt-4 flex items-center justify-between gap-3 px-5">
+  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
+    <span>My Diamonds:</span>
+    <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
+  </div>
 
-            <button
-              type="button"
-              onClick={() => setAutoUnlock((value) => !value)}
-              className="flex items-center gap-2 text-[13px] font-normal text-[#9CA3AF]"
-            >
-              Auto unlock
-              <span className={`relative h-8 w-14 rounded-full transition ${autoUnlock ? 'bg-[#111827]' : 'bg-[#D0D5DD]'}`}>
-                <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${autoUnlock ? 'left-7' : 'left-1'}`} />
-              </span>
-            </button>
-          </div>
+  <div className="relative flex items-center gap-2">
+    <button
+      type="button"
+      onClick={() => setShowAutoHint((value) => !value)}
+      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
+      aria-label="Auto unlock info"
+    >
+      ?
+    </button>
+
+    {showAutoHint ? (
+      <button
+        type="button"
+        onClick={() => setShowAutoHint(false)}
+        className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
+      >
+        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
+      </button>
+    ) : null}
+
+    <button
+      type="button"
+      onClick={() => setAutoUnlock((value) => !value)}
+      className="flex items-center gap-2"
+    >
+      <span className="text-[12px] font-bold text-[#9CA3AF]">
+  Auto unlock
+</span>
+
+      <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
+        autoUnlock
+          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
+          : 'bg-[#D1D6DE] shadow-inner'
+      }`}>
+        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
+          autoUnlock ? 'left-[26px]' : 'left-1'
+        }`} />
+      </span>
+    </button>
+  </div>
+</div>
 
           {unlocking ? (
             <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
@@ -791,6 +850,7 @@ function LockedEpisodeCard({
             </div>
           ) : null}
         </section>
+        </div>
       </div>
     </div>
   )
@@ -1876,6 +1936,15 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
     navigate(`/story/${storyId}/episode/${nextEpisode.id}`)
   }
 
+const handleOpenPurchasePage = () => {
+  navigate('/shop', {
+    state: {
+      activeTab: 'Purchase',
+      from: `/story/${storyId}/episode/${episodeId}`,
+    },
+  })
+}
+
   async function loadLockedUnlockStatus() {
   if (!storyId || !episodeId) return
 
@@ -1976,11 +2045,7 @@ async function handleLockedDiamondUnlock(packageKey) {
   if (!option?.enabled) return
 
   if (diamondBalance < price) {
-  navigate('/shop/mall/purchase', {
-    state: {
-      returnTo: `/story/${storyId}/episode/${episodeId}`,
-    },
-  })
+  handleOpenPurchasePage()
   return
 }
   
@@ -2205,6 +2270,7 @@ return (
         {!loading && lockedEpisode && episode ? (
   <LockedEpisodeCard
   theme={theme}
+  story={story}
   episode={episode}
   wallet={unlockWallet}
   coinAccess={unlockCoinAccess}
@@ -2215,7 +2281,8 @@ return (
   showAutoHint={unlockAutoHintOpen}
   setShowAutoHint={setUnlockAutoHintOpen}
   unlocking={unlockingEpisode}
-  onUnlock={handleLockedDiamondUnlock}
+onPurchase={handleOpenPurchasePage}
+onUnlock={handleLockedDiamondUnlock}
   onCoinUnlock={handleLockedCoinUnlock}
   onVoucherUnlock={handleLockedVoucherUnlock}
 />
