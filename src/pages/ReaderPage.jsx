@@ -734,19 +734,24 @@ function LockedEpisodeCard({
           onClick={goPurchase}
           className="mx-3 mb-3 flex min-h-[68px] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/95 via-[#565C68]/95 to-[#343842]/95 px-3 py-2 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)]"
         >
-          <img
+         <img
   src="/assets/Icons/Diamond box.png"
   alt=""
   className="h-14 w-14 shrink-0 object-contain"
   loading="lazy"
   decoding="async"
 />
-្
-          <div className="min-w-0 flex-1">
-            <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]">
-          </div>
 
-          <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
+<div className="min-w-0 flex-1">
+  <div className="text-[15px] font-black leading-5 text-white">
+    Not enough Diamonds
+  </div>
+  <div className="mt-1 text-[12px] font-semibold leading-4 text-white/70">
+    Tap to top up and continue reading.
+  </div>
+</div>
+
+<i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
         </button>
 
         <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]">
