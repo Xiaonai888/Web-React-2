@@ -154,6 +154,28 @@ function HighlightCircle({ title, isAdd = false }) {
   )
 }
 
+const PROFILE_LINK_OPTIONS = [
+  { type: 'website', label: 'Website', icon: 'fas fa-globe' },
+  { type: 'facebook', label: 'Facebook', icon: 'fab fa-facebook-f' },
+  { type: 'instagram', label: 'Instagram', icon: 'fab fa-instagram' },
+  { type: 'telegram', label: 'Telegram', icon: 'fab fa-telegram-plane' },
+  { type: 'tiktok', label: 'TikTok', icon: 'fab fa-tiktok' },
+  { type: 'youtube', label: 'YouTube', icon: 'fab fa-youtube' },
+  { type: 'x', label: 'X', icon: 'fab fa-twitter' },
+  { type: 'link', label: 'Other Link', icon: 'fas fa-link' },
+]
+
+function getProfileLinkIcon(type) {
+  return PROFILE_LINK_OPTIONS.find((item) => item.type === type)?.icon || 'fas fa-link'
+}
+
+function normalizeProfileLinkUrl(url) {
+  const trimmed = String(url || '').trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
 function AvatarImage({ profile, sizeClass = 'h-[92px] w-[92px] md:h-[96px] md:w-[96px]' }) {
   return (
     <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[34px] font-extrabold text-white ring-2 ring-[#f6b800] ${sizeClass}`}>
@@ -421,6 +443,80 @@ function EditProfileModal({
                 placeholder="Based in KPS"
               />
             </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="block text-[13px] font-extrabold text-[#111827]">Add link</label>
+                <div className="text-[11px] font-bold text-[#98a2b3]">{(form.social_links || []).length}/5</div>
+              </div>
+            
+              <div className="space-y-2">
+                {(form.social_links || []).map((link, index) => (
+                  <div key={index} className="rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] p-3">
+                    <div className="mb-2 flex gap-2">
+                      <select
+                        value={link.type || 'link'}
+                        onChange={(event) =>
+                          onChange(
+                            'social_links',
+                            (form.social_links || []).map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, type: event.target.value } : item
+                            )
+                          )
+                        }
+                        className="h-10 w-[130px] rounded-[12px] border border-[#e5e7eb] bg-white px-3 text-[12px] font-bold text-[#111827] outline-none"
+                      >
+                        {PROFILE_LINK_OPTIONS.map((option) => (
+                          <option key={option.type} value={option.type}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+            
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onChange(
+                            'social_links',
+                            (form.social_links || []).filter((_, itemIndex) => itemIndex !== index)
+                          )
+                        }
+                        className="ml-auto h-10 w-10 rounded-full bg-white text-[#e5484d] ring-1 ring-[#e5e7eb]"
+                      >
+                        <i className="fa-solid fa-trash text-[12px]" />
+                      </button>
+                    </div>
+            
+                    <input
+                      value={link.url}
+                      onChange={(event) =>
+                        onChange(
+                          'social_links',
+                          (form.social_links || []).map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, url: event.target.value } : item
+                          )
+                        )
+                      }
+                      className="h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-4 text-[13px] text-[#111827] outline-none focus:border-[#111827]"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                ))}
+              </div>
+            
+              {(form.social_links || []).length < 5 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange('social_links', [...(form.social_links || []), { type: 'website', url: '' }])
+                  }
+                  className="mt-3 h-11 w-full rounded-[14px] border border-dashed border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827]"
+                >
+                  <i className="fa-solid fa-plus mr-2 text-[12px]" />
+                  Add link
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
@@ -522,6 +618,7 @@ export default function ProfilePage() {
   bio: user?.bio || '',
   work: user?.work || '',
   location: user?.location || '',
+  social_links: Array.isArray(user?.social_links) ? user.social_links.map((item) => ({ type: item?.type || 'link', url: item?.url || '' })).slice(0, 5) : [],
 })
 
   const isOwnProfile = true
@@ -566,6 +663,7 @@ following: String(user?.following_count || 0),
       bio: user?.bio || 'Add your bio',
       location: user?.location || 'Add your location',
       isPremium: Boolean(user?.is_premium),
+      socialLinks: Array.isArray(user?.social_links) ? user.social_links.filter((item) => item?.url).slice(0, 5) : [],
     }
   }, [avatarPreview, user])
 
@@ -615,6 +713,7 @@ following: String(user?.following_count || 0),
   bio: user?.bio || '',
   work: user?.work || '',
   location: user?.location || '',
+  social_links: Array.isArray(user?.social_links) ? user.social_links.map((item) => ({ type: item?.type || 'link', url: item?.url || '' })).slice(0, 5) : [],
 })
     setEditProfileOpen(true)
   }
@@ -739,6 +838,10 @@ following: String(user?.following_count || 0),
   bio: editForm.bio,
   work: editForm.work,
   location: editForm.location,
+  social_links: (editForm.social_links || [])
+  .map((item) => ({ type: item.type || 'link', url: normalizeProfileLinkUrl(item.url) }))
+  .filter((item) => item.url)
+  .slice(0, 5),      
 }),
 })
 
@@ -804,6 +907,7 @@ following: String(user?.following_count || 0),
         }}
         onSave={handleSaveProfileInfo}
       />
+
 
       <main className="mx-auto min-h-screen w-full bg-[#f5f3fa] md:max-w-[560px] md:py-4">
         <div className="overflow-hidden bg-white md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
@@ -879,20 +983,21 @@ following: String(user?.following_count || 0),
               <div>{profile.location}</div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 text-[#111827]">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                <i className="fas fa-globe" />
-              </span>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                <i className="fab fa-facebook-f" />
-              </span>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                <i className="fab fa-instagram" />
-              </span>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] text-[11px]">
-                <i className="fas fa-link" />
-              </span>
-            </div>
+            {profile.socialLinks.length ? (
+  <div className="mt-3 flex items-center gap-2 text-[#111827]">
+    {profile.socialLinks.map((link, index) => (
+      <a
+        key={`${link.type}-${index}`}
+        href={normalizeProfileLinkUrl(link.url)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d8dbe3] bg-white text-[11px] transition hover:bg-[#f7f7fb] active:scale-95"
+      >
+        <i className={getProfileLinkIcon(link.type)} />
+      </a>
+    ))}
+  </div>
+) : null}
 
             {isOwnProfile ? (
               <button
