@@ -1002,7 +1002,7 @@ following: String(user?.following_count || 0),
             {isOwnProfile ? (
               <button
                 type="button"
-                onClick={openEditProfile}
+                onClick={() => navigate('/profile/edit')}
                 className="mt-4 h-10 w-full rounded-[14px] border border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] transition hover:bg-[#f7f7fb] active:scale-[0.99]"
               >
                 Edit Profile
