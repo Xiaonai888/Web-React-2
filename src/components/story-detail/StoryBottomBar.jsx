@@ -4,7 +4,7 @@ export default function StoryBottomBar({ subscribed, onToggleSubscribe, episode,
     : 'Read Now'
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/5 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(17,24,39,0.08)] backdrop-blur">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/5 bg-white/95 px-4 pb-5 pt-2 shadow-[0_-12px_30px_rgba(17,24,39,0.08)] backdrop-blur sm:py-3">
       <div className="mx-auto grid max-w-5xl grid-cols-[56px_1fr] gap-3">
         <button
           type="button"
