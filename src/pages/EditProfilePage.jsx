@@ -60,8 +60,8 @@ function saveAuthToken(token) {
   sessionStorage.setItem('shadow_reader_token', token)
 }
 
-function getProfileLinkIcon(type) {
-  return PROFILE_LINK_OPTIONS.find((item) => item.type === type)?.icon || 'fas fa-link'
+function getProfileLinkOption(type) {
+  return PROFILE_LINK_OPTIONS.find((item) => item.type === type) || PROFILE_LINK_OPTIONS[0]
 }
 
 function normalizeProfileLinkUrl(url) {
@@ -121,6 +121,13 @@ export default function EditProfilePage() {
 
   const avatarLetter = useMemo(() => (form.name || user?.name || 'R').charAt(0).toUpperCase(), [form.name, user?.name])
 
+  const activeLinks = useMemo(() => form.social_links.filter((item) => String(item?.url || '').trim()).slice(0, 5), [form.social_links])
+
+  const linkSummary = useMemo(() => {
+    if (!activeLinks.length) return 'No links added'
+    return activeLinks.map((item) => getProfileLinkOption(item.type).label).join(', ')
+  }, [activeLinks])
+
   useEffect(() => {
     let ignore = false
 
@@ -157,33 +164,6 @@ export default function EditProfilePage() {
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }))
-  }
-
-  const updateLink = (index, payload) => {
-    setForm((current) => ({
-      ...current,
-      social_links: current.social_links.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, ...payload } : item
-      ),
-    }))
-  }
-
-  const removeLink = (index) => {
-    setForm((current) => ({
-      ...current,
-      social_links: current.social_links.filter((_, itemIndex) => itemIndex !== index),
-    }))
-  }
-
-  const addLink = () => {
-    setForm((current) => {
-      if (current.social_links.length >= 5) return current
-
-      return {
-        ...current,
-        social_links: [...current.social_links, { type: 'website', url: '' }],
-      }
-    })
   }
 
   const handleSave = async () => {
@@ -337,70 +317,37 @@ export default function EditProfilePage() {
               />
             </div>
 
-            <div className="rounded-[22px] bg-white pt-1">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[13px] font-extrabold text-[#111827]">Add link</div>
-                  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">The selected icon will show on your timeline profile.</div>
+            <button
+              type="button"
+              onClick={() => navigate('/profile/edit/links')}
+              className="flex w-full items-center gap-3 rounded-[18px] border border-[#e5e7eb] bg-white p-4 text-left active:scale-[0.99]"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fafafe] text-[#111827] ring-1 ring-[#e5e7eb]">
+                  <i className="fas fa-link text-[14px]" />
                 </div>
-                <div className="text-[11px] font-bold text-[#98a2b3]">{form.social_links.length}/5</div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="text-[13px] font-extrabold text-[#111827]">Add link</div>
+                    <div className="text-[11px] font-bold text-[#98a2b3]">{activeLinks.length}/5</div>
+                  </div>
+                  <div className="mt-1 truncate text-[12px] font-semibold text-[#8d94a1]">{linkSummary}</div>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {form.social_links.map((link, index) => {
-                  const icon = getProfileLinkIcon(link.type)
-
-                  return (
-                    <div key={index} className="rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] p-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[16px] text-[#111827] ring-1 ring-[#e5e7eb]">
-                          <i className={icon} />
-                        </div>
-
-                        <select
-                          value={link.type}
-                          onChange={(event) => updateLink(index, { type: event.target.value })}
-                          className="h-11 min-w-0 flex-1 rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[13px] font-extrabold text-[#111827] outline-none focus:border-[#111827]"
-                        >
-                          {PROFILE_LINK_OPTIONS.map((option) => (
-                            <option key={option.type} value={option.type}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-
-                        <button
-                          type="button"
-                          onClick={() => removeLink(index)}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#e5484d] ring-1 ring-[#e5e7eb] active:scale-95"
-                          aria-label="Remove link"
-                        >
-                          <i className="fa-solid fa-trash text-[12px]" />
-                        </button>
-                      </div>
-
-                      <input
-                        value={link.url}
-                        onChange={(event) => updateLink(index, { url: event.target.value })}
-                        className="mt-2 h-11 w-full rounded-[14px] border border-[#e5e7eb] bg-white px-4 text-[13px] text-[#111827] outline-none focus:border-[#111827]"
-                        placeholder="https://example.com"
-                      />
+              {activeLinks.length ? (
+                <div className="hidden shrink-0 items-center -space-x-2 sm:flex">
+                  {activeLinks.slice(0, 3).map((link, index) => (
+                    <div key={`${link.type}-${index}`} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[12px] text-[#111827] ring-1 ring-[#e5e7eb]">
+                      <i className={getProfileLinkOption(link.type).icon} />
                     </div>
-                  )
-                })}
-              </div>
-
-              {form.social_links.length < 5 ? (
-                <button
-                  type="button"
-                  onClick={addLink}
-                  className="mt-3 h-12 w-full rounded-[16px] border border-dashed border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
-                >
-                  <i className="fa-solid fa-plus mr-2 text-[12px]" />
-                  Add link
-                </button>
+                  ))}
+                </div>
               ) : null}
-            </div>
+
+              <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#98a2b3]" />
+            </button>
           </div>
         </section>
       </main>
