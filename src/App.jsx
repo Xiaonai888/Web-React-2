@@ -10,6 +10,7 @@ import WalletPage from './pages/WalletPage'
 import WalletOrderHistoryPage from './pages/WalletOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
+import EditProfilePage from './pages/EditProfilePage'
 import ProfileFollowListPage from './pages/ProfileFollowListPage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import RatingPage from './pages/RatingPage'
@@ -891,6 +892,7 @@ const shouldShowOpeningAds =
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
