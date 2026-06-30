@@ -565,6 +565,7 @@ following: String(user?.following_count || 0),
       bioTitle: user?.work || 'Add your work / job',
       bio: user?.bio || 'Add your bio',
       location: user?.location || 'Add your location',
+      isPremium: Boolean(user?.is_premium),
     }
   }, [avatarPreview, user])
 
@@ -849,7 +850,7 @@ following: String(user?.following_count || 0),
                   <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
                     {profile.name}
                   </h1>
-                  <i className="fas fa-crown text-[14px] text-[#f6b800]" />
+                  {profile.isPremium ? <i className="fas fa-crown text-[14px] text-[#f6b800]" /> : null}
                 </div>
 
                 <div className="grid grid-cols-3 gap-1">
