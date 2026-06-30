@@ -518,7 +518,7 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+    <div className="min-h-screen bg-white pb-[150px] sm:bg-[#f5f3fa] sm:pb-[138px]">
       <StoryHeroSection
   story={story}
   onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
