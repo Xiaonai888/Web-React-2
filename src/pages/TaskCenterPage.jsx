@@ -78,6 +78,75 @@ function normalizeTaskLink(link) {
   }
 }
 
+function hasLegacyReadingTask(task) {
+  if (!task) return false
+
+  return Boolean(
+    task.is_active ||
+      task.title ||
+      task.subtitle ||
+      task.story_link ||
+      Number(task.reward_coins || 0) > 0 ||
+      Number(task.target_minutes || 0) > 0
+  )
+}
+
+function normalizeReadingMission(mission = {}, index = 0) {
+  const targetMinutes = Math.max(1, Number(mission.target_minutes || 1))
+  const targetSeconds = Math.max(60, Number(mission.target_seconds || targetMinutes * 60))
+  const activeSeconds = Math.min(targetSeconds, Math.max(0, Number(mission.active_seconds || 0)))
+  const completed = Boolean(mission.completed) || activeSeconds >= targetSeconds
+  const claimed = Boolean(mission.claimed || mission.claimed_at)
+
+  return {
+    id: mission.id || `legacy-reading-task-${index}`,
+    is_active: Boolean(mission.is_active),
+    title: mission.title || `Read ${targetMinutes} minutes`,
+    subtitle: mission.subtitle || 'Keep reading longer to earn more coins.',
+    reward_coins: Number(mission.reward_coins || 0),
+    target_minutes: targetMinutes,
+    target_seconds: targetSeconds,
+    story_link: mission.story_link || '',
+    button_text: mission.button_text || 'Go',
+    sort_order: Number(mission.sort_order || index),
+    active_seconds: activeSeconds,
+    active_minutes: Math.floor(activeSeconds / 60),
+    completed,
+    claimed,
+    claimable: Boolean(mission.claimable) || (completed && !claimed),
+    completed_at: mission.completed_at || null,
+    claimed_at: mission.claimed_at || null,
+  }
+}
+
+function extractReadingMissionsFromPublicSettings(settings) {
+  if (Array.isArray(settings?.reading_missions) && settings.reading_missions.length > 0) {
+    return settings.reading_missions
+      .slice(0, 2)
+      .map((mission, index) => normalizeReadingMission(mission, index))
+  }
+
+  if (hasLegacyReadingTask(settings?.reading_task)) {
+    return [
+      normalizeReadingMission(
+        {
+          ...settings.reading_task,
+          id: settings.reading_task.id || 'legacy-reading-task',
+        },
+        0
+      ),
+    ]
+  }
+
+  return []
+}
+
+function normalizeReadingMissionList(list = []) {
+  return Array.isArray(list)
+    ? list.slice(0, 2).map((mission, index) => normalizeReadingMission(mission, index))
+    : []
+}
+
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000))
   const hours = Math.floor(totalSeconds / 3600)
@@ -611,6 +680,11 @@ export default function TaskCenterPage() {
 
       if (response.ok && data.ok) {
         setTaskCoverUrl(data.settings?.cover_url || '')
+
+        const fallbackMissions = extractReadingMissionsFromPublicSettings(data.settings || {})
+        if (fallbackMissions.length > 0) {
+          setReadingMissions((current) => (current.length > 0 ? current : fallbackMissions))
+        }
       }
     } catch {
       setTaskCoverUrl('')
@@ -723,7 +797,11 @@ export default function TaskCenterPage() {
         }
 
         if (missionResponse.value.ok && missionData.ok) {
-          setReadingMissions(Array.isArray(missionData.missions) ? missionData.missions : [])
+          const nextMissions = normalizeReadingMissionList(missionData.missions)
+
+          if (nextMissions.length > 0) {
+            setReadingMissions(nextMissions)
+          }
         }
       }
     } catch {
@@ -980,7 +1058,7 @@ export default function TaskCenterPage() {
         fromTaskCenter: true,
         returnTo: '/tasks',
         taskMissionId: mission?.id,
-        taskMission: mission,
+        taskMission: normalizeReadingMission(mission),
       },
     })
   }
@@ -1023,10 +1101,12 @@ export default function TaskCenterPage() {
       }
 
       if (Array.isArray(data.missions)) {
-        setReadingMissions(data.missions)
+        setReadingMissions(normalizeReadingMissionList(data.missions))
       } else if (data.mission) {
         setReadingMissions((current) =>
-          current.map((item) => (item.id === data.mission.id ? data.mission : item))
+          current.map((item, index) =>
+            item.id === data.mission.id ? normalizeReadingMission(data.mission, index) : item
+          )
         )
       }
 
@@ -1532,15 +1612,17 @@ export default function TaskCenterPage() {
               />
             ))}
 
-            {readingMissions.map((mission) => (
-              <AdminReadingMissionCard
-                key={mission.id}
-                task={mission}
-                claimingMissionId={missionClaimingId}
-                onGo={goToReadingMission}
-                onClaim={claimReadingMissionReward}
-              />
-            ))}
+            {readingMissions
+              .filter((mission) => mission?.is_active)
+              .map((mission) => (
+                <AdminReadingMissionCard
+                  key={mission.id}
+                  task={mission}
+                  claimingMissionId={missionClaimingId}
+                  onGo={goToReadingMission}
+                  onClaim={claimReadingMissionReward}
+                />
+              ))}
 
             <ReadingRewardCard
               readingReward={readingReward}
