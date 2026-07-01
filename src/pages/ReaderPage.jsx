@@ -1706,6 +1706,7 @@ export default function ReaderPage() {
   const autoScrollFrameRef = useRef(null)
   const qualifiedViewSentRef = useRef(false)
   const readingProgressRef = useRef(0)
+  const missionProgressSentRef = useRef(0)
 
   const [story, setStory] = useState(expectedStory)
   const [episode, setEpisode] = useState(expectedEpisode)
@@ -1737,6 +1738,7 @@ export default function ReaderPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
+  const [activeTaskMission, setActiveTaskMission] = useState(location.state?.taskMission || null)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -1877,6 +1879,8 @@ async function loadReaderAdStatus() {
   setReaderAdPolicy(null)
   setReadingProgress(0)
   setReaderGateReady(true)
+  setActiveTaskMission(null)
+  missionProgressSentRef.current = 0
 
   try {
     await loadLockedUnlockStatus()
@@ -1908,7 +1912,9 @@ setLockedEpisode(false)
 setReaderAdPolicy(nextReaderAdStatus.ad_policy)
 setReaderAdvertisement(nextReaderAdStatus.advertisement)
 setReadingProgress(0)
-setReaderGateReady(true)       
+setReaderGateReady(true)
+setActiveTaskMission(location.state?.taskMission || null)
+missionProgressSentRef.current = 0      
 
         if (episodeData.episode?.is_adult) {
           setAdultAccepted(false)
@@ -1999,6 +2005,61 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
       window.clearInterval(timer)
     }
   }, [adultAccepted, episode, episodeId, loading, storyId])
+
+  useEffect(() => {
+    if (
+      !storyId ||
+      !episodeId ||
+      !episode ||
+      loading ||
+      lockedEpisode ||
+      !adultAccepted ||
+      !activeTaskMission?.id ||
+      activeTaskMission?.claimed ||
+      activeTaskMission?.completed
+    ) {
+      return undefined
+    }
+
+    const timer = window.setInterval(async () => {
+      if (document.visibilityState !== 'visible') return
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions/${activeTaskMission.id}/progress`, {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          story_id: storyId,
+          episode_id: episodeId,
+          seconds: 5,
+        }),
+      }).catch(() => null)
+
+      if (!response?.ok) return
+
+      const data = await response.json().catch(() => ({}))
+
+      if (data?.mission) {
+        setActiveTaskMission(data.mission)
+      }
+    }, 5000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [
+    activeTaskMission?.claimed,
+    activeTaskMission?.completed,
+    activeTaskMission?.id,
+    adultAccepted,
+    episode,
+    episodeId,
+    loading,
+    lockedEpisode,
+    storyId,
+  ])
 
   useEffect(() => {
     const handleActionBarVisibility = () => {
@@ -2255,6 +2316,19 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
+const activeMissionTargetSeconds = Math.max(
+  60,
+  Number(activeTaskMission?.target_seconds || Number(activeTaskMission?.target_minutes || 1) * 60)
+)
+const activeMissionSeconds = Math.min(activeMissionTargetSeconds, Math.max(0, Number(activeTaskMission?.active_seconds || 0)))
+const activeMissionProgress = activeMissionTargetSeconds > 0 ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100)) : 0
+const activeMissionMinutes = Math.max(1, Math.ceil(activeMissionTargetSeconds / 60))
+const activeMissionLabel = activeTaskMission?.claimed
+  ? 'Done'
+  : activeTaskMission?.claimable || activeTaskMission?.completed
+    ? 'Ready'
+    : `${Math.floor(activeMissionSeconds / 60)}/${activeMissionMinutes}m`
+
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
 
@@ -2369,6 +2443,26 @@ return (
   <div className="fixed inset-0 z-[2147483646] bg-black" />
 ) : null}
       
+     {activeTaskMission?.id && !lockedEpisode && adultAccepted && !loading ? (
+  <div className="fixed right-4 top-[76px] z-[80] flex flex-col items-center">
+    <div
+      className="flex h-[60px] w-[60px] items-center justify-center rounded-full p-1 shadow-[0_10px_24px_rgba(17,24,39,0.16)] ring-1 ring-black/5"
+      style={{
+        background: `conic-gradient(${activeTaskMission?.claimed ? '#22C55E' : activeTaskMission?.claimable || activeTaskMission?.completed ? '#F6B800' : '#ff3f62'} ${activeMissionProgress}%, #edf0f5 0)`,
+      }}
+    >
+      <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-white">
+        <img src="/assets/Icons/Shadow%20Coin.svg" alt="" className="h-5 w-5 object-contain" />
+        <span className="mt-0.5 text-[9px] font-black text-[#d97706]">+{formatNumber(activeTaskMission.reward_coins || 0)}</span>
+      </div>
+    </div>
+
+    <div className="mt-1 rounded-full bg-black/65 px-2 py-0.5 text-[9px] font-black text-white">
+      {activeMissionLabel}
+    </div>
+  </div>
+) : null}
+
      <ReaderBottomActionBar
   visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   story={story}
