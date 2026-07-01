@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
 import EchoShareSheet from '../components/reader/EchoShareSheet'
@@ -614,24 +614,28 @@ function LockedEpisodeCard({
   story,
   episode,
   wallet,
+  coinAccess,
+  voucherAccess,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
   unlocking,
   onPurchase,
   onUnlock,
+  onCoinUnlock,
+  onVoucherUnlock,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
-const [showAutoHint, setShowAutoHint] = useState(false)
+  const [showAutoHint, setShowAutoHint] = useState(false)
+  const [activeTab, setActiveTab] = useState('instant')
+  const [freeAccessView, setFreeAccessView] = useState('wallet')
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
-
-  const diamondBoxSources = [
-  '/assets/Icons/Diamond box 2.png',
-  '/assets/Icons/Diamond%20box%202.png',
-  '/assets/Icons/Diamond box.png',
-  '/assets/Icons/Diamond.svg',
-]
+  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
+  const voucherBalance = Number(wallet?.voucher_balance || 0)
+  const coinRequired = Number(coinAccess?.amount || 0)
+  const voucherRequired = Number(voucherAccess?.amount || 0)
+  const coinCanAccess = Boolean(coinAccess?.available) && (coinRequired <= 0 || coinBalance >= coinRequired)
+  const voucherCanAccess = Boolean(voucherAccess?.available) && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
@@ -659,8 +663,8 @@ const [showAutoHint, setShowAutoHint] = useState(false)
     }
 
   const goPurchase = () => {
-  onPurchase?.()
-}
+    onPurchase?.()
+  }
 
   const handlePackageClick = (option) => {
     if (!option || unlocking || !option.enabled) return
@@ -678,6 +682,68 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
     onUnlock(option.key)
   }
+
+  const AccessTab = ({ active, children, onClick }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative h-11 flex-1 text-[13px] font-semibold transition ${
+        active ? 'text-[#111827]' : 'text-[#A7ADBA]'
+      }`}
+    >
+      {children}
+      {active ? (
+        <span className="absolute bottom-0 left-1/2 h-[2px] w-[76%] -translate-x-1/2 rounded-full bg-[#D6A300]" />
+      ) : null}
+    </button>
+  )
+
+  const PremiumRow = () => (
+    <button
+      type="button"
+      onClick={goPurchase}
+      className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 text-left active:scale-[0.995]"
+    >
+      <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
+        <img
+          src="/assets/Icons/Crown.svg"
+          alt=""
+          className="h-3.5 w-3.5 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+        Premium
+      </span>
+
+      <span className="min-w-0 flex-1 text-[12px] font-semibold leading-4 text-[#8D94A1]">
+        Enjoy 10% off every episode you unlock.
+      </span>
+
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
+    </button>
+  )
+
+  const FreeAccessOption = ({ icon, title, subtitle, buttonText, disabled, onClick }) => (
+    <div className="flex min-h-[72px] items-center gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-3 py-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+  {icon}
+</span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-semibold text-[#111827]">{title}</span>
+        <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-[#667085]">{subtitle}</span>
+      </span>
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[11px] font-black text-white disabled:bg-[#D1D5DB] disabled:text-white"
+      >
+        {buttonText}
+      </button>
+    </div>
+  )
 
   const PackageButton = ({ option, primary = false }) => {
     if (!option) return null
@@ -700,10 +766,10 @@ const [showAutoHint, setShowAutoHint] = useState(false)
           className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
         >
           <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
-  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-  <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
-  <span>to unlock this Ep.</span>
-</span>
+            <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+            <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
+            <span>to unlock this Ep.</span>
+          </span>
         </button>
       )
     }
@@ -716,14 +782,14 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
       >
         {discount > 0 ? (
-      <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-  {discount}% OFF
-</span>
+          <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
+            {discount}% OFF
+          </span>
         ) : null}
 
         <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
-  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-  <span className="text-[#111827]">{formatNumber(price)}</span>
+          <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+          <span className="text-[#111827]">{formatNumber(price)}</span>
           {originalPrice > price ? (
             <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
               {formatNumber(originalPrice)}
@@ -731,8 +797,6 @@ const [showAutoHint, setShowAutoHint] = useState(false)
           ) : null}
           <span>to unlock {requestedCount || 'all'} Eps.</span>
         </span>
-
-        
       </button>
     )
   }
@@ -751,104 +815,184 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
       <div className="relative z-10 flex h-full items-end justify-center md:items-center">
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
-        <button
-          type="button"
-          onClick={goPurchase}
-          className="mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-1 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
-        >
-          <span className="-mb-0 -mt-3 -ml-1 flex h-[78px] w-[78px] shrink-0 items-end justify-center overflow-visible">
+          <button
+            type="button"
+            onClick={goPurchase}
+            className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-20 pr-[104px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px] font-black italic leading-5 text-[#FFE36E]">
+                FIRST TOP-UP BONUS!
+              </div>
+
+              <div className="mt-0.5 truncate text-[11.5px] font-bold leading-4 text-white/90">
+                1 Free Book + 3 reading vouchers
+              </div>
+            </div>
+
             <img
-             src="/assets/Icons/Diamond%20box.png?v=box-new-1"
+              src="/assets/Icons/Manga%20girl.png"
               alt=""
-              className="h-full w-full object-contain"
+              className="pointer-events-none absolute -right-0 -top-[36px] h-[107px] w-[137px] object-contain"
               loading="eager"
               decoding="async"
-              onError={() => {
-                setDiamondBoxIndex((current) => Math.min(current + 1, diamondBoxSources.length - 1))
-              }}
             />
-          </span>
+          </button>
 
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[16px] font-black italic leading-5 text-white">
-              Don’t Miss Out
+          <section className="max-h-[58vh] min-h-[340px] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
+            <div className="border-b border-[#E5E7EB] px-4 pt-2">
+              <div className="flex">
+                <AccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
+                  Instant Access
+                </AccessTab>
+
+                <AccessTab active={activeTab === 'free'} onClick={() => setActiveTab('free')}>
+                  Free Access
+                </AccessTab>
+              </div>
             </div>
 
-            <div className="mt-0.5 flex items-baseline gap-1 leading-4">
-              <span className="text-[15px] font-black italic text-[#FFE36E]">330</span>
-              <span className="text-[11px] font-medium italic text-white/90">Diamonds Await!</span>
-            </div>
-          </div>
+            {activeTab === 'instant' ? (
+              <>
+                <PremiumRow />
 
-          <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
-        </button>
+                <div className="overflow-hidden border-b border-[#E5E7EB]">
+                  <PackageButton option={singleOption} primary />
+                  <PackageButton option={displayMultiOption} />
+                </div>
 
-        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
-          <div className="px-5 text-center">
-            <h2 className="text-[16px] font-semibold text-[#4B5563]">
-  Continue reading?
-</h2>
-          </div>
+                <div className="mt-4 flex items-center justify-between gap-3 px-5">
+                  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
+                    <span>My Diamonds:</span>
+                    <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
+                  </div>
 
-          <div className="mt-5 overflow-hidden border-y border-[#E5E7EB]">
-            <PackageButton option={singleOption} primary />
-            <PackageButton option={displayMultiOption} />
-          </div>
+                  <div className="relative flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAutoHint((value) => !value)}
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
+                      aria-label="Auto unlock info"
+                    >
+                      ?
+                    </button>
 
-          <div className="mt-4 flex items-center justify-between gap-3 px-5">
-  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
-    <span>My Diamonds:</span>
-    <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
-  </div>
+                    {showAutoHint ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAutoHint(false)}
+                        className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
+                      >
+                        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
+                      </button>
+                    ) : null}
 
-  <div className="relative flex items-center gap-2">
-    <button
-      type="button"
-      onClick={() => setShowAutoHint((value) => !value)}
-      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
-      aria-label="Auto unlock info"
-    >
-      ?
-    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAutoUnlock((value) => !value)}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-[12px] font-bold text-[#9CA3AF]">
+                        Auto unlock
+                      </span>
 
-    {showAutoHint ? (
+                      <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
+                        autoUnlock
+                          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
+                          : 'bg-[#D1D6DE] shadow-inner'
+                      }`}>
+                        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
+                          autoUnlock ? 'left-[26px]' : 'left-1'
+                        }`} />
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {unlocking ? (
+                  <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
+                    Unlocking...
+                  </div>
+                ) : null}
+              </>
+            ) : (
+       <div className="space-y-2.5 px-3 py-4">
+  {freeAccessView === 'wallet' ? (
+    <>
+      <FreeAccessOption
+        icon={
+  <img
+    src="/assets/Icons/Shadow Coin.svg"
+    alt=""
+    className="mx-auto h-7 w-7 object-contain"
+    loading="lazy"
+    decoding="async"
+  />
+}
+        title={`Coins — ${formatNumber(coinBalance)} remaining`}
+        subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
+        buttonText={coinCanAccess ? 'Access' : 'Not enough'}
+        disabled={unlocking || !coinCanAccess}
+        onClick={onCoinUnlock}
+      />
+
+      <FreeAccessOption
+        icon={
+  <img
+    src="/assets/Icons/Voucher.svg"
+    alt=""
+    className="h-7 w-7 object-contain"
+    loading="lazy"
+    decoding="async"
+  />
+}
+        title={`Vouchers — ${formatNumber(voucherBalance)} remaining`}
+        subtitle="Permanent unlock for this episode."
+        buttonText={voucherCanAccess ? 'Access' : 'Not enough'}
+        disabled={unlocking || !voucherCanAccess}
+        onClick={onVoucherUnlock}
+      />
+
       <button
         type="button"
-        onClick={() => setShowAutoHint(false)}
-        className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
+        onClick={() => setFreeAccessView('more')}
+        className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
       >
-        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
+        <span>More free methods</span>
+        <i className="fa-solid fa-chevron-right text-[10px]" />
       </button>
-    ) : null}
+    </>
+  ) : (
+    <>
+      <FreeAccessOption
+        icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
+        title="Watch Video — Coming soon"
+        subtitle="Unlock for one read only."
+        buttonText="Watch"
+        disabled
+      />
 
-    <button
-      type="button"
-      onClick={() => setAutoUnlock((value) => !value)}
-      className="flex items-center gap-2"
-    >
-      <span className="text-[12px] font-bold text-[#9CA3AF]">
-  Auto unlock
-</span>
+      <FreeAccessOption
+        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
+        title="Story Card — Coming soon"
+        subtitle="Permanent unlock for same story only."
+        buttonText="Access"
+        disabled
+      />
 
-      <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
-        autoUnlock
-          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
-          : 'bg-[#D1D6DE] shadow-inner'
-      }`}>
-        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
-          autoUnlock ? 'left-[26px]' : 'left-1'
-        }`} />
-      </span>
-    </button>
-  </div>
+      <button
+        type="button"
+        onClick={() => setFreeAccessView('wallet')}
+        className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
+      >
+        <span>Coins & Vouchers</span>
+        <i className="fa-solid fa-chevron-right text-[10px]" />
+      </button>
+    </>
+  )}
 </div>
-
-          {unlocking ? (
-            <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
-              Unlocking...
-            </div>
-          ) : null}
-        </section>
+            )}
+          </section>
         </div>
       </div>
     </div>
@@ -1553,17 +1697,22 @@ const handleDragEnd = () => {
 
 export default function ReaderPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { storyId, episodeId } = useParams()
+  const expectedLocked = Boolean(location.state?.expectedLocked)
+  const expectedStory = location.state?.storyPreview || null
+  const expectedEpisode = location.state?.episodePreview || null
+  const hasExpectedLockedPreview = expectedLocked && Boolean(expectedEpisode)
   const autoScrollFrameRef = useRef(null)
   const qualifiedViewSentRef = useRef(false)
   const readingProgressRef = useRef(0)
 
-  const [story, setStory] = useState(null)
-  const [episode, setEpisode] = useState(null)
+  const [story, setStory] = useState(expectedStory)
+  const [episode, setEpisode] = useState(expectedEpisode)
   const [episodes, setEpisodes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!hasExpectedLockedPreview)
   const [message, setMessage] = useState('')
-  const [lockedEpisode, setLockedEpisode] = useState(false)
+  const [lockedEpisode, setLockedEpisode] = useState(hasExpectedLockedPreview)
   const [unlockWallet, setUnlockWallet] = useState(null)
   const [unlockCoinAccess, setUnlockCoinAccess] = useState(null)
   const [unlockVoucherAccess, setUnlockVoucherAccess] = useState(null)
@@ -1686,11 +1835,17 @@ async function loadReaderAdStatus() {
     let ignore = false
 
     async function loadReader() {
-      setLoading(true)
+      setLoading(!hasExpectedLockedPreview)
       setMessage('')
       setAutoScrollEnabled(false)
       setReaderAdvertisement(null)
-      setReaderGateReady(false)
+      setReaderGateReady(hasExpectedLockedPreview)
+      setLockedEpisode(hasExpectedLockedPreview)
+
+      if (hasExpectedLockedPreview) {
+        setStory(expectedStory)
+        setEpisode(expectedEpisode)
+      }
 
       if (!getReaderToken()) {
         navigate('/login')
@@ -1780,7 +1935,7 @@ setReaderGateReady(true)
     return () => {
       ignore = true
     }
-  }, [episodeId, navigate, storyId])
+  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, storyId])
 
   useEffect(() => {
     if (readingMode === 'paging') return undefined
