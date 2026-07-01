@@ -78,19 +78,6 @@ function normalizeTaskLink(link) {
   }
 }
 
-function hasLegacyReadingTask(task) {
-  if (!task) return false
-
-  return Boolean(
-    task.is_active ||
-      task.title ||
-      task.subtitle ||
-      task.story_link ||
-      Number(task.reward_coins || 0) > 0 ||
-      Number(task.target_minutes || 0) > 0
-  )
-}
-
 function normalizeReadingMission(mission = {}, index = 0) {
   const targetMinutes = Math.max(1, Number(mission.target_minutes || 1))
   const targetSeconds = Math.max(60, Number(mission.target_seconds || targetMinutes * 60))
@@ -117,28 +104,6 @@ function normalizeReadingMission(mission = {}, index = 0) {
     completed_at: mission.completed_at || null,
     claimed_at: mission.claimed_at || null,
   }
-}
-
-function extractReadingMissionsFromPublicSettings(settings) {
-  if (Array.isArray(settings?.reading_missions) && settings.reading_missions.length > 0) {
-    return settings.reading_missions
-      .slice(0, 2)
-      .map((mission, index) => normalizeReadingMission(mission, index))
-  }
-
-  if (hasLegacyReadingTask(settings?.reading_task)) {
-    return [
-      normalizeReadingMission(
-        {
-          ...settings.reading_task,
-          id: settings.reading_task.id || 'legacy-reading-task',
-        },
-        0
-      ),
-    ]
-  }
-
-  return []
 }
 
 function normalizeReadingMissionList(list = []) {
@@ -680,11 +645,6 @@ export default function TaskCenterPage() {
 
       if (response.ok && data.ok) {
         setTaskCoverUrl(data.settings?.cover_url || '')
-
-        const fallbackMissions = extractReadingMissionsFromPublicSettings(data.settings || {})
-        if (fallbackMissions.length > 0) {
-          setReadingMissions((current) => (current.length > 0 ? current : fallbackMissions))
-        }
       }
     } catch {
       setTaskCoverUrl('')
@@ -797,11 +757,7 @@ export default function TaskCenterPage() {
         }
 
         if (missionResponse.value.ok && missionData.ok) {
-          const nextMissions = normalizeReadingMissionList(missionData.missions)
-
-          if (nextMissions.length > 0) {
-            setReadingMissions(nextMissions)
-          }
+          setReadingMissions(normalizeReadingMissionList(missionData.missions))
         }
       }
     } catch {
