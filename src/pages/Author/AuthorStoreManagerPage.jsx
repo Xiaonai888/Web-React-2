@@ -179,6 +179,26 @@ async function fetchMyProducts() {
   return Array.isArray(data.products) ? data.products.map(formatProductForUi) : []
 }
 
+async function fetchMyStorePromotion() {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/promotion`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load promotion')
+  }
+
+  return data.promotion || null
+}
+
 async function fetchMyOrderReport({ page = 1, limit = 20, type = 'book', prepareStatus = 'all', q = '' } = {}) {
   const token = getAuthToken()
 
@@ -888,6 +908,7 @@ function DeliveryLogo({ type }) {
 }
 
 function StoreManagerHome({
+  promotion,
   activeTab,
   setActiveTab,
   activeType,
@@ -919,10 +940,10 @@ function StoreManagerHome({
   onRefreshOrders,
   orderSummary,
   orders,
-orderPage,
-setOrderPage,
-orderLoading,
-orderPagination,
+  orderPage,
+  setOrderPage,
+  orderLoading,
+  orderPagination,
   orderType,
   setOrderType,
   orderPrepareFilter,
@@ -1115,6 +1136,15 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   <StatCard label="Orders" value={String(orderSummary.orders_count || 0)} icon="fa-receipt" />
   <StatCard label="Net income" value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)} icon="fa-chart-line" />
 </div>
+
+{promotion ? (
+  <div className="mt-3 rounded-[18px] bg-[#fff7ed] px-3.5 py-3 ring-1 ring-[#fed7aa]">
+    <div className="text-[12px] font-black text-[#111827]">🎉 0% Service Fee Promotion</div>
+    <div className="mt-1 text-[12px] font-bold text-[#9a3412]">
+      Book {promotion.book?.used || 0}/{promotion.book?.limit || 50} • PDF {promotion.pdf?.used || 0}/{promotion.pdf?.limit || 100}
+    </div>
+  </div>
+) : null}
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {['Records', 'Orders'].map((tab) => {
@@ -2494,6 +2524,7 @@ accessRule,
 }
 
 export default function AuthorStoreManagerPage() {
+  const [promotion, setPromotion] = useState(null)
   const navigate = useNavigate()
   const [mode, setMode] = useState('manager')
   const [editingProduct, setEditingProduct] = useState(null)
@@ -2610,6 +2641,25 @@ export default function AuthorStoreManagerPage() {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+  let ignore = false
+
+  async function loadPromotion() {
+    try {
+      const nextPromotion = await fetchMyStorePromotion()
+      if (!ignore) setPromotion(nextPromotion)
+    } catch {
+      if (!ignore) setPromotion(null)
+    }
+  }
+
+  loadPromotion()
+
+  return () => {
+    ignore = true
+  }
+}, [])
 
   useEffect(() => {
     let timer = null
@@ -2947,6 +2997,7 @@ const saveCategoryOrder = async () => {
         />
       ) : (
         <StoreManagerHome
+          promotion={promotion}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           activeType={activeType}
