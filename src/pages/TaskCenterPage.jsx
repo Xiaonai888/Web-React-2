@@ -399,19 +399,25 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   )
 }
 
-function AdminReadingMissionCard({ task, readingReward, onGo }) {
+function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }) {
   if (!task?.is_active) return null
 
-  const targetMinutes = Number(task.target_minutes || 1)
-  const targetSeconds = targetMinutes * 60
-  const activeSeconds = Math.min(targetSeconds, Number(readingReward?.active_seconds || 0))
+  const targetMinutes = Math.max(1, Number(task.target_minutes || 1))
+  const targetSeconds = Math.max(60, Number(task.target_seconds || targetMinutes * 60))
+  const activeSeconds = Math.min(targetSeconds, Number(task.active_seconds || 0))
   const progressMinutes = Math.min(targetMinutes, Math.floor(activeSeconds / 60))
   const percent = targetSeconds > 0 ? Math.min(100, (activeSeconds / targetSeconds) * 100) : 0
+  const rewardCoins = Number(task.reward_coins || 0)
+  const claimed = Boolean(task.claimed)
+  const claimable = Boolean(task.claimable)
+  const claiming = claimingMissionId === task.id
+  const buttonText = claimed ? 'Done' : claimable ? `Claim +${formatNumber(rewardCoins)}` : task.button_text || 'Go'
+  const buttonTone = claimed ? 'soft' : 'gold'
 
   return (
     <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
-        <i className="fa-regular fa-clock text-[15px]" />
+        <i className={`${claimable ? 'fa-solid fa-coins' : 'fa-regular fa-clock'} text-[15px]`} />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -427,22 +433,27 @@ function AdminReadingMissionCard({ task, readingReward, onGo }) {
 
             <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
               <CoinIcon className="h-4 w-4" />
-              <span>+{formatNumber(task.reward_coins || 0)}</span>
+              <span>+{formatNumber(rewardCoins)}</span>
             </div>
           </div>
 
-          <RewardButton tone="gold" onClick={onGo}>
-            {task.button_text || 'Go'}
+          <RewardButton
+            tone={buttonTone}
+            disabled={claiming || claimed}
+            onClick={claimable ? () => onClaim(task) : () => onGo(task)}
+          >
+            {claiming ? 'Claiming...' : buttonText}
           </RewardButton>
         </div>
 
         <div className="mt-3">
           <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
-            <div className="h-full rounded-full bg-[#F6B800]" style={{ width: `${percent}%` }} />
+            <div className={`h-full rounded-full ${claimed ? 'bg-[#22C55E]' : 'bg-[#F6B800]'}`} style={{ width: `${percent}%` }} />
           </div>
 
-          <div className="mt-1 text-[10px] font-semibold text-[#9ca3af]">
-            {progressMinutes}/{targetMinutes}
+          <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-[#9ca3af]">
+            <span>{progressMinutes}/{targetMinutes} min</span>
+            {claimed ? <span className="font-black text-[#22C55E]">Claimed</span> : claimable ? <span className="font-black text-[#d97706]">Ready</span> : null}
           </div>
         </div>
       </div>
@@ -563,7 +574,8 @@ export default function TaskCenterPage() {
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
   const [taskCoverUrl, setTaskCoverUrl] = useState('')
-  const [adminReadingTask, setAdminReadingTask] = useState(null)
+  const [readingMissions, setReadingMissions] = useState([])
+  const [missionClaimingId, setMissionClaimingId] = useState('')
   const [scrolledPastCover, setScrolledPastCover] = useState(false)
   const coverRef = useRef(null)
 
@@ -599,7 +611,6 @@ export default function TaskCenterPage() {
 
       if (response.ok && data.ok) {
         setTaskCoverUrl(data.settings?.cover_url || '')
-        setAdminReadingTask(data.settings?.reading_task || null)
       }
     } catch {
       setTaskCoverUrl('')
@@ -613,6 +624,7 @@ export default function TaskCenterPage() {
       setCheckIn(null)
       setRewardChest(null)
       setReadingReward(null)
+      setReadingMissions([])
       return
     }
 
@@ -620,11 +632,12 @@ export default function TaskCenterPage() {
       setLoading(true)
       setMessage('')
 
-      const [walletResponse, checkInResponse, chestResponse, readingResponse] = await Promise.allSettled([
+      const [walletResponse, checkInResponse, chestResponse, readingResponse, missionResponse] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/check-in`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/reward-chest`, { headers: getHeaders() }),
         fetch(`${API_BASE_URL}/api/tasks/reading-reward`, { headers: getHeaders() }),
+        fetch(`${API_BASE_URL}/api/tasks/reading-missions`, { headers: getHeaders() }),
       ])
 
       if (walletResponse.status === 'fulfilled') {
@@ -696,6 +709,21 @@ export default function TaskCenterPage() {
 
         if (readingResponse.value.ok && readingData.ok && readingData.reading_reward) {
           setReadingReward(readingData.reading_reward)
+        }
+      }
+
+      if (missionResponse.status === 'fulfilled') {
+        const missionData = await missionResponse.value.json().catch(() => ({}))
+
+        if (missionResponse.value.status === 401 || missionResponse.value.status === 403) {
+          clearReaderSession()
+          setToast('Please log in again')
+          navigate('/login')
+          return
+        }
+
+        if (missionResponse.value.ok && missionData.ok) {
+          setReadingMissions(Array.isArray(missionData.missions) ? missionData.missions : [])
         }
       }
     } catch {
@@ -936,6 +964,77 @@ export default function TaskCenterPage() {
       setToast(error.message || 'Failed to claim reading reward')
     } finally {
       setReadingClaiming(false)
+    }
+  }
+
+  function goToReadingMission(mission) {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    const targetPath = normalizeTaskLink(mission?.story_link)
+
+    navigate(targetPath, {
+      state: {
+        fromTaskCenter: true,
+        returnTo: '/tasks',
+        taskMissionId: mission?.id,
+        taskMission: mission,
+      },
+    })
+  }
+
+  async function claimReadingMissionReward(mission) {
+    if (!isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    if (!mission?.id || missionClaimingId) return
+
+    try {
+      setMissionClaimingId(mission.id)
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions/${mission.id}/claim`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.status === 401 || response.status === 403) {
+        clearReaderSession()
+        setToast('Please log in again')
+        navigate('/login')
+        return
+      }
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Reading mission reward is not available')
+      }
+
+      if (data.wallet) {
+        setWallet({
+          coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? wallet.coins ?? 0),
+          diamonds: Number(data.wallet.diamond_balance ?? wallet.diamonds ?? 0),
+          vouchers: Number(data.wallet.voucher_balance ?? wallet.vouchers ?? 0),
+        })
+      }
+
+      if (Array.isArray(data.missions)) {
+        setReadingMissions(data.missions)
+      } else if (data.mission) {
+        setReadingMissions((current) =>
+          current.map((item) => (item.id === data.mission.id ? data.mission : item))
+        )
+      }
+
+      setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
+    } catch (error) {
+      setToast(error.message || 'Failed to claim reading mission reward')
+    } finally {
+      setMissionClaimingId('')
     }
   }
 
@@ -1433,13 +1532,15 @@ export default function TaskCenterPage() {
               />
             ))}
 
-            {adminReadingTask?.is_active ? (
+            {readingMissions.map((mission) => (
               <AdminReadingMissionCard
-                task={adminReadingTask}
-                readingReward={readingReward}
-                onGo={() => navigate(normalizeTaskLink(adminReadingTask.story_link))}
+                key={mission.id}
+                task={mission}
+                claimingMissionId={missionClaimingId}
+                onGo={goToReadingMission}
+                onClaim={claimReadingMissionReward}
               />
-            ) : null}
+            ))}
 
             <ReadingRewardCard
               readingReward={readingReward}
