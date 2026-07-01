@@ -2565,6 +2565,15 @@ export default function AuthorStoreManagerPage() {
   const orderAutoRefreshCountRef = useRef(0)
   const lastOrderReportLoadAtRef = useRef(0)
 
+  const loadPromotion = useCallback(async () => {
+    try {
+      const nextPromotion = await fetchMyStorePromotion()
+      setPromotion(nextPromotion)
+    } catch {
+      setPromotion(null)
+    }
+  }, [])
+
   const loadOrderReport = useCallback(async ({ silent = false } = {}) => {
     try {
       if (!silent) setOrderLoading(true)
@@ -2595,12 +2604,13 @@ export default function AuthorStoreManagerPage() {
         total: 0,
         total_pages: 1,
       })
+      await loadPromotion()
     } catch {
       setOrders([])
     } finally {
       setOrderLoading(false)
     }
-  }, [orderPage, orderType, orderPrepareFilter, orderSearchQuery])
+  }, [orderPage, orderType, orderPrepareFilter, orderSearchQuery, loadPromotion])
 
   useEffect(() => {
     setOrderPage(1)
@@ -2643,24 +2653,23 @@ export default function AuthorStoreManagerPage() {
   }, [])
 
   useEffect(() => {
-  let ignore = false
+    loadPromotion()
+  }, [loadPromotion])
 
-  async function loadPromotion() {
-    try {
-      const nextPromotion = await fetchMyStorePromotion()
-      if (!ignore) setPromotion(nextPromotion)
-    } catch {
-      if (!ignore) setPromotion(null)
+  useEffect(() => {
+    const refreshPromotion = () => {
+      if (document.visibilityState === 'visible') loadPromotion()
     }
-  }
 
-  loadPromotion()
+    window.addEventListener('focus', refreshPromotion)
+    document.addEventListener('visibilitychange', refreshPromotion)
 
-  return () => {
-    ignore = true
-  }
-}, [])
-
+    return () => {
+      window.removeEventListener('focus', refreshPromotion)
+      document.removeEventListener('visibilitychange', refreshPromotion)
+    }
+  }, [loadPromotion])
+  
   useEffect(() => {
     let timer = null
 
@@ -3028,10 +3037,10 @@ const saveCategoryOrder = async () => {
           saveCategoryOrder={saveCategoryOrder}
           orderSummary={orderSummary}
           orders={orders}
-orderPage={orderPage}
-setOrderPage={setOrderPage}
-orderLoading={orderLoading}
-orderPagination={orderPagination}
+          orderPage={orderPage}
+          setOrderPage={setOrderPage}
+          orderLoading={orderLoading}
+          orderPagination={orderPagination}
           onRefreshOrders={() => loadOrderReport({ silent: false })}
           orderType={orderType}
           setOrderType={setOrderType}
