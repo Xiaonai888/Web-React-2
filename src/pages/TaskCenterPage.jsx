@@ -10,6 +10,11 @@ const API_BASE_URL =
 const CHEST_COOLDOWN_MS = 4 * 60 * 60 * 1000
 const CHEST_MAX_STORAGE = 2
 
+const SMART_REFRESH_CHECK_INTERVAL_MS = 60 * 1000
+const SMART_REFRESH_MAX_CHECKS = 3
+const SMART_REFRESH_COOLDOWN_MS = 60 * 60 * 1000
+
+
 const fallbackRewards = [
   { day: 1, gems: 50, coins: 50, vouchers: 0, gift: false, story_cards: 0 },
   { day: 2, gems: 100, coins: 100, vouchers: 0, gift: false, story_cards: 0 },
@@ -612,7 +617,11 @@ export default function TaskCenterPage() {
   const [missionClaimingId, setMissionClaimingId] = useState('')
   const [scrolledPastCover, setScrolledPastCover] = useState(false)
   const coverRef = useRef(null)
-
+  const smartRefreshVersionRef = useRef('')
+  const smartRefreshTimerRef = useRef(null)
+  const smartRefreshChecksRef = useRef(0)
+  const smartRefreshCooldownUntilRef = useRef(0)
+  const loadTaskCenterRef = useRef(null)
   const token = getReaderToken()
   const storedUser = getStoredUser()
   const isLoggedIn = Boolean(token)
@@ -651,9 +660,11 @@ export default function TaskCenterPage() {
     }
   }
 
-  async function loadTaskCenter() {
+  async function loadTaskCenter(options = {}) {
+    const silent = Boolean(options.silent)
+
     if (!token) {
-      setLoading(false)
+      if (!silent) setLoading(false)
       setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
       setCheckIn(null)
       setRewardChest(null)
@@ -663,7 +674,7 @@ export default function TaskCenterPage() {
     }
 
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       setMessage('')
 
       const [walletResponse, checkInResponse, chestResponse, readingResponse, missionResponse] = await Promise.allSettled([
@@ -763,9 +774,90 @@ export default function TaskCenterPage() {
     } catch {
       setToast('Could not load rewards')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
+
+
+  async function fetchTaskCenterVersion() {
+  const response = await fetch(`${API_BASE_URL}/api/task-center/public/version`, {
+    cache: 'no-store',
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to check task center version')
+  }
+
+  return String(data.version || '')
+}
+
+function clearSmartRefreshTimer() {
+  if (smartRefreshTimerRef.current) {
+    window.clearInterval(smartRefreshTimerRef.current)
+    smartRefreshTimerRef.current = null
+  }
+}
+
+async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
+  if (document.visibilityState !== 'visible') return false
+
+  const nextVersion = await fetchTaskCenterVersion().catch(() => '')
+
+  if (!nextVersion) return false
+
+  const previousVersion = smartRefreshVersionRef.current
+
+  if (!previousVersion) {
+    smartRefreshVersionRef.current = nextVersion
+    return false
+  }
+
+  if (nextVersion !== previousVersion) {
+    smartRefreshVersionRef.current = nextVersion
+
+    if (refreshOnChange) {
+      await Promise.allSettled([
+        loadTaskCenterRef.current?.({ silent: true }),
+        loadTaskCover(),
+      ])
+    }
+
+    return true
+  }
+
+  return false
+}
+
+function startSmartRefreshCycle() {
+  if (!isLoggedIn) return
+  if (document.visibilityState !== 'visible') return
+
+  const now = Date.now()
+
+  if (now < smartRefreshCooldownUntilRef.current) return
+  if (smartRefreshTimerRef.current) return
+
+  smartRefreshChecksRef.current = 0
+
+  smartRefreshTimerRef.current = window.setInterval(async () => {
+    if (document.visibilityState !== 'visible') {
+      clearSmartRefreshTimer()
+      return
+    }
+
+    smartRefreshChecksRef.current += 1
+
+    const changed = await checkTaskCenterVersion({ refreshOnChange: true })
+
+    if (changed || smartRefreshChecksRef.current >= SMART_REFRESH_MAX_CHECKS) {
+      clearSmartRefreshTimer()
+      smartRefreshCooldownUntilRef.current = Date.now() + SMART_REFRESH_COOLDOWN_MS
+    }
+  }, SMART_REFRESH_CHECK_INTERVAL_MS)
+}
+
 
   async function loadReminderSetting() {
     if (!isLoggedIn) {
@@ -1079,6 +1171,39 @@ export default function TaskCenterPage() {
     loadTaskCenter()
     loadReminderSetting()
   }, [])
+
+  useEffect(() => {
+    loadTaskCenterRef.current = loadTaskCenter
+  })
+
+  useEffect(() => {
+    if (!isLoggedIn) return undefined
+
+    let cancelled = false
+
+    checkTaskCenterVersion({ refreshOnChange: false }).finally(() => {
+      if (!cancelled) startSmartRefreshCycle()
+    })
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkTaskCenterVersion({ refreshOnChange: true }).finally(() => {
+          startSmartRefreshCycle()
+        })
+        return
+      }
+
+      clearSmartRefreshTimer()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearSmartRefreshTimer()
+    }
+  }, [isLoggedIn])
 
  useEffect(() => {
   const shouldLock = Boolean(chestReward || giftReward)
