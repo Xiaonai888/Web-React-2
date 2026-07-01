@@ -2316,18 +2316,14 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
-const activeMissionTargetSeconds = Math.max(
-  60,
-  Number(activeTaskMission?.target_seconds || Number(activeTaskMission?.target_minutes || 1) * 60)
-)
-const activeMissionSeconds = Math.min(activeMissionTargetSeconds, Math.max(0, Number(activeTaskMission?.active_seconds || 0)))
-const activeMissionProgress = activeMissionTargetSeconds > 0 ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100)) : 0
-const activeMissionMinutes = Math.max(1, Math.ceil(activeMissionTargetSeconds / 60))
-const activeMissionLabel = activeTaskMission?.claimed
-  ? 'Done'
-  : activeTaskMission?.claimable || activeTaskMission?.completed
-    ? 'Ready'
-    : `${Math.floor(activeMissionSeconds / 60)}/${activeMissionMinutes}m`
+  const activeMissionTargetSeconds = Math.max(
+    60,
+    Number(activeTaskMission?.target_seconds || Number(activeTaskMission?.target_minutes || 1) * 60)
+  )
+  const activeMissionSeconds = Math.min(activeMissionTargetSeconds, Math.max(0, Number(activeTaskMission?.active_seconds || 0)))
+  const activeMissionPercent = activeMissionTargetSeconds > 0 ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100)) : 0
+  const activeMissionReady = Boolean(activeTaskMission?.claimable || activeTaskMission?.completed)
+  const activeMissionClaimed = Boolean(activeTaskMission?.claimed)
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
@@ -2462,6 +2458,29 @@ return (
     </div>
   </div>
 ) : null}
+
+      {activeTaskMission?.id && !lockedEpisode && adultAccepted && !loading ? (
+        <button
+          type="button"
+          onClick={() => navigate('/tasks')}
+          className="fixed right-4 top-[76px] z-[80] flex h-[62px] w-[62px] items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(17,24,39,0.16)] ring-1 ring-black/5 active:scale-95"
+          aria-label="Reading mission progress"
+        >
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `conic-gradient(${activeMissionClaimed ? '#22C55E' : activeMissionReady ? '#22C55E' : '#F6B800'} ${activeMissionPercent * 3.6}deg, #edf0f5 0deg)`,
+            }}
+          />
+          <div className="absolute inset-[5px] rounded-full bg-white" />
+          <div className="relative z-10 text-center">
+            <img src="/assets/Icons/Shadow%20Coin.svg" alt="" className="mx-auto h-5 w-5 object-contain" />
+            <div className={`mt-0.5 text-[9px] font-black ${activeMissionReady || activeMissionClaimed ? 'text-[#16A34A]' : 'text-[#d97706]'}`}>
+              {activeMissionClaimed ? 'Done' : activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
+            </div>
+          </div>
+        </button>
+      ) : null}
 
      <ReaderBottomActionBar
   visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
