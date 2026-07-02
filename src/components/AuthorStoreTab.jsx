@@ -246,27 +246,27 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   }, [author?.page_username])
 
   const visibleSections = useMemo(() => {
-  const typeFilteredProducts = products.filter((product) => {
-    return activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
-  })
-
-  const customCategories = Array.from(
-    new Set(typeFilteredProducts.map((product) => product.category).filter(Boolean))
-  )
-
-  return customCategories
-    .map((category) => {
-      const items = typeFilteredProducts.filter((product) => product.category === category)
-
-      return {
-        key: category.toLowerCase().replace(/\s+/g, '-'),
-        title: category,
-        subtitle: 'Books and PDFs in this category.',
-        items,
-      }
+    const typeFilteredProducts = products.filter((product) => {
+      return activeType === 'All' || product.type === activeType.slice(0, -1) || product.type === activeType
     })
-    .filter((section) => section.items.length > 0)
-}, [activeType, products])
+
+    const customCategories = Array.from(
+      new Set(typeFilteredProducts.map((product) => product.category).filter(Boolean))
+    )
+
+    return customCategories
+      .map((category) => {
+        const items = typeFilteredProducts.filter((product) => product.category === category)
+
+        return {
+          key: category.toLowerCase().replace(/\s+/g, '-'),
+          title: category,
+          subtitle: 'Books and PDFs in this category.',
+          items,
+        }
+      })
+      .filter((section) => section.items.length > 0)
+  }, [activeType, products])
 
   const isOwner = Boolean(author?.is_owner)
 
@@ -303,64 +303,46 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
-        <div className="bg-gradient-to-br from-[#fffaf0] via-white to-[#f7f5ff] px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-[18px] font-black leading-6 text-[#111827]">Store</h2>
-                {loading ? (
-                  <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-black text-[#8b93a1] ring-1 ring-black/5">
-                    Loading
-                  </span>
-                ) : null}
-              </div>
-              <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                Books, PDFs, bundles, and pre-orders from this author.
-              </p>
-            </div>
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
+          {STORE_TYPE_FILTERS.map((type) => {
+            const active = activeType === type
 
-            {isOwner ? (
+            return (
               <button
+                key={type}
                 type="button"
-                onClick={() => navigate('/author/page/store')}
-                className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+                onClick={() => setActiveType(type)}
+                className={`h-8 shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-95 ${
+                  active ? 'bg-[#111827] text-white' : 'bg-white text-[#6b7280] ring-1 ring-black/5'
+                }`}
               >
-                Manage
+                {type}
               </button>
-            ) : null}
-          </div>
-
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {STORE_TYPE_FILTERS.map((type) => {
-              const active = activeType === type
-
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActiveType(type)}
-                  className={`h-8 shrink-0 rounded-full px-4 text-[12px] font-black transition active:scale-95 ${
-                    active ? 'bg-[#111827] text-white' : 'bg-white text-[#6b7280] ring-1 ring-black/5'
-                  }`}
-                >
-                  {type}
-                </button>
-              )
-            })}
-          </div>
+            )
+          })}
         </div>
 
-        {loadError ? (
+        {isOwner ? (
           <button
             type="button"
-            onClick={() => window.location.reload()}
-            className="block w-full border-t border-[#f0eef6] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
+            onClick={() => navigate('/author/page/store')}
+            className="h-8 shrink-0 rounded-full bg-white px-4 text-[12px] font-black text-[#111827] ring-1 ring-black/5 active:scale-95"
           >
-            {loadError}
+            Manage
           </button>
         ) : null}
-      </section>
+      </div>
+
+      {loadError ? (
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="block w-full rounded-[18px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412] ring-1 ring-[#fed7aa]"
+        >
+          {loadError}
+        </button>
+      ) : null}
 
       {!loading && !loadError && !visibleSections.length ? (
         <section className="rounded-[22px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
