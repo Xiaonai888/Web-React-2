@@ -62,8 +62,16 @@ function formatProductForUi(product) {
     id: product.id,
     type: apiTypeToUi(product.product_type),
     title: product.title || '',
+    authorName: product.author_name || product.authorName || '',
+    publisher: product.publisher || '',
+    novelType: product.novel_type || product.novelType || '',
     category: product.category || 'New Books',
+    genre: product.genre || '',
     description: product.description || '',
+    coverType: product.cover_type || product.coverType || '',
+    sortOrder: String(product.sort_order ?? product.sortOrder ?? 0),
+    bestSeller: Boolean(product.best_seller ?? product.bestSeller),
+    discount: Boolean(product.discount),
     originalPrice: String(product.original_price || ''),
     salePrice: String(product.sale_price || ''),
     status: product.status === 'active' ? 'Active' : product.status === 'hidden' ? 'Hidden' : 'Draft',
@@ -383,8 +391,16 @@ async function createStoreProduct(product) {
     body: JSON.stringify({
       product_type: product.type === 'PDF' ? 'pdf' : 'book',
       title: product.title,
+      author_name: product.authorName,
+      publisher: product.publisher,
+      novel_type: product.novelType,
       category: product.category,
+      genre: product.genre,
       description: product.description,
+      cover_type: product.coverType,
+      sort_order: product.sortOrder,
+      best_seller: Boolean(product.bestSeller),
+      discount: Boolean(product.discount),
       original_price: product.originalPrice,
       sale_price: product.salePrice,
       status: statusToApi(product.status),
@@ -426,8 +442,16 @@ async function updateStoreProduct(productId, product) {
     body: JSON.stringify({
       product_type: product.type === 'PDF' ? 'pdf' : 'book',
       title: product.title,
+      author_name: product.authorName,
+      publisher: product.publisher,
+      novel_type: product.novelType,
       category: product.category,
+      genre: product.genre,
       description: product.description,
+      cover_type: product.coverType,
+      sort_order: product.sortOrder,
+      best_seller: Boolean(product.bestSeller),
+      discount: Boolean(product.discount),
       original_price: product.originalPrice,
       sale_price: product.salePrice,
       status: statusToApi(product.status),
@@ -1910,13 +1934,13 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [type, setType] = useState(productToEdit?.type || 'Book')
   const [title, setTitle] = useState(productToEdit?.title || '')
   const [category, setCategory] = useState(productToEdit?.category || '')
-  const [authorName, setAuthorName] = useState('')
-  const [publisher, setPublisher] = useState('')
-  const [novelType, setNovelType] = useState('')
-  const [coverType, setCoverType] = useState('')
-  const [sortOrder, setSortOrder] = useState('0')
-  const [bestSeller, setBestSeller] = useState(false)
-  const [discount, setDiscount] = useState(false)
+  const [authorName, setAuthorName] = useState(productToEdit?.authorName || '')
+  const [publisher, setPublisher] = useState(productToEdit?.publisher || '')
+  const [novelType, setNovelType] = useState(productToEdit?.novelType || '')
+  const [coverType, setCoverType] = useState(productToEdit?.coverType || '')
+  const [sortOrder, setSortOrder] = useState(String(productToEdit?.sortOrder ?? '0'))
+  const [bestSeller, setBestSeller] = useState(Boolean(productToEdit?.bestSeller))
+  const [discount, setDiscount] = useState(Boolean(productToEdit?.discount))
   const [description, setDescription] = useState(productToEdit?.description || '')
   const [originalPrice, setOriginalPrice] = useState(productToEdit?.originalPrice || '')
   const [salePrice, setSalePrice] = useState(productToEdit?.salePrice || '')
@@ -1944,7 +1968,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [condition, setCondition] = useState(productToEdit?.condition || 'New')
   const [qualityPercent, setQualityPercent] = useState(productToEdit?.qualityPercent || '')
   const [deliveryNote, setDeliveryNote] = useState(productToEdit?.deliveryNote || '')
-  const [genre, setGenre] = useState('')
+  const [genre, setGenre] = useState(productToEdit?.genre || '')
   const [preOrder, setPreOrder] = useState(Boolean(productToEdit?.preOrder))
   const [pdfFileName, setPdfFileName] = useState(productToEdit?.pdfFileName || '')
   const [pdfFile, setPdfFile] = useState(null)
@@ -2167,8 +2191,16 @@ setFormError('Saving product...')
       await onSave({
         type,
         title: title.trim(),
+        authorName: authorName.trim(),
+        publisher: publisher.trim(),
+        novelType: novelType.trim(),
         category,
+        genre: genre.trim(),
         description,
+        coverType: coverType.trim(),
+        sortOrder,
+        bestSeller,
+        discount,
         originalPrice,
         salePrice,
         status: active ? 'Active' : 'Draft',
@@ -2420,6 +2452,27 @@ accessRule,
       <input type="checkbox" checked={preOrder} onChange={(event) => setPreOrder(event.target.checked)} />
       Pre-order product
     </label>
+
+<div className="grid gap-3 sm:grid-cols-2">
+  <label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
+    <input
+      type="checkbox"
+      checked={bestSeller}
+      onChange={(event) => setBestSeller(event.target.checked)}
+    />
+    Best seller product
+  </label>
+
+  <label className="flex h-11 items-center gap-2 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827]">
+    <input
+      type="checkbox"
+      checked={discount}
+      onChange={(event) => setDiscount(event.target.checked)}
+    />
+    Discount product
+  </label>
+</div>
+    
   </div>
 ) : (
             <div className="grid gap-3 sm:grid-cols-2">
