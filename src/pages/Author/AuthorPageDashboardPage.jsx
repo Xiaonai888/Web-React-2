@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
@@ -126,41 +126,63 @@ export default function AuthorPageDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    let ignore = false
+  const loadPage = useCallback(async ({ silent = false } = {}) => {
+  const token = getAuthToken()
 
-    async function loadPage() {
-      const token = getAuthToken()
+  if (!token) {
+    setLoading(false)
+    navigate('/login')
+    return
+  }
 
-      if (!token) {
-        navigate('/login')
-        return
-      }
+  try {
+    if (!silent) setLoading(true)
+    setMessage('')
 
-      try {
-        setLoading(true)
-        setMessage('')
+    const page = await fetchMyAuthorPage()
 
-        const page = await fetchMyAuthorPage()
-
-        if (!page) {
-          throw new Error('Author page not found')
-        }
-
-        if (!ignore) setAuthorPage(page)
-      } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load Page Dashboard')
-      } finally {
-        if (!ignore) setLoading(false)
-      }
+    if (!page) {
+      throw new Error('Author page not found')
     }
 
-    loadPage()
+    setAuthorPage(page)
+  } catch (error) {
+    setMessage(error.message || 'Failed to load Page Dashboard')
+  } finally {
+    setLoading(false)
+  }
+}, [navigate])
 
-    return () => {
-      ignore = true
+useEffect(() => {
+  let active = true
+
+  async function load() {
+    if (!active) return
+    await loadPage()
+  }
+
+  load()
+
+  return () => {
+    active = false
+  }
+}, [loadPage])
+
+useEffect(() => {
+  function refreshDashboard() {
+    if (document.visibilityState === 'visible') {
+      loadPage({ silent: true })
     }
-  }, [navigate])
+  }
+
+  window.addEventListener('focus', refreshDashboard)
+  document.addEventListener('visibilitychange', refreshDashboard)
+
+  return () => {
+    window.removeEventListener('focus', refreshDashboard)
+    document.removeEventListener('visibilitychange', refreshDashboard)
+  }
+}, [loadPage])
 
   const pageStats = useMemo(() => {
     return {
@@ -172,12 +194,45 @@ export default function AuthorPageDashboardPage() {
   }, [authorPage])
 
   const income = {
-    available: 0,
-    pending: 0,
-    thisMonth: 0,
-  }
+  available: 0,
+  pending: 0,
+  thisMonth: 0,
+}
 
+if (loading && !authorPage) {
   return (
+    <div className="min-h-screen bg-[#f3f4f6] pb-[92px]">
+      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
+          <button
+            type="button"
+            onClick={() => navigate('/author/page')}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+            aria-label="Back to page"
+          >
+            <i className="fa-solid fa-chevron-left text-[15px]" />
+          </button>
+
+          <div className="text-[16px] font-black text-[#111827]">Page Dashboard</div>
+
+          <div className="h-10 w-10" />
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[980px] px-4 py-4">
+        <div className="rounded-[28px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+          <div className="text-[14px] font-black text-[#111827]">Loading dashboard...</div>
+          <div className="mt-1 text-[12px] font-semibold text-[#8b93a1]">Please wait a moment.</div>
+        </div>
+      </div>
+
+      <AuthorPageFooter active="Dashboard" />
+    </div>
+  )
+}
+
+return (
     <div className="min-h-screen bg-[#f3f4f6] pb-[92px]">
       <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
