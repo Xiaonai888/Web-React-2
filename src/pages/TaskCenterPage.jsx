@@ -13,6 +13,7 @@ const CHEST_MAX_STORAGE = 2
 const SMART_REFRESH_CHECK_INTERVAL_MS = 60 * 1000
 const SMART_REFRESH_MAX_CHECKS = 3
 const SMART_REFRESH_COOLDOWN_MS = 60 * 60 * 1000
+const ACTIVE_READING_MISSION_KEY = 'shadow_active_reading_mission'
 
 
 const fallbackRewards = [
@@ -1100,15 +1101,21 @@ function startSmartRefreshCycle() {
     }
 
     const targetPath = normalizeTaskLink(mission?.story_link)
+    const normalizedMission = normalizeReadingMission(mission)
 
-    navigate(targetPath, {
-      state: {
-        fromTaskCenter: true,
-        returnTo: '/tasks',
-        taskMissionId: mission?.id,
-        taskMission: normalizeReadingMission(mission),
-      },
-    })
+try {
+  sessionStorage.setItem(ACTIVE_READING_MISSION_KEY, JSON.stringify(normalizedMission))
+} catch {
+}
+
+navigate(targetPath, {
+  state: {
+    fromTaskCenter: true,
+    returnTo: '/tasks',
+    taskMissionId: normalizedMission?.id,
+    taskMission: normalizedMission,
+  },
+})
   }
 
   async function claimReadingMissionReward(mission) {
