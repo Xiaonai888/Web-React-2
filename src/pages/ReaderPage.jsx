@@ -19,6 +19,139 @@ function readerAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+const ACTIVE_READING_MISSION_KEY = 'shadow_active_reading_mission'
+
+function safeParseJson(value) {
+  try {
+    return value ? JSON.parse(value) : null
+  } catch {
+    return null
+  }
+}
+
+function normalizeReaderTaskMission(mission = null, index = 0) {
+  if (!mission?.id) return null
+
+  const targetMinutes = Math.max(1, Number(mission.target_minutes || 1))
+  const targetSeconds = Math.max(
+    60,
+    Number(
+      mission.target_seconds ||
+        mission.targetSeconds ||
+        mission.required_seconds ||
+        targetMinutes * 60
+    )
+  )
+
+  const activeSeconds = Math.min(
+    targetSeconds,
+    Math.max(
+      0,
+      Number(
+        mission.active_seconds ||
+          mission.activeSeconds ||
+          mission.progress_seconds ||
+          mission.read_seconds ||
+          0
+      )
+    )
+  )
+
+  const completed =
+    Boolean(mission.completed || mission.is_completed) || activeSeconds >= targetSeconds
+
+  const claimed = Boolean(mission.claimed || mission.is_claimed || mission.claimed_at)
+
+  const claimable =
+    Boolean(mission.claimable || mission.can_claim || mission.ready_to_claim) ||
+    (completed && !claimed)
+
+  return {
+    ...mission,
+    id: mission.id || `reading-mission-${index}`,
+    is_active: mission.is_active !== false,
+    title: mission.title || `Read ${targetMinutes} minutes`,
+    subtitle: mission.subtitle || 'Keep reading longer to earn more coins.',
+    reward_coins: Number(mission.reward_coins || mission.coins || 0),
+    target_minutes: targetMinutes,
+    target_seconds: targetSeconds,
+    story_link: mission.story_link || '',
+    button_text: mission.button_text || 'Go',
+    sort_order: Number(mission.sort_order || index),
+    active_seconds: activeSeconds,
+    active_minutes: Math.floor(activeSeconds / 60),
+    completed,
+    claimed,
+    claimable,
+    completed_at: mission.completed_at || null,
+    claimed_at: mission.claimed_at || null,
+  }
+}
+
+function readSavedActiveReadingMission() {
+  if (typeof window === 'undefined') return null
+
+  return normalizeReaderTaskMission(
+    safeParseJson(sessionStorage.getItem(ACTIVE_READING_MISSION_KEY))
+  )
+}
+
+function saveActiveReadingMission(mission) {
+  if (typeof window === 'undefined') return
+
+  const normalized = normalizeReaderTaskMission(mission)
+  if (!normalized?.id) return
+
+  sessionStorage.setItem(ACTIVE_READING_MISSION_KEY, JSON.stringify(normalized))
+}
+
+function clearSavedActiveReadingMission() {
+  if (typeof window === 'undefined') return
+
+  sessionStorage.removeItem(ACTIVE_READING_MISSION_KEY)
+}
+
+function missionMatchesReaderStory(mission, storyId) {
+  const cleanStoryId = String(storyId || '').trim()
+  const link = String(mission?.story_link || '').trim()
+
+  if (!cleanStoryId) return false
+  if (!link) return true
+
+  return link.includes(cleanStoryId)
+}
+
+function missionCanStayVisible(mission, storyId) {
+  const normalized = normalizeReaderTaskMission(mission)
+
+  if (!normalized?.id) return false
+  if (!normalized.is_active) return false
+  if (normalized.claimed) return false
+
+  return missionMatchesReaderStory(normalized, storyId)
+}
+
+function missionCanTrack(mission, storyId) {
+  const normalized = normalizeReaderTaskMission(mission)
+
+  if (!missionCanStayVisible(normalized, storyId)) return false
+  if (normalized.completed || normalized.claimable) return false
+
+  return true
+}
+
+function pickActiveReadingMission(missions, storyId) {
+  const list = Array.isArray(missions)
+    ? missions.map((mission, index) => normalizeReaderTaskMission(mission, index)).filter(Boolean)
+    : []
+
+  return (
+    list.find((mission) => missionCanTrack(mission, storyId)) ||
+    list.find((mission) => missionCanStayVisible(mission, storyId)) ||
+    null
+  )
+}
+
 const REVIEW_READ_PROGRESS_PERCENT = 85
 const PAGING_LINES_PER_PAGE = 20
 
@@ -1699,6 +1832,7 @@ export default function ReaderPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { storyId, episodeId } = useParams()
+  const routeTaskMission = location.state?.taskMission || null
   const expectedLocked = Boolean(location.state?.expectedLocked)
   const expectedStory = location.state?.storyPreview || null
   const expectedEpisode = location.state?.episodePreview || null
@@ -1738,7 +1872,9 @@ export default function ReaderPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
-  const [activeTaskMission, setActiveTaskMission] = useState(location.state?.taskMission || null)
+  const [activeTaskMission, setActiveTaskMission] = useState(() => {
+  return normalizeReaderTaskMission(routeTaskMission) || readSavedActiveReadingMission()
+})
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -1913,8 +2049,20 @@ setReaderAdPolicy(nextReaderAdStatus.ad_policy)
 setReaderAdvertisement(nextReaderAdStatus.advertisement)
 setReadingProgress(0)
 setReaderGateReady(true)
-setActiveTaskMission(location.state?.taskMission || null)
-missionProgressSentRef.current = 0      
+const nextRouteMission = normalizeReaderTaskMission(routeTaskMission)
+const savedMission = readSavedActiveReadingMission()
+
+const nextTaskMission =
+  (nextRouteMission && missionCanStayVisible(nextRouteMission, storyId) ? nextRouteMission : null) ||
+  (savedMission && missionCanStayVisible(savedMission, storyId) ? savedMission : null)
+
+setActiveTaskMission(nextTaskMission)
+
+if (nextTaskMission) {
+  saveActiveReadingMission(nextTaskMission)
+}
+
+missionProgressSentRef.current = 0
 
         if (episodeData.episode?.is_adult) {
           setAdultAccepted(false)
@@ -1941,7 +2089,7 @@ missionProgressSentRef.current = 0
     return () => {
       ignore = true
     }
-  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, storyId])
+  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, routeTaskMission, storyId])
 
   useEffect(() => {
     if (readingMode === 'paging') return undefined
@@ -2007,6 +2155,113 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
   }, [adultAccepted, episode, episodeId, loading, storyId])
 
   useEffect(() => {
+    const nextMission = normalizeReaderTaskMission(routeTaskMission)
+
+    if (!nextMission?.id) return
+
+    setActiveTaskMission(nextMission)
+    saveActiveReadingMission(nextMission)
+    missionProgressSentRef.current = 0
+  }, [routeTaskMission?.id])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadActiveReadingMission() {
+      if (!storyId || !episodeId || loading || lockedEpisode || !adultAccepted) return
+
+      const currentMission = normalizeReaderTaskMission(activeTaskMission)
+
+      if (missionCanTrack(currentMission, storyId)) {
+        saveActiveReadingMission(currentMission)
+        return
+      }
+
+      const savedMission = readSavedActiveReadingMission()
+
+      if (missionCanTrack(savedMission, storyId)) {
+        setActiveTaskMission(savedMission)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
+          headers: readerAuthHeaders(),
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (ignore || !response.ok || data.ok === false) return
+
+        const missions =
+          data.missions ||
+          data.reading_missions ||
+          data.tasks ||
+          data.items ||
+          []
+
+        const pickedMission = pickActiveReadingMission(missions, storyId)
+
+        if (pickedMission?.id) {
+          setActiveTaskMission(pickedMission)
+          saveActiveReadingMission(pickedMission)
+          missionProgressSentRef.current = 0
+        } else {
+          setActiveTaskMission(null)
+          clearSavedActiveReadingMission()
+        }
+      } catch {
+        // Reading should still work even if mission API fails.
+      }
+    }
+
+    loadActiveReadingMission()
+
+    return () => {
+      ignore = true
+    }
+  }, [
+    activeTaskMission?.id,
+    activeTaskMission?.claimed,
+    activeTaskMission?.completed,
+    activeTaskMission?.claimable,
+    adultAccepted,
+    episodeId,
+    loading,
+    lockedEpisode,
+    storyId,
+  ])
+
+  useEffect(() => {
+    if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
+      return undefined
+    }
+
+    const timer = window.setInterval(async () => {
+      if (document.visibilityState !== 'visible') return
+
+      await fetch(`${API_BASE_URL}/api/tasks/reading-reward/progress`, {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          story_id: storyId,
+          episode_id: episodeId,
+          seconds: 5,
+        }),
+      }).catch(() => {})
+    }, 5000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [adultAccepted, episode, episodeId, loading, lockedEpisode, storyId])
+
+  useEffect(() => {
+    const currentMission = normalizeReaderTaskMission(activeTaskMission)
+
     if (
       !storyId ||
       !episodeId ||
@@ -2014,9 +2269,11 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
       loading ||
       lockedEpisode ||
       !adultAccepted ||
-      !activeTaskMission?.id ||
-      activeTaskMission?.claimed ||
-      activeTaskMission?.completed
+      !currentMission?.id ||
+      currentMission.claimed ||
+      currentMission.completed ||
+      currentMission.claimable ||
+      currentMission.is_active === false
     ) {
       return undefined
     }
@@ -2024,7 +2281,7 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
     const timer = window.setInterval(async () => {
       if (document.visibilityState !== 'visible') return
 
-      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions/${activeTaskMission.id}/progress`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions/${currentMission.id}/progress`, {
         method: 'POST',
         headers: {
           ...readerAuthHeaders(),
@@ -2042,7 +2299,12 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
       const data = await response.json().catch(() => ({}))
 
       if (data?.mission) {
-        setActiveTaskMission(data.mission)
+        const nextMission = normalizeReaderTaskMission(data.mission)
+
+        if (nextMission?.id) {
+          setActiveTaskMission(nextMission)
+          saveActiveReadingMission(nextMission)
+        }
       }
     }, 5000)
 
@@ -2051,8 +2313,10 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
     }
   }, [
     activeTaskMission?.claimed,
+    activeTaskMission?.claimable,
     activeTaskMission?.completed,
     activeTaskMission?.id,
+    activeTaskMission?.active_seconds,
     adultAccepted,
     episode,
     episodeId,
@@ -2316,14 +2580,28 @@ async function handleLockedDiamondUnlock(packageKey) {
 
   const handleCommentChanged = () => {}
 
+  const activeMission = normalizeReaderTaskMission(activeTaskMission)
   const activeMissionTargetSeconds = Math.max(
     60,
-    Number(activeTaskMission?.target_seconds || Number(activeTaskMission?.target_minutes || 1) * 60)
+    Number(activeMission?.target_seconds || Number(activeMission?.target_minutes || 1) * 60)
   )
-  const activeMissionSeconds = Math.min(activeMissionTargetSeconds, Math.max(0, Number(activeTaskMission?.active_seconds || 0)))
-  const activeMissionPercent = activeMissionTargetSeconds > 0 ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100)) : 0
-  const activeMissionReady = Boolean(activeTaskMission?.claimable || activeTaskMission?.completed)
-  const activeMissionClaimed = Boolean(activeTaskMission?.claimed)
+  const activeMissionSeconds = Math.min(
+    activeMissionTargetSeconds,
+    Math.max(0, Number(activeMission?.active_seconds || 0))
+  )
+  const activeMissionPercent =
+    activeMissionTargetSeconds > 0
+      ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100))
+      : 0
+  const activeMissionReady = Boolean(
+    activeMission?.claimable ||
+      activeMission?.completed ||
+      activeMissionPercent >= 100
+  )
+  const activeMissionClaimed = Boolean(activeMission?.claimed)
+  const showActiveMissionCircle = Boolean(
+    activeMission?.id && !activeMissionClaimed && !lockedEpisode && adultAccepted && !loading
+  )
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
@@ -2439,46 +2717,32 @@ return (
   <div className="fixed inset-0 z-[2147483646] bg-black" />
 ) : null}
       
-     {activeTaskMission?.id && !lockedEpisode && adultAccepted && !loading ? (
-  <div className="fixed right-4 top-[76px] z-[80] flex flex-col items-center">
-    <div
-      className="flex h-[60px] w-[60px] items-center justify-center rounded-full p-1 shadow-[0_10px_24px_rgba(17,24,39,0.16)] ring-1 ring-black/5"
-      style={{
-        background: `conic-gradient(${activeTaskMission?.claimed ? '#22C55E' : activeTaskMission?.claimable || activeTaskMission?.completed ? '#F6B800' : '#ff3f62'} ${activeMissionProgress}%, #edf0f5 0)`,
-      }}
-    >
-      <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-white">
-        <img src="/assets/Icons/Shadow%20Coin.svg" alt="" className="h-5 w-5 object-contain" />
-        <span className="mt-0.5 text-[9px] font-black text-[#d97706]">+{formatNumber(activeTaskMission.reward_coins || 0)}</span>
-      </div>
-    </div>
-
-    <div className="mt-1 rounded-full bg-black/65 px-2 py-0.5 text-[9px] font-black text-white">
-      {activeMissionLabel}
-    </div>
-  </div>
-) : null}
-
-      {activeTaskMission?.id && !lockedEpisode && adultAccepted && !loading ? (
+      {showActiveMissionCircle ? (
         <button
           type="button"
           onClick={() => navigate('/tasks')}
-          className="fixed right-4 top-[76px] z-[80] flex h-[62px] w-[62px] items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(17,24,39,0.16)] ring-1 ring-black/5 active:scale-95"
+          className={`fixed right-4 top-[76px] z-[120] flex h-[62px] w-[62px] flex-col items-center justify-center rounded-full shadow-[0_10px_26px_rgba(17,24,39,0.22)] ring-1 ring-black/5 active:scale-95 ${
+            activeMissionReady
+              ? 'bg-[#22C55E] text-white'
+              : 'bg-[#111827] text-white'
+          }`}
           aria-label="Reading mission progress"
         >
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: `conic-gradient(${activeMissionClaimed ? '#22C55E' : activeMissionReady ? '#22C55E' : '#F6B800'} ${activeMissionPercent * 3.6}deg, #edf0f5 0deg)`,
-            }}
+          <img
+            src="/assets/Icons/Shadow%20Coin.svg"
+            alt=""
+            className="h-6 w-6 object-contain"
           />
-          <div className="absolute inset-[5px] rounded-full bg-white" />
-          <div className="relative z-10 text-center">
-            <img src="/assets/Icons/Shadow%20Coin.svg" alt="" className="mx-auto h-5 w-5 object-contain" />
-            <div className={`mt-0.5 text-[9px] font-black ${activeMissionReady || activeMissionClaimed ? 'text-[#16A34A]' : 'text-[#d97706]'}`}>
-              {activeMissionClaimed ? 'Done' : activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
-            </div>
-          </div>
+
+          <span className="mt-0.5 text-[10px] font-black leading-none">
+            {activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
+          </span>
+
+          {Number(activeMission?.reward_coins || 0) > 0 ? (
+            <span className="mt-0.5 text-[9px] font-black leading-none opacity-90">
+              +{formatNumber(activeMission.reward_coins)}
+            </span>
+          ) : null}
         </button>
       ) : null}
 
