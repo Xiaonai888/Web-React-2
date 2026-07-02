@@ -107,7 +107,7 @@ function PublicProductCard({ product, onAddToCart }) {
   )
 }
 
-export default function AuthorPublicStoreSection({ author, activeType, activeCategory, onTypeChange, onCategoryChange }) {
+export default function AuthorPublicStoreSection({ author, activeType, activeCategory, onTypeChange, onCategoryChange, isOwner = false }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
@@ -195,37 +195,38 @@ export default function AuthorPublicStoreSection({ author, activeType, activeCat
         <i className="fa-solid fa-bag-shopping text-[13px]" />
       </span>
     ) : null}
-      <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[18px] font-black text-[#111827]">Store</h2>
-            <p className="mt-1 text-[12px] font-semibold text-[#8b93a1]">
-              Books and PDFs from this author.
-            </p>
-          </div>
-        </div>
+      <div className="flex items-center justify-between gap-3 px-1">
+  <div className="flex gap-2 overflow-x-auto pb-1">
+    {STORE_TYPE_FILTERS.map((type) => {
+      const active = activeType === type
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {STORE_TYPE_FILTERS.map((type) => {
-            const active = activeType === type
+      return (
+        <button
+          key={type}
+          type="button"
+          onClick={() => onTypeChange(type)}
+          className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
+            active
+              ? 'bg-[#111827] text-white'
+              : 'bg-white text-[#6b7280] ring-1 ring-black/5'
+          }`}
+        >
+          {type}
+        </button>
+      )
+    })}
+  </div>
 
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => onTypeChange(type)}
-                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-black ${
-                  active
-                    ? 'bg-[#111827] text-white'
-                    : 'bg-[#f3f4f6] text-[#6b7280]'
-                }`}
-              >
-                {type}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+  {isOwner ? (
+    <button
+      type="button"
+      onClick={() => window.location.assign('/author/page/store')}
+      className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-black text-[#111827] ring-1 ring-black/5 active:scale-95"
+    >
+      Manage
+    </button>
+  ) : null}
+</div>
 
       <div className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
         <h3 className="mb-3 text-[15px] font-black text-[#111827]">Categories</h3>
