@@ -2602,6 +2602,9 @@ async function handleLockedDiamondUnlock(packageKey) {
   const showActiveMissionCircle = Boolean(
     activeMission?.id && !activeMissionClaimed && !lockedEpisode && adultAccepted && !loading
   )
+  const activeMissionRingRadius = 33
+  const activeMissionRingCircumference = 2 * Math.PI * activeMissionRingRadius
+  const activeMissionRingOffset = activeMissionRingCircumference * (1 - activeMissionPercent / 100)
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
@@ -2721,28 +2724,63 @@ return (
         <button
           type="button"
           onClick={() => navigate('/tasks')}
-          className={`fixed right-4 top-[76px] z-[120] flex h-[62px] w-[62px] flex-col items-center justify-center rounded-full shadow-[0_10px_26px_rgba(17,24,39,0.22)] ring-1 ring-black/5 active:scale-95 ${
-            activeMissionReady
-              ? 'bg-[#22C55E] text-white'
-              : 'bg-[#111827] text-white'
-          }`}
+          className="fixed right-3 top-[68px] z-[120] flex h-[78px] w-[78px] items-center justify-center rounded-full active:scale-95"
           aria-label="Reading mission progress"
         >
-          <img
-            src="/assets/Icons/Shadow%20Coin.svg"
-            alt=""
-            className="h-6 w-6 object-contain"
-          />
+          {activeMissionReady ? (
+            <span className="absolute inset-1 rounded-full bg-[#22C55E]/25 animate-ping" />
+          ) : (
+            <span className="absolute inset-1 rounded-full border-2 border-transparent border-t-[#F6B800] border-r-[#F6B800] animate-spin" />
+          )}
 
-          <span className="mt-0.5 text-[10px] font-black leading-none">
-            {activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
-          </span>
+          <svg
+            viewBox="0 0 78 78"
+            className="absolute inset-0 h-[78px] w-[78px] -rotate-90 drop-shadow-[0_10px_22px_rgba(17,24,39,0.18)]"
+            aria-hidden="true"
+          >
+            <circle
+              cx="39"
+              cy="39"
+              r={activeMissionRingRadius}
+              fill="none"
+              stroke="rgba(17,24,39,0.14)"
+              strokeWidth="5"
+            />
+            <circle
+              cx="39"
+              cy="39"
+              r={activeMissionRingRadius}
+              fill="none"
+              stroke={activeMissionReady ? '#22C55E' : '#F6B800'}
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={activeMissionRingCircumference}
+              strokeDashoffset={activeMissionRingOffset}
+              className="transition-all duration-500 ease-out"
+            />
+          </svg>
 
-          {Number(activeMission?.reward_coins || 0) > 0 ? (
-            <span className="mt-0.5 text-[9px] font-black leading-none opacity-90">
-              +{formatNumber(activeMission.reward_coins)}
+          <span
+            className={`relative flex h-[62px] w-[62px] flex-col items-center justify-center rounded-full text-white shadow-[0_10px_26px_rgba(17,24,39,0.24)] ring-1 ring-white/40 ${
+              activeMissionReady ? 'bg-[#22C55E]' : 'bg-[#111827]'
+            }`}
+          >
+            <img
+              src="/assets/Icons/Shadow%20Coin.svg"
+              alt=""
+              className="h-6 w-6 object-contain"
+            />
+
+            <span className="mt-0.5 text-[10px] font-black leading-none">
+              {activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
             </span>
-          ) : null}
+
+            {Number(activeMission?.reward_coins || 0) > 0 ? (
+              <span className="mt-0.5 text-[9px] font-black leading-none opacity-90">
+                +{formatNumber(activeMission.reward_coins)}
+              </span>
+            ) : null}
+          </span>
         </button>
       ) : null}
 
