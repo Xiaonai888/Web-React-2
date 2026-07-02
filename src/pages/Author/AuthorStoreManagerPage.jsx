@@ -1147,8 +1147,8 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 }, [filteredProducts, recordQuery, activeType])
 
   return (
-    <main className="mx-auto max-w-[980px] px-4 py-4">
-      <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <main className="mx-auto max-w-[980px] px-0 py-0 sm:px-4 sm:py-4">
+      <section className="rounded-none bg-white p-4 shadow-none ring-0 sm:rounded-[26px] sm:shadow-sm sm:ring-1 sm:ring-black/5">
         <div>
           <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
@@ -1162,7 +1162,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 </div>
 
 {promotion ? (
-  <div className="mt-3 rounded-[18px] bg-[#fff7ed] px-3.5 py-3 ring-1 ring-[#fed7aa]">
+  <div className="mt-3 border-y border-[#fed7aa] bg-[#fff7ed] px-3.5 py-3 sm:rounded-[18px] sm:border sm:ring-0">
     <div className="text-[12px] font-black text-[#111827]">🎉 0% Service Fee Promotion</div>
     <div className="mt-1 text-[12px] font-bold text-[#9a3412]">
       Book {promotion.book?.used || 0}/{promotion.book?.limit || 50} • PDF {promotion.pdf?.used || 0}/{promotion.pdf?.limit || 100}
@@ -1170,7 +1170,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   </div>
 ) : null}
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-0 sm:mt-4 sm:pb-1">
           {['Records', 'Orders'].map((tab) => {
             const active = activeTab === tab
 
@@ -1203,7 +1203,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       ) : null}
 
       {activeTab === 'Records' ? (
-        <section className="mt-4 rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
+        <section className="mt-0 rounded-none bg-white shadow-none ring-0 sm:mt-4 sm:rounded-[24px] sm:shadow-sm sm:ring-1 sm:ring-black/5">
           <div className="border-b border-[#eef0f4] px-4 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
