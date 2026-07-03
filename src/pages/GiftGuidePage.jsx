@@ -101,13 +101,7 @@ export default function GiftGuidePage() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={goBack}
-          className="mt-8 h-11 w-full rounded-full bg-[#111827] text-[14px] font-bold text-white active:scale-95"
-        >
-          Back
-        </button>
+       
       </section>
     </main>
   )
