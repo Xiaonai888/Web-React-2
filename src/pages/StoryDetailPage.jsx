@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import StoryHeroSection from '../components/story-detail/StoryHeroSection'
 import StoryStatsSection from '../components/story-detail/StoryStatsSection'
 import StoryInfoSection from '../components/story-detail/StoryInfoSection'
@@ -49,9 +49,96 @@ function authHeaders() {
 
 function LoadingBlock() {
   return (
-    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-7 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#eef1f5] border-t-[#111827]" />
-      <div className="text-[13px] font-black text-[#667085]">Opening story...</div>
+    <div className="min-h-screen bg-white pb-[130px] sm:bg-[#f5f3fa]">
+      <section className="relative bg-[#f5f3fa]">
+        <div className="fixed left-0 right-0 top-0 z-50 px-4 py-3">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div className="h-10 w-10 rounded-full bg-white/55" />
+            <div className="flex gap-2">
+              <div className="h-10 w-10 rounded-full bg-white/55" />
+              <div className="h-10 w-10 rounded-full bg-white/55" />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative h-[56.25vw] min-h-[200px] max-h-[520px] w-full animate-pulse overflow-hidden bg-[#dfe5ec]">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f5f3fa] to-transparent" />
+
+          <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-end px-4 pb-14">
+            <div className="h-7 w-3/4 rounded-full bg-white/75" />
+            <div className="mt-3 h-4 w-36 rounded-full bg-white/65" />
+            <div className="mt-5 flex justify-end gap-1.5">
+              <div className="h-2.5 w-7 rounded-full bg-white/75" />
+              <div className="h-2.5 w-2.5 rounded-full bg-white/55" />
+              <div className="h-2.5 w-2.5 rounded-full bg-white/55" />
+              <div className="h-2.5 w-2.5 rounded-full bg-white/55" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="mx-auto max-w-5xl px-0 sm:px-4">
+        <section className="-mt-8 px-4">
+          <div className="h-14 animate-pulse rounded-full bg-[#fff4cf]" />
+        </section>
+
+        <section className="bg-white px-4 py-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center">
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+            </div>
+            <div className="text-center">
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+            </div>
+            <div className="text-center">
+              <div className="mx-auto h-6 w-10 animate-pulse rounded-full bg-[#eef1f5]" />
+              <div className="mx-auto mt-2 h-3 w-14 animate-pulse rounded-full bg-[#eef1f5]" />
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-2 bg-white px-4 py-5">
+          <div className="mb-4 h-4 w-20 animate-pulse rounded-full bg-[#eef1f5]" />
+          <div className="space-y-2">
+            <div className="h-4 w-full animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="h-4 w-11/12 animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="h-4 w-5/6 animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="h-4 w-3/4 animate-pulse rounded-full bg-[#eef1f5]" />
+          </div>
+        </section>
+
+        <section className="mt-2 bg-white px-4 py-5">
+          <div className="mb-4 h-5 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5]" />
+              <div className="flex-1 pt-1">
+                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
+                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="h-[58px] w-[76px] shrink-0 animate-pulse rounded-[10px] bg-[#eef1f5]" />
+              <div className="flex-1 pt-1">
+                <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
+                <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-[#eef1f5]" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 pb-4 pt-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-[48px_1fr] gap-2">
+          <div className="h-12 animate-pulse rounded-full bg-[#eef1f5]" />
+          <div className="h-12 animate-pulse rounded-full bg-[#111827]/20" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -80,10 +167,34 @@ function ErrorBlock({ message, onBack }) {
 function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoading, isOwnerPage = false, onManagePage, onViewPage, onFollow }) {
   if (!authorPage) return null
 
+  const followers = Number(followerCount || authorPage.total_followers || 0)
   const followerText =
-    followerCount >= 1000
-      ? `${(followerCount / 1000).toFixed(followerCount >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
-      : `${followerCount} followers`
+    followers >= 1000
+      ? `${(followers / 1000).toFixed(followers >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
+      : `${followers} followers`
+
+  const topFans = (
+    authorPage.top_fans ||
+    authorPage.topFans ||
+    authorPage.top_fan_profiles ||
+    []
+  ).filter(Boolean).slice(0, 3)
+
+  const demoTopFans = [
+    { id: 'demo-profile-1', name: 'Top Fan 1' },
+    { id: 'demo-profile-2', name: 'Top Fan 2' },
+    { id: 'demo-profile-3', name: 'Top Fan 3' },
+  ]
+
+  const displayTopFans = topFans.length ? topFans : demoTopFans
+
+  const topFanCount = Number(
+    authorPage.top_fan_count ||
+    authorPage.topFansCount ||
+    authorPage.total_top_fans ||
+    topFans.length ||
+    0
+  )
 
   const handleOpenPage = () => {
     if (typeof onViewPage === 'function') onViewPage()
@@ -91,93 +202,86 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
 
   const handleFollowClick = (event) => {
     event.stopPropagation()
-
     if (typeof onFollow === 'function') onFollow()
   }
 
   return (
-    <section className="mt-2 bg-white p-4 shadow-sm sm:mt-4 sm:rounded-[28px] sm:p-5 sm:ring-1 sm:ring-black/5">
+    <section className="mt-2 bg-white px-4 py-5 shadow-sm sm:mt-4 sm:rounded-[22px] sm:px-5 sm:py-6 sm:ring-1 sm:ring-black/5">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={handleOpenPage}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left active:scale-[0.995]"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[14px] font-bold text-[#111827] ring-1 ring-black/5">
+            {authorPage.avatar_url ? (
+              <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
+            ) : (
+              String(authorPage.page_name || 'A').slice(0, 1).toUpperCase()
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 text-[14px] font-bold leading-5 text-[#111827]">
+              {authorPage.page_name || 'Author Page'}
+            </div>
+            <div className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[#98a2b3]">
+              {followerText}
+            </div>
+          </div>
+        </button>
+
+        <button
+  type="button"
+  onClick={(event) => {
+    event.stopPropagation()
+
+    if (isOwnerPage) {
+      onManagePage?.()
+      return
+    }
+
+    handleOpenPage()
+  }}
+  className="shrink-0 pt-0 text-[12px] font-semibold text-[#98a2b3] active:scale-95"
+>
+  {isOwnerPage ? 'Manage Page' : 'View Page'}{' '}
+  <i className="fa-solid fa-chevron-right ml-1 text-[9px]" />
+</button>
+      </div>
+
+     <div className="mt-5 -mx-1 flex min-h-[112px] items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4">
+        <div className="min-w-0 flex-1 pt-1">
+          <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
+            <span>Top Fans</span>
+            <span className="text-[#d99a00]">
+  {`${topFanCount} people in total`}
+</span>
+            <i className="fa-solid fa-chevron-right text-[9px] text-[#d99a00]" />
+          </div>
+
+          <div className="mt-3 flex items-center gap-1.5">
+  {displayTopFans.map((fan, index) => {
+    const avatar = fan.avatar_url || fan.avatar || fan.photo_url || ''
+    const name = fan.name || fan.username || 'Fan'
+
+    return (
       <div
-        role="button"
-        tabIndex={0}
-        onClick={handleOpenPage}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            handleOpenPage()
-          }
-        }}
-        className="flex w-full cursor-pointer items-center gap-3 text-left active:scale-[0.995]"
+        key={fan.id || fan.user_id || name || index}
+        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f2f3f6] text-[#aeb5c2] ring-1 ring-[#dfe3ea]"
       >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5f3fa] text-[18px] font-black text-[#111827] ring-1 ring-black/10 sm:h-14 sm:w-14 sm:text-[20px]">
-          {authorPage.avatar_url ? (
-            <img src={authorPage.avatar_url} alt={authorPage.page_name} className="h-full w-full object-cover" />
-          ) : (
-            String(authorPage.page_name || 'A').slice(0, 1).toUpperCase()
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="line-clamp-1 text-[15px] font-bold leading-5 text-[#111827] sm:text-[16px]">
-  {authorPage.page_name || 'Author Page'}
-</div>
-
-<div className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#8d94a1] sm:text-[12px]">
-  {followerText}
-</div>
-
-          <div className="mt-3 flex items-center gap-3">
-  {isOwnerPage ? (
-    <>
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          onManagePage?.()
-        }}
-        className="h-7 rounded-full bg-[#111827] px-4 text-[11px] font-bold text-white active:scale-95"
-      >
-        Manage Page
-      </button>
-
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          onViewPage?.()
-        }}
-        className="h-7 rounded-full bg-[#f5f3fa] px-4 text-[11px] font-bold text-[#111827] ring-1 ring-black/5 active:scale-95"
-      >
-        View Page
-      </button>
-    </>
-  ) : (
-    <>
-      <button
-        type="button"
-        onClick={handleFollowClick}
-        disabled={followLoading}
-        className={`h-7 rounded-full px-4 text-[11px] font-bold active:scale-95 disabled:opacity-60 ${
-  following ? 'bg-[#f5f3fa] text-[#111827] ring-1 ring-black/5' : 'bg-[#111827] text-white'
-}`}
-      >
-        {following ? 'Following' : 'Follow'}
-      </button>
-
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          onViewPage?.()
-        }}
-        className="h-7 rounded-full bg-transparent px-1 text-[11px] font-bold text-[#8d94a1] active:scale-95"
-      >
-        View Page
-      </button>
-    </>
-  )}
+        {avatar ? (
+          <img src={avatar} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          <i className="fa-regular fa-user text-[13px]" />
+        )}
+      </div>
+    )
+  })}
 </div>
         </div>
+
+      
       </div>
     </section>
   )
@@ -203,6 +307,7 @@ export default function StoryDetailPage() {
 
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
+  const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
@@ -219,53 +324,91 @@ export default function StoryDetailPage() {
   const [authorIsOwnerPage, setAuthorIsOwnerPage] = useState(false)
   const location = useLocation()
 
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [realStoryId])
+
+  useEffect(() => {
+  if (!location.state?.reopenEpisodeList) return
+
+  setEpisodeListOpen(true)
+
+  navigate(location.pathname, {
+    replace: true,
+    state: {
+      ...location.state,
+      reopenEpisodeList: false,
+    },
+  })
+}, [location.pathname, location.state, navigate])
+
   useEffect(() => {
     let ignore = false
 
     async function loadStory() {
       setLoading(true)
+      setEpisodesLoading(true)
       setMessage('')
+      setStory(null)
+      setEpisodes([])
+      setAuthorFollowing(false)
+      setAuthorFollowerCount(0)
+      setAuthorIsOwnerPage(false)
+      const episodesPromise = fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`)
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}))
+
+          if (!response.ok || data.ok === false) {
+            throw new Error(data.message || 'Episodes not found')
+          }
+
+          return data
+        })
+        .catch((error) => ({ error }))
 
       try {
-        const [storyResponse, episodesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`),
-          fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`),
-        ])
-
+        const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`)
         const storyData = await storyResponse.json().catch(() => ({}))
-        const episodesData = await episodesResponse.json().catch(() => ({}))
 
         if (!storyResponse.ok || storyData.ok === false) {
           throw new Error(storyData.message || 'Story not found')
         }
 
-        if (!episodesResponse.ok || episodesData.ok === false) {
-          throw new Error(episodesData.message || 'Episodes not found')
-        }
-
         if (ignore) return
 
         const loadedStory = storyData.story || null
-const loadedAuthorPage = loadedStory?.author_page || null
-const currentReaderId = getCurrentReaderId()
-const authorOwnerId =
-  loadedAuthorPage?.user_id ||
-  loadedAuthorPage?.owner_id ||
-  loadedAuthorPage?.created_by ||
-  loadedStory?.author_user_id ||
-  loadedStory?.user_id ||
-  null
+        const loadedAuthorPage = loadedStory?.author_page || null
+        const currentReaderId = getCurrentReaderId()
+        const authorOwnerId =
+          loadedAuthorPage?.user_id ||
+          loadedAuthorPage?.owner_id ||
+          loadedAuthorPage?.created_by ||
+          loadedStory?.author_user_id ||
+          loadedStory?.user_id ||
+          null
 
-setAuthorIsOwnerPage(Boolean(
-  loadedAuthorPage?.is_owner ||
-  loadedAuthorPage?.is_owner_page ||
-  (currentReaderId && authorOwnerId && String(currentReaderId) === String(authorOwnerId))
-))
+        setAuthorIsOwnerPage(Boolean(
+          loadedAuthorPage?.is_owner ||
+          loadedAuthorPage?.is_owner_page ||
+          (currentReaderId && authorOwnerId && String(currentReaderId) === String(authorOwnerId))
+        ))
 
         setStory(loadedStory)
-        setEpisodes(episodesData.episodes || [])
         setAuthorFollowing(Boolean(loadedAuthorPage?.is_following))
         setAuthorFollowerCount(Number(loadedAuthorPage?.total_followers || 0))
+        setLoading(false)
+
+        const episodesData = await episodesPromise
+
+        if (ignore) return
+
+        if (episodesData?.error) {
+          setEpisodes([])
+        } else {
+          setEpisodes(episodesData.episodes || [])
+        }
+
+        setEpisodesLoading(false)
 
         const token = getReaderToken()
 
@@ -281,33 +424,35 @@ setAuthorIsOwnerPage(Boolean(
             if (!ignore && authorResponse.ok && authorData.ok !== false) {
               setAuthorFollowing(Boolean(authorData.is_following))
               setAuthorFollowerCount(Number(authorData.total_followers ?? authorData.author_page?.total_followers ?? loadedAuthorPage.total_followers ?? 0))
-              const detailAuthorPage = authorData.author_page || {}
-const detailOwnerId =
-  detailAuthorPage.user_id ||
-  detailAuthorPage.owner_id ||
-  detailAuthorPage.created_by ||
-  authorData.user_id ||
-  null
 
-setAuthorIsOwnerPage(Boolean(
-  authorData.is_owner ||
-  detailAuthorPage.is_owner ||
-  detailAuthorPage.is_owner_page ||
-  (currentReaderId && detailOwnerId && String(currentReaderId) === String(detailOwnerId))
-))
+              const detailAuthorPage = authorData.author_page || {}
+              const detailOwnerId =
+                detailAuthorPage.user_id ||
+                detailAuthorPage.owner_id ||
+                detailAuthorPage.created_by ||
+                authorData.user_id ||
+                null
+
+              setAuthorIsOwnerPage(Boolean(
+                authorData.is_owner ||
+                detailAuthorPage.is_owner ||
+                detailAuthorPage.is_owner_page ||
+                (currentReaderId && detailOwnerId && String(currentReaderId) === String(detailOwnerId))
+              ))
             }
           } catch {
           }
         }
       } catch (error) {
         if (ignore) return
+
         setMessage(
           error.message === 'Failed to fetch'
             ? 'Cannot connect to server. Please check API settings.'
             : error.message || 'Failed to load story'
         )
-      } finally {
-        if (!ignore) setLoading(false)
+        setLoading(false)
+        setEpisodesLoading(false)
       }
     }
 
@@ -373,27 +518,35 @@ setAuthorIsOwnerPage(Boolean(
     return getStoredProgress(realStoryId, episodes) || firstEpisode
   }, [episodes, firstEpisode, realStoryId])
 
-  const handleOpenEpisode = (episode) => {
+  const handleOpenEpisode = (episode, source = 'preview') => {
     if (!episode) return
+
     if (!getReaderToken()) {
-  navigate('/login')
-  return
-}
+      navigate('/login')
+      return
+    }
 
-   const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
+    const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
 
-if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlocked) {
-  navigate(`/story/${realStoryId}/episode/${episode.id}`, {
-    state: {
-      expectedLocked: true,
-      storyPreview: story,
-      episodePreview: episode,
-    },
-  })
-  return
-}
+    if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlocked) {
+      navigate(`/story/${realStoryId}/episode/${episode.id}`, {
+        state: {
+          expectedLocked: true,
+          storyPreview: story,
+          episodePreview: episode,
+          returnSource: source,
+        },
+      })
+      return
+    }
 
-    navigate(`/story/${realStoryId}/episode/${episode.id}`)
+    navigate(`/story/${realStoryId}/episode/${episode.id}`, {
+      state: {
+        storyPreview: story,
+        episodePreview: episode,
+        returnSource: source,
+      },
+    })
   }
 
   const handleToggleBookmark = async () => {
@@ -508,11 +661,7 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4">
-        <LoadingBlock />
-      </div>
-    )
+    return <LoadingBlock />
   }
 
   if (message || !story) {
@@ -524,21 +673,26 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[150px] sm:bg-[#f5f3fa] sm:pb-[138px]">
+    <div className="min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
       <StoryHeroSection
-  story={story}
-  onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
+        story={story}
+        onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
       />
 
       <main className="mx-auto max-w-5xl px-0 sm:px-4">
         <StoryStatsSection
-  story={story}
-  episodes={episodes}
-  onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
-  onOpenRanking={() => navigate('/ranking')}
-/>
+          story={story}
+          episodes={episodes}
+          onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
+          onOpenRanking={() => {
+  setCommentsOpen(false)
+  setEpisodeListOpen(false)
+  setLockedEpisode(null)
+  navigate('/ranking')
+}}
+        />
 
         <StoryInfoSection story={story} />
 
@@ -546,20 +700,22 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
           story={story}
           episodes={newestEpisodes}
           totalEpisodes={episodes.length}
+          loading={episodesLoading}
           onOpenEpisode={handleOpenEpisode}
           onOpenAll={() => setEpisodeListOpen(true)}
         />
 
-       <StoryAuthorMiniCard
-  authorPage={story.author_page}
-  following={authorFollowing}
-  followerCount={authorFollowerCount}
-  followLoading={authorFollowLoading}
-  isOwnerPage={authorIsOwnerPage}
-  onManagePage={() => navigate('/author/dashboard')}
-  onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
-  onFollow={handleToggleAuthorFollow}
-/>
+        <StoryAuthorMiniCard
+          authorPage={story.author_page}
+          following={authorFollowing}
+          followerCount={authorFollowerCount}
+          followLoading={authorFollowLoading}
+          isOwnerPage={authorIsOwnerPage}
+          onManagePage={() => navigate('/author/dashboard')}
+          onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
+          onFollow={handleToggleAuthorFollow}
+        />
+
         <LatestCommentSection
           story={story}
           refreshKey={commentRefreshKey}
@@ -585,17 +741,17 @@ if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlo
       />
 
       <LockedEpisodeModal
-  episode={lockedEpisode}
-  storyId={realStoryId}
-  onClose={() => setLockedEpisode(null)}
-  onLogin={() => navigate('/login')}
-  onTopUp={() => navigate('/shop/mall/purchase', { state: { returnTo: location.pathname } })}
-  onUnlocked={(episode) => {
-    setUnlockedEpisodeIds((current) => [...new Set([...current, episode.id])])
-    setLockedEpisode(null)
-    navigate(`/story/${realStoryId}/episode/${episode.id}`)
-  }}
-/>
+        episode={lockedEpisode}
+        storyId={realStoryId}
+        onClose={() => setLockedEpisode(null)}
+        onLogin={() => navigate('/login')}
+        onTopUp={() => navigate('/shop/mall/purchase', { state: { returnTo: location.pathname } })}
+        onUnlocked={(episode) => {
+          setUnlockedEpisodeIds((current) => [...new Set([...current, episode.id])])
+          setLockedEpisode(null)
+          navigate(`/story/${realStoryId}/episode/${episode.id}`)
+        }}
+      />
 
       <CommentsModal
         open={commentsOpen}
