@@ -181,7 +181,7 @@ function ReviewBottomSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-0">
       <button
         type="button"
         onClick={onClose}
