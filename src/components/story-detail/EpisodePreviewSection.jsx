@@ -7,6 +7,7 @@ function formatShortNumber(value) {
 
 function formatDate(value) {
   if (!value) return ''
+
   const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) return ''
@@ -68,14 +69,40 @@ function EpisodeRow({ episode, story, onOpenEpisode }) {
   )
 }
 
-export default function EpisodePreviewSection({ story, episodes, totalEpisodes, onOpenEpisode, onOpenAll }) {
+function EpisodeSkeletonList() {
+  return (
+    <div className="divide-y divide-[#eef1f5]">
+      {[0, 1, 2].map((item) => (
+        <div key={item} className="flex w-full items-center gap-3 bg-white px-0 py-3">
+          <div className="h-[76px] w-[104px] shrink-0 animate-pulse rounded-[12px] bg-[#eef1f5]" />
+
+          <div className="min-w-0 flex-1">
+            <div className="h-4 w-28 animate-pulse rounded-full bg-[#eef1f5]" />
+            <div className="mt-3 h-3 w-40 animate-pulse rounded-full bg-[#eef1f5]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function EpisodePreviewSection({
+  story,
+  episodes = [],
+  totalEpisodes = 0,
+  loading = false,
+  onOpenEpisode,
+  onOpenAll,
+}) {
   return (
     <section className="mt-0 bg-white px-4 py-4 sm:mt-4 sm:rounded-[18px] sm:px-5 sm:py-5 sm:shadow-sm">
       <div className="mb-3">
         <h2 className="text-[16px] font-bold text-[#111827]">Episodes</h2>
       </div>
 
-      {episodes.length ? (
+      {loading ? (
+        <EpisodeSkeletonList />
+      ) : episodes.length ? (
         <div className="divide-y divide-[#eef1f5]">
           {episodes.map((episode) => (
             <EpisodeRow
@@ -94,7 +121,7 @@ export default function EpisodePreviewSection({ story, episodes, totalEpisodes, 
         </div>
       )}
 
-      {totalEpisodes ? (
+      {!loading && totalEpisodes ? (
         <button
           type="button"
           onClick={onOpenAll}
