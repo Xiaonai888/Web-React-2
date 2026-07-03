@@ -69,12 +69,20 @@ function getStoryOwnerId(story) {
   )
 }
 
+if (targetType === 'episode') {
+  return `${API_BASE_URL}/api/comments/episode/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+}
+
 function buildCommentListUrl(targetType, targetId, page, sort) {
   if (targetType === 'author_post') {
     return `${API_BASE_URL}/api/authors/page/posts/${targetId}/comments?limit=${COMMENT_PAGE_SIZE}`
   }
 
   return `${API_BASE_URL}/api/comments/story/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+}
+
+if (targetType === 'episode') {
+  return `${API_BASE_URL}/api/comments/episode/${targetId}`
 }
 
 function buildCommentCreateUrl(targetType, targetId) {
