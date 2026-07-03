@@ -65,11 +65,29 @@ function EpisodeListItem({ episode, story, onOpenEpisode }) {
   const date = formatDate(episode.published_at || episode.created_at || episode.updated_at)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
 
+  const lastReadKey = `shadow_last_read_episode_${story?.id || 'story'}`
+
+const [hasRead, setHasRead] = useState(() => {
+  return String(localStorage.getItem(lastReadKey) || '') === String(episode.id)
+})
+
+const handleClick = () => {
+  try {
+    localStorage.setItem(lastReadKey, String(episode.id))
+    setHasRead(true)
+  } catch {
+  }
+
+  onOpenEpisode(episode, 'modal')
+}
+
   return (
     <button
       type="button"
-      onClick={() => onOpenEpisode(episode)}
-      className="flex w-full gap-3 border-b border-[#eef0f4] px-4 py-3.5 text-left transition active:scale-[0.995] sm:gap-4 sm:px-5"
+      onClick={handleClick}
+      className={`flex w-full gap-3 border-b border-[#eef0f4] px-4 py-3.5 text-left transition active:scale-[0.995] sm:gap-4 sm:px-5 ${
+        hasRead ? 'bg-[#f5f5f5]' : 'bg-white'
+      }`}
     >
       <div className="relative h-[76px] w-[108px] shrink-0 overflow-hidden rounded-[14px] bg-[#f0f2f5] sm:h-[86px] sm:w-[128px]">
         {cover ? (
@@ -88,7 +106,11 @@ function EpisodeListItem({ episode, story, onOpenEpisode }) {
       </div>
 
       <div className="min-w-0 flex-1 py-1">
-        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-5 text-[#111827] sm:text-[15px]">
+        <h3
+          className={`line-clamp-2 text-[14px] font-bold leading-5 ${
+            hasRead ? 'text-[#a0a6b0]' : 'text-[#111827]'
+          }`}
+        >
           {episode.title || 'Untitled Episode'}
         </h3>
 
@@ -128,7 +150,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
           <div className="flex items-center justify-between gap-3">
             <div className="h-10 w-10" />
 
-            <h2 className="line-clamp-1 text-center text-[18px] font-black text-[#111827]">
+            <h2 className="line-clamp-1 text-center text-[18px] font-bold text-[#111827]">
               Episodes
             </h2>
 
@@ -138,25 +160,37 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:scale-95"
               aria-label="Close"
             >
-              <i className="fa-solid fa-xmark text-[24px]" />
+              <span className="text-[26px] leading-none text-[#111827]" style={{ fontWeight: 300 }}>
+                ×
+              </span>
             </button>
           </div>
 
           <button
   type="button"
-  className="mt-4 flex items-center gap-2 font-['Roboto'] text-[17px] font-medium text-[#8d94a1] active:scale-[0.99]"
+  className="mt-4 flex min-h-[34px] w-full items-center gap-3 text-left active:scale-[0.995]"
 >
-  <span className="rounded-[4px] bg-[#111827] px-2 py-1 text-[10px] font-black text-white">
-    <i className="fa-solid fa-crown mr-1 text-[#f5c542]" />
+  <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
+    <img
+      src="/assets/Icons/Crown.svg"
+      alt=""
+      className="h-3.5 w-3.5 object-contain"
+      loading="lazy"
+      decoding="async"
+    />
     Premium
   </span>
-  <span>Early Access</span>
-  <i className="fa-solid fa-caret-right text-[10px] text-[#8d94a1]" />
+
+  <span className="min-w-0 text-[13px] font-semibold text-[#8D94A1]">
+    Early Access
+  </span>
+
+  <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
 </button>
         </header>
 
         <div className="flex items-center justify-between gap-4 border-b border-[#eef0f4] px-4 py-4 sm:px-5">
-          <div className="font-['Roboto'] text-[17px] font-medium text-[#111827]">
+          <div className="font-['Roboto'] text-[14px] font-medium text-[#111827]">
   {status}, {updateText}
 </div>
 
@@ -166,10 +200,10 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent active:scale-95"
             aria-label="Reverse episodes"
           >
-            <img
+           <img
   src="/assets/Icons/Revers.svg"
   alt="Reverse episodes"
-  className="h-4 w-4"
+  className="h-3.5 w-3.5 object-contain opacity-75"
 />
           </button>
         </div>
