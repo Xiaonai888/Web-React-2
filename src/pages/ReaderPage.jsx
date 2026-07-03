@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
-import ReaderBottomActionBar from '../components/reader/ReaderBottomActionBar'
 import EchoShareSheet from '../components/reader/EchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 
@@ -17,139 +16,6 @@ function getReaderToken() {
 function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-const ACTIVE_READING_MISSION_KEY = 'shadow_active_reading_mission'
-
-function safeParseJson(value) {
-  try {
-    return value ? JSON.parse(value) : null
-  } catch {
-    return null
-  }
-}
-
-function normalizeReaderTaskMission(mission = null, index = 0) {
-  if (!mission?.id) return null
-
-  const targetMinutes = Math.max(1, Number(mission.target_minutes || 1))
-  const targetSeconds = Math.max(
-    60,
-    Number(
-      mission.target_seconds ||
-        mission.targetSeconds ||
-        mission.required_seconds ||
-        targetMinutes * 60
-    )
-  )
-
-  const activeSeconds = Math.min(
-    targetSeconds,
-    Math.max(
-      0,
-      Number(
-        mission.active_seconds ||
-          mission.activeSeconds ||
-          mission.progress_seconds ||
-          mission.read_seconds ||
-          0
-      )
-    )
-  )
-
-  const completed =
-    Boolean(mission.completed || mission.is_completed) || activeSeconds >= targetSeconds
-
-  const claimed = Boolean(mission.claimed || mission.is_claimed || mission.claimed_at)
-
-  const claimable =
-    Boolean(mission.claimable || mission.can_claim || mission.ready_to_claim) ||
-    (completed && !claimed)
-
-  return {
-    ...mission,
-    id: mission.id || `reading-mission-${index}`,
-    is_active: mission.is_active !== false,
-    title: mission.title || `Read ${targetMinutes} minutes`,
-    subtitle: mission.subtitle || 'Keep reading longer to earn more coins.',
-    reward_coins: Number(mission.reward_coins || mission.coins || 0),
-    target_minutes: targetMinutes,
-    target_seconds: targetSeconds,
-    story_link: mission.story_link || '',
-    button_text: mission.button_text || 'Go',
-    sort_order: Number(mission.sort_order || index),
-    active_seconds: activeSeconds,
-    active_minutes: Math.floor(activeSeconds / 60),
-    completed,
-    claimed,
-    claimable,
-    completed_at: mission.completed_at || null,
-    claimed_at: mission.claimed_at || null,
-  }
-}
-
-function readSavedActiveReadingMission() {
-  if (typeof window === 'undefined') return null
-
-  return normalizeReaderTaskMission(
-    safeParseJson(sessionStorage.getItem(ACTIVE_READING_MISSION_KEY))
-  )
-}
-
-function saveActiveReadingMission(mission) {
-  if (typeof window === 'undefined') return
-
-  const normalized = normalizeReaderTaskMission(mission)
-  if (!normalized?.id) return
-
-  sessionStorage.setItem(ACTIVE_READING_MISSION_KEY, JSON.stringify(normalized))
-}
-
-function clearSavedActiveReadingMission() {
-  if (typeof window === 'undefined') return
-
-  sessionStorage.removeItem(ACTIVE_READING_MISSION_KEY)
-}
-
-function missionMatchesReaderStory(mission, storyId) {
-  const cleanStoryId = String(storyId || '').trim()
-  const link = String(mission?.story_link || '').trim()
-
-  if (!cleanStoryId) return false
-  if (!link) return true
-
-  return link.includes(cleanStoryId)
-}
-
-function missionCanStayVisible(mission, storyId) {
-  const normalized = normalizeReaderTaskMission(mission)
-
-  if (!normalized?.id) return false
-  if (!normalized.is_active) return false
-  if (normalized.claimed) return false
-
-  return missionMatchesReaderStory(normalized, storyId)
-}
-
-function missionCanTrack(mission, storyId) {
-  const normalized = normalizeReaderTaskMission(mission)
-
-  if (!missionCanStayVisible(normalized, storyId)) return false
-  if (normalized.completed || normalized.claimable) return false
-
-  return true
-}
-
-function pickActiveReadingMission(missions, storyId) {
-  const list = Array.isArray(missions)
-    ? missions.map((mission, index) => normalizeReaderTaskMission(mission, index)).filter(Boolean)
-    : []
-
-  return (
-    list.find((mission) => missionCanTrack(mission, storyId)) ||
-    list.find((mission) => missionCanStayVisible(mission, storyId)) ||
-    null
-  )
 }
 
 const REVIEW_READ_PROGRESS_PERCENT = 85
@@ -390,6 +256,16 @@ function formatDate(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number) || number <= 0) return '0'
+  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace(/\.0$/, '')}m`
+  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`
+
+  return String(number)
 }
 
 function formatUnlockDateTime(value) {
@@ -740,6 +616,375 @@ const handlePointerEnd = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+function HeartLineIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path
+        d="M12 20.2C8.2 16.9 5.4 14.4 4.3 12.2 3.2 10 3.8 7.3 6.1 6.2 8 5.3 10.1 5.9 12 8c1.9-2.1 4-2.7 5.9-1.8 2.3 1.1 2.9 3.8 1.8 6-1.1 2.2-3.9 4.7-7.7 8Z"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function GiftLineIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path d="M4.8 10h14.4v10H4.8V10Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M3.8 7.2h16.4V10H3.8V7.2Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M12 7.2V20" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="M12 7.2H9.3c-1.8 0-2.9-.7-2.9-1.9 0-1 .8-1.8 1.9-1.8 1.5 0 2.6 1.2 3.7 3.7Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 7.2h2.7c1.8 0 2.9-.7 2.9-1.9 0-1-.8-1.8-1.9-1.8-1.5 0-2.6 1.2-3.7 3.7Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+const GIFT_ITEMS = [
+  { key: 'candy', name: 'Candy', currency: 'coin', price: 10, image: '/assets/Gift/Candy.png' },
+  { key: 'flower', name: 'Flower', currency: 'coin', price: 100, image: '/assets/Gift/Flower.png' },
+  { key: 'coffee', name: 'Coffee', currency: 'diamond', price: 1, image: '/assets/Gift/Coffee.png' },
+  { key: 'magic_pen', name: 'Magic Pen', currency: 'diamond', price: 3, image: '/assets/Gift/Magic Pen.png' },
+  { key: 'gold_book', name: 'Gold Book', currency: 'diamond', price: 10, image: '/assets/Gift/Gold Book.png' },
+  { key: 'star', name: 'Shadow Star', currency: 'diamond', price: 30, image: '/assets/Gift/Star.png' },
+  { key: 'crown', name: 'Author Crown', currency: 'diamond', price: 100, image: '/assets/Gift/Crown.png' },
+  { key: 'rocket', name: 'Rocket', currency: 'diamond', price: 300, image: '/assets/Gift/Rocket.png' },
+]
+
+function GiftPopup({ open, onClose, onOpenGuide }) {
+  const [selectedKey, setSelectedKey] = useState('candy')
+  const [quantity, setQuantity] = useState(1)
+  const selectedGift = GIFT_ITEMS.find((item) => item.key === selectedKey) || GIFT_ITEMS[0]
+  const total = selectedGift.price * quantity
+  const currencyIcon = selectedGift.currency === 'coin' ? '/assets/Icons/Shadow Coin.svg' : '/assets/Icons/Diamond.svg'
+
+useEffect(() => {
+  if (!open) return
+
+  const scrollY = window.scrollY
+  const previousPosition = document.body.style.position
+  const previousTop = document.body.style.top
+  const previousWidth = document.body.style.width
+  const previousOverflow = document.body.style.overflow
+
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${scrollY}px`
+  document.body.style.width = '100%'
+  document.body.style.overflow = 'hidden'
+
+  return () => {
+    document.body.style.position = previousPosition
+    document.body.style.top = previousTop
+    document.body.style.width = previousWidth
+    document.body.style.overflow = previousOverflow
+    window.scrollTo(0, scrollY)
+  }
+}, [open])
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[190] flex items-end justify-center bg-black/45 sm:items-center">
+      <button type="button" aria-label="Close gift popup" onClick={onClose} className="absolute inset-0" />
+
+      <section className="relative w-full max-w-[480px] overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
+        <div className="px-4 pb-3 pt-4">
+  <div className="flex items-start justify-between gap-3">
+    <div className="min-w-0">
+      <h2 className="text-[18px] font-bold text-[#111827]">Send a Gift</h2>
+      <p className="mt-0.5 text-[12px] font-normal text-[#98a2b3]">
+        Your support gives the author more motivation to keep writing.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#d0d5dd] text-[11px] font-bold text-white active:scale-95"
+      onClick={onOpenGuide}
+    >
+      ?
+    </button>
+  </div>
+</div>
+
+        <div className="mx-4 rounded-[10px] bg-[#fff1f5] px-3 py-3">
+  <div className="flex items-center justify-between text-[13px] font-normal text-[#98a2b3]">
+    <span>Monthly Gifts -</span>
+    <button type="button" className="flex items-center gap-1 active:scale-95">
+      <span>Top Fans</span>
+      <i className="fa-solid fa-chevron-right text-[10px]" />
+    </button>
+  </div>
+</div>
+
+        <div className="grid grid-cols-4 gap-2 px-4 py-4">
+          {GIFT_ITEMS.map((gift) => {
+            const active = selectedKey === gift.key
+            const icon = gift.currency === 'coin' ? '/assets/Icons/Shadow Coin.svg' : '/assets/Icons/Diamond.svg'
+
+            return (
+              <button
+                key={gift.key}
+                type="button"
+                onClick={() => setSelectedKey(gift.key)}
+                className={`rounded-[18px] border px-2 py-3 text-center active:scale-95 ${
+                  active ? 'border-[#ff3b5f] bg-[#fff1f5]' : 'border-[#eef1f5] bg-[#fafafa]'
+                }`}
+              >
+                <img src={gift.image} alt="" className="mx-auto h-14 w-14 object-contain" />
+                <span className="mt-1 block truncate text-[11px] font-normal text-[#111827]">{gift.name}</span>
+                <span className="mt-1 flex items-center justify-center gap-1 text-[11px] font-normal text-[#667085]">
+                  <img src={icon} alt="" className="h-3.5 w-3.5 object-contain" />
+                  {formatNumber(gift.price)}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 px-4 pb-3 pt-5">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="flex items-center gap-1 text-[12px] font-bold text-[#667085]">
+              <img src="/assets/Icons/Shadow Coin.svg" alt="" className="h-4 w-4 object-contain" />
+              0
+            </span>
+
+            <span className="flex items-center gap-1 text-[12px] font-bold text-[#667085]">
+              <img src="/assets/Icons/Diamond.svg" alt="" className="h-4 w-4 object-contain" />
+              0
+            </span>
+          </div>
+
+          <div className="flex h-9 shrink-0 -translate-y-1.5 overflow-hidden rounded-full border border-[#ffb3c0] bg-white">
+  <div className="relative h-9 w-[64px] shrink-0 bg-white">
+  <select
+    value={quantity}
+    onChange={(event) => setQuantity(Number(event.target.value))}
+    className="h-9 w-full appearance-none border-0 bg-transparent pl-5 pr-7 text-[12px] font-bold text-[#111827] outline-none"
+  >
+    <option value={1}>1</option>
+    <option value={5}>5</option>
+    <option value={10}>10</option>
+  </select>
+
+  <i className="fa-solid fa-chevron-down pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[#b8beca]" />
+</div>
+
+  <button
+    type="button"
+    onClick={() => window.alert('Gift system is coming soon.')}
+    className="h-9 bg-[#ff3b5f] px-5 text-[12px] font-bold text-white active:scale-95"
+  >
+    Gift
+  </button>
+</div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
+  const episodeId = episode?.id || episode?.episode_id || ''
+  const [hotComment, setHotComment] = useState(null)
+  const [hotCommentTotal, setHotCommentTotal] = useState(0)
+
+  const likeCount = Number(
+    story?.total_likes ||
+    story?.like_count ||
+    story?.likes_count ||
+    episode?.total_likes ||
+    episode?.like_count ||
+    episode?.likes_count ||
+    0
+  )
+
+  const giftCount = Number(
+    story?.total_gifts ||
+    story?.gift_count ||
+    story?.gifts_count ||
+    episode?.total_gifts ||
+    episode?.gift_count ||
+    episode?.gifts_count ||
+    0
+  )
+
+  const fallbackCommentCount = Number(
+    episode?.total_comments ||
+    episode?.comment_count ||
+    episode?.comments_count ||
+    0
+  )
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadHotComment() {
+      if (!episodeId) return
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/comments/episode/${episodeId}?page=1&limit=20&sort=top`, {
+          headers: readerAuthHeaders(),
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false || ignore) return
+
+        const comments = Array.isArray(data.comments) ? data.comments : []
+        const sorted = [...comments].sort((first, second) => {
+          const firstReplies = Array.isArray(first.replies) ? first.replies.length : 0
+          const secondReplies = Array.isArray(second.replies) ? second.replies.length : 0
+          const firstLikes = Number(first.likes || first.like_count || 0)
+          const secondLikes = Number(second.likes || second.like_count || 0)
+
+          return secondReplies - firstReplies || secondLikes - firstLikes
+        })
+
+        setHotComment(sorted[0] || null)
+        setHotCommentTotal(Number(data.total || comments.length || 0))
+      } catch {
+        if (!ignore) {
+          setHotComment(null)
+          setHotCommentTotal(fallbackCommentCount)
+        }
+      }
+    }
+
+    loadHotComment()
+
+    return () => {
+      ignore = true
+    }
+  }, [episodeId, fallbackCommentCount])
+
+  const commentCount = hotCommentTotal || fallbackCommentCount
+  const replies = Array.isArray(hotComment?.replies) ? hotComment.replies : []
+  const replyCount = replies.length
+  const hotLikes = Number(hotComment?.likes || hotComment?.like_count || 0)
+  const hotUser = hotComment?.user || {}
+  const hotName = hotUser.name || hotComment?.name || 'Reader'
+  const hotAvatar = hotUser.avatar_url || hotComment?.avatar_url || ''
+
+  return (
+    <section className="mt-8 bg-white px-4 pb-8 pt-2">
+      <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
+        <button
+          type="button"
+          className="flex flex-col items-center justify-center gap-1 active:scale-95"
+        >
+          <HeartLineIcon className="h-[26px] w-[26px] text-[#111827]" />
+          <span className="text-[13px] font-normal text-[#111827]">Like</span>
+          <span className="text-[11px] font-normal text-[#98a2b3]">
+            {formatCompactNumber(likeCount)}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenGift}
+          className="flex flex-col items-center justify-center gap-1 active:scale-95"
+        >
+       <img src="/assets/Icons/Gift%203.svg" alt="" className="h-[26px] w-[26px] object-contain" />
+          <span className="text-[13px] font-normal text-[#111827]">Gift</span>
+          <span className="text-[11px] font-normal text-[#98a2b3]">
+            {formatCompactNumber(giftCount)}
+          </span>
+        </button>
+      </div>
+
+      <div className="pt-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-[18px] font-bold text-[#111827]">Hot comments</h3>
+
+          <button
+            type="button"
+            onClick={onOpenComments}
+            className="flex items-center gap-1 text-[13px] font-normal text-[#98a2b3] active:scale-95"
+          >
+            <span>
+              {`View ${formatCompactNumber(commentCount)} ${commentCount === 1 ? 'comment' : 'comments'}`}
+            </span>
+            <i className="fa-solid fa-chevron-right text-[10px]" />
+          </button>
+        </div>
+
+        {hotComment ? (
+          <button
+            type="button"
+            onClick={onOpenComments}
+            className="mb-4 flex w-full gap-3 text-left active:scale-[0.995]"
+          >
+            {hotAvatar ? (
+              <img
+                src={hotAvatar}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-bold text-white">
+                {hotName.slice(0, 1).toUpperCase()}
+              </span>
+            )}
+
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-bold text-[#98a2b3]">
+                {hotName}
+              </span>
+
+              <span className="mt-1 line-clamp-3 block whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+                {hotComment.text}
+              </span>
+
+              <span className="mt-2 flex items-center gap-5 text-[12px] font-normal text-[#98a2b3]">
+                <span className="flex items-center gap-1">
+                  <i className="fa-regular fa-comment text-[13px]" />
+                  {formatCompactNumber(replyCount)}
+                </span>
+
+                <span className="flex items-center gap-1">
+                  <i className="fa-regular fa-thumbs-up text-[13px]" />
+                  {formatCompactNumber(hotLikes)}
+                </span>
+              </span>
+            </span>
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={onOpenComments}
+          className="flex w-full items-center gap-3 rounded-full border border-[#eef1f5] bg-white px-4 py-3 text-left active:scale-[0.995]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
+            <i className="fa-regular fa-comment text-[15px]" />
+          </span>
+
+          <span className="min-w-0 flex-1 text-[13px] font-normal text-[#98a2b3]">
+            Write a comment
+          </span>
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -1140,7 +1385,7 @@ function ReaderIconButton({ icon, label, onClick, className = '', disabled = fal
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-10 w-10 items-center justify-center rounded-full transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`flex h-10 w-10 items-center justify-center border-0 bg-transparent p-0 text-current shadow-none ring-0 outline-none transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       aria-label={label}
     >
       <i className={`${icon} text-[14px]`} />
@@ -1148,14 +1393,405 @@ function ReaderIconButton({ icon, label, onClick, className = '', disabled = fal
   )
 }
 
+function SettingsLineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" aria-hidden="true">
+      <path
+        d="M8.5 4.5h7L20 12l-4.5 7h-7L4 12l4.5-7Z"
+        stroke="currentColor"
+        strokeWidth="2.1"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="2.2" stroke="currentColor" strokeWidth="2.1" />
+    </svg>
+  )
+}
+
+function ProgressLineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none" aria-hidden="true">
+      <path d="M4 7h9" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+      <path d="M17 7h3" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+      <circle cx="15" cy="7" r="2.2" stroke="currentColor" strokeWidth="2.1" />
+
+      <path d="M4 17h3" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+      <path d="M11 17h9" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+      <circle cx="9" cy="17" r="2.2" stroke="currentColor" strokeWidth="2.1" />
+    </svg>
+  )
+}
+
+function getSubscribeHiddenKey(storyId) {
+  return `shadow_reader_subscribe_hidden_${storyId}`
+}
+
+function getSubscribeEligibleKey(storyId) {
+  return `shadow_reader_subscribe_eligible_${storyId}`
+}
+
+function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
+  const [expandedByUser, setExpandedByUser] = useState(false)
+  const shouldCollapse = Number(readingProgress || 0) >= 85
+  const collapsed = shouldCollapse && !expandedByUser
+
+  useEffect(() => {
+    if (!visible || Number(readingProgress || 0) < 85) {
+      setExpandedByUser(false)
+    }
+  }, [visible, readingProgress])
+
+  const handleClose = () => {
+    onClose?.()
+  }
+
+  if (!visible || !storyId) return null
+
+ if (collapsed) {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
+      <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
+        <button
+          type="button"
+          onClick={() => setExpandedByUser(true)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
+          aria-label="Show subscribe popup"
+        >
+          <i className="fa-solid fa-xmark text-[13px]" />
+        </button>
+
+        <img
+          src="/assets/Icons/Logo%20Shadow%203.png"
+          alt=""
+          className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+
+        <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
+          Subscribe to follow new episodes
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setExpandedByUser(true)}
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
+        >
+          <i className="fa-regular fa-heart text-[14px]" />
+          <span>Subscribe</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
+      <div className="pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)]">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
+          aria-label="Close subscribe popup"
+        >
+          <i className="fa-solid fa-xmark text-[13px]" />
+        </button>
+
+        <img
+          src="/assets/Icons/Logo%20Shadow%203.png"
+          alt=""
+          className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+
+        <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
+          Subscribe to follow new episodes
+        </div>
+
+        <button
+          type="button"
+          onClick={handleClose}
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
+        >
+          <i className="fa-regular fa-heart text-[14px]" />
+          <span>Subscribe</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ReaderBottomActionBar({
+  visible,
+  story,
+  episode,
+  commentRefreshKey,
+  readingProgress,
+  previousEpisode,
+  nextEpisode,
+  onPrevious,
+  onNext,
+  showSubscribeOnDoubleTap,
+  onOpenChapters,
+  onOpenComments,
+  onOpenSettings,
+}) {
+  const [progressOpen, setProgressOpen] = useState(false)
+  const safeProgress = Math.max(0, Math.min(100, Math.round(Number(readingProgress || 0))))
+  const storyId = story?.id || story?.story_id || episode?.story_id || ''
+  const subscribeHiddenKey = storyId ? getSubscribeHiddenKey(storyId) : ''
+  const subscribeEligibleKey = storyId ? getSubscribeEligibleKey(storyId) : ''
+
+  const [subscribeHidden, setSubscribeHidden] = useState(() => {
+    if (!storyId) return false
+    return localStorage.getItem(getSubscribeHiddenKey(storyId)) === '1'
+  })
+
+  const [subscribeEligible, setSubscribeEligible] = useState(() => {
+    if (!storyId) return false
+    return localStorage.getItem(getSubscribeEligibleKey(storyId)) === '1'
+  })
+
+  const fallbackCommentTotal = Number(
+    story?.total_comments ||
+    story?.comment_count ||
+    story?.comments_count ||
+    episode?.total_comments ||
+    episode?.comment_count ||
+    episode?.comments_count ||
+    0
+  )
+
+  const [commentTotal, setCommentTotal] = useState(fallbackCommentTotal)
+
+  useEffect(() => {
+    if (!storyId) {
+      setSubscribeHidden(false)
+      setSubscribeEligible(false)
+      return
+    }
+
+    setSubscribeHidden(localStorage.getItem(getSubscribeHiddenKey(storyId)) === '1')
+    setSubscribeEligible(localStorage.getItem(getSubscribeEligibleKey(storyId)) === '1')
+  }, [storyId])
+
+  useEffect(() => {
+    if (!storyId || subscribeHidden || subscribeEligible) return
+
+    if (safeProgress >= 35) {
+      localStorage.setItem(subscribeEligibleKey, '1')
+      setSubscribeEligible(true)
+    }
+  }, [safeProgress, storyId, subscribeHidden, subscribeEligible, subscribeEligibleKey])
+
+  const handleSubscribeClick = () => {
+    if (subscribeHiddenKey) {
+      localStorage.setItem(subscribeHiddenKey, '1')
+    }
+
+    setSubscribeHidden(true)
+  }
+
+  useEffect(() => {
+    setCommentTotal(fallbackCommentTotal)
+  }, [fallbackCommentTotal])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadCommentTotal() {
+      if (!storyId) return
+
+      try {
+        const token = getReaderToken()
+        const response = await fetch(`${API_BASE_URL}/api/comments/story/${storyId}?page=1&limit=1&sort=newest`, {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {},
+        })
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false || ignore) return
+
+        const nextTotal = Number(
+          data.total ??
+          data.total_comments ??
+          data.count ??
+          (Array.isArray(data.comments) ? data.comments.length : 0)
+        )
+
+        setCommentTotal(Number.isFinite(nextTotal) ? nextTotal : 0)
+      } catch {
+        if (!ignore) {
+          setCommentTotal(fallbackCommentTotal)
+        }
+      }
+    }
+
+    loadCommentTotal()
+
+    return () => {
+      ignore = true
+    }
+  }, [storyId, commentRefreshKey, fallbackCommentTotal])
+
+  useEffect(() => {
+    setProgressOpen(false)
+  }, [episode?.id, episode?.episode_id])
+
+  const commentBadge = commentTotal > 0 ? formatCompactNumber(commentTotal) : ''
+
+  const FooterTab = ({ icon, iconNode, label, badge, onClick }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[54px] flex-1 flex-col items-center justify-center gap-1 active:scale-95"
+    >
+      <span className="relative flex h-5 items-center justify-center text-[#111827]">
+        {iconNode || <i className={`${icon} text-[16px]`} />}
+
+        {badge ? (
+          <span className="absolute left-[20px] top-[-5px] text-[9px] font-normal text-[#9ca3af]">
+            {badge}
+          </span>
+        ) : null}
+      </span>
+
+      <span className="text-[11px] font-normal leading-none text-[#8d94a1]">
+        {label}
+      </span>
+    </button>
+  )
+
+  return (
+    <div
+      className={`pointer-events-none fixed bottom-0 left-0 right-0 z-[95] px-0 pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-out md:bottom-4 md:px-4 ${
+        visible ? 'translate-y-0' : 'translate-y-[calc(100%+16px)]'
+      }`}
+    >
+      {visible && showSubscribeOnDoubleTap && storyId && subscribeEligible && !subscribeHidden ? (
+        <button
+  type="button"
+  onClick={handleSubscribeClick}
+  className={`pointer-events-auto absolute right-[-7px] z-[2] flex h-[58px] min-w-[84px] flex-col items-center justify-center rounded-l-[28px] rounded-r-none bg-black/60 px-4 text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] active:scale-95 md:right-[-2px] ${
+
+  progressOpen ? 'bottom-[132px]' : 'bottom-[84px]'
+}`}
+>
+          <i className="fa-regular fa-heart text-[20px]" />
+          <span className="mt-1 text-[11px] font-normal leading-none">
+            Subscribe
+          </span>
+        </button>
+      ) : null}
+
+      <div className="pointer-events-auto mx-auto max-w-3xl bg-white/95 shadow-[0_-10px_28px_rgba(17,24,39,0.06)] backdrop-blur md:rounded-[18px] md:border md:border-[#e5e7eb] md:shadow-[0_14px_34px_rgba(17,24,39,0.10)]">
+        {progressOpen ? (
+          <div className="grid h-[48px] grid-cols-[58px_1fr_58px] items-center gap-3 border-b border-[#eef1f5] px-4">
+            {previousEpisode ? (
+              <button
+                type="button"
+                onClick={onPrevious}
+                className="flex flex-col items-center justify-center gap-0.5 text-[#8d94a1] active:scale-95"
+              >
+                <i className="fa-solid fa-chevron-left text-[17px] text-[#111827]" />
+                <span className="text-[10px] font-normal leading-none">Prev</span>
+              </button>
+            ) : (
+              <div className="h-10 w-[58px]" />
+            )}
+
+            <div />
+
+            {nextEpisode ? (
+              <button
+                type="button"
+                onClick={onNext}
+                className="flex flex-col items-center justify-center gap-0.5 text-[#8d94a1] active:scale-95"
+              >
+                <i className="fa-solid fa-chevron-right text-[17px] text-[#111827]" />
+                <span className="text-[10px] font-normal leading-none">Next</span>
+              </button>
+            ) : (
+              <div className="h-10 w-[58px]" />
+            )}
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-4 px-1 py-1">
+          <FooterTab
+            icon="fa-solid fa-list-ul"
+            label="Episode"
+            onClick={onOpenChapters}
+          />
+
+          <FooterTab
+            icon="fa-regular fa-comment"
+            label="Comments"
+            badge={commentBadge}
+            onClick={onOpenComments}
+          />
+
+          <FooterTab
+            iconNode={<SettingsLineIcon />}
+            label="Settings"
+            onClick={onOpenSettings}
+          />
+
+          <FooterTab
+            iconNode={
+              progressOpen ? (
+                <i className="fa-solid fa-chevron-down text-[17px]" />
+              ) : (
+                <ProgressLineIcon />
+              )
+            }
+            label="Progress"
+            badge={`${safeProgress}%`}
+            onClick={() => setProgressOpen((value) => !value)}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function LoadingCard() {
   return (
-    <section className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-      <div className="text-[13px] font-bold text-[#667085]">Loading episode...</div>
+    <section className="px-1 pb-10 pt-2">
+      <div className="animate-pulse">
+        <div className="mb-7 border-b border-[#eef0f4] pb-6">
+          <div className="h-5 w-28 rounded-full bg-[#eef1f5]" />
+          <div className="mt-3 h-3 w-36 rounded-full bg-[#f3f4f6]" />
+        </div>
+
+        <div className="space-y-4">
+          <div className="h-4 w-full rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[92%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[96%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[78%] rounded-full bg-[#eef1f5]" />
+
+          <div className="h-3" />
+
+          <div className="h-4 w-full rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[88%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[94%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[70%] rounded-full bg-[#eef1f5]" />
+
+          <div className="h-3" />
+
+          <div className="h-4 w-[98%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[84%] rounded-full bg-[#eef1f5]" />
+          <div className="h-4 w-[91%] rounded-full bg-[#eef1f5]" />
+        </div>
+      </div>
     </section>
   )
 }
+
 
 function AdultWarningModal({ open, onCancel, onContinue }) {
   if (!open) return null
@@ -1195,7 +1831,7 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
   )
 }
 
-function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId, navigate, theme }) {
+function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, storyId, navigate, theme }) {
   const [newestFirst, setNewestFirst] = useState(false)
 
   if (!open) return null
@@ -1206,6 +1842,25 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
     return newestFirst ? second - first : first - second
   })
 
+  const readEpisodeIds = getReviewReadEpisodes(storyId).map((id) => String(id))
+  const cover = story?.cover_url || story?.thumbnail_url || story?.image_url || ''
+  const title = story?.title || story?.name || 'Untitled Story'
+  const authorName =
+  story?.author_page?.page_name ||
+  story?.authorPage?.page_name ||
+  story?.author_name ||
+  story?.author?.name ||
+  story?.page_name ||
+  ''
+
+  const rawStatus = String(story?.status || story?.publication_status || '').toLowerCase()
+  const statusText =
+    rawStatus.includes('complete') || rawStatus.includes('completed')
+      ? 'Completed'
+      : rawStatus.includes('new')
+        ? 'New'
+        : 'Ongoing'
+
   return (
     <div className="fixed inset-0 z-[140]">
       <button
@@ -1215,14 +1870,40 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
         className="absolute inset-0 bg-black/35"
       />
 
-      <section className={`absolute bottom-0 left-0 right-0 max-h-[78vh] overflow-hidden rounded-t-[30px] ${theme.card} shadow-2xl md:left-auto md:right-5 md:top-20 md:h-auto md:w-[380px] md:rounded-[26px]`}>
-        <div className={`sticky top-0 z-10 border-b ${theme.border} ${theme.card} px-4 py-4`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className={`text-[17px] font-extrabold ${theme.text}`}>Episode List</h3>
-              <p className={`mt-0.5 text-[11.5px] font-semibold ${theme.muted}`}>
-                {episodes.length} published episodes
-              </p>
+      <section
+          className={`absolute bottom-0 left-0 top-0 flex w-[77vw] max-w-[360px] flex-col overflow-hidden ${theme.card} shadow-2xl transition-transform duration-300 ease-out`}
+
+      >
+        <div className={`shrink-0 border-b ${theme.border} ${theme.card}`}>
+          <div className="flex items-center gap-3 px-4 py-5">
+            {cover ? (
+              <img
+  src={cover}
+  alt=""
+  className="h-[66px] w-[50px] shrink-0 rounded-[7px] object-cover"
+  loading="lazy"
+  decoding="async"
+/>
+            ) : (
+              <div className="h-[66px] w-[50px] shrink-0 rounded-[7px] bg-[#eef0f4]" />
+            )}
+
+            <div className="min-w-0 flex-1">
+  <h3 className={`line-clamp-3 break-words text-[18px] font-bold leading-[1.65] ${theme.text}`}>
+    {title}
+  </h3>
+
+  {authorName ? (
+    <p className={`mt-1 line-clamp-1 text-[11.5px] font-normal leading-5 ${theme.muted}`}>
+      by {authorName}
+    </p>
+  ) : null}
+</div>
+          </div>
+
+          <div className={`flex h-14 items-center justify-between border-t ${theme.border} px-4`}>
+            <div className={`text-[15px] font-semibold ${theme.text}`}>
+              {episodes.length} Episodes, {statusText}
             </div>
 
             <button
@@ -1236,9 +1917,20 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
           </div>
         </div>
 
-        <div className="max-h-[62vh] space-y-2 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto pb-5">
           {sortedEpisodes.map((item) => {
-            const active = item.id === currentEpisodeId
+            const active = String(item.id) === String(currentEpisodeId)
+            const read = readEpisodeIds.includes(String(item.id))
+            const locked = Boolean(
+  item.is_locked ||
+  item.locked ||
+  item.access_locked ||
+  item.requires_unlock ||
+  item.is_premium ||
+  item.lock_type
+)
+
+const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
 
             return (
               <button
@@ -1246,21 +1938,27 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
                 type="button"
                 onClick={() => {
                   onClose()
-                  navigate(`/story/${storyId}/episode/${item.id}`)
+                  navigate(`/story/${storyId}/episode/${item.id}`, {
+                    state: {
+                      storyPreview: story,
+                      episodePreview: item,
+                      returnSource: 'readerEpisodeList',
+                    },
+                  })
                 }}
-                className="flex w-full items-center gap-3 px-1 py-3 text-left transition active:scale-[0.995]"
+                className={`relative flex min-h-[64px] w-full items-center gap-3 px-5 text-left transition active:scale-[0.995] ${
+  active ? 'bg-[#f3f4f6]' : 'bg-transparent'
+}`}
               >
-                <span className={`line-clamp-1 flex-1 text-[14px] font-extrabold ${
-  active ? 'text-[#f6a800]' : theme.text
-}`}>
-  {item.title || 'Untitled Episode'}
+                <span className={`line-clamp-1 min-w-0 flex-1 text-[16px] font-semibold ${titleColor}`}>
+  {item.title || `Episode ${item.episode_number || ''}`}
 </span>
 
-                {item.is_adult ? (
-                  <span className="rounded-full bg-[#fff1f1] px-2 py-1 text-[10px] font-extrabold text-[#e5484d]">
-                    18+
-                  </span>
-                ) : null}
+{locked ? (
+  <i className="fa-solid fa-lock shrink-0 text-[12px] text-[#b6bcc6]" />
+) : null}
+
+               
               </button>
             )
           })}
@@ -1273,7 +1971,7 @@ function EpisodeListDrawer({ open, onClose, episodes, currentEpisodeId, storyId,
 function SettingSection({ title, children }) {
   return (
     <section className="border-t border-[#f0eef6] px-2 py-3 first:border-t-0">
-      <h3 className="mb-3 text-[14px] font-black text-[#111827]">{title}</h3>
+      <h3 className="mb-3 text-[14px] font-bold text-[#111827]">{title}</h3>
       {children}
     </section>
   )
@@ -1337,9 +2035,15 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
                         active ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
                       }`}
                     >
-                      <span className="line-clamp-1 text-[14px] font-extrabold" style={{ fontFamily: font.family }}>
-                        {font.label}
-                      </span>
+                      <span
+  className="line-clamp-1 text-[14px] font-bold"
+  style={{
+    fontFamily: font.family,
+    fontWeight: 700,
+  }}
+>
+  {font.label}
+</span>
 
                       {active ? (
                         <i className="fa-solid fa-check text-[13px]" />
@@ -1482,24 +2186,24 @@ const handleDragEnd = () => {
       <div className="fixed inset-0 z-[146] bg-white">
         <div className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-[#f0eef6] bg-white px-4">
           <button
-            type="button"
-            onClick={() => setMoreSettingsOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Back to reader settings"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+  type="button"
+  onClick={() => setMoreSettingsOpen(false)}
+  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
+  aria-label="Back to reader settings"
+>
+  <i className="fa-solid fa-chevron-left text-[14px]" />
+</button>
 
-          <h2 className="text-[15px] font-black text-[#111827]">More Setting</h2>
+          <h2 className="text-[15px] font-bold text-[#111827]">More Setting</h2>
 
           <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Close reader settings"
-          >
-            <i className="fa-solid fa-xmark text-[15px]" />
-          </button>
+  type="button"
+  onClick={onClose}
+  className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
+  aria-label="Close reader settings"
+>
+  <i className="fa-solid fa-xmark text-[15px]" />
+</button>
         </div>
 
         <div className="mx-auto max-w-[520px] px-4 py-5">
@@ -1511,9 +2215,9 @@ const handleDragEnd = () => {
                   setReadingMode('paging')
                   setAutoScrollEnabled(false)
                 }}
-                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
+                className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+}`}
               >
                 Paging
               </button>
@@ -1521,9 +2225,9 @@ const handleDragEnd = () => {
               <button
                 type="button"
                 onClick={() => setReadingMode('scroll')}
-                className={`h-12 rounded-[16px] text-[13px] font-black active:scale-[0.98] ${
-                  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                }`}
+                className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
+}`}
               >
                 Scrolling
               </button>
@@ -1533,7 +2237,7 @@ const handleDragEnd = () => {
               <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-[13px] font-black text-[#111827]">Auto Scroll</h4>
+                    <h4 className="text-[13px] font-bold text-[#111827]">Auto Scroll</h4>
                     <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
                       Available only in Scrolling mode
                     </p>
@@ -1542,9 +2246,9 @@ const handleDragEnd = () => {
                   <button
                     type="button"
                     onClick={handleAutoScrollToggle}
-                    className={`h-9 rounded-full px-4 text-[11px] font-black active:scale-[0.995] ${
-                      autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
-                    }`}
+                    className={`h-9 rounded-full px-4 text-[11px] font-normal active:scale-[0.995] ${
+  autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
+}`}
                   >
                     {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
                   </button>
@@ -1577,12 +2281,12 @@ const handleDragEnd = () => {
 
           <section className="px-2 pt-1">
             <button
-              type="button"
-              onClick={onOpenReset}
-              className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-black text-[#e5484d] active:scale-[0.99]"
-            >
-              Reset Settings
-            </button>
+  type="button"
+  onClick={onOpenReset}
+  className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-normal text-[#e5484d] active:scale-[0.99]"
+>
+  Reset Settings
+</button>
           </section>
         </div>
       </div>
@@ -1635,15 +2339,15 @@ const handleDragEnd = () => {
                     type="button"
                     onClick={decreaseFont}
                     disabled={fontSizeIndex <= 0}
-                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[14px] font-black text-[#111827] active:scale-[0.98] disabled:opacity-40"
+                    className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[13px] font-bold text-[#111827] active:scale-[0.98] disabled:opacity-40"
                     aria-label="Decrease font size"
                   >
                     A<sup className="-mt-2 text-[10px]">−</sup>
                   </button>
 
-                  <div className="min-w-[34px] text-center text-[13px] font-black text-[#8d94a1]">
-                    {fontSizePx}
-                  </div>
+                  <div className="min-w-[34px] text-center text-[12px] font-bold text-[#8d94a1]">
+  {fontSizePx}
+</div>
 
                   <button
                     type="button"
@@ -1668,13 +2372,13 @@ const handleDragEnd = () => {
                     className="flex h-10 items-center justify-center rounded-[15px] bg-[#f0eef6] text-[#111827] active:scale-[0.98] disabled:opacity-40"
                     aria-label="Decrease line spacing"
                   >
-                    <i className="fa-solid fa-text-height text-[13px]" />
-                    <i className="fa-solid fa-minus ml-1 text-[9px]" />
+                    <i className="fa-solid fa-text-height text-[12px]" />
+                   <i className="fa-solid fa-plus ml-1 text-[9px]" />
                   </button>
 
-                  <div className="min-w-[34px] text-center text-[13px] font-black text-[#8d94a1]">
-                    {lineSpacingValue}
-                  </div>
+                  <div className="min-w-[34px] text-center text-[12px] font-bold text-[#8d94a1]">
+  {lineSpacingValue}
+</div>
 
                   <button
                     type="button"
@@ -1692,26 +2396,25 @@ const handleDragEnd = () => {
           </SettingSection>
 
           <SettingSection title="Page Color">
-            <div className="grid grid-cols-4 gap-2">
-              {Object.entries(READER_THEMES).map(([key, item]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setThemeName(key)}
-                  className={`relative rounded-[16px] border p-2 text-center active:scale-[0.98] ${
-                    themeName === key ? 'border-[#111827] bg-[#f5f3fa]' : 'border-[#e4e7ec] bg-white'
-                  }`}
-                >
-                  <span className={`mx-auto block h-9 rounded-[12px] border border-black/10 ${item.swatch}`} />
-                  <span className="mt-2 block text-[10.5px] font-extrabold text-[#111827]">{item.name}</span>
-                  {themeName === key ? (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#111827] text-white">
-                      <i className="fa-solid fa-check text-[9px]" />
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
+<div className="grid grid-cols-4 gap-2">
+  {Object.entries(READER_THEMES).map(([key, item]) => (
+    <button
+      key={key}
+      type="button"
+      onClick={() => setThemeName(key)}
+      className="flex items-center justify-center rounded-[12px] bg-transparent p-0 active:scale-[0.98]"
+      aria-label={item.name}
+    >
+      <span
+        className={`block h-9 w-full rounded-[12px] ${item.swatch} ${
+          themeName === key
+            ? 'ring-2 ring-[#f6c343]'
+            : 'ring-0'
+        }`}
+      />
+    </button>
+  ))}
+</div>
           </SettingSection>
 
           <SettingSection title="Font Style">
@@ -1720,21 +2423,27 @@ const handleDragEnd = () => {
               onClick={onOpenFontList}
               className="flex h-14 w-full items-center justify-between rounded-[18px] bg-[#f5f3fa] px-4 text-left active:scale-[0.995]"
             >
-              <span className="line-clamp-1 text-[14px] font-black text-[#111827]" style={{ fontFamily: selectedFont.family }}>
-                {selectedFont.label}
-              </span>
+              <span
+  className="line-clamp-1 text-[14px] font-bold text-[#111827]"
+  style={{
+    fontFamily: selectedFont.family,
+    fontWeight: 700,
+  }}
+>
+  {selectedFont.label}
+</span>
               <i className="fa-solid fa-chevron-right text-[12px] text-[#8d94a1]" />
             </button>
           </SettingSection>
 
          <section className="px-2 py-3 text-center">
   <button
-    type="button"
-    onClick={() => setMoreSettingsOpen(true)}
-    className="text-[13px] font-black text-[#8d94a1] active:scale-[0.98]"
-  >
-    More Setting
-  </button>
+  type="button"
+  onClick={() => setMoreSettingsOpen(true)}
+  className="text-[13px] font-normal text-[#8d94a1] active:scale-[0.98]"
+>
+  More Setting
+</button>
 </section>
 
           {moreSettingsOpen ? (
@@ -1829,10 +2538,11 @@ const handleDragEnd = () => {
 }
 
 export default function ReaderPage() {
+  const SHOW_READER_COVER = false
+  const SHOW_READER_INFO = false
   const navigate = useNavigate()
   const location = useLocation()
   const { storyId, episodeId } = useParams()
-  const routeTaskMission = location.state?.taskMission || null
   const expectedLocked = Boolean(location.state?.expectedLocked)
   const expectedStory = location.state?.storyPreview || null
   const expectedEpisode = location.state?.episodePreview || null
@@ -1840,7 +2550,6 @@ export default function ReaderPage() {
   const autoScrollFrameRef = useRef(null)
   const qualifiedViewSentRef = useRef(false)
   const readingProgressRef = useRef(0)
-  const missionProgressSentRef = useRef(0)
 
   const [story, setStory] = useState(expectedStory)
   const [episode, setEpisode] = useState(expectedEpisode)
@@ -1867,24 +2576,33 @@ export default function ReaderPage() {
   const [adultWarningOpen, setAdultWarningOpen] = useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [readerMoreOpen, setReaderMoreOpen] = useState(false)
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
-  const [activeTaskMission, setActiveTaskMission] = useState(() => {
-  return normalizeReaderTaskMission(routeTaskMission) || readSavedActiveReadingMission()
-})
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [giftPopupOpen, setGiftPopupOpen] = useState(false)
+useEffect(() => {
+  if (sessionStorage.getItem('shadow_reopen_gift_popup') !== '1') return
+  sessionStorage.removeItem('shadow_reopen_gift_popup')
+  setGiftPopupOpen(true)
+}, [])
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
-  const [bottomActionsVisible, setBottomActionsVisible] = useState(true)
+  const [bottomActionsVisible, setBottomActionsVisible] = useState(false)
+  const [readerHeaderVisible, setReaderHeaderVisible] = useState(false)
+  const [readerDoubleTapVisible, setReaderDoubleTapVisible] = useState(false)
+  const [scrollSubscribePopupVisible, setScrollSubscribePopupVisible] = useState(false)
+  const [scrollSubscribeDismissed, setScrollSubscribeDismissed] = useState(false)
   const [readerAdPolicy, setReaderAdPolicy] = useState(null)
   const [readerAdvertisement, setReaderAdvertisement] = useState(null)
   const [readerAdFinished, setReaderAdFinished] = useState(false)
   const [readerGateReady, setReaderGateReady] = useState(false)
   const lastScrollYRef = useRef(0)
+  const lastReaderTapRef = useRef(0)
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
@@ -1898,6 +2616,11 @@ export default function ReaderPage() {
     localStorage.setItem('reader_font_size_index', String(fontSizeIndex))
     localStorage.setItem('reader_font_size', fontSizeIndex <= 0 ? 'small' : fontSizeIndex >= 2 ? 'large' : 'normal')
   }, [fontSizeIndex])
+
+useEffect(() => {
+  setScrollSubscribePopupVisible(false)
+  setScrollSubscribeDismissed(false)
+}, [storyId, episodeId])
 
   useEffect(() => {
     localStorage.setItem('reader_font_key', fontKey)
@@ -1923,9 +2646,39 @@ export default function ReaderPage() {
     localStorage.setItem('reader_auto_scroll_speed', String(autoScrollSpeed))
   }, [autoScrollSpeed])
 
+  const handleReaderDoubleTap = (event) => {
+    const target = event.target
+
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[data-ignore-reader-tap="true"]')
+    ) {
+      return
+    }
+
+    const now = Date.now()
+    const difference = now - lastReaderTapRef.current
+
+    if (difference > 0 && difference < 320) {
+      const nextVisible = !bottomActionsVisible
+
+      setReaderHeaderVisible(nextVisible)
+      setBottomActionsVisible(nextVisible)
+      setReaderDoubleTapVisible(nextVisible)
+     setScrollSubscribePopupVisible(false)
+
+      lastReaderTapRef.current = 0
+      return
+    }
+
+    lastReaderTapRef.current = now
+  }
+
   useEffect(() => {
     if (readingMode !== 'paging') return
-
     const savedPage = Number(localStorage.getItem(getPagingKey(storyId, episodeId)) || 0)
     setCurrentPageIndex(Number.isFinite(savedPage) && savedPage >= 0 ? savedPage : 0)
   }, [episodeId, readingMode, storyId])
@@ -1977,6 +2730,7 @@ async function loadReaderAdStatus() {
       setMessage('')
       setAutoScrollEnabled(false)
       setReaderAdvertisement(null)
+      setReaderAdFinished(false)
       setReaderGateReady(hasExpectedLockedPreview)
       setLockedEpisode(hasExpectedLockedPreview)
 
@@ -2015,8 +2769,6 @@ async function loadReaderAdStatus() {
   setReaderAdPolicy(null)
   setReadingProgress(0)
   setReaderGateReady(true)
-  setActiveTaskMission(null)
-  missionProgressSentRef.current = 0
 
   try {
     await loadLockedUnlockStatus()
@@ -2048,21 +2800,7 @@ setLockedEpisode(false)
 setReaderAdPolicy(nextReaderAdStatus.ad_policy)
 setReaderAdvertisement(nextReaderAdStatus.advertisement)
 setReadingProgress(0)
-setReaderGateReady(true)
-const nextRouteMission = normalizeReaderTaskMission(routeTaskMission)
-const savedMission = readSavedActiveReadingMission()
-
-const nextTaskMission =
-  (nextRouteMission && missionCanStayVisible(nextRouteMission, storyId) ? nextRouteMission : null) ||
-  (savedMission && missionCanStayVisible(savedMission, storyId) ? savedMission : null)
-
-setActiveTaskMission(nextTaskMission)
-
-if (nextTaskMission) {
-  saveActiveReadingMission(nextTaskMission)
-}
-
-missionProgressSentRef.current = 0
+setReaderGateReady(true)       
 
         if (episodeData.episode?.is_adult) {
           setAdultAccepted(false)
@@ -2089,7 +2827,7 @@ missionProgressSentRef.current = 0
     return () => {
       ignore = true
     }
-  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, routeTaskMission, storyId])
+  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, storyId])
 
   useEffect(() => {
     if (readingMode === 'paging') return undefined
@@ -2154,201 +2892,42 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
     }
   }, [adultAccepted, episode, episodeId, loading, storyId])
 
-  useEffect(() => {
-    const nextMission = normalizeReaderTaskMission(routeTaskMission)
+useEffect(() => {
+  setReaderHeaderVisible(false)
+  setBottomActionsVisible(false)
+  lastScrollYRef.current = window.scrollY || document.documentElement.scrollTop
 
-    if (!nextMission?.id) return
+  const handleActionBarVisibility = () => {
+  const currentScrollY = window.scrollY || document.documentElement.scrollTop
+  const previousScrollY = lastScrollYRef.current
+  const difference = currentScrollY - previousScrollY
+  const scrollHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+  const scrolledPercent = Math.min(100, Math.max(0, (currentScrollY / scrollHeight) * 100))
 
-    setActiveTaskMission(nextMission)
-    saveActiveReadingMission(nextMission)
-    missionProgressSentRef.current = 0
-  }, [routeTaskMission?.id])
+  if (Math.abs(difference) < 8) return
 
-  useEffect(() => {
-    let ignore = false
+  setReaderHeaderVisible(false)
+  setBottomActionsVisible(false)
+  setReaderDoubleTapVisible(false)
 
-    async function loadActiveReadingMission() {
-      if (!storyId || !episodeId || loading || lockedEpisode || !adultAccepted) return
+  const shouldShowSubscribe =
+    !scrollSubscribeDismissed &&
+    currentScrollY > 30 &&
+    (difference < 0 || (difference > 0 && scrolledPercent >= 70))
 
-      const currentMission = normalizeReaderTaskMission(activeTaskMission)
+  if (shouldShowSubscribe) {
+    setScrollSubscribePopupVisible(true)
+  }
 
-      if (missionCanTrack(currentMission, storyId)) {
-        saveActiveReadingMission(currentMission)
-        return
-      }
+  lastScrollYRef.current = Math.max(0, currentScrollY)
+}
 
-      const savedMission = readSavedActiveReadingMission()
+  window.addEventListener('scroll', handleActionBarVisibility, { passive: true })
 
-      if (missionCanTrack(savedMission, storyId)) {
-        setActiveTaskMission(savedMission)
-        return
-      }
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
-          headers: readerAuthHeaders(),
-        })
-
-        const data = await response.json().catch(() => ({}))
-
-        if (ignore || !response.ok || data.ok === false) return
-
-        const missions =
-          data.missions ||
-          data.reading_missions ||
-          data.tasks ||
-          data.items ||
-          []
-
-        const pickedMission = pickActiveReadingMission(missions, storyId)
-
-        if (pickedMission?.id) {
-          setActiveTaskMission(pickedMission)
-          saveActiveReadingMission(pickedMission)
-          missionProgressSentRef.current = 0
-        } else {
-          setActiveTaskMission(null)
-          clearSavedActiveReadingMission()
-        }
-      } catch {
-        // Reading should still work even if mission API fails.
-      }
-    }
-
-    loadActiveReadingMission()
-
-    return () => {
-      ignore = true
-    }
-  }, [
-    activeTaskMission?.id,
-    activeTaskMission?.claimed,
-    activeTaskMission?.completed,
-    activeTaskMission?.claimable,
-    adultAccepted,
-    episodeId,
-    loading,
-    lockedEpisode,
-    storyId,
-  ])
-
-  useEffect(() => {
-    if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
-      return undefined
-    }
-
-    const timer = window.setInterval(async () => {
-      if (document.visibilityState !== 'visible') return
-
-      await fetch(`${API_BASE_URL}/api/tasks/reading-reward/progress`, {
-        method: 'POST',
-        headers: {
-          ...readerAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          story_id: storyId,
-          episode_id: episodeId,
-          seconds: 5,
-        }),
-      }).catch(() => {})
-    }, 5000)
-
-    return () => {
-      window.clearInterval(timer)
-    }
-  }, [adultAccepted, episode, episodeId, loading, lockedEpisode, storyId])
-
-  useEffect(() => {
-    const currentMission = normalizeReaderTaskMission(activeTaskMission)
-
-    if (
-      !storyId ||
-      !episodeId ||
-      !episode ||
-      loading ||
-      lockedEpisode ||
-      !adultAccepted ||
-      !currentMission?.id ||
-      currentMission.claimed ||
-      currentMission.completed ||
-      currentMission.claimable ||
-      currentMission.is_active === false
-    ) {
-      return undefined
-    }
-
-    const timer = window.setInterval(async () => {
-      if (document.visibilityState !== 'visible') return
-
-      const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions/${currentMission.id}/progress`, {
-        method: 'POST',
-        headers: {
-          ...readerAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          story_id: storyId,
-          episode_id: episodeId,
-          seconds: 5,
-        }),
-      }).catch(() => null)
-
-      if (!response?.ok) return
-
-      const data = await response.json().catch(() => ({}))
-
-      if (data?.mission) {
-        const nextMission = normalizeReaderTaskMission(data.mission)
-
-        if (nextMission?.id) {
-          setActiveTaskMission(nextMission)
-          saveActiveReadingMission(nextMission)
-        }
-      }
-    }, 5000)
-
-    return () => {
-      window.clearInterval(timer)
-    }
-  }, [
-    activeTaskMission?.claimed,
-    activeTaskMission?.claimable,
-    activeTaskMission?.completed,
-    activeTaskMission?.id,
-    activeTaskMission?.active_seconds,
-    adultAccepted,
-    episode,
-    episodeId,
-    loading,
-    lockedEpisode,
-    storyId,
-  ])
-
-  useEffect(() => {
-    const handleActionBarVisibility = () => {
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop
-      const previousScrollY = lastScrollYRef.current
-      const difference = currentScrollY - previousScrollY
-
-      if (Math.abs(difference) < 8) return
-
-      if (currentScrollY < 80 || difference < 0) {
-        setBottomActionsVisible(true)
-      } else {
-        setBottomActionsVisible(false)
-      }
-
-      lastScrollYRef.current = Math.max(0, currentScrollY)
-    }
-
-    lastScrollYRef.current = window.scrollY || document.documentElement.scrollTop
-    window.addEventListener('scroll', handleActionBarVisibility, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleActionBarVisibility)
-    }
-  }, [episodeId])
+  return () => {
+    window.removeEventListener('scroll', handleActionBarVisibility)
+  }
+}, [episodeId, scrollSubscribeDismissed])
 
 
   useEffect(() => {
@@ -2396,23 +2975,66 @@ if (activeSeconds >= requiredSeconds && progressPassed) {
     }
   }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, readingMode, resetOpen, settingsOpen])
 
-  const currentIndex = episodes.findIndex((item) => item.id === episodeId)
-  const previousEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null
-  const nextEpisode = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null
+  const sortedReaderEpisodes = useMemo(() => {
+    return [...episodes].sort((a, b) => Number(a.episode_number || 0) - Number(b.episode_number || 0))
+  }, [episodes])
+
+  const currentReaderEpisodeIndex = sortedReaderEpisodes.findIndex((item) => String(item.id) === String(episodeId))
+
+  const previousEpisode =
+    currentReaderEpisodeIndex > 0 ? sortedReaderEpisodes[currentReaderEpisodeIndex - 1] : null
+
+  const nextEpisode =
+    currentReaderEpisodeIndex >= 0 && currentReaderEpisodeIndex < sortedReaderEpisodes.length - 1
+      ? sortedReaderEpisodes[currentReaderEpisodeIndex + 1]
+      : null
+
+  const openReaderEpisode = (targetEpisode) => {
+    if (!targetEpisode) return
+
+    navigate(`/story/${storyId}/episode/${targetEpisode.id}`, {
+      state: {
+        storyPreview: story,
+        episodePreview: targetEpisode,
+        returnSource: location.state?.returnSource,
+      },
+    })
+  }
 
   const cover = episode?.cover_url || story?.cover_url || ''
   const publishedDate = formatDate(episode?.published_at)
   const characterCount = Number(episode?.character_count || episode?.content?.length || 0)
   const isLastReadingPage = readingMode !== 'paging' || currentPageIndex >= Math.max(0, pagingPages.length - 1)
 
+
+const handleReaderCopyLink = async () => {
+  const link = window.location.href
+
+  try {
+    await navigator.clipboard.writeText(link)
+  } catch {
+    window.prompt('Copy this link:', link)
+  }
+
+  setReaderMoreOpen(false)
+}
+
+const handleReaderReport = () => {
+  setReaderMoreOpen(false)
+  window.alert('Report is coming soon.')
+}
+
+const handleReaderEcho = () => {
+  setReaderMoreOpen(false)
+  setEchoShareOpen(true)
+}
+
   const handlePrevious = () => {
-    if (!previousEpisode) return
-    navigate(`/story/${storyId}/episode/${previousEpisode.id}`)
+    openReaderEpisode(previousEpisode)
   }
 
   const handleNext = () => {
-    if (!nextEpisode) return
-    navigate(`/story/${storyId}/episode/${nextEpisode.id}`)
+    openReaderEpisode(nextEpisode)
   }
 
 const handleOpenPurchasePage = () => {
@@ -2578,36 +3200,12 @@ async function handleLockedDiamondUnlock(packageKey) {
   }
 
 
-  const handleCommentChanged = () => {}
-
-  const activeMission = normalizeReaderTaskMission(activeTaskMission)
-  const activeMissionTargetSeconds = Math.max(
-    60,
-    Number(activeMission?.target_seconds || Number(activeMission?.target_minutes || 1) * 60)
-  )
-  const activeMissionSeconds = Math.min(
-    activeMissionTargetSeconds,
-    Math.max(0, Number(activeMission?.active_seconds || 0))
-  )
-  const activeMissionPercent =
-    activeMissionTargetSeconds > 0
-      ? Math.min(100, Math.round((activeMissionSeconds / activeMissionTargetSeconds) * 100))
-      : 0
-  const activeMissionReady = Boolean(
-    activeMission?.claimable ||
-      activeMission?.completed ||
-      activeMissionPercent >= 100
-  )
-  const activeMissionClaimed = Boolean(activeMission?.claimed)
-  const showActiveMissionCircle = Boolean(
-    activeMission?.id && !activeMissionClaimed && !lockedEpisode && adultAccepted && !loading
-  )
-  const activeMissionRingRadius = 33
-  const activeMissionRingCircumference = 2 * Math.PI * activeMissionRingRadius
-  const activeMissionRingOffset = activeMissionRingCircumference * (1 - activeMissionPercent / 100)
+  const handleCommentChanged = () => {
+    setCommentRefreshKey((value) => value + 1)
+  }
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
-const shouldBlockReaderContent = (!readerGateReady && !lockedEpisode) || (shouldShowReaderAd && !readerAdFinished)
+const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
 
 return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
@@ -2683,14 +3281,15 @@ return (
       />
 
       <EpisodeListDrawer
-        open={episodeListOpen}
-        onClose={() => setEpisodeListOpen(false)}
-        episodes={episodes}
-        currentEpisodeId={episodeId}
-        storyId={storyId}
-        navigate={navigate}
-        theme={theme}
-      />
+  open={episodeListOpen}
+  onClose={() => setEpisodeListOpen(false)}
+  story={story}
+  episodes={episodes}
+  currentEpisodeId={episodeId}
+  storyId={storyId}
+  navigate={navigate}
+  theme={theme}
+/>
 
       <EchoShareSheet
   open={echoShareOpen}
@@ -2701,11 +3300,22 @@ return (
       <CommentsModal
   open={commentsOpen}
   story={story}
+  targetType="episode"
+  targetId={episode?.id || episodeId}
+  title={episode?.title || story?.title || 'Comments'}
   onClose={() => setCommentsOpen(false)}
   onCommentChanged={handleCommentChanged}
-  key={storyId}
+  key={`${storyId}-${episodeId}`}
 />
 
+      <GiftPopup
+  open={giftPopupOpen}
+  onClose={() => setGiftPopupOpen(false)}
+  onOpenGuide={() => {
+    sessionStorage.setItem('shadow_reopen_gift_popup', '1')
+    navigate('/gift-guide')
+  }}
+/>
       {shouldShowReaderAd && !readerAdFinished ? (
   <AdvertisementPopup
   placement="freeUnlock"
@@ -2719,116 +3329,105 @@ return (
      {shouldBlockReaderContent ? (
   <div className="fixed inset-0 z-[2147483646] bg-black" />
 ) : null}
+
+<ScrollSubscribePopup
+  visible={scrollSubscribePopupVisible}
+  storyId={storyId}
+  readingProgress={readingProgress}
+  onClose={() => {
+    setScrollSubscribePopupVisible(false)
+    setScrollSubscribeDismissed(true)
+  }}
+/>
       
-      {showActiveMissionCircle ? (
-        <button
-          type="button"
-          onClick={() => navigate('/tasks')}
-          className="fixed right-3 top-[68px] z-[120] flex h-[78px] w-[78px] items-center justify-center rounded-full active:scale-95"
-          aria-label="Reading mission progress"
-        >
-          {activeMissionReady ? (
-            <span className="absolute inset-1 rounded-full bg-[#22C55E]/25 animate-ping" />
-          ) : (
-            <span className="absolute inset-1 rounded-full border-2 border-transparent border-t-[#F6B800] border-r-[#F6B800] animate-spin" />
-          )}
-
-          <svg
-            viewBox="0 0 78 78"
-            className="absolute inset-0 h-[78px] w-[78px] -rotate-90 drop-shadow-[0_10px_22px_rgba(17,24,39,0.18)]"
-            aria-hidden="true"
-          >
-            <circle
-              cx="39"
-              cy="39"
-              r={activeMissionRingRadius}
-              fill="none"
-              stroke="rgba(17,24,39,0.14)"
-              strokeWidth="5"
-            />
-            <circle
-              cx="39"
-              cy="39"
-              r={activeMissionRingRadius}
-              fill="none"
-              stroke={activeMissionReady ? '#22C55E' : '#F6B800'}
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={activeMissionRingCircumference}
-              strokeDashoffset={activeMissionRingOffset}
-              className="transition-all duration-500 ease-out"
-            />
-          </svg>
-
-          <span
-            className={`relative flex h-[62px] w-[62px] flex-col items-center justify-center rounded-full text-white shadow-[0_10px_26px_rgba(17,24,39,0.24)] ring-1 ring-white/40 ${
-              activeMissionReady ? 'bg-[#22C55E]' : 'bg-[#111827]'
-            }`}
-          >
-            <img
-              src="/assets/Icons/Shadow%20Coin.svg"
-              alt=""
-              className="h-6 w-6 object-contain"
-            />
-
-            <span className="mt-0.5 text-[10px] font-black leading-none">
-              {activeMissionReady ? 'Ready' : `${activeMissionPercent}%`}
-            </span>
-
-            {Number(activeMission?.reward_coins || 0) > 0 ? (
-              <span className="mt-0.5 text-[9px] font-black leading-none opacity-90">
-                +{formatNumber(activeMission.reward_coins)}
-              </span>
-            ) : null}
-          </span>
-        </button>
-      ) : null}
-
      <ReaderBottomActionBar
   visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
   story={story}
   episode={episode}
+  commentRefreshKey={commentRefreshKey}
+  readingProgress={readingProgress}
+  previousEpisode={previousEpisode}
+  nextEpisode={nextEpisode}
+  onPrevious={() => openReaderEpisode(previousEpisode)}
+  onNext={() => openReaderEpisode(nextEpisode)}
+  showSubscribeOnDoubleTap={readerDoubleTapVisible}
+  onOpenChapters={() => setEpisodeListOpen(true)}
   onOpenComments={() => setCommentsOpen(true)}
-  onOpenEcho={() => setEchoShareOpen(true)}
+  onOpenSettings={() => setSettingsOpen(true)}
 />
 
-      <header className={`${bottomActionsVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur transition-transform duration-300 ease-out`}>
+      <header className={`${readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b ${theme.border} ${theme.card}/95 px-4 py-3 shadow-sm backdrop-blur transition-transform duration-300 ease-out`}>
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <ReaderIconButton
             icon="fa-solid fa-chevron-left"
             label="Back to story"
-            onClick={() => navigate(`/story/${storyId}`)}
-            className={`${theme.ghost}`}
+            onClick={() => {
+  const returnSource = location.state?.returnSource
+
+  navigate(`/story/${storyId}`, {
+    state: {
+      reopenEpisodeList: returnSource === 'modal',
+    },
+  })
+}}
+            className={theme.text}
           />
 
           <div className="min-w-0 px-3 text-center">
             <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
-              {episode?.title || 'Reader'}
+              {story?.title || 'Reader'}
             </h1>
 
            
           </div>
 
-          <div className="flex items-center gap-2">
-            <ReaderIconButton
-              icon="fa-solid fa-sliders"
-              label="Reader settings"
-              onClick={() => setSettingsOpen(true)}
-              className={`${settingsOpen ? theme.button : theme.ghost}`}
-            />
+          <div className="relative">
+  <ReaderIconButton
+    icon="fa-solid fa-ellipsis-vertical"
+    label="More options"
+    onClick={() => setReaderMoreOpen((value) => !value)}
+    className={theme.text}
+  />
 
-            <ReaderIconButton
-              icon="fa-solid fa-list-ul"
-              label="Episode list"
-              onClick={() => setEpisodeListOpen(true)}
-              className={`${theme.ghost}`}
-            />
-          </div>
+  {readerMoreOpen ? (
+    <div className="absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+      <button
+        type="button"
+        onClick={handleReaderReport}
+        className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+      >
+        <i className="fa-regular fa-flag w-4 text-center text-[14px] text-[#667085]" />
+        <span>Report</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={handleReaderCopyLink}
+        className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+      >
+        <i className="fa-solid fa-link w-4 text-center text-[14px] text-[#667085]" />
+        <span>Copy link</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={handleReaderEcho}
+        className="flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+      >
+        <i className="fa-solid fa-rotate w-4 text-center text-[14px] text-[#667085]" />
+        <span>Echo</span>
+      </button>
+    </div>
+  ) : null}
+</div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pt-[76px]">
-        {loading ? null : null}
+      <main
+        onClick={handleReaderDoubleTap}
+        className={`mx-auto max-w-3xl px-0 pt-[50px] pb-[92px] ${theme.page} sm:px-4`}
+      >
+        {loading ? <LoadingCard /> : null}
 
         {message ? (
           <section className="rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
@@ -2859,8 +3458,8 @@ onUnlock={handleLockedDiamondUnlock}
 
         {!loading && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
           <>
-            <section className={`overflow-hidden rounded-[28px] ${theme.card} shadow-sm ring-1 ring-black/5`}>
-              {cover ? (
+            <section className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}>
+              {SHOW_READER_COVER && cover ? (
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#111827]">
                   <img src={cover} alt={episode.title} className="h-full w-full object-cover opacity-90" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
@@ -2887,8 +3486,8 @@ onUnlock={handleLockedDiamondUnlock}
                 </div>
               ) : null}
 
-              <div className="p-5 sm:p-8">
-                {!cover ? (
+              <div className="px-4 py-5 sm:p-8">
+                {SHOW_READER_COVER && !cover ? (
                   <div className={`mb-7 border-b ${theme.border} pb-6`}>
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className={`${theme.soft} ${theme.muted} rounded-full px-3 py-1.5 text-[11px] font-extrabold`}>
@@ -2914,27 +3513,38 @@ onUnlock={handleLockedDiamondUnlock}
                   </div>
                 ) : null}
 
-                <div className={`mb-7 grid grid-cols-2 gap-2 rounded-[22px] ${theme.soft} p-3 sm:grid-cols-4`}>
-                  <div>
-                    <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Episode</div>
-                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>EP {episode.episode_number || 1}</div>
-                  </div>
+                {SHOW_READER_INFO ? (
+                  <div className={`mb-7 grid grid-cols-2 gap-2 rounded-[22px] ${theme.soft} p-3 sm:grid-cols-4`}>
+                    <div>
+                      <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Episode</div>
+                      <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>EP {episode.episode_number || 1}</div>
+                    </div>
 
-                  <div>
-                    <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Length</div>
-                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{characterCount.toLocaleString()} chars</div>
-                  </div>
+                    <div>
+                      <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Length</div>
+                      <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{characterCount.toLocaleString()} chars</div>
+                    </div>
 
-                  <div>
-                    <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Mode</div>
-                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{READER_THEMES[themeName]?.name || themeName}</div>
-                  </div>
+                    <div>
+                      <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Mode</div>
+                      <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{READER_THEMES[themeName]?.name || themeName}</div>
+                    </div>
 
-                  <div>
-                    <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Published</div>
-                    <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{publishedDate || 'New'}</div>
+                    <div>
+                      <div className={`text-[10px] font-black uppercase tracking-[0.08em] ${theme.muted}`}>Published</div>
+                      <div className={`mt-1 text-[13px] font-extrabold ${theme.text}`}>{publishedDate || 'New'}</div>
+                    </div>
                   </div>
-                </div>
+                ) : null}
+
+<div className="mb-7">
+  <h1
+       className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
+    style={{ fontFamily: activeFont.family }}
+  >
+    {episode.title || 'Untitled Episode'}
+  </h1>
+</div>
 
                 <article>
                   {readingMode === 'paging' ? (
@@ -2961,51 +3571,17 @@ onUnlock={handleLockedDiamondUnlock}
             </section>
 
             {isLastReadingPage ? (
-              <>
-                <section className="mt-5 grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    disabled={!previousEpisode}
-                    className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.ghost}`}
-                  >
-                    <i className="fa-solid fa-chevron-left mr-2 text-[12px]" />
-{previousEpisode ? `Previous: EP ${previousEpisode.episode_number || ''}` : 'Previous'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={!nextEpisode}
-                    className={`flex h-14 items-center justify-center rounded-full text-[14px] font-extrabold shadow-[0_14px_30px_rgba(17,24,39,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 ${theme.button}`}
-                  >
-                    {nextEpisode ? `Next: EP ${nextEpisode.episode_number || ''}` : 'Next'}
-<i className="fa-solid fa-chevron-right ml-2 text-[12px]" />
-                  </button>
-                </section>
-
-                {!nextEpisode ? (
-                  <section className={`mt-4 rounded-[24px] ${theme.card} px-5 py-7 text-center shadow-sm ring-1 ring-black/5`}>
-                    <h3 className={`text-[19px] font-black tracking-wide ${theme.text}`}>
-                      TO BE CONTINUED
-                    </h3>
-
-                    <p className={`mt-3 text-[13px] font-semibold leading-6 ${theme.muted}`}>
-                      The story ends here… but the adventure is just beginning.
-                    </p>
-
-                    <div className="mx-auto mt-5 flex max-w-[220px] items-center justify-center gap-2">
-                      <span className="h-px flex-1 bg-[#111827]/45" />
-                      <span className="text-[15px] leading-none text-[#e5484d]">♥</span>
-                      <span className="h-px flex-1 bg-[#111827]/45" />
-                    </div>
-                  </section>
-                ) : null}
-              </>
-            ) : null}
+  <ReaderEndPanel
+    story={story}
+    episode={episode}
+    onOpenComments={() => setCommentsOpen(true)}
+    onOpenGift={() => setGiftPopupOpen(true)}
+  />
+) : null}
           </>
         ) : null}
       </main>
     </div>
   )
 }
+
