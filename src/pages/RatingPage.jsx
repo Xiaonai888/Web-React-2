@@ -69,7 +69,7 @@ function EmptyReviewState({ onWriteReview }) {
         <i className="fa-regular fa-star text-[22px]" />
       </div>
 
-      <h3 className="mt-4 text-[17px] font-black text-[#111827]">No reviews yet</h3>
+      <h3 className="mt-4 text-[17px] font-extrabold text-[#111827]">No reviews yet</h3>
 
       <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085]">
         Be the first reader to rate this story. Your review helps other readers decide what to read next.
@@ -78,7 +78,7 @@ function EmptyReviewState({ onWriteReview }) {
       <button
         type="button"
         onClick={onWriteReview}
-        className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-black text-white active:scale-95"
+        className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95"
       >
         Write the first review
       </button>
@@ -361,14 +361,14 @@ export default function RatingPage() {
             <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="min-w-0 flex-1 truncate text-center text-[18px] font-black">Reviews</h1>
+          <h1 className="min-w-0 flex-1 truncate text-center text-[18px] font-extrabold">Reviews</h1>
 
           <div className="h-10 w-10" />
         </div>
       </header>
 
       <section className="mx-auto max-w-3xl px-4 pt-5">
-        <div className="overflow-hidden rounded-[26px] bg-[#111827] text-white shadow-sm">
+        <div className="overflow-hidden rounded-none bg-[#111827] text-white shadow-sm sm:rounded-[26px]">
           <div className="relative min-h-[160px] p-5">
             {story?.cover_url ? (
               <img
@@ -381,14 +381,14 @@ export default function RatingPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#111827]/92 via-[#111827]/72 to-[#ff8a3d]/45" />
 
             <div className="relative z-10 flex min-h-[120px] flex-col justify-between">
-              <h2 className="line-clamp-2 text-[22px] font-black leading-7">
+              <h2 className="line-clamp-2 text-[22px] font-extrabold leading-7">
                 {loading ? 'Loading story...' : story?.title || 'Untitled Story'}
               </h2>
 
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[34px] font-black leading-none">{ratingValue.toFixed(1)}</span>
+                    <span className="text-[34px] font-extrabold leading-none">{ratingValue.toFixed(1)}</span>
                     <StarRow value={Math.round(ratingValue)} size="text-[16px]" />
                   </div>
 
@@ -400,7 +400,7 @@ export default function RatingPage() {
                 <button
                   type="button"
                   onClick={handleOpenReviewSheet}
-                  className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-black text-[#111827] active:scale-95"
+                  className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-extrabold text-[#111827] active:scale-95"
                 >
                   Leave a Review
                   <i className="fa-solid fa-pen-to-square ml-2" />
@@ -413,7 +413,7 @@ export default function RatingPage() {
 
       <section className="mx-auto max-w-3xl pt-5">
         <div className="flex items-center justify-between px-4">
-          <h2 className="text-[18px] font-black">Review Center</h2>
+          <h2 className="text-[18px] font-extrabold">Review Center</h2>
 
           {reviews.length ? (
             <div className="rounded-full bg-[#f5f3fa] p-1">
