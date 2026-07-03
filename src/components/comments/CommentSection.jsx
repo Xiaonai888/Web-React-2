@@ -69,11 +69,11 @@ function getStoryOwnerId(story) {
   )
 }
 
-if (targetType === 'episode') {
-  return `${API_BASE_URL}/api/comments/episode/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
-}
-
 function buildCommentListUrl(targetType, targetId, page, sort) {
+  if (targetType === 'episode') {
+    return `${API_BASE_URL}/api/comments/episode/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+  }
+
   if (targetType === 'author_post') {
     return `${API_BASE_URL}/api/authors/page/posts/${targetId}/comments?limit=${COMMENT_PAGE_SIZE}`
   }
@@ -81,11 +81,11 @@ function buildCommentListUrl(targetType, targetId, page, sort) {
   return `${API_BASE_URL}/api/comments/story/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
 }
 
-if (targetType === 'episode') {
-  return `${API_BASE_URL}/api/comments/episode/${targetId}`
-}
-
 function buildCommentCreateUrl(targetType, targetId) {
+  if (targetType === 'episode') {
+    return `${API_BASE_URL}/api/comments/episode/${targetId}`
+  }
+
   if (targetType === 'author_post') {
     return `${API_BASE_URL}/api/authors/me/posts/${targetId}/comments`
   }
@@ -135,6 +135,7 @@ function normalizeApiComment(comment) {
   return {
     id: comment.id,
     story_id: comment.story_id,
+    episode_id: comment.episode_id || null,
     user_id: comment.user_id || user.id,
     parent_id: comment.parent_id,
     text: comment.text || '',
