@@ -126,6 +126,7 @@ const CompletedPage = lazy(() => import('./pages/CompletedPage'))
 const MostReadThisWeekPage = lazy(() => import('./pages/MostReadThisWeekPage'))
 const GiftGuidePage = lazy(() => import('./pages/GiftGuidePage'))
 const StoryTopFansPage = lazy(() => import('./pages/StoryTopFansPage'))
+const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 
 
 function ComingSoon({ title }) {
@@ -905,6 +906,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <StoryTopFansPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/story/:storyId/top-fans-guide"
+  element={
+    <LazyPage>
+      <TopFansGuidePage />
     </LazyPage>
   }
 />
