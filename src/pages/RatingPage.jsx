@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
@@ -178,7 +178,115 @@ function ReviewBottomSheet({
   onReviewTextChange,
   onSubmit,
 }) {
+  const dragRef = useRef({
+    active: false,
+    pointerId: null,
+    startY: 0,
+    lastY: 0,
+    startTime: 0,
+  })
+
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+
+    dragRef.current = {
+      active: false,
+      pointerId: null,
+      startY: 0,
+      lastY: 0,
+      startTime: 0,
+    }
+
+    setDragging(false)
+    setDragOffset(0)
+  }, [open])
+
   if (!open) return null
+
+  const resetDrag = () => {
+    dragRef.current.active = false
+    dragRef.current.pointerId = null
+    setDragging(false)
+    setDragOffset(0)
+  }
+
+  const handleDragStart = (event) => {
+    if (!event.isPrimary) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    if (
+      event.target instanceof Element &&
+      event.target.closest('button, input, textarea')
+    ) {
+      return
+    }
+
+    dragRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      lastY: event.clientY,
+      startTime: performance.now(),
+    }
+
+    setDragging(true)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleDragMove = (event) => {
+    const drag = dragRef.current
+
+    if (!drag.active || drag.pointerId !== event.pointerId) return
+
+    drag.lastY = event.clientY
+
+    const distance = Math.max(0, event.clientY - drag.startY)
+
+    setDragOffset(
+      Math.min(distance, window.innerHeight * 0.65)
+    )
+
+    if (event.cancelable) event.preventDefault()
+  }
+
+  const handleDragEnd = (event) => {
+    const drag = dragRef.current
+
+    if (!drag.active || drag.pointerId !== event.pointerId) return
+
+    drag.lastY = event.clientY
+
+    const distance = Math.max(0, drag.lastY - drag.startY)
+    const elapsed = Math.max(1, performance.now() - drag.startTime)
+    const velocity = distance / elapsed
+
+    drag.active = false
+    drag.pointerId = null
+    setDragging(false)
+
+    if (
+      distance >= 70 ||
+      (distance >= 24 && velocity >= 0.6)
+    ) {
+      setDragOffset(0)
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
+  }
+
+  const handleDragCancel = (event) => {
+    const drag = dragRef.current
+
+    if (!drag.active) return
+    if (drag.pointerId !== event.pointerId) return
+
+    resetDrag()
+  }
 
   return (
     <div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/40 px-0">
@@ -189,11 +297,31 @@ function ReviewBottomSheet({
         aria-label="Close review sheet"
       />
 
-      <section className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-5 shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-[18px] font-black text-[#111827]">Leave a Review</h2>
+      <section
+        className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-6 pt-3 shadow-2xl"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: dragging
+            ? 'none'
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'transform',
+        }}
+      >
+        <div
+          role="presentation"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragCancel}
+          onLostPointerCapture={handleDragCancel}
+          className="flex min-h-12 cursor-grab touch-none items-center justify-between gap-3 active:cursor-grabbing"
+        >
+          <h2
+            className="text-[18px] font-bold text-[#111827]"
+            style={{ fontWeight: 700 }}
+          >
+            Leave a Review
+          </h2>
 
           <button
             type="button"
@@ -205,14 +333,16 @@ function ReviewBottomSheet({
           </button>
         </div>
 
-        <div className="mt-5 flex justify-center gap-2">
+        <div className="mt-3 flex justify-center gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               type="button"
               onClick={() => onRatingChange(star)}
               className={`text-[36px] active:scale-95 ${
-                rating >= star ? 'text-[#ff8a3d]' : 'text-[#d9d9d9]'
+                rating >= star
+                  ? 'text-[#ff8a3d]'
+                  : 'text-[#d9d9d9]'
               }`}
               aria-label={`Rate ${star}`}
             >
@@ -223,7 +353,9 @@ function ReviewBottomSheet({
 
         <textarea
           value={reviewText}
-          onChange={(event) => onReviewTextChange(event.target.value)}
+          onChange={(event) =>
+            onReviewTextChange(event.target.value)
+          }
           rows={5}
           placeholder="What made this story stand out?"
           className="mt-5 w-full resize-none rounded-[20px] bg-[#f3f4f6] px-4 py-4 text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#111827]/15"
@@ -289,14 +421,21 @@ export default function RatingPage() {
   const reviews = useMemo(() => storedReviews, [storedReviews])
 
   const sortedReviews = useMemo(() => {
-    const list = [...reviews]
+  const list = [...reviews]
 
-    if (sort === 'highest') {
-      return list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
-    }
+  if (sort === 'hot') {
+    return list.sort((a, b) => {
+      const aReplies = Array.isArray(a.replies) ? a.replies.length : Number(a.reply_count || 0)
+      const bReplies = Array.isArray(b.replies) ? b.replies.length : Number(b.reply_count || 0)
+      const aScore = Number(a.likes || a.like_count || 0) + aReplies
+      const bScore = Number(b.likes || b.like_count || 0) + bReplies
 
-    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [reviews, sort])
+      return bScore - aScore || new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }
+
+  return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+}, [reviews, sort])
 
   const averageRating = useMemo(() => {
     if (!reviews.length) return 0
@@ -334,6 +473,8 @@ export default function RatingPage() {
       id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()),
       name: 'Reader',
       rating: newRating,
+      likes: 0,
+      replies: [],
       label: newRating >= 5 ? 'Excellent' : newRating >= 4 ? 'Good' : newRating >= 3 ? 'Okay' : 'Needs work',
       text: newReviewText.trim(),
       created_at: new Date().toISOString(),
@@ -350,93 +491,89 @@ export default function RatingPage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#eef1f5] bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:scale-95"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[17px]" />
-          </button>
+      <section className="mx-auto max-w-3xl">
+  <div className="overflow-hidden rounded-none bg-[#111827] text-white shadow-sm">
+    <div className="relative min-h-[220px] px-5 pb-5 pt-16">
+      {story?.cover_url ? (
+        <img
+          src={story.cover_url}
+          alt={story.title || 'Story cover'}
+          className="absolute inset-0 h-full w-full object-cover opacity-65"
+        />
+      ) : null}
 
-          <h1 className="min-w-0 flex-1 truncate text-center text-[18px] font-extrabold">Reviews</h1>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#111827]/70 via-[#111827]/45 to-[#ff8a3d]/25" />
+      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/45 to-transparent" />
 
-          <div className="h-10 w-10" />
-        </div>
-      </header>
+      <div className="absolute inset-x-0 top-0 z-20 flex h-14 items-center px-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:scale-95"
+          aria-label="Go back"
+        >
+          <i className="fa-solid fa-chevron-left text-[18px]" />
+        </button>
 
-      <section className="mx-auto max-w-3xl px-4 pt-5">
-        <div className="overflow-hidden rounded-none bg-[#111827] text-white shadow-sm sm:rounded-[26px]">
-          <div className="relative min-h-[160px] p-5">
-            {story?.cover_url ? (
-              <img
-                src={story.cover_url}
-                alt={story.title || 'Story cover'}
-                className="absolute inset-0 h-full w-full object-cover opacity-35"
-              />
-            ) : null}
+        <h1 className="min-w-0 flex-1 truncate px-2 text-center text-[20px] font-bold text-white">
+          {loading ? 'Loading story...' : story?.title || 'Untitled Story'}
+        </h1>
 
-            <div className="absolute inset-0 bg-gradient-to-br from-[#111827]/92 via-[#111827]/72 to-[#ff8a3d]/45" />
+        <div className="h-10 w-10 shrink-0" />
+      </div>
 
-            <div className="relative z-10 flex min-h-[120px] flex-col justify-between">
-              <h2 className="line-clamp-2 text-[22px] font-extrabold leading-7">
-                {loading ? 'Loading story...' : story?.title || 'Untitled Story'}
-              </h2>
+      <div className="relative z-10 flex min-h-[140px] items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[34px] font-extrabold leading-none">
+              {ratingValue.toFixed(1)}
+            </span>
+            <StarRow value={Math.round(ratingValue)} size="text-[16px]" />
+          </div>
 
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[34px] font-extrabold leading-none">{ratingValue.toFixed(1)}</span>
-                    <StarRow value={Math.round(ratingValue)} size="text-[16px]" />
-                  </div>
-
-                  <div className="mt-2 text-[12px] font-semibold text-white/75">
-                    {formatShortNumber(reviewCount)} reviews
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleOpenReviewSheet}
-                  className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-extrabold text-[#111827] active:scale-95"
-                >
-                  Leave a Review
-                  <i className="fa-solid fa-pen-to-square ml-2" />
-                </button>
-              </div>
-            </div>
+          <div className="mt-2 text-[12px] font-semibold text-white/75">
+            {formatShortNumber(reviewCount)} reviews
           </div>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-3xl pt-5">
-        <div className="flex items-center justify-between px-4">
-          <h2 className="text-[18px] font-extrabold">Review Center</h2>
+        <button
+          type="button"
+          onClick={handleOpenReviewSheet}
+          className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-extrabold text-[#111827] active:scale-95"
+        >
+          Leave a Review
+          <i className="fa-solid fa-pen-to-square ml-2" />
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
-          {reviews.length ? (
-            <div className="rounded-full bg-[#f5f3fa] p-1">
-              <button
-                type="button"
-                onClick={() => setSort('newest')}
-                className={`rounded-full px-3 py-1.5 text-[12px] font-black ${
-                  sort === 'newest' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#98a2b3]'
-                }`}
-              >
-                Newest
-              </button>
-              <button
-                type="button"
-                onClick={() => setSort('highest')}
-                className={`rounded-full px-3 py-1.5 text-[12px] font-black ${
-                  sort === 'highest' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#98a2b3]'
-                }`}
-              >
-                Highest
-              </button>
-            </div>
-          ) : null}
+      
+
+      <section className="relative z-10 mx-auto -mt-2 max-w-3xl rounded-t-[14px] bg-white pt-5">
+        <div className="flex items-center justify-between px-5">
+          <h2 className="text-[14px] font-semibold text-[#111827]">Review Center</h2>
+
+          <div className="flex items-center text-[14px] font-medium">
+            <button
+              type="button"
+              onClick={() => setSort('hot')}
+className={sort === 'hot' ? 'text-[#e85d75]' : 'text-[#98a2b3]'}
+            >
+              Hot
+            </button>
+
+            <span className="mx-3 h-4 w-px bg-[#e4e7ec]" />
+
+            <button
+              type="button"
+              onClick={() => setSort('newest')}
+              className={sort === 'newest' ? 'text-[#e85d75]' : 'text-[#98a2b3]'}
+            >
+              New
+            </button>
+          </div>
         </div>
 
         <div className="mt-2 bg-white">
