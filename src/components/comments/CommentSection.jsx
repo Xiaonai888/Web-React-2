@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -7,6 +7,24 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const COMMENT_PAGE_SIZE = 20
+
+const COMMENT_SORT_OPTIONS = [
+  {
+    value: 'top',
+    label: 'Hot comments',
+    description: 'Show comments with the most likes and replies first.',
+  },
+  {
+    value: 'newest',
+    label: 'Newest',
+    description: 'Show the newest comments first.',
+  },
+  {
+    value: 'all',
+    label: 'All comments',
+    description: 'Show all comments.',
+  },
+]
 
 function getReaderToken() {
   return (
@@ -70,15 +88,17 @@ function getStoryOwnerId(story) {
 }
 
 function buildCommentListUrl(targetType, targetId, page, sort) {
+  const sortValue = sort === 'all' ? 'newest' : sort
+
   if (targetType === 'episode') {
-    return `${API_BASE_URL}/api/comments/episode/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+    return `${API_BASE_URL}/api/comments/episode/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
   }
 
   if (targetType === 'author_post') {
     return `${API_BASE_URL}/api/authors/page/posts/${targetId}/comments?limit=${COMMENT_PAGE_SIZE}`
   }
 
-  return `${API_BASE_URL}/api/comments/story/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`
+  return `${API_BASE_URL}/api/comments/story/${targetId}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
 }
 
 function buildCommentCreateUrl(targetType, targetId) {
@@ -580,43 +600,49 @@ function CommentComposer({
   isBanned,
   sending,
 }) {
-  const currentUser = getCurrentUser()
+  const [focused, setFocused] = useState(false)
+  const textareaRef = useRef(null)
+  const showSend = focused || value.trim()
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 118)}px`
+    textarea.scrollTop = textarea.scrollHeight
+  }, [value])
 
   return (
     <div className={`${isModal ? 'shrink-0' : 'fixed bottom-0 left-0 right-0'} z-50 border-t border-[#eef1f5] bg-white px-3 py-3`}>
       <div className="mx-auto flex max-w-3xl items-end gap-2">
-        <Avatar user={currentUser} />
-
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[22px] bg-[#f3f4f6] px-3 py-2">
-          <input
+        <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
+          <textarea
+            ref={textareaRef}
             id="shadow-comment-input"
             value={value}
             onChange={(event) => onChange(event.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             disabled={isBanned || sending}
+            rows={1}
             placeholder={isBanned ? 'You cannot comment on this story.' : 'Write a comment...'}
-            className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
+            className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
           />
+        </div>
 
+        {showSend ? (
           <button
             type="button"
-            onClick={onSticker}
-            className="hidden text-[#98a2b3]"
-            aria-label="Sticker"
-            disabled={isBanned}
-          >
-            <i className="fa-regular fa-note-sticky text-[17px]" />
-          </button>
-
-          <button
-            type="button"
+            onMouseDown={(event) => event.preventDefault()}
             onClick={onSend}
             disabled={!value.trim() || isBanned || sending}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
+            className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
             aria-label="Send comment"
           >
             <i className={`fa-solid ${sending ? 'fa-spinner animate-spin' : 'fa-paper-plane'} text-[13px]`} />
           </button>
-        </div>
+        ) : null}
       </div>
     </div>
   )
@@ -668,8 +694,18 @@ export default function CommentSection({
   variant = 'page',
   onCommentsChange,
 }) {
-  const [comments, setComments] = useState([])
-  const [sort, setSort] = useState('newest')
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
+const sortDragRef = useRef({
+  active: false,
+  pointerId: null,
+  startY: 0,
+  lastY: 0,
+  startTime: 0,
+})
+const [sortDragOffset, setSortDragOffset] = useState(0)
+const [sortDragging, setSortDragging] = useState(false)
+const [comments, setComments] = useState([])
+  const [sort, setSort] = useState('top')
   const [text, setText] = useState('')
   const [toast, setToast] = useState('')
   const [warningDialog, setWarningDialog] = useState(null)
@@ -683,6 +719,7 @@ export default function CommentSection({
   const [hasMore, setHasMore] = useState(false)
   const [totalComments, setTotalComments] = useState(0)
   const isModal = variant === 'modal'
+  const selectedSort = COMMENT_SORT_OPTIONS.find((option) => option.value === sort) || COMMENT_SORT_OPTIONS[0]
   const currentUser = getCurrentUser()
   const token = getReaderToken()
 
@@ -1047,46 +1084,161 @@ export default function CommentSection({
   }
 
   const handleLoadMore = () => {
-    if (loadingMore || !hasMore) return
-    fetchComments(page + 1, true)
+  if (loadingMore || !hasMore) return
+  fetchComments(page + 1, true)
+}
+
+const resetSortDrag = () => {
+  sortDragRef.current.active = false
+  sortDragRef.current.pointerId = null
+  setSortDragging(false)
+  setSortDragOffset(0)
+}
+
+const handleSortDragStart = (event) => {
+  if (!event.isPrimary) return
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+
+  sortDragRef.current = {
+    active: true,
+    pointerId: event.pointerId,
+    startY: event.clientY,
+    lastY: event.clientY,
+    startTime: performance.now(),
   }
 
-  return (
+  setSortDragging(true)
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+const handleSortDragMove = (event) => {
+  const drag = sortDragRef.current
+
+  if (!drag.active || drag.pointerId !== event.pointerId) return
+
+  drag.lastY = event.clientY
+
+  const distance = Math.max(0, event.clientY - drag.startY)
+
+  setSortDragOffset(
+    Math.min(distance, window.innerHeight * 0.45)
+  )
+}
+
+const handleSortDragEnd = (event) => {
+  const drag = sortDragRef.current
+
+  if (!drag.active || drag.pointerId !== event.pointerId) return
+
+  drag.lastY = event.clientY
+
+  const distance = Math.max(0, drag.lastY - drag.startY)
+  const elapsed = Math.max(1, performance.now() - drag.startTime)
+  const velocity = distance / elapsed
+
+  drag.active = false
+  drag.pointerId = null
+  setSortDragging(false)
+  setSortDragOffset(0)
+
+  if (distance >= 60 || (distance >= 24 && velocity >= 0.55)) {
+    setSortMenuOpen(false)
+  }
+}
+
+const handleSortDragCancel = (event) => {
+  const drag = sortDragRef.current
+
+  if (!drag.active) return
+  if (drag.pointerId !== event.pointerId) return
+
+  resetSortDrag()
+}
+
+return (
     <section className={`${isModal ? 'relative flex h-full flex-col bg-white' : 'min-h-screen bg-white pb-[84px]'}`}>
-      <div className="shrink-0 border-b border-[#eef1f5] bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[17px] font-black text-[#111827]">All Comments</h2>
-            <p className="mt-0.5 text-[12px] font-semibold text-[#98a2b3]">
-              {loading ? 'Loading comments...' : totalComments ? `${totalComments} comments` : 'No comments yet'}
-            </p>
-          </div>
+     <div className="relative z-10 shrink-0 bg-white px-4 pb-1 pt-0">
+  <div className="mx-auto flex max-w-3xl items-center">
+    <button
+      type="button"
+      onClick={() => setSortMenuOpen(true)}
+      className="flex items-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+    >
+      <span>{selectedSort.label}</span>
+      <i className="fa-solid fa-chevron-down text-[11px]" />
+    </button>
+  </div>
+</div>
 
-          <div className="rounded-full bg-[#f5f3fa] p-1">
-            <button
-              type="button"
-              onClick={() => setSort('newest')}
-              className={`rounded-full px-3 py-1.5 text-[12px] font-black ${
-                sort === 'newest' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#98a2b3]'
-              }`}
-            >
-              Newest
-            </button>
-            <button
-              type="button"
-              onClick={() => setSort('top')}
-              className={`rounded-full px-3 py-1.5 text-[12px] font-black ${
-                sort === 'top' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#98a2b3]'
-              }`}
-            >
-              Top
-            </button>
-          </div>
+      {sortMenuOpen ? (
+  <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/35 px-0">
+          <button
+            type="button"
+            onClick={() => setSortMenuOpen(false)}
+            className="absolute inset-0"
+            aria-label="Close comment filter"
+          />
+
+          <section
+  className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-5 pb-5 pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]"
+  style={{
+    transform: `translateY(${sortDragOffset}px)`,
+    transition: sortDragging
+      ? 'none'
+      : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+    willChange: 'transform',
+  }}
+>
+  <div
+    role="presentation"
+    onPointerDown={handleSortDragStart}
+    onPointerMove={handleSortDragMove}
+    onPointerUp={handleSortDragEnd}
+    onPointerCancel={handleSortDragCancel}
+    onLostPointerCapture={handleSortDragCancel}
+    className="-mx-5 -mt-4 flex h-14 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+  >
+    <div className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+  </div>
+
+  <div className="space-y-1">
+              {COMMENT_SORT_OPTIONS.map((option) => {
+                const active = sort === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setSort(option.value)
+                      setSortMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 bg-transparent px-3 py-3 text-left active:scale-[0.995]"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-normal text-[#111827]">
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[#667085]">
+                        {option.description}
+                      </span>
+                    </span>
+
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                      active ? 'border-[#111827] bg-[#111827]' : 'border-[#d0d5dd] bg-white'
+                    }`}>
+                      {active ? <i className="fa-solid fa-check text-[10px] text-white" /> : null}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
         </div>
-      </div>
+      ) : null}
 
-      <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto' : 'mx-auto max-w-3xl divide-y divide-[#eef1f5]'}`}>
-        <div className="mx-auto max-w-3xl divide-y divide-[#eef1f5]">
+      <div className={`${isModal ? 'min-h-0 flex-1 overflow-y-auto' : 'mx-auto max-w-3xl'}`}>
+  <div className="mx-auto max-w-3xl">
           {loading && !sortedComments.length ? (
             <div className="px-4 py-4">
               {Array.from({ length: 5 }).map((_, index) => (
