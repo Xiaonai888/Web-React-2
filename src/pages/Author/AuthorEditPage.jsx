@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-
+import { useLocation, useNavigate } from 'react-router-dom'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -24,6 +23,9 @@ function normalizeUsername(value) {
 
 export default function AuthorEditPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo =
+  location.state?.returnTo || '/author/page-settings'
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -129,7 +131,7 @@ export default function AuthorEditPage() {
 
       setMessage('Author page updated.')
       window.setTimeout(() => {
-        navigate('/author/dashboard', { replace: true })
+        navigate(returnTo, { replace: true })
       }, 700)
     } catch (error) {
       setMessage(error.message || 'Failed to update author page')
@@ -144,7 +146,7 @@ export default function AuthorEditPage() {
   <div className="mx-auto flex h-12 max-w-[680px] items-center justify-between px-4">
     <button
       type="button"
-      onClick={() => navigate('/author/page-settings', { replace: true })}
+      onClick={() => navigate(returnTo, { replace: true })}
       className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] active:scale-95"
     >
       <i className="fa-solid fa-chevron-left text-[13px]" />
