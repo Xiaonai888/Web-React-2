@@ -1,5 +1,20 @@
 import { useMemo, useState } from 'react'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+function getReaderToken() {
+  return (
+    sessionStorage.getItem('shadow_reader_token') ||
+    localStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
 const DESTINATIONS = [
   {
     key: 'feed',
@@ -177,13 +192,14 @@ function ChoiceSheet({ title, subtitle, options, value, onChoose, onBack }) {
   )
 }
 
-export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
+export default function EchoShareSheet({ open, story, episode, onClose, onEchoed }) {
   const [postText, setPostText] = useState('')
   const [message, setMessage] = useState('')
   const [destination, setDestination] = useState('feed')
   const [audience, setAudience] = useState('public')
   const [activePanel, setActivePanel] = useState('')
   const [selectedReaders, setSelectedReaders] = useState([])
+  const [sending, setSending] = useState(false)
   const user = useMemo(() => getStoredUser(), [])
   const storyLink = useMemo(() => getStoryLink(story), [story])
   const authorName = getAuthorName(story)
@@ -230,36 +246,76 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
     setMessage('Tag reader is selected for the next update.')
   }
 
-  const handleEchoNow = () => {
-    if (!story?.id) {
-      setMessage('Story is not ready yet.')
+  const handleEchoNow = async () => {
+    if (!story?.id || !episode?.id) {
+      setMessage('Episode is not ready yet.')
       return
     }
 
-    const post = {
-      id: getId(),
-      type: 'echo',
-      story_id: story.id,
-      story_title: story.title || 'Untitled Story',
-      story_cover_url: story.cover_url || '',
-      story_author_name: authorName,
-      story_genre: story.main_genre || 'Story',
-      echo_text: postText.trim(),
-      destination,
-      destination_label: destinationItem.title,
-      audience,
-      audience_label: audienceItem.title,
-      selected_readers: selectedReaders,
-      user_name: displayName,
-      created_at: new Date().toISOString(),
+    const token = getReaderToken()
+
+    if (!token) {
+      setMessage('Please log in before echoing.')
+      return
     }
 
-    saveEchoPost(post)
-    setPostText('')
-    setMessage('')
-    setSelectedReaders([])
-    onEchoed?.(post)
-    onClose()
+    try {
+      setSending(true)
+      setMessage('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/echoes/episode/${episode.id}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            echo_text: postText.trim(),
+            destination,
+            audience,
+          }),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to echo episode')
+      }
+
+      const post = {
+        id: data.echo?.id || getId(),
+        type: 'echo',
+        story_id: story.id,
+        episode_id: episode.id,
+        story_title: story.title || 'Untitled Story',
+        episode_title: episode.title || '',
+        story_cover_url: story.cover_url || '',
+        story_author_name: authorName,
+        story_genre: story.main_genre || 'Story',
+        echo_text: postText.trim(),
+        destination,
+        destination_label: destinationItem.title,
+        audience,
+        audience_label: audienceItem.title,
+        selected_readers: selectedReaders,
+        user_name: displayName,
+        created_at: data.echo?.created_at || new Date().toISOString(),
+      }
+
+      saveEchoPost(post)
+      setPostText('')
+      setMessage('')
+      setSelectedReaders([])
+      onEchoed?.(data.echo || post)
+      onClose()
+    } catch (error) {
+      setMessage(error.message || 'Failed to echo episode.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -322,9 +378,10 @@ export default function EchoShareSheet({ open, story, onClose, onEchoed }) {
             <button
               type="button"
               onClick={handleEchoNow}
-              className="h-11 rounded-[13px] bg-[#111827] px-5 text-[15px] font-black text-white active:scale-95"
+              disabled={sending}
+              className="h-11 rounded-[13px] bg-[#111827] px-5 text-[15px] font-black text-white active:scale-95 disabled:opacity-60"
             >
-              Echo now
+              {sending ? 'Echoing...' : 'Echo now'}
             </button>
           </div>
         </div>
