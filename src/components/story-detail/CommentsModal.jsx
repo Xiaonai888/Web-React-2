@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CommentSection from '../comments/CommentSection'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 function getPointerY(event) {
   if (event.touches?.length) return event.touches[0].clientY
@@ -15,14 +23,16 @@ export default function CommentsModal({
   onClose,
   onCommentChanged,
 }) {
+  const navigate = useNavigate()
   const sheetRef = useRef(null)
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
   const draggingRef = useRef(false)
   const [dragOffset, setDragOffset] = useState(0)
+  const [episodeEchoTotal, setEpisodeEchoTotal] = useState(0)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return undefined
 
     setDragOffset(0)
     document.body.style.overflow = 'hidden'
@@ -32,37 +42,127 @@ export default function CommentsModal({
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open || targetType !== 'episode' || !targetId) {
+      setEpisodeEchoTotal(0)
+      return undefined
+    }
+
+    let ignore = false
+
+    async function loadEpisodeEchoTotal() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/echoes/episode/${targetId}?page=1&limit=1`
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!ignore && response.ok && data.ok !== false) {
+          setEpisodeEchoTotal(Number(data.total || 0))
+        }
+      } catch {
+        if (!ignore) setEpisodeEchoTotal(0)
+      }
+    }
+
+    loadEpisodeEchoTotal()
+
+    return () => {
+      ignore = true
+    }
+  }, [open, targetId, targetType])
+
   if (!open) return null
 
-  const handleDragStart = (event) => {
-  draggingRef.current = true
-  startYRef.current = event.clientY
-  currentYRef.current = event.clientY
-  event.currentTarget.setPointerCapture?.(event.pointerId)
-}
+  const totalLikes = Number(
+    story?.total_likes ||
+      story?.like_count ||
+      story?.likes_count ||
+      0
+  )
 
-const handleDragMove = (event) => {
-  if (!draggingRef.current) return
+  const totalComments = Number(
+    story?.total_comments ||
+      story?.comment_count ||
+      story?.comments_count ||
+      0
+  )
 
-  currentYRef.current = event.clientY
-  const nextOffset = Math.max(0, currentYRef.current - startYRef.current)
+  const totalEcho =
+    targetType === 'episode'
+      ? episodeEchoTotal
+      : Number(
+          story?.total_echoes ||
+            story?.echo_count ||
+            story?.echoes_count ||
+            story?.total_shares ||
+            story?.share_count ||
+            story?.shares_count ||
+            0
+        )
 
-  setDragOffset(nextOffset)
-}
+  const handleOpenEpisodeReactions = () => {
+    if (targetType !== 'episode' || !story?.id || !targetId) return
 
-const handleDragEnd = () => {
-  if (!draggingRef.current) return
+    sessionStorage.setItem(
+      'shadow_reopen_episode_comments',
+      `${story.id}:${targetId}`
+    )
 
-  const distance = Math.max(0, currentYRef.current - startYRef.current)
-  draggingRef.current = false
-
-  if (distance > 70) {
     onClose()
-    return
+    navigate(`/story/${story.id}/episode/${targetId}/reactions`)
   }
 
-  setDragOffset(0)
-}
+  const handleOpenEpisodeEchoes = () => {
+    if (targetType !== 'episode' || !story?.id || !targetId) return
+
+    sessionStorage.setItem(
+      'shadow_reopen_episode_comments',
+      `${story.id}:${targetId}`
+    )
+
+    onClose()
+    navigate(`/story/${story.id}/episode/${targetId}/echoes`)
+  }
+
+  const handleDragStart = (event) => {
+    draggingRef.current = true
+    startYRef.current = getPointerY(event)
+    currentYRef.current = getPointerY(event)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleDragMove = (event) => {
+    if (!draggingRef.current) return
+
+    currentYRef.current = getPointerY(event)
+    const nextOffset = Math.max(
+      0,
+      currentYRef.current - startYRef.current
+    )
+
+    setDragOffset(nextOffset)
+  }
+
+  const handleDragEnd = () => {
+    if (!draggingRef.current) return
+
+    const distance = Math.max(
+      0,
+      currentYRef.current - startYRef.current
+    )
+
+    draggingRef.current = false
+
+    if (distance > 70) {
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
+  }
+
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4">
       <button
@@ -74,44 +174,58 @@ const handleDragEnd = () => {
 
       <section
         ref={sheetRef}
-        className="relative flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[82vh] sm:rounded-[28px]"
+        className="relative flex h-[calc(100vh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100vh-24px)] sm:rounded-[28px]"
         style={{ transform: `translateY(${dragOffset}px)` }}
       >
         <div
-  role="presentation"
-  onPointerDown={handleDragStart}
-  onPointerMove={handleDragMove}
-  onPointerUp={handleDragEnd}
-  onPointerCancel={handleDragEnd}
-  className="shrink-0 cursor-grab bg-white px-4 pb-2 pt-3"
-  style={{ touchAction: 'none' }}
->
-          <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-        </div>
+          role="presentation"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          className={`shrink-0 cursor-grab bg-white px-4 ${
+            targetType === 'story' ? 'h-6' : 'pt-2.5 pb-0'
+          }`}
+          style={{ touchAction: 'none' }}
+        />
 
-        <header className="shrink-0 border-b border-[#eef1f5] bg-white px-4 pb-3">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <div className="h-10 w-10" />
+        {targetType !== 'story' ? (
+          <header className="shrink-0 bg-white px-4 pb-4">
+            <div className="grid grid-cols-3 items-center gap-2 text-center">
+              <button
+                type="button"
+                onClick={handleOpenEpisodeReactions}
+                className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+                aria-label="View people who reacted"
+              >
+                <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
+                <span>{totalLikes.toLocaleString()}</span>
+              </button>
 
-            <div className="min-w-0 flex-1 px-2 text-center">
-              <h2 className="text-[17px] font-black text-[#111827]">Comments</h2>
-              <p className="line-clamp-1 text-[11px] font-semibold text-[#98a2b3]">
-                {title || story?.title || 'Comments'}
-              </p>
+              <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
+                {totalComments.toLocaleString()} comments
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenEpisodeEchoes}
+                className="text-[14px] font-normal text-[#111827] active:scale-95"
+                aria-label="View people who echoed"
+              >
+                {totalEcho.toLocaleString()} echo
+              </button>
             </div>
-
-            <div className="h-10 w-10" />
-          </div>
-        </header>
+          </header>
+        ) : null}
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <CommentSection
-  targetType={targetType}
-  targetId={targetId || story?.id}
-  story={story}
-  variant="modal"
-  onCommentsChange={onCommentChanged}
-/>
+            targetType={targetType}
+            targetId={targetId || story?.id}
+            story={story}
+            variant="modal"
+            onCommentsChange={onCommentChanged}
+          />
         </div>
       </section>
     </div>
