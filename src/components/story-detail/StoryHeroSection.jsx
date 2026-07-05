@@ -208,20 +208,20 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
             </div>
 
             {slides.length > 1 ? (
-              <div className="mb-1 flex shrink-0 items-center justify-end gap-1.5">
-                {slides.map((slide, index) => (
-                  <button
-                    key={slide.id || slide.image_url || index}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    className={`h-2.5 rounded-full transition-all ${
-                      activeIndex === index ? 'w-7 bg-white' : 'w-2.5 bg-white/55'
-                    }`}
-                    aria-label={`Show slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-            ) : null}
+  <div className="mb-1 flex shrink-0 items-center justify-end gap-1">
+    {slides.map((slide, index) => (
+      <button
+        key={slide.id || slide.image_url || index}
+        type="button"
+        onClick={() => setActiveIndex(index)}
+        className={`h-1.5 rounded-full transition-all ${
+          activeIndex === index ? 'w-4 bg-white' : 'w-1.5 bg-white/55'
+        }`}
+        aria-label={`Show slide ${index + 1}`}
+      />
+    ))}
+  </div>
+) : null}
           </div>
         </div>
       </div>
