@@ -89,6 +89,7 @@ pageCount: product.page_count || '',
 accessRule: product.access_rule || 'Download after payment',
     
     createdAt: product.created_at,
+updatedAt: product.updated_at || product.updatedAt || product.created_at,
   }
 }
 
@@ -560,22 +561,37 @@ function FormDivider({ title }) {
 
 function EmptyState({ onAddProduct }) {
   return (
-    <div className="overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
-      <div className="bg-gradient-to-br from-[#f8f7ff] via-white to-[#fff8e6] px-5 py-6 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-          <i className="fa-solid fa-store text-[22px]" />
-        </div>
-        <h3 className="text-[18px] font-black text-[#111827]">Start selling from your author page</h3>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-          Add paper books, PDFs, or pre-orders so readers can discover products from your page.
-        </p>
-        <button
-          type="button"
-          onClick={onAddProduct}
-          className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-black text-white shadow-sm active:scale-[0.98]"
-        >
-          Add your first product
-        </button>
+    <div className="rounded-[22px] bg-gradient-to-br from-[#f8f5ff] via-white to-[#fff8e8] px-5 py-7 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f1ebff] text-[#7c5cff] shadow-[0_10px_26px_rgba(124,91,255,0.16)] ring-1 ring-white">
+        <i className="fa-solid fa-store text-[22px]" />
+      </div>
+
+      <h3 className="mt-4 text-[17px] font-bold leading-6 text-[#2d2766]">
+        Create your first product
+      </h3>
+
+      <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-normal leading-5 text-[#7c7da6]">
+        Add a book or PDF and start selling from your author page.
+      </p>
+
+      <button
+        type="button"
+        onClick={onAddProduct}
+        className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] px-6 text-[13px] font-normal text-white shadow-[0_12px_26px_rgba(124,91,255,0.28)] active:scale-[0.97]"
+      >
+        <i className="fa-solid fa-plus text-[11px]" />
+        Add product
+      </button>
+
+      <div className="mt-4 flex items-center justify-center gap-2">
+        {['Book', 'PDF', 'Pre-order'].map((item) => (
+          <span
+            key={item}
+            className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-normal text-[#7c7da6] shadow-sm ring-1 ring-[#ece7ff]"
+          >
+            {item}
+          </span>
+        ))}
       </div>
     </div>
   )
@@ -833,14 +849,17 @@ async function reorderStoreCategories(categoryIds) {
 
 function StatCard({ label, value, icon }) {
   return (
-    <div className="rounded-[18px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="text-[18px] font-black text-[#111827]">{value}</div>
-          <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">{label}</div>
+    <div className="relative overflow-hidden rounded-[10px] bg-white/75 p-3.5 shadow-[0_14px_34px_rgba(124,91,255,0.12)] ring-1 ring-white/80 backdrop-blur">
+      <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#ede9fe]/70 blur-2xl" />
+
+      <div className="relative flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3edff] text-[#7c5cff] shadow-[0_10px_24px_rgba(124,91,255,0.18)] ring-1 ring-white/80">
+          <i className={`fa-solid ${icon} text-[14px]`} />
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-          <i className={`fa-solid ${icon} text-[13px]`} />
+
+        <div className="min-w-0">
+          <div className="text-[20px] font-black leading-6 text-[#2d2766]">{value}</div>
+          <div className="mt-1 text-[12px] font-semibold text-[#7c7da6]">{label}</div>
         </div>
       </div>
     </div>
@@ -920,6 +939,104 @@ function OrderHistoryRow({ order, onMarkPreparing, preparingLoading }) {
   )
 }
 
+function readStoredJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || sessionStorage.getItem(key) || 'null')
+  } catch {
+    return null
+  }
+}
+
+function getAuthorMenuProfile() {
+  const authorPage = readStoredJson('shadow_author_page') || {}
+  const readerUser = readStoredJson('shadow_reader_user') || {}
+
+  const name =
+    authorPage.page_name ||
+    authorPage.name ||
+    readerUser.name ||
+    readerUser.username ||
+    'Author'
+
+  const avatarUrl =
+    authorPage.avatar_url ||
+    authorPage.logo_url ||
+    readerUser.avatar_url ||
+    ''
+
+  return {
+    name,
+    avatarUrl,
+    letter: String(name || 'A').slice(0, 1).toUpperCase(),
+  }
+}
+
+function AuthorStoreMenuSheet({ open, onClose, onSwitchProfile, onFinance, onSettings }) {
+  if (!open) return null
+
+  const profile = getAuthorMenuProfile()
+
+  return (
+    <div className="fixed inset-0 z-[400] bg-black/25">
+      <button
+        type="button"
+        aria-label="Close menu"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
+
+      <aside className="relative h-full w-[82%] max-w-[340px] bg-white px-4 py-4 shadow-2xl">
+        <div className="text-[14px] font-black text-[#111827]">Author Menu</div>
+
+        <button
+          type="button"
+          onClick={onSwitchProfile}
+          className="mt-6 flex w-full items-center gap-3 rounded-2xl text-left active:opacity-70"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[16px] font-black text-[#111827] ring-1 ring-black/10">
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
+            ) : (
+              profile.letter
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <div className="line-clamp-1 text-[14px] font-black text-[#111827]">{profile.name}</div>
+            <div className="mt-0.5 text-[11px] font-semibold text-[#8b93a1]">Switch Profile</div>
+          </div>
+        </button>
+
+        <div className="mt-8 space-y-2">
+          <button
+            type="button"
+            onClick={onFinance}
+            className="flex h-12 w-full items-center gap-4 rounded-2xl px-1 text-left text-[14px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+          >
+            <i className="fa-solid fa-wallet w-7 text-center text-[15px]" />
+            Finance
+          </button>
+
+          <button
+            type="button"
+            onClick={onSettings}
+            className="flex h-12 w-full items-center gap-4 rounded-2xl px-1 text-left text-[14px] font-semibold text-[#111827] active:bg-[#f3f4f6]"
+          >
+            <i className="fa-solid fa-gear w-7 text-center text-[15px]" />
+            Settings
+          </button>
+        </div>
+
+        <div className="absolute bottom-8 left-0 right-0 text-center">
+          <div className="text-[18px] font-black tracking-[-0.05em] text-[#111827]">
+            SHADOW <span className="text-[14px]">☠</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
 function DeliveryLogo({ type }) {
   const src = type === 'jnt' ? '/assets/Icons/J%26T.svg' : '/assets/Icons/VET.svg'
   const label = type === 'jnt' ? 'J&T' : 'VET'
@@ -979,6 +1096,9 @@ function StoreManagerHome({
   orderActionLoadingId,
 }) {
   const [recordQuery, setRecordQuery] = useState('')
+const [recordFilterOpen, setRecordFilterOpen] = useState(false)
+const [recordFilter, setRecordFilter] = useState('newest')
+const [orderFilterOpen, setOrderFilterOpen] = useState(false)
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
 const [searchParams] = useSearchParams()
 const initialSettingsView = ['categories', 'delivery', 'telegram'].includes(searchParams.get('settings'))
@@ -1127,70 +1247,173 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 
  const visibleRecords = useMemo(() => {
   const query = recordQuery.trim().toLowerCase()
-  const records = filteredProducts.filter((product) => {
+
+  let records = filteredProducts.filter((product) => {
     if (activeType === 'Active') return product.status === 'Active'
     if (activeType === 'Draft') return product.status === 'Draft'
     return true
   })
 
-  if (!query) return records
+  if (query) {
+    records = records.filter((product) => {
+      return (
+        String(product.title || '').toLowerCase().includes(query) ||
+        String(product.id || '').toLowerCase().includes(query) ||
+        String(product.category || '').toLowerCase().includes(query) ||
+        String(product.status || '').toLowerCase().includes(query) ||
+        String(product.type || '').toLowerCase().includes(query)
+      )
+    })
+  }
 
-  return records.filter((product) => {
+  if (recordFilter === 'low_stock') {
+    records = records.filter((product) => {
+      const stock = Number(product.stock || 0)
+
+      return product.type === 'Book' && stock > 0 && stock <= 5
+    })
+  }
+
+  if (recordFilter === 'sold_out') {
+    records = records.filter((product) => {
+      return product.type === 'Book' && Number(product.stock || 0) <= 0
+    })
+  }
+
+  const getTime = (value) => {
+    const time = new Date(value || 0).getTime()
+    return Number.isFinite(time) ? time : 0
+  }
+
+  return [...records].sort((firstProduct, secondProduct) => {
+    if (recordFilter === 'oldest') {
+      return (
+        getTime(firstProduct.createdAt) -
+        getTime(secondProduct.createdAt)
+      )
+    }
+
+    if (recordFilter === 'recently_updated') {
+      return (
+        getTime(secondProduct.updatedAt) -
+        getTime(firstProduct.updatedAt)
+      )
+    }
+
     return (
-      product.title.toLowerCase().includes(query) ||
-      String(product.id).toLowerCase().includes(query) ||
-      product.category.toLowerCase().includes(query) ||
-      product.status.toLowerCase().includes(query) ||
-      product.type.toLowerCase().includes(query)
+      getTime(secondProduct.createdAt) -
+      getTime(firstProduct.createdAt)
     )
   })
-}, [filteredProducts, recordQuery, activeType])
+}, [filteredProducts, recordQuery, activeType, recordFilter])
 
   return (
     <main className="mx-auto max-w-[980px] px-0 py-0 sm:px-4 sm:py-4">
-      <section className="rounded-none bg-white p-4 shadow-none ring-0 sm:rounded-[26px] sm:shadow-sm sm:ring-1 sm:ring-black/5">
-        <div>
-          <h1 className="text-[21px] font-black leading-6 text-[#111827]">Store Manager</h1>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-            Sell books, PDFs, and pre-orders from your author page.
-          </p>
-        </div>
-
-       <div className="mt-4 grid grid-cols-2 gap-2">
-  <StatCard label="Orders" value={String(orderSummary.orders_count || 0)} icon="fa-receipt" />
-  <StatCard label="Net income" value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)} icon="fa-chart-line" />
-</div>
-
-{promotion ? (
-  <div className="mt-3 border-y border-[#fed7aa] bg-[#fff7ed] px-3.5 py-3 sm:rounded-[18px] sm:border sm:ring-0">
-    <div className="text-[12px] font-black text-[#111827]">🎉 0% Service Fee Promotion</div>
-    <div className="mt-1 text-[12px] font-bold text-[#9a3412]">
-      Book {promotion.book?.used || 0}/{promotion.book?.limit || 50} • PDF {promotion.pdf?.used || 0}/{promotion.pdf?.limit || 100}
-    </div>
-  </div>
-) : null}
-
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-0 sm:mt-4 sm:pb-1">
-          {['Records', 'Orders'].map((tab) => {
-            const active = activeTab === tab
-
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`h-9 shrink-0 rounded-full px-4 text-[12px] font-semibold transition active:scale-[0.98] ${
-                  active
-                    ? 'bg-[#f3f4f6] text-[#111827] shadow-sm'
-                    : 'bg-transparent text-[#8b93a1]'
-                }`}
-              >
-                {tab}
-              </button>
-            )
-          })}
+      <section
+        className="relative overflow-hidden rounded-none bg-[#f5f3ff] bg-cover bg-center bg-no-repeat px-4 pb-4 pt-[92px] shadow-none ring-0 sm:rounded-[28px] sm:px-5 sm:pb-5 sm:pt-[118px] sm:shadow-[0_24px_60px_rgba(124,91,255,0.16)] sm:ring-1 sm:ring-white/70"
+        style={{
+          backgroundImage: "url('/assets/Page%20Picture/Store%20Manager.png')",
+        }}
+      >
+        <div className="relative grid grid-cols-2 gap-3">
+          <StatCard
+            label="Orders"
+            value={String(orderSummary.orders_count || 0)}
+            icon="fa-bag-shopping"
+          />
+          <StatCard
+            label="Net income"
+            value={formatMoney(orderSummary.revenue || orderSummary.author_income || 0)}
+            icon="fa-chart-line"
+          />
         </div>
       </section>
+
+<section className="mx-4 mt-3 overflow-hidden rounded-[10px] bg-white/90 px-4 py-3 shadow-[0_14px_38px_rgba(124,91,255,0.10)] ring-1 ring-white/80 backdrop-blur sm:mx-0 sm:rounded-[10px]">
+  <div className="flex items-center gap-3">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3edff] text-[#7c5cff] shadow-[0_10px_24px_rgba(124,91,255,0.18)] ring-1 ring-white/80">
+      <i className="fa-solid fa-tags text-[14px]" />
+    </div>
+
+    <div className="min-w-0 flex-1">
+      <div className="text-[13px] font-black text-[#2d2766]">
+        0% Service Fee Promotion
+      </div>
+
+      <div className="mt-1 flex items-center gap-2 text-[13px] font-normal">
+        <span className="text-[#6f5cff]">
+          Book {promotion?.book?.used || 0}/{promotion?.book?.limit || 50}
+        </span>
+        <span className="text-[#a6a3c7]">•</span>
+        <span className="text-[#d6a52a]">
+          PDF {promotion?.pdf?.used || 0}/{promotion?.pdf?.limit || 100}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="h-2 overflow-hidden rounded-full bg-[#ebe7ff]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] transition-all duration-500"
+            style={{
+              width: `${Math.min(
+                100,
+                Math.max(
+                  0,
+                  (Number(promotion?.book?.used || 0) /
+                    Math.max(1, Number(promotion?.book?.limit || 50))) *
+                    100,
+                ),
+              )}%`,
+            }}
+          />
+        </div>
+
+        <div className="h-2 overflow-hidden rounded-full bg-[#fff1c7]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#d6a52a] to-[#f1c75b] transition-all duration-500"
+            style={{
+              width: `${Math.min(
+                100,
+                Math.max(
+                  0,
+                  (Number(promotion?.pdf?.used || 0) /
+                    Math.max(1, Number(promotion?.pdf?.limit || 100))) *
+                    100,
+                ),
+              )}%`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+
+    <i className="fa-solid fa-chevron-right shrink-0 text-[13px] text-[#9b98bd]" />
+  </div>
+</section>
+
+<section className="mx-4 mt-3 overflow-hidden rounded-full bg-white shadow-[0_14px_38px_rgba(124,91,255,0.10)] sm:mx-0">
+  <div className="grid grid-cols-2 gap-0">
+    {['Records', 'Orders'].map((tab) => {
+      const active = activeTab === tab
+
+      return (
+        <button
+          key={tab}
+          type="button"
+          onClick={() => setActiveTab(tab)}
+          className={`flex h-11 items-center justify-center gap-2 rounded-full text-[13px] font-normal transition active:scale-[0.98] ${
+            active
+              ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-white shadow-[0_12px_26px_rgba(124,91,255,0.32)]'
+              : 'bg-transparent text-[#7c7da6]'
+          }`}
+        >
+          <i className={`fa-solid ${tab === 'Records' ? 'fa-list-alt' : 'fa-bag-shopping'} text-[13px]`} />
+          {tab}
+        </button>
+      )
+    })}
+  </div>
+</section>
 
       {localError ? (
         <button
@@ -1203,73 +1426,164 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       ) : null}
 
       {activeTab === 'Records' ? (
-        <section className="mt-0 rounded-none bg-white shadow-none ring-0 sm:mt-4 sm:rounded-[24px] sm:shadow-sm sm:ring-1 sm:ring-black/5">
-          <div className="border-b border-[#eef0f4] px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-[17px] font-black text-[#111827]">Book Records</h2>
-                <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
-                  Search, filter, and manage your author store products.
-                </p>
-              </div>
-              <span className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[11px] font-black text-[#111827]">
-                {products.length} products
-              </span>
-            </div>
+  <section className="mx-4 mt-3 overflow-visible rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-white/80 sm:mx-0 sm:mt-4">
+    <div className="border-b border-white/70 px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-[18px] font-black text-[#2d2766]">
+            Book Records
+          </h2>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#9ca3af]" />
-                <input
-                  type="search"
-                  value={recordQuery}
-                  onChange={(event) => setRecordQuery(event.target.value)}
-                  placeholder="Search title, category, product ID..."
-                  className="h-11 w-full rounded-2xl border border-[#d9e1ec] bg-white pl-9 pr-3 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
-                />
-              </div>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7c7da6]">
+            Search, filter, and manage your author store products.
+          </p>
+        </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-                {TYPE_FILTERS.map((type) => {
-                  const active = activeType === type
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setActiveType(type)}
-                      className={`h-10 shrink-0 rounded-full px-4 text-[12px] font-black ${
-                        active
-                          ? 'bg-[#fff4cc] text-[#111827] ring-1 ring-[#f6b800]/35'
-                          : 'bg-[#f8fafc] text-[#6b7280] ring-1 ring-black/5'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+        <span className="shrink-0 rounded-[10px] bg-white/75 px-3 py-1.5 text-[11px] font-black text-[#6f5cff] shadow-[0_8px_20px_rgba(124,91,255,0.10)] ring-1 ring-white/80">
+          {products.length} products
+        </span>
+      </div>
 
-          <div className="px-4 py-2">
+      <div className="mt-4 flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#9b98bd]" />
+
+          <input
+            type="search"
+            value={recordQuery}
+            onChange={(event) => setRecordQuery(event.target.value)}
+            placeholder="Search title, category, product ID..."
+            className="h-11 w-full rounded-[10px] border border-[#ddd6fe] bg-white/85 pl-9 pr-3 text-[13px] font-bold text-[#2d2766] shadow-[0_8px_22px_rgba(124,91,255,0.07)] outline-none placeholder:text-[#aaa8c8] focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/10"
+          />
+        </div>
+
+        <div className="relative z-[130] shrink-0">
+  <button
+    type="button"
+    onClick={() => setRecordFilterOpen((current) => !current)}
+    className={`relative flex h-11 w-11 items-center justify-center rounded-[10px] bg-white shadow-[0_8px_22px_rgba(124,91,255,0.12)] ring-1 ring-[#e9e2ff] transition active:scale-[0.96] ${
+      recordFilterOpen
+        ? 'bg-[#f3edff] text-[#7c5cff]'
+        : 'text-[#7c5cff]'
+    }`}
+    aria-label="Filter product records"
+    aria-expanded={recordFilterOpen}
+  >
+    <i className="fa-solid fa-sliders text-[14px]" />
+
+    {recordFilter !== 'newest' ? (
+      <span className="absolute right-[6px] top-[6px] h-2 w-2 rounded-full bg-[#8b5cf6] ring-2 ring-white" />
+    ) : null}
+  </button>
+
+  {recordFilterOpen ? (
+    <>
+      <button
+        type="button"
+        aria-label="Close record filter"
+        onClick={() => setRecordFilterOpen(false)}
+        className="fixed inset-0 z-[129] cursor-default bg-transparent"
+      />
+
+      <div className="absolute right-0 top-[52px] z-[130] w-[190px] overflow-hidden rounded-[16px] bg-white p-2 shadow-[0_18px_45px_rgba(45,39,102,0.22)] ring-1 ring-[#e5ddff]">
+        {[
+          { value: 'newest', label: 'Newest first' },
+          { value: 'recently_updated', label: 'Recently updated' },
+          { value: 'low_stock', label: 'Low stock' },
+          { value: 'sold_out', label: 'Sold out' },
+          { value: 'oldest', label: 'Oldest first' },
+        ].map((item) => {
+          const active = recordFilter === item.value
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => {
+                setRecordFilter(item.value)
+                setRecordFilterOpen(false)
+              }}
+              className={`flex h-10 w-full items-center justify-between rounded-[11px] px-3 text-left text-[12px] font-normal transition ${
+                active
+                  ? 'bg-[#f1edff] text-[#6f4cff]'
+                  : 'text-[#555777] hover:bg-[#f8f7ff] active:bg-[#f3efff]'
+              }`}
+            >
+              <span>{item.label}</span>
+
+              {active ? (
+                <i className="fa-solid fa-check text-[11px] text-[#7c5cff]" />
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
+    </>
+  ) : null}
+</div>
+      </div>
+
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        {TYPE_FILTERS.map((type) => {
+          const active = activeType === type
+
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setActiveType(type)}
+              className={`flex h-8 min-w-[44px] shrink-0 items-center justify-center gap-1 rounded-full px-3 text-[11px] font-black transition active:scale-[0.97] ${
+                active
+                  ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-white shadow-[0_10px_24px_rgba(124,91,255,0.28)]'
+                  : 'bg-white/70 text-[#74759b] shadow-[0_7px_18px_rgba(124,91,255,0.07)] ring-1 ring-white/80'
+              }`}
+            >
+              <span>{type}</span>
+
+              {type === 'Active' ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-[#41c98e]" />
+              ) : null}
+
+              {type === 'Draft' ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-[#aaa8c8]" />
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+
+          <div className="bg-white/85 px-4 py-2">
   {loading ? (
-    <div className="rounded-[18px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#8b93a1] ring-1 ring-black/5">
-      Loading products...
+  <div className="rounded-[18px] bg-[#f8fafc] p-8 text-center text-[13px] font-bold text-[#8b93a1] ring-1 ring-black/5">
+    Loading products...
+  </div>
+) : products.length === 0 ? (
+  <EmptyState onAddProduct={onAddProduct} />
+) : visibleRecords.length ? (
+  <div className="overflow-hidden bg-white">
+    {visibleRecords.map((product) => (
+      <ProductRecordRow
+        key={product.id}
+        product={product}
+        onEdit={onEditProduct}
+        onDelete={onDeleteProduct}
+      />
+    ))}
+  </div>
+) : (
+  <div className="rounded-[18px] bg-white px-4 py-10 text-center ring-1 ring-[#ece7ff]">
+    <i className="fa-solid fa-magnifying-glass text-[20px] text-[#a78bfa]" />
+
+    <div className="mt-3 text-[14px] font-bold text-[#2d2766]">
+      No matching products
     </div>
-  ) : visibleRecords.length ? (
-    <div className="overflow-hidden bg-white">
-      {visibleRecords.map((product) => (
-  <ProductRecordRow
-  key={product.id}
-  product={product}
-  onEdit={onEditProduct}
-  onDelete={onDeleteProduct}
-/>
-))}
+
+    <div className="mt-1 text-[12px] font-normal text-[#8b86aa]">
+      Try another search or filter.
     </div>
-  ) : (
-    <EmptyState onAddProduct={onAddProduct} />
-  )}
+  </div>
+)}
 </div>
         </section>
       ) : null}
@@ -1744,49 +2058,16 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 
      {activeTab === 'Orders' ? (
   <section className="mt-4 space-y-3">
-    <div className="rounded-[24px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
+    <div className="mx-4 overflow-visible rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] px-4 py-4 shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-white/80 sm:mx-0">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[17px] font-black text-[#111827]">Order history</h2>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8b93a1]">
+          <h2 className="text-[18px] font-black text-[#2d2766]">Order history</h2>
+          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7c7da6]">
             Orders checked by admin from your author store.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onRefreshOrders}
-          disabled={orderLoading}
-          className="shrink-0 rounded-full bg-[#f3f4f6] px-3 py-2 text-[11px] font-black text-[#111827] disabled:opacity-40"
-        >
-          Refresh
-        </button>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-[#f3f4f6] p-1">
-        {[
-          { value: 'book', label: 'Book Orders' },
-          { value: 'pdf', label: 'PDF Orders' },
-        ].map((item) => {
-          const active = orderType === item.value
-
-          return (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => {
-                setOrderType(item.value)
-                setOrderPage(1)
-                if (item.value === 'pdf') setOrderPrepareFilter('all')
-              }}
-              className={`h-10 rounded-xl text-[12px] font-black ${
-                active ? 'bg-white text-[#111827] shadow-sm' : 'text-[#6b7280]'
-              }`}
-            >
-              {item.label}
-            </button>
-          )
-        })}
+        
       </div>
 
       <form
@@ -1795,38 +2076,110 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
           setOrderPage(1)
           setOrderSearchQuery(orderSearchDraft.trim())
         }}
-        className="mt-3 flex flex-col gap-2 sm:flex-row"
+        className="mt-4 flex items-center gap-2"
       >
-        <input
-          type="search"
-          value={orderSearchDraft}
-          onChange={(event) => setOrderSearchDraft(event.target.value)}
-          placeholder="Search order ID, buyer name, phone..."
-          className="h-11 flex-1 rounded-2xl border border-[#d9e1ec] bg-white px-3.5 text-[13px] font-bold text-[#111827] outline-none focus:border-[#111827]"
-        />
+        <div className="relative min-w-0 flex-1">
+          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#9b98bd]" />
+          <input
+            type="search"
+            value={orderSearchDraft}
+            onChange={(event) => setOrderSearchDraft(event.target.value)}
+            placeholder="Search order ID, buyer name, phone..."
+            className="h-11 w-full rounded-[10px] border border-[#ddd6fe] bg-white/85 pl-9 pr-3 text-[13px] font-bold text-[#2d2766] shadow-[0_8px_22px_rgba(124,91,255,0.07)] outline-none placeholder:text-[#aaa8c8] focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/10"
+          />
+        </div>
 
-        {orderType === 'book' ? (
-          <select
-            value={orderPrepareFilter}
-            onChange={(event) => {
-              setOrderPage(1)
-              setOrderPrepareFilter(event.target.value)
-            }}
-            className="h-11 rounded-2xl border border-[#d9e1ec] bg-white px-3 text-[13px] font-black text-[#111827] outline-none focus:border-[#111827]"
+        <div className="relative z-[120] shrink-0">
+          <button
+            type="button"
+            onClick={() => setOrderFilterOpen((current) => !current)}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-[10px] bg-white shadow-[0_8px_22px_rgba(124,91,255,0.12)] ring-1 ring-[#e9e2ff] transition active:scale-[0.96] ${
+              orderFilterOpen ? 'bg-[#f3edff] text-[#7c5cff]' : 'text-[#8b86aa]'
+            }`}
+            aria-label="Filter orders"
+            aria-expanded={orderFilterOpen}
           >
-            <option value="all">All</option>
-            <option value="to_prepare">To prepare</option>
-            <option value="preparing">Preparing</option>
-          </select>
-        ) : null}
+            <i className="fa-solid fa-sliders text-[14px]" />
 
-        <button
-          type="submit"
-          className="h-11 rounded-2xl bg-[#111827] px-5 text-[13px] font-black text-white active:scale-[0.98]"
-        >
-          Search
-        </button>
+            {orderPrepareFilter !== 'all' ? (
+              <span className="absolute right-[6px] top-[6px] h-2 w-2 rounded-full bg-[#8b5cf6] ring-2 ring-white" />
+            ) : null}
+          </button>
+
+          {orderFilterOpen ? (
+            <>
+              <button
+                type="button"
+                aria-label="Close order filter"
+                onClick={() => setOrderFilterOpen(false)}
+                className="fixed inset-0 z-[119] cursor-default bg-transparent"
+              />
+
+              <div className="absolute right-0 top-[52px] z-[120] w-[176px] overflow-hidden rounded-[16px] bg-white p-2 shadow-[0_18px_45px_rgba(45,39,102,0.22)] ring-1 ring-[#e5ddff]">
+                {[
+                  { value: 'all', label: 'All' },
+                  { value: 'to_prepare', label: 'To prepare' },
+                  { value: 'preparing', label: 'Preparing' },
+                ].map((item) => {
+                  const active = orderPrepareFilter === item.value
+
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => {
+                        setOrderPrepareFilter(item.value)
+                        setOrderPage(1)
+                        setOrderFilterOpen(false)
+                      }}
+                      className={`flex h-10 w-full items-center justify-between rounded-[11px] px-3 text-left text-[12px] font-black transition ${
+                        active
+                          ? 'bg-[#f1edff] text-[#6f4cff]'
+                          : 'text-[#555777] hover:bg-[#f8f7ff] active:bg-[#f3efff]'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+
+                      {active ? (
+                        <i className="fa-solid fa-check text-[11px] text-[#7c5cff]" />
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          ) : null}
+        </div>
+        
       </form>
+
+      <div className="mt-3 flex gap-1.5">
+  {[
+    { value: 'all', label: 'All' },
+    { value: 'book', label: 'Book' },
+    { value: 'pdf', label: 'PDF' },
+  ].map((item) => {
+    const active = orderType === item.value
+
+    return (
+      <button
+        key={item.value}
+        type="button"
+        onClick={() => {
+          setOrderType(item.value)
+          setOrderPage(1)
+        }}
+        className={`flex h-8 min-w-[58px] flex-1 items-center justify-center rounded-full px-3 text-[11px] font-black transition active:scale-[0.97] ${
+          active
+            ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-white shadow-[0_8px_20px_rgba(124,91,255,0.24)]'
+            : 'bg-white/75 text-[#74759b] shadow-[0_7px_18px_rgba(124,91,255,0.07)] ring-1 ring-white/80'
+        }`}
+      >
+        {item.label}
+      </button>
+    )
+  })}
+</div>
     </div>
 
     {orderLoading ? (
@@ -1871,15 +2224,30 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         </div>
       </>
     ) : (
-      <div className="rounded-[28px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-          <i className="fa-solid fa-receipt text-[22px]" />
-        </div>
-        <h3 className="text-[17px] font-black text-[#111827]">No orders yet</h3>
-        <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-          Orders checked by admin will appear here.
-        </p>
-      </div>
+      <div className="rounded-[22px] bg-gradient-to-br from-[#f8f5ff] via-white to-[#fff8e8] px-5 py-8 text-center">
+  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f1ebff] text-[#7c5cff] shadow-[0_10px_26px_rgba(124,91,255,0.16)] ring-1 ring-white">
+    <i className="fa-solid fa-receipt text-[22px]" />
+  </div>
+
+  <h3 className="mt-4 text-[17px] font-bold leading-6 text-[#2d2766]">
+    No orders yet
+  </h3>
+
+  <p className="mx-auto mt-2 max-w-[280px] text-[12px] font-normal leading-5 text-[#7c7da6]">
+    New confirmed orders from your author store will appear here.
+  </p>
+
+  <div className="mt-4 flex items-center justify-center gap-2">
+    {['Book', 'PDF', 'Preparing'].map((item) => (
+      <span
+        key={item}
+        className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-normal text-[#7c7da6] shadow-sm ring-1 ring-[#ece7ff]"
+      >
+        {item}
+      </span>
+    ))}
+  </div>
+</div>
     )}
   </section>
 ) : null}
@@ -2578,6 +2946,7 @@ accessRule,
 
 export default function AuthorStoreManagerPage() {
   const [promotion, setPromotion] = useState(null)
+  const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const navigate = useNavigate()
   const [mode, setMode] = useState('manager')
   const [editingProduct, setEditingProduct] = useState(null)
@@ -2610,7 +2979,7 @@ export default function AuthorStoreManagerPage() {
     total: 0,
     total_pages: 1,
   })
-  const [orderType, setOrderType] = useState('book')
+  const [orderType, setOrderType] = useState('all')
   const [orderPrepareFilter, setOrderPrepareFilter] = useState('all')
   const [orderSearchDraft, setOrderSearchDraft] = useState('')
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
@@ -2635,7 +3004,7 @@ export default function AuthorStoreManagerPage() {
         page: orderPage,
         limit: ORDER_REPORT_LIMIT,
         type: orderType,
-        prepareStatus: orderType === 'book' ? orderPrepareFilter : 'all',
+        prepareStatus: orderPrepareFilter,
         q: orderSearchQuery,
       })
       const summary = report.summary || {}
@@ -3019,23 +3388,38 @@ const saveCategoryOrder = async () => {
 
   return (
     <div className={`min-h-screen bg-[#f3f4f6] ${mode === 'form' ? 'pb-0' : 'pb-[92px]'}`}>
+<AuthorStoreMenuSheet
+  open={authorMenuOpen}
+  onClose={() => setAuthorMenuOpen(false)}
+  onSwitchProfile={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page')
+  }}
+  onFinance={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page/finance')
+  }}
+  onSettings={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page-settings')
+  }}
+/>
       <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
-            type="button"
-            onClick={() => {
-              if (mode === 'form') {
-                closeProductForm()
-                return
-              }
+  type="button"
+  onClick={() => {
+    if (mode === 'form') {
+      closeProductForm()
+      return
+    }
 
-              navigate('/author/page')
-            }}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-          >
-            <i className="fa-solid fa-chevron-left text-[16px]" />
-          </button>
-
+    setAuthorMenuOpen(true)
+  }}
+  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+>
+  <i className={`fa-solid ${mode === 'form' ? 'fa-chevron-left' : 'fa-bars'} text-[16px]`} />
+</button>
           <div className="text-[16px] font-black text-[#111827]">
             {mode === 'form' ? (editingProduct ? 'Edit Product' : 'Add Product') : 'Store'}
           </div>
