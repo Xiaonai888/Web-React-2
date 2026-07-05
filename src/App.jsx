@@ -938,7 +938,7 @@ const shouldShowOpeningAds =
   }
 />
 
-        
+        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
@@ -989,6 +989,7 @@ const shouldShowOpeningAds =
         <Route path="/author/trash" element={<AuthorTrashPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
+        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
   
  
       </Routes>
