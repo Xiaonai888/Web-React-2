@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheet from '../components/reader/EchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
+import GiftPopup from '../components/reader/GiftPopup'
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -16,6 +18,11 @@ function getReaderToken() {
 function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+function isUsableRouteId(value) {
+  const text = String(value ?? '').trim()
+  return Boolean(text && text !== 'undefined' && text !== 'null')
 }
 
 const REVIEW_READ_PROGRESS_PERCENT = 85
@@ -654,150 +661,6 @@ function GiftLineIcon({ className = '' }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
-}
-
-const GIFT_ITEMS = [
-  { key: 'candy', name: 'Candy', currency: 'coin', price: 10, image: '/assets/Gift/Candy.png' },
-  { key: 'flower', name: 'Flower', currency: 'coin', price: 100, image: '/assets/Gift/Flower.png' },
-  { key: 'coffee', name: 'Coffee', currency: 'diamond', price: 1, image: '/assets/Gift/Coffee.png' },
-  { key: 'magic_pen', name: 'Magic Pen', currency: 'diamond', price: 3, image: '/assets/Gift/Magic Pen.png' },
-  { key: 'gold_book', name: 'Gold Book', currency: 'diamond', price: 10, image: '/assets/Gift/Gold Book.png' },
-  { key: 'star', name: 'Shadow Star', currency: 'diamond', price: 30, image: '/assets/Gift/Star.png' },
-  { key: 'crown', name: 'Author Crown', currency: 'diamond', price: 100, image: '/assets/Gift/Crown.png' },
-  { key: 'rocket', name: 'Rocket', currency: 'diamond', price: 300, image: '/assets/Gift/Rocket.png' },
-]
-
-function GiftPopup({ open, onClose, onOpenGuide }) {
-  const [selectedKey, setSelectedKey] = useState('candy')
-  const [quantity, setQuantity] = useState(1)
-  const selectedGift = GIFT_ITEMS.find((item) => item.key === selectedKey) || GIFT_ITEMS[0]
-  const total = selectedGift.price * quantity
-  const currencyIcon = selectedGift.currency === 'coin' ? '/assets/Icons/Shadow Coin.svg' : '/assets/Icons/Diamond.svg'
-
-useEffect(() => {
-  if (!open) return
-
-  const scrollY = window.scrollY
-  const previousPosition = document.body.style.position
-  const previousTop = document.body.style.top
-  const previousWidth = document.body.style.width
-  const previousOverflow = document.body.style.overflow
-
-  document.body.style.position = 'fixed'
-  document.body.style.top = `-${scrollY}px`
-  document.body.style.width = '100%'
-  document.body.style.overflow = 'hidden'
-
-  return () => {
-    document.body.style.position = previousPosition
-    document.body.style.top = previousTop
-    document.body.style.width = previousWidth
-    document.body.style.overflow = previousOverflow
-    window.scrollTo(0, scrollY)
-  }
-}, [open])
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[190] flex items-end justify-center bg-black/45 sm:items-center">
-      <button type="button" aria-label="Close gift popup" onClick={onClose} className="absolute inset-0" />
-
-      <section className="relative w-full max-w-[480px] overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-        <div className="px-4 pb-3 pt-4">
-  <div className="flex items-start justify-between gap-3">
-    <div className="min-w-0">
-      <h2 className="text-[18px] font-bold text-[#111827]">Send a Gift</h2>
-      <p className="mt-0.5 text-[12px] font-normal text-[#98a2b3]">
-        Your support gives the author more motivation to keep writing.
-      </p>
-    </div>
-
-    <button
-      type="button"
-      className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#d0d5dd] text-[11px] font-bold text-white active:scale-95"
-      onClick={onOpenGuide}
-    >
-      ?
-    </button>
-  </div>
-</div>
-
-        <div className="mx-4 rounded-[10px] bg-[#fff1f5] px-3 py-3">
-  <div className="flex items-center justify-between text-[13px] font-normal text-[#98a2b3]">
-    <span>Monthly Gifts -</span>
-    <button type="button" className="flex items-center gap-1 active:scale-95">
-      <span>Top Fans</span>
-      <i className="fa-solid fa-chevron-right text-[10px]" />
-    </button>
-  </div>
-</div>
-
-        <div className="grid grid-cols-4 gap-2 px-4 py-4">
-          {GIFT_ITEMS.map((gift) => {
-            const active = selectedKey === gift.key
-            const icon = gift.currency === 'coin' ? '/assets/Icons/Shadow Coin.svg' : '/assets/Icons/Diamond.svg'
-
-            return (
-              <button
-                key={gift.key}
-                type="button"
-                onClick={() => setSelectedKey(gift.key)}
-                className={`rounded-[18px] border px-2 py-3 text-center active:scale-95 ${
-                  active ? 'border-[#ff3b5f] bg-[#fff1f5]' : 'border-[#eef1f5] bg-[#fafafa]'
-                }`}
-              >
-                <img src={gift.image} alt="" className="mx-auto h-14 w-14 object-contain" />
-                <span className="mt-1 block truncate text-[11px] font-normal text-[#111827]">{gift.name}</span>
-                <span className="mt-1 flex items-center justify-center gap-1 text-[11px] font-normal text-[#667085]">
-                  <img src={icon} alt="" className="h-3.5 w-3.5 object-contain" />
-                  {formatNumber(gift.price)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="flex items-center gap-3 px-4 pb-3 pt-5">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="flex items-center gap-1 text-[12px] font-bold text-[#667085]">
-              <img src="/assets/Icons/Shadow Coin.svg" alt="" className="h-4 w-4 object-contain" />
-              0
-            </span>
-
-            <span className="flex items-center gap-1 text-[12px] font-bold text-[#667085]">
-              <img src="/assets/Icons/Diamond.svg" alt="" className="h-4 w-4 object-contain" />
-              0
-            </span>
-          </div>
-
-          <div className="flex h-9 shrink-0 -translate-y-1.5 overflow-hidden rounded-full border border-[#ffb3c0] bg-white">
-  <div className="relative h-9 w-[64px] shrink-0 bg-white">
-  <select
-    value={quantity}
-    onChange={(event) => setQuantity(Number(event.target.value))}
-    className="h-9 w-full appearance-none border-0 bg-transparent pl-5 pr-7 text-[12px] font-bold text-[#111827] outline-none"
-  >
-    <option value={1}>1</option>
-    <option value={5}>5</option>
-    <option value={10}>10</option>
-  </select>
-
-  <i className="fa-solid fa-chevron-down pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[#b8beca]" />
-</div>
-
-  <button
-    type="button"
-    onClick={() => window.alert('Gift system is coming soon.')}
-    className="h-9 bg-[#ff3b5f] px-5 text-[12px] font-bold text-white active:scale-95"
-  >
-    Gift
-  </button>
-</div>
-        </div>
-      </section>
-    </div>
   )
 }
 
@@ -2585,9 +2448,22 @@ export default function ReaderPage() {
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
-  const [giftPopupOpen, setGiftPopupOpen] = useState(false)
+const [giftPopupOpen, setGiftPopupOpen] = useState(false)
+
+useEffect(() => {
+  const reopenKey = sessionStorage.getItem(
+    'shadow_reopen_episode_comments'
+  )
+
+  if (reopenKey !== `${storyId}:${episodeId}`) return
+
+  sessionStorage.removeItem('shadow_reopen_episode_comments')
+  setCommentsOpen(true)
+}, [storyId, episodeId])
+
 useEffect(() => {
   if (sessionStorage.getItem('shadow_reopen_gift_popup') !== '1') return
+
   sessionStorage.removeItem('shadow_reopen_gift_popup')
   setGiftPopupOpen(true)
 }, [])
@@ -2703,6 +2579,10 @@ useEffect(() => {
   }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
 
 async function loadReaderAdStatus() {
+  if (!isUsableRouteId(storyId) || !isUsableRouteId(episodeId)) {
+    return { ad_policy: null, advertisement: null }
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
     headers: readerAuthHeaders(),
   })
@@ -2737,6 +2617,13 @@ async function loadReaderAdStatus() {
       if (hasExpectedLockedPreview) {
         setStory(expectedStory)
         setEpisode(expectedEpisode)
+      }
+
+      if (!isUsableRouteId(storyId) || !isUsableRouteId(episodeId)) {
+        setLoading(false)
+        setReaderGateReady(true)
+        setMessage('Invalid reading link. Please open the episode from its story page.')
+        return
       }
 
       if (!getReaderToken()) {
@@ -3294,9 +3181,9 @@ return (
       <EchoShareSheet
   open={echoShareOpen}
   story={story}
+  episode={episode}
   onClose={() => setEchoShareOpen(false)}
 />
-
       <CommentsModal
   open={commentsOpen}
   story={story}
@@ -3310,10 +3197,20 @@ return (
 
       <GiftPopup
   open={giftPopupOpen}
+  storyId={storyId}
   onClose={() => setGiftPopupOpen(false)}
   onOpenGuide={() => {
     sessionStorage.setItem('shadow_reopen_gift_popup', '1')
     navigate('/gift-guide')
+  }}
+  onOpenTopFans={() => {
+    setGiftPopupOpen(false)
+    navigate(`/story/${storyId}/top-fans`, {
+      state: {
+        storyPreview: story,
+        from: `/story/${storyId}/episode/${episodeId}`,
+      },
+    })
   }}
 />
       {shouldShowReaderAd && !readerAdFinished ? (
@@ -3584,4 +3481,5 @@ onUnlock={handleLockedDiamondUnlock}
     </div>
   )
 }
+
 
