@@ -164,7 +164,17 @@ function ErrorBlock({ message, onBack }) {
   )
 }
 
-function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoading, isOwnerPage = false, onManagePage, onViewPage, onFollow }) {
+function StoryAuthorMiniCard({
+  authorPage,
+  giftTopFans = [],
+  following,
+  followerCount,
+  followLoading,
+  isOwnerPage = false,
+  onManagePage,
+  onViewPage,
+  onFollow,
+}) {
   if (!authorPage) return null
 
   const followers = Number(followerCount || authorPage.total_followers || 0)
@@ -173,28 +183,13 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
       ? `${(followers / 1000).toFixed(followers >= 10000 ? 0 : 1).replace(/\.0$/, '')}k followers`
       : `${followers} followers`
 
-  const topFans = (
-    authorPage.top_fans ||
-    authorPage.topFans ||
-    authorPage.top_fan_profiles ||
-    []
-  ).filter(Boolean).slice(0, 3)
+  const displayTopFans = Array.isArray(giftTopFans)
+    ? giftTopFans.slice(0, 3)
+    : []
 
-  const demoTopFans = [
-    { id: 'demo-profile-1', name: 'Top Fan 1' },
-    { id: 'demo-profile-2', name: 'Top Fan 2' },
-    { id: 'demo-profile-3', name: 'Top Fan 3' },
-  ]
-
-  const displayTopFans = topFans.length ? topFans : demoTopFans
-
-  const topFanCount = Number(
-    authorPage.top_fan_count ||
-    authorPage.topFansCount ||
-    authorPage.total_top_fans ||
-    topFans.length ||
-    0
-  )
+  const topFanCount = Array.isArray(giftTopFans)
+    ? giftTopFans.length
+    : 0
 
   const handleOpenPage = () => {
     if (typeof onViewPage === 'function') onViewPage()
@@ -250,39 +245,39 @@ function StoryAuthorMiniCard({ authorPage, following, followerCount, followLoadi
 </button>
       </div>
 
-     <div className="mt-5 -mx-1 flex min-h-[112px] items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4">
-        <div className="min-w-0 flex-1 pt-1">
-          <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
-            <span>Top Fans</span>
-            <span className="text-[#d99a00]">
-  {`${topFanCount} people in total`}
-</span>
-            <i className="fa-solid fa-chevron-right text-[9px] text-[#d99a00]" />
-          </div>
-
-          <div className="mt-3 flex items-center gap-1.5">
-  {displayTopFans.map((fan, index) => {
-    const avatar = fan.avatar_url || fan.avatar || fan.photo_url || ''
-    const name = fan.name || fan.username || 'Fan'
-
-    return (
-      <div
-        key={fan.id || fan.user_id || name || index}
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f2f3f6] text-[#aeb5c2] ring-1 ring-[#dfe3ea]"
-      >
-        {avatar ? (
-          <img src={avatar} alt={name} className="h-full w-full object-cover" />
-        ) : (
-          <i className="fa-regular fa-user text-[13px]" />
-        )}
+     {displayTopFans.length ? (
+  <div className="mt-5 -mx-1 flex min-h-[112px] items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4">
+    <div className="min-w-0 flex-1 pt-1">
+      <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
+        <span>Top Fans</span>
+        <span className="text-[#d99a00]">
+          {`${topFanCount} people in total`}
+        </span>
+        <i className="fa-solid fa-chevron-right text-[9px] text-[#d99a00]" />
       </div>
-    )
-  })}
-</div>
-        </div>
 
-      
+      <div className="mt-3 flex items-center gap-1.5">
+        {displayTopFans.map((fan, index) => {
+          const avatar = fan.avatar_url || fan.avatar || fan.photo_url || ''
+          const name = fan.name || fan.username || 'Fan'
+
+          return (
+            <div
+              key={fan.id || fan.user_id || name || index}
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f2f3f6] text-[#aeb5c2] ring-1 ring-[#dfe3ea]"
+            >
+              {avatar ? (
+                <img src={avatar} alt={name} className="h-full w-full object-cover" />
+              ) : (
+                <i className="fa-regular fa-user text-[13px]" />
+              )}
+            </div>
+          )
+        })}
       </div>
+    </div>
+  </div>
+) : null}
     </section>
   )
 }
@@ -302,6 +297,7 @@ function getStoredProgress(storyId, episodes) {
 
 export default function StoryDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id, storyId } = useParams()
   const realStoryId = storyId || id
 
@@ -310,7 +306,9 @@ export default function StoryDetailPage() {
   const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [episodeListOpen, setEpisodeListOpen] = useState(false)
+  const [episodeListOpen, setEpisodeListOpen] = useState(
+    () => Boolean(location.state?.reopenEpisodeList)
+  )
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [lockedEpisode, setLockedEpisode] = useState(null)
@@ -322,25 +320,62 @@ export default function StoryDetailPage() {
   const [authorFollowerCount, setAuthorFollowerCount] = useState(0)
   const [authorFollowLoading, setAuthorFollowLoading] = useState(false)
   const [authorIsOwnerPage, setAuthorIsOwnerPage] = useState(false)
-  const location = useLocation()
+  const [giftTopFans, setGiftTopFans] = useState([])
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [realStoryId])
 
   useEffect(() => {
-  if (!location.state?.reopenEpisodeList) return
+    let ignore = false
 
-  setEpisodeListOpen(true)
+    async function loadGiftTopFans() {
+      if (!realStoryId) {
+        setGiftTopFans([])
+        return
+      }
 
-  navigate(location.pathname, {
-    replace: true,
-    state: {
-      ...location.state,
-      reopenEpisodeList: false,
-    },
-  })
-}, [location.pathname, location.state, navigate])
+      setGiftTopFans([])
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/gifts/stories/${realStoryId}/top-fans?period=all_time&limit=100`
+        )
+
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load top fans')
+        }
+
+        if (!ignore) {
+          setGiftTopFans(Array.isArray(data.fans) ? data.fans : [])
+        }
+      } catch {
+        if (!ignore) setGiftTopFans([])
+      }
+    }
+
+    loadGiftTopFans()
+
+    return () => {
+      ignore = true
+    }
+  }, [realStoryId])
+
+  useLayoutEffect(() => {
+    if (!location.state?.reopenEpisodeList) return
+
+    setEpisodeListOpen(true)
+
+    navigate(location.pathname, {
+      replace: true,
+      state: {
+        ...location.state,
+        reopenEpisodeList: false,
+      },
+    })
+  }, [location.pathname, location.state, navigate])
 
   useEffect(() => {
     let ignore = false
@@ -707,6 +742,7 @@ export default function StoryDetailPage() {
 
         <StoryAuthorMiniCard
           authorPage={story.author_page}
+          giftTopFans={giftTopFans}
           following={authorFollowing}
           followerCount={authorFollowerCount}
           followLoading={authorFollowLoading}
