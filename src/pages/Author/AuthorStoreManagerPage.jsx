@@ -647,17 +647,25 @@ function ProductCard({ product }) {
 }
 
 function ProductRecordRow({ product, onEdit, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const priceText = product.salePrice || product.originalPrice || '0.00'
-  const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
+  const hasDiscount =
+    product.salePrice &&
+    product.originalPrice &&
+    product.salePrice !== product.originalPrice
   const isActive = product.status === 'Active'
   const isDraft = product.status === 'Draft'
 
   return (
     <article className="border-b border-[#eef0f4] px-0 py-3 last:border-b-0">
-  <div className="flex gap-3">
+      <div className="flex gap-3">
         <div className="h-[86px] w-[64px] shrink-0 overflow-hidden rounded-[12px] bg-[#f3f4f6] ring-1 ring-black/5">
           {product.coverUrl ? (
-            <img src={product.coverUrl} alt={product.title} className="h-full w-full object-cover" />
+            <img
+              src={product.coverUrl}
+              alt={product.title}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[#9ca3af]">
               <i className="fa-regular fa-image text-[18px]" />
@@ -671,24 +679,59 @@ function ProductRecordRow({ product, onEdit, onDelete }) {
               <h3 className="line-clamp-1 text-[13px] font-black text-[#111827]">
                 {product.title || 'Untitled product'}
               </h3>
-              <p className="mt-0.5 text-[10px] font-bold text-[#8b93a1]">ID: {product.id}</p>
+
+              <p className="mt-0.5 text-[10px] font-bold text-[#8b93a1]">
+                ID: {product.id}
+              </p>
             </div>
 
-            <div className="flex shrink-0 gap-1.5">
+            <div className={`relative shrink-0 ${menuOpen ? 'z-[150]' : ''}`}>
               <button
                 type="button"
-                onClick={() => onEdit(product)}
-                className="h-8 rounded-xl bg-[#fff4cc] px-3 text-[11px] font-black text-[#111827] active:scale-95"
+                onClick={() => setMenuOpen((current) => !current)}
+                className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-white text-[#7c5cff] shadow-[0_6px_16px_rgba(124,91,255,0.10)] ring-1 ring-[#e9e2ff] transition active:scale-95"
+                aria-label="Product options"
+                aria-expanded={menuOpen}
               >
-                Edit
+                <i className="fa-solid fa-ellipsis-vertical text-[13px]" />
               </button>
-              <button
-                type="button"
-                onClick={() => onDelete(product)}
-                className="h-8 rounded-xl bg-[#fff1f1] px-3 text-[11px] font-black text-[#e5484d] active:scale-95"
-              >
-                Delete
-              </button>
+
+              {menuOpen ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close product menu"
+                    onClick={() => setMenuOpen(false)}
+                    className="fixed inset-0 z-[149] cursor-default bg-transparent"
+                  />
+
+                  <div className="absolute right-0 top-[38px] z-[150] w-[130px] overflow-hidden rounded-[14px] bg-white p-1.5 shadow-[0_16px_38px_rgba(45,39,102,0.20)] ring-1 ring-[#e9e2ff]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onEdit(product)
+                      }}
+                      className="flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[12px] font-normal text-[#6f4cff] transition hover:bg-[#f3edff] active:bg-[#eee7ff]"
+                    >
+                      <i className="fa-regular fa-pen-to-square w-4 text-center text-[12px]" />
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onDelete(product)
+                      }}
+                      className="flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[12px] font-normal text-[#e5484d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e8]"
+                    >
+                      <i className="fa-regular fa-trash-can w-4 text-center text-[12px]" />
+                      Delete
+                    </button>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -696,23 +739,31 @@ function ProductRecordRow({ product, onEdit, onDelete }) {
             <span className="rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#6b7280] ring-1 ring-black/5">
               {product.category}
             </span>
+
             <span className="rounded-full bg-[#f8fafc] px-2 py-1 text-[10px] font-black text-[#111827] ring-1 ring-black/5">
               {product.type}
             </span>
-            <span className={`rounded-full px-2 py-1 text-[10px] font-black ${
-              isActive
-                ? 'bg-[#ecfdf3] text-[#027a48]'
-                : isDraft
-                  ? 'bg-[#f5f3ff] text-[#6b5cff]'
-                  : 'bg-[#f3f4f6] text-[#6b7280]'
-            }`}>
+
+            <span
+              className={`rounded-full px-2 py-1 text-[10px] font-black ${
+                isActive
+                  ? 'bg-[#ecfdf3] text-[#027a48]'
+                  : isDraft
+                    ? 'bg-[#f5f3ff] text-[#6b5cff]'
+                    : 'bg-[#f3f4f6] text-[#6b7280]'
+              }`}
+            >
               {product.status}
             </span>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-[#6b7280]">
             <span className="font-black text-[#111827]">${priceText}</span>
-            {hasDiscount ? <span className="line-through">${product.originalPrice}</span> : null}
+
+            {hasDiscount ? (
+              <span className="line-through">${product.originalPrice}</span>
+            ) : null}
+
             <span>
               {product.type === 'Book'
                 ? `${product.stock || 0} stock • ${product.condition}`
