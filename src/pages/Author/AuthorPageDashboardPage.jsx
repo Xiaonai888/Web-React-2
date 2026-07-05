@@ -712,7 +712,11 @@ export default function AuthorPageDashboardPage() {
                 <span>Author Page</span>
                 <button
                   type="button"
-                  onClick={() => navigate('/author/edit-page')}
+                 onClick={() =>
+  navigate('/author/edit-page', {
+    state: { returnTo: '/author/page/dashboard' },
+  })
+}
                   className="rounded-full bg-white/65 px-3 py-1 text-[#7c3aed] active:scale-95"
                 >
                   Set up your page
