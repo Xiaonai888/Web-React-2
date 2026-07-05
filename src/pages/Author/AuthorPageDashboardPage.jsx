@@ -958,7 +958,11 @@ export default function AuthorPageDashboardPage() {
               icon="fa-solid fa-pen-to-square"
               title="Edit Page"
               text="Update your page details"
-              onClick={() => navigate('/author/edit-page')}
+              onClick={() =>
+  navigate('/author/edit-page', {
+    state: { returnTo: '/author/page/dashboard' },
+  })
+}
             />
             <ToolCard
               icon="fa-solid fa-book-open"
