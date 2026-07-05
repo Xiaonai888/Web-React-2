@@ -36,23 +36,29 @@ export default function StoryStatsSection({ story, episodes, onOpenRating, onOpe
 
   return (
     <section className="relative z-20 -mt-10 w-full">
-      <div className="w-full overflow-hidden rounded-t-[26px] bg-white shadow-[0_-10px_28px_rgba(17,24,39,0.08)]">
+      <div className="w-full overflow-hidden rounded-t-[16px] bg-white shadow-[0_-10px_28px_rgba(17,24,39,0.08)]">
         {showRank ? (
-          <div className="px-4 pt-4">
-            <button
-              type="button"
-              onClick={onOpenRanking}
-              className="flex h-11 w-full items-center justify-between rounded-full bg-[#fff7df] px-5 text-[#111827] active:scale-[0.99] sm:h-12"
-            >
-              <div className="flex items-center gap-3">
-                <img src="/assets/Icons/Award.svg" alt="" className="h-[23px] w-[23px] object-contain" />
-                <span className="text-[14px] font-bold text-[#f6a800]">No.{rank}</span>
-              </div>
+  <div className="px-4 pt-4">
+    <button
+      type="button"
+      onClick={onOpenRanking}
+      className="flex h-11 w-full items-center justify-between rounded-[14px] bg-[#fff7df] px-5 text-[#111827] active:scale-[0.99] sm:h-12"
+    >
+      <div className="flex items-center gap-3">
+        <img
+          src="/assets/Icons/Award.svg"
+          alt=""
+          className="h-[23px] w-[23px] object-contain"
+        />
+        <span className="text-[14px] font-bold text-[#f6a800]">
+          No.{rank}
+        </span>
+      </div>
 
-              <i className="fa-solid fa-chevron-right text-[12px] text-[#f6a800]" />
-            </button>
-          </div>
-        ) : null}
+      <i className="fa-solid fa-chevron-right text-[12px] text-[#f6a800]" />
+    </button>
+  </div>
+) : null}
 
         <div className="grid grid-cols-3 gap-2 px-5 py-5">
           <StatItem
