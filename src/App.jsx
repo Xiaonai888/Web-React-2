@@ -49,6 +49,7 @@ import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionP
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
+const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 
 
 
@@ -924,6 +925,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <EpisodeReactionsPage />
+    </LazyPage>
+  }
+/>
+
+      <Route
+  path="/story/:storyId/episode/:episodeId/echoes"
+  element={
+    <LazyPage>
+      <EpisodeEchoesPage />
     </LazyPage>
   }
 />
