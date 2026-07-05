@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import GiftPopup from '../components/reader/GiftPopup'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -10,6 +11,43 @@ function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
+function getCurrentReader() {
+  try {
+    const raw =
+      localStorage.getItem('shadow_reader_user') ||
+      sessionStorage.getItem('shadow_reader_user') ||
+      ''
+
+    if (!raw) {
+      return {
+        name: 'Reader',
+        avatar_url: '',
+      }
+    }
+
+    const user = JSON.parse(raw)
+
+    return {
+      name:
+        user.name ||
+        user.username ||
+        user.display_name ||
+        user.email?.split('@')[0] ||
+        'Reader',
+      avatar_url:
+        user.avatar_url ||
+        user.profile_image ||
+        user.photo_url ||
+        '',
+    }
+  } catch {
+    return {
+      name: 'Reader',
+      avatar_url: '',
+    }
+  }
+}
+
 function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -18,6 +56,58 @@ function readerAuthHeaders() {
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
 }
+
+function isUsableRouteId(value) {
+  const text = String(value ?? '').trim()
+  return Boolean(text && text !== 'undefined' && text !== 'null')
+}
+
+function formatDateYMD(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function getWeeklyDateRange() {
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+
+  // Monday = first day of the week
+  const daysFromMonday = (dayOfWeek + 6) % 7
+
+  const monday = new Date(today)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(today.getDate() - daysFromMonday)
+
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
+  return `${formatDateYMD(monday)} ~ ${formatDateYMD(sunday)}`
+}
+
+const DEMO_WEEKLY_FANS = [
+  { id: 'demo-week-1', name: 'Dara', avatar: '', support: 48, color: '#ff5d7d', is_demo: true },
+  { id: 'demo-week-2', name: 'Lina', avatar: '', support: 41, color: '#7c5cff', is_demo: true },
+  { id: 'demo-week-3', name: 'Soriya', avatar: '', support: 35, color: '#f59e0b', is_demo: true },
+  { id: 'demo-week-4', name: 'Maly', avatar: '', support: 29, color: '#0ea5e9', is_demo: true },
+  { id: 'demo-week-5', name: 'Nika', avatar: '', support: 24, color: '#10b981', is_demo: true },
+  { id: 'demo-week-6', name: 'Rina', avatar: '', support: 18, color: '#ec4899', is_demo: true },
+  { id: 'demo-week-7', name: 'Pich', avatar: '', support: 12, color: '#8b5cf6', is_demo: true },
+  { id: 'demo-week-8', name: 'Mina', avatar: '', support: 8, color: '#64748b', is_demo: true },
+]
+
+const DEMO_ALL_TIME_FANS = [
+  { id: 'demo-all-1', name: 'Dara', avatar: '', support: 160, color: '#ff5d7d', is_demo: true },
+  { id: 'demo-all-2', name: 'Lina', avatar: '', support: 135, color: '#7c5cff', is_demo: true },
+  { id: 'demo-all-3', name: 'Soriya', avatar: '', support: 112, color: '#f59e0b', is_demo: true },
+  { id: 'demo-all-4', name: 'Maly', avatar: '', support: 90, color: '#0ea5e9', is_demo: true },
+  { id: 'demo-all-5', name: 'Nika', avatar: '', support: 72, color: '#10b981', is_demo: true },
+  { id: 'demo-all-6', name: 'Rina', avatar: '', support: 58, color: '#ec4899', is_demo: true },
+  { id: 'demo-all-7', name: 'Pich', avatar: '', support: 43, color: '#8b5cf6', is_demo: true },
+  { id: 'demo-all-8', name: 'Mina', avatar: '', support: 30, color: '#64748b', is_demo: true },
+]
 
 function normalizeFan(item, index) {
   const user = item.user || item.reader || item.profile || {}
@@ -34,62 +124,134 @@ function getInitial(name) {
   return String(name || 'S').slice(0, 1).toUpperCase()
 }
 
-function FanAvatar({ fan, size = 'h-12 w-12', rank }) {
+function FanAvatar({ fan, className = 'h-12 w-12', textClassName = 'text-[15px]' }) {
   if (fan.avatar) {
     return (
-      <span className="relative shrink-0">
-        <img src={fan.avatar} alt="" className={`${size} rounded-full object-cover`} />
-        {rank ? (
-          <span className="absolute -bottom-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ff3b5f] px-1 text-[11px] font-bold text-white">
-            {rank}
-          </span>
-        ) : null}
-      </span>
+      <img
+        src={fan.avatar}
+        alt=""
+        className={`${className} rounded-full object-cover`}
+      />
     )
   }
 
   return (
-    <span className={`relative flex ${size} shrink-0 items-center justify-center rounded-full bg-[#111827] text-[15px] font-bold text-white`}>
+    <span
+      className={`flex ${className} items-center justify-center rounded-full font-bold text-white ${textClassName}`}
+      style={{
+        backgroundColor: fan.color || '#111827',
+      }}
+    >
       {getInitial(fan.name)}
-      {rank ? (
-        <span className="absolute -bottom-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ff3b5f] px-1 text-[11px] font-bold text-white">
-          {rank}
-        </span>
-      ) : null}
     </span>
   )
 }
 
-function TopThree({ fans }) {
-  const top = fans.slice(0, 3)
+const TOP_FAN_LAYOUT = {
+  1: {
+    frame: '/assets/Top%20Fan/Top%20Fan%201.png',
 
-  if (!top.length) {
-    return (
-      <div className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f5] text-[#ff3b5f]">
-          <i className="fa-solid fa-heart text-[20px]" />
-        </div>
-        <h3 className="mt-3 text-[17px] font-bold text-[#111827]">No top fans yet</h3>
-        <p className="mt-1 text-[13px] leading-5 text-[#98a2b3]">
-          Be the first reader to brighten this story with a gift.
-        </p>
-      </div>
-    )
-  }
+    // Top 1 stays larger and higher.
+    frameWidth: 'clamp(104px, 25vw, 114px)',
+    avatarSize: 'clamp(106px, 17vw, 106px)',
+    avatarTop: '53%',
+    avatarLeft: '50%',
+    cardTop: '0px',
+  },
+  2: {
+    frame: '/assets/Top%20Fan/Top%20Fan%202.png',
+
+    // Top 2 is smaller and sits lower than Top 1.
+    frameWidth: 'clamp(88px, 20vw, 98px)',
+    avatarSize: 'clamp(84px, 18vw, 90px)',
+    avatarTop: '54.5%',
+    avatarLeft: '50%',
+    cardTop: '18px',
+  },
+  3: {
+    frame: '/assets/Top%20Fan/Top%20Fan%203.png',
+
+    // Top 3 is smaller and sits lower than Top 1.
+    frameWidth: 'clamp(88px, 20vw, 98px)',
+    avatarSize: 'clamp(84px, 18vw, 90px)',
+    avatarTop: '54.5%',
+    avatarLeft: '50%',
+    cardTop: '18px',
+  },
+}
+
+function RankedFanAvatar({ fan, rank }) {
+  const layout = TOP_FAN_LAYOUT[rank]
+
+  if (!layout) return null
 
   return (
-    <div className="grid grid-cols-3 items-end gap-3 px-2">
-      {top.map((fan, index) => {
-        const rank = index + 1
-        const isFirst = rank === 1
+    <div
+      className="relative mx-auto shrink-0"
+      style={{
+        width: layout.frameWidth,
+        aspectRatio: '907 / 972',
+      }}
+    >
+      <div
+        className="absolute z-10 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-[#111827]"
+        style={{
+          width: layout.avatarSize,
+          height: layout.avatarSize,
+          top: layout.avatarTop,
+          left: layout.avatarLeft,
+        }}
+      >
+        <FanAvatar
+          fan={fan}
+          className="h-full w-full"
+          textClassName={rank === 1 ? 'text-[23px]' : 'text-[20px]'}
+        />
+      </div>
+
+      <img
+        src={layout.frame}
+        alt={`Top ${rank} frame`}
+        draggable="false"
+        className="pointer-events-none absolute inset-0 z-20 h-full w-full select-none object-contain"
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+  )
+}
+
+function TopThree({ fans }) {
+  const rankedTop = fans.slice(0, 3).map((fan, index) => ({
+    ...fan,
+    rank: index + 1,
+  }))
+
+  // Show Top 2 on the left, Top 1 in the center, and Top 3 on the right.
+  const displayOrder = [rankedTop[1], rankedTop[0], rankedTop[2]]
+
+  return (
+    <div className="grid min-h-[170px] grid-cols-3 items-start gap-2 px-2 sm:gap-5 sm:px-8">
+      {displayOrder.map((fan, slotIndex) => {
+        if (!fan) return <div key={`empty-${slotIndex}`} />
 
         return (
-          <div key={fan.id} className={`text-center ${isFirst ? 'pb-0' : 'pb-5'}`}>
-            <div className="mx-auto flex justify-center">
-              <FanAvatar fan={fan} size={isFirst ? 'h-24 w-24' : 'h-20 w-20'} rank={rank} />
+          <div
+            key={fan.id}
+            className="min-w-0 text-center"
+            style={{
+              marginTop: TOP_FAN_LAYOUT[fan.rank]?.cardTop || '0px',
+            }}
+          >
+            <RankedFanAvatar fan={fan} rank={fan.rank} />
+
+            <div className="mt-0.5 truncate text-[12px] font-bold text-[#111827] sm:text-[13px]">
+              {fan.name}
             </div>
-            <div className="mt-3 truncate text-[14px] font-bold text-[#111827]">{fan.name}</div>
-            <div className="mt-1 text-[12px] text-[#98a2b3]">{formatNumber(fan.support)} support</div>
+
+            <div className="mt-0.5 text-[10px] font-normal text-[#98a2b3] sm:text-[11px]">
+              {formatNumber(fan.support)} points
+            </div>
           </div>
         )
       })}
@@ -101,21 +263,22 @@ function FanRow({ fan, index }) {
   const rank = index + 1
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="w-7 text-center text-[15px] font-normal text-[#98a2b3]">
+    <div className="flex items-center gap-3 px-2 py-3 sm:px-4">
+      <div className="w-8 shrink-0 text-center text-[14px] font-normal text-[#98a2b3]">
         {rank < 10 ? `0${rank}` : rank}
       </div>
 
-      <FanAvatar fan={fan} />
+      <FanAvatar fan={fan} className="h-11 w-11 shrink-0" textClassName="text-[14px]" />
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-normal text-[#111827]">{fan.name}</div>
-        <div className="mt-0.5 text-[12px] font-normal text-[#98a2b3]">
-          {formatNumber(fan.support)} support
+        <div className="truncate text-[14px] font-normal text-[#111827] sm:text-[15px]">
+          {fan.name}
         </div>
       </div>
 
-      <div className="text-[14px] font-normal text-[#667085]">{formatNumber(fan.support)}</div>
+      <div className="shrink-0 text-[14px] font-normal text-[#667085]">
+        {formatNumber(fan.support)}
+      </div>
     </div>
   )
 }
@@ -124,6 +287,15 @@ export default function StoryTopFansPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { storyId } = useParams()
+  const [giftPopupOpen, setGiftPopupOpen] = useState(false)
+  const [rankingRefreshKey, setRankingRefreshKey] = useState(0)
+  const currentReader = useMemo(() => getCurrentReader(), [])
+
+  useEffect(() => {
+    if (sessionStorage.getItem('shadow_reopen_top_fans_gift_popup') !== '1') return
+    sessionStorage.removeItem('shadow_reopen_top_fans_gift_popup')
+    setGiftPopupOpen(true)
+  }, [])
 
   const [story, setStory] = useState(location.state?.storyPreview || null)
   const [activeTab, setActiveTab] = useState('weekly')
@@ -135,6 +307,11 @@ export default function StoryTopFansPage() {
     let ignore = false
 
     async function loadStory() {
+      if (!isUsableRouteId(storyId)) {
+        setLoading(false)
+        return
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/public/stories/${storyId}`)
         const data = await response.json().catch(() => ({}))
@@ -155,6 +332,13 @@ export default function StoryTopFansPage() {
     let ignore = false
 
     async function loadFans() {
+      if (!isUsableRouteId(storyId)) {
+        setWeeklyFans([])
+        setAllTimeFans([])
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
 
       try {
@@ -201,47 +385,88 @@ export default function StoryTopFansPage() {
     return () => {
       ignore = true
     }
-  }, [storyId])
+  }, [storyId, rankingRefreshKey])
 
   const fans = useMemo(() => {
     return activeTab === 'weekly' ? weeklyFans : allTimeFans
   }, [activeTab, weeklyFans, allTimeFans])
 
+  const demoFans = activeTab === 'weekly' ? DEMO_WEEKLY_FANS : DEMO_ALL_TIME_FANS
+  const showingDemo = fans.length === 0
+  const displayFans = showingDemo ? demoFans : fans
+
   const cover = story?.cover_url || story?.thumbnail_url || ''
-  const title = story?.title || 'Top Fans'
+const title = story?.title || 'Top Fans'
+const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
 
   return (
     <main className="min-h-screen bg-white pb-[92px]">
-      <section className="relative h-[300px] overflow-hidden bg-[#111827] text-white">
-        {cover ? (
-          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35 blur-[1px]" />
-        ) : null}
+      <div className="relative h-[220px] overflow-hidden bg-white text-white">
+        <div
+          className="absolute left-1/2 top-0 h-full w-[124%] -translate-x-1/2 overflow-hidden bg-[#111827]"
+          style={{
+            borderBottomLeftRadius: '50% 50px',
+            borderBottomRightRadius: '50% 50px',
+          }} 
+        >
+          {cover ? (
+            <img
+              src={cover}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-35 blur-[1px]"
+            />
+          ) : null}
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
-
-        <div className="relative z-10 flex h-full flex-col px-4 pt-9">
-          <div className="flex items-center justify-between">
-            <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-white active:scale-95">
-              <i className="fa-solid fa-chevron-left text-[22px]" />
-            </button>
-
-            <h1 className="text-[24px] font-bold tracking-[0.04em]">TOP FANS</h1>
-
-            <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-white active:scale-95">
-              <i className="fa-solid fa-question text-[14px]" />
-            </button>
-          </div>
-
-          <div className="mt-14 text-center">
-            <h2 className="line-clamp-2 text-[24px] font-normal leading-8">{title}</h2>
-            <p className="mt-3 text-[13px] font-normal text-white/75">
-              Celebrate the readers who keep this story shining.
-            </p>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
         </div>
-      </section>
 
-      <section className="-mt-8 rounded-t-[28px] bg-white px-4 pt-5">
+        <div className="relative z-10 mx-auto flex h-full max-w-3xl flex-col px-3 pt-4 sm:px-4 sm:pt-5">
+  <div className="flex items-center justify-between">
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      className="flex h-8 w-8 items-center justify-center text-white active:scale-95 sm:h-9 sm:w-9"
+    >
+      <i className="fa-solid fa-chevron-left text-[17px] sm:text-[18px]" />
+    </button>
+
+    <h1 className="text-[18px] font-bold tracking-[0.03em] sm:text-[20px]">
+      TOP FANS
+    </h1>
+
+    <button
+      type="button"
+      onClick={() =>
+        navigate(`/story/${storyId}/top-fans-guide`, {
+          state: {
+            storyPreview: story,
+          },
+        })
+      }
+      className="flex h-7 w-7 items-center justify-center rounded-full border border-white text-white active:scale-95 sm:h-8 sm:w-8"
+      aria-label="How Top Fans works"
+    >
+      <i className="fa-solid fa-question text-[9px] sm:text-[10px]" />
+    </button>
+  </div>
+
+<div className="mt-9 px-6 text-center">
+  <h2 className="line-clamp-2 text-[20px] font-bold leading-7 text-white sm:text-[22px]">
+    {title}
+  </h2>
+
+  {activeTab === 'weekly' ? (
+    <p className="mt-2 text-[14px] font-normal text-white/85 sm:text-[15px]">
+      {weeklyDateRange}
+    </p>
+  ) : null}
+</div>
+
+          
+        </div>
+      </div>
+
+      <section className="bg-white px-4 pt-8">
         <div className="rounded-[22px] bg-gradient-to-r from-[#fff1f5] to-[#f4efff] px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#ff3b5f] shadow-sm">
@@ -258,24 +483,32 @@ export default function StoryTopFansPage() {
         </div>
 
         <div className="mt-7 grid grid-cols-2 text-center">
-          <button
-            type="button"
-            onClick={() => setActiveTab('weekly')}
-            className={`relative pb-4 text-[20px] font-normal active:scale-95 ${activeTab === 'weekly' ? 'text-[#111827]' : 'text-[#98a2b3]'}`}
-          >
-            Weekly Fans
-            {activeTab === 'weekly' ? <span className="absolute bottom-1 left-1/2 h-1.5 w-9 -translate-x-1/2 rounded-full bg-[#ff3b5f]" /> : null}
-          </button>
+  <button
+    type="button"
+    onClick={() => setActiveTab('weekly')}
+    className={`relative pb-4 text-[16px] font-normal active:scale-95 ${
+      activeTab === 'weekly' ? 'text-[#111827]' : 'text-[#98a2b3]'
+    }`}
+  >
+    Weekly Ranking
+    {activeTab === 'weekly' ? (
+      <span className="absolute bottom-1 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#ff3b5f]" />
+    ) : null}
+  </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('all_time')}
-            className={`relative pb-4 text-[20px] font-normal active:scale-95 ${activeTab === 'all_time' ? 'text-[#111827]' : 'text-[#98a2b3]'}`}
-          >
-            All-Time Fans
-            {activeTab === 'all_time' ? <span className="absolute bottom-1 left-1/2 h-1.5 w-9 -translate-x-1/2 rounded-full bg-[#ff3b5f]" /> : null}
-          </button>
-        </div>
+  <button
+    type="button"
+    onClick={() => setActiveTab('all_time')}
+    className={`relative pb-4 text-[16px] font-normal active:scale-95 ${
+      activeTab === 'all_time' ? 'text-[#111827]' : 'text-[#98a2b3]'
+    }`}
+  >
+    Overall Ranking
+    {activeTab === 'all_time' ? (
+      <span className="absolute bottom-1 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#ff3b5f]" />
+    ) : null}
+  </button>
+</div>
 
         <div className="mt-5">
           {loading ? (
@@ -286,11 +519,11 @@ export default function StoryTopFansPage() {
             </div>
           ) : (
             <>
-              <TopThree fans={fans} />
+              <TopThree fans={displayFans} />
 
-              {fans.length > 3 ? (
+              {displayFans.length > 3 ? (
                 <div className="mt-7 rounded-[24px] bg-white">
-                  {fans.slice(3).map((fan, index) => (
+                  {displayFans.slice(3).map((fan, index) => (
                     <FanRow key={fan.id} fan={fan} index={index + 3} />
                   ))}
                 </div>
@@ -300,24 +533,55 @@ export default function StoryTopFansPage() {
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 shadow-[0_-10px_30px_rgba(17,24,39,0.08)]">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-normal text-[#111827]">Your support</div>
-            <div className="mt-0.5 text-[12px] font-normal text-[#98a2b3]">
-              Send a gift and join this story’s fan board.
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="h-11 rounded-full bg-[#ff3b5f] px-8 text-[14px] font-bold text-white active:scale-95"
-          >
-            Gift
-          </button>
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-10px_30px_rgba(17,24,39,0.08)]">
+  <div className="mx-auto flex max-w-3xl items-center gap-3">
+    {currentReader.avatar_url ? (
+      <img
+        src={currentReader.avatar_url}
+        alt=""
+        className="h-10 w-10 shrink-0 rounded-full object-cover"
+      />
+    ) : (
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[13px] font-bold text-white">
+        {currentReader.name.slice(0, 1).toUpperCase()}
       </div>
+    )}
+
+    <div className="min-w-0 flex-1">
+      <div className="truncate text-[13px] font-medium text-[#111827]">
+        {currentReader.name}
+      </div>
+
+      <div className="mt-0.5 truncate text-[11px] font-normal text-[#98a2b3]">
+        Send a gift and join this story’s fan board.
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setGiftPopupOpen(true)}
+      className="h-9 shrink-0 rounded-full bg-[#ff3b5f] px-6 text-[13px] font-bold text-white active:scale-95"
+    >
+      Gift
+    </button>
+  </div>
+</div>
+
+      <GiftPopup
+        open={giftPopupOpen}
+        storyId={storyId}
+        onClose={() => setGiftPopupOpen(false)}
+        onOpenGuide={() => {
+          sessionStorage.setItem('shadow_reopen_top_fans_gift_popup', '1')
+          setGiftPopupOpen(false)
+          navigate('/gift-guide')
+        }}
+        onOpenTopFans={() => setGiftPopupOpen(false)}
+        onGiftSent={() => {
+          setGiftPopupOpen(false)
+          setRankingRefreshKey((value) => value + 1)
+        }}
+      />
     </main>
   )
 }
