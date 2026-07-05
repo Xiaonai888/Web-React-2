@@ -128,6 +128,7 @@ const GiftGuidePage = lazy(() => import('./pages/GiftGuidePage'))
 const StoryTopFansPage = lazy(() => import('./pages/StoryTopFansPage'))
 const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
+const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -928,7 +929,15 @@ const shouldShowOpeningAds =
   }
 />
 
-<Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+      <Route
+  path="/story/:storyId/episode/:episodeId/echoes"
+  element={
+    <LazyPage>
+      <EpisodeEchoesPage />
+    </LazyPage>
+  }
+/>
+
         
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
@@ -980,7 +989,7 @@ const shouldShowOpeningAds =
         <Route path="/author/trash" element={<AuthorTrashPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+  
  
       </Routes>
 
