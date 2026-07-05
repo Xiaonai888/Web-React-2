@@ -22,7 +22,7 @@ function AuthorPageFooter({ active = 'Page', onComingSoon }) {
               type="button"
               onClick={item.action}
               className={`flex flex-col items-center justify-center gap-1 text-[10px] font-extrabold transition active:scale-95 ${
-                isActive ? 'text-[#111827] dark:text-white' : 'text-[#9aa1ad] dark:text-white/45'
+                isActive ? 'text-[#8b5cf6] dark:text-[#a78bfa]' : 'text-[#9aa1ad] dark:text-white/45'
               }`}
             >
               <i className={`${item.icon} text-[18px]`} />
