@@ -2590,7 +2590,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
         {displayAuthor.is_owner ? (
           <button
             type="button"
-            onClick={() => setMessage('Add to story is coming soon.')}
+            onClick={() => navigate('/author/page/story/create')}
             className="flex h-10 w-full items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
           >
             <img
