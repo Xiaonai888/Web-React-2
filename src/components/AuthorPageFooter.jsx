@@ -9,7 +9,7 @@ function AuthorPageFooter({ active = 'Page', onComingSoon }) {
   { label: 'Store', icon: 'fa-solid fa-bag-shopping', action: () => navigate('/author/page/store') },
   { label: 'Notifications', icon: 'fa-solid fa-bell', action: () => navigate('/author/page/notifications') },
 ]
-<i className={`${item.icon} text-[16px]`} />
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-[#eef0f4] bg-white/95 shadow-[0_-8px_24px_rgba(17,24,39,0.06)] backdrop-blur dark:border-white/10 dark:bg-[#0d0f16]/95">
       <div className="mx-auto grid h-[66px] max-w-5xl grid-cols-4">
