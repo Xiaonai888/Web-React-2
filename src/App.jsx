@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
+import Fast from './pages/Fast'
 
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
@@ -225,7 +226,7 @@ const shouldShowOpeningAds =
 <VisitorTracker />
     <Routes>
         <Route path="/" element={<ForYou />} />
-        <Route path="/fast" element={<ComingSoon title="Fast" />} />
+        <Route path="/fast" element={<Fast />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
 
