@@ -68,13 +68,96 @@ function pickReadingMission(missions, storyId) {
     ? missions.map(normalizeReadingMission).filter(Boolean)
     : []
 
+  const available = list.filter(
+    (mission) => mission.is_active && !mission.claimed
+  )
+
+  const specificMission = available.find((mission) => {
+    const link = String(mission.story_link || '').trim()
+
+    return link && readingMissionMatchesStory(mission, storyId)
+  })
+
+  if (specificMission) {
+    return {
+      ...specificMission,
+      reward_type: 'mission',
+      mission_scope: 'specific',
+    }
+  }
+
+  const anyStoryMission = available.find(
+    (mission) => !String(mission.story_link || '').trim()
+  )
+
+  if (anyStoryMission) {
+    return {
+      ...anyStoryMission,
+      reward_type: 'mission',
+      mission_scope: 'global',
+    }
+  }
+
+  return null
+}
+
+function buildDailyReadingTarget(readingReward = null) {
+  if (!readingReward) return null
+
+  const milestones = Array.isArray(readingReward.milestones)
+    ? readingReward.milestones
+    : []
+
+  const nextIndex = milestones.findIndex(
+    (milestone) => !milestone.claimed
+  )
+
+  if (nextIndex < 0) return null
+
+  const nextMilestone = milestones[nextIndex]
+  const previousMilestoneSeconds =
+    nextIndex > 0
+      ? Number(milestones[nextIndex - 1]?.seconds || 0)
+      : 0
+
+  const milestoneSeconds = Number(nextMilestone.seconds || 0)
+  const targetSeconds = Math.max(
+    1,
+    milestoneSeconds - previousMilestoneSeconds
+  )
+
+  const activeSeconds = Math.min(
+    targetSeconds,
+    Math.max(
+      0,
+      Number(readingReward.active_seconds || 0) -
+        previousMilestoneSeconds
+    )
+  )
+
+  return {
+    id: `daily-${readingReward.reward_date}-${milestoneSeconds}`,
+    reward_type: 'daily',
+    title: `Read ${nextMilestone.minutes} minutes`,
+    reward_coins: Number(nextMilestone.coins || 0),
+    target_seconds: targetSeconds,
+    active_seconds: activeSeconds,
+    completed: Boolean(nextMilestone.completed),
+    claimable: Boolean(nextMilestone.claimable),
+    claimed: Boolean(nextMilestone.claimed),
+    milestone_seconds: milestoneSeconds,
+  }
+}
+
+function resolveReadingTarget({
+  missions,
+  readingReward,
+  storyId,
+}) {
   return (
-    list.find(
-      (mission) =>
-        mission.is_active &&
-        !mission.claimed &&
-        readingMissionMatchesStory(mission, storyId)
-    ) || null
+    pickReadingMission(missions, storyId) ||
+    buildDailyReadingTarget(readingReward) ||
+    null
   )
 }
 
@@ -2462,16 +2545,16 @@ const handleDragEnd = () => {
 
 function WebcomicReadingMissionCoin({
   visible,
-  mission,
+  target,
   rewardAnimation,
   onClick,
 }) {
-  if (!mission && !rewardAnimation) return null
+  if (!target && !rewardAnimation) return null
 
-  const targetSeconds = Math.max(60, Number(mission?.target_seconds || 60))
+  const targetSeconds = Math.max(1, Number(target?.target_seconds || 1))
   const activeSeconds = Math.min(
     targetSeconds,
-    Math.max(0, Number(mission?.active_seconds || 0))
+    Math.max(0, Number(target?.active_seconds || 0))
   )
   const progress = targetSeconds > 0 ? activeSeconds / targetSeconds : 0
   const degrees = Math.min(360, Math.max(0, Math.round(progress * 360)))
@@ -2480,23 +2563,23 @@ function WebcomicReadingMissionCoin({
   return (
     <>
       <style>{`
-        @keyframes shadowMissionCoinBounce {
+        @keyframes shadowReadingCoinBounce {
           0%, 100% { transform: translateY(0) scale(1); }
           30% { transform: translateY(-7px) scale(1.06); }
           55% { transform: translateY(1px) scale(.98); }
           75% { transform: translateY(-3px) scale(1.02); }
         }
 
-        @keyframes shadowMissionRingFlash {
-          0% { opacity: 0; transform: scale(.84); }
-          35% { opacity: 1; transform: scale(1.08); }
-          100% { opacity: 0; transform: scale(1.22); }
+        @keyframes shadowReadingRewardPop {
+          0% { transform: scale(.72); opacity: 0; }
+          55% { transform: scale(1.12); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
 
-        @keyframes shadowMissionNumberDrop {
+        @keyframes shadowReadingNumberDrop {
           0% {
             opacity: 0;
-            transform: translateY(-25px) scale(.65);
+            transform: translateY(-24px) scale(.65);
           }
           55% {
             opacity: 1;
@@ -2511,26 +2594,35 @@ function WebcomicReadingMissionCoin({
           }
         }
 
-        @keyframes shadowMissionRewardPop {
-          0% { transform: scale(.75); }
-          45% { transform: scale(1.12); }
-          100% { transform: scale(1); }
+        @keyframes shadowReadingWhiteFlash {
+          0% {
+            opacity: 0;
+            transform: scale(.82);
+          }
+          35% {
+            opacity: 1;
+            transform: scale(1.08);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.24);
+          }
         }
 
-        .shadowMissionCoinBounce {
-          animation: shadowMissionCoinBounce .85s ease-in-out infinite;
+        .shadowReadingCoinBounce {
+          animation: shadowReadingCoinBounce .85s ease-in-out 2;
         }
 
-        .shadowMissionRingFlash {
-          animation: shadowMissionRingFlash .9s ease-out both;
+        .shadowReadingRewardPop {
+          animation: shadowReadingRewardPop .5s cubic-bezier(.2,.9,.2,1) both;
         }
 
-        .shadowMissionNumberDrop {
-          animation: shadowMissionNumberDrop .7s cubic-bezier(.2,.9,.2,1) both;
+        .shadowReadingNumberDrop {
+          animation: shadowReadingNumberDrop .72s cubic-bezier(.2,.9,.2,1) both;
         }
 
-        .shadowMissionRewardPop {
-          animation: shadowMissionRewardPop .48s cubic-bezier(.2,.9,.2,1) both;
+        .shadowReadingWhiteFlash {
+          animation: shadowReadingWhiteFlash .95s ease-out both;
         }
       `}</style>
 
@@ -2538,20 +2630,18 @@ function WebcomicReadingMissionCoin({
         type="button"
         onClick={onClick}
         aria-label="Open Task Center"
-        className={`fixed right-3 top-[76px] z-[92] flex h-[56px] w-[56px] items-center justify-center transition-all duration-300 active:scale-95 ${
-          visible
+        className={`fixed right-3 top-[74px] z-[92] flex h-[56px] w-[56px] items-center justify-center transition-all duration-300 active:scale-95 ${
+          visible || showingReward
             ? 'pointer-events-auto translate-x-0 opacity-100'
             : 'pointer-events-none translate-x-5 opacity-0'
         }`}
       >
         <span
-          className={`absolute inset-0 rounded-full shadow-[0_7px_18px_rgba(17,24,39,0.24)] ${
-            showingReward ? 'shadowMissionRewardPop' : ''
-          }`}
+          className="absolute inset-0 rounded-full shadow-[0_8px_20px_rgba(17,24,39,0.24)]"
           style={{
             background: showingReward
               ? 'conic-gradient(#ffffff 0deg 360deg)'
-              : `conic-gradient(#ff3b30 0deg ${degrees}deg, #8f949b ${degrees}deg 360deg)`,
+              : `conic-gradient(#ff3b30 0deg ${degrees}deg, #858a91 ${degrees}deg 360deg)`,
           }}
         />
 
@@ -2559,29 +2649,29 @@ function WebcomicReadingMissionCoin({
 
         {showingReward ? (
           <>
-            <span className="shadowMissionRingFlash absolute -inset-1 rounded-full border-[3px] border-white shadow-[0_0_18px_rgba(255,255,255,0.95)]" />
+            <span className="shadowReadingWhiteFlash absolute -inset-1 rounded-full border-[3px] border-white shadow-[0_0_18px_rgba(255,255,255,0.95)]" />
 
-            <span className="relative z-10 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-gradient-to-b from-[#ffad22] to-[#ed7400] shadow-[inset_0_2px_4px_rgba(255,255,255,0.48),0_6px_12px_rgba(199,83,0,0.30)]">
+            <span className="shadowReadingRewardPop relative z-10 flex h-[44px] w-[44px] items-center justify-center">
+              <img
+                src="/assets/Icons/Shadow%20Coin%202.svg"
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+
               <span
                 key={rewardAnimation.key}
-                className="shadowMissionNumberDrop text-[18px] font-black leading-none text-white drop-shadow-[0_2px_2px_rgba(143,56,0,0.34)]"
+                className="shadowReadingNumberDrop relative z-10 text-[18px] font-black leading-none text-white drop-shadow-[0_2px_2px_rgba(130,55,0,0.45)]"
               >
                 {rewardAnimation.coins}
               </span>
             </span>
           </>
         ) : (
-          <span
-            className={`relative z-10 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#74787d] shadow-[inset_0_2px_4px_rgba(255,255,255,0.25)] ${
-              mission?.completed && !mission?.claimed
-                ? 'shadowMissionCoinBounce'
-                : ''
-            }`}
-          >
+          <span className="relative z-10 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#72777d] shadow-[inset_0_2px_4px_rgba(255,255,255,0.28)]">
             <img
               src="/assets/Icons/Shadow%20Coin.svg"
               alt="Shadow Coin"
-              className="h-[34px] w-[34px] object-contain"
+              className="h-[35px] w-[35px] object-contain"
             />
           </span>
         )}
@@ -2606,7 +2696,9 @@ export default function ReaderPage() {
   const readingProgressRef = useRef(0)
   const lastReadingActivityRef = useRef(0)
   const readingActivityReadyAtRef = useRef(0)
-  const autoClaimMissionRef = useRef('')
+  const previousReadingPageRef = useRef(null)
+  const readingHeartbeatBusyRef = useRef(false)
+  const activeReadingTargetRef = useRef(null)
   const rewardAnimationTimerRef = useRef(null)
 
   const [story, setStory] = useState(expectedStory)
@@ -2640,10 +2732,9 @@ export default function ReaderPage() {
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
   const [echoShareOpen, setEchoShareOpen] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
-  const [activeReadingMission, setActiveReadingMission] = useState(null)
-  const [readingMissionRewardAnimation, setReadingMissionRewardAnimation] =
-  useState(null)
-  const [readingMissionReloadKey, setReadingMissionReloadKey] = useState(0)
+  const [activeReadingTarget, setActiveReadingTarget] = useState(null)
+  const [readingRewardAnimation, setReadingRewardAnimation] = useState(null)
+  const [readingRewardReloadKey, setReadingRewardReloadKey] = useState(0)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -2678,6 +2769,10 @@ useEffect(() => {
   const [readerGateReady, setReaderGateReady] = useState(false)
   const lastScrollYRef = useRef(0)
   const lastReaderTapRef = useRef(0)
+
+  useEffect(() => {
+    activeReadingTargetRef.current = activeReadingTarget
+  }, [activeReadingTarget])
 
   const theme = READER_THEMES[themeName] || READER_THEMES.paper
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
@@ -2981,28 +3076,49 @@ setReaderGateReady(true)
   useEffect(() => {
     let cancelled = false
 
-    async function loadReadingMission() {
+    async function loadReadingTarget() {
       if (!storyId || !episodeId || loading || lockedEpisode || !adultAccepted) {
         return
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
-          headers: readerAuthHeaders(),
+        const [missionsResponse, dailyResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
+            headers: readerAuthHeaders(),
+          }),
+          fetch(`${API_BASE_URL}/api/tasks/reading-reward`, {
+            headers: readerAuthHeaders(),
+          }),
+        ])
+
+        const missionsData = await missionsResponse.json().catch(() => ({}))
+        const dailyData = await dailyResponse.json().catch(() => ({}))
+
+        if (cancelled) return
+
+        const missions =
+          missionsResponse.ok && missionsData.ok !== false
+            ? missionsData.missions || []
+            : []
+
+        const readingReward =
+          dailyResponse.ok && dailyData.ok !== false
+            ? dailyData.reading_reward || null
+            : null
+
+        const nextTarget = resolveReadingTarget({
+          missions,
+          readingReward,
+          storyId,
         })
 
-        const data = await response.json().catch(() => ({}))
-
-        if (cancelled || !response.ok || data.ok === false) return
-
-        const mission = pickReadingMission(data.missions, storyId)
-        setActiveReadingMission(mission)
+        setActiveReadingTarget(nextTarget)
       } catch {
-        if (!cancelled) setActiveReadingMission(null)
+        if (!cancelled) setActiveReadingTarget(null)
       }
     }
 
-    loadReadingMission()
+    loadReadingTarget()
 
     return () => {
       cancelled = true
@@ -3012,9 +3128,10 @@ setReaderGateReady(true)
     episodeId,
     loading,
     lockedEpisode,
-    readingMissionReloadKey,
+    readingRewardReloadKey,
     storyId,
   ])
+
 
   useEffect(() => {
     if (!storyId || !episodeId || loading || lockedEpisode || !adultAccepted) {
@@ -3060,10 +3177,24 @@ setReaderGateReady(true)
   useEffect(() => {
     lastReadingActivityRef.current = 0
     readingActivityReadyAtRef.current = Date.now() + 1000
-    autoClaimMissionRef.current = ''
-    setActiveReadingMission(null)
-    setReadingMissionRewardAnimation(null)
+    previousReadingPageRef.current = null
+    readingHeartbeatBusyRef.current = false
+    setActiveReadingTarget(null)
+    setReadingRewardAnimation(null)
   }, [episodeId, storyId])
+
+  useEffect(() => {
+    if (previousReadingPageRef.current === null) {
+      previousReadingPageRef.current = currentPageIndex
+      return
+    }
+
+    if (previousReadingPageRef.current !== currentPageIndex) {
+      lastReadingActivityRef.current = Date.now()
+    }
+
+    previousReadingPageRef.current = currentPageIndex
+  }, [currentPageIndex])
 
   useEffect(() => {
     return () => {
@@ -3073,43 +3204,89 @@ setReaderGateReady(true)
     }
   }, [])
 
-  useEffect(() => {
-    if (!activeReadingMission?.claimable || activeReadingMission?.claimed) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(() => {
-      autoAwardReadingMission(activeReadingMission)
-    }, 550)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [
-    activeReadingMission?.claimable,
-    activeReadingMission?.claimed,
-    activeReadingMission?.id,
-  ])
-
+  
   useEffect(() => {
     if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
       return undefined
     }
 
-    let requestRunning = false
-
     const timer = window.setInterval(async () => {
-      if (requestRunning || document.visibilityState !== 'visible') return
+      if (readingHeartbeatBusyRef.current || document.visibilityState !== 'visible') return
 
       const recentlyActive =
         Date.now() - lastReadingActivityRef.current <= READING_ACTIVITY_GRACE_MS
 
       if (!recentlyActive && !autoScrollEnabled) return
 
-      requestRunning = true
+      const currentTarget = activeReadingTargetRef.current
+
+      if (!currentTarget?.id) return
+
+      readingHeartbeatBusyRef.current = true
 
       try {
-        const dailyRewardRequest = fetch(
+        if (currentTarget.reward_type === 'mission') {
+          const progressResponse = await fetch(
+            `${API_BASE_URL}/api/tasks/reading-missions/${currentTarget.id}/progress`,
+            {
+              method: 'POST',
+              headers: {
+                ...readerAuthHeaders(),
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                story_id: storyId,
+                episode_id: episodeId,
+                seconds: READING_PROGRESS_STEP_SECONDS,
+              }),
+            }
+          )
+
+          const progressData = await progressResponse.json().catch(() => ({}))
+
+          if (!progressResponse.ok || progressData.ok === false) return
+
+          const nextMission = normalizeReadingMission(progressData.mission)
+
+          if (nextMission?.id) {
+            const nextTarget = {
+              ...nextMission,
+              reward_type: 'mission',
+              mission_scope: currentTarget.mission_scope,
+            }
+
+            setActiveReadingTarget(nextTarget)
+
+            if (nextMission.claimable && !nextMission.claimed) {
+              const claimResponse = await fetch(
+                `${API_BASE_URL}/api/tasks/reading-missions/${nextMission.id}/claim`,
+                {
+                  method: 'POST',
+                  headers: {
+                    ...readerAuthHeaders(),
+                    'Content-Type': 'application/json',
+                  },
+                }
+              )
+
+              const claimData = await claimResponse.json().catch(() => ({}))
+
+              if (claimResponse.ok && claimData.ok !== false) {
+                showReadingRewardAnimation(
+                  claimData.reward?.coins ||
+                    claimData.reward?.gems ||
+                    nextMission.reward_coins
+                )
+              } else {
+                setReadingRewardReloadKey((value) => value + 1)
+              }
+            }
+          }
+
+          return
+        }
+
+        const progressResponse = await fetch(
           `${API_BASE_URL}/api/tasks/reading-reward/progress`,
           {
             method: 'POST',
@@ -3123,47 +3300,42 @@ setReaderGateReady(true)
               seconds: READING_PROGRESS_STEP_SECONDS,
             }),
           }
-        ).catch(() => null)
+        )
 
-        let missionRequest = null
+        const progressData = await progressResponse.json().catch(() => ({}))
 
-        if (
-          activeReadingMission?.id &&
-          !activeReadingMission.claimed &&
-          !activeReadingMission.completed
-        ) {
-          missionRequest = fetch(
-            `${API_BASE_URL}/api/tasks/reading-missions/${activeReadingMission.id}/progress`,
+        if (!progressResponse.ok || progressData.ok === false) return
+
+        const readingReward = progressData.reading_reward || null
+        const claimableCoins = Number(readingReward?.claimable_coins || 0)
+
+        if (claimableCoins > 0) {
+          const claimResponse = await fetch(
+            `${API_BASE_URL}/api/tasks/reading-reward/claim`,
             {
               method: 'POST',
               headers: {
                 ...readerAuthHeaders(),
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                story_id: storyId,
-                episode_id: episodeId,
-                seconds: READING_PROGRESS_STEP_SECONDS,
-              }),
             }
-          ).catch(() => null)
-        }
+          )
 
-        const [, missionResponse] = await Promise.all([
-          dailyRewardRequest,
-          missionRequest,
-        ])
+          const claimData = await claimResponse.json().catch(() => ({}))
 
-        if (missionResponse?.ok) {
-          const missionData = await missionResponse.json().catch(() => ({}))
-          const nextMission = normalizeReadingMission(missionData.mission)
-
-          if (nextMission?.id) {
-            setActiveReadingMission(nextMission)
+          if (claimResponse.ok && claimData.ok !== false) {
+            showReadingRewardAnimation(
+              claimData.reward?.coins ||
+                claimData.reward?.gems ||
+                claimableCoins
+            )
+            return
           }
         }
+
+        setActiveReadingTarget(buildDailyReadingTarget(readingReward))
       } finally {
-        requestRunning = false
+        readingHeartbeatBusyRef.current = false
       }
     }, READING_PROGRESS_STEP_SECONDS * 1000)
 
@@ -3171,9 +3343,6 @@ setReaderGateReady(true)
       window.clearInterval(timer)
     }
   }, [
-    activeReadingMission?.claimed,
-    activeReadingMission?.completed,
-    activeReadingMission?.id,
     adultAccepted,
     autoScrollEnabled,
     episode,
@@ -3182,6 +3351,7 @@ setReaderGateReady(true)
     lockedEpisode,
     storyId,
   ])
+
 
 useEffect(() => {
   setReaderHeaderVisible(false)
@@ -3495,96 +3665,35 @@ async function handleLockedDiamondUnlock(packageKey) {
     setCommentRefreshKey((value) => value + 1)
   }
 
-async function autoAwardReadingMission(mission) {
-  const currentMission = normalizeReadingMission(mission)
+function showReadingRewardAnimation(coins) {
+  const rewardCoins = Math.max(0, Number(coins || 0))
 
-  if (
-    !currentMission?.id ||
-    currentMission.claimed ||
-    autoClaimMissionRef.current === currentMission.id
-  ) {
-    return
+  if (rewardCoins <= 0) return
+
+  setReaderHeaderVisible(true)
+  setBottomActionsVisible(true)
+  setReaderDoubleTapVisible(true)
+  setScrollSubscribePopupVisible(false)
+
+  setReadingRewardAnimation({
+    key: Date.now(),
+    coins: rewardCoins,
+  })
+
+  if (rewardAnimationTimerRef.current) {
+    window.clearTimeout(rewardAnimationTimerRef.current)
   }
 
-  autoClaimMissionRef.current = currentMission.id
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/tasks/reading-missions/${currentMission.id}/claim`,
-      {
-        method: 'POST',
-        headers: {
-          ...readerAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-
-    const data = await response.json().catch(() => ({}))
-
-    if (response.status === 401 || response.status === 403) {
-      autoClaimMissionRef.current = ''
-      navigate('/login')
-      return
-    }
-
-    const alreadyClaimed =
-      Boolean(data.mission?.claimed) ||
-      String(data.message || '').toLowerCase().includes('already claimed')
-
-    if (!response.ok || data.ok === false) {
-      if (alreadyClaimed) {
-        setActiveReadingMission(null)
-        setReadingMissionReloadKey((value) => value + 1)
-        return
-      }
-
-      throw new Error(data.message || 'Failed to receive reading reward')
-    }
-
-    const rewardCoins = Number(
-      data.reward?.coins ||
-        data.reward?.gems ||
-        currentMission.reward_coins ||
-        0
-    )
-
-    setActiveReadingMission({
-      ...currentMission,
-      ...(data.mission || {}),
-      claimed: true,
-      claimed_at: data.mission?.claimed_at || new Date().toISOString(),
-    })
-
-    setReaderHeaderVisible(true)
-    setBottomActionsVisible(true)
-    setReaderDoubleTapVisible(true)
-    setScrollSubscribePopupVisible(false)
-
-    setReadingMissionRewardAnimation({
-      key: Date.now(),
-      coins: rewardCoins,
-    })
-
-    if (rewardAnimationTimerRef.current) {
-      window.clearTimeout(rewardAnimationTimerRef.current)
-    }
-
-    rewardAnimationTimerRef.current = window.setTimeout(() => {
-      setReadingMissionRewardAnimation(null)
-      setActiveReadingMission(null)
-      setReadingMissionReloadKey((value) => value + 1)
-    }, 1700)
-  } catch {
-    autoClaimMissionRef.current = ''
-    setReadingMissionReloadKey((value) => value + 1)
-  }
+  rewardAnimationTimerRef.current = window.setTimeout(() => {
+    setReadingRewardAnimation(null)
+    setReadingRewardReloadKey((value) => value + 1)
+  }, 1700)
 }
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
 
-const readingControlsVisible =
+const readerControlsVisible =
   readerHeaderVisible &&
   bottomActionsVisible &&
   !lockedEpisode &&
@@ -3599,11 +3708,11 @@ const readingControlsVisible =
   !episodeListOpen &&
   !commentsOpen
 
-const showReadingMissionCoin =
-  readingControlsVisible &&
-  Boolean(
-    readingMissionRewardAnimation ||
-      (activeReadingMission?.id && !activeReadingMission?.claimed)
+const showReadingRewardCoin =
+  Boolean(readingRewardAnimation) ||
+  (
+    readerControlsVisible &&
+    Boolean(activeReadingTarget?.id)
   )
 
 return (
@@ -3766,9 +3875,9 @@ return (
 />
 
 <WebcomicReadingMissionCoin
-  visible={showReadingMissionCoin}
-  mission={activeReadingMission}
-  rewardAnimation={readingMissionRewardAnimation}
+  visible={showReadingRewardCoin}
+  target={activeReadingTarget}
+  rewardAnimation={readingRewardAnimation}
   onClick={() => navigate('/tasks')}
 />
 
