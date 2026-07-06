@@ -302,7 +302,7 @@ export default function Fast() {
 
             <button
               type="button"
-              onClick={() => navigate('/author/dashboard')}
+              onClick={() => navigate('/fast/studio')}
               className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#7846e7] bg-white px-3 text-[#6738d9] transition hover:bg-[#f6f1ff] active:scale-95"
               aria-label="Create"
             >
