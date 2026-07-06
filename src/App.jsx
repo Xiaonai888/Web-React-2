@@ -51,6 +51,7 @@ import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
+const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
 
 
 
@@ -938,7 +939,11 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-
+      
+<Route
+  path="/author/page/story/create"
+  element={<LazyPage><CreateAuthorStoryPage /></LazyPage>}
+/>
       
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
