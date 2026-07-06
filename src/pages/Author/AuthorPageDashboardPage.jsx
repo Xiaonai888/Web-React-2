@@ -968,7 +968,11 @@ export default function AuthorPageDashboardPage() {
               icon="fa-solid fa-book-open"
               title="Story Manager"
               text="Manage your stories and drafts"
-              onClick={() => navigate('/author/dashboard')}
+              onClick={() =>
+  navigate('/author/dashboard', {
+    state: { returnTo: '/author/page/dashboard' },
+  })
+}
             />
             <ToolCard
               icon="fa-solid fa-gear"
