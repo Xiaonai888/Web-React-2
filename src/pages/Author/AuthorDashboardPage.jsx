@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-
+import { useLocation, useNavigate } from 'react-router-dom'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -325,6 +324,8 @@ function StoryCard({ story, onEdit, onAddEpisode }) {
 
 export default function AuthorDashboardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = location.state?.returnTo || '/me'
   const [menuOpen, setMenuOpen] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Novel')
@@ -482,7 +483,7 @@ export default function AuthorDashboardPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/me')}
+            onClick={() => navigate(returnTo)}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Go back"
           >
