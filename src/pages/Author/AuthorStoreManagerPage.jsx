@@ -1363,8 +1363,8 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       <section
         className="relative overflow-hidden rounded-none bg-[#f5f3ff] bg-cover bg-center bg-no-repeat px-4 pb-4 pt-[92px] shadow-none ring-0 sm:rounded-[28px] sm:px-5 sm:pb-5 sm:pt-[118px] sm:shadow-[0_24px_60px_rgba(124,91,255,0.16)] sm:ring-1 sm:ring-white/70"
         style={{
-          backgroundImage: "url('/assets/Page%20Picture/Store%20Manager.png')",
-        }}
+  backgroundImage: "url('/assets/Author%20Page/Store%20Manager.png')",
+}}
       >
         <div className="relative grid grid-cols-2 gap-3">
           <StatCard
