@@ -769,9 +769,14 @@ const handlePointerEnd = () => {
   )
 }
 
-function HeartLineIcon({ className = '' }) {
+function HeartLineIcon({ className = '', filled = false }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill={filled ? 'currentColor' : 'none'}
+      aria-hidden="true"
+    >
       <path
         d="M12 20.2C8.2 16.9 5.4 14.4 4.3 12.2 3.2 10 3.8 7.3 6.1 6.2 8 5.3 10.1 5.9 12 8c1.9-2.1 4-2.7 5.9-1.8 2.3 1.1 2.9 3.8 1.8 6-1.1 2.2-3.9 4.7-7.7 8Z"
         stroke="currentColor"
@@ -808,19 +813,21 @@ function GiftLineIcon({ className = '' }) {
 }
 
 function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
+  const navigate = useNavigate()
   const episodeId = episode?.id || episode?.episode_id || ''
-  const [hotComment, setHotComment] = useState(null)
-  const [hotCommentTotal, setHotCommentTotal] = useState(0)
 
-  const likeCount = Number(
-    story?.total_likes ||
-    story?.like_count ||
-    story?.likes_count ||
+  const initialLikeCount = Number(
     episode?.total_likes ||
     episode?.like_count ||
     episode?.likes_count ||
     0
   )
+
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(initialLikeCount)
+  const [likeBusy, setLikeBusy] = useState(false)
+  const [hotComment, setHotComment] = useState(null)
+  const [hotCommentTotal, setHotCommentTotal] = useState(0)
 
   const giftCount = Number(
     story?.total_gifts ||
@@ -838,6 +845,93 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     episode?.comments_count ||
     0
   )
+
+  useEffect(() => {
+  let ignore = false
+
+  setLiked(false)
+  setLikeCount(initialLikeCount)
+
+  async function loadLikeStatus() {
+    if (!episodeId) return
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/reactions/episode/${episodeId}/status`,
+        {
+          headers: readerAuthHeaders(),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false || ignore) return
+
+      setLiked(Boolean(data.liked))
+      setLikeCount(Math.max(0, Number(data.total_likes || 0)))
+    } catch {
+    }
+  }
+
+  loadLikeStatus()
+
+  return () => {
+    ignore = true
+  }
+}, [episodeId, initialLikeCount])
+
+async function handleToggleLike() {
+  if (!episodeId || likeBusy) return
+
+  if (!getReaderToken()) {
+    navigate('/login', {
+      state: {
+        returnTo: window.location.pathname,
+      },
+    })
+    return
+  }
+
+  const previousLiked = liked
+  const previousCount = likeCount
+  const nextLiked = !previousLiked
+
+  setLikeBusy(true)
+  setLiked(nextLiked)
+  setLikeCount(
+    Math.max(0, previousCount + (nextLiked ? 1 : -1))
+  )
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/reactions/episode/${episodeId}/toggle`,
+      {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reaction_type: 'love',
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to update like')
+    }
+
+    setLiked(Boolean(data.liked))
+    setLikeCount(Math.max(0, Number(data.total_likes || 0)))
+  } catch {
+    setLiked(previousLiked)
+    setLikeCount(previousCount)
+  } finally {
+    setLikeBusy(false)
+  }
+}
 
   useEffect(() => {
     let ignore = false
@@ -892,16 +986,38 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
   return (
     <section className="mt-8 bg-white px-4 pb-8 pt-2">
       <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
-        <button
-          type="button"
-          className="flex flex-col items-center justify-center gap-1 active:scale-95"
-        >
-          <HeartLineIcon className="h-[26px] w-[26px] text-[#111827]" />
-          <span className="text-[13px] font-normal text-[#111827]">Like</span>
-          <span className="text-[11px] font-normal text-[#98a2b3]">
-            {formatCompactNumber(likeCount)}
-          </span>
-        </button>
+       <button
+  type="button"
+  onClick={handleToggleLike}
+  disabled={likeBusy || !episodeId}
+  aria-pressed={liked}
+  className="flex flex-col items-center justify-center gap-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  <HeartLineIcon
+    filled={liked}
+    className={`h-[26px] w-[26px] transition-all duration-200 ${
+      liked
+        ? 'scale-110 text-[#E5484D]'
+        : 'text-[#111827]'
+    }`}
+  />
+
+  <span
+    className={`text-[13px] font-normal transition-colors duration-200 ${
+      liked ? 'text-[#E5484D]' : 'text-[#111827]'
+    }`}
+  >
+    Like
+  </span>
+
+  <span
+    className={`text-[11px] font-normal transition-colors duration-200 ${
+      liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
+    }`}
+  >
+    {formatCompactNumber(likeCount)}
+  </span>
+</button>
 
         <button
           type="button"
