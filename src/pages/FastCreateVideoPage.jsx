@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useFastThumbnailUpload from '../hooks/useFastThumbnailUpload'
+import useFastVideoCreate from '../hooks/useFastVideoCreate'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -42,6 +43,7 @@ export default function FastCreateVideoPage() {
   const navigate = useNavigate()
   const thumbnailInputRef = useRef(null)
   const { uploadThumbnail, uploadingThumbnail } = useFastThumbnailUpload()
+  const { createFastVideo, creatingVideo } = useFastVideoCreate()
   const [link, setLink] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -49,9 +51,11 @@ export default function FastCreateVideoPage() {
   const [diamonds, setDiamonds] = useState('10')
   const [thumbnailFile, setThumbnailFile] = useState(null)
   const [thumbnailPreview, setThumbnailPreview] = useState('')
+  const [uploadedThumbnailUrl, setUploadedThumbnailUrl] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState([])
   const [message, setMessage] = useState('')
+  const [savingStatus, setSavingStatus] = useState('')
 
   const youtubeThumbnail = useMemo(() => {
     const videoId = extractYouTubeId(link)
@@ -88,12 +92,14 @@ export default function FastCreateVideoPage() {
 
     setThumbnailFile(file)
     setThumbnailPreview(URL.createObjectURL(file))
+    setUploadedThumbnailUrl('')
   }
 
   const removeThumbnail = () => {
     if (thumbnailPreview.startsWith('blob:')) URL.revokeObjectURL(thumbnailPreview)
     setThumbnailFile(null)
     setThumbnailPreview('')
+    setUploadedThumbnailUrl('')
     if (thumbnailInputRef.current) thumbnailInputRef.current.value = ''
   }
 
@@ -124,8 +130,7 @@ export default function FastCreateVideoPage() {
     }
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const saveVideo = async (status) => {
     setMessage('')
 
     if (!link.trim() || !title.trim()) {
@@ -144,19 +149,45 @@ export default function FastCreateVideoPage() {
     }
 
     try {
-      const thumbnailUrl = thumbnailFile
-        ? await uploadThumbnail(thumbnailFile)
-        : youtubeThumbnail
+      setSavingStatus(status)
+
+      let thumbnailUrl = uploadedThumbnailUrl || youtubeThumbnail
+
+      if (thumbnailFile && !uploadedThumbnailUrl) {
+        thumbnailUrl = await uploadThumbnail(thumbnailFile)
+        setUploadedThumbnailUrl(thumbnailUrl)
+      }
+
+      const result = await createFastVideo({
+        video_url: link.trim(),
+        title: title.trim(),
+        description: description.trim(),
+        thumbnail_url: thumbnailUrl,
+        tags,
+        access_type: access,
+        unlock_price_diamonds: access === 'paid' ? Number(diamonds) : 0,
+        status,
+      })
 
       setMessage(
-        thumbnailUrl
-          ? 'Thumbnail uploaded to Cloudflare R2 successfully.'
-          : 'Create form is ready.'
+        result.message ||
+          (status === 'published'
+            ? 'Video published successfully.'
+            : 'Draft saved successfully.')
       )
     } catch (error) {
-      setMessage(error.message || 'Failed to upload thumbnail.')
+      setMessage(error.message || 'Failed to save video.')
+    } finally {
+      setSavingStatus('')
     }
   }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    saveVideo('published')
+  }
+
+  const isSaving = uploadingThumbnail || creatingVideo
 
   return (
     <div className="min-h-screen bg-[#f7f5fb] pb-10 text-[#171329]">
@@ -395,18 +426,24 @@ export default function FastCreateVideoPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-[#cdbcf2] bg-white text-[12px] font-extrabold text-[#6738d9] transition hover:bg-[#f8f5ff] active:scale-[0.99]"
+              disabled={isSaving}
+              onClick={() => saveVideo('draft')}
+              className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-[#cdbcf2] bg-white text-[12px] font-extrabold text-[#6738d9] transition hover:bg-[#f8f5ff] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save size={16} />
-              Save draft
+              {isSaving && savingStatus === 'draft' ? 'Saving...' : 'Save draft'}
             </button>
             <button
               type="submit"
-              disabled={uploadingThumbnail}
+              disabled={isSaving}
               className="flex h-12 items-center justify-center gap-2 rounded-[16px] bg-[#7443e5] text-[12px] font-extrabold text-white shadow-[0_12px_26px_rgba(116,67,229,0.25)] transition hover:bg-[#6538d2] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send size={16} />
-              {uploadingThumbnail ? 'Uploading...' : 'Publish'}
+              {isSaving && savingStatus === 'published'
+                ? uploadingThumbnail
+                  ? 'Uploading...'
+                  : 'Publishing...'
+                : 'Publish'}
             </button>
           </div>
         </form>
