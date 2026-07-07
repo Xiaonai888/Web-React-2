@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesReportsSettings'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -1299,7 +1300,7 @@ const [recordFilter, setRecordFilter] = useState('newest')
 const [orderFilterOpen, setOrderFilterOpen] = useState(false)
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
 const [searchParams] = useSearchParams()
-const initialSettingsView = ['categories', 'delivery', 'telegram'].includes(searchParams.get('settings'))
+const initialSettingsView = ['categories', 'delivery', 'sales-reports', 'telegram'].includes(searchParams.get('settings'))
   ? searchParams.get('settings')
   : 'home'
 const [settingsView, setSettingsView] = useState(initialSettingsView)
@@ -1826,6 +1827,17 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       </span>
       <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
     </button>
+
+    <SalesReportsSettingsMenuItem
+  onOpen={() => setSettingsView('sales-reports')}
+/>
+
+<div className="mx-4 h-px bg-[#eef0f4]" />
+
+<button
+  type="button"
+  onClick={() => setSettingsView('telegram')}
+  
     <div className="mx-4 h-px bg-[#eef0f4]" />
 
     <button
@@ -2164,6 +2176,15 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
     </div>
   </div>
 ) : null}
+
+    <SalesReportsSettingsPage
+  open={settingsView === 'sales-reports'}
+  onBack={() => setSettingsView('home')}
+  fetchSettings={fetchSalesReportsSettings}
+  connectSheet={connectSalesReports}
+  syncSheet={syncSalesReports}
+  disconnectSheet={disconnectSalesReports}
+/>
 
   {settingsView === 'telegram' ? (
   <>
