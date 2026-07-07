@@ -106,41 +106,45 @@ function StatusBadge({ status }) {
   return <span className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${tone}`}>{labelMap[value] || value || 'Unknown'}</span>
 }
 
-function PackageCard({ item, selected, onSelect }) {
+function PackageCard({ item, onPurchase }) {
   const isBestValue = Number(item.package_usd) === 10
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative min-h-[126px] overflow-hidden rounded-[22px] border bg-white p-4 text-left transition active:scale-[0.99] ${selected ? 'border-[#C59B2D] shadow-[0_14px_30px_rgba(197,155,45,0.16)]' : 'border-[#E5E7EB] shadow-[0_6px_16px_rgba(17,17,17,0.035)] hover:border-[#C59B2D]/70'}`}
-    >
-      {isBestValue ? (
-        <div className="absolute right-3 top-3 rounded-bl-[12px] rounded-tr-[14px] bg-[#F5C542] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#111111] shadow-sm">
-          Best Value
-        </div>
-      ) : null}
+    <div className="relative flex min-h-[116px] items-center gap-3 rounded-[20px] bg-white px-4 py-4">
+      <DiamondIcon size="h-10 w-10" />
 
-      <div className="flex items-start gap-3 pr-8">
-        <DiamondIcon selected={selected} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">{formatNumber(item.diamonds)}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">
+              {formatNumber(item.diamonds)}
+            </span>
             <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
           </div>
-          <p className="mt-2 text-[12px] font-extrabold text-[#6B7280]">{formatMoney(item.package_usd)}</p>
-          <p className={`mt-2 text-[11px] font-extrabold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
-            {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Coins` : 'No bonus coins'}
-          </p>
+
+          {isBestValue ? (
+            <span className="rounded-full bg-[#FF5A5F] px-2 py-1 text-[8px] font-black uppercase tracking-[0.05em] text-white">
+              Best Value
+            </span>
+          ) : null}
         </div>
+
+        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
+          {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Coins` : 'No bonus coins'}
+        </p>
       </div>
 
-      <span className={`absolute right-3 flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-[#111111] bg-[#111111]' : 'border-[#D1D5DB] bg-white'} ${isBestValue ? 'top-11' : 'top-3'}`}>
-        {selected ? <i className="fas fa-check text-[9px] text-[#F5C542]" /> : null}
-      </span>
-    </button>
+      <button
+        type="button"
+        onClick={onPurchase}
+        className="min-w-[96px] shrink-0 rounded-full bg-[#FFD400] px-4 py-3 text-[15px] font-black text-[#111111] active:scale-95"
+      >
+        {formatMoney(item.package_usd)}
+      </button>
+    </div>
   )
 }
+
 
 function PaymentProfileRequiredModal({ onClose, onGoWallet }) {
   return (
@@ -421,21 +425,24 @@ export default function PurchaseSection() {
     }
   }
 
-  function handlePurchase() {
-    if (!getReaderToken()) {
-      navigate('/login')
-      return
-    }
+  function handlePurchase(packageUsd = selectedUsd) {
+  setSelectedUsd(packageUsd)
 
-    setToast('')
-
-    if (!hasPaymentProfile) {
-      setShowPaymentProfileRequired(true)
-      return
-    }
-
-    setShowPaymentMethods(true)
+  if (!getReaderToken()) {
+    navigate('/login')
+    return
   }
+
+  setToast('')
+
+  if (!hasPaymentProfile) {
+    setShowPaymentProfileRequired(true)
+    return
+  }
+
+  setShowPaymentMethods(true)
+}
+
 
   async function cancelPurchase() {
     if (!manualPayment?.order_id || checking) return
@@ -487,98 +494,114 @@ export default function PurchaseSection() {
   }
 
   return (
-    <section className="space-y-5 pb-[108px]">
-      <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_6px_16px_rgba(17,17,17,0.035)]">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#6B7280]">My Balance</p>
-          <button type="button" onClick={() => navigate('/wallet')} className="text-[12px] font-semibold text-[#9CA3AF] active:scale-95">
-            Wallet <i className="fas fa-chevron-right ml-1 text-[9px]" />
-          </button>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
-            <div className="flex items-center gap-3">
-              <DiamondIcon size="h-9 w-9" />
-              <div>
-                <p className="text-[12px] font-bold text-[#6B7280]">Diamonds</p>
-                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.diamond_balance)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-[#F8F8F8] p-4">
-            <div className="flex items-center gap-3">
-              <CoinIcon size="h-8 w-8" />
-              <div>
-                <p className="text-[12px] font-bold text-[#6B7280]">Coins</p>
-                <p className="mt-1 text-[23px] font-black text-[#111111]">{loading ? '...' : formatNumber(wallet?.coin_balance ?? wallet?.gem_balance)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
-          Diamonds are added automatically after payment confirms.
+  <section className="-mx-4 space-y-4 bg-[#F5F5F5] px-4 pb-8">
+    <div className="overflow-hidden rounded-[24px] bg-gradient-to-b from-[#FFD94A] to-[#FFA51F] p-[2px]">
+      <div className="rounded-t-[22px] bg-white/95 px-4 pb-5 pt-4">
+        <p className="text-center text-[14px] font-black uppercase tracking-[0.08em] text-[#E58A00]">
+          Join Premium to Get
         </p>
-      </div>
 
-      <div>
-        <div className="mb-3">
-          <h2 className="text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {packages.map((item) => (
-            <PackageCard key={item.package_usd} item={item} selected={Number(selectedUsd) === Number(item.package_usd)} onSelect={() => setSelectedUsd(item.package_usd)} />
-          ))}
-        </div>
-      </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="flex flex-col items-center text-center">
+            <DiamondIcon size="h-12 w-12" />
+            <p className="mt-2 text-[13px] font-black text-[#111111]">120 Diamonds</p>
+          </div>
 
-      {message ? <p className="text-center text-[12px] font-bold text-[#555]">{message}</p> : null}
-      {toast ? <p className="text-center text-[12px] font-bold text-[#111111]">{toast}</p> : null}
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#FFF1D7] text-[#F59E0B]">
+              <i className="fas fa-book-open text-[22px]" />
+            </div>
+            <p className="mt-2 text-[13px] font-black text-[#111111]">Early Access</p>
+          </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E5E7EB] bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(17,17,17,0.08)] backdrop-blur">
-        <div className="mx-auto max-w-[720px]">
-          <button
-            type="button"
-            onClick={handlePurchase}
-            className="w-full rounded-[18px] bg-[#111111] py-4 text-[15px] font-black text-white shadow-[0_12px_24px_rgba(17,17,17,0.16)] active:scale-[0.99]"
-          >
-            Purchase {selectedPackage ? `${formatNumber(selectedPackage.diamonds)} Diamonds` : ''}
-          </button>
+          <div className="flex flex-col items-center text-center">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#FFE4E7] text-[#F43F5E]">
+              <i className="fas fa-book text-[22px]" />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F43F5E] px-1 text-[9px] font-black text-white">
+                7
+              </span>
+            </div>
+            <p className="mt-2 text-[13px] font-black text-[#111111]">Free 7 Stories</p>
+          </div>
         </div>
       </div>
 
-      {showPaymentProfileRequired ? (
-        <PaymentProfileRequiredModal
-          onClose={() => setShowPaymentProfileRequired(false)}
-          onGoWallet={() => {
-            setShowPaymentProfileRequired(false)
-            navigate('/wallet')
-          }}
-        />
-      ) : null}
+      <div className="px-4 pb-4 pt-3">
+        <button
+          type="button"
+          onClick={() => navigate('/shop', { state: { activeTab: 'Plans' } })}
+          className="flex w-full items-center justify-between rounded-full bg-[#FFE85E] px-5 py-3.5 text-[#111111] active:scale-[0.99]"
+        >
+          <span className="text-[13px] font-black">Buy Premium</span>
+          <span className="text-[19px] font-black">$5.99/month</span>
+          <i className="fas fa-chevron-right text-[14px]" />
+        </button>
+      </div>
+    </div>
 
-      {showPaymentMethods ? (
-        <PaymentMethodModal
-          selectedPackage={selectedPackage}
-          creating={creatingPayment}
-          onClose={() => setShowPaymentMethods(false)}
-          onCreateManualPayment={createManualPayment}
-        />
-      ) : null}
+    <div>
+      <h2 className="mb-3 text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
 
-      {manualPayment ? (
-        <PaymentStatusModal
-          payment={manualPayment}
-          secondsLeft={secondsLeft}
-          checking={checking}
-          message={toast}
-          onCancel={cancelPurchase}
-          onClose={() => setManualPayment(null)}
-          onRefresh={() => refreshPaymentStatus(manualPayment.order_id)}
-        />
-      ) : null}
-    </section>
-  )
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {packages.map((item) => (
+          <PackageCard
+            key={item.package_usd}
+            item={item}
+            onPurchase={() => handlePurchase(item.package_usd)}
+          />
+        ))}
+      </div>
+    </div>
+
+    {message ? <p className="text-center text-[12px] font-bold text-[#555555]">{message}</p> : null}
+    {toast ? <p className="text-center text-[12px] font-bold text-[#111111]">{toast}</p> : null}
+
+    <div className="rounded-[20px] bg-white p-4">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF4D6] text-[#D98A00]">
+          <i className="fas fa-info text-[13px]" />
+        </div>
+        <h3 className="text-[14px] font-black text-[#111111]">Things to note before purchasing</h3>
+      </div>
+
+      <ol className="mt-3 list-decimal space-y-2 pl-5 text-[12px] font-medium leading-5 text-[#6B7280]">
+        <li>Diamonds are used to unlock premium episodes and support creators.</li>
+        <li>Bonus Coins are added automatically after payment is confirmed.</li>
+        <li>Completed purchases are non-refundable.</li>
+      </ol>
+    </div>
+
+    {showPaymentProfileRequired ? (
+      <PaymentProfileRequiredModal
+        onClose={() => setShowPaymentProfileRequired(false)}
+        onGoWallet={() => {
+          setShowPaymentProfileRequired(false)
+          navigate('/wallet')
+        }}
+      />
+    ) : null}
+
+    {showPaymentMethods ? (
+      <PaymentMethodModal
+        selectedPackage={selectedPackage}
+        creating={creatingPayment}
+        onClose={() => setShowPaymentMethods(false)}
+        onCreateManualPayment={createManualPayment}
+      />
+    ) : null}
+
+    {manualPayment ? (
+      <PaymentStatusModal
+        payment={manualPayment}
+        secondsLeft={secondsLeft}
+        checking={checking}
+        message={toast}
+        onCancel={cancelPurchase}
+        onClose={() => setManualPayment(null)}
+        onRefresh={() => refreshPaymentStatus(manualPayment.order_id)}
+      />
+    ) : null}
+  </section>
+)
+
 }
