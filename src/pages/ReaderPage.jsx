@@ -1553,95 +1553,325 @@ function getSubscribeEligibleKey(storyId) {
 
 function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
   const [expandedByUser, setExpandedByUser] = useState(false)
+  const [actionState, setActionState] = useState('idle')
+  const dismissTimerRef = useRef(null)
   const shouldCollapse = Number(readingProgress || 0) >= 85
-  const collapsed = shouldCollapse && !expandedByUser
+  const collapsed =
+    shouldCollapse &&
+    !expandedByUser &&
+    actionState === 'idle'
 
   useEffect(() => {
-    if (!visible || Number(readingProgress || 0) < 85) {
+    if (dismissTimerRef.current) {
+      window.clearTimeout(dismissTimerRef.current)
+      dismissTimerRef.current = null
+    }
+
+    if (!visible) {
+      setExpandedByUser(false)
+      setActionState('idle')
+      return
+    }
+
+    if (Number(readingProgress || 0) < 85) {
       setExpandedByUser(false)
     }
   }, [visible, readingProgress])
 
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        window.clearTimeout(dismissTimerRef.current)
+      }
+    }
+  }, [])
+
+  const dismissAfterAnimation = (state, delay) => {
+    if (dismissTimerRef.current) {
+      window.clearTimeout(dismissTimerRef.current)
+    }
+
+    setActionState(state)
+
+    dismissTimerRef.current = window.setTimeout(() => {
+      onClose?.()
+      setActionState('idle')
+      dismissTimerRef.current = null
+    }, delay)
+  }
+
   const handleClose = () => {
-    onClose?.()
+    if (actionState !== 'idle') return
+    dismissAfterAnimation('closing', 280)
+  }
+
+  const handleSubscribe = () => {
+    if (actionState !== 'idle') return
+    setExpandedByUser(true)
+    dismissAfterAnimation('success', 1200)
   }
 
   if (!visible || !storyId) return null
 
- if (collapsed) {
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
-      <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
-        <button
-          type="button"
-          onClick={() => setExpandedByUser(true)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
-          aria-label="Show subscribe popup"
-        >
-          <i className="fa-solid fa-xmark text-[13px]" />
-        </button>
+  const bannerMotionClass =
+    actionState === 'success'
+      ? 'shadowSubscribeSuccess'
+      : actionState === 'closing'
+        ? 'shadowSubscribeClose'
+        : ''
 
-        <img
-          src="/assets/Icons/Logo%20Shadow%203.png"
-          alt=""
-          className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
-          loading="lazy"
-          decoding="async"
-        />
+  if (collapsed) {
+    return (
+      <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
+        <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
+          <button
+            type="button"
+            onClick={() => setExpandedByUser(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
+            aria-label="Show subscribe popup"
+          >
+            <i className="fa-solid fa-heart text-[13px] text-[#ff3b5f]" />
+          </button>
 
-        <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
-          Subscribe to follow new episodes
+          <img
+            src="/assets/Icons/Logo%20Shadow%203.png"
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
+            Subscribe to follow new episodes
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setExpandedByUser(true)}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
+          >
+            <i className="fa-regular fa-heart text-[14px]" />
+            <span>Subscribe</span>
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setExpandedByUser(true)}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
-        >
-          <i className="fa-regular fa-heart text-[14px]" />
-          <span>Subscribe</span>
-        </button>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <>
+      <style>{`
+        @keyframes shadowSubscribeSuccess {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+
+          18% {
+            transform: translateY(-2px) scale(1.015);
+            box-shadow: 0 14px 38px rgba(255, 59, 95, 0.22);
+          }
+
+          68% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+
+          100% {
+            opacity: 0;
+            transform: translateY(12px) scale(0.97);
+          }
+        }
+
+        @keyframes shadowSubscribeClose {
+          0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+
+          100% {
+            opacity: 0;
+            transform: translateX(16px) scale(0.98);
+          }
+        }
+
+        @keyframes shadowSubscribeButtonPop {
+          0% {
+            transform: scale(1);
+          }
+
+          30% {
+            transform: scale(0.92);
+          }
+
+          58% {
+            transform: scale(1.08);
+          }
+
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes shadowSubscribeHeartFly {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.35) rotate(0deg);
+          }
+
+          20% {
+            opacity: 1;
+          }
+
+          100% {
+            opacity: 0;
+            transform:
+              translate(
+                calc(-50% + var(--heart-x)),
+                calc(-50% + var(--heart-y))
+              )
+              scale(0.92)
+              rotate(var(--heart-r));
+          }
+        }
+
+        .shadowSubscribeSuccess {
+          animation:
+            shadowSubscribeSuccess
+            1.2s
+            cubic-bezier(.22, 1, .36, 1)
+            both;
+        }
+
+        .shadowSubscribeClose {
+          animation:
+            shadowSubscribeClose
+            .28s
+            ease-out
+            both;
+        }
+
+        .shadowSubscribeButtonPop {
+          animation:
+            shadowSubscribeButtonPop
+            .52s
+            cubic-bezier(.22, 1, .36, 1)
+            both;
+        }
+
+        .shadowSubscribeHeart {
+          animation:
+            shadowSubscribeHeartFly
+            .86s
+            cubic-bezier(.22, 1, .36, 1)
+            both;
+        }
+      `}</style>
+
+      <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
+        <div
+          className={`pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] ${bannerMotionClass}`}
+        >
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={actionState !== 'idle'}
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95 disabled:pointer-events-none"
+            aria-label="Close subscribe popup"
+          >
+            <i className="fa-solid fa-xmark text-[13px]" />
+          </button>
+
+          <img
+            src="/assets/Icons/Logo%20Shadow%203.png"
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
+            {actionState === 'success'
+              ? 'You will see new episodes first'
+              : 'Subscribe to follow new episodes'}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSubscribe}
+            disabled={actionState !== 'idle'}
+            className={`relative flex h-10 shrink-0 items-center gap-1.5 overflow-visible rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95 disabled:pointer-events-none ${
+              actionState === 'success'
+                ? 'shadowSubscribeButtonPop'
+                : ''
+            }`}
+          >
+            {actionState === 'success' ? (
+              <>
+                <i className="fa-solid fa-check text-[13px]" />
+                <span>Subscribed</span>
+
+                <span
+                  className="shadowSubscribeHeart absolute left-1/2 top-1/2 text-[10px] text-[#ff3b5f]"
+                  style={{
+                    '--heart-x': '-34px',
+                    '--heart-y': '-34px',
+                    '--heart-r': '-18deg',
+                    animationDelay: '20ms',
+                  }}
+                >
+                  <i className="fa-solid fa-heart" />
+                </span>
+
+                <span
+                  className="shadowSubscribeHeart absolute left-1/2 top-1/2 text-[8px] text-[#ff7891]"
+                  style={{
+                    '--heart-x': '-13px',
+                    '--heart-y': '-44px',
+                    '--heart-r': '14deg',
+                    animationDelay: '90ms',
+                  }}
+                >
+                  <i className="fa-solid fa-heart" />
+                </span>
+
+                <span
+                  className="shadowSubscribeHeart absolute left-1/2 top-1/2 text-[9px] text-[#ff3b5f]"
+                  style={{
+                    '--heart-x': '18px',
+                    '--heart-y': '-41px',
+                    '--heart-r': '-10deg',
+                    animationDelay: '150ms',
+                  }}
+                >
+                  <i className="fa-solid fa-heart" />
+                </span>
+
+                <span
+                  className="shadowSubscribeHeart absolute left-1/2 top-1/2 text-[7px] text-[#ff9aab]"
+                  style={{
+                    '--heart-x': '36px',
+                    '--heart-y': '-27px',
+                    '--heart-r': '20deg',
+                    animationDelay: '220ms',
+                  }}
+                >
+                  <i className="fa-solid fa-heart" />
+                </span>
+              </>
+            ) : (
+              <>
+                <i className="fa-regular fa-heart text-[14px]" />
+                <span>Subscribe</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </>
   )
 }
 
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(50vh+310px)] z-[96] -translate-y-1/2 px-3">
-      <div className="pointer-events-auto mx-auto flex h-[62px] max-w-[430px] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)]">
-        <button
-          type="button"
-          onClick={handleClose}
-          className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
-          aria-label="Close subscribe popup"
-        >
-          <i className="fa-solid fa-xmark text-[13px]" />
-        </button>
-
-        <img
-          src="/assets/Icons/Logo%20Shadow%203.png"
-          alt=""
-          className="h-10 w-10 shrink-0 rounded-[10px] object-contain"
-          loading="lazy"
-          decoding="async"
-        />
-
-        <div className="min-w-0 flex-1 text-[13px] font-bold leading-4 text-[#111827]">
-          Subscribe to follow new episodes
-        </div>
-
-        <button
-          type="button"
-          onClick={handleClose}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
-        >
-          <i className="fa-regular fa-heart text-[14px]" />
-          <span>Subscribe</span>
-        </button>
-      </div>
-    </div>
-  )
-}
 
 function ReaderBottomActionBar({
   visible,
