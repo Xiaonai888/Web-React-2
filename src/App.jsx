@@ -132,6 +132,7 @@ const StoryTopFansPage = lazy(() => import('./pages/StoryTopFansPage'))
 const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
+const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
 
 function ComingSoon({ title }) {
   return (
@@ -1007,6 +1008,8 @@ const shouldShowOpeningAds =
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+        <Route path="/fast/studio" element={<LazyPage><FastStudioPage /></LazyPage>} />
+        <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
   
  
       </Routes>
