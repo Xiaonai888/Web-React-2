@@ -3352,19 +3352,6 @@ setReaderGateReady(true)
 
   
   useEffect(() => {
-    if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
-      return undefined
-    }
-
-    const timer = window.setInterval(async () => {
-      if (readingHeartbeatBusyRef.current || document.visibilityState !== 'visible') return
-
-      const recentlyActive =
-        Date.now() - lastReadingActivityRef.current <= READING_ACTIVITY_GRACE_MS
-
-      if (!recentlyActive && !autoScrollEnabled) return
-
-useEffect(() => {
   if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
     return undefined
   }
@@ -3863,7 +3850,7 @@ const readerControlsVisible =
   !episodeListOpen &&
   !commentsOpen
 
-const showReadingRewardCoin =
+  const showReadingRewardCoin =
   Boolean(readingRewardAnimation) ||
   Boolean(
     activeReadingTarget?.id &&
