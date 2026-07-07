@@ -3865,6 +3865,23 @@ const readerControlsVisible =
 
 const showReadingRewardCoin =
 
+  const showReadingRewardCoin =
+  Boolean(readingRewardAnimation) ||
+  Boolean(
+    activeReadingTarget?.id &&
+    !lockedEpisode &&
+    !loading &&
+    adultAccepted &&
+    episode &&
+    !shouldBlockReaderContent &&
+    !echoShareOpen &&
+    !settingsOpen &&
+    !fontSelectOpen &&
+    !resetOpen &&
+    !episodeListOpen &&
+    !commentsOpen
+  )
+
 
 return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
