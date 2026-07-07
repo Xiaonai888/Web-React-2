@@ -52,6 +52,7 @@ import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
+import PremiumPage from './pages/Me/PremiumPage'
 
 
 
@@ -199,6 +200,7 @@ function AppShell() {
     '/author/orders',
     '/most-read-this-week',
     '/gift-guide',
+    '/premium',
     
   ]
 
@@ -983,7 +985,7 @@ const shouldShowOpeningAds =
         <Route path="/author/story/:storyId/episode/publish-warning" element={<PublishBlockedWarningPage />} />
         <Route path="/author/story/:storyId/episode/preview" element={<EpisodePreviewPage />} />
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
-        <Route path="/premium" element={<ComingSoon title="Premium" />} />
+        <Route path="/premium" element={<PremiumPage />} />
         <Route path="/inbox" element={<InboxPage />} />
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
