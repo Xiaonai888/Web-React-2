@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import PremiumHelpSheet from '../../components/Me/PremiumHelpSheet'
 
 const PLANS = [
-  { id: '1', label: '1 Month', price: '$5', coins: '180 Coins' },
-  { id: '3', label: '3 Months', price: '$18', coins: '540 Coins', badge: 'POPULAR' },
-  { id: '12', label: '12 Months', price: '$70', coins: '2,200 Coins' },
+  { id: '1', label: '1 Month', price: '$5', diamonds: '180 Diamonds', badge: 'FLEXIBLE' },
+  { id: '3', label: '3 Months', price: '$18', diamonds: '540 Diamonds', badge: 'POPULAR' },
+  { id: '12', label: '12 Months', price: '$70', diamonds: '2,200 Diamonds', badge: 'ANNUAL' },
 ]
 
 function getStoredReader() {
@@ -20,20 +20,19 @@ function getStoredReader() {
   }
 }
 
-function CoinMark({ className = '' }) {
+function DiamondMark({ className = '' }) {
   return (
-    <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ffd62e] to-[#ff9f0a] font-black text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65)] ${className}`}
-    >
-      C
-    </span>
+    <img
+      src="/assets/Icons/Diamond.svg"
+      alt=""
+      className={`shrink-0 object-contain ${className}`}
+    />
   )
 }
 
 export default function PremiumPage() {
   const reader = useMemo(getStoredReader, [])
   const [selectedPlan, setSelectedPlan] = useState('3')
-  const [detailsOpen, setDetailsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
 
   const displayName =
@@ -126,24 +125,23 @@ export default function PremiumPage() {
         <section className="rounded-b-[26px] bg-white px-5 pb-6 pt-1">
           <div className="flex items-center justify-between">
             <h2 className="text-[21px] font-bold">Privileges</h2>
-            <button
-              type="button"
-              onClick={() => setDetailsOpen(true)}
+            <a
+              href="#premium-details"
               className="flex items-center gap-1 text-[14px] text-[#a5a5a5]"
             >
               More
               <i className="fa-solid fa-chevron-right text-[10px]" />
-            </button>
+            </a>
           </div>
 
           <div className="relative mt-5 grid grid-cols-2 gap-4">
             <div className="min-h-[92px] rounded-[12px] bg-gradient-to-r from-[#f4f9ff] to-[#f9fbff] px-4 py-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-[17px] font-bold">180 Coins</div>
-                  <div className="mt-1 text-[13px] text-[#9aa0a6]">+90 Coins</div>
+                  <div className="text-[17px] font-bold">180 Diamonds</div>
+                  <div className="mt-1 text-[13px] text-[#9aa0a6]">+90 Diamonds</div>
                 </div>
-                <CoinMark className="h-11 w-11 text-[18px]" />
+                <DiamondMark className="h-11 w-11 text-[18px]" />
               </div>
 
               <span className="absolute left-[39%] top-[-7px] rounded-b-[8px] rounded-t-[4px] bg-[#ff9212] px-2 py-1 text-[10px] font-bold text-white">
@@ -155,9 +153,9 @@ export default function PremiumPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="text-[17px] font-bold">Check-in Reward</div>
-                  <div className="mt-1 text-[13px] text-[#9aa0a6]">Get 5 Coins/Week</div>
+                  <div className="mt-1 text-[13px] text-[#9aa0a6]">Get 5 Diamonds/Week</div>
                 </div>
-                <CoinMark className="h-11 w-11 text-[18px]" />
+                <DiamondMark className="h-11 w-11 text-[18px]" />
               </div>
             </div>
 
@@ -200,7 +198,13 @@ export default function PremiumPage() {
                   }`}
                 >
                   {plan.badge ? (
-                    <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-t-[7px] bg-[#202124] px-2.5 py-1 text-[9px] font-black text-[#ffd100]">
+                    <span className={`absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-t-[7px] px-2.5 py-1 text-[9px] font-black ${
+                      plan.id === '3'
+                        ? 'bg-[#202124] text-[#ffd100]'
+                        : plan.id === '12'
+                          ? 'bg-[#ffb000] text-[#202124]'
+                          : 'bg-[#ececec] text-[#616161]'
+                    }`}>
                       {plan.badge}
                     </span>
                   ) : null}
@@ -209,8 +213,8 @@ export default function PremiumPage() {
                   <div className="mt-5 text-[27px] font-semibold">{plan.price}</div>
 
                   <div className="mt-5 flex items-center justify-center gap-1.5 text-[12px] text-[#777]">
-                    <CoinMark className="h-5 w-5 text-[9px]" />
-                    <span>{plan.coins}</span>
+                    <DiamondMark className="h-5 w-5 text-[9px]" />
+                    <span>{plan.diamonds}</span>
                   </div>
                 </button>
               )
@@ -225,52 +229,38 @@ export default function PremiumPage() {
           </button>
 
           <p className="mt-4 text-center text-[12px] leading-5 text-[#a0a0a0]">
-            Extra Coins for new Premium members (limited time)
+            Extra Diamonds for new Premium members (limited time)
             <br />
             Auto-renewal, cancelled anytime
           </p>
 
-          <div className="mt-5 border-t border-[#e5e5e5] pt-5">
-            <button
-              type="button"
-              onClick={() => setDetailsOpen((value) => !value)}
-              className="flex w-full items-center justify-between text-left"
-            >
-              <span className="text-[14px] font-semibold text-[#9a9a9a]">
-                Details about Premium
-              </span>
+          <div id="premium-details" className="mt-5 border-t border-[#e5e5e5] pt-5">
+            <h3 className="text-[14px] font-semibold text-[#9a9a9a]">
+              Details about Premium
+            </h3>
 
-              <i
-                className={`fa-solid fa-chevron-down text-[11px] text-[#a8a8a8] transition ${
-                  detailsOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {detailsOpen ? (
-              <div className="mt-4 space-y-4 text-[12px] leading-5 text-[#8f8f8f]">
-                <div>
-                  <div className="font-semibold text-[#777]">1. Premium Gift Pack</div>
-                  <p className="mt-1">
-                    After subscribing, Premium rewards can be claimed from the Premium Center.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="font-semibold text-[#777]">2. Subscription</div>
-                  <p className="mt-1">
-                    The selected plan renews automatically unless cancelled before the next billing date.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="font-semibold text-[#777]">3. Benefits</div>
-                  <p className="mt-1">
-                    Premium privileges remain active until the subscription period ends.
-                  </p>
-                </div>
+            <div className="mt-4 space-y-4 text-[12px] leading-5 text-[#8f8f8f]">
+              <div>
+                <div className="font-semibold text-[#777]">1. Premium Gift Pack</div>
+                <p className="mt-1">
+                  After subscribing, Premium rewards can be claimed from the Premium Center.
+                </p>
               </div>
-            ) : null}
+
+              <div>
+                <div className="font-semibold text-[#777]">2. Subscription</div>
+                <p className="mt-1">
+                  The selected plan renews automatically unless cancelled before the next billing date.
+                </p>
+              </div>
+
+              <div>
+                <div className="font-semibold text-[#777]">3. Benefits</div>
+                <p className="mt-1">
+                  Premium privileges remain active until the subscription period ends.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
         <PremiumHelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
