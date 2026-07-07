@@ -3364,139 +3364,148 @@ setReaderGateReady(true)
 
       if (!recentlyActive && !autoScrollEnabled) return
 
-      const currentTarget = activeReadingTargetRef.current
+useEffect(() => {
+  if (!storyId || !episodeId || !episode || loading || lockedEpisode || !adultAccepted) {
+    return undefined
+  }
 
-      if (!currentTarget?.id) return
+  const timer = window.setInterval(async () => {
+    if (readingHeartbeatBusyRef.current || document.visibilityState !== 'visible') return
 
-      readingHeartbeatBusyRef.current = true
+    const recentlyActive =
+      Date.now() - lastReadingActivityRef.current <= READING_ACTIVITY_GRACE_MS
 
-      try {
-        if (currentTarget.reward_type === 'mission') {
-          const progressResponse = await fetch(
-            `${API_BASE_URL}/api/tasks/reading-missions/${currentTarget.id}/progress`,
-            {
-              method: 'POST',
-              headers: {
-                ...readerAuthHeaders(),
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                story_id: storyId,
-                episode_id: episodeId,
-                seconds: READING_PROGRESS_STEP_SECONDS,
-              }),
-            }
-          )
+    if (!recentlyActive && !autoScrollEnabled) return
+    if (!activeReadingTargetRef.current?.id) return
 
-          const progressData = await progressResponse.json().catch(() => ({}))
+    readingHeartbeatBusyRef.current = true
 
-          if (!progressResponse.ok || progressData.ok === false) return
-
-          const nextMission = normalizeReadingMission(progressData.mission)
-
-          if (nextMission?.id) {
-            const nextTarget = {
-              ...nextMission,
-              reward_type: 'mission',
-              mission_scope: currentTarget.mission_scope,
-            }
-
-            setActiveReadingTarget(nextTarget)
-
-            if (nextMission.claimable && !nextMission.claimed) {
-              const claimResponse = await fetch(
-                `${API_BASE_URL}/api/tasks/reading-missions/${nextMission.id}/claim`,
-                {
-                  method: 'POST',
-                  headers: {
-                    ...readerAuthHeaders(),
-                    'Content-Type': 'application/json',
-                  },
-                }
-              )
-
-              const claimData = await claimResponse.json().catch(() => ({}))
-
-              if (claimResponse.ok && claimData.ok !== false) {
-                showReadingRewardAnimation(
-                  claimData.reward?.coins ||
-                    claimData.reward?.gems ||
-                    nextMission.reward_coins
-                )
-              } else {
-                setReadingRewardReloadKey((value) => value + 1)
-              }
-            }
-          }
-
-          return
+    try {
+      const progressResponse = await fetch(
+        `${API_BASE_URL}/api/tasks/reading-session/progress`,
+        {
+          method: 'POST',
+          headers: {
+            ...readerAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            story_id: storyId,
+            episode_id: episodeId,
+            seconds: READING_PROGRESS_STEP_SECONDS,
+          }),
         }
+      )
 
-        const progressResponse = await fetch(
-          `${API_BASE_URL}/api/tasks/reading-reward/progress`,
+      const progressData = await progressResponse.json().catch(() => ({}))
+
+      if (!progressResponse.ok || progressData.ok === false) return
+
+      const missionIds = Array.isArray(progressData.claimable?.mission_ids)
+        ? progressData.claimable.mission_ids.filter(Boolean)
+        : []
+
+      const dailyCoins = Math.max(
+        0,
+        Number(progressData.claimable?.daily_coins || 0)
+      )
+
+      let totalClaimedCoins = 0
+      let needsReload = false
+
+      if (dailyCoins > 0) {
+        const dailyClaimResponse = await fetch(
+          `${API_BASE_URL}/api/tasks/reading-reward/claim`,
           {
             method: 'POST',
             headers: {
               ...readerAuthHeaders(),
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              story_id: storyId,
-              episode_id: episodeId,
-              seconds: READING_PROGRESS_STEP_SECONDS,
-            }),
           }
         )
 
-        const progressData = await progressResponse.json().catch(() => ({}))
+        const dailyClaimData = await dailyClaimResponse.json().catch(() => ({}))
 
-        if (!progressResponse.ok || progressData.ok === false) return
-
-        const readingReward = progressData.reading_reward || null
-        const claimableCoins = Number(readingReward?.claimable_coins || 0)
-
-        if (claimableCoins > 0) {
-          const claimResponse = await fetch(
-            `${API_BASE_URL}/api/tasks/reading-reward/claim`,
-            {
-              method: 'POST',
-              headers: {
-                ...readerAuthHeaders(),
-                'Content-Type': 'application/json',
-              },
-            }
-          )
-
-          const claimData = await claimResponse.json().catch(() => ({}))
-
-          if (claimResponse.ok && claimData.ok !== false) {
-            showReadingRewardAnimation(
-              claimData.reward?.coins ||
-                claimData.reward?.gems ||
-                claimableCoins
+        if (dailyClaimResponse.ok && dailyClaimData.ok !== false) {
+          totalClaimedCoins += Math.max(
+            0,
+            Number(
+              dailyClaimData.reward?.coins ||
+                dailyClaimData.reward?.gems ||
+                dailyCoins
             )
-            return
-          }
+          )
+        } else {
+          needsReload = true
         }
-
-        setActiveReadingTarget(buildDailyReadingTarget(readingReward))
-      } finally {
-        readingHeartbeatBusyRef.current = false
       }
-    }, READING_PROGRESS_STEP_SECONDS * 1000)
 
-    return () => {
-      window.clearInterval(timer)
+      for (const missionId of missionIds) {
+        const missionClaimResponse = await fetch(
+          `${API_BASE_URL}/api/tasks/reading-missions/${missionId}/claim`,
+          {
+            method: 'POST',
+            headers: {
+              ...readerAuthHeaders(),
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+
+        const missionClaimData = await missionClaimResponse.json().catch(() => ({}))
+
+        if (missionClaimResponse.ok && missionClaimData.ok !== false) {
+          totalClaimedCoins += Math.max(
+            0,
+            Number(
+              missionClaimData.reward?.coins ||
+                missionClaimData.reward?.gems ||
+                0
+            )
+          )
+        } else {
+          needsReload = true
+        }
+      }
+
+      if (totalClaimedCoins > 0) {
+        activeReadingTargetRef.current = null
+        setActiveReadingTarget(null)
+        showReadingRewardAnimation(totalClaimedCoins)
+        return
+      }
+
+      const nextTarget = resolveReadingTarget({
+        missions: progressData.missions || [],
+        readingReward: progressData.reading_reward || null,
+        storyId,
+      })
+
+      activeReadingTargetRef.current = nextTarget
+      setActiveReadingTarget(nextTarget)
+
+      if (needsReload) {
+        setReadingRewardReloadKey((value) => value + 1)
+      }
+    } finally {
+      readingHeartbeatBusyRef.current = false
     }
-  }, [
-    adultAccepted,
-    autoScrollEnabled,
-    episode,
-    episodeId,
-    loading,
-    lockedEpisode,
-    storyId,
-  ])
+  }, READING_PROGRESS_STEP_SECONDS * 1000)
+
+  return () => {
+    window.clearInterval(timer)
+  }
+}, [
+  adultAccepted,
+  autoScrollEnabled,
+  episode,
+  episodeId,
+  loading,
+  lockedEpisode,
+  storyId,
+])
+      
 
 
 useEffect(() => {
