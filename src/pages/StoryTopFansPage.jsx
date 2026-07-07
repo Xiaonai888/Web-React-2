@@ -500,8 +500,7 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
                 <div key={index} className="h-16 animate-pulse rounded-[18px] bg-[#f3f4f6]" />
               ))}
             </div>
-          ) : (
-            <>
+    
             fans.length > 0 ? (
   <>
     <TopThree fans={fans} />
