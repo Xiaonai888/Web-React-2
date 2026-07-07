@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useFastThumbnailUpload from '../hooks/useFastThumbnailUpload'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -40,6 +41,7 @@ function extractYouTubeId(value) {
 export default function FastCreateVideoPage() {
   const navigate = useNavigate()
   const thumbnailInputRef = useRef(null)
+  const { uploadThumbnail, uploadingThumbnail } = useFastThumbnailUpload()
   const [link, setLink] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -122,7 +124,7 @@ export default function FastCreateVideoPage() {
     }
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setMessage('')
 
@@ -141,11 +143,19 @@ export default function FastCreateVideoPage() {
       return
     }
 
-    setMessage(
-      thumbnailFile
-        ? 'Create form is ready. Cloudflare thumbnail upload will be connected in the backend stage.'
-        : 'Create form is ready.'
-    )
+    try {
+      const thumbnailUrl = thumbnailFile
+        ? await uploadThumbnail(thumbnailFile)
+        : youtubeThumbnail
+
+      setMessage(
+        thumbnailUrl
+          ? 'Thumbnail uploaded to Cloudflare R2 successfully.'
+          : 'Create form is ready.'
+      )
+    } catch (error) {
+      setMessage(error.message || 'Failed to upload thumbnail.')
+    }
   }
 
   return (
@@ -392,10 +402,11 @@ export default function FastCreateVideoPage() {
             </button>
             <button
               type="submit"
-              className="flex h-12 items-center justify-center gap-2 rounded-[16px] bg-[#7443e5] text-[12px] font-extrabold text-white shadow-[0_12px_26px_rgba(116,67,229,0.25)] transition hover:bg-[#6538d2] active:scale-[0.99]"
+              disabled={uploadingThumbnail}
+              className="flex h-12 items-center justify-center gap-2 rounded-[16px] bg-[#7443e5] text-[12px] font-extrabold text-white shadow-[0_12px_26px_rgba(116,67,229,0.25)] transition hover:bg-[#6538d2] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send size={16} />
-              Publish
+              {uploadingThumbnail ? 'Uploading...' : 'Publish'}
             </button>
           </div>
         </form>
@@ -489,7 +500,7 @@ export default function FastCreateVideoPage() {
               Thumbnail storage
             </div>
             <p className="mt-1 text-[10px] leading-4 text-[#918a9e]">
-              Uploaded thumbnails will be stored in Cloudflare R2 after the backend upload API is connected.
+              Uploaded thumbnails are stored securely in Cloudflare R2.
             </p>
           </div>
         </aside>
