@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import PremiumHelpSheet from '../../components/Me/PremiumHelpSheet'
 
 const PLANS = [
   { id: '1', label: '1 Month', price: '$5', coins: '180 Coins' },
@@ -33,6 +34,7 @@ export default function PremiumPage() {
   const reader = useMemo(getStoredReader, [])
   const [selectedPlan, setSelectedPlan] = useState('3')
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const displayName =
     reader?.name ||
@@ -67,7 +69,7 @@ export default function PremiumPage() {
             <button
               type="button"
               aria-label="Premium help"
-              onClick={() => setDetailsOpen(true)}
+              onClick={() => setHelpOpen(true)}
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#202124] active:bg-black/5"
             >
               <i className="fa-regular fa-circle-question text-[19px]" />
@@ -271,6 +273,7 @@ export default function PremiumPage() {
             ) : null}
           </div>
         </section>
+        <PremiumHelpSheet open={helpOpen} onClose={() => setHelpOpen(false)} />
       </div>
     </main>
   )
