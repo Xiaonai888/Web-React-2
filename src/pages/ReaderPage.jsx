@@ -3855,11 +3855,7 @@ const readerControlsVisible =
   !commentsOpen
 
 const showReadingRewardCoin =
-  Boolean(readingRewardAnimation) ||
-  (
-    readerControlsVisible &&
-    Boolean(activeReadingTarget?.id)
-  )
+
 
 return (
     <div className={`min-h-screen ${theme.page} pb-[110px] transition-colors`}>
