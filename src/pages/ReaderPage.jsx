@@ -3864,8 +3864,6 @@ const readerControlsVisible =
   !commentsOpen
 
 const showReadingRewardCoin =
-
-  const showReadingRewardCoin =
   Boolean(readingRewardAnimation) ||
   Boolean(
     activeReadingTarget?.id &&
