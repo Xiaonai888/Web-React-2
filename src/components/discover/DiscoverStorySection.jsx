@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -126,12 +126,15 @@ function AuthorStoryCard({ group, onClick }) {
   const author = group.author_page || {}
   const latestStory = group.stories?.[group.stories.length - 1] || null
   const isVideo = latestStory?.media_type === 'video'
+  const ringClass = group.has_unseen
+    ? 'ring-2 ring-[#8b5cf6] ring-offset-2 ring-offset-white'
+    : 'ring-2 ring-[#cbd5e1] ring-offset-2 ring-offset-white'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="relative h-[178px] w-[108px] shrink-0 overflow-hidden rounded-[18px] bg-[#111827] text-left shadow-sm ring-2 ring-[#8b5cf6] ring-offset-2 ring-offset-white transition-transform active:scale-[0.98] sm:h-[184px] sm:w-[112px]"
+      className={`relative h-[178px] w-[108px] shrink-0 overflow-hidden rounded-[18px] bg-[#111827] text-left shadow-sm transition-transform active:scale-[0.98] sm:h-[184px] sm:w-[112px] ${ringClass}`}
       aria-label={`View ${author.page_name || 'author'} story`}
     >
       {latestStory?.media_url ? (
@@ -213,7 +216,7 @@ function ViewerAvatar({ author }) {
   )
 }
 
-function StoryViewer({ group, onClose }) {
+function StoryViewer({ group, onClose, onViewed }) {
   const [storyIndex, setStoryIndex] = useState(0)
   const [progress, setProgress] = useState(0)
   const videoRef = useRef(null)
@@ -252,7 +255,7 @@ function StoryViewer({ group, onClose }) {
     }, 80)
 
     return () => window.clearInterval(timer)
-  }, [story?.id, storyIndex, stories.length, onClose])
+  }, [story?.id, story?.media_type, storyIndex, stories.length, onClose])
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -262,6 +265,40 @@ function StoryViewer({ group, onClose }) {
       document.body.style.overflow = previousOverflow
     }
   }, [])
+
+  useEffect(() => {
+    const token = getAuthToken()
+
+    if (!story?.id || story.has_viewed || group.is_owner || !token) return undefined
+
+    let active = true
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/author-stories/${encodeURIComponent(story.id)}/view`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) return
+
+        if (active) {
+          onViewed(story.id, Number(data.view_count || story.view_count || 0))
+        }
+      } catch {}
+    }, 500)
+
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [group.is_owner, onViewed, story?.has_viewed, story?.id, story?.view_count])
 
   function goNext() {
     if (storyIndex < stories.length - 1) {
@@ -386,6 +423,15 @@ function StoryViewer({ group, onClose }) {
           aria-label="Next story"
         />
 
+        {group.is_owner ? (
+          <div className={`absolute inset-x-5 z-20 ${story.caption ? 'bottom-[104px]' : 'bottom-[max(32px,env(safe-area-inset-bottom))]'}`}>
+            <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-[12px] font-black text-white backdrop-blur-xl">
+              <i className="fa-solid fa-eye text-[11px]" />
+              {Number(story.view_count || 0)} {Number(story.view_count || 0) === 1 ? 'view' : 'views'}
+            </div>
+          </div>
+        ) : null}
+
         {story.caption ? (
           <div className="absolute inset-x-5 bottom-[max(32px,env(safe-area-inset-bottom))] z-20">
             <div className="rounded-[18px] bg-black/40 px-4 py-3 text-center text-[14px] font-semibold leading-6 text-white backdrop-blur-xl">
@@ -442,6 +488,31 @@ export default function DiscoverStorySection() {
     }
   }, [requestHeaders])
 
+  const handleViewed = useCallback((storyId, viewCount) => {
+    function updateGroup(group) {
+      if (!group) return group
+
+      const nextStories = (group.stories || []).map((story) =>
+        story.id === storyId
+          ? {
+              ...story,
+              has_viewed: true,
+              view_count: viewCount,
+            }
+          : story
+      )
+
+      return {
+        ...group,
+        stories: nextStories,
+        has_unseen: nextStories.some((story) => !story.has_viewed),
+      }
+    }
+
+    setGroups((current) => current.map(updateGroup))
+    setActiveGroup((current) => updateGroup(current))
+  }, [])
+
   return (
     <>
       <section className="border-b border-gray-100 bg-white py-3 sm:rounded-b-[22px] sm:border sm:shadow-sm sm:ring-1 sm:ring-gray-100">
@@ -480,6 +551,7 @@ export default function DiscoverStorySection() {
         <StoryViewer
           group={activeGroup}
           onClose={() => setActiveGroup(null)}
+          onViewed={handleViewed}
         />
       ) : null}
     </>
