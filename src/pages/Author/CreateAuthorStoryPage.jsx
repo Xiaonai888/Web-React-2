@@ -7,9 +7,10 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/quicktime'])
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024
+const VIDEO_TYPES = new Set(['video/mp4', 'video/quicktime'])
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024
+const MAX_VIDEO_BYTES = 30 * 1024 * 1024
+const MAX_VIDEO_DURATION_SECONDS = 60
 
 function getAuthToken() {
   return (
@@ -27,6 +28,42 @@ function formatFileSize(bytes) {
   }
 
   return `${Math.max(1, Math.round(value / 1024))} KB`
+}
+
+function readVideoDuration(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video')
+    const objectUrl = URL.createObjectURL(file)
+
+    function cleanup() {
+      video.removeAttribute('src')
+      video.load()
+      URL.revokeObjectURL(objectUrl)
+    }
+
+    video.preload = 'metadata'
+    video.muted = true
+    video.playsInline = true
+
+    video.onloadedmetadata = () => {
+      const duration = Number(video.duration || 0)
+      cleanup()
+
+      if (!Number.isFinite(duration) || duration <= 0) {
+        reject(new Error('Could not read video duration.'))
+        return
+      }
+
+      resolve(duration)
+    }
+
+    video.onerror = () => {
+      cleanup()
+      reject(new Error('Could not read this video file.'))
+    }
+
+    video.src = objectUrl
+  })
 }
 
 function uploadAuthorStory({ file, caption, allowMessages, token, onProgress }) {
@@ -212,34 +249,48 @@ export default function CreateAuthorStoryPage() {
     if (videoInputRef.current) videoInputRef.current.value = ''
   }
 
-  function selectMedia(file) {
-    if (!file) return
+  async function selectMedia(file) {
+  if (!file) return
 
-    const isPhoto = PHOTO_TYPES.has(file.type)
-    const isVideo = VIDEO_TYPES.has(file.type)
+  const isPhoto = PHOTO_TYPES.has(file.type)
+  const isVideo = VIDEO_TYPES.has(file.type)
 
-    if (!isPhoto && !isVideo) {
-      setError('Choose a JPG, PNG, WebP, MP4, WebM, or MOV file.')
-      return
-    }
-
-    if (isPhoto && file.size > MAX_PHOTO_BYTES) {
-      setError('Photo must be 10 MB or smaller.')
-      return
-    }
-
-    if (isVideo && file.size > MAX_VIDEO_BYTES) {
-      setError('Video must be 50 MB or smaller.')
-      return
-    }
-
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
-
-    setMediaFile(file)
-    setPreviewUrl(URL.createObjectURL(file))
-    setError('')
-    setStep('preview')
+  if (!isPhoto && !isVideo) {
+    setError('Choose a JPG, PNG, WebP, MP4, or MOV file.')
+    return
   }
+
+  if (isPhoto && file.size > MAX_PHOTO_BYTES) {
+    setError('Photo must be 5 MB or smaller.')
+    return
+  }
+
+  if (isVideo && file.size > MAX_VIDEO_BYTES) {
+    setError('Video must be 30 MB or smaller.')
+    return
+  }
+
+  if (isVideo) {
+    try {
+      const duration = await readVideoDuration(file)
+
+      if (duration > MAX_VIDEO_DURATION_SECONDS) {
+        setError('Video must be 60 seconds or shorter.')
+        return
+      }
+    } catch (videoError) {
+      setError(videoError.message || 'Could not validate video duration.')
+      return
+    }
+  }
+
+  if (previewUrl) URL.revokeObjectURL(previewUrl)
+
+  setMediaFile(file)
+  setPreviewUrl(URL.createObjectURL(file))
+  setError('')
+  setStep('preview')
+}
 
   function handleBack() {
     if (uploading) return
@@ -404,7 +455,7 @@ export default function CreateAuthorStoryPage() {
                     <div className="relative mt-1 text-[11px] font-medium leading-5 text-white/45">
                       JPG, PNG or WebP
                     </div>
-                    <div className="relative mt-3 text-[10px] font-bold text-[#c4b5fd]">Maximum 10 MB</div>
+                    <div className="relative mt-3 text-[10px] font-bold text-[#c4b5fd]">Maximum 5 MB · Auto optimized</div>
                   </button>
 
                   <button
@@ -418,9 +469,9 @@ export default function CreateAuthorStoryPage() {
                     </span>
                     <div className="relative mt-5 text-[15px] font-black">Video story</div>
                     <div className="relative mt-1 text-[11px] font-medium leading-5 text-white/45">
-                      MP4, WebM or MOV
+                      MP4 or MOV
                     </div>
-                    <div className="relative mt-3 text-[10px] font-bold text-[#f9a8d4]">Maximum 50 MB</div>
+                    <div className="relative mt-3 text-[10px] font-bold text-[#f9a8d4]">Maximum 30 MB · 60 seconds</div>
                   </button>
                 </div>
               </div>
@@ -453,7 +504,7 @@ export default function CreateAuthorStoryPage() {
             <input
               ref={videoInputRef}
               type="file"
-              accept="video/mp4,video/webm,video/quicktime"
+              accept="video/mp4,video/quicktime"
               className="hidden"
               onChange={(event) => selectMedia(event.target.files?.[0])}
             />
