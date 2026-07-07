@@ -11,7 +11,7 @@ const DEFAULT_CATEGORIES = ['New Books', 'Second Hand', 'Best Seller', 'PDF Book
 const TYPE_FILTERS = ['All', 'Book', 'PDF', 'Active', 'Draft']
 const PAPER_TYPES = ['Normal Paper', 'Premium Paper', 'Matte Cover', 'Glossy Cover']
 const BOOK_CONDITIONS = ['New', 'Second Hand']
-const PDF_ACCESS_RULES = ['Download after payment', 'Read online only', 'Download and read online']
+const PDF_ACCESS_RULES = ['Read online only']
 const ORDER_REPORT_LIMIT = 20
 const ORDER_REFRESH_INTERVAL_MS = 60000
 const ORDER_MAX_AUTO_REFRESHES = 10
@@ -86,7 +86,7 @@ galleryImages: formatGalleryImagesForUi(product.gallery_images),
    pdfFileUrl: product.pdf_file_url || '',
 pdfFileName: product.pdf_file_name || '',
 pageCount: product.page_count || '',
-accessRule: product.access_rule || 'Download after payment',
+accessRule: product.access_rule || 'Read online only',
     
     createdAt: product.created_at,
 updatedAt: product.updated_at || product.updatedAt || product.created_at,
@@ -165,6 +165,66 @@ async function uploadGalleryImage(file) {
   }
 
   return data.image_url || data.imageUrl || ''
+}
+
+
+async function uploadPrivatePdfFile(file) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+  if (!file) throw new Error('PDF file is required')
+
+  const formData = new FormData()
+  formData.append('pdf', file)
+
+  const response = await fetch(`${API_BASE_URL}/api/author-store/me/pdfs/upload-private`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false || !data.pdf?.storage_key) {
+    throw new Error(data.message || 'Failed to upload private PDF')
+  }
+
+  return data.pdf
+}
+
+async function attachPrivatePdfToProduct(productId, pdf) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+  if (!productId) throw new Error('Product ID is required')
+  if (!pdf?.storage_key) throw new Error('Private PDF storage key is missing')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/author-store/me/products/${encodeURIComponent(productId)}/private-pdf`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        pdf_storage_key: pdf.storage_key,
+        pdf_file_name: pdf.file_name,
+        pdf_mime_type: pdf.mime_type,
+        pdf_file_size_bytes: pdf.file_size_bytes,
+      }),
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to attach private PDF')
+  }
+
+  return data.product || null
 }
 
 
@@ -413,10 +473,10 @@ async function createStoreProduct(product) {
       quality_percent: product.qualityPercent,
       delivery_note: product.deliveryNote,
       pre_order: product.preOrder,
-       pdf_file_url: product.pdfFileUrl,
+      pdf_file_url: product.type === 'PDF' ? '' : product.pdfFileUrl,
       pdf_file_name: product.pdfFileName,
       page_count: product.pageCount,
-      access_rule: product.accessRule,
+      access_rule: product.type === 'PDF' ? 'Read online only' : product.accessRule,
     }),
   })
 
@@ -467,7 +527,7 @@ async function updateStoreProduct(productId, product) {
       pdf_file_url: product.pdfFileUrl,
       pdf_file_name: product.pdfFileName,
       page_count: product.pageCount,
-      access_rule: product.accessRule,
+      access_rule: product.type === 'PDF' ? 'Read online only' : product.accessRule,
     }),
   })
 
@@ -775,7 +835,6 @@ function ProductRecordRow({ product, onEdit, onDelete }) {
     </article>
   )
 }
-
 
 function formatCategoryForUi(category) {
   return {
@@ -1363,8 +1422,8 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       <section
         className="relative overflow-hidden rounded-none bg-[#f5f3ff] bg-cover bg-center bg-no-repeat px-4 pb-4 pt-[92px] shadow-none ring-0 sm:rounded-[28px] sm:px-5 sm:pb-5 sm:pt-[118px] sm:shadow-[0_24px_60px_rgba(124,91,255,0.16)] sm:ring-1 sm:ring-white/70"
         style={{
-  backgroundImage: "url('/assets/Author%20Page/Store%20Manager.png')",
-}}
+          backgroundImage: "url('/assets/Author%20Page/Store%20Manager.png')",
+        }}
       >
         <div className="relative grid grid-cols-2 gap-3">
           <StatCard
@@ -1477,7 +1536,7 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       ) : null}
 
       {activeTab === 'Records' ? (
-  <section className="mx-4 mt-3 overflow-visible rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-white/80 sm:mx-0 sm:mt-4">
+  <section className="mx-4 mt-3 overflow-hidden rounded-[10px] bg-[linear-gradient(135deg,#fbfaff_0%,#f3efff_55%,#ffffff_100%)] shadow-[0_16px_38px_rgba(124,91,255,0.10)] ring-1 ring-white/80 sm:mx-0 sm:mt-4">
     <div className="border-b border-white/70 px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -2393,7 +2452,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   const [pdfFile, setPdfFile] = useState(null)
   const [pdfFileUrl, setPdfFileUrl] = useState(productToEdit?.pdfFileUrl || '')
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
-  const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Download after payment')
+  const [accessRule, setAccessRule] = useState('Read online only')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   useEffect(() => {
@@ -2484,34 +2543,6 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave }) {
   }
 }
 
-  const uploadPdfFile = async (file) => {
-  const token = getAuthToken()
-
-  if (!token) {
-    throw new Error('Please login first.')
-  }
-
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append('folder', 'author_store_pdf')
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload PDF file.')
-  }
-
-  return data.image_url || data.imageUrl || ''
-}
-
   const uploadBookGalleryImages = async () => {
     if (type !== 'Book') return []
 
@@ -2589,23 +2620,19 @@ const coverUrl = coverFile ? await uploadCoverImage(coverFile) : coverPreview
 
 const nextGalleryImages = await uploadBookGalleryImages()
 
-let nextPdfFileUrl = pdfFileUrl
+const hasExistingPdf = Boolean(pdfFileUrl || pdfFileName)
 
-if (type === 'PDF') {
-  if (!pdfFile && !nextPdfFileUrl) {
-    setFormError('PDF file is required.')
-    setSaving(false)
-    return
-  }
-
-  if (pdfFile) {
-    setFormError('Saving product...')
-    nextPdfFileUrl = await uploadPdfFile(pdfFile)
-    setPdfFileUrl(nextPdfFileUrl)
-  }
+if (type === 'PDF' && !pdfFile && !hasExistingPdf) {
+  setFormError('PDF file is required.')
+  setSaving(false)
+  return
 }
 
-setFormError('Saving product...')
+setFormError(
+  type === 'PDF' && pdfFile
+    ? 'Uploading private PDF...'
+    : 'Saving product...'
+)
 
       await onSave({
         type,
@@ -2631,10 +2658,11 @@ stock,
         qualityPercent: condition === 'Second Hand' ? qualityPercent : '',
         deliveryNote,
         preOrder,
+        pdfFile,
         pdfFileName,
-pdfFileUrl: nextPdfFileUrl,
+pdfFileUrl,
 pageCount,
-accessRule,
+accessRule: type === 'PDF' ? 'Read online only' : accessRule,
       })
     } catch (error) {
       setFormError(error.message || 'Failed to create product')
@@ -2909,8 +2937,19 @@ accessRule,
     return
   }
 
-  if (file.type !== 'application/pdf') {
+  const isPdf =
+    file.type === 'application/pdf' ||
+    file.name.toLowerCase().endsWith('.pdf')
+
+  if (!isPdf) {
     setFormError('Please upload a valid PDF file.')
+    setPdfFile(null)
+    setPdfFileName('')
+    return
+  }
+
+  if (file.size > 50 * 1024 * 1024) {
+    setFormError('PDF file must be 50 MB or smaller.')
     setPdfFile(null)
     setPdfFileName('')
     return
@@ -3360,27 +3399,81 @@ const saveCategoryOrder = async () => {
 }
 
   const saveProduct = async (product) => {
-    const savedProduct = editingProduct?.id
-      ? await updateStoreProduct(editingProduct.id, product)
-      : await createStoreProduct(product)
+    const isEditing = Boolean(editingProduct?.id)
+    const hasNewPrivatePdf = product.type === 'PDF' && Boolean(product.pdfFile)
+    let savedProduct = null
 
-    if (savedProduct) {
-      setProducts((current) => {
-        if (editingProduct?.id) {
-          return current.map((item) => (item.id === savedProduct.id ? savedProduct : item))
-        }
+    try {
+      if (isEditing) {
+        const metadataProduct = hasNewPrivatePdf
+          ? {
+              ...product,
+              pdfFileName: editingProduct?.pdfFileName || '',
+              pdfFileUrl: editingProduct?.pdfFileUrl || '',
+              accessRule: 'Read online only',
+            }
+          : product
 
-        return [savedProduct, ...current]
-      })
+        savedProduct = await updateStoreProduct(editingProduct.id, metadataProduct)
+      } else {
+        const initialProduct = hasNewPrivatePdf
+          ? {
+              ...product,
+              status: 'Draft',
+              pdfFileUrl: '',
+              accessRule: 'Read online only',
+            }
+          : product
 
-      if (savedProduct.category && !categories.includes(savedProduct.category)) {
-        setCategories((current) => [...current, savedProduct.category])
+        savedProduct = await createStoreProduct(initialProduct)
       }
-    }
 
-    setEditingProduct(null)
-    setMode('manager')
-    setActiveTab('Records')
+      if (!savedProduct?.id) {
+        throw new Error('Product was not saved')
+      }
+
+      if (hasNewPrivatePdf) {
+        const privatePdf = await uploadPrivatePdfFile(product.pdfFile)
+
+        await attachPrivatePdfToProduct(savedProduct.id, privatePdf)
+
+        if (!isEditing && product.status !== 'Draft') {
+          savedProduct = await updateStoreProduct(savedProduct.id, {
+            ...product,
+            pdfFile: null,
+            pdfFileUrl: '',
+            pdfFileName: privatePdf.file_name,
+            accessRule: 'Read online only',
+          })
+        }
+      }
+
+      const nextProducts = await fetchMyProducts()
+      const finalProduct =
+        nextProducts.find((item) => item.id === savedProduct.id) ||
+        savedProduct
+
+      setProducts(nextProducts)
+
+      if (finalProduct.category && !categories.includes(finalProduct.category)) {
+        setCategories((current) => [...current, finalProduct.category])
+      }
+
+      setEditingProduct(null)
+      setMode('manager')
+      setActiveTab('Records')
+
+      return finalProduct
+    } catch (error) {
+      if (!isEditing && savedProduct?.id && hasNewPrivatePdf) {
+        try {
+          await deleteStoreProduct(savedProduct.id)
+        } catch {
+        }
+      }
+
+      throw error
+    }
   }
 
   const handleMarkOrderPreparing = async (order) => {
