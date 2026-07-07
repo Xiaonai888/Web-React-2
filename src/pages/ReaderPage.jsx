@@ -2638,7 +2638,7 @@ function WebcomicReadingMissionCoin({
             : 'pointer-events-none translate-x-5 opacity-0'
         }`}
       >
-        <span className="absolute inset-0 rounded-full bg-[#8d939a] shadow-[0_8px_20px_rgba(17,24,39,0.22)]" />
+        <span className="absolute inset-0 rounded-full bg-[#8D939A] shadow-[0_8px_20px_rgba(17,24,39,0.22)]" />
 
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
@@ -2650,7 +2650,7 @@ function WebcomicReadingMissionCoin({
             cy="28"
             r={ringRadius}
             fill="none"
-            stroke="#C84A4A"
+            stroke="#D95A5A"
             strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray={ringCircumference}
