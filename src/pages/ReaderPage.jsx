@@ -1889,6 +1889,8 @@ function ReaderBottomActionBar({
   onOpenSettings,
 }) {
   const [progressOpen, setProgressOpen] = useState(false)
+  const [sideSubscribeState, setSideSubscribeState] = useState('idle')
+  const sideSubscribeTimerRef = useRef(null)
   const safeProgress = Math.max(0, Math.min(100, Math.round(Number(readingProgress || 0))))
   const storyId = story?.id || story?.story_id || episode?.story_id || ''
   const subscribeHiddenKey = storyId ? getSubscribeHiddenKey(storyId) : ''
@@ -1917,6 +1919,13 @@ function ReaderBottomActionBar({
   const [commentTotal, setCommentTotal] = useState(fallbackCommentTotal)
 
   useEffect(() => {
+    if (sideSubscribeTimerRef.current) {
+      window.clearTimeout(sideSubscribeTimerRef.current)
+      sideSubscribeTimerRef.current = null
+    }
+
+    setSideSubscribeState('idle')
+
     if (!storyId) {
       setSubscribeHidden(false)
       setSubscribeEligible(false)
@@ -1937,12 +1946,32 @@ function ReaderBottomActionBar({
   }, [safeProgress, storyId, subscribeHidden, subscribeEligible, subscribeEligibleKey])
 
   const handleSubscribeClick = () => {
+    if (sideSubscribeState !== 'idle') return
+
     if (subscribeHiddenKey) {
       localStorage.setItem(subscribeHiddenKey, '1')
     }
 
-    setSubscribeHidden(true)
+    setSideSubscribeState('success')
+
+    sideSubscribeTimerRef.current = window.setTimeout(() => {
+      setSideSubscribeState('hiding')
+
+      sideSubscribeTimerRef.current = window.setTimeout(() => {
+        setSubscribeHidden(true)
+        setSideSubscribeState('idle')
+        sideSubscribeTimerRef.current = null
+      }, 280)
+    }, 760)
   }
+
+  useEffect(() => {
+    return () => {
+      if (sideSubscribeTimerRef.current) {
+        window.clearTimeout(sideSubscribeTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     setCommentTotal(fallbackCommentTotal)
@@ -2024,20 +2053,137 @@ function ReaderBottomActionBar({
         visible ? 'translate-y-0' : 'translate-y-[calc(100%+16px)]'
       }`}
     >
+      <style>{`
+  @keyframes shadowSideSubscribePop {
+    0% { transform: scale(1); }
+    28% { transform: scale(.91); }
+    60% { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shadowSideSubscribeHide {
+    0% { opacity: 1; transform: translateX(0) scale(1); }
+    100% { opacity: 0; transform: translateX(22px) scale(.82); }
+  }
+
+  @keyframes shadowSideHeartFly {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.3) rotate(0deg);
+    }
+
+    22% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      transform:
+        translate(
+          calc(-50% + var(--side-heart-x)),
+          calc(-50% + var(--side-heart-y))
+        )
+        scale(.9)
+        rotate(var(--side-heart-r));
+    }
+  }
+
+  .shadowSideSubscribePop {
+    animation:
+      shadowSideSubscribePop
+      .5s
+      cubic-bezier(.22, 1, .36, 1)
+      both;
+  }
+
+  .shadowSideSubscribeHide {
+    animation:
+      shadowSideSubscribeHide
+      .28s
+      ease-out
+      both;
+  }
+
+  .shadowSideHeart {
+    animation:
+      shadowSideHeartFly
+      .72s
+      cubic-bezier(.22, 1, .36, 1)
+      both;
+  }
+`}</style>
+
       {visible && showSubscribeOnDoubleTap && storyId && subscribeEligible && !subscribeHidden ? (
         <button
   type="button"
   onClick={handleSubscribeClick}
-  className={`pointer-events-auto absolute right-[-7px] z-[2] flex h-[58px] min-w-[84px] flex-col items-center justify-center rounded-l-[28px] rounded-r-none bg-black/60 px-4 text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] active:scale-95 md:right-[-2px] ${
-
-  progressOpen ? 'bottom-[132px]' : 'bottom-[84px]'
-}`}
+  disabled={sideSubscribeState !== 'idle'}
+  aria-label="Subscribe to this story"
+  className={`pointer-events-auto absolute right-[-7px] z-[2] flex h-[58px] min-w-[84px] flex-col items-center justify-center overflow-visible rounded-l-[28px] rounded-r-none px-4 text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition-colors duration-200 active:scale-95 disabled:pointer-events-none md:right-[-2px] ${
+    sideSubscribeState === 'idle'
+      ? 'bg-black/60'
+      : 'bg-[#ff3b5f]'
+  } ${
+    sideSubscribeState === 'success'
+      ? 'shadowSideSubscribePop'
+      : sideSubscribeState === 'hiding'
+        ? 'shadowSideSubscribeHide'
+        : ''
+  } ${progressOpen ? 'bottom-[132px]' : 'bottom-[84px]'}`}
 >
-          <i className="fa-regular fa-heart text-[20px]" />
-          <span className="mt-1 text-[11px] font-normal leading-none">
-            Subscribe
-          </span>
-        </button>
+  {sideSubscribeState === 'idle' ? (
+    <>
+      <i className="fa-regular fa-heart text-[20px]" />
+      <span className="mt-1 text-[11px] font-normal leading-none">
+        Subscribe
+      </span>
+    </>
+  ) : (
+    <>
+      <i className="fa-solid fa-heart text-[20px]" />
+      <span className="mt-1 text-[10px] font-semibold leading-none">
+        Subscribed
+      </span>
+
+      <span
+        className="shadowSideHeart pointer-events-none absolute left-1/2 top-1/2 text-[9px] text-[#ff3b5f]"
+        style={{
+          '--side-heart-x': '-24px',
+          '--side-heart-y': '-36px',
+          '--side-heart-r': '-16deg',
+          animationDelay: '20ms',
+        }}
+      >
+        <i className="fa-solid fa-heart" />
+      </span>
+
+      <span
+        className="shadowSideHeart pointer-events-none absolute left-1/2 top-1/2 text-[7px] text-[#ff7891]"
+        style={{
+          '--side-heart-x': '0px',
+          '--side-heart-y': '-43px',
+          '--side-heart-r': '10deg',
+          animationDelay: '90ms',
+        }}
+      >
+        <i className="fa-solid fa-heart" />
+      </span>
+
+      <span
+        className="shadowSideHeart pointer-events-none absolute left-1/2 top-1/2 text-[8px] text-[#ff9aab]"
+        style={{
+          '--side-heart-x': '23px',
+          '--side-heart-y': '-33px',
+          '--side-heart-r': '18deg',
+          animationDelay: '150ms',
+        }}
+      >
+        <i className="fa-solid fa-heart" />
+      </span>
+    </>
+  )}
+</button>
+
       ) : null}
 
       <div className="pointer-events-auto mx-auto max-w-3xl bg-white/95 shadow-[0_-10px_28px_rgba(17,24,39,0.06)] backdrop-blur md:rounded-[18px] md:border md:border-[#e5e7eb] md:shadow-[0_14px_34px_rgba(17,24,39,0.10)]">
@@ -4611,3 +4757,4 @@ onUnlock={handleLockedDiamondUnlock}
     </div>
   )
 }
+
