@@ -1837,10 +1837,16 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
 <button
   type="button"
   onClick={() => setSettingsView('telegram')}
-  
-    <div className="mx-4 h-px bg-[#eef0f4]" />
-
-    <button
+  className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+>
+  <span className="min-w-0">
+    <span className="block text-[14px] font-black text-[#111827]">Telegram Bot</span>
+    <span className="mt-0.5 block text-[12px] font-semibold leading-5 text-[#8b93a1]">
+      Connect order approval notifications to your Telegram group.
+    </span>
+  </span>
+  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#9ca3af]" />
+</button>
       type="button"
       onClick={() => setSettingsView('telegram')}
       className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
