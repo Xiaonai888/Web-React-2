@@ -2551,45 +2551,95 @@ function WebcomicReadingMissionCoin({
 }) {
   if (!target && !rewardAnimation) return null
 
-  const targetSeconds = Math.max(1, Number(target?.target_seconds || 1))
+  const targetSeconds = Math.max(
+    1,
+    Number(target?.target_seconds || 1)
+  )
+
   const activeSeconds = Math.min(
     targetSeconds,
     Math.max(0, Number(target?.active_seconds || 0))
   )
-  const progress = targetSeconds > 0 ? activeSeconds / targetSeconds : 0
+
+  const progress =
+    targetSeconds > 0
+      ? activeSeconds / targetSeconds
+      : 0
+
   const showingReward = Boolean(rewardAnimation)
-  const ringRadius = 25
+
+  const ringRadius = 24
   const ringCircumference = 2 * Math.PI * ringRadius
   const ringOffset = ringCircumference * (1 - progress)
 
   return (
     <>
       <style>{`
-        @keyframes shadowReadingCoinBounce {
-          0%, 100% { transform: translateY(0) scale(1); }
-          30% { transform: translateY(-7px) scale(1.06); }
-          55% { transform: translateY(1px) scale(.98); }
-          75% { transform: translateY(-3px) scale(1.02); }
+        @keyframes shadowReadingCoinExit {
+          0% {
+            opacity: 1;
+            transform: translateY(0) rotate(0deg) scale(1);
+          }
+
+          20% {
+            transform: translateY(-6px) rotate(-9deg) scale(1.06);
+          }
+
+          42% {
+            transform: translateY(1px) rotate(8deg) scale(.98);
+          }
+
+          62% {
+            transform: translateY(-3px) rotate(-5deg) scale(1.03);
+          }
+
+          78% {
+            opacity: 1;
+            transform: translateY(0) rotate(0deg) scale(.96);
+          }
+
+          100% {
+            opacity: 0;
+            transform: translateY(2px) rotate(0deg) scale(.68);
+          }
         }
 
-        @keyframes shadowReadingRewardPop {
-          0% { transform: scale(.72); opacity: 0; }
-          55% { transform: scale(1.12); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes shadowReadingRewardEnter {
+          0% {
+            opacity: 0;
+            transform: scale(.55) rotate(-7deg);
+          }
+
+          58% {
+            opacity: 1;
+            transform: scale(1.13) rotate(3deg);
+          }
+
+          78% {
+            transform: scale(.97) rotate(-1deg);
+          }
+
+          100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+          }
         }
 
         @keyframes shadowReadingNumberDrop {
           0% {
             opacity: 0;
-            transform: translateY(-24px) scale(.65);
+            transform: translateY(-20px) scale(.7);
           }
-          55% {
+
+          58% {
             opacity: 1;
-            transform: translateY(3px) scale(1.15);
+            transform: translateY(3px) scale(1.1);
           }
-          75% {
-            transform: translateY(-2px) scale(.97);
+
+          78% {
+            transform: translateY(-2px) scale(.98);
           }
+
           100% {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -2601,30 +2651,76 @@ function WebcomicReadingMissionCoin({
             opacity: 0;
             transform: scale(.82);
           }
-          35% {
-            opacity: 1;
-            transform: scale(1.08);
+
+          34% {
+            opacity: .95;
+            transform: scale(1.05);
           }
+
           100% {
             opacity: 0;
-            transform: scale(1.24);
+            transform: scale(1.28);
           }
         }
 
-        .shadowReadingCoinBounce {
-          animation: shadowReadingCoinBounce .85s ease-in-out 2;
+        @keyframes shadowReadingSparkle {
+          0% {
+            opacity: 0;
+            transform: scale(0);
+          }
+
+          40% {
+            opacity: 1;
+            transform: scale(1.25);
+          }
+
+          100% {
+            opacity: 0;
+            transform: scale(.25);
+          }
         }
 
-        .shadowReadingRewardPop {
-          animation: shadowReadingRewardPop .5s cubic-bezier(.2,.9,.2,1) both;
+        .shadowReadingCoinExit {
+          animation:
+            shadowReadingCoinExit
+            .52s
+            cubic-bezier(.22, 1, .36, 1)
+            both;
+        }
+
+        .shadowReadingRewardEnter {
+          animation:
+            shadowReadingRewardEnter
+            .5s
+            cubic-bezier(.22, 1, .36, 1)
+            .34s
+            both;
         }
 
         .shadowReadingNumberDrop {
-          animation: shadowReadingNumberDrop .72s cubic-bezier(.2,.9,.2,1) both;
+          animation:
+            shadowReadingNumberDrop
+            .5s
+            cubic-bezier(.22, 1, .36, 1)
+            .52s
+            both;
         }
 
         .shadowReadingWhiteFlash {
-          animation: shadowReadingWhiteFlash .95s ease-out both;
+          animation:
+            shadowReadingWhiteFlash
+            .82s
+            ease-out
+            .38s
+            both;
+        }
+
+        .shadowReadingSparkle {
+          animation:
+            shadowReadingSparkle
+            .72s
+            ease-out
+            both;
         }
       `}</style>
 
@@ -2650,41 +2746,79 @@ function WebcomicReadingMissionCoin({
             cy="28"
             r={ringRadius}
             fill="none"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="4"
+          />
+
+          <circle
+            cx="28"
+            cy="28"
+            r={ringRadius}
+            fill="none"
             stroke="#D95A5A"
             strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray={ringCircumference}
             strokeDashoffset={showingReward ? 0 : ringOffset}
+            className="transition-[stroke-dashoffset] duration-500 ease-out"
           />
         </svg>
 
         {showingReward ? (
-          <>
-            <span className="shadowReadingWhiteFlash absolute inset-0 rounded-full border-[3px] border-white" />
-
-            <span className="shadowReadingRewardPop relative z-10 flex h-[42px] w-[42px] items-center justify-center">
+          <span
+            key={rewardAnimation.key}
+            className="absolute inset-0"
+          >
+            <span className="absolute inset-0 flex items-center justify-center">
               <img
-                src="/assets/Icons/Shadow%20Coin%202.svg"
+                src="/assets/Icons/Shadow%20Coin.svg"
                 alt=""
-                className="absolute inset-0 h-full w-full object-contain"
+                className="shadowReadingCoinExit h-[38px] w-[38px] object-contain"
               />
+            </span>
 
-              <span
-                key={rewardAnimation.key}
-                className="shadowReadingNumberDrop relative z-10 text-[18px] font-black leading-none text-white drop-shadow-[0_2px_2px_rgba(130,55,0,0.45)]"
-              >
-                {rewardAnimation.coins}
+            <span className="shadowReadingWhiteFlash absolute -inset-1 rounded-full border-[3px] border-white shadow-[0_0_16px_rgba(255,255,255,0.92)]" />
+
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="shadowReadingRewardEnter relative flex h-[40px] w-[40px] items-center justify-center">
+                <img
+                  src="/assets/Icons/Shadow%20Coin%202.svg"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+
+                <span className="shadowReadingNumberDrop relative z-10 text-[17px] font-bold leading-none tracking-[-0.02em] text-white drop-shadow-[0_2px_2px_rgba(120,48,0,0.38)] [font-variant-numeric:tabular-nums]">
+                  {rewardAnimation.coins}
+                </span>
               </span>
             </span>
-          </>
+
+            <span
+              className="shadowReadingSparkle absolute -left-0.5 top-1 h-2 w-2 rounded-full bg-white"
+              style={{ animationDelay: '.45s' }}
+            />
+
+            <span
+              className="shadowReadingSparkle absolute right-0 top-2 h-2.5 w-2.5 rounded-full bg-[#FFD66B]"
+              style={{ animationDelay: '.52s' }}
+            />
+
+            <span
+              className="shadowReadingSparkle absolute bottom-1 left-2 h-1.5 w-1.5 rounded-full bg-[#FFE9A6]"
+              style={{ animationDelay: '.59s' }}
+            />
+
+            <span
+              className="shadowReadingSparkle absolute bottom-0 right-2 h-2 w-2 rounded-full bg-white"
+              style={{ animationDelay: '.65s' }}
+            />
+          </span>
         ) : (
-          <span className="relative z-10 flex h-[40px] w-[40px] items-center justify-center">
+          <span className="relative z-10 flex h-[38px] w-[38px] items-center justify-center">
             <img
               src="/assets/Icons/Shadow%20Coin.svg"
               alt="Shadow Coin"
-              className={`h-[40px] w-[40px] object-contain ${
-                target?.completed && !target?.claimed ? 'shadowReadingCoinBounce' : ''
-              }`}
+              className="h-[38px] w-[38px] object-contain"
             />
           </span>
         )}
