@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 
 const storyItems = [
   {
@@ -535,7 +536,7 @@ export default function DiscoverPage() {
 
       <main className="pt-[72px]">
         <div className="mx-auto w-full max-w-[620px]">
-          <StorySection />
+          <DiscoverStorySection />
 
           <section className="space-y-2 py-2 sm:space-y-3 sm:px-3 sm:py-3">
           {feed.length ? (
