@@ -87,27 +87,7 @@ function getWeeklyDateRange() {
   return `${formatDateYMD(monday)} ~ ${formatDateYMD(sunday)}`
 }
 
-const DEMO_WEEKLY_FANS = [
-  { id: 'demo-week-1', name: 'Dara', avatar: '', support: 48, color: '#ff5d7d', is_demo: true },
-  { id: 'demo-week-2', name: 'Lina', avatar: '', support: 41, color: '#7c5cff', is_demo: true },
-  { id: 'demo-week-3', name: 'Soriya', avatar: '', support: 35, color: '#f59e0b', is_demo: true },
-  { id: 'demo-week-4', name: 'Maly', avatar: '', support: 29, color: '#0ea5e9', is_demo: true },
-  { id: 'demo-week-5', name: 'Nika', avatar: '', support: 24, color: '#10b981', is_demo: true },
-  { id: 'demo-week-6', name: 'Rina', avatar: '', support: 18, color: '#ec4899', is_demo: true },
-  { id: 'demo-week-7', name: 'Pich', avatar: '', support: 12, color: '#8b5cf6', is_demo: true },
-  { id: 'demo-week-8', name: 'Mina', avatar: '', support: 8, color: '#64748b', is_demo: true },
-]
 
-const DEMO_ALL_TIME_FANS = [
-  { id: 'demo-all-1', name: 'Dara', avatar: '', support: 160, color: '#ff5d7d', is_demo: true },
-  { id: 'demo-all-2', name: 'Lina', avatar: '', support: 135, color: '#7c5cff', is_demo: true },
-  { id: 'demo-all-3', name: 'Soriya', avatar: '', support: 112, color: '#f59e0b', is_demo: true },
-  { id: 'demo-all-4', name: 'Maly', avatar: '', support: 90, color: '#0ea5e9', is_demo: true },
-  { id: 'demo-all-5', name: 'Nika', avatar: '', support: 72, color: '#10b981', is_demo: true },
-  { id: 'demo-all-6', name: 'Rina', avatar: '', support: 58, color: '#ec4899', is_demo: true },
-  { id: 'demo-all-7', name: 'Pich', avatar: '', support: 43, color: '#8b5cf6', is_demo: true },
-  { id: 'demo-all-8', name: 'Mina', avatar: '', support: 30, color: '#64748b', is_demo: true },
-]
 
 function normalizeFan(item, index) {
   const user = item.user || item.reader || item.profile || {}
@@ -388,12 +368,15 @@ export default function StoryTopFansPage() {
   }, [storyId, rankingRefreshKey])
 
   const fans = useMemo(() => {
-    return activeTab === 'weekly' ? weeklyFans : allTimeFans
-  }, [activeTab, weeklyFans, allTimeFans])
+  const source = activeTab === 'weekly' ? weeklyFans : allTimeFans
 
-  const demoFans = activeTab === 'weekly' ? DEMO_WEEKLY_FANS : DEMO_ALL_TIME_FANS
-  const showingDemo = fans.length === 0
-  const displayFans = showingDemo ? demoFans : fans
+  return source
+    .filter((fan) =>
+      !String(fan?.id || '').startsWith('demo-') &&
+      Number(fan?.support || 0) > 0
+    )
+    .sort((a, b) => Number(b.support || 0) - Number(a.support || 0))
+}, [activeTab, weeklyFans, allTimeFans])
 
   const cover = story?.cover_url || story?.thumbnail_url || ''
 const title = story?.title || 'Top Fans'
@@ -519,16 +502,31 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
             </div>
           ) : (
             <>
-              <TopThree fans={displayFans} />
+            fans.length > 0 ? (
+  <>
+    <TopThree fans={fans} />
 
-              {displayFans.length > 3 ? (
-                <div className="mt-7 rounded-[24px] bg-white">
-                  {displayFans.slice(3).map((fan, index) => (
-                    <FanRow key={fan.id} fan={fan} index={index + 3} />
-                  ))}
-                </div>
-              ) : null}
-            </>
+    {fans.length > 3 ? (
+      <div className="mt-7 rounded-[24px] bg-white">
+        {fans.slice(3).map((fan, index) => (
+          <FanRow key={fan.id} fan={fan} index={index + 3} />
+        ))}
+      </div>
+    ) : null}
+  </>
+) : (
+  <div className="px-4 py-16 text-center">
+    <div className="text-[15px] font-semibold text-[#111827]">
+      {activeTab === 'weekly'
+        ? 'No weekly ranking yet'
+        : 'No overall ranking yet'}
+    </div>
+
+    <div className="mt-2 text-[12px] text-[#98a2b3]">
+      Send a gift to become this story’s first Top Fan.
+    </div>
+  </div>
+)
           )}
         </div>
       </section>
