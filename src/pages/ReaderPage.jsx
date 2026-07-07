@@ -2557,8 +2557,10 @@ function WebcomicReadingMissionCoin({
     Math.max(0, Number(target?.active_seconds || 0))
   )
   const progress = targetSeconds > 0 ? activeSeconds / targetSeconds : 0
-  const degrees = Math.min(360, Math.max(0, Math.round(progress * 360)))
   const showingReward = Boolean(rewardAnimation)
+  const ringRadius = 25
+  const ringCircumference = 2 * Math.PI * ringRadius
+  const ringOffset = ringCircumference * (1 - progress)
 
   return (
     <>
@@ -2636,22 +2638,31 @@ function WebcomicReadingMissionCoin({
             : 'pointer-events-none translate-x-5 opacity-0'
         }`}
       >
-        <span
-          className="absolute inset-0 rounded-full shadow-[0_8px_20px_rgba(17,24,39,0.24)]"
-          style={{
-            background: showingReward
-              ? 'conic-gradient(#ffffff 0deg 360deg)'
-              : `conic-gradient(#ff3b30 0deg ${degrees}deg, #858a91 ${degrees}deg 360deg)`,
-          }}
-        />
+        <span className="absolute inset-0 rounded-full bg-[#8d939a] shadow-[0_8px_20px_rgba(17,24,39,0.22)]" />
 
-        <span className="absolute inset-[4px] rounded-full bg-white" />
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
+          viewBox="0 0 56 56"
+          aria-hidden="true"
+        >
+          <circle
+            cx="28"
+            cy="28"
+            r={ringRadius}
+            fill="none"
+            stroke="#C84A4A"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={ringCircumference}
+            strokeDashoffset={showingReward ? 0 : ringOffset}
+          />
+        </svg>
 
         {showingReward ? (
           <>
-            <span className="shadowReadingWhiteFlash absolute -inset-1 rounded-full border-[3px] border-white shadow-[0_0_18px_rgba(255,255,255,0.95)]" />
+            <span className="shadowReadingWhiteFlash absolute inset-0 rounded-full border-[3px] border-white" />
 
-            <span className="shadowReadingRewardPop relative z-10 flex h-[44px] w-[44px] items-center justify-center">
+            <span className="shadowReadingRewardPop relative z-10 flex h-[42px] w-[42px] items-center justify-center">
               <img
                 src="/assets/Icons/Shadow%20Coin%202.svg"
                 alt=""
@@ -2667,11 +2678,13 @@ function WebcomicReadingMissionCoin({
             </span>
           </>
         ) : (
-          <span className="relative z-10 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#72777d] shadow-[inset_0_2px_4px_rgba(255,255,255,0.28)]">
+          <span className="relative z-10 flex h-[40px] w-[40px] items-center justify-center">
             <img
               src="/assets/Icons/Shadow%20Coin.svg"
               alt="Shadow Coin"
-              className="h-[35px] w-[35px] object-contain"
+              className={`h-[40px] w-[40px] object-contain ${
+                target?.completed && !target?.claimed ? 'shadowReadingCoinBounce' : ''
+              }`}
             />
           </span>
         )}
@@ -2679,7 +2692,6 @@ function WebcomicReadingMissionCoin({
     </>
   )
 }
-
 
 export default function ReaderPage() {
   const SHOW_READER_COVER = false
