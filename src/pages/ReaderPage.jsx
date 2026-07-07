@@ -3233,14 +3233,6 @@ function WebcomicReadingMissionCoin({
           viewBox="0 0 56 56"
           aria-hidden="true"
         >
-          <circle
-            cx="28"
-            cy="28"
-            r={ringRadius}
-            fill="none"
-            stroke="rgba(255,255,255,0.18)"
-            strokeWidth="4"
-          />
 
           <circle
             cx="28"
