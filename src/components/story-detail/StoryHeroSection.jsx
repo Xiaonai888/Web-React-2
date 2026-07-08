@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import ReportModal from '../ReportModal'
 
 function normalizeSlides(story) {
   const slides = Array.isArray(story?.slides)
@@ -23,8 +24,9 @@ function getStoryStatus(story) {
 
 export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBookmark }) {
   const slides = useMemo(() => normalizeSlides(story), [story])
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0)  
   const [menuOpen, setMenuOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const [showTitleBar, setShowTitleBar] = useState(false)
   const activeSlide = slides[activeIndex] || slides[0] || null
   const storyStatus = getStoryStatus(story)
@@ -142,14 +144,16 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
               {menuOpen ? (
                 <div className="absolute right-0 top-12 z-[80] w-44 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_18px_46px_rgba(17,24,39,0.22)] ring-1 ring-black/5">
                   <button
-                    type="button"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
-                  >
-                    <i className="fa-regular fa-flag w-4 text-[#8d94a1]" />
-                    Report
-                  </button>
-
+  type="button"
+  onClick={() => {
+    setMenuOpen(false)
+    setReportOpen(true)
+  }}
+  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
+>
+  <i className="fa-regular fa-flag w-4 text-[#8d94a1]" />
+  Report Story
+</button>
                   <button
                     type="button"
                     onClick={handleCopyLink}
@@ -224,7 +228,15 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
 ) : null}
           </div>
         </div>
-      </div>
+       </div>
+
+      <ReportModal
+        open={reportOpen}
+        reportType="story"
+        targetId={story?.id}
+        targetTitle={story?.title}
+        onClose={() => setReportOpen(false)}
+      />
     </section>
   )
 }
