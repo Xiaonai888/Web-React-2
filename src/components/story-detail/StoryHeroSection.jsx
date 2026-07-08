@@ -152,7 +152,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
 >
   <i className="fa-regular fa-flag w-4 text-[#8d94a1]" />
-  Report Story
+  Report
 </button>
                   <button
                     type="button"
