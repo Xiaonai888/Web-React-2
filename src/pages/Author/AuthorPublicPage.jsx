@@ -4,6 +4,7 @@ import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
+import ReportModal from '../../components/ReportModal'
 import Cropper from 'react-easy-crop'
 
 
@@ -1001,6 +1002,7 @@ const { pageUsername } = useParams()
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
+  const [reportPageOpen, setReportPageOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || 'Reader'
@@ -1706,6 +1708,14 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
+
+      <ReportModal
+        open={reportPageOpen}
+        reportType="author_page"
+        targetId={displayAuthor?.id}
+        targetTitle={displayAuthor?.page_name}
+        onClose={() => setReportPageOpen(false)}
+      />
       <CropImageModal
         open={cropModalOpen}
         image={rawImage}
@@ -2367,15 +2377,15 @@ onOpenStoreSetting={() => {
 </span>
   </button>
 
-  <button
+ <button
         type="button"
-        onClick={() => setMessage('Page options are coming soon.')}
+        onClick={() => setReportPageOpen(true)}
         className={`flex h-10 w-10 items-center justify-center rounded-full ${
           readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
         }`}
-        aria-label="More options"
+        aria-label="Report Author Page"
       >
-        <i className="fa-solid fa-ellipsis text-[15px]" />
+        <i className="fa-regular fa-flag text-[15px]" />
       </button>
         </div>
   </div>
