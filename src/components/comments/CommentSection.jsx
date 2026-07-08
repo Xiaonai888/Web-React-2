@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ReportModal from '../ReportModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -246,6 +247,7 @@ function CommentMenu({
   onSpoiler,
   onUnspoiler,
   onBan,
+  onReport,
   onClose,
 }) {
   if (!isOpen) return null
@@ -266,9 +268,9 @@ function CommentMenu({
       {permissions.isOtherReader ? (
         <MenuButton
           icon="fa-regular fa-flag"
-          label="Report"
+          label="Report Comment"
           onClick={() => {
-            onHide()
+            onReport()
             onClose()
           }}
         />
@@ -404,6 +406,7 @@ function CommentItem({
   onSpoiler,
   onUnspoiler,
   onBan,
+  onReport,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replyOpen, setReplyOpen] = useState(false)
@@ -527,7 +530,9 @@ const displayAvatar =
               onSpoiler={() => onSpoiler(comment)}
               onUnspoiler={() => onUnspoiler(comment)}
               onBan={() => onBan(comment)}
+              onReport={() => onReport(comment)}
               onClose={() => setMenuOpen(false)}
+
             />
           </div>
 
@@ -710,6 +715,7 @@ const [comments, setComments] = useState([])
   const [toast, setToast] = useState('')
   const [warningDialog, setWarningDialog] = useState(null)
   const [editComment, setEditComment] = useState(null)
+  const [reportComment, setReportComment] = useState(null)
   const [editText, setEditText] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -1273,6 +1279,7 @@ return (
                   onSpoiler={(selectedComment) => handleModerate(selectedComment, 'spoiler')}
                   onUnspoiler={(selectedComment) => handleModerate(selectedComment, 'unspoiler')}
                   onBan={(selectedComment) => handleModerate(selectedComment, 'ban')}
+                  onReport={setReportComment}
                 />
               ))}
 
@@ -1346,8 +1353,21 @@ return (
         </div>
       ) : null}
 
+       <ReportModal
+        open={Boolean(reportComment)}
+        reportType="comment"
+        targetId={reportComment?.id}
+        targetTitle={
+          reportComment
+            ? `${reportComment.name || 'Reader'}: ${String(reportComment.text || '').slice(0, 80)}`
+            : ''
+        }
+        onClose={() => setReportComment(null)}
+      />
+
       <CommentComposer
         value={text}
+
         onChange={setText}
         onSend={handleSend}
         onSticker={handleSticker}
