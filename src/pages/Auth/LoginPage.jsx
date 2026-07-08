@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,7 +51,14 @@ export default function LoginPage() {
         localStorage.removeItem('shadow_reader_user')
       }
 
-      navigate('/me')
+      
+      const returnTo = location.state?.returnTo || '/me'
+      const returnState = location.state?.returnState
+
+      navigate(returnTo, {
+        replace: true,
+        state: returnState,
+      })
     } catch (error) {
       setMessage(
   error.message === 'Failed to fetch'
