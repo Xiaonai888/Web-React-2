@@ -65,173 +65,140 @@ const SALES_REPORTS_HELP_STEPS = [
   {
     number: '1',
     title: 'Create a Google Sheet',
-    description:
+    content:
       'Create a new Google Sheet for receiving your sales reports from Shadow. You may use any spreadsheet name.',
   },
   {
     number: '2',
     title: 'Share the Sheet with Shadow',
-    description:
+    content:
       'Open Share in Google Sheets, enter the Shadow email shown on the Sales Reports page, and set the permission to Editor.',
-    note:
-      'Shadow cannot create or update reports unless the account has Editor access.',
   },
   {
     number: '3',
     title: 'Copy the Google Sheet Link',
-    description:
+    content:
       'Copy the Google Sheet link and paste it into the Google Sheet link field.',
   },
   {
     number: '4',
     title: 'Connect the Google Sheet',
-    description:
+    content:
       'Tap Connect Google Sheet. Shadow will verify that the link is valid and that it has permission to edit the Sheet.',
   },
   {
     number: '5',
     title: 'Sync Your Reports',
-    description:
+    content:
       'After the connection is successful, tap Sync Now to send your sales data to Google Sheets.',
+  },
+  {
+    number: '6',
+    title: 'What Shadow Creates',
+    content:
+      'Shadow creates one tab for each month, keeps Monthly Summary updated, and updates orders, cancellations, and refunds without duplicate rows.',
+  },
+  {
+    number: '7',
+    title: 'Disconnecting Google Sheet',
+    content:
+      'Disconnecting stops future report syncing. Existing data in your Google Sheet will not be deleted.',
   },
 ]
 
+function SalesReportsHelpSection({ number, title, children }) {
+  return (
+    <section className="border-b border-[#eef1f5] px-4 py-5 last:border-b-0">
+      <div className="flex items-start gap-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#ecfdf3] text-[12px] font-bold text-[#16a34a]">
+          {number}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[16px] font-bold text-[#111827]">{title}</h2>
+          <div className="mt-2 text-[13px] font-normal leading-6 text-[#667085]">
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function SalesReportsHelpPage({ onBack }) {
   return (
-    <div className="fixed inset-0 z-[1000] bg-[#f7f5fb]">
-      <header className="sticky top-0 z-40 border-b border-[#eeeaf5] bg-white/95 backdrop-blur">
-        <div className="flex h-14 items-center px-4">
+    <main className="fixed inset-0 z-[1000] overflow-y-auto bg-[#f7f7f9]">
+      <header className="sticky top-0 z-40 border-b border-[#eef1f5] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-3xl items-center px-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-8 shrink-0 items-center justify-start text-[#111827] active:opacity-60"
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:opacity-60"
             aria-label="Back to Sales Reports"
           >
-            <i className="fa-solid fa-chevron-left text-[15px]" />
+            <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[17px] font-black leading-5 text-[#111827]">
-              How to Use Sales Reports
-            </h1>
-            <p className="mt-0.5 truncate text-[11px] font-semibold text-[#8b93a1]">
-              Connect Google Sheets and sync your monthly sales.
-            </p>
-          </div>
+          <h1 className="min-w-0 flex-1 truncate px-2 text-center text-[17px] font-bold text-[#111827]">
+            How to Use Sales Reports
+          </h1>
 
-          <div className="h-10 w-8 shrink-0" />
+          <span className="h-9 w-9 shrink-0" aria-hidden="true" />
         </div>
       </header>
 
-      <main className="h-[calc(100vh-56px)] overflow-y-auto px-4 pb-20 pt-4">
-        <div className="mx-auto max-w-[720px] space-y-4">
-          <section className="rounded-[24px] bg-gradient-to-br from-[#ede9fe] via-[#f5f3ff] to-white p-4 ring-1 ring-[#e9e3f7]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#16a34a] shadow-sm ring-1 ring-black/5">
-                <i className="fa-solid fa-file-excel text-[23px]" />
-              </div>
+      <div className="mx-auto max-w-3xl pb-10">
+        <section className="bg-white px-4 pb-5 pt-6 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#ecfdf3] text-[#16a34a]">
+            <i className="fa-solid fa-file-excel text-[19px]" />
+          </div>
 
-              <div className="min-w-0">
-                <h2 className="text-[16px] font-black text-[#111827]">
-                  Sales Reports
-                </h2>
-                <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
-                  Sales Reports saves your monthly Book and PDF sales data to a
-                  Google Sheet.
+          <h2 className="mt-3 text-[18px] font-bold text-[#111827]">
+            Sales Reports Guide
+          </h2>
+
+          <p className="mx-auto mt-1 max-w-[420px] text-[13px] font-normal leading-5 text-[#98a2b3]">
+            Learn how to connect Google Sheets and sync your monthly Book and PDF
+            sales reports.
+          </p>
+        </section>
+
+        <div className="mt-3 bg-white">
+          {SALES_REPORTS_HELP_STEPS.map((step) => (
+            <SalesReportsHelpSection
+              key={step.number}
+              number={step.number}
+              title={step.title}
+            >
+              <p>{step.content}</p>
+
+              {step.number === '2' ? (
+                <p className="mt-2 font-medium text-[#475467]">
+                  Editor access is required. Without it, Shadow cannot create or
+                  update your reports.
                 </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5">
-            {SALES_REPORTS_HELP_STEPS.map((step, index) => (
-              <div key={step.number}>
-                {index > 0 ? <div className="mx-4 h-px bg-[#eef0f4]" /> : null}
-
-                <div className="flex gap-3 p-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f0ecff] text-[12px] font-black text-[#6f4cff]">
-                    {step.number}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] font-black text-[#111827]">
-                      {step.title}
-                    </h3>
-
-                    <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
-                      {step.description}
-                    </p>
-
-                    {step.note ? (
-                      <div className="mt-3 rounded-2xl bg-[#fff7ed] px-3 py-2 text-[11px] font-bold leading-5 text-[#9a3412] ring-1 ring-[#fed7aa]">
-                        {step.note}
-                      </div>
-                    ) : null}
-
-                    {step.number === '5' ? (
-                      <div className="mt-3 rounded-2xl bg-[#f8fafc] px-3 py-3 ring-1 ring-black/5">
-                        <div className="text-[11px] font-black text-[#111827]">
-                          Shadow will create and update:
-                        </div>
-
-                        <ul className="mt-2 space-y-1.5 text-[11px] font-semibold leading-5 text-[#6b7280]">
-                          <li className="flex gap-2">
-                            <i className="fa-solid fa-check mt-1 text-[9px] text-[#16a34a]" />
-                            <span>One tab for each month</span>
-                          </li>
-                          <li className="flex gap-2">
-                            <i className="fa-solid fa-check mt-1 text-[9px] text-[#16a34a]" />
-                            <span>A Monthly Summary tab</span>
-                          </li>
-                          <li className="flex gap-2">
-                            <i className="fa-solid fa-check mt-1 text-[9px] text-[#16a34a]" />
-                            <span>
-                              Order, cancellation, and refund updates without
-                              duplicate rows
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-            <h2 className="text-[14px] font-black text-[#111827]">
-              Disconnecting Google Sheet
-            </h2>
-
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#6b7280]">
-              Disconnecting stops future report syncing. Existing data in your
-              Google Sheet will not be deleted.
-            </p>
-          </section>
-
-          <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-            <h2 className="text-[14px] font-black text-[#111827]">
-              Having Trouble Connecting?
-            </h2>
-
-            <ul className="mt-3 space-y-2 text-[12px] font-semibold leading-5 text-[#6b7280]">
-              {[
-                'Make sure the Google Sheet link is correct.',
-                'Share the Sheet with the Shadow email shown on the Sales Reports page.',
-                'Set the permission to Editor.',
-                'Make sure you are logged in to the correct Author Page.',
-              ].map((item) => (
-                <li key={item} className="flex gap-2.5">
-                  <i className="fa-solid fa-circle-check mt-1 text-[11px] text-[#6f4cff]" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+              ) : null}
+            </SalesReportsHelpSection>
+          ))}
         </div>
-      </main>
-    </div>
+
+        <div className="mx-4 mt-4 rounded-[16px] bg-[#ecfdf3] px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            <i className="fa-solid fa-circle-info mt-0.5 text-[14px] text-[#16a34a]" />
+
+            <p className="text-[12px] font-normal leading-5 text-[#667085]">
+              Having trouble connecting? Check the Google Sheet link, confirm
+              that the Sheet is shared with the Shadow email, and make sure the
+              permission is set to Editor.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-7 text-center text-[11px] font-normal text-[#b0b7c3]">
+          All rights reserved by Shadow.
+        </p>
+      </div>
+    </main>
   )
 }
 
@@ -463,11 +430,10 @@ export function SalesReportsSettingsPage({
           <button
             type="button"
             onClick={() => setShowHelp(true)}
-            className="ml-2 flex h-9 shrink-0 items-center gap-1.5 px-1 text-[12px] font-black text-[#6f4cff] active:opacity-60"
+            className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center text-[#667085] active:opacity-60"
             aria-label="Open Sales Reports guide"
           >
-            <i className="fa-regular fa-circle-question text-[14px]" />
-            <span>Hint</span>
+            <i className="fa-regular fa-circle-question text-[17px]" />
           </button>
         </div>
       </header>
