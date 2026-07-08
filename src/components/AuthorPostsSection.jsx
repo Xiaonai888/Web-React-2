@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import EchoShareSheet from './reader/EchoShareSheet'
+import ReportModal from './ReportModal'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -465,7 +466,17 @@ function SheetOption({ icon, title, subtext, danger = false, disabled = false, o
   )
 }
 
-function PostOptionsSheet({ post, busy, isOwner, author, onClose, onPinChange, onMessage }) {
+function PostOptionsSheet({
+  post,
+  busy,
+  isOwner,
+  author,
+  onClose,
+  onPinChange,
+  onReport,
+  onMessage,
+}) {
+
   const [toast, setToast] = useState('')
   const [notificationsOff, setNotificationsOff] = useState(false)
 
@@ -532,7 +543,12 @@ function PostOptionsSheet({ post, busy, isOwner, author, onClose, onPinChange, o
           <>
             <SheetOption icon="fa-regular fa-bookmark" title="Save post" subtext="Add this to your saved items." onClick={() => handleComingSoon('Post saved')} />
             <SheetOption icon="fa-regular fa-eye-slash" title="Hide post" subtext="See fewer posts like this." onClick={() => handleComingSoon('Post hidden')} />
-            <SheetOption icon="fa-regular fa-flag" title="Report post" subtext="Tell us if this post violates platform rules." onClick={() => handleComingSoon('Report post is coming soon.')} />
+            <SheetOption
+              icon="fa-regular fa-flag"
+              title="Report Author Post"
+              subtext="Tell us if this post violates platform rules."
+              onClick={() => onReport?.(post)}
+            />
             <SheetOption icon="fa-solid fa-user-slash" title="Block author" subtext="Stop seeing this author in your experience." onClick={() => handleComingSoon('Block author is coming soon.')} />
             <SheetOption icon="fa-regular fa-bell-slash" title={notificationsOff ? 'Turn on notifications for this post' : 'Turn off notifications for this post'} onClick={handleNotificationToggle} />
             <SheetOption icon="fa-regular fa-copy" title="Copy link" onClick={copyPostLink} />
@@ -706,6 +722,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [localError, setLocalError] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState(null)
+  const [reportPost, setReportPost] = useState(null)
   const [echoPost, setEchoPost] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
   const [viewImageUrl, setViewImageUrl] = useState('')    
@@ -957,7 +974,23 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         author={author}
         onClose={() => setSelectedPost(null)}
         onPinChange={handlePinChange}
+        onReport={(post) => {
+          setSelectedPost(null)
+          setReportPost(post)
+        }}
         onMessage={onMessage}
+      />
+
+      <ReportModal
+        open={Boolean(reportPost)}
+        reportType="author_post"
+        targetId={reportPost?.id}
+        targetTitle={
+          reportPost
+            ? `${author?.page_name || 'Author'}: ${String(reportPost.content || 'Author post').slice(0, 80)}`
+            : ''
+        }
+        onClose={() => setReportPost(null)}
       />
 
       <CommentsModal
