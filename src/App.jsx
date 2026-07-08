@@ -134,6 +134,8 @@ const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
 const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
+const ReportPage = lazy(() => import('./pages/ReportPage'))
+
 
 function ComingSoon({ title }) {
   return (
@@ -207,6 +209,7 @@ function AppShell() {
   const shouldHideFooter =
   hideFooterPaths.includes(location.pathname) ||
   location.pathname.startsWith('/story/') ||
+  location.pathname.startsWith('/report/') ||
   location.pathname.startsWith('/author/post/') ||
   location.pathname.startsWith('/author/story/') ||
   location.pathname === '/author/page' ||
@@ -957,6 +960,16 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+      <Route
+          path="/report/:reportType/:targetId"
+          element={
+            <LazyPage>
+              <ReportPage />
+            </LazyPage>
+          }
+        />
+
       
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
