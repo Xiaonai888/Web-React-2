@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SalesReportsSettingsPage } from './SalesReportsSettings'
+import {
+  connectSalesReports,
+  disconnectSalesReports,
+  fetchSalesReportsSettings,
+  syncSalesReports,
+} from './authorStoreSalesReportsApi'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -626,11 +633,13 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
           <h1 className="text-[16px] font-semibold text-[#111827]">
             {settingsView === 'telegram'
               ? 'Telegram Bot'
-              : settingsView === 'categories'
-                ? 'Category Management'
-                : settingsView === 'delivery'
-                  ? 'Delivery Company'
-                  : 'Settings'}
+              : settingsView === 'sales-reports'
+                ? 'Sales Reports'
+                : settingsView === 'categories'
+                  ? 'Category Management'
+                  : settingsView === 'delivery'
+                    ? 'Delivery Company'
+                    : 'Settings'}
           </h1>
 
           <div className="h-10 w-10" />
@@ -960,8 +969,17 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
       {deliverySaving ? 'Saving...' : 'Save delivery fees'}
     </button>
   </section>
-      
-        ) : settingsView === 'telegram' ? (
+
+      ) : settingsView === 'sales-reports' ? (
+        <SalesReportsSettingsPage
+          open={settingsView === 'sales-reports'}
+          onBack={() => setSettingsView('home')}
+          fetchSettings={fetchSalesReportsSettings}
+          connectSheet={connectSalesReports}
+          syncSheet={syncSalesReports}
+          disconnectSheet={disconnectSalesReports}
+        />
+      ) : settingsView === 'telegram' ? (
           <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
             <div className="bg-gradient-to-br from-[#dff6ff] via-[#eefaff] to-white px-4 py-5 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#229ed9] shadow-sm ring-1 ring-black/5">
@@ -1095,6 +1113,16 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
             </div>
 
             <section className="mt-3 overflow-hidden rounded-[20px] bg-white shadow-sm ring-1 ring-black/5">
+
+              <ToolRow
+                icon="fa-solid fa-file-excel"
+                label="Sales Reports"
+                subtext="Sync monthly Book and PDF sales to Google Sheets."
+                onClick={() => setSettingsView('sales-reports')}
+              />
+
+              <div className="mx-3 h-px bg-[#eef0f4]" />
+
               <ToolRow
                 icon="fa-regular fa-paper-plane"
                 label="Telegram Bot"
