@@ -497,35 +497,36 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
           {loading ? (
             <div className="space-y-3 px-2">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-16 animate-pulse rounded-[18px] bg-[#f3f4f6]" />
+                <div
+                  key={index}
+                  className="h-16 animate-pulse rounded-[18px] bg-[#f3f4f6]"
+                />
               ))}
             </div>
-    
-            fans.length > 0 ? (
-  <>
-    <TopThree fans={fans} />
+          ) : fans.length > 0 ? (
+            <>
+              <TopThree fans={fans} />
 
-    {fans.length > 3 ? (
-      <div className="mt-7 rounded-[24px] bg-white">
-        {fans.slice(3).map((fan, index) => (
-          <FanRow key={fan.id} fan={fan} index={index + 3} />
-        ))}
-      </div>
-    ) : null}
-  </>
-) : (
-  <div className="px-4 py-16 text-center">
-    <div className="text-[15px] font-semibold text-[#111827]">
-      {activeTab === 'weekly'
-        ? 'No weekly ranking yet'
-        : 'No overall ranking yet'}
-    </div>
+              {fans.length > 3 ? (
+                <div className="mt-7 rounded-[24px] bg-white">
+                  {fans.slice(3).map((fan, index) => (
+                    <FanRow key={fan.id} fan={fan} index={index + 3} />
+                  ))}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="px-4 py-16 text-center">
+              <div className="text-[15px] font-semibold text-[#111827]">
+                {activeTab === 'weekly'
+                  ? 'No weekly ranking yet'
+                  : 'No overall ranking yet'}
+              </div>
 
-    <div className="mt-2 text-[12px] text-[#98a2b3]">
-      Send a gift to become this story’s first Top Fan.
-    </div>
-  </div>
-)
+              <div className="mt-2 text-[12px] text-[#98a2b3]">
+                Send a gift to become this story’s first Top Fan.
+              </div>
+            </div>
           )}
         </div>
       </section>
