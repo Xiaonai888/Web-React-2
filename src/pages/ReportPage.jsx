@@ -436,7 +436,7 @@ export default function ReportPage() {
       <div className="mx-auto max-w-[680px] px-4 pt-5">
         <section className="rounded-[18px] border border-[#e4e3df] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(24,28,36,0.045)]">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#fff0ef] text-[#c95f5b]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#fff1f5] text-[#ff3b5f]">
               <i className="fa-regular fa-flag text-[18px]" />
             </div>
 
@@ -458,7 +458,7 @@ export default function ReportPage() {
 
         <section className="mt-5">
           <div className="flex items-start gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff0ef] text-[11px] font-black text-[#c95f5b]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[11px] font-black text-[#ff3b5f]">
               1
             </span>
 
@@ -493,15 +493,15 @@ export default function ReportPage() {
                     }}
                     className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left transition ${
                       selected
-                        ? 'bg-[#fff3f2] ring-1 ring-inset ring-[#e6aaa6]'
-                        : 'bg-white hover:bg-[#fff9f8]'
+  ? 'bg-[#fff1f5] ring-1 ring-inset ring-[#ff3b5f]/35'
+  : 'bg-white hover:bg-[#fff8fa]'
                     }`}
                   >
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
                         selected
-                          ? 'bg-[#fde8e6] text-[#c95f5b]'
-                          : 'bg-[#f3f3f1] text-[#777c84] group-hover:bg-[#fff0ef] group-hover:text-[#c95f5b]'
+  ? 'bg-white text-[#ff3b5f] shadow-sm'
+  : 'bg-[#f3f4f6] text-[#98a2b3] group-hover:bg-[#fff1f5] group-hover:text-[#ff3b5f]'
                       }`}
                     >
                       <i className={`${option.icon} text-[14px]`} />
@@ -520,8 +520,8 @@ export default function ReportPage() {
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
                         selected
-                          ? 'border-[#c95f5b] bg-white'
-                          : 'border-[#c7cbd0] bg-white group-hover:border-[#d8918d]'
+  ? 'border-[#ff3b5f] bg-white'
+  : 'border-[#cfd4dc] bg-white group-hover:border-[#ff9bb0]'
                       }`}
                       aria-hidden="true"
                     >
@@ -567,7 +567,7 @@ export default function ReportPage() {
                   ? 'Please explain what happened...'
                   : 'Add any details that may help us review this report...'
               }
-              className="min-h-[112px] w-full resize-none rounded-[13px] border border-[#dfe1e4] bg-[#fbfbfa] px-3.5 py-3 text-[13px] font-medium leading-6 text-[#171a21] outline-none transition placeholder:text-[#a0a4ab] focus:border-[#d8918d] focus:bg-white focus:shadow-[0_0_0_3px_rgba(201,95,91,0.08)]"
+              className="min-h-[112px] w-full resize-none rounded-[13px] border border-[#dfe1e4] bg-[#fbfbfa] px-3.5 py-3 text-[13px] font-medium leading-6 text-[#171a21] outline-none transition placeholder:text-[#a0a4ab] focus:border-[#ff3b5f] focus:bg-white focus:shadow-[0_0_0_3px_rgba(255,59,95,0.10)]"
             />
 
             <div className="mt-1 text-right text-[10.5px] font-semibold text-[#9b9fa6]">
@@ -582,202 +582,32 @@ export default function ReportPage() {
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-start gap-3 rounded-[15px] border border-[#f0dfb8] bg-[#fff9e9] px-4 py-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#fff1c9] text-[#b98225]">
-            <i className="fa-solid fa-lock text-[12px]" />
-          </span>
+        <div className="mt-4 flex items-start gap-3 rounded-[15px] border border-[#e5e7eb] bg-[#f8f9fa] px-4 py-3">
+  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#fff3d6] text-[#b7791f]">
+    <i className="fa-solid fa-lock text-[12px]" />
+  </span>
 
-          <div className="min-w-0">
-            <div className="text-[11.5px] font-black leading-5 text-[#4e4a42]">
-              Your report is confidential.
-            </div>
+  <div className="min-w-0">
+    <div className="text-[11.5px] font-black leading-5 text-[#374151]">
+      Your report is confidential.
+    </div>
 
-            <div className="text-[11px] font-medium leading-5 text-[#817969]">
-              The reported person will not see your identity.
-            </div>
-          </div>
-        </div>
+    <div className="text-[11px] font-medium leading-5 text-[#6b7280]">
+      The reported person will not see your identity.
+    </div>
+  </div>
+</div>
 
         <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t border-[#eceae6] bg-[#faf9f7]/95 px-4 pb-3 pt-3 backdrop-blur">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={submitting || !reasonCode}
-            className="h-12 w-full rounded-[14px] bg-[#c95f5b] text-[14px] font-black text-white shadow-[0_8px_18px_rgba(201,95,91,0.18)] transition hover:bg-[#bb5652] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
+            className="h-12 w-full rounded-[14px] bg-[#ff3b5f] text-[14px] font-black text-white shadow-[0_8px_18px_rgba(255,59,95,0.22)] transition hover:bg-[#e93254] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
           >
             {submitting ? 'Submitting...' : 'Submit Report'}
           </button>
         </div>
-      </div>
-    </main>
-  )
-}
-
-      <header className="sticky top-0 z-30 border-b border-[#eceef2] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[58px] max-w-[680px] items-center gap-3 px-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
-
-          <h1 className="min-w-0 flex-1 truncate text-[17px] font-black text-[#111827]">
-            {config.title}
-          </h1>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-[680px] px-4 pt-5">
-        <section className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f2edff] text-[#6f4ee8]">
-              <i className="fa-regular fa-flag text-[17px]" />
-            </div>
-
-            <div className="min-w-0">
-              <div className="text-[11px] font-black uppercase tracking-[0.5px] text-[#8d94a1]">
-                {config.typeLabel}
-              </div>
-
-              <h2 className="mt-1 line-clamp-2 text-[16px] font-black leading-6 text-[#111827]">
-                {targetTitle || `Reported ${config.typeLabel}`}
-              </h2>
-
-              <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#667085]">
-                {config.subtitle}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="px-1">
-            <h3 className="text-[15px] font-black text-[#111827]">
-              Why are you reporting this?
-            </h3>
-            <p className="mt-1 text-[12px] font-medium leading-5 text-[#8d94a1]">
-              Select one reason. Shadow will review the reported content.
-            </p>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {config.options.map((option) => {
-              const selected = option.value === reasonCode
-
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    setReasonCode(option.value)
-                    setMessage('')
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-[18px] border px-3 py-3.5 text-left transition ${
-                    selected
-                      ? 'border-[#7c5cff] bg-[#f5f1ff]'
-                      : 'border-[#e5e7eb] bg-white active:bg-[#f8fafc]'
-                  }`}
-                >
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                      selected
-                        ? 'bg-[#7c5cff] text-white'
-                        : 'bg-[#f3f4f6] text-[#667085]'
-                    }`}
-                  >
-                    <i className={`${option.icon} text-[14px]`} />
-                  </span>
-
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={`block text-[13.5px] font-black ${
-                        selected ? 'text-[#5b3fd6]' : 'text-[#111827]'
-                      }`}
-                    >
-                      {option.label}
-                    </span>
-
-                    <span className="mt-0.5 block text-[11.5px] font-medium leading-5 text-[#8d94a1]">
-                      {option.description}
-                    </span>
-                  </span>
-
-                  <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                      selected
-                        ? 'border-[#7c5cff] bg-[#7c5cff] text-white'
-                        : 'border-[#cfd4dc] bg-white text-transparent'
-                    }`}
-                  >
-                    <i className="fa-solid fa-check text-[9px]" />
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <label
-            htmlFor="shadow-report-details"
-            className="text-[14px] font-black text-[#111827]"
-          >
-            Tell us more
-            <span className="ml-1 text-[12px] font-semibold text-[#8d94a1]">
-              {reasonCode === 'other' ? '(required)' : '(optional)'}
-            </span>
-          </label>
-
-          <textarea
-            id="shadow-report-details"
-            value={reasonText}
-            maxLength={1000}
-            onChange={(event) => {
-              setReasonText(event.target.value)
-              setMessage('')
-            }}
-            placeholder={
-              reasonCode === 'other'
-                ? 'Please explain what happened...'
-                : 'Add any details that may help us review this report...'
-            }
-            className="mt-3 min-h-[120px] w-full resize-none rounded-[18px] border border-[#dfe3ea] bg-[#f8fafc] px-4 py-3 text-[13px] font-medium leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] focus:border-[#7c5cff] focus:bg-white"
-          />
-
-          <div className="mt-1 text-right text-[10.5px] font-semibold text-[#98a2b3]">
-            {reasonText.length}/1000
-          </div>
-
-          {selectedReason ? (
-            <div className="mt-3 rounded-[15px] bg-[#f8fafc] px-3 py-2 text-[11.5px] font-semibold leading-5 text-[#667085]">
-              Selected: {selectedReason.label}
-            </div>
-          ) : null}
-        </section>
-
-        {message ? (
-          <div className="mt-4 rounded-[16px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#c9363e]">
-            {message}
-          </div>
-        ) : null}
-
-        <div className="mt-4 rounded-[18px] bg-white px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#667085] ring-1 ring-black/5">
-          <i className="fa-solid fa-lock mr-2 text-[#7c5cff]" />
-          Your report is confidential. The reported person will not see your
-          identity.
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting || !reasonCode}
-          className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white shadow-sm active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {submitting ? 'Submitting...' : 'Submit Report'}
-        </button>
       </div>
     </main>
   )
