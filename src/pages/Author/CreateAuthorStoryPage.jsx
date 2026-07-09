@@ -476,21 +476,7 @@ export default function CreateAuthorStoryPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {[
-                  ['fa-cloud-arrow-up', 'Cloudflare R2'],
-                  ['fa-clock', 'Auto delete 24h'],
-                  ['fa-shield-halved', 'Author only'],
-                ].map(([icon, label]) => (
-                  <div
-                    key={label}
-                    className="rounded-[18px] border border-white/[0.07] bg-white/[0.035] px-2 py-3 text-center backdrop-blur-xl"
-                  >
-                    <i className={`fa-solid ${icon} text-[14px] text-[#c084fc]`} />
-                    <div className="mt-2 text-[9px] font-bold leading-4 text-white/45">{label}</div>
-                  </div>
-                ))}
-              </div>
+              
             </div>
 
             <input
