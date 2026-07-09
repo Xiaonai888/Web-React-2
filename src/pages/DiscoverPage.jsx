@@ -2,6 +2,79 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 
+const API_BASE_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function formatPostTime(value) {
+  const timestamp = new Date(value || 0).getTime()
+
+  if (!timestamp) return 'Just now'
+
+  const difference = Math.max(0, Date.now() - timestamp)
+  const minutes = Math.floor(difference / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m`
+  if (hours < 24) return `${hours}h`
+  if (days < 7) return `${days}d`
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(timestamp))
+}
+
+function mergeUniquePosts(current, incoming) {
+  const seen = new Set()
+  const merged = []
+
+  for (const post of [...current, ...incoming]) {
+    if (!post?.id || seen.has(post.id)) continue
+
+    seen.add(post.id)
+    merged.push(post)
+  }
+
+  return merged
+}
+
+async function fetchFollowedPosts(token, cursor = '') {
+  const params = new URLSearchParams({ limit: '10' })
+
+  if (cursor) {
+    params.set('cursor', cursor)
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/following/posts/feed?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load followed posts')
+  }
+
+  return data
+}
+
 const storyItems = [
   {
     id: 'music',
@@ -342,6 +415,322 @@ function FollowedPostCard({ post }) {
   )
 }
 
+function RealPostImageGrid({ images, authorName }) {
+  const urls = Array.isArray(images)
+    ? images.filter(Boolean).slice(0, 5)
+    : []
+
+  if (!urls.length) return null
+
+  const alt = `${authorName || 'Author'} post`
+
+  if (urls.length === 1) {
+    return (
+      <div className="bg-gray-100">
+        <img
+          src={urls[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="max-h-[620px] w-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  if (urls.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+        {urls.map((url) => (
+          <img
+            key={url}
+            src={url}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="h-[260px] w-full object-cover sm:h-[310px]"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (urls.length === 3) {
+    return (
+      <div className="grid h-[340px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[400px]">
+        <img
+          src={urls[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+
+        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
+          {urls.slice(1).map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              className="h-full min-h-0 w-full object-cover"
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const visibleUrls = urls.slice(0, 4)
+  const hiddenCount = Math.max(0, urls.length - 4)
+
+  return (
+    <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+      {visibleUrls.map((url, index) => (
+        <div key={url} className="relative">
+          <img
+            src={url}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="h-[210px] w-full object-cover sm:h-[250px]"
+          />
+
+          {index === 3 && hiddenCount > 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[28px] font-black text-white">
+              +{hiddenCount}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RealReactionSummary({ summary, likeCount }) {
+  const icons = {
+    love: '❤️',
+    haha: '😂',
+    wow: '😮',
+    sad: '😢',
+    angry: '😡',
+    support: '👏',
+    touched: '🥹',
+  }
+
+  const items = Array.isArray(summary) ? summary.slice(0, 3) : []
+
+  return (
+    <div className="flex items-center gap-1">
+      {items.length ? (
+        <div className="flex -space-x-1">
+          {items.map((item) => (
+            <span
+              key={item.type}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-white bg-[#f5f3fa] text-[11px]"
+            >
+              {icons[item.type] || '❤️'}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <span>{Number(likeCount || 0)}</span>
+    </div>
+  )
+}
+
+function RealFollowedPostCard({ post }) {
+  const author = post.author_page || {}
+  const authorName = author.page_name || 'Author'
+  const pageUsername = author.page_username || ''
+  const pageUrl = pageUsername
+    ? `/author/page/${encodeURIComponent(pageUsername)}`
+    : '#'
+  const firstLetter = authorName.trim().slice(0, 1).toUpperCase() || 'A'
+
+  return (
+    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+      <div className="flex items-start gap-3 p-4">
+        <Link
+          to={pageUrl}
+          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
+          aria-label={`Open ${authorName}`}
+        >
+          {author.avatar_url ? (
+            <img
+              src={author.avatar_url}
+              alt={authorName}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            firstLetter
+          )}
+        </Link>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Link
+                to={pageUrl}
+                className="block truncate text-[15px] font-black text-[#111827]"
+              >
+                {authorName}
+              </Link>
+
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
+                {pageUsername ? <span>@{pageUsername}</span> : null}
+                {pageUsername ? <span>·</span> : null}
+                <span>{formatPostTime(post.created_at)}</span>
+                <span>·</span>
+                <i className="fa-solid fa-earth-americas text-[10px]" />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+              aria-label="More"
+            >
+              <i className="fa-solid fa-ellipsis" />
+            </button>
+          </div>
+
+          {post.content ? (
+            <p className="mt-3 whitespace-pre-wrap break-words text-[14px] font-semibold leading-6 text-[#111827]">
+              {post.content}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <RealPostImageGrid
+        images={post.image_urls}
+        authorName={authorName}
+      />
+
+      <div className="flex items-center justify-between px-4 py-3 text-[12px] font-bold text-gray-500">
+        <RealReactionSummary
+          summary={post.reaction_summary}
+          likeCount={post.like_count}
+        />
+
+        <div>
+          {Number(post.comment_count || 0)}{' '}
+          {Number(post.comment_count || 0) === 1 ? 'comment' : 'comments'}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 border-t border-gray-100 text-[13px] font-extrabold text-gray-500">
+        <button
+          type="button"
+          className={`flex items-center justify-center gap-2 py-3 active:bg-gray-50 ${
+            post.my_reaction ? 'text-[#7c3aed]' : ''
+          }`}
+        >
+          <i
+            className={
+              post.my_reaction
+                ? 'fa-solid fa-heart'
+                : 'fa-regular fa-heart'
+            }
+          />
+          React
+        </button>
+
+        <button
+          type="button"
+          className="flex items-center justify-center gap-2 py-3 active:bg-gray-50"
+        >
+          <i className="fa-regular fa-comment" />
+          Comment
+        </button>
+
+        <button
+          type="button"
+          className="flex items-center justify-center gap-2 py-3 active:bg-gray-50"
+        >
+          <i className="fa-solid fa-share" />
+          Share
+        </button>
+      </div>
+    </article>
+  )
+}
+
+function RealPostSkeleton() {
+  return (
+    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+      <div className="flex animate-pulse items-start gap-3 p-4">
+        <div className="h-11 w-11 shrink-0 rounded-full bg-gray-200" />
+
+        <div className="min-w-0 flex-1">
+          <div className="h-4 w-32 rounded bg-gray-200" />
+          <div className="mt-2 h-3 w-24 rounded bg-gray-100" />
+          <div className="mt-5 h-3 w-full rounded bg-gray-100" />
+          <div className="mt-2 h-3 w-4/5 rounded bg-gray-100" />
+        </div>
+      </div>
+
+      <div className="h-[230px] animate-pulse bg-gray-100" />
+    </article>
+  )
+}
+
+function RealFeedEmptyState() {
+  return (
+    <article className="bg-white p-7 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f1edfb] text-[#7c3aed]">
+        <i className="fa-solid fa-user-plus text-xl" />
+      </div>
+
+      <div className="mt-4 text-[17px] font-black text-[#111827]">
+        No posts yet
+      </div>
+
+      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500">
+        Follow authors to see their latest posts here.
+      </div>
+
+      <Link
+        to="/authors/top"
+        className="mt-5 inline-flex items-center justify-center rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-black text-white active:scale-[0.98]"
+      >
+        Find authors
+      </Link>
+    </article>
+  )
+}
+
+function RealFeedErrorState({ onRetry }) {
+  return (
+    <article className="bg-white p-7 text-center shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500">
+        <i className="fa-solid fa-triangle-exclamation text-xl" />
+      </div>
+
+      <div className="mt-4 text-[17px] font-black text-[#111827]">
+        Could not load posts
+      </div>
+
+      <div className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-gray-500">
+        Check your connection and try again.
+      </div>
+
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-5 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-black text-white active:scale-[0.98]"
+      >
+        Retry
+      </button>
+    </article>
+  )
+}
+
 function AdsCard({ item }) {
   return (
     <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
@@ -485,7 +874,129 @@ function FeedRenderer({ item }) {
 export default function DiscoverPage() {
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
-  const feed = useMemo(() => feedItems, [])
+  const token = useMemo(() => getAuthToken(), [])
+
+  const [realPosts, setRealPosts] = useState([])
+  const [realPostsCursor, setRealPostsCursor] = useState(null)
+  const [realPostsHasMore, setRealPostsHasMore] = useState(false)
+  const [realPostsLoading, setRealPostsLoading] = useState(true)
+  const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
+  const [realPostsError, setRealPostsError] = useState('')
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadInitialPosts() {
+      if (!token) {
+        if (alive) {
+          setRealPosts([])
+          setRealPostsCursor(null)
+          setRealPostsHasMore(false)
+          setRealPostsLoading(false)
+          setRealPostsError('')
+        }
+
+        return
+      }
+
+      try {
+        setRealPostsLoading(true)
+        setRealPostsError('')
+
+        const data = await fetchFollowedPosts(token)
+
+        if (!alive) return
+
+        setRealPosts(Array.isArray(data.posts) ? data.posts : [])
+        setRealPostsCursor(data.next_cursor || null)
+        setRealPostsHasMore(
+          Boolean(data.has_more && data.next_cursor)
+        )
+      } catch (error) {
+        if (!alive) return
+
+        setRealPosts([])
+        setRealPostsCursor(null)
+        setRealPostsHasMore(false)
+        setRealPostsError(
+          error.message || 'Failed to load followed posts'
+        )
+      } finally {
+        if (alive) {
+          setRealPostsLoading(false)
+        }
+      }
+    }
+
+    loadInitialPosts()
+
+    return () => {
+      alive = false
+    }
+  }, [token])
+
+  async function loadMoreRealPosts() {
+    if (
+      !token ||
+      !realPostsCursor ||
+      realPostsLoadingMore
+    ) {
+      return
+    }
+
+    try {
+      setRealPostsLoadingMore(true)
+      setRealPostsError('')
+
+      const data = await fetchFollowedPosts(
+        token,
+        realPostsCursor
+      )
+      const incomingPosts = Array.isArray(data.posts)
+        ? data.posts
+        : []
+
+      setRealPosts((current) =>
+        mergeUniquePosts(current, incomingPosts)
+      )
+      setRealPostsCursor(data.next_cursor || null)
+      setRealPostsHasMore(
+        Boolean(data.has_more && data.next_cursor)
+      )
+    } catch (error) {
+      setRealPostsError(
+        error.message || 'Failed to load more posts'
+      )
+    } finally {
+      setRealPostsLoadingMore(false)
+    }
+  }
+
+  async function retryRealPosts() {
+    if (!token) return
+
+    try {
+      setRealPostsLoading(true)
+      setRealPostsError('')
+
+      const data = await fetchFollowedPosts(token)
+
+      setRealPosts(Array.isArray(data.posts) ? data.posts : [])
+      setRealPostsCursor(data.next_cursor || null)
+      setRealPostsHasMore(
+        Boolean(data.has_more && data.next_cursor)
+      )
+    } catch (error) {
+      setRealPosts([])
+      setRealPostsCursor(null)
+      setRealPostsHasMore(false)
+      setRealPostsError(
+        error.message || 'Failed to load followed posts'
+      )
+    } finally {
+      setRealPostsLoading(false)
+    }
+  }
 
   useEffect(() => {
     function handleScroll() {
@@ -539,11 +1050,48 @@ export default function DiscoverPage() {
           <DiscoverStorySection />
 
           <section className="space-y-2 py-2 sm:space-y-3 sm:px-3 sm:py-3">
-          {feed.length ? (
-            feed.map((item) => <FeedRenderer key={item.id} item={item} />)
-          ) : (
-            <EmptyStateCard />
-          )}
+            {realPostsLoading ? (
+              <>
+                <RealPostSkeleton />
+                <RealPostSkeleton />
+              </>
+            ) : null}
+
+            {!realPostsLoading && realPostsError && !realPosts.length ? (
+              <RealFeedErrorState onRetry={retryRealPosts} />
+            ) : null}
+
+            {!realPostsLoading && !realPostsError && !realPosts.length ? (
+              <RealFeedEmptyState />
+            ) : null}
+
+            {realPosts.map((post) => (
+              <RealFollowedPostCard key={post.id} post={post} />
+            ))}
+
+            {realPostsError && realPosts.length ? (
+              <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-bold text-red-600 ring-1 ring-red-100">
+                {realPostsError}
+              </div>
+            ) : null}
+
+            {realPostsHasMore ? (
+              <button
+                type="button"
+                onClick={loadMoreRealPosts}
+                disabled={realPostsLoadingMore}
+                className="w-full rounded-[16px] bg-white py-3.5 text-[13px] font-black text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.99] disabled:opacity-60"
+              >
+                {realPostsLoadingMore ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch mr-2 animate-spin" />
+                    Loading
+                  </>
+                ) : (
+                  'Load more posts'
+                )}
+              </button>
+            ) : null}
           </section>
         </div>
       </main>
