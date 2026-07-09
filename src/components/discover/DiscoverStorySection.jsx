@@ -6,24 +6,14 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const STATIC_START_ITEMS = [
-  {
-    id: 'music',
-    name: 'Music',
-    label: 'Music',
-    avatar: '♪',
-    type: 'feature',
-    image: 'linear-gradient(160deg, #4ec7a5 0%, #45b4df 100%)',
-  },
-  {
-    id: 'create',
-    name: 'Create story',
-    label: 'Create story',
-    avatar: '+',
-    type: 'create',
-    image: 'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
-  },
-]
+const CREATE_STORY_ITEM = {
+  id: 'create',
+  name: 'Create story',
+  label: 'Create story',
+  avatar: '+',
+  type: 'create',
+  image: 'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
+}
 
 const STATIC_END_ITEMS = [
   {
@@ -517,17 +507,10 @@ export default function DiscoverStorySection() {
     <>
       <section className="border-b border-gray-100 bg-white py-3 sm:rounded-b-[22px] sm:border sm:shadow-sm sm:ring-1 sm:ring-gray-100">
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 sm:px-4">
-          {STATIC_START_ITEMS.map((item) => (
-            <StaticStoryCard
-              key={item.id}
-              item={item}
-              onClick={
-                item.type === 'create'
-                  ? () => navigate('/author/page/story/create')
-                  : undefined
-              }
-            />
-          ))}
+          <StaticStoryCard
+  item={CREATE_STORY_ITEM}
+  onClick={() => navigate('/author/page/story/create')}
+/>
 
           {groups.map((group) => (
             <AuthorStoryCard
@@ -541,9 +524,7 @@ export default function DiscoverStorySection() {
             <div className="h-[178px] w-[108px] shrink-0 animate-pulse rounded-[18px] bg-gradient-to-br from-gray-200 to-gray-100 sm:h-[184px] sm:w-[112px]" />
           ) : null}
 
-          {STATIC_END_ITEMS.map((item) => (
-            <StaticStoryCard key={item.id} item={item} />
-          ))}
+          
         </div>
       </section>
 
