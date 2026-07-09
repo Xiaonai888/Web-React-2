@@ -7,6 +7,52 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+
+const AUTHOR_POST_REACTIONS = [
+  {
+    type: 'love',
+    label: 'Love',
+    src: '/assets/React/Love.svg',
+    text: '#ff2f5f',
+  },
+  {
+    type: 'haha',
+    label: 'Haha',
+    src: '/assets/React/Haha.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'wow',
+    label: 'Wow',
+    src: '/assets/React/Wow.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'sad',
+    label: 'Sad',
+    src: '/assets/React/Sad.svg',
+    text: '#3b82f6',
+  },
+  {
+    type: 'angry',
+    label: 'Angry',
+    src: '/assets/React/Angry.svg',
+    text: '#ef4444',
+  },
+  {
+    type: 'support',
+    label: 'Support',
+    src: '/assets/React/Support.svg',
+    text: '#16a34a',
+  },
+  {
+    type: 'touched',
+    label: 'Touched',
+    src: '/assets/React/Touched.svg',
+    text: '#8b5cf6',
+  },
+]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -70,6 +116,39 @@ async function fetchFollowedPosts(token, cursor = '') {
 
   if (!response.ok || data.ok === false) {
     throw new Error(data.message || 'Failed to load followed posts')
+  }
+
+  return data
+}
+
+
+async function setFollowedPostReaction(
+  token,
+  postId,
+  reactionType = 'love'
+) {
+  if (!token) {
+    throw new Error('Please login first')
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/react`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        reaction_type: reactionType,
+      }),
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update reaction')
   }
 
   return data
@@ -541,14 +620,89 @@ function RealReactionSummary({ summary, likeCount }) {
   )
 }
 
-function RealFollowedPostCard({ post }) {
+function RealFollowedPostCard({
+  post,
+  token,
+  onReactionUpdated,
+}) {
   const author = post.author_page || {}
   const authorName = author.page_name || 'Author'
   const pageUsername = author.page_username || ''
   const pageUrl = pageUsername
     ? `/author/page/${encodeURIComponent(pageUsername)}`
     : '#'
-  const firstLetter = authorName.trim().slice(0, 1).toUpperCase() || 'A'
+  const firstLetter =
+    authorName.trim().slice(0, 1).toUpperCase() || 'A'
+
+  const [reactionPickerOpen, setReactionPickerOpen] =
+    useState(false)
+  const [reactionBusy, setReactionBusy] = useState(false)
+  const [reactionError, setReactionError] = useState('')
+  const pressTimerRef = useRef(null)
+
+  const activeReaction =
+    AUTHOR_POST_REACTIONS.find(
+      (item) => item.type === post.my_reaction
+    ) || null
+
+  useEffect(() => {
+    return () => {
+      if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current)
+      }
+    }
+  }, [])
+
+  async function chooseReaction(reactionType) {
+    if (reactionBusy) return
+
+    try {
+      setReactionBusy(true)
+      setReactionError('')
+
+      const data = await setFollowedPostReaction(
+        token,
+        post.id,
+        reactionType
+      )
+
+      onReactionUpdated?.(post.id, data)
+    } catch (error) {
+      setReactionError(
+        error.message || 'Failed to update reaction'
+      )
+    } finally {
+      setReactionBusy(false)
+    }
+  }
+
+  function startReactionPress() {
+    if (reactionBusy) return
+
+    if (pressTimerRef.current) {
+      window.clearTimeout(pressTimerRef.current)
+    }
+
+    pressTimerRef.current = window.setTimeout(() => {
+      setReactionPickerOpen(true)
+      pressTimerRef.current = null
+    }, 420)
+  }
+
+  function endReactionPress() {
+    if (!pressTimerRef.current) return
+
+    window.clearTimeout(pressTimerRef.current)
+    pressTimerRef.current = null
+    chooseReaction('love')
+  }
+
+  function cancelReactionPress() {
+    if (!pressTimerRef.current) return
+
+    window.clearTimeout(pressTimerRef.current)
+    pressTimerRef.current = null
+  }
 
   return (
     <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
@@ -582,7 +736,9 @@ function RealFollowedPostCard({ post }) {
               </Link>
 
               <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
-                {pageUsername ? <span>@{pageUsername}</span> : null}
+                {pageUsername ? (
+                  <span>@{pageUsername}</span>
+                ) : null}
                 {pageUsername ? <span>·</span> : null}
                 <span>{formatPostTime(post.created_at)}</span>
                 <span>·</span>
@@ -620,26 +776,81 @@ function RealFollowedPostCard({ post }) {
 
         <div>
           {Number(post.comment_count || 0)}{' '}
-          {Number(post.comment_count || 0) === 1 ? 'comment' : 'comments'}
+          {Number(post.comment_count || 0) === 1
+            ? 'comment'
+            : 'comments'}
         </div>
       </div>
 
       <div className="grid grid-cols-3 border-t border-gray-100 text-[13px] font-extrabold text-gray-500">
-        <button
-          type="button"
-          className={`flex items-center justify-center gap-2 py-3 active:bg-gray-50 ${
-            post.my_reaction ? 'text-[#7c3aed]' : ''
-          }`}
-        >
-          <i
-            className={
-              post.my_reaction
-                ? 'fa-solid fa-heart'
-                : 'fa-regular fa-heart'
+        <div className="relative">
+          {reactionPickerOpen ? (
+            <>
+              <button
+                type="button"
+                aria-label="Close reactions"
+                onClick={() => setReactionPickerOpen(false)}
+                className="fixed inset-0 z-20 cursor-default"
+              />
+
+              <div className="absolute bottom-[52px] left-2 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
+                {AUTHOR_POST_REACTIONS.map((reaction) => (
+                  <button
+                    key={reaction.type}
+                    type="button"
+                    disabled={reactionBusy}
+                    onClick={() => {
+                      setReactionPickerOpen(false)
+                      chooseReaction(reaction.type)
+                    }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:-translate-y-1 hover:scale-110 active:scale-90 disabled:opacity-60"
+                    aria-label={reaction.label}
+                    title={reaction.label}
+                  >
+                    <img
+                      src={reaction.src}
+                      alt={reaction.label}
+                      className="h-8 w-8 object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          <button
+            type="button"
+            disabled={reactionBusy}
+            onPointerDown={startReactionPress}
+            onPointerUp={endReactionPress}
+            onPointerLeave={cancelReactionPress}
+            onPointerCancel={cancelReactionPress}
+            onContextMenu={(event) => event.preventDefault()}
+            className="flex w-full items-center justify-center gap-2 py-3 active:bg-gray-50 disabled:opacity-60"
+            style={{
+              color: activeReaction?.text || undefined,
+            }}
+            aria-label={
+              activeReaction
+                ? `${activeReaction.label} reaction`
+                : 'React'
             }
-          />
-          React
-        </button>
+          >
+            {reactionBusy ? (
+              <i className="fa-solid fa-circle-notch animate-spin" />
+            ) : activeReaction ? (
+              <img
+                src={activeReaction.src}
+                alt={activeReaction.label}
+                className="h-[19px] w-[19px] object-contain"
+              />
+            ) : (
+              <i className="fa-regular fa-heart" />
+            )}
+
+            {activeReaction?.label || 'React'}
+          </button>
+        </div>
 
         <button
           type="button"
@@ -657,6 +868,12 @@ function RealFollowedPostCard({ post }) {
           Share
         </button>
       </div>
+
+      {reactionError ? (
+        <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
+          {reactionError}
+        </div>
+      ) : null}
     </article>
   )
 }
@@ -998,6 +1215,35 @@ export default function DiscoverPage() {
     }
   }
 
+
+  function handleRealPostReactionUpdated(postId, data) {
+    setRealPosts((current) =>
+      current.map((post) => {
+        if (post.id !== postId) return post
+
+        const updatedPost = data.post || {}
+
+        return {
+          ...post,
+          ...updatedPost,
+          author_page: post.author_page,
+          my_reaction: data.reaction_type || null,
+          like_count: Number(
+            data.like_count ??
+              updatedPost.like_count ??
+              post.like_count ??
+              0
+          ),
+          reaction_summary: Array.isArray(
+            data.reaction_summary
+          )
+            ? data.reaction_summary
+            : post.reaction_summary,
+        }
+      })
+    )
+  }
+
   useEffect(() => {
     function handleScroll() {
       const currentScrollY = window.scrollY
@@ -1066,7 +1312,12 @@ export default function DiscoverPage() {
             ) : null}
 
             {realPosts.map((post) => (
-              <RealFollowedPostCard key={post.id} post={post} />
+              <RealFollowedPostCard
+                key={post.id}
+                post={post}
+                token={token}
+                onReactionUpdated={handleRealPostReactionUpdated}
+              />
             ))}
 
             {realPostsError && realPosts.length ? (
