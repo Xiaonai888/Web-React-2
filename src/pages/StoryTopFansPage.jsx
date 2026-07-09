@@ -383,7 +383,8 @@ const title = story?.title || 'Top Fans'
 const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
 
   return (
-    <main className="min-h-screen bg-white pb-[92px]">
+    <main className="min-h-screen bg-[#f7f7f9] pb-[92px]">
+  <div className="mx-auto min-h-screen w-full max-w-3xl overflow-hidden bg-white">
       <div className="relative h-[220px] overflow-hidden bg-white text-white">
         <div
           className="absolute left-1/2 top-0 h-full w-[124%] -translate-x-1/2 overflow-hidden bg-[#111827]"
@@ -529,10 +530,11 @@ const weeklyDateRange = useMemo(() => getWeeklyDateRange(), [])
             </div>
           )}
         </div>
-      </section>
+     </section>
+</div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-10px_30px_rgba(17,24,39,0.08)]">
-  <div className="mx-auto flex max-w-3xl items-center gap-3">
+<div className="fixed bottom-0 left-0 right-0 z-40 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+  <div className="mx-auto flex max-w-3xl items-center gap-3 bg-white px-4 pt-2 shadow-[0_-10px_30px_rgba(17,24,39,0.08)]">
     {currentReader.avatar_url ? (
       <img
         src={currentReader.avatar_url}
