@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -259,10 +259,7 @@ export default function ReportPage() {
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
 
-  const selectedReason = useMemo(
-    () => config?.options.find((option) => option.value === reasonCode) || null,
-    [config, reasonCode]
-  )
+  
 
   const handleBack = () => {
     if (returnTo) {
@@ -418,7 +415,204 @@ export default function ReportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f3fa] pb-8">
+    <main className="min-h-screen bg-[#faf9f7] pb-6 text-[#171a21]">
+      <header className="sticky top-0 z-30 border-b border-[#e8e7e3] bg-white/95 backdrop-blur">
+        <div className="relative mx-auto flex h-[58px] max-w-[680px] items-center justify-center px-14">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="absolute left-3 flex h-10 w-10 items-center justify-center rounded-full text-[#242830] transition active:bg-[#f1f1ef]"
+            aria-label="Go back"
+          >
+            <i className="fa-solid fa-chevron-left text-[14px]" />
+          </button>
+
+          <h1 className="truncate text-center text-[17px] font-black text-[#171a21]">
+            {config.title}
+          </h1>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-[680px] px-4 pt-5">
+        <section className="rounded-[18px] border border-[#e4e3df] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(24,28,36,0.045)]">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[#fff0ef] text-[#c95f5b]">
+              <i className="fa-regular fa-flag text-[18px]" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="text-[10.5px] font-black uppercase tracking-[0.65px] text-[#8a8f98]">
+                {config.typeLabel}
+              </div>
+
+              <h2 className="mt-1 line-clamp-2 text-[15px] font-black leading-6 text-[#171a21]">
+                {targetTitle || `Reported ${config.typeLabel}`}
+              </h2>
+
+              <p className="mt-1 text-[12px] font-medium leading-5 text-[#767c86]">
+                {config.subtitle}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff0ef] text-[11px] font-black text-[#c95f5b]">
+              1
+            </span>
+
+            <div className="min-w-0">
+              <h3 className="text-[15.5px] font-black leading-6 text-[#171a21]">
+                Why are you reporting this?
+              </h3>
+
+              <p className="mt-0.5 text-[11.5px] font-medium leading-5 text-[#858a93]">
+                Select one reason. Shadow will review the reported content.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-[18px] border border-[#e1e2e4] bg-white shadow-[0_8px_24px_rgba(24,28,36,0.035)]">
+            {config.options.map((option, index) => {
+              const selected = option.value === reasonCode
+              const isLast = index === config.options.length - 1
+
+              return (
+                <div
+                  key={option.value}
+                  className={`px-2 py-1 ${
+                    isLast ? '' : 'border-b border-[#ececea]'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReasonCode(option.value)
+                      setMessage('')
+                    }}
+                    className={`group flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left transition ${
+                      selected
+                        ? 'bg-[#fff3f2] ring-1 ring-inset ring-[#e6aaa6]'
+                        : 'bg-white hover:bg-[#fff9f8]'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
+                        selected
+                          ? 'bg-[#fde8e6] text-[#c95f5b]'
+                          : 'bg-[#f3f3f1] text-[#777c84] group-hover:bg-[#fff0ef] group-hover:text-[#c95f5b]'
+                      }`}
+                    >
+                      <i className={`${option.icon} text-[14px]`} />
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-black leading-5 text-[#171a21]">
+                        {option.label}
+                      </span>
+
+                      <span className="mt-0.5 block text-[11.5px] font-medium leading-[18px] text-[#7d838d]">
+                        {option.description}
+                      </span>
+                    </span>
+
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
+                        selected
+                          ? 'border-[#c95f5b] bg-white'
+                          : 'border-[#c7cbd0] bg-white group-hover:border-[#d8918d]'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {selected ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-[#c95f5b]" />
+                      ) : null}
+                    </span>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="mt-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f1f1ef] text-[11px] font-black text-[#5f646d]">
+              2
+            </span>
+
+            <label
+              htmlFor="shadow-report-details"
+              className="text-[14.5px] font-black text-[#171a21]"
+            >
+              Tell us more
+              <span className="ml-1 text-[12px] font-semibold text-[#92969d]">
+                {reasonCode === 'other' ? '(required)' : '(optional)'}
+              </span>
+            </label>
+          </div>
+
+          <div className="mt-3 rounded-[18px] border border-[#e1e2e4] bg-white p-3 shadow-[0_8px_24px_rgba(24,28,36,0.03)]">
+            <textarea
+              id="shadow-report-details"
+              value={reasonText}
+              maxLength={1000}
+              onChange={(event) => {
+                setReasonText(event.target.value)
+                setMessage('')
+              }}
+              placeholder={
+                reasonCode === 'other'
+                  ? 'Please explain what happened...'
+                  : 'Add any details that may help us review this report...'
+              }
+              className="min-h-[112px] w-full resize-none rounded-[13px] border border-[#dfe1e4] bg-[#fbfbfa] px-3.5 py-3 text-[13px] font-medium leading-6 text-[#171a21] outline-none transition placeholder:text-[#a0a4ab] focus:border-[#d8918d] focus:bg-white focus:shadow-[0_0_0_3px_rgba(201,95,91,0.08)]"
+            />
+
+            <div className="mt-1 text-right text-[10.5px] font-semibold text-[#9b9fa6]">
+              {reasonText.length}/1000
+            </div>
+          </div>
+        </section>
+
+        {message ? (
+          <div className="mt-4 rounded-[14px] border border-[#f1c5c2] bg-[#fff1f0] px-4 py-3 text-[12px] font-bold leading-5 text-[#b84f4b]">
+            {message}
+          </div>
+        ) : null}
+
+        <div className="mt-4 flex items-start gap-3 rounded-[15px] border border-[#f0dfb8] bg-[#fff9e9] px-4 py-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#fff1c9] text-[#b98225]">
+            <i className="fa-solid fa-lock text-[12px]" />
+          </span>
+
+          <div className="min-w-0">
+            <div className="text-[11.5px] font-black leading-5 text-[#4e4a42]">
+              Your report is confidential.
+            </div>
+
+            <div className="text-[11px] font-medium leading-5 text-[#817969]">
+              The reported person will not see your identity.
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 z-20 -mx-4 mt-4 border-t border-[#eceae6] bg-[#faf9f7]/95 px-4 pb-3 pt-3 backdrop-blur">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting || !reasonCode}
+            className="h-12 w-full rounded-[14px] bg-[#c95f5b] text-[14px] font-black text-white shadow-[0_8px_18px_rgba(201,95,91,0.18)] transition hover:bg-[#bb5652] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
+          >
+            {submitting ? 'Submitting...' : 'Submit Report'}
+          </button>
+        </div>
+      </div>
+    </main>
+  )
+}
+
       <header className="sticky top-0 z-30 border-b border-[#eceef2] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[680px] items-center gap-3 px-4">
           <button
