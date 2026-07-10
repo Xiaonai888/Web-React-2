@@ -756,19 +756,7 @@ export default function TaskCenterPage() {
   }, [rewardChest, chestTick])
 
   async function loadTaskCover() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/task-center/public`)
-      const data = await response.json().catch(() => ({}))
 
-      if (response.ok && data.ok) {
-        setTaskCoverUrl(data.settings?.cover_url || '')
-      }
-    } catch {
-      setTaskCoverUrl('')
-    }
-  }
-
-  async function loadTaskCenter(options = {}) {
     const silent = Boolean(options.silent)
 
     if (!token) {
