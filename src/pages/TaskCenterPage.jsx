@@ -715,6 +715,8 @@ export default function TaskCenterPage() {
   const [chestClaiming, setChestClaiming] = useState(false)
   const [readingReward, setReadingReward] = useState(null)
   const [readingClaiming, setReadingClaiming] = useState(false)
+  const [dailyVoteReward, setDailyVoteReward] = useState(null)
+  const [voteClaiming, setVoteClaiming] = useState(false)
   const [chestTick, setChestTick] = useState(Date.now())
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
