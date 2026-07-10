@@ -353,6 +353,111 @@ function TaskRow({ task, onCheckIn, claimedToday }) {
    )
 }
 
+function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
+  if (!reward) return null
+
+  const completedMissions = Math.max(
+    0,
+    Number(reward.completed_missions || 0)
+  )
+
+  const totalMissions = Math.max(
+    1,
+    Number(reward.total_missions || 1)
+  )
+
+  const progress = Math.min(totalMissions, completedMissions)
+
+  const progressPercent = Math.min(
+    100,
+    Math.round((progress / totalMissions) * 100)
+  )
+
+  const claimed = Boolean(reward.claimed)
+  const claimable = Boolean(reward.claimable)
+
+  const buttonText = claiming
+    ? 'Claiming...'
+    : claimed
+      ? 'Done'
+      : claimable
+        ? 'Claim'
+        : 'Locked'
+
+  const statusText = claimed
+    ? 'Claimed'
+    : claimable
+      ? 'Ready'
+      : 'In progress'
+
+  return (
+    <div className="mt-4 rounded-[20px] border border-[#eadfff] bg-gradient-to-br from-[#fbf9ff] to-[#fffaf1] p-4 shadow-[0_8px_24px_rgba(124,58,237,0.08)]">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#efe8ff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
+          <i className="fa-solid fa-ticket text-[16px]" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-bold leading-5 text-[#111827]">
+            Daily Mission Reward
+          </h3>
+
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+            Complete all daily missions to earn 1 Vote.
+          </p>
+
+          <div className="mt-2 flex items-center gap-1.5 text-[12px] font-bold text-[#7c3aed]">
+            <i className="fa-solid fa-ticket text-[12px]" />
+            <span>1 Vote</span>
+          </div>
+        </div>
+
+        <RewardButton
+          tone={claimed || !claimable ? 'soft' : 'gold'}
+          disabled={claiming || claimed || !claimable}
+          onClick={onClaim}
+        >
+          {buttonText}
+        </RewardButton>
+      </div>
+
+      <div className="mt-4">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#e9e5f1]">
+          <div
+            className={`h-full rounded-full ${
+              claimed ? 'bg-[#22C55E]' : 'bg-[#7c3aed]'
+            }`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <div className="mt-1.5 flex items-center justify-between gap-3 text-[10px] font-semibold">
+          <span className="text-[#8b93a1]">
+            {progress}/{totalMissions} Missions
+          </span>
+
+          <span
+            className={
+              claimed
+                ? 'font-bold text-[#22C55E]'
+                : claimable
+                  ? 'font-bold text-[#7c3aed]'
+                  : 'text-[#8b93a1]'
+            }
+          >
+            {statusText}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-1.5 border-t border-[#eadfff] pt-3 text-[10px] font-bold text-[#b7791f]">
+        <i className="fa-solid fa-crown text-[9px]" />
+        <span>Premium members earn ×2 Votes</span>
+      </div>
+    </div>
+  )
+}
+
 function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   const fallbackMilestones = [
     { seconds: 60, minutes: 1, coins: 5, completed: false, claimed: false, claimable: false },
