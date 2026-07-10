@@ -432,7 +432,7 @@ function FeedImageGrid({ layout }) {
 
 function FollowedPostCard({ post }) {
   return (
-    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+    <article className="overflow-hidden rounded-[12px] bg-white shadow-sm ring-1 ring-gray-100">
       <div className="flex items-start gap-3 p-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white">
           {post.avatar}
@@ -962,14 +962,14 @@ function AdsCard({ item }) {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[18px] bg-gradient-to-br from-[#111827] via-[#4c1d95] to-[#f59e0b] p-5">
+        <div className="overflow-hidden rounded-[8px] bg-gradient-to-br from-[#111827] via-[#4c1d95] to-[#f59e0b] p-5">
           <div className="flex h-[128px] flex-col justify-end">
             <div className="text-[22px] font-black leading-7 text-white">{item.title}</div>
             <div className="mt-2 text-[13px] font-bold leading-5 text-white/80">{item.description}</div>
           </div>
         </div>
 
-        <button type="button" className="mt-4 w-full rounded-[14px] bg-[#1677ff] py-3 text-[14px] font-black text-white active:scale-[0.99]">
+        <button type="button" className="mt-4 w-full rounded-[8px] bg-[#111111] py-3 text-[14px] font-black text-white transition active:scale-[0.99] active:bg-black">
           {item.cta}
         </button>
       </div>
