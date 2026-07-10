@@ -111,7 +111,7 @@ function PackageCard({ item, onPurchase }) {
 
   return (
     <div
-      className="relative flex min-h-[96px] items-start gap-3 overflow-hidden rounded-[12px] bg-white px-4 pb-3"
+      className="relative flex min-h-[107px] items-start gap-3 overflow-hidden rounded-[12px] bg-white px-4 pb-3"
       style={{ paddingTop: isBestValue ? '32px' : '16px' }}
     >
       {isBestValue ? (
@@ -123,20 +123,22 @@ function PackageCard({ item, onPurchase }) {
         </span>
       ) : null}
 
-      <DiamondIcon size="h-6 w-6" />
+      <div className="flex min-w-0 flex-1 items-start gap-3 self-center">
+  <DiamondIcon size="h-6 w-6" />
 
-      <div className="min-w-0 flex-1">
-        <div className="relative -top-[2px] flex items-baseline gap-1.5">
-          <span className="text-[27px] font-bold leading-none tracking-[-0.04em] text-[#111111]">
-            {formatNumber(item.diamonds)}
-          </span>
-          <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
-        </div>
+  <div className="min-w-0 flex-1">
+    <div className="relative -top-[2px] flex items-baseline gap-1.5">
+      <span className="text-[27px] font-bold leading-none tracking-[-0.04em] text-[#111111]">
+        {formatNumber(item.diamonds)}
+      </span>
+      <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
+    </div>
 
-        <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
-          {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Coins` : 'No bonus coins'}
-        </p>
-      </div>
+    <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
+      {item.bonus_gems > 0 ? `Bonus ${formatNumber(item.bonus_gems)} Coins` : 'No bonus coins'}
+    </p>
+  </div>
+</div>
 
       <button
         type="button"
