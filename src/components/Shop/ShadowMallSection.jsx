@@ -1,3 +1,4 @@
+const mallShortcuts = [
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
@@ -13,7 +14,7 @@ const API_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const mallShortcuts = [
-    { label: 'Diamond', icon: 'fa-gem', type: 'route', path: '/shop/mall/purchase' },
+  { label: 'Diamond', icon: 'fa-gem', type: 'tab', tab: 'Purchase' },
   { label: 'Plans', icon: 'fa-crown', type: 'tab', tab: 'Plans' },
   { label: 'A', icon: 'fa-book-open', type: 'disabled' },
   { label: 'B', icon: 'fa-box-open', type: 'disabled' },
