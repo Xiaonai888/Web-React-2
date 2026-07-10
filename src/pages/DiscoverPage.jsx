@@ -154,62 +154,7 @@ async function setFollowedPostReaction(
   return data
 }
 
-const storyItems = [
-  {
-    id: 'music',
-    name: 'Music',
-    label: 'Music',
-    avatar: '♪',
-    badge: '',
-    type: 'feature',
-    image: 'linear-gradient(160deg, #4ec7a5 0%, #45b4df 100%)',
-  },
-  {
-    id: 'create',
-    name: 'Create story',
-    label: 'Create story',
-    avatar: '+',
-    badge: '',
-    type: 'create',
-    image: 'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
-  },
-  {
-    id: 'luna-story',
-    name: 'Luna Hart',
-    label: 'New episode',
-    avatar: 'LH',
-    badge: 'LIVE',
-    type: 'author',
-    image: 'linear-gradient(160deg, #111827 0%, #4f46e5 100%)',
-  },
-  {
-    id: 'mika-story',
-    name: 'Mika Rose',
-    label: 'New book',
-    avatar: 'MR',
-    badge: 'NEW',
-    type: 'author',
-    image: 'linear-gradient(160deg, #3b0764 0%, #f472b6 100%)',
-  },
-  {
-    id: 'nora-story',
-    name: 'Nora Vale',
-    label: 'Trending',
-    avatar: 'NV',
-    badge: 'HOT',
-    type: 'author',
-    image: 'linear-gradient(160deg, #7f1d1d 0%, #f59e0b 100%)',
-  },
-  {
-    id: 'skye-story',
-    name: 'Skye Novel',
-    label: 'Behind scene',
-    avatar: 'SN',
-    badge: '',
-    type: 'author',
-    image: 'linear-gradient(160deg, #064e3b 0%, #14b8a6 100%)',
-  },
-]
+
 
 const feedItems = [
   {
