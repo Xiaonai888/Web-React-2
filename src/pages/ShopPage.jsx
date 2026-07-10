@@ -52,7 +52,7 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-<header className="sticky top-0 z-40 bg-white">
+<header className="sticky top-0 z-40 bg-[#FFE66A]">
   <div className="flex h-14 items-center gap-3 px-4">
     <button
       type="button"
@@ -122,7 +122,13 @@ export default function ShopPage() {
   </div>
 </header>
 
-      <main className="px-4 pt-4">
+      <main
+  className={`px-4 pt-4 ${
+    isPurchaseMode
+      ? 'bg-gradient-to-b from-[#FFE66A] to-[#F5F5F5]'
+      : 'bg-white'
+  }`}
+>
         {activeTab === 'Plans' && <PlanSection />}
         {activeTab === 'Purchase' && <PurchaseSection />}
         {activeTab === 'Shadow Mall' && (
