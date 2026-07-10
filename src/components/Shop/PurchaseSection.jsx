@@ -110,23 +110,27 @@ function PackageCard({ item, onPurchase }) {
   const isBestValue = Number(item.package_usd) === 10
 
   return (
-    <div className="relative flex min-h-[116px] items-center gap-3 rounded-[20px] bg-white px-4 py-4">
-      <DiamondIcon size="h-10 w-10" />
+    <div
+      className="relative flex min-h-[116px] items-start gap-3 overflow-hidden rounded-[12px] bg-white px-4 pb-4"
+      style={{ paddingTop: isBestValue ? '32px' : '16px' }}
+    >
+      {isBestValue ? (
+        <span
+          className="absolute left-0 top-0 flex h-6 items-center bg-gradient-to-r from-[#FF5A67] to-[#FF747C] pl-3 pr-5 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+          style={{ borderBottomRightRadius: '16px' }}
+        >
+          Best Value
+        </span>
+      ) : null}
+
+      <DiamondIcon size="h-6 w-6" />
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[25px] font-black leading-none tracking-[-0.04em] text-[#111111]">
-              {formatNumber(item.diamonds)}
-            </span>
-            <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
-          </div>
-
-          {isBestValue ? (
-            <span className="rounded-full bg-[#FF5A5F] px-2 py-1 text-[8px] font-black uppercase tracking-[0.05em] text-white">
-              Best Value
-            </span>
-          ) : null}
+        <div className="relative -top-[2px] flex items-baseline gap-1.5">
+          <span className="text-[27px] font-bold leading-none tracking-[-0.04em] text-[#111111]">
+            {formatNumber(item.diamonds)}
+          </span>
+          <span className="text-[12px] font-black text-[#111111]">Diamonds</span>
         </div>
 
         <p className={`mt-2 text-[11px] font-bold ${item.bonus_gems > 0 ? 'text-[#B56A00]' : 'text-[#6B7280]'}`}>
@@ -137,13 +141,14 @@ function PackageCard({ item, onPurchase }) {
       <button
         type="button"
         onClick={onPurchase}
-        className="min-w-[96px] shrink-0 rounded-full bg-[#FFD400] px-4 py-3 text-[15px] font-black text-[#111111] active:scale-95"
+        className="min-w-[84px] shrink-0 self-center rounded-full bg-[#FFD400] px-3 py-2 text-[14px] font-[600] text-[#111111] active:scale-95"
       >
         {formatMoney(item.package_usd)}
       </button>
     </div>
   )
 }
+
 
 
 function PaymentProfileRequiredModal({ onClose, onGoWallet }) {
@@ -494,53 +499,67 @@ export default function PurchaseSection() {
   }
 
   return (
-  <section className="-mx-4 space-y-4 bg-[#F5F5F5] px-4 pb-8">
-    <div className="overflow-hidden rounded-[24px] bg-gradient-to-b from-[#FFD94A] to-[#FFA51F] p-[2px]">
-      <div className="rounded-t-[22px] bg-white/95 px-4 pb-5 pt-4">
-        <p className="text-center text-[14px] font-black uppercase tracking-[0.08em] text-[#E58A00]">
-          Join Premium to Get
-        </p>
+  <section
+  className="-mx-4 -mb-24 min-h-[calc(100vh-72px)] space-y-4 px-4 pb-24"
+  style={{
+    background:
+      'linear-gradient(to bottom, #FFE66A 0px, #FFF3A8 90px, #F5F5F5 170px, #F5F5F5 100%)',
+  }}
+>
+  <div className="rounded-[16px] bg-white px-4 pb-5 pt-4">
+    <div className="px-4 pb-5 pt-4">
+        <div className="flex items-center justify-center gap-2">
+  <img src="/assets/Icons/Crown.svg" alt="" className="h-6 w-6 object-contain" />
+  <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111111]">
+    Shadow Premium
+  </h2>
+</div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="flex flex-col items-center text-center">
-            <DiamondIcon size="h-12 w-12" />
-            <p className="mt-2 text-[13px] font-black text-[#111111]">120 Diamonds</p>
+            <div className="flex h-12 w-12 items-center justify-center">
+  <DiamondIcon size="h-10 w-10" />
+</div>
+            <p className="mt-2 text-[13px] font-bold text-[#111111]">120 Diamonds</p>
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#FFF1D7] text-[#F59E0B]">
-              <i className="fas fa-book-open text-[22px]" />
-            </div>
-            <p className="mt-2 text-[13px] font-black text-[#111111]">Early Access</p>
+            <div className="flex h-12 w-12 items-center justify-center">
+  <img
+    src="/assets/Icons/Early Access.svg"
+    alt="Early Access"
+    className="h-10 w-10 object-contain"
+  />
+</div>
+            <p className="mt-2 text-[13px] font-bold text-[#111111]">Early Access</p>
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#FFE4E7] text-[#F43F5E]">
-              <i className="fas fa-book text-[22px]" />
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F43F5E] px-1 text-[9px] font-black text-white">
-                7
-              </span>
-            </div>
-            <p className="mt-2 text-[13px] font-black text-[#111111]">Free 7 Stories</p>
+            <div className="flex h-12 w-12 items-center justify-center">
+  <img
+    src="/assets/Icons/Free 7 Stories.svg"
+    alt="Free 7 Stories"
+    className="h-10 w-10 object-contain"
+  />
+</div>
+            <p className="mt-2 text-[13px] font-bold text-[#111111]">Free 7 Stories</p>
           </div>
         </div>
       </div>
 
       <div className="px-4 pb-4 pt-3">
-        <button
-          type="button"
-          onClick={() => navigate('/shop', { state: { activeTab: 'Plans' } })}
-          className="flex w-full items-center justify-between rounded-full bg-[#FFE85E] px-5 py-3.5 text-[#111111] active:scale-[0.99]"
-        >
-          <span className="text-[13px] font-black">Buy Premium</span>
-          <span className="text-[19px] font-black">$5.99/month</span>
-          <i className="fas fa-chevron-right text-[14px]" />
-        </button>
-      </div>
-    </div>
+  <button
+  type="button"
+  onClick={() => navigate('/shop', { state: { activeTab: 'Plans' } })}
+  className="flex w-full items-center justify-center rounded-full bg-gradient-to-b from-[#FEE550] via-[#FEE14B] to-[#FECC35] px-5 py-2.5 text-[#111111] transition-all duration-200 hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.99]"
+>
+  <span className="text-[19px] font-bold">$5/month</span>
+</button>
+</div>
+</div>
 
-    <div>
-      <h2 className="mb-3 text-[20px] font-black text-[#111111]">Choose Diamonds</h2>
+<div>
+     
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {packages.map((item) => (
@@ -556,20 +575,14 @@ export default function PurchaseSection() {
     {message ? <p className="text-center text-[12px] font-bold text-[#555555]">{message}</p> : null}
     {toast ? <p className="text-center text-[12px] font-bold text-[#111111]">{toast}</p> : null}
 
-    <div className="rounded-[20px] bg-white p-4">
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF4D6] text-[#D98A00]">
-          <i className="fas fa-info text-[13px]" />
-        </div>
-        <h3 className="text-[14px] font-black text-[#111111]">Things to note before purchasing</h3>
-      </div>
-
-      <ol className="mt-3 list-decimal space-y-2 pl-5 text-[12px] font-medium leading-5 text-[#6B7280]">
-        <li>Diamonds are used to unlock premium episodes and support creators.</li>
-        <li>Bonus Coins are added automatically after payment is confirmed.</li>
-        <li>Completed purchases are non-refundable.</li>
-      </ol>
-    </div>
+    <div className="px-1 pb-2">
+  <h3 className="text-[14px] font-bold text-[#111111]">Purchase Notes</h3>
+<ol className="mt-3 list-decimal space-y-2 pl-5 text-[12px] font-normal leading-5 text-[#6B7280]">
+    <li>Diamonds are used to unlock premium episodes and support creators.</li>
+    <li>Bonus Coins are added automatically after payment is confirmed.</li>
+    <li>Completed purchases are non-refundable.</li>
+  </ol>
+</div>
 
     {showPaymentProfileRequired ? (
       <PaymentProfileRequiredModal
