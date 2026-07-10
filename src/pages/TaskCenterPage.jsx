@@ -458,6 +458,111 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
   )
 }
 
+function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
+  if (!reward) return null
+
+  const completedMissions = Math.max(
+    0,
+    Number(reward.completed_missions || 0)
+  )
+
+  const totalMissions = Math.max(
+    1,
+    Number(reward.total_missions || 1)
+  )
+
+  const progress = Math.min(totalMissions, completedMissions)
+
+  const progressPercent = Math.min(
+    100,
+    Math.round((progress / totalMissions) * 100)
+  )
+
+  const claimed = Boolean(reward.claimed)
+  const claimable = Boolean(reward.claimable)
+
+  const buttonText = claiming
+    ? 'Claiming...'
+    : claimed
+      ? 'Done'
+      : claimable
+        ? 'Claim'
+        : 'Locked'
+
+  const statusText = claimed
+    ? 'Claimed'
+    : claimable
+      ? 'Ready'
+      : 'In progress'
+
+  return (
+    <div className="mt-4 rounded-[20px] border border-[#eadfff] bg-gradient-to-br from-[#fbf9ff] to-[#fffaf1] p-4 shadow-[0_8px_24px_rgba(124,58,237,0.08)]">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#efe8ff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
+          <i className="fa-solid fa-ticket text-[16px]" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-bold leading-5 text-[#111827]">
+            Daily Mission Reward
+          </h3>
+
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#8b93a1]">
+            Complete all daily missions to earn 1 Vote.
+          </p>
+
+          <div className="mt-2 flex items-center gap-1.5 text-[12px] font-bold text-[#7c3aed]">
+            <i className="fa-solid fa-ticket text-[12px]" />
+            <span>1 Vote</span>
+          </div>
+        </div>
+
+        <RewardButton
+          tone={claimed || !claimable ? 'soft' : 'gold'}
+          disabled={claiming || claimed || !claimable}
+          onClick={onClaim}
+        >
+          {buttonText}
+        </RewardButton>
+      </div>
+
+      <div className="mt-4">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#e9e5f1]">
+          <div
+            className={`h-full rounded-full ${
+              claimed ? 'bg-[#22C55E]' : 'bg-[#7c3aed]'
+            }`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <div className="mt-1.5 flex items-center justify-between gap-3 text-[10px] font-semibold">
+          <span className="text-[#8b93a1]">
+            {progress}/{totalMissions} Missions
+          </span>
+
+          <span
+            className={
+              claimed
+                ? 'font-bold text-[#22C55E]'
+                : claimable
+                  ? 'font-bold text-[#7c3aed]'
+                  : 'text-[#8b93a1]'
+            }
+          >
+            {statusText}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-1.5 border-t border-[#eadfff] pt-3 text-[10px] font-bold text-[#b7791f]">
+        <i className="fa-solid fa-crown text-[9px]" />
+        <span>Premium members earn ×2 Votes</span>
+      </div>
+    </div>
+  )
+}
+
 function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   const fallbackMilestones = [
     { seconds: 60, minutes: 1, coins: 5, completed: false, claimed: false, claimable: false },
@@ -760,14 +865,15 @@ export default function TaskCenterPage() {
     const silent = Boolean(options.silent)
 
     if (!token) {
-      if (!silent) setLoading(false)
-      setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
-      setCheckIn(null)
-      setRewardChest(null)
-      setReadingReward(null)
-      setReadingMissions([])
-      return
-    }
+  if (!silent) setLoading(false)
+  setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
+  setCheckIn(null)
+  setRewardChest(null)
+  setReadingReward(null)
+  setReadingMissions([])
+  setDailyVoteReward(null)
+  return
+}
 
     try {
       if (!silent) setLoading(true)
@@ -867,6 +973,8 @@ export default function TaskCenterPage() {
           setReadingMissions(normalizeReadingMissionList(missionData.missions))
         }
       }
+
+      await refreshDailyVoteReward()
     } catch {
       setToast('Could not load rewards')
     } finally {
@@ -919,6 +1027,58 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
         loadTaskCover(),
       ])
     }
+
+    async function claimDailyVoteReward() {
+  if (!isLoggedIn) {
+    navigate('/login')
+    return
+  }
+
+  if (voteClaiming || !dailyVoteReward?.claimable) return
+
+  try {
+    setVoteClaiming(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/tasks/daily-vote-reward/claim`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (response.status === 401 || response.status === 403) {
+      clearReaderSession()
+      setToast('Please log in again')
+      navigate('/login')
+      return
+    }
+
+    if (!response.ok || data.ok === false) {
+      if (data.daily_vote_reward) {
+        setDailyVoteReward(data.daily_vote_reward)
+      }
+
+      throw new Error(
+        data.message || 'Daily Vote reward is not available'
+      )
+    }
+
+    if (data.daily_vote_reward) {
+      setDailyVoteReward(data.daily_vote_reward)
+    } else {
+      await refreshDailyVoteReward()
+    }
+
+    setToast(data.message || 'Daily Vote reward claimed')
+  } catch (error) {
+    setToast(error.message || 'Failed to claim Daily Vote reward')
+  } finally {
+    setVoteClaiming(false)
+  }
+}
 
     return true
   }
@@ -1058,6 +1218,12 @@ function startSmartRefreshCycle() {
 
       setCheckIn(data.check_in || { ...currentCheckIn, claimed_today: true })
 
+await refreshDailyVoteReward()
+
+const rewardCoins = Number(
+
+      setCheckIn(data.check_in || { ...currentCheckIn, claimed_today: true })
+
       const rewardCoins = Number(data.reward?.coins ?? data.reward?.gems ?? data.history_item?.amount_coins ?? data.history_item?.amount_gems ?? 0)
       const rewardVouchers = Number(data.reward?.vouchers ?? data.history_item?.amount_vouchers ?? 0)
       const storyCards = Number(data.reward?.story_cards ?? data.history_item?.story_cards ?? 0)
@@ -1178,10 +1344,12 @@ function startSmartRefreshCycle() {
       }
 
       if (data.reading_reward) {
-        setReadingReward(data.reading_reward)
-      }
+  setReadingReward(data.reading_reward)
+}
 
-      setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
+await refreshDailyVoteReward()
+
+setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
     } catch (error) {
       setToast(error.message || 'Failed to claim reading reward')
     } finally {
@@ -1251,16 +1419,20 @@ navigate(targetPath, {
       }
 
       if (Array.isArray(data.missions)) {
-        setReadingMissions(normalizeReadingMissionList(data.missions))
-      } else if (data.mission) {
-        setReadingMissions((current) =>
-          current.map((item, index) =>
-            item.id === data.mission.id ? normalizeReadingMission(data.mission, index) : item
-          )
-        )
-      }
+  setReadingMissions(normalizeReadingMissionList(data.missions))
+} else if (data.mission) {
+  setReadingMissions((current) =>
+    current.map((item, index) =>
+      item.id === data.mission.id
+        ? normalizeReadingMission(data.mission, index)
+        : item
+    )
+  )
+}
 
-      setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
+await refreshDailyVoteReward()
+
+setToast(`+${formatNumber(data.reward?.coins || data.reward?.gems || 0)} coins added`)
     } catch (error) {
       setToast(error.message || 'Failed to claim reading mission reward')
     } finally {
@@ -1780,12 +1952,20 @@ navigate(targetPath, {
 
         <section className="mt-1.5 bg-white p-5">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[17px] font-bold text-[#111827]">More Rewards</h2>
-            </div>
-          </div>
+  <div>
+    <h2 className="text-[17px] font-bold text-[#111827]">
+      More Rewards
+    </h2>
+  </div>
+</div>
 
-          <div className="mt-2">
+<DailyVoteRewardCard
+  reward={dailyVoteReward}
+  claiming={voteClaiming}
+  onClaim={claimDailyVoteReward}
+/>
+
+<div className="mt-2">
             {moreRewards.map((task) => (
               <TaskRow
                 key={task.id}
