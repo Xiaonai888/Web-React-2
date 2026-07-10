@@ -52,7 +52,11 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-<header className="sticky top-0 z-40 bg-[#FFE66A]">
+<header
+  className={`sticky top-0 z-40 ${
+    isPurchaseMode ? 'bg-[#FFE66A]' : 'bg-white'
+  }`}
+>
   <div className="flex h-14 items-center gap-3 px-4">
     <button
       type="button"
