@@ -111,7 +111,7 @@ function PackageCard({ item, onPurchase }) {
 
   return (
     <div
-      className="relative flex min-h-[116px] items-start gap-3 overflow-hidden rounded-[12px] bg-white px-4 pb-4"
+      className="relative flex min-h-[96px] items-start gap-3 overflow-hidden rounded-[12px] bg-white px-4 pb-3"
       style={{ paddingTop: isBestValue ? '32px' : '16px' }}
     >
       {isBestValue ? (
@@ -506,8 +506,8 @@ export default function PurchaseSection() {
       'linear-gradient(to bottom, #FFE66A 0px, #FFF3A8 90px, #F5F5F5 170px, #F5F5F5 100%)',
   }}
 >
-  <div className="rounded-[16px] bg-white px-4 pb-5 pt-4">
-    <div className="px-4 pb-5 pt-4">
+  <div className="rounded-[16px] bg-white px-4 pb-3 pt-3">
+    <div className="px-4 pb-2 pt-1">
         <div className="flex items-center justify-center gap-2">
   <img src="/assets/Icons/Crown.svg" alt="" className="h-6 w-6 object-contain" />
   <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111111]">
