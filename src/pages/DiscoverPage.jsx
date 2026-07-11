@@ -291,56 +291,6 @@ function Header({ hidden }) {
   )
 }
 
-function StoryCard({ item }) {
-  return (
-    <button
-      type="button"
-      className="relative h-[178px] w-[108px] sm:h-[184px] sm:w-[112px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 transition-transform active:scale-[0.98]"
-      aria-label={item.name}
-    >
-      <div className="absolute inset-0" style={{ background: item.image }} />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/5 to-black/60" />
-
-      <div className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[14px] font-black text-white shadow-md">
-        {item.avatar}
-      </div>
-
-      {item.badge ? (
-        <div className="absolute right-2 top-3 rounded-full bg-[#f6b800] px-2 py-0.5 text-[9px] font-black text-[#111827] shadow-sm">
-          {item.badge}
-        </div>
-      ) : null}
-
-      {item.type === 'create' ? (
-        <div className="absolute left-1/2 top-[68px] sm:top-[72px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg">
-          +
-        </div>
-      ) : null}
-
-      <div className="absolute bottom-3 left-3 right-3">
-        <div className="line-clamp-2 text-[13px] font-black leading-[16px] text-white drop-shadow">
-          {item.label}
-        </div>
-        {item.type === 'author' ? (
-          <div className="mt-1 truncate text-[10px] font-bold text-white/80">{item.name}</div>
-        ) : null}
-      </div>
-    </button>
-  )
-}
-
-function StorySection() {
-  return (
-    <section className="border-b border-gray-100 bg-white py-3 sm:rounded-b-[22px] sm:border sm:shadow-sm sm:ring-1 sm:ring-gray-100">
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 sm:px-4">
-        {storyItems.map((item) => (
-          <StoryCard key={item.id} item={item} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function FeedImageGrid({ layout }) {
   if (layout === 'single') {
     return (
