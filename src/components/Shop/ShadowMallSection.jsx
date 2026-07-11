@@ -1,4 +1,3 @@
-const mallShortcuts = [
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addShadowMallCartItem } from '../../utils/shadowMallCart'
