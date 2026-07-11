@@ -2,10 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
 
 const AUTHOR_POST_REACTIONS = [
@@ -156,65 +153,6 @@ async function setFollowedPostReaction(
 
 
 
-const feedItems = [
-  {
-    id: 'post-1',
-    kind: 'followed_post',
-    author: 'Luna Hart',
-    handle: 'Author Page',
-    time: '9h',
-    avatar: 'LH',
-    verified: true,
-    text: 'Chapter 25 is out now. A quiet promise becomes the most dangerous lie.',
-    imageLayout: 'two',
-    stats: { likes: 19, comments: 1, shares: 3 },
-  },
-  {
-    id: 'ad-1',
-    kind: 'ad',
-    sponsor: 'Shadow Mall',
-    title: 'Special book bundle',
-    description: 'Discover signed novels, limited merch, and reader gifts from official publishers.',
-    cta: 'Shop now',
-  },
-  {
-    id: 'trending-1',
-    kind: 'trending',
-    title: 'Trending now',
-    items: [
-      { rank: 1, title: 'The Last Rose Contract', meta: 'Romance · 18.2K reads' },
-      { rank: 2, title: 'Blood Moon Academy', meta: 'Fantasy · 15.7K reads' },
-      { rank: 3, title: 'CEO Hidden Bride', meta: 'Drama · 12.9K reads' },
-      { rank: 4, title: 'The Silent Crown', meta: 'Royalty · 9.4K reads' },
-      { rank: 5, title: 'Kiss Me After Midnight', meta: 'Drama · 8.8K reads' },
-    ],
-  },
-  {
-    id: 'post-2',
-    kind: 'followed_post',
-    author: 'Mika Rose',
-    handle: 'Followed Author',
-    time: '12h',
-    avatar: 'MR',
-    verified: false,
-    text: 'I just shared a new cover reveal. Thank you for waiting for this story.',
-    imageLayout: 'single',
-    stats: { likes: 42, comments: 8, shares: 6 },
-  },
-  {
-    id: 'authors-1',
-    kind: 'recommended_authors',
-    title: 'Authors you may like',
-    authors: [
-      { name: 'Ari Moon', meta: 'Soft romance writer', avatar: 'AM' },
-      { name: 'Nora Vale', meta: 'Dark fantasy author', avatar: 'NV' },
-      { name: 'Skye Novel', meta: 'Emotional drama', avatar: 'SN' },
-      { name: 'Luna Hart', meta: 'Sad romance author', avatar: 'LH' },
-      { name: 'Mika Rose', meta: 'Modern drama writer', avatar: 'MR' },
-    ],
-  },
-]
-
 function GridHeaderIcon() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
@@ -288,104 +226,6 @@ function Header({ hidden }) {
         </div>
       </div>
     </header>
-  )
-}
-
-function FeedImageGrid({ layout }) {
-  if (layout === 'single') {
-    return (
-      <div className="h-[220px] bg-gradient-to-br from-[#3b0764] via-[#9333ea] to-[#f9a8d4] sm:h-[260px]">
-        <div className="flex h-full items-end p-4 sm:p-5">
-          <div className="rounded-2xl bg-black/35 px-4 py-3 backdrop-blur">
-            <div className="text-[17px] font-black text-white sm:text-[18px]">Cover Reveal</div>
-            <div className="mt-1 text-[12px] font-bold text-white/80">Coming this week</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
-      <div className="h-[190px] bg-gradient-to-br from-[#111827] via-[#374151] to-[#7c3aed] sm:h-[220px]">
-        <div className="flex h-full items-end p-3 sm:p-4">
-          <div className="rounded-xl bg-white/15 px-3 py-2 backdrop-blur">
-            <div className="text-[13px] font-black text-white">New Chapter</div>
-          </div>
-        </div>
-      </div>
-      <div className="h-[190px] bg-gradient-to-br from-[#f8fafc] via-[#dbeafe] to-[#94a3b8] sm:h-[220px]">
-        <div className="flex h-full items-end p-3 sm:p-4">
-          <div className="rounded-xl bg-black/15 px-3 py-2 backdrop-blur">
-            <div className="text-[13px] font-black text-white">Reader Gift</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FollowedPostCard({ post }) {
-  return (
-    <article className="overflow-hidden rounded-[12px] bg-white shadow-sm ring-1 ring-gray-100">
-      <div className="flex items-start gap-3 p-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white">
-          {post.avatar}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <div className="truncate text-[15px] font-black text-[#111827]">{post.author}</div>
-                {post.verified ? <i className="fa-solid fa-circle-check text-[12px] text-[#1677ff]" /> : null}
-              </div>
-
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
-                <span>{post.handle}</span>
-                <span>·</span>
-                <span>{post.time}</span>
-                <span>·</span>
-                <i className="fa-solid fa-earth-americas text-[10px]" />
-              </div>
-            </div>
-
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100" aria-label="More">
-              <i className="fa-solid fa-ellipsis" />
-            </button>
-          </div>
-
-          <p className="mt-3 text-[14px] font-semibold leading-6 text-[#111827]">{post.text}</p>
-        </div>
-      </div>
-
-      <FeedImageGrid layout={post.imageLayout} />
-
-      <div className="flex items-center justify-between px-4 py-3 text-[12px] font-bold text-gray-500">
-        <div className="flex items-center gap-1">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1677ff] text-[10px] text-white">
-            <i className="fa-solid fa-thumbs-up" />
-          </span>
-          <span>{post.stats.likes}</span>
-        </div>
-        <div>{post.stats.comments} comment · {post.stats.shares} shares</div>
-      </div>
-
-      <div className="grid grid-cols-3 border-t border-gray-100 text-[13px] font-extrabold text-gray-500">
-        <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
-          <i className="fa-regular fa-thumbs-up" />
-          Like
-        </button>
-        <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
-          <i className="fa-regular fa-comment" />
-          Comment
-        </button>
-        <button type="button" className="flex items-center justify-center gap-2 py-3 active:bg-gray-50">
-          <i className="fa-solid fa-share" />
-          Share
-        </button>
-      </div>
-    </article>
   )
 }
 
@@ -663,21 +503,7 @@ function RealFollowedPostCard({
         authorName={authorName}
       />
 
-      <div className="flex items-center justify-between px-4 py-3 text-[12px] font-bold text-gray-500">
-        <RealReactionSummary
-          summary={post.reaction_summary}
-          likeCount={post.like_count}
-        />
-
-        <div>
-          {Number(post.comment_count || 0)}{' '}
-          {Number(post.comment_count || 0) === 1
-            ? 'comment'
-            : 'comments'}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 border-t border-gray-100 text-[13px] font-extrabold text-gray-500">
+      <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
         <div className="relative">
           {reactionPickerOpen ? (
             <>
@@ -688,7 +514,7 @@ function RealFollowedPostCard({
                 className="fixed inset-0 z-20 cursor-default"
               />
 
-              <div className="absolute bottom-[52px] left-2 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
+              <div className="absolute bottom-8 left-0 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
                 {AUTHOR_POST_REACTIONS.map((reaction) => (
                   <button
                     key={reaction.type}
@@ -721,14 +547,14 @@ function RealFollowedPostCard({
             onPointerLeave={cancelReactionPress}
             onPointerCancel={cancelReactionPress}
             onContextMenu={(event) => event.preventDefault()}
-            className="flex w-full items-center justify-center gap-2 py-3 active:bg-gray-50 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
             style={{
               color: activeReaction?.text || undefined,
             }}
             aria-label={
               activeReaction
                 ? `${activeReaction.label} reaction`
-                : 'React'
+                : 'Like'
             }
           >
             {reactionBusy ? (
@@ -737,30 +563,36 @@ function RealFollowedPostCard({
               <img
                 src={activeReaction.src}
                 alt={activeReaction.label}
-                className="h-[19px] w-[19px] object-contain"
+                className="h-[17px] w-[17px] object-contain"
               />
             ) : (
-              <i className="fa-regular fa-heart" />
+              <i className="fa-regular fa-heart text-[15px]" />
             )}
 
-            {activeReaction?.label || 'React'}
+            <span>{Number(post.like_count || 0)}</span>
           </button>
         </div>
 
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-3 active:bg-gray-50"
+          className="inline-flex items-center gap-1.5 active:scale-95"
+          aria-label="Comments"
         >
-          <i className="fa-regular fa-comment" />
-          Comment
+          <i className="fa-regular fa-comment text-[15px]" />
+          <span>{Number(post.comment_count || 0)}</span>
         </button>
 
         <button
           type="button"
-          className="flex items-center justify-center gap-2 py-3 active:bg-gray-50"
+          className="inline-flex items-center gap-1.5 active:scale-95"
+          aria-label="Echo"
         >
-          <i className="fa-solid fa-share" />
-          Share
+          <img
+            src="/assets/Icons/echo.svg"
+            alt=""
+            className="h-[15px] w-[15px] opacity-60"
+          />
+          <span>{Number(post.echo_count || 0)}</span>
         </button>
       </div>
 
