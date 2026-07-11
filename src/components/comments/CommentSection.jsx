@@ -224,20 +224,32 @@ function MenuButton({ icon, label, danger = false, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa] ${
-        danger ? 'text-[#e5484d] hover:bg-[#fff1f1]' : 'text-[#111827]'
+      className={`flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left active:bg-[#f3f4f6] ${
+        danger ? 'text-[#dc2626]' : 'text-[#111827]'
       }`}
     >
-      <i className={`${icon} w-4 ${danger ? '' : 'text-[#8d94a1]'}`} />
-      {label}
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+          danger
+            ? 'bg-[#fff1f2] text-[#dc2626]'
+            : 'bg-[#f3f4f6] text-[#111827]'
+        }`}
+      >
+        <i className={`${icon} text-[18px]`} />
+      </span>
+
+      <span className="text-[16px] font-medium">{label}</span>
     </button>
   )
 }
 
 function CommentMenu({
   isOpen,
+  targetType,
   permissions,
   comment,
+  onReply,
+  onCopy,
   onEdit,
   onDelete,
   onHide,
@@ -252,109 +264,166 @@ function CommentMenu({
 }) {
   if (!isOpen) return null
 
+  const isAuthorPost = targetType === 'author_post'
+  const ownsComment = Boolean(permissions.ownsComment)
+
+  const runAction = (action) => {
+    onClose()
+    action?.()
+  }
+
   return (
-    <div className="absolute right-0 top-8 z-20 w-52 overflow-hidden rounded-[18px] bg-white text-[#111827] shadow-[0_14px_40px_rgba(17,24,39,0.16)] ring-1 ring-black/5">
-      {permissions.isOwner ? (
+    <div className="fixed inset-0 z-[260] flex items-end justify-center">
+      <button
+        type="button"
+        aria-label="Close comment options"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
         <MenuButton
-          icon="fa-regular fa-pen-to-square"
-          label="Edit"
-          onClick={() => {
-            onEdit()
-            onClose()
-          }}
+          icon="fa-regular fa-comment"
+          label="Reply"
+          onClick={() => runAction(onReply)}
         />
-      ) : null}
 
-      {permissions.isOtherReader ? (
         <MenuButton
-          icon="fa-regular fa-flag"
-          label="Report Comment"
-          onClick={() => {
-            onReport()
-            onClose()
-          }}
+          icon="fa-regular fa-copy"
+          label="Copy"
+          onClick={() => runAction(onCopy)}
         />
-      ) : null}
 
-      {permissions.isOtherReader ? (
-        <MenuButton
-          icon="fa-regular fa-eye-slash"
-          label="Hide this comment"
-          onClick={() => {
-            onHide()
-            onClose()
-          }}
-        />
-      ) : null}
+        {isAuthorPost && ownsComment ? (
+          <>
+            <MenuButton
+              icon="fa-regular fa-trash-can"
+              label="Delete"
+              danger
+              onClick={() => runAction(onDelete)}
+            />
 
-      {permissions.isAuthor ? (
-        <>
-          <MenuButton
-            icon="fa-solid fa-thumbtack"
-            label={comment.is_pinned ? 'Unpin comment' : 'Pin comment'}
-            onClick={() => {
-              comment.is_pinned ? onUnpin() : onPin()
-              onClose()
-            }}
-          />
-          <MenuButton
-            icon="fa-regular fa-eye-slash"
-            label="Hide comment"
-            onClick={() => {
-              onHide()
-              onClose()
-            }}
-          />
-          <MenuButton
-            icon="fa-solid fa-ban"
-            label="Ban user"
-            danger
-            onClick={() => {
-              onBan()
-              onClose()
-            }}
-          />
-          <MenuButton
-            icon={comment.is_spoiler ? 'fa-regular fa-eye' : 'fa-solid fa-triangle-exclamation'}
-            label={comment.is_spoiler ? 'Remove spoiler mark' : 'Spoiler mark'}
-            onClick={() => {
-              comment.is_spoiler ? onUnspoiler() : onSpoiler()
-              onClose()
-            }}
-          />
-        </>
-      ) : null}
+            <MenuButton
+              icon="fa-regular fa-pen-to-square"
+              label="Edit"
+              onClick={() => runAction(onEdit)}
+            />
+          </>
+        ) : null}
 
-      {permissions.isAdmin ? (
-        <>
+        {isAuthorPost && !ownsComment ? (
+          <>
+            <MenuButton
+              icon="fa-regular fa-flag"
+              label="Report Comment"
+              onClick={() => runAction(onReport)}
+            />
+
+            <MenuButton
+              icon="fa-regular fa-eye-slash"
+              label="Hide this comment"
+              onClick={() => runAction(onHide)}
+            />
+          </>
+        ) : null}
+
+        {!isAuthorPost && permissions.isOwner ? (
           <MenuButton
-            icon="fa-regular fa-trash-can"
-            label="Delete"
-            danger
-            onClick={() => {
-              onDelete()
-              onClose()
-            }}
+            icon="fa-regular fa-pen-to-square"
+            label="Edit"
+            onClick={() => runAction(onEdit)}
           />
-          <MenuButton
-            icon={comment.is_hidden ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'}
-            label={comment.is_hidden ? 'Unhide' : 'Hide'}
-            onClick={() => {
-              comment.is_hidden ? onUnhide() : onHide()
-              onClose()
-            }}
-          />
-          <MenuButton
-            icon="fa-solid fa-ban"
-            label="Ban user"
-            danger
-            onClick={() => {
-              onBan()
-              onClose()
-            }}
-          />
-        </>
-      ) : null}
+        ) : null}
+
+        {!isAuthorPost && permissions.isOtherReader ? (
+          <>
+            <MenuButton
+              icon="fa-regular fa-flag"
+              label="Report Comment"
+              onClick={() => runAction(onReport)}
+            />
+
+            <MenuButton
+              icon="fa-regular fa-eye-slash"
+              label="Hide this comment"
+              onClick={() => runAction(onHide)}
+            />
+          </>
+        ) : null}
+
+        {!isAuthorPost && permissions.isAuthor && !ownsComment ? (
+          <>
+            <MenuButton
+              icon="fa-solid fa-thumbtack"
+              label={comment.is_pinned ? 'Unpin comment' : 'Pin comment'}
+              onClick={() =>
+                runAction(comment.is_pinned ? onUnpin : onPin)
+              }
+            />
+
+            <MenuButton
+              icon="fa-regular fa-eye-slash"
+              label="Hide comment"
+              onClick={() => runAction(onHide)}
+            />
+
+            <MenuButton
+              icon="fa-solid fa-ban"
+              label="Ban user"
+              danger
+              onClick={() => runAction(onBan)}
+            />
+
+            <MenuButton
+              icon={
+                comment.is_spoiler
+                  ? 'fa-regular fa-eye'
+                  : 'fa-solid fa-triangle-exclamation'
+              }
+              label={
+                comment.is_spoiler
+                  ? 'Remove spoiler mark'
+                  : 'Spoiler mark'
+              }
+              onClick={() =>
+                runAction(comment.is_spoiler ? onUnspoiler : onSpoiler)
+              }
+            />
+          </>
+        ) : null}
+
+        {!isAuthorPost && permissions.isAdmin ? (
+          <>
+            <MenuButton
+              icon="fa-regular fa-trash-can"
+              label="Delete"
+              danger
+              onClick={() => runAction(onDelete)}
+            />
+
+            <MenuButton
+              icon={
+                comment.is_hidden
+                  ? 'fa-regular fa-eye'
+                  : 'fa-regular fa-eye-slash'
+              }
+              label={comment.is_hidden ? 'Unhide' : 'Hide'}
+              onClick={() =>
+                runAction(comment.is_hidden ? onUnhide : onHide)
+              }
+            />
+
+            <MenuButton
+              icon="fa-solid fa-ban"
+              label="Ban user"
+              danger
+              onClick={() => runAction(onBan)}
+            />
+          </>
+        ) : null}
+      </section>
     </div>
   )
 }
@@ -395,8 +464,10 @@ function ReplyComposer({ value, onChange, onCancel, onSend }) {
 function CommentItem({
   comment,
   story,
+  targetType,
   onLike,
   onReply,
+  onCopy,
   onEdit,
   onDelete,
   onHide,
@@ -413,29 +484,31 @@ function CommentItem({
   const [replyText, setReplyText] = useState('')
   const [repliesShown, setRepliesShown] = useState(false)
   const [spoilerOpen, setSpoilerOpen] = useState(false)
+  const menuPressTimerRef = useRef(null)
+  const ignoreNextTapRef = useRef(false)
   const replies = Array.isArray(comment.replies) ? comment.replies : []
   const currentUser = getCurrentUser()
 
   const pageOwnerId =
-  story?.author_page?.user_id ||
-  story?.author_user_id ||
-  story?.user_id ||
-  null
+    story?.author_page?.user_id ||
+    story?.author_user_id ||
+    story?.user_id ||
+    null
 
-const isPageOwnerComment =
-  pageOwnerId &&
-  comment.user_id &&
-  String(pageOwnerId) === String(comment.user_id)
+  const isPageOwnerComment =
+    pageOwnerId &&
+    comment.user_id &&
+    String(pageOwnerId) === String(comment.user_id)
 
-const displayName =
-  isPageOwnerComment && story?.author_page?.page_name
-    ? story.author_page.page_name
-    : comment.name || 'Reader'
+  const displayName =
+    isPageOwnerComment && story?.author_page?.page_name
+      ? story.author_page.page_name
+      : comment.name || 'Reader'
 
-const displayAvatar =
-  isPageOwnerComment && story?.author_page?.avatar_url
-    ? story.author_page.avatar_url
-    : comment.avatar_url || ''
+  const displayAvatar =
+    isPageOwnerComment && story?.author_page?.avatar_url
+      ? story.author_page.avatar_url
+      : comment.avatar_url || ''
 
   const isOwner =
     comment.user_id &&
@@ -446,10 +519,46 @@ const displayAvatar =
   const admin = currentUser.is_admin
 
   const permissions = {
+    ownsComment: Boolean(isOwner),
     isOwner: isOwner && !admin,
     isOtherReader: !isOwner && !author && !admin,
     isAuthor: author && !admin,
     isAdmin: admin,
+  }
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(menuPressTimerRef.current)
+    }
+  }, [])
+
+  const clearMenuPress = () => {
+    window.clearTimeout(menuPressTimerRef.current)
+    menuPressTimerRef.current = null
+  }
+
+  const handleMenuPressStart = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    clearMenuPress()
+
+    menuPressTimerRef.current = window.setTimeout(() => {
+      ignoreNextTapRef.current = true
+      setMenuOpen(true)
+    }, 420)
+  }
+
+  const handleMenuPressEnd = () => {
+    clearMenuPress()
+  }
+
+  const handleCommentTap = () => {
+    if (ignoreNextTapRef.current) {
+      ignoreNextTapRef.current = false
+      return
+    }
+
+    setMenuOpen(true)
   }
 
   const handleSendReply = () => {
@@ -461,20 +570,50 @@ const displayAvatar =
   }
 
   return (
-    <article className={`px-4 py-4 ${comment.is_hidden ? 'opacity-60' : ''}`} id={`comment-${comment.id}`}>
+    <article
+      className={`px-4 py-4 ${comment.is_hidden ? 'opacity-60' : ''}`}
+      id={`comment-${comment.id}`}
+    >
       <div className="flex gap-3">
         <Avatar
-  user={{
-    name: displayName,
-    avatar_url: displayAvatar,
-  }}
-/>
+          user={{
+            name: displayName,
+            avatar_url: displayAvatar,
+          }}
+        />
+
         <div className="min-w-0 flex-1">
           <div className="relative pr-8">
-            <div className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3">
+            <div
+              role="button"
+              tabIndex={0}
+              onPointerDown={handleMenuPressStart}
+              onPointerUp={handleMenuPressEnd}
+              onPointerCancel={handleMenuPressEnd}
+              onPointerLeave={handleMenuPressEnd}
+              onClick={handleCommentTap}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setMenuOpen(true)
+                }
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault()
+                clearMenuPress()
+                setMenuOpen(true)
+              }}
+              className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[#f3f4f6] px-4 py-3 outline-none active:bg-[#ebeef2]"
+              style={{ touchAction: 'manipulation' }}
+            >
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-[13px] font-black text-[#111827]">{displayName}</h3>
-                <span className="text-[11px] font-semibold text-[#98a2b3]">{formatTime(comment.created_at)}</span>
+                <h3 className="text-[13px] font-black text-[#111827]">
+                  {displayName}
+                </h3>
+
+                <span className="text-[11px] font-semibold text-[#98a2b3]">
+                  {formatTime(comment.created_at)}
+                </span>
 
                 {comment.is_pinned ? (
                   <span className="rounded-full bg-[#fff7d6] px-2 py-0.5 text-[10px] font-black text-[#b7791f]">
@@ -492,7 +631,10 @@ const displayAvatar =
               {comment.is_spoiler && !spoilerOpen ? (
                 <button
                   type="button"
-                  onClick={() => setSpoilerOpen(true)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setSpoilerOpen(true)
+                  }}
                   className="mt-2 rounded-[14px] bg-white px-3 py-2 text-left text-[12px] font-black text-[#667085]"
                 >
                   This comment may contain spoilers. Tap to reveal.
@@ -510,7 +652,7 @@ const displayAvatar =
 
             <button
               type="button"
-              onClick={() => setMenuOpen((value) => !value)}
+              onClick={() => setMenuOpen(true)}
               className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-[#98a2b3] active:scale-95"
               aria-label="Comment options"
             >
@@ -519,8 +661,11 @@ const displayAvatar =
 
             <CommentMenu
               isOpen={menuOpen}
+              targetType={targetType}
               permissions={permissions}
               comment={comment}
+              onReply={() => setReplyOpen(true)}
+              onCopy={() => onCopy(comment)}
               onEdit={() => onEdit(comment)}
               onDelete={() => onDelete(comment)}
               onHide={() => onHide(comment)}
@@ -532,13 +677,17 @@ const displayAvatar =
               onBan={() => onBan(comment)}
               onReport={() => onReport(comment)}
               onClose={() => setMenuOpen(false)}
-
             />
           </div>
 
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-extrabold text-[#98a2b3]">
-            <button type="button" onClick={() => onLike(comment.id)} className={comment.liked ? 'text-[#e5484d]' : ''}>
-              {comment.liked ? 'Liked' : 'Like'} {comment.likes ? `· ${comment.likes}` : ''}
+            <button
+              type="button"
+              onClick={() => onLike(comment.id)}
+              className={comment.liked ? 'text-[#e5484d]' : ''}
+            >
+              {comment.liked ? 'Liked' : 'Like'}{' '}
+              {comment.likes ? `· ${comment.likes}` : ''}
             </button>
 
             <button type="button" onClick={() => setReplyOpen(true)}>
@@ -546,8 +695,15 @@ const displayAvatar =
             </button>
 
             {replies.length ? (
-              <button type="button" onClick={() => setRepliesShown((value) => !value)}>
-                {repliesShown ? 'Hide replies' : `View ${replies.length} ${replies.length > 1 ? 'replies' : 'reply'}`}
+              <button
+                type="button"
+                onClick={() => setRepliesShown((value) => !value)}
+              >
+                {repliesShown
+                  ? 'Hide replies'
+                  : `View ${replies.length} ${
+                      replies.length > 1 ? 'replies' : 'reply'
+                    }`}
               </button>
             ) : null}
           </div>
@@ -580,10 +736,18 @@ const displayAvatar =
                   <div className="min-w-0">
                     <div className="inline-block rounded-[16px] bg-[#f3f4f6] px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-black text-[#111827]">{reply.name || 'Reader'}</span>
-                        <span className="text-[10px] font-semibold text-[#98a2b3]">{formatTime(reply.created_at)}</span>
+                        <span className="text-[12px] font-black text-[#111827]">
+                          {reply.name || 'Reader'}
+                        </span>
+
+                        <span className="text-[10px] font-semibold text-[#98a2b3]">
+                          {formatTime(reply.created_at)}
+                        </span>
                       </div>
-                      <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#4b5563]">{reply.text}</p>
+
+                      <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#4b5563]">
+                        {reply.text}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -985,7 +1149,12 @@ const [comments, setComments] = useState([])
     try {
       setSaving(true)
 
-      const response = await fetch(`${API_BASE_URL}/api/comments/${editComment.id}`, {
+      const editUrl =
+        targetType === 'author_post'
+          ? `${API_BASE_URL}/api/authors/me/post-comments/${editComment.id}`
+          : `${API_BASE_URL}/api/comments/${editComment.id}`
+
+      const response = await fetch(editUrl, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -1005,10 +1174,22 @@ const [comments, setComments] = useState([])
       const updatedComment = normalizeApiComment(data.comment)
 
       const nextComments = comments.map((comment) => {
-        if (comment.id === editComment.id) return { ...comment, ...updatedComment }
+        if (comment.id === editComment.id) {
+          return {
+            ...comment,
+            ...updatedComment,
+          }
+        }
 
         const replies = Array.isArray(comment.replies)
-          ? comment.replies.map((reply) => (reply.id === editComment.id ? { ...reply, ...updatedComment } : reply))
+          ? comment.replies.map((reply) =>
+              reply.id === editComment.id
+                ? {
+                    ...reply,
+                    ...updatedComment,
+                  }
+                : reply
+            )
           : []
 
         return {
@@ -1025,6 +1206,86 @@ const [comments, setComments] = useState([])
       showToast(error.message || 'Failed to update comment.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleCopyComment = async (comment) => {
+    const value = String(comment?.text || '').trim()
+
+    if (!value) return
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = value
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        textarea.remove()
+      }
+
+      showToast('Comment copied.')
+    } catch {
+      showToast('Copy failed.')
+    }
+  }
+
+  const handleDeleteComment = async (comment) => {
+    const ownsComment =
+      comment?.user_id &&
+      currentUser.id &&
+      String(comment.user_id) === String(currentUser.id)
+
+    if (targetType !== 'author_post' || !ownsComment) {
+      handleModerate(comment, 'delete')
+      return
+    }
+
+    if (!token) {
+      showToast('Please login again.')
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/post-comments/${comment.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to delete comment')
+      }
+
+      const nextComments = comments
+        .filter((item) => item.id !== comment.id)
+        .map((item) => ({
+          ...item,
+          replies: Array.isArray(item.replies)
+            ? item.replies.filter((reply) => reply.id !== comment.id)
+            : [],
+        }))
+
+      updateComments(nextComments)
+      setTotalComments(
+        Number.isFinite(Number(data.comment_count))
+          ? Number(data.comment_count)
+          : Math.max(0, totalComments - 1)
+      )
+      showToast('Comment deleted.')
+    } catch (error) {
+      showToast(error.message || 'Failed to delete comment.')
     }
   }
 
@@ -1258,12 +1519,22 @@ return (
                   key={comment.id}
                   comment={comment}
                   story={story}
+                  targetType={targetType}
                   onLike={handleLike}
                   onReply={handleReply}
+                  onCopy={handleCopyComment}
                   onEdit={handleEdit}
-                  onDelete={(selectedComment) => handleModerate(selectedComment, 'delete')}
+                  onDelete={handleDeleteComment}
                   onHide={(selectedComment) => {
-                    const currentUserIsAuthor = isStoryAuthor(currentUser, story)
+                    if (targetType === 'author_post') {
+                      handleHideForReader(selectedComment)
+                      return
+                    }
+
+                    const currentUserIsAuthor = isStoryAuthor(
+                      currentUser,
+                      story
+                    )
                     const currentUserIsAdmin = currentUser.is_admin
 
                     if (currentUserIsAuthor || currentUserIsAdmin) {
@@ -1273,12 +1544,24 @@ return (
 
                     handleHideForReader(selectedComment)
                   }}
-                  onUnhide={(selectedComment) => handleModerate(selectedComment, 'unhide')}
-                  onPin={(selectedComment) => handleModerate(selectedComment, 'pin')}
-                  onUnpin={(selectedComment) => handleModerate(selectedComment, 'unpin')}
-                  onSpoiler={(selectedComment) => handleModerate(selectedComment, 'spoiler')}
-                  onUnspoiler={(selectedComment) => handleModerate(selectedComment, 'unspoiler')}
-                  onBan={(selectedComment) => handleModerate(selectedComment, 'ban')}
+                  onUnhide={(selectedComment) =>
+                    handleModerate(selectedComment, 'unhide')
+                  }
+                  onPin={(selectedComment) =>
+                    handleModerate(selectedComment, 'pin')
+                  }
+                  onUnpin={(selectedComment) =>
+                    handleModerate(selectedComment, 'unpin')
+                  }
+                  onSpoiler={(selectedComment) =>
+                    handleModerate(selectedComment, 'spoiler')
+                  }
+                  onUnspoiler={(selectedComment) =>
+                    handleModerate(selectedComment, 'unspoiler')
+                  }
+                  onBan={(selectedComment) =>
+                    handleModerate(selectedComment, 'ban')
+                  }
                   onReport={setReportComment}
                 />
               ))}
