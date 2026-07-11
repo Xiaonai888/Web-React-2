@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 
@@ -49,6 +49,7 @@ const AUTHOR_POST_REACTIONS = [
     text: '#8b5cf6',
   },
 ]
+
 
 function getAuthToken() {
   return (
@@ -117,6 +118,22 @@ async function fetchFollowedPosts(token, cursor = '') {
 
   return data
 }
+
+async function fetchShadowMallPromotion() {
+  const response = await fetch(
+    `${API_BASE_URL}/api/shadow-mall/promotion`
+  )
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message || 'Failed to load Shadow Mall promotion'
+    )
+  }
+
+  return data.promotion || null
+}
+
 
 
 async function setFollowedPostReaction(
@@ -675,30 +692,92 @@ function RealFeedErrorState({ onRetry }) {
   )
 }
 
-function AdsCard({ item }) {
+function PromotionLink({ to, className, children }) {
+  const destination = String(to || '/shop').trim() || '/shop'
+  const isExternal = /^https?:\/\//i.test(destination)
+
+  if (isExternal) {
+    return (
+      <a
+        href={destination}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+      >
+        {children}
+      </a>
+    )
+  }
+
   return (
-    <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[#f6b800]">Sponsored</div>
-            <div className="mt-1 text-[16px] font-black text-[#111827]">{item.sponsor}</div>
+    <Link to={destination} className={className}>
+      {children}
+    </Link>
+  )
+}
+
+function AdsCard({ item }) {
+  const destination = item.link_url || '/shop'
+
+  return (
+    <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#f0a800]">
+            Sponsored
           </div>
-          <button type="button" className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100">
-            <i className="fa-solid fa-xmark" />
-          </button>
+          <div className="mt-0.5 text-[15px] font-semibold text-[#111827]">
+            {item.sponsor}
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-[8px] bg-gradient-to-br from-[#111827] via-[#4c1d95] to-[#f59e0b] p-5">
-          <div className="flex h-[128px] flex-col justify-end">
-            <div className="text-[22px] font-black leading-7 text-white">{item.title}</div>
-            <div className="mt-2 text-[13px] font-bold leading-5 text-white/80">{item.description}</div>
-          </div>
-        </div>
-
-        <button type="button" className="mt-4 w-full rounded-[8px] bg-[#111111] py-3 text-[14px] font-black text-white transition active:scale-[0.99] active:bg-black">
-          {item.cta}
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+          aria-label="Hide sponsored promotion"
+        >
+          <i className="fa-solid fa-xmark text-[13px]" />
         </button>
+      </div>
+
+      <PromotionLink to={destination} className="block">
+        <div className="relative aspect-square w-full overflow-hidden bg-[#111827]">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#111827] via-[#4c1d95] to-[#f59e0b]" />
+              <div className="absolute -right-16 -top-14 h-48 w-48 rounded-full bg-white/10" />
+              <div className="absolute -bottom-20 -left-14 h-56 w-56 rounded-full bg-black/20" />
+              <div className="absolute left-5 top-5 rounded-[6px] bg-white/15 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+                Shadow Mall
+              </div>
+              <div className="absolute inset-x-5 bottom-6">
+                <div className="max-w-[360px] text-[25px] font-black leading-[1.16] text-white">
+                  {item.title}
+                </div>
+                <div className="mt-3 max-w-[390px] text-[13px] font-medium leading-5 text-white/80">
+                  {item.description}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </PromotionLink>
+
+      <div className="p-4">
+        <PromotionLink
+          to={destination}
+          className="flex h-[44px] w-full items-center justify-center rounded-[8px] bg-[#111111] text-[14px] font-semibold text-white active:scale-[0.99] active:bg-black"
+        >
+          {item.button_text || 'Shop now'}
+        </PromotionLink>
       </div>
     </article>
   )
@@ -826,6 +905,32 @@ export default function DiscoverPage() {
   const [realPostsLoading, setRealPostsLoading] = useState(true)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
+  const [shadowMallPromotion, setShadowMallPromotion] =
+    useState(null)
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadPromotion() {
+      try {
+        const promotion = await fetchShadowMallPromotion()
+
+        if (alive) {
+          setShadowMallPromotion(promotion)
+        }
+      } catch {
+        if (alive) {
+          setShadowMallPromotion(null)
+        }
+      }
+    }
+
+    loadPromotion()
+
+    return () => {
+      alive = false
+    }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -1018,11 +1123,11 @@ export default function DiscoverPage() {
 
       <Header hidden={barsHidden} />
 
-      <main className="pt-[72px]">
+      <main className="pt-[58px]">
         <div className="mx-auto w-full max-w-[620px]">
           <DiscoverStorySection />
 
-          <section className="space-y-2 py-2 sm:space-y-3 sm:px-3 sm:py-3">
+          <section className="space-y-1 py-2 sm:space-y-1.5 sm:px-3 sm:py-3">
             {realPostsLoading ? (
               <>
                 <RealPostSkeleton />
@@ -1038,13 +1143,18 @@ export default function DiscoverPage() {
               <RealFeedEmptyState />
             ) : null}
 
-            {realPosts.map((post) => (
-              <RealFollowedPostCard
-                key={post.id}
-                post={post}
-                token={token}
-                onReactionUpdated={handleRealPostReactionUpdated}
-              />
+            {realPosts.map((post, index) => (
+              <Fragment key={post.id}>
+                <RealFollowedPostCard
+                  post={post}
+                  token={token}
+                  onReactionUpdated={handleRealPostReactionUpdated}
+                />
+
+                {index === 0 && shadowMallPromotion ? (
+                  <AdsCard item={shadowMallPromotion} />
+                ) : null}
+              </Fragment>
             ))}
 
             {realPostsError && realPosts.length ? (
