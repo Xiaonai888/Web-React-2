@@ -386,7 +386,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
       ? 'Done'
       : claimable
         ? 'Claim'
-        : 'Locked'
+        : 'Not Ready'
 
   const buttonTone = claimed || !claimable
     ? 'soft'
@@ -394,9 +394,9 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
 
   return (
     <div className="flex gap-3 border-b border-[#f1f2f5] py-5">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed] ring-1 ring-[#7c3aed]/15">
-        <i className="fa-solid fa-ticket text-[15px]" />
-      </div>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f4] text-[#ff3f62] ring-1 ring-[#ff3f62]/10">
+  <i className="fa-solid fa-ticket text-[15px]" />
+</div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
@@ -415,14 +415,20 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
               Complete all daily missions to earn 1 Vote.
             </p>
 
-            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#7c3aed]">
-              <i className="fa-solid fa-ticket text-[12px]" />
+            <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
+  <img
+    src="/assets/Icons/Vote.svg"
+    alt=""
+    className="h-4 w-4 shrink-0 object-contain"
+    loading="lazy"
+    decoding="async"
+  />
 
-              <span>
-                +{rewardVotes}{' '}
-                {rewardVotes > 1 ? 'Votes' : 'Vote'}
-              </span>
-            </div>
+  <span>
+    +{rewardVotes}{' '}
+    {rewardVotes > 1 ? 'Votes' : 'Vote'}
+  </span>
+</div>
           </div>
 
           <RewardButton
@@ -438,10 +444,10 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
           <div className="h-1.5 overflow-hidden rounded-full bg-[#edf0f5]">
             <div
               className={`h-full rounded-full ${
-                claimed
-                  ? 'bg-[#22C55E]'
-                  : 'bg-[#7c3aed]'
-              }`}
+  claimed
+    ? 'bg-[#22C55E]'
+    : 'bg-[#F6B800]'
+}`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -456,9 +462,9 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
                 Claimed
               </span>
             ) : claimable ? (
-              <span className="font-black text-[#7c3aed]">
-                Ready
-              </span>
+              <span className="font-black text-[#2563EB]">
+  Ready
+</span>
             ) : (
               <span>In progress</span>
             )}
