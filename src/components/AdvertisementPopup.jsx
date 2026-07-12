@@ -90,9 +90,9 @@ export default function AdvertisementPopup({ placement = 'opening', onFinish = n
   }
 
   function closeAd() {
-    if (!canSkip) return
-    finishAd()
-  }
+  if (placement !== 'opening' && !canSkip) return
+  finishAd()
+}
 
   useEffect(() => {
     finishedRef.current = false
@@ -315,17 +315,19 @@ markShown(nextAdvertisement)
   <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-28 bg-gradient-to-b from-black/45 to-transparent" />
 
   <div className="absolute right-4 top-7 z-20 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[14px] font-semibold shadow-lg backdrop-blur-[2px]">
-  {!canSkip ? (
-    <span className="text-[#FFB020]">{skipCountdown}s</span>
-  ) : null}
+  {placement !== 'opening' && !canSkip ? (
+  <span className="text-[#FFB020]">{skipCountdown}s</span>
+) : null}
 
   <button
     type="button"
     onClick={closeAd}
-    disabled={!canSkip}
-    className={`text-white ${
-      canSkip ? 'cursor-pointer opacity-100 active:scale-95' : 'cursor-not-allowed opacity-80'
-    }`}
+    disabled={placement !== 'opening' && !canSkip}
+className={`text-white ${
+  placement === 'opening' || canSkip
+    ? 'cursor-pointer opacity-100 active:scale-95'
+    : 'cursor-not-allowed opacity-80'
+}`}
   >
     Skip
   </button>
