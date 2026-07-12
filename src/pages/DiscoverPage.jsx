@@ -50,7 +50,6 @@ const AUTHOR_POST_REACTIONS = [
   },
 ]
 
-
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -119,10 +118,12 @@ async function fetchFollowedPosts(token, cursor = '') {
   return data
 }
 
+
 async function fetchShadowMallPromotion() {
   const response = await fetch(
     `${API_BASE_URL}/api/shadow-mall/promotion`
   )
+
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -133,7 +134,6 @@ async function fetchShadowMallPromotion() {
 
   return data.promotion || null
 }
-
 
 
 async function setFollowedPostReaction(
@@ -694,9 +694,8 @@ function RealFeedErrorState({ onRetry }) {
 
 function PromotionLink({ to, className, children }) {
   const destination = String(to || '/shop').trim() || '/shop'
-  const isExternal = /^https?:\/\//i.test(destination)
 
-  if (isExternal) {
+  if (/^https?:\/\//i.test(destination)) {
     return (
       <a
         href={destination}
@@ -776,7 +775,7 @@ function AdsCard({ item }) {
           to={destination}
           className="flex h-[44px] w-full items-center justify-center rounded-[8px] bg-[#111111] text-[14px] font-semibold text-white active:scale-[0.99] active:bg-black"
         >
-          {item.button_text || 'Shop now'}
+          {item.button_text || item.cta || 'Shop now'}
         </PromotionLink>
       </div>
     </article>
@@ -905,13 +904,12 @@ export default function DiscoverPage() {
   const [realPostsLoading, setRealPostsLoading] = useState(true)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
-  const [shadowMallPromotion, setShadowMallPromotion] =
-    useState(null)
+  const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
 
   useEffect(() => {
     let alive = true
 
-    async function loadPromotion() {
+    async function loadShadowMallPromotion() {
       try {
         const promotion = await fetchShadowMallPromotion()
 
@@ -925,7 +923,7 @@ export default function DiscoverPage() {
       }
     }
 
-    loadPromotion()
+    loadShadowMallPromotion()
 
     return () => {
       alive = false
