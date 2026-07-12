@@ -730,8 +730,18 @@ function AdsCard({ item }) {
   return (
     <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
       <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
-          <i className="fa-solid fa-store text-[14px]" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-white">
+          {item.profile_image_url ? (
+            <img
+              src={item.profile_image_url}
+              alt={item.sponsor || 'Shadow Mall'}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <i className="fa-solid fa-store text-[14px]" />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -1293,7 +1303,7 @@ export default function DiscoverPage() {
         <div className="mx-auto w-full max-w-[620px]">
           <DiscoverStorySection />
 
-          <section className="space-y-1 py-2 sm:space-y-1.5 sm:px-3 sm:py-3">
+          <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
             {realPostsLoading ? (
               <>
                 <RealPostSkeleton />
