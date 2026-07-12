@@ -230,6 +230,10 @@ const shouldShowOpeningAds =
   location.pathname !== '/reset-password'
   return (
   <>
+
+    const shouldShowMeAd =
+  location.pathname === '/me' &&
+  (!shouldShowOpeningAds || adStep === 'done')
     
 <VisitorTracker />
     <Routes>
@@ -1035,6 +1039,12 @@ const shouldShowOpeningAds =
 
 {shouldShowOpeningAds && adStep === 'opening' ? (
   <AdvertisementPopup placement="opening" blocking onFinish={() => setAdStep('done')} />
+) : null}
+
+    {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
+
+    {shouldShowMeAd ? (
+  <AdvertisementPopup placement="me" />
 ) : null}
 
       {!shouldHideFooter ? <Footer /> : null}
