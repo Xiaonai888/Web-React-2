@@ -262,6 +262,79 @@ markShown(nextAdvertisement)
     return null
   }
 
+  if (placement === 'me') {
+    const adImage = (
+      <img
+        src={advertisement.image_url}
+        alt="Advertisement"
+        className={`h-full w-full object-cover transition-opacity duration-200 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoad={() => setImageLoaded(true)}
+        onError={() => {
+          setDebugMessage('Advertisement image failed to load')
+          finishAd()
+        }}
+      />
+    )
+
+    return (
+      <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/65 px-4 py-8 backdrop-blur-[2px]">
+        <div className="relative" style={{ width: 'min(84vw, 58.5vh, 380px)' }}>
+          <div className="absolute -right-3 -top-3 z-20 flex items-center gap-2">
+            {!canSkip ? (
+              <span className="rounded-full bg-black/75 px-3 py-2 text-[12px] font-extrabold text-[#FFB020] shadow-lg">
+                {skipCountdown}s
+              </span>
+            ) : null}
+
+            <button
+              type="button"
+              aria-label="Close advertisement"
+              onClick={closeAd}
+              disabled={!canSkip}
+              className={`flex h-10 w-10 items-center justify-center rounded-full bg-white text-[25px] font-medium leading-none text-[#111827] shadow-xl ${
+                canSkip
+                  ? 'cursor-pointer opacity-100 active:scale-95'
+                  : 'cursor-not-allowed opacity-70'
+              }`}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="aspect-[3/4] overflow-hidden rounded-[24px] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.55)] ring-1 ring-white/15">
+            {advertisement.link_url ? (
+              <a
+                href={advertisement.link_url}
+                target="_blank"
+                rel="noreferrer"
+                className="block h-full w-full"
+              >
+                {adImage}
+              </a>
+            ) : (
+              adImage
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={closeAd}
+            disabled={!canSkip}
+            className={`mx-auto mt-4 block rounded-full bg-black/75 px-6 py-2.5 text-[13px] font-extrabold text-white shadow-lg ${
+              canSkip
+                ? 'cursor-pointer opacity-100 active:scale-95'
+                : 'cursor-not-allowed opacity-75'
+            }`}
+          >
+            {canSkip ? 'Skip' : `Skip in ${skipCountdown}s`}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[2147483647] bg-black">
   <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-28 bg-gradient-to-b from-black/45 to-transparent" />
