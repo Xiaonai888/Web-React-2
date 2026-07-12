@@ -281,15 +281,14 @@ markShown(nextAdvertisement)
     return (
       <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/65 px-4 py-8 backdrop-blur-[2px]">
         <div className="relative" style={{ width: 'min(84vw, 58.5vh, 380px)' }}>
-          <button
+         <button
   type="button"
   aria-label="Close advertisement"
   onClick={finishAd}
-  className="absolute -right-3 -top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[25px] font-medium leading-none text-[#111827] shadow-xl active:scale-95"
+  className="absolute -top-10 right-0 z-20 text-[30px] font-light leading-none text-white drop-shadow-lg active:scale-95"
 >
   ×
 </button>
-
           <div className="aspect-[3/4] overflow-hidden rounded-[24px] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.55)] ring-1 ring-white/15">
             {advertisement.link_url ? (
               <a
