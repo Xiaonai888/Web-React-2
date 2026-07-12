@@ -228,15 +228,15 @@ const shouldShowOpeningAds =
   location.pathname !== '/register' &&
   location.pathname !== '/forgot-password' &&
   location.pathname !== '/reset-password'
-  return (
-  <>
 
-    const shouldShowMeAd =
-  location.pathname === '/me' &&
-  (!shouldShowOpeningAds || adStep === 'done')
-    
-<VisitorTracker />
-    <Routes>
+  const shouldShowMeAd =
+    location.pathname === '/me' &&
+    (!shouldShowOpeningAds || adStep === 'done')
+
+  return (
+    <>
+      <VisitorTracker />
+      <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/fast" element={<Fast />} />
         <Route path="/library" element={<Library />} />
@@ -981,7 +981,7 @@ const shouldShowOpeningAds =
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/edit" element={<EditProfilePage />} />
-     ‌   <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
+        <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
@@ -1041,11 +1041,7 @@ const shouldShowOpeningAds =
   <AdvertisementPopup placement="opening" blocking onFinish={() => setAdStep('done')} />
 ) : null}
 
-    {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
-
-    {shouldShowMeAd ? (
-  <AdvertisementPopup placement="me" />
-) : null}
+      {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
 
       {!shouldHideFooter ? <Footer /> : null}
     </>
