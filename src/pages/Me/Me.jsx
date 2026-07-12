@@ -87,18 +87,18 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
-const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#f5f3fa] text-[#111827] dark:bg-white/10 dark:text-white'
+const iconBox = 'flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] dark:text-white'
 
-function HeaderIcon({ icon, label, to, onClick, badgeCount = 0 }) {
+function HeaderIcon({ icon, customIcon = null, label, to, onClick, badgeCount = 0 }) {
   const showBadge = Number(badgeCount) > 0
   const content = (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f2430] shadow-sm ring-1 ring-black/5 active:scale-95 dark:bg-[#202331] dark:text-white dark:ring-white/10"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#1f2430] active:scale-95 dark:bg-[#202331] dark:text-white"
     >
-      <i className={`${icon} text-[15px]`} />
+      {customIcon || <i className={`${icon} text-[22px]`} />}
       {showBadge ? (
         <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-white dark:ring-[#202331]">
           {badgeCount > 99 ? '99+' : badgeCount}
@@ -162,7 +162,7 @@ function QuickAction({ icon, title, subtitle, to, onClick }) {
   )
 }
 
-function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = false, extra = null }) {
+function MenuRow({ icon, customIcon = null, title, subtitle, to, onClick, danger = false, dark = false, divider = false, extra = null }) {
   const body = (
     <>
       <div className="flex min-w-0 items-center gap-3">
@@ -171,11 +171,11 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
             dark
               ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]'
               : danger
-                ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#fff1f1] text-[#e5484d] dark:bg-[#3a1f25]'
+                ? 'flex h-9 w-9 shrink-0 items-center justify-center text-[#e5484d]'
                 : iconBox
           }
         >
-          <i className={`${icon} text-[14px]`} />
+          {customIcon || <i className={`${icon} text-[14px]`} />}
         </div>
         <div className="min-w-0">
           <div
@@ -193,10 +193,13 @@ function MenuRow({ icon, title, subtitle, to, onClick, danger = false, dark = fa
         </div>
       </div>
       <i className={`fa-solid fa-chevron-right text-[11px] ${dark ? 'text-white/45' : 'text-[#c6c9d1] dark:text-white/35'}`} />
+      {divider ? (
+        <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#f1f1f1] dark:bg-white/10" />
+      ) : null}
     </>
   )
 
-  const className = `flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99] ${
+  const className = `relative flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left active:scale-[0.99] ${
     dark ? 'bg-[#171923]' : 'dark:bg-[#171923]'
   }`
 
@@ -664,7 +667,7 @@ useEffect(() => {
         setWalletBalance({
           diamonds: Number(data.wallet.diamond_balance || 0),
           gems: Number(data.wallet.gem_balance || 0),
-          vouchers: 0,
+          vouchers: Number(data.wallet.voucher_balance || 0),
         })
       }
     } catch {
@@ -881,7 +884,7 @@ const handleOpenProfileSwitcher = (event) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px] dark:bg-[#0d0f16]">
+    <div className="min-h-screen bg-[#fafafa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
       {switchingProfile ? (
   <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white px-6 text-center dark:bg-[#0d0f16]">
@@ -926,11 +929,49 @@ const handleOpenProfileSwitcher = (event) => {
       />
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
+        <section className="px-3 pb-4 pt-1">
           <div className="flex justify-end gap-2">
-            <HeaderIcon to="/inbox" icon="far fa-envelope" label="Inbox" badgeCount={inboxUnreadCount} />
-            <HeaderIcon icon="fa-solid fa-cog" label="Settings" onClick={() => setSettingsOpen(true)} />
-          </div>
+  <HeaderIcon
+    to="/inbox"
+    label="Inbox"
+    badgeCount={inboxUnreadCount}
+    customIcon={
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[22px] w-[22px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+        <path d="m4.5 7 7.5 6 7.5-6" />
+      </svg>
+    }
+  />
+
+  <HeaderIcon
+    label="Settings"
+    onClick={() => setSettingsOpen(true)}
+    customIcon={
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[22px] w-[22px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.05.05-2.87 2.87-.05-.05A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21h-4v-.05A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.05.05-2.87-2.87.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3v-4h.05A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.05-.05 2.87-2.87.05.05A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3h4v.05A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.05-.05 2.87 2.87-.05.05A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21v4h-.05A1.7 1.7 0 0 0 19.4 15Z" />
+      </svg>
+    }
+  />
+</div>
 
           <div className="mt-3 flex w-full items-center gap-4 text-left">
   <button
@@ -993,7 +1034,7 @@ const handleOpenProfileSwitcher = (event) => {
   </div>
 </div>
 
-          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[18px] bg-[#fafafe] px-2 py-3 dark:divide-white/10 dark:bg-white/5">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-[#f3f3f3] px-2 py-1 dark:divide-white/10">
             <BalanceItem value={walletBalance.diamonds} label={tx('diamond')} to="/shop" state={{ activeTab: 'Purchase', from: '/me' }} />
             <BalanceItem value={walletBalance.gems} label="Coin" to="/tasks" />
             <BalanceItem value={walletBalance.vouchers} label={tx('voucher')} />
@@ -1001,17 +1042,22 @@ const handleOpenProfileSwitcher = (event) => {
           
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-          <div className="grid grid-cols-2 divide-x divide-[#f0eef6] dark:divide-white/10">
-            <QuickAction to="/wallet" icon="fa-solid fa-wallet" title={tx('wallet')} subtitle={tx('walletSub')} />
-            <QuickAction to="/tasks" icon="far fa-calendar-check" title={tx('checkIn')} subtitle={tx('checkInSub')} />
-          </div>
+        <section className="mt-2 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+          <div className="relative grid grid-cols-2">
+  <span className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-px -translate-x-1/2 -translate-y-1/2 bg-[#e5e7eb] dark:bg-white/10" />
+  <QuickAction to="/wallet" icon="fa-solid fa-wallet" title={tx('wallet')} subtitle={tx('walletSub')} />
+  <QuickAction to="/tasks" icon="far fa-calendar-check" title={tx('checkIn')} subtitle={tx('checkInSub')} />
+</div>
         </section>
 
-        <section className="mt-3 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-          <button type="button" onClick={handleAuthorDashboard} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]">
+        <section className="mt-3 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+          <button
+            type="button"
+            onClick={handleAuthorDashboard}
+            className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left active:scale-[0.99]"
+          >
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fff4cc] text-[#111827] dark:bg-[#FFE9A6] dark:text-[#111827]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] dark:text-white">
                 <i className="fa-solid fa-pen-nib text-[14px]" />
               </div>
               <div className="min-w-0">
@@ -1023,19 +1069,65 @@ const handleOpenProfileSwitcher = (event) => {
           </button>
         </section>
 
-        <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-          <div className="divide-y divide-[#f0eef6] dark:divide-white/10">
-            <MenuRow to="/premium" icon="fa-solid fa-crown" title={tx('premium')} subtitle={tx('premiumSub')} dark />
-            <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} subtitle={tx('myCommentsSub')} />
-            <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} subtitle={tx('feedbackSub')} />
-            <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} subtitle={tx('helpCenterSub')} />
-            <MenuRow to="/about" icon="fa-solid fa-circle-info" title={tx('aboutUs')} subtitle={tx('aboutUsSub')} />
+        <section className="mt-3 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+          <div>
+            <Link
+  to="/premium"
+  className="relative flex h-[50px] w-full items-center justify-between overflow-hidden bg-[#303030] px-3.5 active:scale-[0.99]"
+>
+  <span className="pointer-events-none absolute inset-y-0 left-[38%] w-[34%] -skew-x-[28deg] bg-[#3d3d3d]" />
+
+  <div className="relative z-10 flex items-center gap-2">
+    <img
+      src="/assets/Icons/Crown.svg"
+      alt=""
+      className="h-6 w-6 shrink-0 object-contain"
+    />
+    <span className="text-[16px] font-bold italic text-white">
+      Premium
+    </span>
+  </div>
+
+  <div className="relative z-10 flex items-center gap-2">
+    <span className="whitespace-nowrap text-[10px] font-semibold text-[#f6d445]">
+      Premium Perks
+    </span>
+    <span className="flex h-7 min-w-[48px] items-center justify-center rounded-[6px] bg-[#ffd600] px-2.5 text-[12px] font-bold text-[#202020]">
+      Go
+    </span>
+  </div>
+</Link>
+
+<MenuRow
+  to="/shop"
+  customIcon={<svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4h2l2 11h10l2-8H6" /><circle cx="9" cy="19" r="1" /><circle cx="17" cy="19" r="1" /></svg>}
+  title="Shadow Mall"
+  divider
+/>
+            <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} divider />
+            <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} divider />
+            <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} divider />
+            <MenuRow
+              to="/about"
+              customIcon={
+                <span className="flex h-[14px] w-[14px] items-center justify-center rounded-full border-[1.4px] border-current text-[9px] font-bold leading-none">
+                  i
+                </span>
+              }
+              title={tx('aboutUs')}
+              
+            />
           </div>
         </section>
 
         {isLoggedIn ? (
-          <section className="mt-4 overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white shadow-sm dark:border-white/10 dark:bg-[#171923]">
-            <MenuRow onClick={handleLogout} icon="fa-solid fa-right-from-bracket" title={tx('logout')} danger />
+          <section className="mt-3 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+            <MenuRow
+              onClick={handleLogout}
+              icon="fa-solid fa-right-from-bracket"
+              title={tx('logout')}
+              danger
+            />
           </section>
         ) : null}
       </main>
@@ -1044,7 +1136,7 @@ const handleOpenProfileSwitcher = (event) => {
         type="button"
         onClick={handleAuthorDashboard}
         aria-label="Author Dashboard shortcut"
-        className="fixed bottom-[92px] right-5 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[#f6b800] text-[17px] text-[#111827] shadow-[0_14px_30px_rgba(246,184,0,0.34)] active:scale-95 dark:text-[#111827]"
+        className="fixed bottom-[92px] right-5 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-[#f6b800] text-[17px] text-[#111827] active:scale-95 dark:text-[#111827]"
       >
         <i className="fa-solid fa-pen-nib" />
       </button>
