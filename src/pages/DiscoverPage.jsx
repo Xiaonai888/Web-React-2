@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
+import CommentsModal from '../components/story-detail/CommentsModal'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -376,6 +377,7 @@ function RealFollowedPostCard({
   post,
   token,
   onReactionUpdated,
+  onComment,
 }) {
   const author = post.author_page || {}
   const authorName = author.page_name || 'Author'
@@ -592,6 +594,7 @@ function RealFollowedPostCard({
 
         <button
           type="button"
+          onClick={() => onComment?.(post)}
           className="inline-flex items-center gap-1.5 active:scale-95"
           aria-label="Comments"
         >
@@ -978,6 +981,18 @@ function FeedRenderer({ item }) {
   return null
 }
 
+function countAuthorPostComments(comments = []) {
+  return comments.reduce(
+    (total, comment) =>
+      total +
+      1 +
+      countAuthorPostComments(
+        Array.isArray(comment?.replies) ? comment.replies : []
+      ),
+    0
+  )
+}
+
 export default function DiscoverPage() {
   const [barsHidden, setBarsHidden] = useState(false)
   const lastScrollYRef = useRef(0)
@@ -990,6 +1005,12 @@ export default function DiscoverPage() {
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
   const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
+  const [commentPost, setCommentPost] = useState(null)
+  const commentCountBaseRef = useRef({
+    postId: '',
+    loadedCount: null,
+    serverCount: 0,
+  })
 
   useEffect(() => {
     let alive = true
@@ -1131,6 +1152,68 @@ export default function DiscoverPage() {
   }
 
 
+  function openPostComments(post) {
+    if (!post?.id) return
+
+    commentCountBaseRef.current = {
+      postId: post.id,
+      loadedCount: null,
+      serverCount: Number(post.comment_count || 0),
+    }
+    setCommentPost(post)
+  }
+
+  function closePostComments() {
+    setCommentPost(null)
+    commentCountBaseRef.current = {
+      postId: '',
+      loadedCount: null,
+      serverCount: 0,
+    }
+  }
+
+  function handlePostCommentsChanged(nextComments = []) {
+    const activePostId = commentPost?.id
+    const base = commentCountBaseRef.current
+
+    if (!activePostId || base.postId !== activePostId) return
+
+    const loadedCount = countAuthorPostComments(nextComments)
+
+    if (base.loadedCount === null) {
+      commentCountBaseRef.current = {
+        ...base,
+        loadedCount,
+      }
+      return
+    }
+
+    const nextCount = Math.max(
+      0,
+      base.serverCount + loadedCount - base.loadedCount
+    )
+
+    setRealPosts((current) =>
+      current.map((post) =>
+        post.id === activePostId
+          ? {
+              ...post,
+              comment_count: nextCount,
+            }
+          : post
+      )
+    )
+
+    setCommentPost((current) =>
+      current?.id === activePostId
+        ? {
+            ...current,
+            comment_count: nextCount,
+          }
+        : current
+    )
+  }
+
   function handleRealPostReactionUpdated(postId, data) {
     setRealPosts((current) =>
       current.map((post) => {
@@ -1232,6 +1315,7 @@ export default function DiscoverPage() {
                   post={post}
                   token={token}
                   onReactionUpdated={handleRealPostReactionUpdated}
+                  onComment={openPostComments}
                 />
 
                 {index === 0 && shadowMallPromotion ? (
@@ -1266,6 +1350,29 @@ export default function DiscoverPage() {
           </section>
         </div>
       </main>
+
+      <CommentsModal
+        open={Boolean(commentPost)}
+        targetType="author_post"
+        targetId={commentPost?.id}
+        title="Author post comments"
+        story={
+          commentPost
+            ? {
+                ...commentPost,
+                author_page: {
+                  ...(commentPost.author_page || {}),
+                  user_id:
+                    commentPost.author_page?.user_id ||
+                    commentPost.user_id ||
+                    null,
+                },
+              }
+            : null
+        }
+        onClose={closePostComments}
+        onCommentChanged={handlePostCommentsChanged}
+      />
     </div>
   )
 }
