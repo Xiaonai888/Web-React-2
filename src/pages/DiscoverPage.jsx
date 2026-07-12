@@ -717,34 +717,85 @@ function PromotionLink({ to, className, children }) {
 
 function AdsCard({ item }) {
   const destination = item.link_url || '/shop'
+  const [hidden, setHidden] = useState(false)
+  const [captionExpanded, setCaptionExpanded] = useState(false)
+  const description = String(item.description || '')
+  const hasMoreDescription = description.length > 110
+
+  if (hidden) return null
 
   return (
     <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
-      <div className="flex items-center justify-between px-4 py-3">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#f0a800]">
-            Sponsored
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+          <i className="fa-solid fa-store text-[14px]" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-semibold text-[#111827]">
+            {item.sponsor || 'Shadow Mall'}
           </div>
-          <div className="mt-0.5 text-[15px] font-semibold text-[#111827]">
-            {item.sponsor}
+
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+            <span>Ad</span>
+            <span>·</span>
+            <i className="fa-solid fa-earth-americas text-[10px]" />
           </div>
         </div>
 
         <button
           type="button"
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+          aria-label="More sponsored options"
+        >
+          <i className="fa-solid fa-ellipsis text-[13px]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHidden(true)}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
           aria-label="Hide sponsored promotion"
         >
-          <i className="fa-solid fa-xmark text-[13px]" />
+          <i className="fa-solid fa-xmark text-[16px]" />
         </button>
       </div>
+
+      {item.title || description ? (
+        <div className="px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827]">
+          {item.title ? (
+            <span className="font-semibold">{item.title}</span>
+          ) : null}
+
+          {description ? (
+            <>
+              {item.title ? <span> · </span> : null}
+              <span>
+                {captionExpanded || !hasMoreDescription
+                  ? description
+                  : `${description.slice(0, 110).trim()}...`}
+              </span>
+
+              {hasMoreDescription ? (
+                <button
+                  type="button"
+                  onClick={() => setCaptionExpanded((current) => !current)}
+                  className="ml-1 font-semibold text-gray-500"
+                >
+                  {captionExpanded ? 'less' : 'more'}
+                </button>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       <PromotionLink to={destination} className="block">
         <div className="relative aspect-square w-full overflow-hidden bg-[#111827]">
           {item.image_url ? (
             <img
               src={item.image_url}
-              alt={item.title}
+              alt={item.title || item.sponsor || 'Shadow Mall promotion'}
               className="h-full w-full object-cover"
               loading="lazy"
               decoding="async"
@@ -754,9 +805,6 @@ function AdsCard({ item }) {
               <div className="absolute inset-0 bg-gradient-to-br from-[#111827] via-[#4c1d95] to-[#f59e0b]" />
               <div className="absolute -right-16 -top-14 h-48 w-48 rounded-full bg-white/10" />
               <div className="absolute -bottom-20 -left-14 h-56 w-56 rounded-full bg-black/20" />
-              <div className="absolute left-5 top-5 rounded-[6px] bg-white/15 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
-                Shadow Mall
-              </div>
               <div className="absolute inset-x-5 bottom-6">
                 <div className="max-w-[360px] text-[25px] font-black leading-[1.16] text-white">
                   {item.title}
@@ -770,13 +818,50 @@ function AdsCard({ item }) {
         </div>
       </PromotionLink>
 
-      <div className="p-4">
+      <div className="flex min-h-[58px] items-center justify-between gap-4 border-b border-gray-100 px-4 py-2.5">
+        <div className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#111827]">
+          {item.sponsor || 'Shadow Mall'}
+        </div>
+
         <PromotionLink
           to={destination}
-          className="flex h-[44px] w-full items-center justify-center rounded-[8px] bg-[#111111] text-[14px] font-semibold text-white active:scale-[0.99] active:bg-black"
+          className="flex h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#eef0f4] px-4 text-[12px] font-semibold text-[#111827] active:bg-[#e5e7eb]"
         >
           {item.button_text || item.cta || 'Shop now'}
         </PromotionLink>
+      </div>
+
+      <div className="flex items-center gap-6 px-4 py-2 text-[13px] font-normal text-gray-500">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 active:scale-95"
+          aria-label="Like promotion"
+        >
+          <i className="fa-regular fa-heart text-[15px]" />
+          <span>{Number(item.like_count || 0)}</span>
+        </button>
+
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 active:scale-95"
+          aria-label="Comment on promotion"
+        >
+          <i className="fa-regular fa-comment text-[15px]" />
+          <span>{Number(item.comment_count || 0)}</span>
+        </button>
+
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 active:scale-95"
+          aria-label="Echo promotion"
+        >
+          <img
+            src="/assets/Icons/echo.svg"
+            alt=""
+            className="h-[15px] w-[15px] opacity-60"
+          />
+          <span>{Number(item.echo_count || 0)}</span>
+        </button>
       </div>
     </article>
   )
