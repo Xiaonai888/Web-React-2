@@ -302,8 +302,14 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 px-1">
+  <div className="space-y-4">
+    {author?.profile_details?.store_banner_url ? (
+      <div className="aspect-video overflow-hidden rounded-[18px] bg-[#f3f4f6]">
+        <img src={author.profile_details.store_banner_url} alt={`${author.page_name || 'Author'} Store banner`} className="h-full w-full object-cover" />
+      </div>
+    ) : null}
+
+    <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
           {STORE_TYPE_FILTERS.map((type) => {
             const active = activeType === type
