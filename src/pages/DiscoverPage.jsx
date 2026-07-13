@@ -5,6 +5,8 @@ import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
 import DiscoverNewUpdatedStoriesSection from '../components/discover/DiscoverNewUpdatedStoriesSection'
+import DiscoverYouMightLikeSection from '../components/discover/DiscoverYouMightLikeSection'
+import DiscoverCompletedStoriesSection from '../components/discover/DiscoverCompletedStoriesSection'
 import AuthorPostOptionsSheet, {
   filterAuthorPostsByLocalPreferences,
 } from '../components/discover/AuthorPostOptionsSheet'
@@ -1408,12 +1410,20 @@ export default function DiscoverPage() {
                   <DiscoverTrendingStoriesSection />
                 ) : null}
 
-                {index === Math.min(1, realPosts.length - 1) ? (
+                {index === 1 ? (
                   <DiscoverAuthorsYouMayLikeSection />
                 ) : null}
 
-                {index === Math.min(2, realPosts.length - 1) ? (
+                {index === 2 ? (
                   <DiscoverNewUpdatedStoriesSection />
+                ) : null}
+
+                {index === 3 ? (
+                  <DiscoverYouMightLikeSection />
+                ) : null}
+
+                {index === 4 ? (
+                  <DiscoverCompletedStoriesSection />
                 ) : null}
                 
               </Fragment>
