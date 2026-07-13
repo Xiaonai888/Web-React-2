@@ -4,6 +4,13 @@ import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
+import AuthorPostOptionsSheet, {
+  filterAuthorPostsByLocalPreferences,
+} from '../components/discover/AuthorPostOptionsSheet'
+import ShadowMallAdOptionsSheet, {
+  hideShadowMallAdLocally,
+  isShadowMallAdHidden,
+} from '../components/discover/ShadowMallAdOptionsSheet'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -380,7 +387,9 @@ function RealFollowedPostCard({
   token,
   onReactionUpdated,
   onComment,
+  onMore,
 }) {
+
   const author = post.author_page || {}
   const authorName = author.page_name || 'Author'
   const pageUsername = author.page_username || ''
@@ -486,7 +495,7 @@ function RealFollowedPostCard({
             <div className="min-w-0">
               <Link
                 to={pageUrl}
-                className="block truncate text-[15px] font-black text-[#111827]"
+                className="block truncate text-[14px] font-semibold text-[#111827]"
               >
                 {authorName}
               </Link>
@@ -503,18 +512,19 @@ function RealFollowedPostCard({
             </div>
 
             <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-              aria-label="More"
-            >
+  type="button"
+  onClick={() => onMore?.(post)}
+  className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+  aria-label="More"
+>
               <i className="fa-solid fa-ellipsis" />
             </button>
           </div>
 
           {post.content ? (
-            <p className="mt-3 whitespace-pre-wrap break-words text-[14px] font-semibold leading-6 text-[#111827]">
-              {post.content}
-            </p>
+            <p className="mt-3 whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-[#111827]">
+  {post.content}
+</p>
           ) : null}
         </div>
       </div>
@@ -720,14 +730,11 @@ function PromotionLink({ to, className, children }) {
   )
 }
 
-function AdsCard({ item }) {
+function AdsCard({ item, onMore, onHide }) {
   const destination = item.link_url || '/shop'
-  const [hidden, setHidden] = useState(false)
   const [captionExpanded, setCaptionExpanded] = useState(false)
   const description = String(item.description || '')
   const hasMoreDescription = description.length > 110
-
-  if (hidden) return null
 
   return (
     <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
@@ -760,6 +767,7 @@ function AdsCard({ item }) {
 
         <button
           type="button"
+          onClick={() => onMore?.(item)}
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
           aria-label="More sponsored options"
         >
@@ -768,7 +776,7 @@ function AdsCard({ item }) {
 
         <button
           type="button"
-          onClick={() => setHidden(true)}
+          onClick={() => onHide?.(item)}
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
           aria-label="Hide sponsored promotion"
         >
@@ -1018,6 +1026,8 @@ export default function DiscoverPage() {
   const [realPostsError, setRealPostsError] = useState('')
   const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
+  const [optionsPost, setOptionsPost] = useState(null)
+  const [adOptionsItem, setAdOptionsItem] = useState(null)
   const commentCountBaseRef = useRef({
     postId: '',
     loadedCount: null,
@@ -1032,7 +1042,11 @@ export default function DiscoverPage() {
         const promotion = await fetchShadowMallPromotion()
 
         if (alive) {
-          setShadowMallPromotion(promotion)
+          setShadowMallPromotion(
+            promotion && !isShadowMallAdHidden(promotion)
+              ? promotion
+              : null
+          )
         }
       } catch {
         if (alive) {
@@ -1072,7 +1086,11 @@ export default function DiscoverPage() {
 
         if (!alive) return
 
-        setRealPosts(Array.isArray(data.posts) ? data.posts : [])
+        setRealPosts(
+          filterAuthorPostsByLocalPreferences(
+            Array.isArray(data.posts) ? data.posts : []
+          )
+        )
         setRealPostsCursor(data.next_cursor || null)
         setRealPostsHasMore(
           Boolean(data.has_more && data.next_cursor)
@@ -1117,9 +1135,10 @@ export default function DiscoverPage() {
         token,
         realPostsCursor
       )
-      const incomingPosts = Array.isArray(data.posts)
-        ? data.posts
-        : []
+      const incomingPosts =
+        filterAuthorPostsByLocalPreferences(
+          Array.isArray(data.posts) ? data.posts : []
+        )
 
       setRealPosts((current) =>
         mergeUniquePosts(current, incomingPosts)
@@ -1146,7 +1165,11 @@ export default function DiscoverPage() {
 
       const data = await fetchFollowedPosts(token)
 
-      setRealPosts(Array.isArray(data.posts) ? data.posts : [])
+      setRealPosts(
+        filterAuthorPostsByLocalPreferences(
+          Array.isArray(data.posts) ? data.posts : []
+        )
+      )
       setRealPostsCursor(data.next_cursor || null)
       setRealPostsHasMore(
         Boolean(data.has_more && data.next_cursor)
@@ -1254,6 +1277,47 @@ export default function DiscoverPage() {
     )
   }
 
+  function hideShadowMallPromotion(item) {
+    if (item) {
+      hideShadowMallAdLocally(item)
+    }
+
+    setShadowMallPromotion(null)
+    setAdOptionsItem(null)
+  }
+
+  function hidePostFromDiscover(postId) {
+    setRealPosts((current) =>
+      current.filter((post) => post.id !== postId)
+    )
+    setOptionsPost(null)
+  }
+
+  function hideAuthorFromDiscover(authorId) {
+    setRealPosts((current) =>
+      current.filter(
+        (post) => post.author_page?.id !== authorId
+      )
+    )
+    setOptionsPost(null)
+  }
+
+  function updateAuthorFollowState(authorId, isFollowing) {
+    setRealPosts((current) =>
+      current.map((post) =>
+        post.author_page?.id === authorId
+          ? {
+              ...post,
+              author_page: {
+                ...post.author_page,
+                is_following: isFollowing,
+              },
+            }
+          : post
+      )
+    )
+  }
+
   useEffect(() => {
     function handleScroll() {
       const currentScrollY = window.scrollY
@@ -1328,19 +1392,24 @@ export default function DiscoverPage() {
                   token={token}
                   onReactionUpdated={handleRealPostReactionUpdated}
                   onComment={openPostComments}
+                  onMore={setOptionsPost}
                 />
 
                 {index === 0 && shadowMallPromotion ? (
-                  <AdsCard item={shadowMallPromotion} />
+                  <AdsCard
+                    item={shadowMallPromotion}
+                    onMore={setAdOptionsItem}
+                    onHide={hideShadowMallPromotion}
+                  />
                 ) : null}
 
                 {index === 0 ? (
-  <DiscoverTrendingStoriesSection />
-) : null}
+                  <DiscoverTrendingStoriesSection />
+                ) : null}
 
                 {index === Math.min(1, realPosts.length - 1) ? (
-  <DiscoverAuthorsYouMayLikeSection />
-) : null}
+                  <DiscoverAuthorsYouMayLikeSection />
+                ) : null}
                 
               </Fragment>
             ))}
@@ -1371,6 +1440,22 @@ export default function DiscoverPage() {
           </section>
         </div>
       </main>
+
+      <ShadowMallAdOptionsSheet
+        open={Boolean(adOptionsItem)}
+        item={adOptionsItem}
+        onClose={() => setAdOptionsItem(null)}
+        onHide={hideShadowMallPromotion}
+      />
+
+      <AuthorPostOptionsSheet
+        open={Boolean(optionsPost)}
+        post={optionsPost}
+        onClose={() => setOptionsPost(null)}
+        onHidePost={hidePostFromDiscover}
+        onHideAuthorPosts={hideAuthorFromDiscover}
+        onFollowChanged={updateAuthorFollowState}
+      />
 
       <CommentsModal
         open={Boolean(commentPost)}
