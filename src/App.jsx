@@ -2,7 +2,6 @@ import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import Fast from './pages/Fast'
-
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import Library from './pages/Library'
@@ -43,15 +42,12 @@ import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
-const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
 import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
 import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
-const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
-const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
 import PremiumPage from './pages/Me/PremiumPage'
 
 
@@ -136,6 +132,10 @@ const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
 const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
+const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
+const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
+const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
+const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 
 
 function ComingSoon({ title }) {
@@ -194,6 +194,7 @@ function AppShell() {
     '/tasks/history',
     '/author/trash',
     '/comments',
+    '/saved-posts',
     '/author/comment-protection',
     '/author/page-settings',
     '/author/page/edit',
@@ -682,6 +683,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <MeCommentsPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/saved-posts"
+  element={
+    <LazyPage>
+      <SavedPostsPage />
     </LazyPage>
   }
 />
