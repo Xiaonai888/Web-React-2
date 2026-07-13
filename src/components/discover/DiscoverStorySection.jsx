@@ -48,13 +48,13 @@ function StaticStoryCard({ item, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="relative h-[178px] w-[108px] shrink-0 overflow-hidden rounded-[18px] bg-white text-left shadow-sm ring-1 ring-black/5 transition-transform active:scale-[0.98] sm:h-[184px] sm:w-[112px]"
+      className="relative h-[168px] w-[102px] shrink-0 overflow-hidden rounded-[8px] bg-white text-left transition-transform active:scale-[0.98] sm:h-[170px] sm:w-[104px]"
       aria-label={item.name}
     >
       <div className="absolute inset-0" style={{ background: item.image }} />
       <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/5 to-black/65" />
 
-      <div className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[14px] font-black text-white shadow-md">
+      <div className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[14px] font-black text-white">
         {item.avatar}
       </div>
 
@@ -65,13 +65,13 @@ function StaticStoryCard({ item, onClick }) {
       ) : null}
 
       {item.type === 'create' ? (
-        <div className="absolute left-1/2 top-[68px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white shadow-lg sm:top-[72px]">
+        <div className="absolute left-1/2 top-[63px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white sm:top-[64px]">
           +
         </div>
       ) : null}
 
       <div className="absolute bottom-3 left-3 right-3">
-        <div className="line-clamp-2 text-[13px] font-black leading-[16px] text-white drop-shadow">
+        <div className="line-clamp-2 text-[13px] font-normal leading-[16px] text-white drop-shadow">
           {item.label}
         </div>
         {item.type === 'feature' && item.name !== item.label ? (
@@ -87,14 +87,14 @@ function AuthorStoryCard({ group, onClick }) {
   const latestStory = group.stories?.[group.stories.length - 1] || null
   const isVideo = latestStory?.media_type === 'video'
   const ringClass = group.has_unseen
-    ? 'ring-2 ring-[#8b5cf6] ring-offset-2 ring-offset-white'
-    : 'ring-2 ring-[#cbd5e1] ring-offset-2 ring-offset-white'
+    ? 'ring-1 ring-inset ring-[#8b5cf6]'
+    : 'ring-1 ring-inset ring-[#cbd5e1]'
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative h-[178px] w-[108px] shrink-0 overflow-hidden rounded-[18px] bg-[#111827] text-left shadow-sm transition-transform active:scale-[0.98] sm:h-[184px] sm:w-[112px] ${ringClass}`}
+      className={`relative h-[168px] w-[102px] shrink-0 overflow-hidden rounded-[8px] bg-[#111827] text-left transition-transform active:scale-[0.98] sm:h-[170px] sm:w-[104px] ${ringClass}`}
       aria-label={`View ${author.page_name || 'author'} story`}
     >
       {latestStory?.media_url ? (
@@ -120,7 +120,7 @@ function AuthorStoryCard({ group, onClick }) {
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/5 to-black/80" />
 
-      <div className="absolute left-2 top-2 h-9 w-9 overflow-hidden rounded-full border-[3px] border-white bg-[#111827] shadow-md">
+      <div className="absolute left-2 top-2 h-9 w-9 overflow-hidden rounded-full border-[3px] border-white bg-[#111827]">
         {author.avatar_url ? (
           <img
             src={author.avatar_url}
@@ -147,10 +147,10 @@ function AuthorStoryCard({ group, onClick }) {
       ) : null}
 
       <div className="absolute bottom-3 left-3 right-3">
-        <div className="line-clamp-2 text-[13px] font-black leading-[16px] text-white drop-shadow">
+        <div className="line-clamp-2 text-[13px] font-normal leading-[16px] text-white drop-shadow">
           {group.is_owner ? 'Your story' : author.page_name || 'Author story'}
         </div>
-        <div className="mt-1 truncate text-[10px] font-bold text-white/75">
+        <div className="mt-1 truncate text-[10px] font-normal text-white/75">
           {formatStoryTime(latestStory?.created_at)}
         </div>
       </div>
@@ -475,12 +475,12 @@ export default function DiscoverStorySection() {
 
   return (
     <>
-      <section className="border-b border-gray-100 bg-white py-3 sm:rounded-b-[22px] sm:border sm:shadow-sm sm:ring-1 sm:ring-gray-100">
-        <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 sm:px-4">
+      <section className="bg-white py-[6px] sm:rounded-[12px]">
+        <div className="no-scrollbar flex gap-1 overflow-x-auto px-3 sm:px-3">
           <StaticStoryCard
-  item={CREATE_STORY_ITEM}
-  onClick={() => navigate('/author/page/story/create')}
-/>
+            item={CREATE_STORY_ITEM}
+            onClick={() => navigate('/author/page/story/create')}
+          />
 
           {groups.map((group) => (
             <AuthorStoryCard
@@ -491,10 +491,8 @@ export default function DiscoverStorySection() {
           ))}
 
           {loading ? (
-            <div className="h-[178px] w-[108px] shrink-0 animate-pulse rounded-[18px] bg-gradient-to-br from-gray-200 to-gray-100 sm:h-[184px] sm:w-[112px]" />
+            <div className="h-[168px] w-[102px] shrink-0 animate-pulse rounded-[8px] bg-gradient-to-br from-gray-200 to-gray-100 sm:h-[170px] sm:w-[104px]" />
           ) : null}
-
-          
         </div>
       </section>
 
