@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
+import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -1331,6 +1332,11 @@ export default function DiscoverPage() {
                 {index === 0 && shadowMallPromotion ? (
                   <AdsCard item={shadowMallPromotion} />
                 ) : null}
+
+                {index === 0 ? (
+  <DiscoverTrendingStoriesSection />
+) : null}
+                
               </Fragment>
             ))}
 
