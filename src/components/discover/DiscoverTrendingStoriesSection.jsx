@@ -17,20 +17,28 @@ function formatReads(value) {
   }).format(number)} reads`
 }
 
-function getRankClass(rank) {
-  if (rank === 1) {
-    return 'bg-[#f6c744] text-[#111827]'
+function RankBadge({ rank }) {
+  const rankBadgeClasses = {
+    1: 'bg-[#FF3B30] text-white',
+    2: 'bg-[#FF8C00] text-white',
+    3: 'bg-[#FFD400] text-[#111827]',
+    4: 'bg-[#8A2BE2] text-white',
+    5: 'bg-[#A0A7B4] text-white',
   }
 
-  if (rank === 2) {
-    return 'bg-[#d9dde5] text-[#111827]'
-  }
-
-  if (rank === 3) {
-    return 'bg-[#a97142] text-white'
-  }
-
-  return 'bg-black/65 text-white'
+  return (
+    <div
+      className={`absolute right-1.5 top-0 flex h-[28px] w-[23px] items-center justify-center pb-[3px] text-[11px] font-bold shadow-[0_3px_7px_rgba(0,0,0,0.14)] ${
+        rankBadgeClasses[rank] || rankBadgeClasses[5]
+      }`}
+      style={{
+        clipPath:
+          'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)',
+      }}
+    >
+      {rank}
+    </div>
+  )
 }
 
 function normalizeStory(story) {
@@ -158,11 +166,7 @@ export default function DiscoverTrendingStoriesSection() {
                       </div>
                     )}
 
-                    <div
-                      className={`absolute right-0 top-0 flex h-7 min-w-7 items-center justify-center rounded-bl-[6px] px-2 text-[11px] font-black ${getRankClass(rank)}`}
-                    >
-                      {rank}
-                    </div>
+                    <RankBadge rank={rank} />
 
                     {story.isAdult ? (
                       <div className="absolute bottom-2 left-2 rounded-[5px] bg-white/90 px-1.5 py-1 text-[9px] font-bold text-red-500">
