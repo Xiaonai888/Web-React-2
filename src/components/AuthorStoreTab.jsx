@@ -304,12 +304,40 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   return (
   <div className="space-y-4">
     {author?.profile_details?.store_banner_url ? (
-      <div className="aspect-video overflow-hidden rounded-[18px] bg-[#f3f4f6]">
-        <img src={author.profile_details.store_banner_url} alt={`${author.page_name || 'Author'} Store banner`} className="h-full w-full object-cover" />
-      </div>
-    ) : null}
+  <div className="relative aspect-video overflow-hidden rounded-[18px] bg-[#f3f4f6]">
+    <img
+      src={author.profile_details.store_banner_url}
+      alt={`${author.page_name || 'Author'} Store banner`}
+      className="h-full w-full object-cover"
+    />
 
-    <div className="flex items-center justify-between gap-3 px-1">
+    <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/55 to-transparent" />
+
+    <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4 sm:px-6">
+      <h2 className="text-[19px] font-black leading-tight text-[#6d28d9] sm:text-[24px]">
+        {author.profile_details.store_banner_title || 'Author Store'}
+      </h2>
+
+      <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-4 text-[#111827] sm:text-[13px]">
+        {author.profile_details.store_banner_subtitle || 'Books, PDFs & Special Releases'}
+      </p>
+
+      <button
+        type="button"
+        onClick={() =>
+          document
+            .getElementById('author-store-products')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        className="mt-3 w-fit rounded-[9px] bg-black px-4 py-2 text-[10px] font-bold text-white active:scale-95 sm:text-[12px]"
+      >
+        {author.profile_details.store_banner_button_text || 'Shop Now →'}
+      </button>
+    </div>
+  </div>
+) : null}
+
+    <div id="author-store-products" className="scroll-mt-16 flex items-center justify-between gap-3 px-1">
         <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
           {STORE_TYPE_FILTERS.map((type) => {
             const active = activeType === type
