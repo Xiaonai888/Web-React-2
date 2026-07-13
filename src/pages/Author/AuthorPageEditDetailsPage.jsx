@@ -1170,9 +1170,13 @@ export default function AuthorPageEditDetailsPage() {
   const detailsRef = useRef(null)
   const linksRef = useRef(null)
   const facebookRef = useRef(null)
-  const contactRef = useRef(null)
+const contactRef = useRef(null)
 
-  const [loading, setLoading] = useState(true)
+useEffect(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+}, [])
+
+const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [pageName, setPageName] = useState('')
