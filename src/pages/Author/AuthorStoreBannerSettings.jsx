@@ -22,6 +22,9 @@ export default function AuthorStoreBannerSettings({ onBack }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [title, setTitle] = useState('Author Store')
+  const [subtitle, setSubtitle] = useState('Books, PDFs & Special Releases')
+  const [buttonText, setButtonText] = useState('Shop Now →')
 
   useEffect(() => {
     let ignore = false
@@ -52,10 +55,15 @@ export default function AuthorStoreBannerSettings({ onBack }) {
 
         if (!ignore) {
           const page = data.author_page
-          const currentBanner = page.profile_details?.store_banner_url || ''
-          setAuthorPage(page)
-          setBannerUrl(currentBanner)
-          setPreviewUrl(currentBanner)
+const details = page.profile_details || {}
+const currentBanner = details.store_banner_url || ''
+
+setAuthorPage(page)
+setBannerUrl(currentBanner)
+setPreviewUrl(currentBanner)
+setTitle(details.store_banner_title || 'Author Store')
+setSubtitle(details.store_banner_subtitle || 'Books, PDFs & Special Releases')
+setButtonText(details.store_banner_button_text || 'Shop Now →')
         }
       } catch (error) {
         if (!ignore) setMessage(error.message || 'Failed to load Store Banner')
@@ -134,9 +142,12 @@ export default function AuthorStoreBannerSettings({ onBack }) {
         : previewUrl
 
       const nextProfileDetails = {
-        ...(authorPage.profile_details || {}),
-        store_banner_url: nextBannerUrl || '',
-      }
+  ...(authorPage.profile_details || {}),
+  store_banner_url: nextBannerUrl || '',
+  store_banner_title: title.trim(),
+  store_banner_subtitle: subtitle.trim(),
+  store_banner_button_text: buttonText.trim(),
+}
 
       const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
         method: 'PUT',
@@ -182,9 +193,14 @@ export default function AuthorStoreBannerSettings({ onBack }) {
     setMessage('Press Save to remove this banner.')
   }
 
-  const changed =
-    Boolean(selectedFile) ||
-    String(previewUrl || '') !== String(bannerUrl || '')
+  const savedDetails = authorPage?.profile_details || {}
+
+const changed =
+  Boolean(selectedFile) ||
+  String(previewUrl || '') !== String(bannerUrl || '') ||
+  title !== (savedDetails.store_banner_title || 'Author Store') ||
+  subtitle !== (savedDetails.store_banner_subtitle || 'Books, PDFs & Special Releases') ||
+  buttonText !== (savedDetails.store_banner_button_text || 'Shop Now →')
 
   return (
     <section className="space-y-4">
@@ -204,22 +220,80 @@ export default function AuthorStoreBannerSettings({ onBack }) {
           Upload a 16:9 banner for the top of your Author Store.
         </p>
 
-        <div className="mt-4 aspect-video overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
-          {loading ? (
-            <div className="flex h-full items-center justify-center text-[12px] font-bold text-[#8b93a1]">
-              Loading banner...
-            </div>
-          ) : previewUrl ? (
-            <img src={previewUrl} alt="Store banner preview" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center text-[#9ca3af]">
-              <i className="fa-regular fa-image text-[28px]" />
-              <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
-            </div>
-          )}
-        </div>
+        <div className="relative mt-4 aspect-video overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
+  {loading ? (
+    <div className="flex h-full items-center justify-center text-[12px] font-bold text-[#8b93a1]">
+      Loading banner...
+    </div>
+  ) : previewUrl ? (
+    <>
+      <img src={previewUrl} alt="Store banner preview" className="h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/55 to-transparent" />
+      <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4">
+        <h3 className="text-[18px] font-black leading-tight text-[#6d28d9]">
+          {title || 'Author Store'}
+        </h3>
+        <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-4 text-[#111827]">
+          {subtitle || 'Books, PDFs & Special Releases'}
+        </p>
+        <span className="mt-3 w-fit rounded-[9px] bg-black px-4 py-2 text-[10px] font-bold text-white">
+          {buttonText || 'Shop Now →'}
+        </span>
+      </div>
+    </>
+  ) : (
+    <div className="flex h-full flex-col items-center justify-center text-[#9ca3af]">
+      <i className="fa-regular fa-image text-[28px]" />
+      <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
+    </div>
+  )}
+</div>
 
-        <input
+<div className="mt-4 space-y-3">
+  <div>
+    <label className="mb-1.5 block text-[12px] font-bold text-[#374151]">
+      Banner title
+    </label>
+    <input
+      type="text"
+      value={title}
+      onChange={(event) => setTitle(event.target.value)}
+      maxLength={40}
+      placeholder="Author Store"
+      className="h-11 w-full rounded-[14px] border border-[#d9e1ec] bg-white px-3 text-[13px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+    />
+  </div>
+
+  <div>
+    <label className="mb-1.5 block text-[12px] font-bold text-[#374151]">
+      Description
+    </label>
+    <textarea
+      value={subtitle}
+      onChange={(event) => setSubtitle(event.target.value)}
+      maxLength={100}
+      rows={3}
+      placeholder="Books, PDFs & Special Releases"
+      className="w-full resize-none rounded-[14px] border border-[#d9e1ec] bg-white px-3 py-3 text-[13px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+    />
+  </div>
+
+  <div>
+    <label className="mb-1.5 block text-[12px] font-bold text-[#374151]">
+      Button text
+    </label>
+    <input
+      type="text"
+      value={buttonText}
+      onChange={(event) => setButtonText(event.target.value)}
+      maxLength={24}
+      placeholder="Shop Now →"
+      className="h-11 w-full rounded-[14px] border border-[#d9e1ec] bg-white px-3 text-[13px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
+    />
+  </div>
+</div>
+
+<input
           ref={fileInputRef}
           type="file"
           accept="image/*"
