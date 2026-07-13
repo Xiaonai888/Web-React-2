@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SalesReportsSettingsPage } from './SalesReportsSettings'
+import AuthorStoreBannerSettings from './AuthorStoreBannerSettings'
 import {
   connectSalesReports,
   disconnectSalesReports,
@@ -631,8 +632,10 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
           </button>
 
           <h1 className="text-[16px] font-semibold text-[#111827]">
-            {settingsView === 'telegram'
-              ? 'Telegram Bot'
+            {settingsView === 'banner'
+  ? 'Store Banner'
+  : settingsView === 'telegram'
+    ? 'Telegram Bot'
               : settingsView === 'sales-reports'
                 ? 'Sales Reports'
                 : settingsView === 'categories'
@@ -647,7 +650,9 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
       </header>
 
       <main className="mx-auto max-w-[720px] px-4 py-4">
-        {settingsView === 'categories' ? (
+        {settingsView === 'banner' ? (
+  <AuthorStoreBannerSettings onBack={() => setSettingsView('home')} />
+) : settingsView === 'categories' ? (
           <section className="space-y-4">
             <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
               <div className="flex items-start justify-between gap-3">
@@ -1093,9 +1098,18 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
             ) : null}
 
             <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
-              <ToolRow
-                icon="fa-solid fa-layer-group"
-                label="Category Management"
+  <ToolRow
+    icon="fa-regular fa-image"
+    label="Store Banner"
+    subtext="Upload, change, or remove your store banner."
+    onClick={() => setSettingsView('banner')}
+  />
+
+  <div className="mx-3 h-px bg-[#eef0f4]" />
+
+  <ToolRow
+    icon="fa-solid fa-layer-group"
+    label="Category Management"
                 subtext="Categories, hidden sections, and order."
                 onClick={() => setSettingsView('categories')}
               />
