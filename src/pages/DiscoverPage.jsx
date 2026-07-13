@@ -1370,7 +1370,9 @@ export default function DiscoverPage() {
 
       <main className="pt-[58px]">
         <div className="mx-auto w-full max-w-[620px]">
-          <DiscoverStorySection />
+          <div className="sm:px-3 sm:pt-1.5">
+            <DiscoverStorySection />
+          </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
             {realPostsLoading ? (
