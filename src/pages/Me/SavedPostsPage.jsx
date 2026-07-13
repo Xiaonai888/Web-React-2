@@ -180,47 +180,72 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
   const customCollection = !['all', 'favorites', 'read_later'].includes(collection.system_key)
 
   return (
-    <div className="relative w-[164px] shrink-0">
+    <div className="relative w-[43%] min-w-[118px] max-w-[138px] shrink-0 snap-start sm:w-[170px] sm:max-w-none">
       <button
         type="button"
         onClick={onSelect}
-        className={`w-full overflow-hidden rounded-[20px] bg-white p-3 text-left transition active:scale-[0.985] dark:bg-[#171923] ${
-          active ? 'ring-2 ring-[#6d4aff] ring-offset-2 ring-offset-[#fafafa] dark:ring-offset-[#0d0f16]' : 'ring-1 ring-black/5 dark:ring-white/10'
+        className={`min-h-[124px] w-full overflow-hidden rounded-[18px] border-2 p-2.5 text-left transition active:scale-[0.985] dark:bg-[#171923] ${
+          active
+            ? 'border-[#6d4aff]'
+            : 'border-transparent ring-1 ring-inset ring-black/5 dark:ring-white/10'
         }`}
         style={{
           backgroundImage: `linear-gradient(145deg, ${hexToRgba(color, 0.18)}, ${hexToRgba(color, 0.06)})`,
         }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[13px] text-white" style={{ backgroundColor: color }}>
-            <Folder className="h-4 w-4" fill="currentColor" strokeWidth={1.6} />
+          <span
+            className="relative flex h-8 w-8 items-center justify-center rounded-[11px] text-white"
+            style={{ backgroundColor: color }}
+          >
+            <Folder className="h-3.5 w-3.5" fill="currentColor" strokeWidth={1.6} />
+
+            {active ? (
+              <span className="absolute -right-1 -top-1 flex h-[17px] w-[17px] items-center justify-center rounded-full bg-[#6d4aff] text-white ring-2 ring-white dark:ring-[#171923]">
+                <Check className="h-2.5 w-2.5" strokeWidth={2.7} />
+              </span>
+            ) : null}
           </span>
-          {active ? (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#6d4aff] text-white">
-              <Check className="h-3 w-3" strokeWidth={2.6} />
-            </span>
-          ) : null}
         </div>
 
-        <div className="mt-3 line-clamp-1 text-[13px] font-extrabold text-[#111827]">{collection.name}</div>
-        <div className="mt-1 text-[10.5px] font-semibold text-[#777f8d]">
-          {Number(collection.item_count || 0)} {Number(collection.item_count || 0) === 1 ? 'post' : 'posts'}
+        <div className="mt-2 line-clamp-1 text-[12px] font-bold text-[#111827] dark:text-white">
+          {collection.name}
         </div>
 
-        <div className="mt-3 flex h-9 items-center">
+        <div className="mt-0.5 text-[9.5px] font-medium text-[#777f8d] dark:text-white/45">
+          {Number(collection.item_count || 0)}{' '}
+          {Number(collection.item_count || 0) === 1 ? 'post' : 'posts'}
+        </div>
+
+        <div className="mt-2 flex h-8 items-center">
           {previewItems.length ? (
             <div className="flex -space-x-2">
               {previewItems.slice(0, 3).map((item, index) => {
                 const image = getPreviewImage(item)
+
                 return (
-                  <span key={item.id || index} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[11px] border-2 border-white bg-[#f5f3fa] text-[10px] font-bold text-[#6d4aff]">
-                    {image ? <img src={image} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Bookmark className="h-3.5 w-3.5" strokeWidth={1.8} />}
+                  <span
+                    key={item.id || index}
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px] border-2 border-white bg-[#f5f3fa] text-[#6d4aff] dark:border-[#171923]"
+                  >
+                    {image ? (
+                      <img
+                        src={image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Bookmark className="h-3 w-3" strokeWidth={1.8} />
+                    )}
                   </span>
                 )
               })}
             </div>
           ) : (
-            <span className="text-[10.5px] font-medium text-[#9aa1ad]">No saved preview</span>
+            <span className="line-clamp-1 text-[9px] font-medium text-[#9aa1ad]">
+              No saved preview
+            </span>
           )}
         </div>
       </button>
@@ -229,10 +254,10 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
         <button
           type="button"
           onClick={onMenu}
-          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 text-[#4b5563] shadow-sm active:scale-95"
+          className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/85 text-[#4b5563] shadow-sm active:scale-95 dark:bg-[#242735] dark:text-white"
           aria-label="Collection options"
         >
-          <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
+          <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.8} />
         </button>
       ) : null}
     </div>
@@ -575,23 +600,25 @@ export default function SavedPostsPage() {
       <header className="sticky top-0 z-40 border-b border-[#eceaf2] bg-white/95 px-4 pb-3 pt-4 backdrop-blur dark:border-white/10 dark:bg-[#171923]/95">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-white/10 dark:text-white"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.9} />
-              </button>
+            <div className="flex min-w-0 items-center gap-2">
+  <button
+    type="button"
+    onClick={() => navigate(-1)}
+    className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95 dark:text-white"
+    aria-label="Back"
+  >
+    <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+  </button>
 
-              <div className="min-w-0">
-                <h1 className="text-[21px] font-black leading-tight text-[#111827] dark:text-white">Saved Posts</h1>
-                <p className="mt-0.5 text-[11px] text-[#8d94a1] dark:text-white/40">
-                  {total} saved {total === 1 ? 'post' : 'posts'}
-                </p>
-              </div>
-            </div>
+  <div className="min-w-0">
+    <h1 className="text-[21px] font-bold leading-tight text-[#111827] dark:text-white">
+      Saved Posts
+    </h1>
+    <p className="mt-0.5 text-[11px] text-[#8d94a1] dark:text-white/40">
+      {total} saved {total === 1 ? 'post' : 'posts'}
+    </p>
+  </div>
+</div>
 
             <button
               type="button"
@@ -671,7 +698,7 @@ export default function SavedPostsPage() {
             </button>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-4 flex snap-x snap-proximity gap-2 overflow-x-auto px-4 pb-2 pt-1 scroll-pl-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {collectionCards.map((collection) => (
               <CollectionCard
                 key={collection.id}
