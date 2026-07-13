@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
+import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -1335,6 +1336,10 @@ export default function DiscoverPage() {
 
                 {index === 0 ? (
   <DiscoverTrendingStoriesSection />
+) : null}
+
+                {index === Math.min(1, realPosts.length - 1) ? (
+  <DiscoverAuthorsYouMayLikeSection />
 ) : null}
                 
               </Fragment>
