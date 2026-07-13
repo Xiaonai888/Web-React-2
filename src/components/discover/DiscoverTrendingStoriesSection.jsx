@@ -159,7 +159,7 @@ export default function DiscoverTrendingStoriesSection() {
                     )}
 
                     <div
-                      className={`absolute left-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-[11px] font-black shadow-sm ${getRankClass(rank)}`}
+                      className={`absolute right-0 top-0 flex h-7 min-w-7 items-center justify-center rounded-bl-[6px] px-2 text-[11px] font-black ${getRankClass(rank)}`}
                     >
                       {rank}
                     </div>
