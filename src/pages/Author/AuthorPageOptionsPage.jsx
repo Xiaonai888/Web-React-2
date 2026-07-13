@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function getStoredAuthorPage() {
@@ -35,9 +35,13 @@ export default function AuthorPageOptionsPage() {
   const navigate = useNavigate()
   const [message, setMessage] = useState('')
   const authorPage = useMemo(() => getStoredAuthorPage(), [])
-  const pageUsername = authorPage?.page_username || ''
+const pageUsername = authorPage?.page_username || ''
 
-  function copyPageLink() {
+useEffect(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+}, [])
+
+function copyPageLink() {
     const path = pageUsername ? `/author/page/${pageUsername}` : '/author/page'
     const link = `${window.location.origin}${path}`
 
