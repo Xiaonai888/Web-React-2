@@ -527,8 +527,9 @@ export default function StoryDetailPage() {
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/reader/status/${realStoryId}`, {
-          headers: authHeaders(),
-        })
+  headers: authHeaders(),
+  cache: 'no-store',
+})
 
         const data = await response.json().catch(() => ({}))
 
@@ -539,7 +540,8 @@ export default function StoryDetailPage() {
         if (ignore) return
 
         setBookmarked(Boolean(data.bookmarked))
-        setSubscribed(Boolean(data.subscribed))
+        const isSubscribed = data.subscribed === true || data.subscribed === 1 || data.subscribed === 'true'
+setSubscribed(isSubscribed)
       } catch {
         if (ignore) return
         setBookmarked(false)
