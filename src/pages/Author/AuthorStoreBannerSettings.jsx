@@ -258,14 +258,7 @@ const changed =
       <i className="fa-regular fa-image text-[28px]" />
       <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
     </div>
-  )}
-</div>
-    </>
-  ) : (
-    <div className="flex h-full flex-col items-center justify-center text-[#9ca3af]">
-      <i className="fa-regular fa-image text-[28px]" />
-      <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
-    </div>
+ 
   )}
 </div>
 
