@@ -862,8 +862,13 @@ export default function CommentSection({
   story,
   variant = 'page',
   onCommentsChange,
+  episodeOptions = [],
+  selectedEpisodeId,
+  onEpisodeChange,
+  onCommentTotalChange,
 }) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [episodeMenuOpen, setEpisodeMenuOpen] = useState(false)
 const sortDragRef = useRef({
   active: false,
   pointerId: null,
@@ -890,6 +895,10 @@ const [comments, setComments] = useState([])
   const [totalComments, setTotalComments] = useState(0)
   const isModal = variant === 'modal'
   const selectedSort = COMMENT_SORT_OPTIONS.find((option) => option.value === sort) || COMMENT_SORT_OPTIONS[0]
+  const selectedEpisode = episodeOptions.find(
+    (item) => String(item.id) === String(selectedEpisodeId || targetId)
+  )
+  const canSwitchEpisode = targetType === 'episode' && episodeOptions.length > 0
   const currentUser = getCurrentUser()
   const token = getReaderToken()
 
@@ -914,7 +923,9 @@ const [comments, setComments] = useState([])
       setComments(nextComments)
       setPage(Number(data.page || nextPage))
       setHasMore(Boolean(data.has_more))
-      setTotalComments(Number(data.total || nextComments.length))
+      const nextTotal = Number(data.total || nextComments.length)
+      setTotalComments(nextTotal)
+      onCommentTotalChange?.(nextTotal)
       onCommentsChange?.(nextComments)
     } catch (error) {
       showToast(error.message || 'Failed to load comments.')
@@ -1008,7 +1019,9 @@ const [comments, setComments] = useState([])
       const nextComments = [newComment, ...comments]
 
       updateComments(nextComments)
-      setTotalComments((value) => value + 1)
+      const nextTotal = totalComments + 1
+      setTotalComments(nextTotal)
+      onCommentTotalChange?.(nextTotal)
       setText('')
     } catch (error) {
       showToast(error.message || 'Failed to create comment.')
@@ -1127,7 +1140,9 @@ const [comments, setComments] = useState([])
       })
 
       updateComments(nextComments)
-      setTotalComments((value) => value + 1)
+      const nextTotal = totalComments + 1
+      setTotalComments(nextTotal)
+      onCommentTotalChange?.(nextTotal)
     } catch (error) {
       showToast(error.message || 'Failed to create reply.')
     }
@@ -1278,11 +1293,11 @@ const [comments, setComments] = useState([])
         }))
 
       updateComments(nextComments)
-      setTotalComments(
-        Number.isFinite(Number(data.comment_count))
-          ? Number(data.comment_count)
-          : Math.max(0, totalComments - 1)
-      )
+      const nextTotal = Number.isFinite(Number(data.comment_count))
+        ? Number(data.comment_count)
+        : Math.max(0, totalComments - 1)
+      setTotalComments(nextTotal)
+      onCommentTotalChange?.(nextTotal)
       showToast('Comment deleted.')
     } catch (error) {
       showToast(error.message || 'Failed to delete comment.')
@@ -1318,7 +1333,9 @@ const [comments, setComments] = useState([])
 
       if (action === 'delete') {
         updateComments(comments.filter((item) => item.id !== comment.id))
-        setTotalComments((value) => Math.max(0, value - 1))
+        const nextTotal = Math.max(0, totalComments - 1)
+        setTotalComments(nextTotal)
+        onCommentTotalChange?.(nextTotal)
         showToast('Comment deleted.')
         return
       }
@@ -1424,8 +1441,8 @@ const handleSortDragCancel = (event) => {
 
 return (
     <section className={`${isModal ? 'relative flex h-full flex-col bg-white' : 'min-h-screen bg-white pb-[84px]'}`}>
-     <div className="relative z-10 shrink-0 bg-white px-4 pb-1 pt-0">
-  <div className="mx-auto flex max-w-3xl items-center">
+  <div className="relative z-10 shrink-0 bg-white px-4 pb-1 pt-0">
+  <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
     <button
       type="button"
       onClick={() => setSortMenuOpen(true)}
@@ -1434,7 +1451,46 @@ return (
       <span>{selectedSort.label}</span>
       <i className="fa-solid fa-chevron-down text-[11px]" />
     </button>
+
+    {canSwitchEpisode ? (
+      <button
+        type="button"
+        onClick={() => setEpisodeMenuOpen((value) => !value)}
+        className="flex items-center gap-1 text-[14px] font-normal text-[#667085] active:scale-95"
+      >
+        <span>Episode {selectedEpisode?.episode_number || ''}</span>
+        <i className={`fa-solid fa-chevron-${episodeMenuOpen ? 'up' : 'down'} text-[10px]`} />
+      </button>
+    ) : null}
   </div>
+
+  {episodeMenuOpen ? (
+    <div className="absolute right-4 top-8 z-[30] w-[220px] overflow-hidden rounded-[16px] border border-[#e5e7eb] bg-white py-1 shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
+      <div className="max-h-[260px] overflow-y-auto">
+        {episodeOptions.map((item) => {
+          const active = String(item.id) === String(selectedEpisodeId || targetId)
+          const total = Math.max(0, Number(item.total_comments || 0))
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                onEpisodeChange?.(String(item.id))
+                setEpisodeMenuOpen(false)
+              }}
+              className={`flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left active:bg-[#f8fafc] ${
+                active ? 'bg-[#fff1f4] text-[#ff3b5f]' : 'text-[#111827]'
+              }`}
+            >
+              <span className="text-[14px] font-semibold">Episode {item.episode_number || ''}</span>
+              <span className="text-[12px] font-normal">{total} {total === 1 ? 'comment' : 'comments'}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  ) : null}
 </div>
 
       {sortMenuOpen ? (
