@@ -326,6 +326,21 @@ export default function StoryDetailPage() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [realStoryId])
 
+  useLayoutEffect(() => {
+    if (!episodeListOpen) return undefined
+
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+    }
+  }, [episodeListOpen])
+
   useEffect(() => {
     let ignore = false
 
