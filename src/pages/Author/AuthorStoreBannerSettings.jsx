@@ -229,7 +229,7 @@ const changed =
     <>
       <img src={previewUrl} alt="Store banner preview" className="h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/55 to-transparent" />
-      <div className="absolute inset-y-0 left-0 flex w-[58%] flex-col justify-center px-4">
+      <div className="absolute left-4 top-1/2 w-[46%]">
         <h3 className="text-[18px] font-black leading-tight text-[#6d28d9]">
           {title || 'Author Store'}
         </h3>
