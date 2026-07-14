@@ -4481,6 +4481,7 @@ return (
   story={story}
   targetType="episode"
   targetId={episode?.id || episodeId}
+  episodes={episodes}
   title={episode?.title || story?.title || 'Comments'}
   onClose={() => setCommentsOpen(false)}
   onCommentChanged={handleCommentChanged}
