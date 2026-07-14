@@ -419,8 +419,12 @@ function cancelReactionPress() {
     onClick={() => onEcho(post)}
     className="inline-flex items-center gap-1.5 active:scale-95"
   >
-    <i className="fa-solid fa-retweet text-[15px]" />
-    {formatCompactNumber(post.echo_count)}
+    <img
+  src="/assets/Icons/echo.svg"
+  alt=""
+  className="h-[15px] w-[15px] object-contain"
+/>
+{formatCompactNumber(post.echo_count)}
   </button>
 </div>
     </article>
