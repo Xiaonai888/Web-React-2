@@ -4013,11 +4013,15 @@ setReaderGateReady(true)
 
 
 useEffect(() => {
-  setReaderHeaderVisible(false)
+  setReaderHeaderVisible(Boolean(lockedEpisode))
   setBottomActionsVisible(false)
   lastScrollYRef.current = window.scrollY || document.documentElement.scrollTop
 
   const handleActionBarVisibility = () => {
+    if (lockedEpisode) {
+  setReaderHeaderVisible(true)
+  return
+}
   const currentScrollY = window.scrollY || document.documentElement.scrollTop
   const previousScrollY = lastScrollYRef.current
   const difference = currentScrollY - previousScrollY
@@ -4048,8 +4052,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener('scroll', handleActionBarVisibility)
   }
-}, [episodeId, scrollSubscribeDismissed, subscribed])
-
+}, [episodeId, lockedEpisode, scrollSubscribeDismissed, subscribed])
 
   useEffect(() => {
     if (!storyId || !episodeId || reviewProgressSaved) return
