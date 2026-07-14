@@ -227,19 +227,39 @@ const changed =
     </div>
   ) : previewUrl ? (
     <>
-      <img src={previewUrl} alt="Store banner preview" className="h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/55 to-transparent" />
-      <div className="absolute left-4 top-1/2 w-[46%]">
-        <h3 className="text-[18px] font-black leading-tight text-[#6d28d9]">
+      <img
+        src={previewUrl}
+        alt="Store banner preview"
+        className="h-full w-full object-cover"
+      />
+
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-white/80 via-white/30 to-transparent" />
+
+      <div className="absolute left-4 top-1/2 w-[46%] sm:left-6">
+        <h2 className="line-clamp-1 text-[18px] font-black leading-tight text-[#6d28d9] sm:text-[23px]">
           {title || 'Author Store'}
-        </h3>
-        <p className="mt-1 whitespace-pre-line text-[11px] font-semibold leading-4 text-[#111827]">
+        </h2>
+
+        <p className="mt-1 line-clamp-2 whitespace-pre-line text-[10px] font-semibold leading-[15px] text-[#111827] sm:text-[12px]">
           {subtitle || 'Books, PDFs & Special Releases'}
         </p>
-        <span className="mt-3 w-fit rounded-[9px] bg-black px-4 py-2 text-[10px] font-bold text-white">
+
+        <button
+          type="button"
+          tabIndex={-1}
+          className="mt-2.5 h-8 rounded-[9px] bg-black px-4 text-[10px] font-bold text-white shadow-sm sm:h-9 sm:text-[11px]"
+        >
           {buttonText || 'Shop Now →'}
-        </span>
+        </button>
       </div>
+    </>
+  ) : (
+    <div className="flex h-full flex-col items-center justify-center text-[#9ca3af]">
+      <i className="fa-regular fa-image text-[28px]" />
+      <span className="mt-2 text-[12px] font-bold">No Store Banner</span>
+    </div>
+  )}
+</div>
     </>
   ) : (
     <div className="flex h-full flex-col items-center justify-center text-[#9ca3af]">
