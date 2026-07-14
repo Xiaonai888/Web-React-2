@@ -305,7 +305,7 @@ const changed =
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={loading || saving}
-          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:opacity-50"
+          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-[#111827] text-[13px] font-normal text-white active:scale-[0.98] disabled:opacity-50"
         >
           <i className="fa-solid fa-arrow-up-from-bracket text-[13px]" />
           {previewUrl ? 'Change Banner' : 'Upload Banner'}
@@ -316,7 +316,7 @@ const changed =
             type="button"
             onClick={removeBanner}
             disabled={saving}
-            className="mt-3 h-11 w-full rounded-[14px] bg-[#fff1f2] text-[13px] font-black text-[#b91c1c] ring-1 ring-[#fecdd3] active:scale-[0.98] disabled:opacity-50"
+            className="mt-3 h-11 w-full rounded-[14px] bg-[#fff1f2] text-[13px] font-normal text-[#b91c1c] ring-1 ring-[#fecdd3] active:scale-[0.98] disabled:opacity-50"
           >
             Remove Banner
           </button>
@@ -327,18 +327,12 @@ const changed =
         type="button"
         onClick={saveBanner}
         disabled={loading || saving || !changed}
-        className="h-12 w-full rounded-[16px] bg-[#111827] text-[13px] font-black text-white active:scale-[0.98] disabled:bg-[#d1d5db]"
+        className="h-12 w-full rounded-[16px] bg-[#111827] text-[13px] font-normal text-white active:scale-[0.98] disabled:bg-[#d1d5db]"
       >
         {saving ? 'Saving...' : 'Save'}
       </button>
 
-      <button
-        type="button"
-        onClick={onBack}
-        className="h-11 w-full rounded-[14px] bg-white text-[13px] font-black text-[#111827] ring-1 ring-black/10 active:scale-[0.98]"
-      >
-        Back to Settings
-      </button>
+      
     </section>
   )
 }
