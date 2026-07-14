@@ -190,13 +190,14 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
             : 'border-transparent ring-1 ring-inset ring-black/5 dark:ring-white/10'
         }`}
         style={{
-          backgroundImage: `linear-gradient(145deg, ${hexToRgba(color, 0.18)}, ${hexToRgba(color, 0.06)})`,
-        }}
+  backgroundImage: `linear-gradient(145deg, ${hexToRgba(color, 0.09)}, ${hexToRgba(color, 0.025)})`,
+  boxShadow: '0 8px 20px rgba(17, 24, 39, 0.055)',
+}}
       >
         <div className="flex items-start justify-between gap-2">
           <span
   className="relative flex h-8 w-8 items-center justify-center rounded-[11px]"
-  style={{ backgroundColor: hexToRgba(color, 0.16), color }}
+  style={{ backgroundColor: hexToRgba(color, 0.09), color }}
 >
   <Folder className="h-3.5 w-3.5" strokeWidth={1.9} />
 
