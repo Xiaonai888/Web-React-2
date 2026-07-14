@@ -190,14 +190,13 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
             : 'border-transparent ring-1 ring-inset ring-black/5 dark:ring-white/10'
         }`}
         style={{
-  backgroundImage: `linear-gradient(145deg, ${hexToRgba(color, 0.09)}, ${hexToRgba(color, 0.025)})`,
-  boxShadow: '0 8px 20px rgba(17, 24, 39, 0.055)',
-}}
+          backgroundImage: `linear-gradient(145deg, ${hexToRgba(color, 0.18)}, ${hexToRgba(color, 0.06)})`,
+        }}
       >
         <div className="flex items-start justify-between gap-2">
           <span
   className="relative flex h-8 w-8 items-center justify-center rounded-[11px]"
-  style={{ backgroundColor: hexToRgba(color, 0.09), color }}
+  style={{ backgroundColor: hexToRgba(color, 0.16), color }}
 >
   <Folder className="h-3.5 w-3.5" strokeWidth={1.9} />
 
@@ -768,15 +767,30 @@ export default function SavedPostsPage() {
               ) : null}
             </div>
           ) : !error ? (
-            <div className="rounded-[24px] bg-white px-6 py-12 text-center ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f0ff] text-[#6d4aff] dark:bg-[#6d4aff]/15 dark:text-[#b9a8ff]">
-                <Bookmark className="h-7 w-7" strokeWidth={1.7} />
-              </div>
-              <h2 className="mt-4 text-[17px] font-black text-[#111827] dark:text-white">No saved posts yet</h2>
-              <p className="mx-auto mt-2 max-w-[300px] text-[12.5px] leading-6 text-[#8d94a1] dark:text-white/45">
-                Posts saved from readers, authors, and promoted content will appear here.
-              </p>
-            </div>
+            <div className="rounded-[24px] bg-white px-6 py-10 text-center ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10">
+  <img
+    src="/assets/Icons/Folder.svg"
+    alt=""
+    className="mx-auto h-auto w-[130px] object-contain"
+  />
+
+  <h2 className="mt-3 text-[17px] font-black text-[#111827] dark:text-white">
+    No saved posts yet
+  </h2>
+
+  <p className="mx-auto mt-2 max-w-[300px] text-[12.5px] leading-6 text-[#8d94a1] dark:text-white/45">
+    Posts saved from readers, authors, and promoted content will appear here.
+  </p>
+
+  <button
+    type="button"
+    onClick={() => navigate('/discover')}
+    className="mx-auto mt-5 flex h-11 items-center justify-center gap-2 rounded-[14px] border border-[#cfc4ff] bg-white px-5 text-[12.5px] font-bold text-[#6d4aff] shadow-[0_6px_18px_rgba(109,74,255,0.08)] active:scale-[0.98] dark:bg-white/5 dark:text-[#b9a8ff]"
+  >
+    <Bookmark className="h-4 w-4" strokeWidth={1.9} />
+    Browse Posts
+  </button>
+</div>
           ) : null}
         </section>
       </main>
