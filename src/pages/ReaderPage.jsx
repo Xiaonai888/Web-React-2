@@ -3392,12 +3392,14 @@ useEffect(() => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reader/status/${storyId}`, {
-        headers: readerAuthHeaders(),
-      })
-      const data = await response.json().catch(() => ({}))
+  headers: readerAuthHeaders(),
+  cache: 'no-store',
+})
+const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) throw new Error()
-      if (!ignore) setSubscribed(Boolean(data.subscribed))
+if (!response.ok || data.ok === false) throw new Error()
+const isSubscribed = data.subscribed === true || data.subscribed === 1 || data.subscribed === 'true'
+if (!ignore) setSubscribed(isSubscribed)
     } catch {
       if (!ignore) setSubscribed(false)
     }
