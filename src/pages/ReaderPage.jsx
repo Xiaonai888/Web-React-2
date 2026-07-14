@@ -2401,7 +2401,7 @@ const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
                     state: {
                       storyPreview: story,
                       episodePreview: item,
-                      returnSource: 'readerEpisodeList',
+                      returnSource: location.state?.returnSource || 'readerEpisodeList',
                     },
                   })
                 }}
