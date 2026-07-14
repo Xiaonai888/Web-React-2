@@ -195,17 +195,17 @@ function CollectionCard({ collection, active, onSelect, onMenu }) {
       >
         <div className="flex items-start justify-between gap-2">
           <span
-            className="relative flex h-8 w-8 items-center justify-center rounded-[11px] text-white"
-            style={{ backgroundColor: color }}
-          >
-            <Folder className="h-3.5 w-3.5" fill="currentColor" strokeWidth={1.6} />
+  className="relative flex h-8 w-8 items-center justify-center rounded-[11px]"
+  style={{ backgroundColor: hexToRgba(color, 0.16), color }}
+>
+  <Folder className="h-3.5 w-3.5" strokeWidth={1.9} />
 
-            {active ? (
-              <span className="absolute -right-1 -top-1 flex h-[17px] w-[17px] items-center justify-center rounded-full bg-[#6d4aff] text-white ring-2 ring-white dark:ring-[#171923]">
-                <Check className="h-2.5 w-2.5" strokeWidth={2.7} />
-              </span>
-            ) : null}
-          </span>
+  {active ? (
+    <span className="absolute -right-1 -top-1 flex h-[17px] w-[17px] items-center justify-center rounded-full bg-white text-[#6d4aff] ring-1 ring-[#dcd6ff] dark:bg-[#171923] dark:text-white dark:ring-white/15">
+      <Check className="h-2.5 w-2.5" strokeWidth={2.7} />
+    </span>
+  ) : null}
+</span>
         </div>
 
         <div className="mt-2 line-clamp-1 text-[12px] font-bold text-[#111827] dark:text-white">
@@ -667,11 +667,11 @@ export default function SavedPostsPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveType(tab.key)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-[11.5px] transition ${
-                    active
-                      ? 'bg-[#6d4aff] font-extrabold text-white'
-                      : 'bg-[#f8f8fb] font-semibold text-[#6b7280] ring-1 ring-black/5 dark:bg-white/10 dark:text-white/60 dark:ring-white/10'
-                  }`}
+                  className={`shrink-0 rounded-full px-4 py-2 text-[11.5px] transition active:scale-[0.97] ${
+  active
+    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] font-extrabold text-white shadow-[0_8px_20px_rgba(124,91,255,0.25)]'
+    : 'bg-white/80 font-semibold text-[#74759b] shadow-[0_5px_14px_rgba(124,91,255,0.06)] ring-1 ring-[#eeeaff] dark:bg-white/10 dark:text-white/60 dark:ring-white/10'
+}`}
                 >
                   {tab.label}
                 </button>
