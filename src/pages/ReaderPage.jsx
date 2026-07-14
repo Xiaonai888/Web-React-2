@@ -1627,7 +1627,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
             className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
             aria-label="Show subscribe popup"
           >
-            <i className="fa-solid fa-heart text-[13px] text-[#ff3b5f]" />
+            <i className="fa-regular fa-heart text-[13px] text-[#98a2b3]" />
           </button>
 
           <img
