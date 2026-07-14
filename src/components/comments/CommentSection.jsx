@@ -865,9 +865,13 @@ export default function CommentSection({
   episodeOptions = [],
   selectedEpisodeId,
   onEpisodeChange,
+  episodeOptions = [],
+  selectedEpisodeId,
+  onEpisodeChange,
   onCommentTotalChange,
 }) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [episodeMenuOpen, setEpisodeMenuOpen] = useState(false)
   const [episodeMenuOpen, setEpisodeMenuOpen] = useState(false)
 const sortDragRef = useRef({
   active: false,
@@ -896,7 +900,7 @@ const [comments, setComments] = useState([])
   const isModal = variant === 'modal'
   const selectedSort = COMMENT_SORT_OPTIONS.find((option) => option.value === sort) || COMMENT_SORT_OPTIONS[0]
   const selectedEpisode = episodeOptions.find(
-    (item) => String(item.id) === String(selectedEpisodeId || targetId)
+      (item) => String(item.id || item.episode_id) === String(selectedEpisodeId || targetId)
   )
   const canSwitchEpisode = targetType === 'episode' && episodeOptions.length > 0
   const currentUser = getCurrentUser()
