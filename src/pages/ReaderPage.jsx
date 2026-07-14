@@ -1543,15 +1543,7 @@ function ProgressLineIcon() {
   )
 }
 
-function getSubscribeHiddenKey(storyId) {
-  return `shadow_reader_subscribe_hidden_${storyId}`
-}
-
-function getSubscribeEligibleKey(storyId) {
-  return `shadow_reader_subscribe_eligible_${storyId}`
-}
-
-function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
+function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, onSubscribe, onClose }) {
   const [expandedByUser, setExpandedByUser] = useState(false)
   const [actionState, setActionState] = useState('idle')
   const dismissTimerRef = useRef(null)
@@ -1605,13 +1597,18 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
     dismissAfterAnimation('closing', 280)
   }
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     if (actionState !== 'idle') return
+
+    const success = await onSubscribe?.()
+
+    if (!success) return
+
     setExpandedByUser(true)
     dismissAfterAnimation('success', 1200)
   }
 
-  if (!visible || !storyId) return null
+  if (!visible || !storyId || subscribed) return null
 
   const bannerMotionClass =
     actionState === 'success'
@@ -1626,7 +1623,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
         <div className="pointer-events-auto ml-auto flex h-[62px] w-[calc(100vw-24px)] max-w-[430px] translate-x-[calc(100%-30px)] items-center gap-2 rounded-full bg-white px-3 shadow-[0_12px_34px_rgba(17,24,39,0.20)] transition-transform duration-300 ease-out">
           <button
             type="button"
-            onClick={() => setExpandedByUser(true)}
+            onClick={handleSubscribe}
             className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
             aria-label="Show subscribe popup"
           >
@@ -1647,7 +1644,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
 
           <button
             type="button"
-            onClick={() => setExpandedByUser(true)}
+            onClick={handleSubscribe}
             className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff3b5f] px-4 text-[12px] font-bold text-white active:scale-95"
           >
             <i className="fa-regular fa-heart text-[14px]" />
@@ -1875,6 +1872,9 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, onClose }) {
 
 function ReaderBottomActionBar({
   visible,
+  theme,
+  subscribed,
+  onSubscribe,
   story,
   episode,
   commentRefreshKey,
@@ -1893,18 +1893,6 @@ function ReaderBottomActionBar({
   const sideSubscribeTimerRef = useRef(null)
   const safeProgress = Math.max(0, Math.min(100, Math.round(Number(readingProgress || 0))))
   const storyId = story?.id || story?.story_id || episode?.story_id || ''
-  const subscribeHiddenKey = storyId ? getSubscribeHiddenKey(storyId) : ''
-  const subscribeEligibleKey = storyId ? getSubscribeEligibleKey(storyId) : ''
-
-  const [subscribeHidden, setSubscribeHidden] = useState(() => {
-    if (!storyId) return false
-    return localStorage.getItem(getSubscribeHiddenKey(storyId)) === '1'
-  })
-
-  const [subscribeEligible, setSubscribeEligible] = useState(() => {
-    if (!storyId) return false
-    return localStorage.getItem(getSubscribeEligibleKey(storyId)) === '1'
-  })
 
   const fallbackCommentTotal = Number(
     story?.total_comments ||
@@ -1926,43 +1914,16 @@ function ReaderBottomActionBar({
 
     setSideSubscribeState('idle')
 
-    if (!storyId) {
-      setSubscribeHidden(false)
-      setSubscribeEligible(false)
-      return
-    }
-
-    setSubscribeHidden(localStorage.getItem(getSubscribeHiddenKey(storyId)) === '1')
-    setSubscribeEligible(localStorage.getItem(getSubscribeEligibleKey(storyId)) === '1')
   }, [storyId])
 
-  useEffect(() => {
-    if (!storyId || subscribeHidden || subscribeEligible) return
-
-    if (safeProgress >= 35) {
-      localStorage.setItem(subscribeEligibleKey, '1')
-      setSubscribeEligible(true)
-    }
-  }, [safeProgress, storyId, subscribeHidden, subscribeEligible, subscribeEligibleKey])
-
-  const handleSubscribeClick = () => {
+  const handleSubscribeClick = async () => {
     if (sideSubscribeState !== 'idle') return
 
-    if (subscribeHiddenKey) {
-      localStorage.setItem(subscribeHiddenKey, '1')
-    }
+    const success = await onSubscribe?.()
+
+    if (!success) return
 
     setSideSubscribeState('success')
-
-    sideSubscribeTimerRef.current = window.setTimeout(() => {
-      setSideSubscribeState('hiding')
-
-      sideSubscribeTimerRef.current = window.setTimeout(() => {
-        setSubscribeHidden(true)
-        setSideSubscribeState('idle')
-        sideSubscribeTimerRef.current = null
-      }, 280)
-    }, 760)
   }
 
   useEffect(() => {
@@ -2113,7 +2074,7 @@ function ReaderBottomActionBar({
   }
 `}</style>
 
-      {visible && showSubscribeOnDoubleTap && storyId && subscribeEligible && !subscribeHidden ? (
+      {visible && showSubscribeOnDoubleTap && storyId && !subscribed ? (
         <button
   type="button"
   onClick={handleSubscribeClick}
@@ -2186,7 +2147,7 @@ function ReaderBottomActionBar({
 
       ) : null}
 
-      <div className="pointer-events-auto mx-auto max-w-3xl bg-white/95 shadow-[0_-10px_28px_rgba(17,24,39,0.06)] backdrop-blur md:rounded-[18px] md:border md:border-[#e5e7eb] md:shadow-[0_14px_34px_rgba(17,24,39,0.10)]">
+      <div className={`pointer-events-auto mx-auto max-w-3xl ${theme.card}/95 shadow-[0_-10px_28px_rgba(17,24,39,0.06)] backdrop-blur md:rounded-[18px] md:border md:border-[#e5e7eb] md:shadow-[0_14px_34px_rgba(17,24,39,0.10)]`}>
         {progressOpen ? (
           <div className="grid h-[48px] grid-cols-[58px_1fr_58px] items-center gap-3 border-b border-[#eef1f5] px-4">
             {previousEpisode ? (
@@ -3347,7 +3308,10 @@ export default function ReaderPage() {
   const [unlockingEpisode, setUnlockingEpisode] = useState(false)
   const [fontSizeIndex, setFontSizeIndex] = useState(getInitialFontSizeIndex)
   const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-sans-khmer')
-  const [themeName, setThemeName] = useState(() => localStorage.getItem('reader_theme') || 'paper')
+  const [themeName, setThemeName] = useState(() => {
+  const savedTheme = localStorage.getItem('reader_theme')
+  return savedTheme === 'paper' ? 'light' : savedTheme || 'light'
+})
   const [brightness, setBrightness] = useState(() => Number(localStorage.getItem('reader_brightness') || 100))
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
   const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
@@ -3393,6 +3357,8 @@ useEffect(() => {
   const [readerDoubleTapVisible, setReaderDoubleTapVisible] = useState(false)
   const [scrollSubscribePopupVisible, setScrollSubscribePopupVisible] = useState(false)
   const [scrollSubscribeDismissed, setScrollSubscribeDismissed] = useState(false)
+const [subscribed, setSubscribed] = useState(false)
+const [savingSubscribe, setSavingSubscribe] = useState(false)
   const [readerAdPolicy, setReaderAdPolicy] = useState(null)
   const [readerAdvertisement, setReaderAdvertisement] = useState(null)
   const [readerAdFinished, setReaderAdFinished] = useState(false)
@@ -3404,13 +3370,78 @@ useEffect(() => {
     activeReadingTargetRef.current = activeReadingTarget
   }, [activeReadingTarget])
 
-  const theme = READER_THEMES[themeName] || READER_THEMES.paper
+  const theme = READER_THEMES[themeName] || READER_THEMES.light
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const brightnessOpacity = Math.max(0, Math.min(0.35, (100 - brightness) / 125))
   const pagingPages = useMemo(() => {
     return createPagingPages(episode?.content || '', lineSpacing, fontSizePx)
   }, [episode?.content, fontSizePx, lineSpacing])
+
+
+useEffect(() => {
+  let ignore = false
+
+  async function loadSubscriptionStatus() {
+    const token = getReaderToken()
+
+    if (!token || !storyId) {
+      setSubscribed(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reader/status/${storyId}`, {
+        headers: readerAuthHeaders(),
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) throw new Error()
+      if (!ignore) setSubscribed(Boolean(data.subscribed))
+    } catch {
+      if (!ignore) setSubscribed(false)
+    }
+  }
+
+  loadSubscriptionStatus()
+
+  return () => {
+    ignore = true
+  }
+}, [storyId])
+
+const handleSubscribe = async () => {
+  const token = getReaderToken()
+
+  if (!token) {
+    navigate('/login')
+    return false
+  }
+
+  if (subscribed) return true
+  if (savingSubscribe) return false
+
+  setSavingSubscribe(true)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/reader/subscriptions/${storyId}`, {
+      method: 'POST',
+      headers: readerAuthHeaders(),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) throw new Error()
+
+    setSubscribed(true)
+    setScrollSubscribePopupVisible(false)
+    setScrollSubscribeDismissed(true)
+    return true
+  } catch {
+    return false
+  } finally {
+    setSavingSubscribe(false)
+  }
+}
 
   useEffect(() => {
     localStorage.setItem('reader_font_size_index', String(fontSizeIndex))
@@ -3998,6 +4029,7 @@ useEffect(() => {
   setReaderDoubleTapVisible(false)
 
   const shouldShowSubscribe =
+    !subscribed &&
     !scrollSubscribeDismissed &&
     currentScrollY > 30 &&
     (difference < 0 || (difference > 0 && scrolledPercent >= 70))
@@ -4014,7 +4046,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener('scroll', handleActionBarVisibility)
   }
-}, [episodeId, scrollSubscribeDismissed])
+}, [episodeId, scrollSubscribeDismissed, subscribed])
 
 
   useEffect(() => {
@@ -4489,6 +4521,8 @@ return (
   visible={scrollSubscribePopupVisible}
   storyId={storyId}
   readingProgress={readingProgress}
+  subscribed={subscribed}
+  onSubscribe={handleSubscribe}
   onClose={() => {
     setScrollSubscribePopupVisible(false)
     setScrollSubscribeDismissed(true)
@@ -4497,6 +4531,9 @@ return (
       
      <ReaderBottomActionBar
   visible={bottomActionsVisible && !lockedEpisode && !echoShareOpen && !settingsOpen && !fontSelectOpen && !resetOpen && !episodeListOpen && !commentsOpen && adultAccepted && !loading && Boolean(episode) && !shouldBlockReaderContent}
+  theme={theme}
+  subscribed={subscribed}
+  onSubscribe={handleSubscribe}
   story={story}
   episode={episode}
   commentRefreshKey={commentRefreshKey}
@@ -4749,4 +4786,3 @@ onUnlock={handleLockedDiamondUnlock}
     </div>
   )
 }
-
