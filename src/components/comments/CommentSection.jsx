@@ -865,13 +865,9 @@ export default function CommentSection({
   episodeOptions = [],
   selectedEpisodeId,
   onEpisodeChange,
-  episodeOptions = [],
-  selectedEpisodeId,
-  onEpisodeChange,
   onCommentTotalChange,
 }) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
-  const [episodeMenuOpen, setEpisodeMenuOpen] = useState(false)
   const [episodeMenuOpen, setEpisodeMenuOpen] = useState(false)
 const sortDragRef = useRef({
   active: false,
