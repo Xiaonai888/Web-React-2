@@ -1608,7 +1608,7 @@ function ScrollSubscribePopup({ visible, storyId, readingProgress, subscribed, o
     dismissAfterAnimation('success', 1200)
   }
 
-  if (!visible || !storyId || subscribed) return null
+  if (!visible || !storyId || (subscribed && actionState === 'idle')) return null
 
   const bannerMotionClass =
     actionState === 'success'
