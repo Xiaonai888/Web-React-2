@@ -19,6 +19,7 @@ export default function CommentsModal({
   story,
   targetType = 'story',
   targetId,
+  episodes = [],
   title,
   onClose,
   onCommentChanged,
@@ -30,6 +31,13 @@ export default function CommentsModal({
   const draggingRef = useRef(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [episodeEchoTotal, setEpisodeEchoTotal] = useState(0)
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
+
+useEffect(() => {
+  if (open && targetType === 'episode') setSelectedEpisodeId(String(targetId || ''))
+}, [open, targetId, targetType])
+
+const activeEpisodeId = selectedEpisodeId || String(targetId || '')
 
   useEffect(() => {
     if (!open) return undefined
@@ -221,10 +229,13 @@ export default function CommentsModal({
         <div className="min-h-0 flex-1 overflow-hidden">
           <CommentSection
             targetType={targetType}
-            targetId={targetId || story?.id}
-            story={story}
-            variant="modal"
-            onCommentsChange={onCommentChanged}
+            targetId={activeEpisodeId || story?.id}
+story={story}
+variant="modal"
+onCommentsChange={onCommentChanged}
+episodeOptions={episodes}
+selectedEpisodeId={activeEpisodeId}
+onEpisodeChange={setSelectedEpisodeId}
           />
         </div>
       </section>
