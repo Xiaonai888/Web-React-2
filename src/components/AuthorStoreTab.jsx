@@ -313,7 +313,7 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
 
     <div className="pointer-events-none absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-white/80 via-white/30 to-transparent" />
 
-    <div className="absolute left-4 top-[62%] w-[46%] -translate-y-1/2 sm:left-6">
+    <div className="absolute left-4 top-1/2 w-[46%] sm:left-6">
       <h2 className="line-clamp-1 text-[18px] font-black leading-tight text-[#6d28d9] sm:text-[23px]">
         {author.profile_details.store_banner_title || 'Author Store'}
       </h2>
