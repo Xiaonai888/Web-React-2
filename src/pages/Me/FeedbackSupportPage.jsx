@@ -106,9 +106,9 @@ function Stepper({ step }) {
   ]
 
   return (
-    <div className="px-5 pb-5 pt-6 sm:px-8">
-      <div className="relative mx-auto flex max-w-[610px] justify-between">
-        <div className="absolute left-[8%] right-[8%] top-[13px] h-[2px] bg-[#d9d9df] dark:bg-white/15" />
+    <div className="px-4 pb-6 pt-6 sm:px-5">
+      <div className="relative flex w-full justify-between">
+        <div className="absolute left-[8%] right-[8%] top-[13px] h-[2px] rounded-full bg-[#e8e3f8] dark:bg-white/10" />
         <div
           className="absolute left-[8%] top-[13px] h-[2px] bg-[#7458e8] transition-all duration-300"
           style={{ width: `${Math.max(0, step - 1) * 42}%` }}
@@ -120,10 +120,10 @@ function Stepper({ step }) {
           return (
             <div key={item.number} className="relative z-10 flex w-[72px] flex-col items-center">
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border-[2px] text-[10px] font-black transition ${
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black transition ${
                   active
-                    ? 'border-[#7458e8] bg-[#7458e8] text-white shadow-[0_4px_12px_rgba(116,88,232,0.22)]'
-                    : 'border-[#aaaab0] bg-[#fafafa] text-[#8d8d94] dark:bg-[#0d0f16]'
+                    ? 'bg-[#7458e8] text-white shadow-[0_5px_14px_rgba(116,88,232,0.28)]'
+                    : 'bg-white text-[#918b9e] shadow-[0_3px_12px_rgba(45,35,82,0.10)] dark:bg-[#1b1d28]'
                 }`}
               >
                 {item.number < step ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : item.number}
@@ -141,12 +141,12 @@ function Stepper({ step }) {
 
 function HelpCenterCard({ navigate }) {
   return (
-    <section className="mt-4 flex items-center gap-3 rounded-[16px] border border-[#d9ceff] bg-[#f9f6ff] p-3.5 dark:border-[#7458e8]/30 dark:bg-[#7458e8]/10 sm:p-4">
+    <section className="mt-4 flex items-center gap-3 rounded-[18px] bg-white p-3.5 dark:bg-[#7458e8]/10 sm:p-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#eee8ff] text-[#7458e8] dark:bg-white/10 dark:text-[#b9aaf7]">
         <BookOpen className="h-5 w-5" strokeWidth={1.9} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-black text-[#242334] dark:text-white">Check Help Center first</div>
+        <div className="text-[13px] font-normal text-[#242334] dark:text-white">Check Help Center first</div>
         <p className="mt-0.5 text-[11px] leading-[17px] text-[#7e7a89] dark:text-white/50">
           Find common answers and get help faster.
         </p>
@@ -154,7 +154,7 @@ function HelpCenterCard({ navigate }) {
       <button
         type="button"
         onClick={() => navigate('/help')}
-        className="shrink-0 rounded-[14px] bg-[#7458e8] px-3.5 py-2.5 text-[11px] font-black text-white shadow-[0_6px_15px_rgba(116,88,232,0.2)] active:scale-[0.98] sm:px-4"
+        className="shrink-0 rounded-full bg-[#7458e8] px-3.5 py-2.5 text-[11px] font-normal text-white active:scale-[0.98] sm:px-4"
       >
         Browse Help
       </button>
@@ -219,7 +219,7 @@ export default function FeedbackSupportPage() {
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setMessage('Screenshot must be 5 MB or smaller.')
+      setMessage('Screenshot must be 2 MB or smaller.')
       return
     }
 
@@ -334,8 +334,8 @@ export default function FeedbackSupportPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-[#fafafa] px-4 py-8 dark:bg-[#0d0f16]">
-        <section className="mx-auto max-w-[520px] rounded-[20px] border border-[#e8e4f3] bg-white p-6 text-center shadow-[0_12px_35px_rgba(28,23,55,0.07)] dark:border-white/10 dark:bg-[#171923]">
+      <main className="min-h-screen bg-[#f8f7fb] px-4 py-8 dark:bg-[#0d0f16]">
+        <section className="mx-auto max-w-[520px] rounded-[22px] bg-white p-6 text-center shadow-[0_14px_38px_rgba(40,28,78,0.10)] dark:bg-[#171923]">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f8ef] text-[#178a55]">
             <CircleCheck className="h-8 w-8" strokeWidth={1.9} />
           </span>
@@ -360,12 +360,12 @@ export default function FeedbackSupportPage() {
 
   return (
     <main className="min-h-screen bg-[#fafafa] pb-8 text-[#20202e] dark:bg-[#0d0f16] dark:text-white">
-      <header className="sticky top-0 z-40 border-b border-[#ecebf0] bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#171923]/95">
+      <header className="sticky top-0 z-40 bg-white/95 shadow-[0_3px_16px_rgba(40,31,70,0.06)] backdrop-blur dark:bg-[#171923]/95">
         <div className="relative mx-auto flex h-12 max-w-[760px] items-center justify-center px-4">
           <button type="button" onClick={goBack} aria-label="Back" className="absolute left-4 flex h-10 w-10 items-center justify-start active:scale-95">
             <ArrowLeft className="h-5 w-5" strokeWidth={2} />
           </button>
-          <h1 className="text-[16px] font-black tracking-[-0.02em]">Contact Support</h1>
+          <h1 className="text-[16px] font-bold tracking-[-0.02em]">Contact Support</h1>
         </div>
       </header>
 
@@ -374,28 +374,31 @@ export default function FeedbackSupportPage() {
 
         <div className="px-4 sm:px-5">
           {step === 1 ? (
-            <section className="rounded-[18px] border border-[#e9e7ed] bg-white p-4 shadow-[0_10px_28px_rgba(28,23,55,0.055)] dark:border-white/10 dark:bg-[#171923] sm:p-6">
-              <h2 className="text-[23px] font-black tracking-[-0.035em] sm:text-[26px]">Choose a topic</h2>
+            <section className="rounded-[20px] bg-transparent py-4 dark:bg-transparent sm:py-6">
+              <h2 className="text-[18px] font-black tracking-[-0.025em] sm:text-[20px]">Choose a topic</h2>
               <p className="mt-1 text-[12.5px] text-[#85818d] dark:text-white/50">We’ll help route your request.</p>
 
-              <div className="mt-5 space-y-2.5">
-                {topics.map((topic) => {
+              <div className="mt-5 overflow-hidden rounded-[15px] bg-white dark:bg-[#171923]">
+                {topics.map((topic, index) => {
                   const Icon = topic.icon
                   return (
                     <button
                       key={topic.id}
                       type="button"
                       onClick={() => selectTopic(topic.id)}
-                      className="group flex w-full items-center gap-3 rounded-[15px] border border-[#e5e4e9] bg-white px-3 py-3 text-left transition hover:border-[#cfc4f8] hover:bg-[#fcfbff] active:scale-[0.995] dark:border-white/10 dark:bg-[#171923] dark:hover:bg-white/5 sm:px-4"
+                      className="group relative flex w-full items-center gap-3 bg-white px-3 py-3 text-left transition-colors active:bg-[#f7f7f8] dark:bg-[#171923] dark:active:bg-white/5 sm:px-4"
                     >
                       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] ${topic.tone}`}>
                         <Icon className="h-5 w-5" strokeWidth={1.9} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13.5px] font-black text-[#272635] dark:text-white">{topic.title}</span>
+                        <span className="block text-[13.5px] font-normal text-[#272635] dark:text-white">{topic.title}</span>
                         <span className="mt-0.5 hidden text-[11px] leading-4 text-[#8d8995] dark:text-white/45 sm:block">{topic.description}</span>
                       </span>
                       <ChevronRight className="h-5 w-5 shrink-0 text-[#99969f] transition group-hover:translate-x-0.5 group-hover:text-[#7458e8]" strokeWidth={1.8} />
+                      {index < topics.length - 1 ? (
+                        <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#f1f1f1] dark:bg-white/10" />
+                      ) : null}
                     </button>
                   )
                 })}
@@ -404,7 +407,7 @@ export default function FeedbackSupportPage() {
           ) : null}
 
           {step === 2 ? (
-            <section className="rounded-[18px] border border-[#e9e7ed] bg-white p-4 shadow-[0_10px_28px_rgba(28,23,55,0.055)] dark:border-white/10 dark:bg-[#171923] sm:p-6">
+            <section className="rounded-[20px] bg-transparent p-4 dark:bg-transparent sm:p-6">
               <div className="flex items-center gap-3">
                 {selectedTopic ? (
                   <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] ${selectedTopic.tone}`}>
@@ -412,7 +415,7 @@ export default function FeedbackSupportPage() {
                   </span>
                 ) : null}
                 <div>
-                  <h2 className="text-[20px] font-black tracking-[-0.025em]">Tell us more</h2>
+                  <h2 className="text-[17px] font-bold tracking-[-0.02em]">Tell us more</h2>
                   <p className="mt-0.5 text-[11.5px] text-[#85818d] dark:text-white/50">{selectedTopic?.title}</p>
                 </div>
               </div>
@@ -428,7 +431,7 @@ export default function FeedbackSupportPage() {
                       setMessage('')
                     }}
                     placeholder="Short summary of the problem"
-                    className="mt-2 h-12 w-full rounded-[14px] border border-[#dedce4] bg-[#fbfbfc] px-3.5 text-[13px] font-medium outline-none transition placeholder:text-[#aaa7b0] focus:border-[#7458e8] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:border-white/10 dark:bg-white/5 dark:focus:border-[#9c88ef]"
+                    className="mt-2 h-12 w-full rounded-[14px] bg-[#f8f7fb] px-3.5 text-[13px] font-medium shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-white/5"
                   />
                 </label>
 
@@ -442,7 +445,7 @@ export default function FeedbackSupportPage() {
                       setMessage('')
                     }}
                     placeholder="Describe what happened and what you expected..."
-                    className="mt-2 min-h-[150px] w-full resize-none rounded-[14px] border border-[#dedce4] bg-[#fbfbfc] px-3.5 py-3 text-[13px] font-medium leading-6 outline-none transition placeholder:text-[#aaa7b0] focus:border-[#7458e8] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:border-white/10 dark:bg-white/5 dark:focus:border-[#9c88ef]"
+                    className="mt-2 min-h-[150px] w-full resize-none rounded-[14px] bg-[#f8f7fb] px-3.5 py-3 text-[13px] font-medium leading-6 shadow-[inset_0_0_0_1px_rgba(116,88,232,0.08)] outline-none transition placeholder:text-[#aaa7b0] focus:bg-white focus:ring-4 focus:ring-[#7458e8]/10 dark:bg-white/5"
                   />
                   <span className="mt-1 block text-right text-[10px] font-semibold text-[#9d99a3]">{description.length}/3000</span>
                 </label>
@@ -450,18 +453,18 @@ export default function FeedbackSupportPage() {
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] font-black text-[#3b3948] dark:text-white/75">Screenshot</span>
-                    <span className="text-[10.5px] font-semibold text-[#9a97a1]">Optional · Max 5 MB</span>
+                    <span className="text-[10.5px] font-semibold text-[#9a97a1]">Optional · Max 2 MB</span>
                   </div>
                   <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
                   {screenshotPreview ? (
-                    <div className="relative mt-2 overflow-hidden rounded-[14px] border border-[#dedce4] bg-[#f7f6f9] p-2 dark:border-white/10 dark:bg-white/5">
+                    <div className="relative mt-2 overflow-hidden rounded-[14px] bg-[#f7f5fb] p-2 shadow-[0_5px_16px_rgba(56,42,98,0.08)] dark:bg-white/5">
                       <img src={screenshotPreview} alt="Screenshot preview" className="max-h-52 w-full rounded-[10px] object-contain" />
                       <button type="button" onClick={removeScreenshot} aria-label="Remove screenshot" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white active:scale-95">
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => fileRef.current?.click()} className="mt-2 flex h-24 w-full items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#cfc8e7] bg-[#fbfaff] text-[12px] font-black text-[#7458e8] active:scale-[0.995] dark:border-[#7458e8]/40 dark:bg-[#7458e8]/10">
+                    <button type="button" onClick={() => fileRef.current?.click()} className="mt-2 flex h-24 w-full items-center justify-center gap-2 rounded-[14px] bg-[#f7f3ff] text-[12px] font-normal text-[#7458e8] shadow-[inset_0_0_0_1px_rgba(116,88,232,0.10)] active:scale-[0.995] dark:bg-[#7458e8]/10">
                       <ImagePlus className="h-5 w-5" strokeWidth={1.9} />
                       Add Screenshot
                     </button>
@@ -469,21 +472,21 @@ export default function FeedbackSupportPage() {
                 </div>
               </div>
 
-              {message ? <div className="mt-4 rounded-[13px] border border-[#f0c9c9] bg-[#fff3f3] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)]">{message}</div> : null}
 
-              <button type="button" onClick={openReview} className="mt-5 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-black text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]">
+              <button type="button" onClick={openReview} className="mt-5 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]">
                 Continue to Review
               </button>
             </section>
           ) : null}
 
           {step === 3 ? (
-            <section className="rounded-[18px] border border-[#e9e7ed] bg-white p-4 shadow-[0_10px_28px_rgba(28,23,55,0.055)] dark:border-white/10 dark:bg-[#171923] sm:p-6">
-              <h2 className="text-[22px] font-black tracking-[-0.03em]">Review your request</h2>
+            <section className="rounded-[20px] bg-white p-4 shadow-[0_12px_32px_rgba(48,35,90,0.085)] dark:bg-[#171923] sm:p-6">
+              <h2 className="text-[17px] font-bold tracking-[-0.02em]">Review your request</h2>
               <p className="mt-1 text-[12px] text-[#85818d] dark:text-white/50">Check the details before submitting.</p>
 
-              <div className="mt-5 overflow-hidden rounded-[15px] border border-[#e5e3ea] dark:border-white/10">
-                <div className="flex items-center gap-3 border-b border-[#eceaf0] px-4 py-3.5 dark:border-white/10">
+              <div className="mt-5 space-y-2.5">
+                <div className="flex items-center gap-3 rounded-[14px] bg-[#faf9fd] px-4 py-3.5 dark:bg-white/5">
                   {selectedTopic ? (
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${selectedTopic.tone}`}>
                       <selectedTopic.icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
@@ -491,17 +494,17 @@ export default function FeedbackSupportPage() {
                   ) : null}
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-[0.06em] text-[#9a96a1]">Topic</div>
-                    <div className="mt-0.5 text-[13px] font-black">{selectedTopic?.title}</div>
+                    <div className="mt-0.5 text-[13px] font-bold">{selectedTopic?.title}</div>
                   </div>
                 </div>
-                <div className="border-b border-[#eceaf0] px-4 py-3.5 dark:border-white/10">
+                <div className="rounded-[14px] bg-[#faf9fd] px-4 py-3.5 dark:bg-white/5">
                   <div className="text-[10px] font-black uppercase tracking-[0.06em] text-[#9a96a1]">Subject</div>
                   <div className="mt-1 text-[13px] font-bold leading-5">{subject.trim()}</div>
                 </div>
-                <div className="px-4 py-3.5">
+                <div className="rounded-[14px] bg-[#faf9fd] px-4 py-3.5 dark:bg-white/5">
                   <div className="text-[10px] font-black uppercase tracking-[0.06em] text-[#9a96a1]">Description</div>
                   <p className="mt-1 whitespace-pre-line text-[12.5px] leading-6 text-[#5f5b69] dark:text-white/65">{description.trim()}</p>
-                  {screenshotPreview ? <img src={screenshotPreview} alt="Attached screenshot" className="mt-3 max-h-56 w-full rounded-[12px] border border-[#e5e3ea] object-contain dark:border-white/10" /> : null}
+                  {screenshotPreview ? <img src={screenshotPreview} alt="Attached screenshot" className="mt-3 max-h-56 w-full rounded-[12px] object-contain shadow-[0_5px_16px_rgba(56,42,98,0.08)]" /> : null}
                 </div>
               </div>
 
@@ -509,13 +512,13 @@ export default function FeedbackSupportPage() {
                 Your request and attachment are private and visible only to Shadow support administrators.
               </div>
 
-              {message ? <div className="mt-4 rounded-[13px] border border-[#f0c9c9] bg-[#fff3f3] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)]">{message}</div> : null}
 
               <div className="mt-5 grid grid-cols-[0.8fr_1.2fr] gap-2.5">
-                <button type="button" onClick={() => setStep(2)} className="h-12 rounded-[14px] border border-[#dedbe6] bg-white text-[12.5px] font-black text-[#5c5865] active:scale-[0.99] dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+                <button type="button" onClick={() => setStep(2)} className="h-12 rounded-[14px] bg-[#f2eff8] text-[12.5px] font-normal text-[#5c5865] active:scale-[0.99] dark:bg-white/5 dark:text-white/70">
                   Edit
                 </button>
-                <button type="button" onClick={submitRequest} disabled={submitting} className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[#7458e8] text-[12.5px] font-black text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99] disabled:opacity-60">
+                <button type="button" onClick={submitRequest} disabled={submitting} className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[#7458e8] text-[12.5px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99] disabled:opacity-60">
                   {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
                   {submitting ? 'Submitting...' : 'Submit Request'}
                 </button>
@@ -525,7 +528,7 @@ export default function FeedbackSupportPage() {
 
           <HelpCenterCard navigate={navigate} />
 
-          <button type="button" onClick={loadRequests} className="mx-auto mt-4 flex h-11 items-center justify-center gap-2 rounded-[14px] px-4 text-[12.5px] font-black text-[#7458e8] active:bg-[#f2edff] dark:active:bg-white/5">
+          <button type="button" onClick={loadRequests} className="mx-auto mt-4 flex h-11 items-center justify-center gap-2 rounded-[14px] px-4 text-[12.5px] font-normal text-[#7458e8] active:bg-[#f2edff] dark:active:bg-white/5">
             View my support requests
             <ChevronRight className="h-4 w-4" strokeWidth={2} />
           </button>
@@ -535,10 +538,10 @@ export default function FeedbackSupportPage() {
       {requestsOpen ? (
         <div className="fixed inset-0 z-[100]">
           <button type="button" aria-label="Close requests" onClick={() => setRequestsOpen(false)} className="absolute inset-0 bg-black/40" />
-          <section className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[24px] bg-[#fafafa] shadow-2xl dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[20px]">
-            <header className="flex items-center justify-between border-b border-[#e8e6ec] bg-white px-4 py-3 dark:border-white/10 dark:bg-[#171923]">
+          <section className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[24px] bg-[#f8f7fb] shadow-2xl dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[20px]">
+            <header className="flex items-center justify-between bg-white px-4 py-3 shadow-[0_3px_15px_rgba(40,31,70,0.06)] dark:bg-[#171923]">
               <div>
-                <h2 className="text-[16px] font-black">My Support Requests</h2>
+                <h2 className="text-[16px] font-bold">My Support Requests</h2>
                 <p className="mt-0.5 text-[10.5px] text-[#918d98] dark:text-white/45">Track updates from Shadow support.</p>
               </div>
               <button type="button" onClick={() => setRequestsOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f0f4] active:scale-95 dark:bg-white/10">
@@ -550,7 +553,7 @@ export default function FeedbackSupportPage() {
               {requestsLoading ? (
                 <div className="flex min-h-48 items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#7458e8]" /></div>
               ) : requestsError ? (
-                <div className="rounded-[15px] border border-[#efcaca] bg-[#fff3f3] px-4 py-5 text-center text-[12px] font-bold text-[#b84d52]">{requestsError}</div>
+                <div className="rounded-[15px] bg-[#fff1f2] px-4 py-5 text-center text-[12px] font-bold text-[#b84d52] shadow-[0_6px_18px_rgba(187,77,82,0.08)]">{requestsError}</div>
               ) : requests.length ? (
                 <div className="space-y-2.5">
                   {requests.map((request) => {
@@ -558,7 +561,7 @@ export default function FeedbackSupportPage() {
                     const Icon = topic?.icon || FileText
                     const status = request.status || 'submitted'
                     return (
-                      <article key={request.id} className="rounded-[16px] border border-[#e6e4ea] bg-white p-4 shadow-sm dark:border-white/10 dark:bg-[#171923]">
+                      <article key={request.id} className="rounded-[16px] bg-white p-4 shadow-[0_7px_20px_rgba(48,35,90,0.08)] dark:bg-[#171923]">
                         <div className="flex items-start gap-3">
                           <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${topic?.tone || 'bg-[#f0eaff] text-[#7458e8]'}`}>
                             <Icon className="h-[18px] w-[18px]" />
@@ -587,7 +590,7 @@ export default function FeedbackSupportPage() {
                   })}
                 </div>
               ) : (
-                <div className="rounded-[16px] border border-[#e6e4ea] bg-white px-5 py-10 text-center dark:border-white/10 dark:bg-[#171923]">
+                <div className="rounded-[16px] bg-white px-5 py-10 text-center shadow-[0_7px_20px_rgba(48,35,90,0.08)] dark:bg-[#171923]">
                   <FileText className="mx-auto h-7 w-7 text-[#aaa6b0]" />
                   <h3 className="mt-3 text-[14px] font-black">No support requests</h3>
                   <p className="mt-1 text-[11.5px] text-[#918d98] dark:text-white/45">Your submitted requests will appear here.</p>
