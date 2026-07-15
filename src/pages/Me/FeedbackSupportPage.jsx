@@ -209,9 +209,9 @@ function RequestsModal({
               {selectedRequest ? selectedRequest.ticket_code : 'Track updates from Shadow support.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
-            <X className="h-4 w-4" />
-          </button>
+          <button type="button" onClick={onClose} aria-label="Close" className="-mt-1.5 flex h-9 w-9 shrink-0 self-start items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
+  <X className="h-4 w-4" />
+</button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
