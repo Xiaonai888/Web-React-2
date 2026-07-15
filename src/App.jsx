@@ -137,6 +137,7 @@ const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
 const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
+const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
 
 
 function ComingSoon({ title }) {
@@ -207,6 +208,8 @@ function AppShell() {
     '/gift-guide',
     '/premium',
     '/about',
+    '/help',
+
     
   ]
 
@@ -1037,7 +1040,7 @@ const shouldShowOpeningAds =
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
-        <Route path="/help" element={<ComingSoon title="Help Center" />} />
+        <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
