@@ -1893,6 +1893,7 @@ function ReaderBottomActionBar({
   const sideSubscribeTimerRef = useRef(null)
   const safeProgress = Math.max(0, Math.min(100, Math.round(Number(readingProgress || 0))))
   const storyId = story?.id || story?.story_id || episode?.story_id || ''
+  const episodeId = episode?.id || episode?.episode_id || ''
 
   const fallbackCommentTotal = Number(
   episode?.total_comments ||
@@ -1943,7 +1944,7 @@ function ReaderBottomActionBar({
 
       try {
         const token = getReaderToken()
-        const response = await fetch(`${API_BASE_URL}/api/comments/story/${storyId}?page=1&limit=1&sort=newest`, {
+        const response = await fetch(`${API_BASE_URL}/api/comments/episode/${episodeId}?page=1&limit=1&sort=newest`, {
           headers: token
             ? {
                 Authorization: `Bearer ${token}`,
