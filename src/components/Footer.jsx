@@ -1,17 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
-function HeartIcon({ active }) {
-  return (
-    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
-      <path
-        d="M12 20.3 10.6 19C5.4 14.3 2 11.2 2 7.4 2 4.4 4.4 2 7.4 2c1.7 0 3.4.8 4.6 2.1C13.2 2.8 14.9 2 16.6 2 19.6 2 22 4.4 22 7.4c0 3.8-3.4 6.9-8.6 11.6L12 20.3Z"
-        fill={active ? '#F6C800' : 'none'}
-        stroke="#111827"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+function StoriesIcon() {
+  return <img src="/assets/Icons/Stories.svg" alt="" aria-hidden="true" width="21" height="21" />
 }
 
 function PlayIcon({ active }) {
@@ -104,7 +94,7 @@ function SmileIcon({ active }) {
 }
 
 const NAV = [
-  { to: '/', label: 'For You', Icon: HeartIcon },
+  { to: '/', label: 'Stories', Icon: StoriesIcon },
   { to: '/fast', label: 'Fast', Icon: PlayIcon },
   { to: '/discover', label: 'Discover', Icon: CompassIcon },
   { to: '/library', label: 'Library', Icon: BookIcon },
