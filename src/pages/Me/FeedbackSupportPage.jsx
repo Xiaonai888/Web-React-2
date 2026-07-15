@@ -197,7 +197,7 @@ function RequestsModal({
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#d4d2d8] sm:hidden" />
         <header className="flex min-h-[64px] items-center gap-3 bg-white px-4 py-3 dark:bg-[#171923]">
           {selectedRequest ? (
-            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f2f5] active:scale-95 dark:bg-white/10">
+            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center text-black active:scale-95">
               <ArrowLeft className="h-4 w-4" />
             </button>
           ) : null}
@@ -209,7 +209,7 @@ function RequestsModal({
               {selectedRequest ? selectedRequest.ticket_code : 'Track updates from Shadow support.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f1f0f4] active:scale-95 dark:bg-white/10">
+          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center text-black active:scale-95">
             <X className="h-4 w-4" />
           </button>
         </header>
