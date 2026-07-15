@@ -325,16 +325,14 @@ export default function CommentsModal({
         style={{ transform: `translateY(${dragOffset}px)` }}
       >
         <div
-          role="presentation"
-          onPointerDown={handleDragStart}
-          onPointerMove={handleDragMove}
-          onPointerUp={handleDragEnd}
-          onPointerCancel={handleDragEnd}
-          className={`shrink-0 cursor-grab bg-white px-4 ${
-            targetType === 'story' ? 'h-6' : 'pt-2.5 pb-0'
-          }`}
-          style={{ touchAction: 'none' }}
-        />
+  role="presentation"
+  onPointerDown={handleDragStart}
+  onPointerMove={handleDragMove}
+  onPointerUp={handleDragEnd}
+  onPointerCancel={handleDragEnd}
+  className="shrink-0 cursor-grab bg-white px-4 pt-2.5 pb-0"
+  style={{ touchAction: 'none' }}
+/>
 
         {targetType === 'story' ? (
   <header className="shrink-0 bg-white px-4 pb-4">
