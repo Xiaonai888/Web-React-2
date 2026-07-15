@@ -506,38 +506,38 @@ export default function AuthorPostComposerSheet({
                 ) : null}
               </div>
 
-              <div className="border-t border-[#eef0f4] bg-white px-4 py-3">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex h-11 items-center gap-3 rounded-[14px] px-2 text-[14px] font-normal text-[#111827] active:bg-[#f3f4f6]"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#f4f5f7] text-[#111827]" aria-hidden="true">
-  <svg
-    className="h-[23px] w-[19px]"
-    viewBox="0 0 22 26"
-    fill="none"
+              <div className="border-t border-[#eef0f4] bg-white px-4 py-4">
+  <button
+    type="button"
+    onClick={() => fileInputRef.current?.click()}
+    className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98]"
+    aria-label="Open Gallery"
   >
-    <rect
-      x="3"
-      y="3"
-      width="16"
-      height="20"
-      rx="3"
-      stroke="currentColor"
-      strokeWidth="2"
+    <svg
+      className="h-[27px] w-[27px]"
+      viewBox="0 0 22 26"
       fill="none"
-    />
-    <circle cx="7.5" cy="8.8" r="1.45" fill="currentColor" />
-    <path
-      d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
-      fill="currentColor"
-    />
-  </svg>
-</span>
-                  Add photo
-                </button>
-              </div>
+      aria-hidden="true"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="16"
+        height="20"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="7.5" cy="8.8" r="1.45" fill="currentColor" />
+      <path
+        d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
+        fill="currentColor"
+      />
+    </svg>
+
+    <span className="text-[14px] font-normal">Gallery</span>
+  </button>
+</div>
             </main>
           </>
         ) : (
