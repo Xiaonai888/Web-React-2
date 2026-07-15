@@ -138,6 +138,7 @@ const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStor
 const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
+const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
 
 
 function ComingSoon({ title }) {
@@ -209,8 +210,7 @@ function AppShell() {
     '/premium',
     '/about',
     '/help',
-
-    
+    '/feedback',
   ]
 
   const shouldHideFooter =
@@ -1039,7 +1039,7 @@ const shouldShowOpeningAds =
         <Route path="/inbox" element={<InboxPage />} />
         <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
-        <Route path="/feedback" element={<ComingSoon title="Feedback" />} />
+        <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
         <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
