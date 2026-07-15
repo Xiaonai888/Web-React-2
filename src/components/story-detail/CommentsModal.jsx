@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CommentSection from '../comments/CommentSection'
 
@@ -31,13 +31,26 @@ export default function CommentsModal({
   const draggingRef = useRef(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [episodeEchoTotal, setEpisodeEchoTotal] = useState(0)
+  const [episodeLikeTotal, setEpisodeLikeTotal] = useState(0)
   const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
+  const [episodeCommentTotals, setEpisodeCommentTotals] = useState({})
 
-useEffect(() => {
-  if (open && targetType === 'episode') setSelectedEpisodeId(String(targetId || ''))
-}, [open, targetId, targetType])
+  const episodeList = useMemo(
+    () =>
+      [...episodes]
+        .filter((item) => item?.id || item?.episode_id)
+        .sort((first, second) => Number(first.episode_number || 0) - Number(second.episode_number || 0)),
+    [episodes]
+  )
 
-const activeEpisodeId = selectedEpisodeId || String(targetId || '')
+  const activeEpisodeId =
+    targetType === 'episode'
+      ? selectedEpisodeId || String(targetId || '')
+      : targetId
+
+  const activeEpisode = episodeList.find(
+    (item) => String(item.id || item.episode_id) === String(activeEpisodeId)
+  )
 
   useEffect(() => {
     if (!open) return undefined
@@ -51,7 +64,75 @@ const activeEpisodeId = selectedEpisodeId || String(targetId || '')
   }, [open])
 
   useEffect(() => {
-    if (!open || targetType !== 'episode' || !targetId) {
+    if (!open || targetType !== 'episode') return
+
+    setSelectedEpisodeId(String(targetId || ''))
+  }, [open, targetId, targetType])
+
+  useEffect(() => {
+    if (!open || targetType !== 'episode' || !episodeList.length) {
+      setEpisodeCommentTotals({})
+      return undefined
+    }
+
+    let ignore = false
+    const initialTotals = Object.fromEntries(
+      episodeList.map((item) => [
+        String(item.id || item.episode_id),
+        Math.max(0, Number(item.total_comments || item.comment_count || item.comments_count || 0)),
+      ])
+    )
+
+    setEpisodeCommentTotals(initialTotals)
+
+    async function loadEpisodeCommentTotals() {
+      const pendingEpisodes = [...episodeList]
+
+      async function loadNext() {
+        while (pendingEpisodes.length) {
+          const item = pendingEpisodes.shift()
+          const itemId = item?.id || item?.episode_id
+
+          if (!itemId) continue
+
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/api/comments/episode/${itemId}?page=1&limit=1&sort=top`,
+              { cache: 'no-store' }
+            )
+            const data = await response.json().catch(() => ({}))
+
+            if (!response.ok || data.ok === false || ignore) continue
+
+            const total = Math.max(
+              0,
+              Number(data.total ?? data.total_comments ?? data.count ?? 0)
+            )
+
+            setEpisodeCommentTotals((current) =>
+              current[String(itemId)] === total
+                ? current
+                : { ...current, [String(itemId)]: total }
+            )
+          } catch {
+          }
+        }
+      }
+
+      await Promise.all(
+        Array.from({ length: Math.min(4, pendingEpisodes.length) }, loadNext)
+      )
+    }
+
+    loadEpisodeCommentTotals()
+
+    return () => {
+      ignore = true
+    }
+  }, [episodeList, open, targetType])
+
+  useEffect(() => {
+    if (!open || targetType !== 'episode' || !activeEpisodeId) {
       setEpisodeEchoTotal(0)
       return undefined
     }
@@ -61,7 +142,7 @@ const activeEpisodeId = selectedEpisodeId || String(targetId || '')
     async function loadEpisodeEchoTotal() {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/echoes/episode/${targetId}?page=1&limit=1`
+          `${API_BASE_URL}/api/echoes/episode/${activeEpisodeId}?page=1&limit=1`
         )
 
         const data = await response.json().catch(() => ({}))
@@ -79,23 +160,69 @@ const activeEpisodeId = selectedEpisodeId || String(targetId || '')
     return () => {
       ignore = true
     }
-  }, [open, targetId, targetType])
+  }, [activeEpisodeId, open, targetType])
+
+  useEffect(() => {
+    if (!open || targetType !== 'episode' || !activeEpisodeId) {
+      setEpisodeLikeTotal(0)
+      return undefined
+    }
+
+    let ignore = false
+
+    async function loadEpisodeLikeTotal() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reactions/episode/${activeEpisodeId}/status`,
+          { cache: 'no-store' }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!ignore && response.ok && data.ok !== false) {
+          setEpisodeLikeTotal(Math.max(0, Number(data.total_likes || 0)))
+        }
+      } catch {
+        if (!ignore) setEpisodeLikeTotal(0)
+      }
+    }
+
+    loadEpisodeLikeTotal()
+
+    return () => {
+      ignore = true
+    }
+  }, [activeEpisodeId, open, targetType])
 
   if (!open) return null
 
-  const totalLikes = Number(
-    story?.total_likes ||
-      story?.like_count ||
-      story?.likes_count ||
-      0
-  )
+  const totalLikes =
+    targetType === 'episode'
+      ? episodeLikeTotal
+      : Number(
+          story?.total_likes ||
+            story?.like_count ||
+            story?.likes_count ||
+            0
+        )
 
-  const totalComments = Number(
-    story?.total_comments ||
-      story?.comment_count ||
-      story?.comments_count ||
-      0
-  )
+  const totalComments =
+    targetType === 'episode'
+      ? Math.max(
+          0,
+          Number(
+            episodeCommentTotals[String(activeEpisodeId)] ??
+              activeEpisode?.total_comments ??
+              activeEpisode?.comment_count ??
+              activeEpisode?.comments_count ??
+              0
+          )
+        )
+      : Number(
+          story?.total_comments ||
+            story?.comment_count ||
+            story?.comments_count ||
+            0
+        )
 
   const totalEcho =
     targetType === 'episode'
@@ -111,27 +238,39 @@ const activeEpisodeId = selectedEpisodeId || String(targetId || '')
         )
 
   const handleOpenEpisodeReactions = () => {
-    if (targetType !== 'episode' || !story?.id || !targetId) return
+    if (targetType !== 'episode' || !story?.id || !activeEpisodeId) return
 
     sessionStorage.setItem(
       'shadow_reopen_episode_comments',
-      `${story.id}:${targetId}`
+      `${story.id}:${activeEpisodeId}`
     )
 
     onClose()
-    navigate(`/story/${story.id}/episode/${targetId}/reactions`)
+    navigate(`/story/${story.id}/episode/${activeEpisodeId}/reactions`)
   }
 
   const handleOpenEpisodeEchoes = () => {
-    if (targetType !== 'episode' || !story?.id || !targetId) return
+    if (targetType !== 'episode' || !story?.id || !activeEpisodeId) return
 
     sessionStorage.setItem(
       'shadow_reopen_episode_comments',
-      `${story.id}:${targetId}`
+      `${story.id}:${activeEpisodeId}`
     )
 
     onClose()
-    navigate(`/story/${story.id}/episode/${targetId}/echoes`)
+    navigate(`/story/${story.id}/episode/${activeEpisodeId}/echoes`)
+  }
+
+  const handleEpisodeCommentTotalChange = (total) => {
+    if (targetType !== 'episode' || !activeEpisodeId) return
+
+    const nextTotal = Math.max(0, Number(total || 0))
+
+    setEpisodeCommentTotals((current) =>
+      current[String(activeEpisodeId)] === nextTotal
+        ? current
+        : { ...current, [String(activeEpisodeId)]: nextTotal }
+    )
   }
 
   const handleDragStart = (event) => {
@@ -230,12 +369,17 @@ const activeEpisodeId = selectedEpisodeId || String(targetId || '')
           <CommentSection
             targetType={targetType}
             targetId={activeEpisodeId || story?.id}
-story={story}
-variant="modal"
-onCommentsChange={onCommentChanged}
-episodeOptions={episodes}
-selectedEpisodeId={activeEpisodeId}
-onEpisodeChange={setSelectedEpisodeId}
+            story={story}
+            variant="modal"
+            onCommentsChange={onCommentChanged}
+            episodeOptions={episodeList.map((item) => ({
+              id: item.id || item.episode_id,
+              episode_number: item.episode_number,
+              total_comments: episodeCommentTotals[String(item.id || item.episode_id)] || 0,
+            }))}
+            selectedEpisodeId={activeEpisodeId}
+            onEpisodeChange={setSelectedEpisodeId}
+            onCommentTotalChange={handleEpisodeCommentTotalChange}
           />
         </div>
       </section>
