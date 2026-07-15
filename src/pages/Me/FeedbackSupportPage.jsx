@@ -98,6 +98,13 @@ function formatDate(value) {
   })
 }
 
+function formatFileSize(value) {
+  const bytes = Number(value)
+  if (!Number.isFinite(bytes) || bytes <= 0) return ''
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 function Stepper({ step }) {
   const steps = [
     { number: 1, label: 'Topic' },
@@ -106,8 +113,8 @@ function Stepper({ step }) {
   ]
 
   return (
-    <div className="px-4 pb-6 pt-6 sm:px-5">
-      <div className="relative flex w-full justify-between">
+    <div className="px-5 pb-6 pt-6 sm:px-8">
+      <div className="relative mx-auto flex max-w-[610px] justify-between">
         <div className="absolute left-[8%] right-[8%] top-[13px] h-[2px] rounded-full bg-[#e8e3f8] dark:bg-white/10" />
         <div
           className="absolute left-[8%] top-[13px] h-[2px] bg-[#7458e8] transition-all duration-300"
@@ -162,6 +169,195 @@ function HelpCenterCard({ navigate }) {
   )
 }
 
+function RequestsModal({
+  open,
+  requests,
+  loading,
+  error,
+  selectedRequest,
+  detailLoading,
+  detailError,
+  onClose,
+  onOpenRequest,
+  onBackToList,
+  onNewRequest,
+}) {
+  if (!open) return null
+
+  const selectedTopic = selectedRequest
+    ? topics.find((item) => item.id === selectedRequest.topic)
+    : null
+  const SelectedIcon = selectedTopic?.icon || FileText
+  const selectedStatus = selectedRequest?.status || 'submitted'
+
+  return (
+    <div className="fixed inset-0 z-[100]">
+      <button type="button" aria-label="Close requests" onClick={onClose} className="absolute inset-0 bg-black/40" />
+      <section className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[24px] bg-[#f7f7f8] shadow-[0_-12px_40px_rgba(24,20,38,0.16)] dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[22px]">
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#d4d2d8] sm:hidden" />
+        <header className="flex min-h-[64px] items-center gap-3 bg-white px-4 py-3 dark:bg-[#171923]">
+          {selectedRequest ? (
+            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f2f5] active:scale-95 dark:bg-white/10">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[16px] font-bold text-[#242330] dark:text-white">
+              {selectedRequest ? 'Request Details' : 'My Support Requests'}
+            </h2>
+            <p className="mt-0.5 text-[10.5px] text-[#918d98] dark:text-white/45">
+              {selectedRequest ? selectedRequest.ticket_code : 'Track updates from Shadow support.'}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f1f0f4] active:scale-95 dark:bg-white/10">
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="max-h-[calc(88vh-68px)] overflow-y-auto p-4">
+          {selectedRequest ? (
+            <div>
+              {detailLoading ? (
+                <div className="flex min-h-48 items-center justify-center">
+                  <LoaderCircle className="h-6 w-6 animate-spin text-[#7458e8]" />
+                </div>
+              ) : (
+                <>
+                  {detailError ? (
+                    <div className="mb-3 rounded-[14px] bg-[#fff1f2] px-4 py-3 text-[11.5px] text-[#b84d52]">{detailError}</div>
+                  ) : null}
+
+                  <article className="overflow-hidden rounded-[18px] bg-white dark:bg-[#171923]">
+                    <div className="flex items-start gap-3 p-4">
+                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] ${selectedTopic?.tone || 'bg-[#f0eaff] text-[#7458e8]'}`}>
+                        <SelectedIcon className="h-5 w-5" strokeWidth={1.9} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="text-[13px] font-bold text-[#272635] dark:text-white">{selectedRequest.ticket_code}</div>
+                            <div className="mt-0.5 text-[10.5px] text-[#95919d]">Submitted {formatDate(selectedRequest.created_at)}</div>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9.5px] font-semibold ${statusStyles[selectedStatus] || statusStyles.submitted}`}>
+                            {statusLabels[selectedStatus] || selectedStatus}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mx-4 h-px bg-[#efedf2] dark:bg-white/10" />
+
+                    <dl className="px-4 py-1">
+                      <div className="grid grid-cols-[82px_1fr] gap-3 py-3 text-[12px]">
+                        <dt className="text-[#96929d]">Topic</dt>
+                        <dd className="font-medium text-[#34323e] dark:text-white/80">{selectedTopic?.title || selectedRequest.topic}</dd>
+                      </div>
+                      <div className="h-px bg-[#efedf2] dark:bg-white/10" />
+                      <div className="grid grid-cols-[82px_1fr] gap-3 py-3 text-[12px]">
+                        <dt className="text-[#96929d]">Subject</dt>
+                        <dd className="font-medium leading-5 text-[#34323e] dark:text-white/80">{selectedRequest.subject}</dd>
+                      </div>
+                      <div className="h-px bg-[#efedf2] dark:bg-white/10" />
+                      <div className="grid grid-cols-[82px_1fr] gap-3 py-3 text-[12px]">
+                        <dt className="text-[#96929d]">Description</dt>
+                        <dd className="whitespace-pre-line leading-5 text-[#5f5b69] dark:text-white/60">{selectedRequest.description}</dd>
+                      </div>
+                      {selectedRequest.screenshot_name ? (
+                        <>
+                          <div className="h-px bg-[#efedf2] dark:bg-white/10" />
+                          <div className="grid grid-cols-[82px_1fr] gap-3 py-3 text-[12px]">
+                            <dt className="text-[#96929d]">Screenshot</dt>
+                            <dd className="min-w-0">
+                              {selectedRequest.screenshot_url ? (
+                                <a href={selectedRequest.screenshot_url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-[12px] bg-[#f4f3f6] dark:bg-white/5">
+                                  <img src={selectedRequest.screenshot_url} alt={selectedRequest.screenshot_name} className="max-h-52 w-full object-contain" />
+                                </a>
+                              ) : null}
+                              <div className="mt-1.5 truncate text-[10.5px] text-[#77727f] dark:text-white/45">
+                                {selectedRequest.screenshot_name}
+                                {selectedRequest.screenshot_size ? ` · ${formatFileSize(selectedRequest.screenshot_size)}` : ''}
+                              </div>
+                            </dd>
+                          </div>
+                        </>
+                      ) : null}
+                    </dl>
+                  </article>
+
+                  <section className="mt-3 rounded-[18px] bg-white p-4 dark:bg-[#171923]">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-[13px] font-bold text-[#292735] dark:text-white">Shadow Support</h3>
+                      {selectedRequest.reviewed_at ? (
+                        <span className="text-[9.5px] text-[#9a96a1]">{formatDate(selectedRequest.reviewed_at)}</span>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 whitespace-pre-line text-[12px] leading-5 text-[#686371] dark:text-white/60">
+                      {selectedRequest.admin_reply || 'Your request is waiting for a reply from Shadow Support.'}
+                    </p>
+                  </section>
+                </>
+              )}
+            </div>
+          ) : loading ? (
+            <div className="flex min-h-48 items-center justify-center">
+              <LoaderCircle className="h-6 w-6 animate-spin text-[#7458e8]" />
+            </div>
+          ) : error ? (
+            <div className="rounded-[15px] bg-[#fff1f2] px-4 py-5 text-center text-[12px] text-[#b84d52]">{error}</div>
+          ) : requests.length ? (
+            <div>
+              <div className="space-y-2.5">
+                {requests.map((request) => {
+                  const topic = topics.find((item) => item.id === request.topic)
+                  const Icon = topic?.icon || FileText
+                  const status = request.status || 'submitted'
+
+                  return (
+                    <button key={request.id} type="button" onClick={() => onOpenRequest(request)} className="flex w-full items-start gap-3 rounded-[16px] bg-white p-4 text-left transition active:scale-[0.995] dark:bg-[#171923]">
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${topic?.tone || 'bg-[#f0eaff] text-[#7458e8]'}`}>
+                        <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-start justify-between gap-2">
+                          <span className="min-w-0">
+                            <span className="block text-[12px] font-bold text-[#292735] dark:text-white">{request.ticket_code}</span>
+                            <span className="mt-0.5 block line-clamp-2 text-[12px] leading-5 text-[#4f4b58] dark:text-white/65">{request.subject}</span>
+                          </span>
+                          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-semibold ${statusStyles[status] || statusStyles.submitted}`}>
+                            {statusLabels[status] || status}
+                          </span>
+                        </span>
+                        <span className="mt-1.5 flex items-center gap-1.5 text-[10px] text-[#9995a0] dark:text-white/40">
+                          <Clock3 className="h-3 w-3" />
+                          {formatDate(request.created_at)}
+                        </span>
+                      </span>
+                      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-[#a09ca6]" strokeWidth={1.8} />
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button type="button" onClick={onNewRequest} className="mt-4 h-12 w-full rounded-full bg-[#7458e8] text-[12.5px] font-normal text-white active:scale-[0.99]">
+                Send another request
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-[16px] bg-white px-5 py-10 text-center dark:bg-[#171923]">
+              <FileText className="mx-auto h-7 w-7 text-[#aaa6b0]" />
+              <h3 className="mt-3 text-[14px] font-bold">No support requests</h3>
+              <p className="mt-1 text-[11.5px] text-[#918d98] dark:text-white/45">Your submitted requests will appear here.</p>
+              <button type="button" onClick={onNewRequest} className="mt-5 h-11 rounded-full bg-[#7458e8] px-5 text-[12px] font-normal text-white">
+                Send a request
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function FeedbackSupportPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -179,6 +375,9 @@ export default function FeedbackSupportPage() {
   const [requests, setRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(false)
   const [requestsError, setRequestsError] = useState('')
+  const [selectedRequest, setSelectedRequest] = useState(null)
+  const [requestDetailLoading, setRequestDetailLoading] = useState(false)
+  const [requestDetailError, setRequestDetailError] = useState('')
 
   const selectedTopic = useMemo(() => topics.find((topic) => topic.id === topicId) || null, [topicId])
 
@@ -218,7 +417,7 @@ export default function FeedbackSupportPage() {
       setMessage('Please choose an image file.')
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
       setMessage('Screenshot must be 2 MB or smaller.')
       return
     }
@@ -303,6 +502,8 @@ export default function FeedbackSupportPage() {
     }
 
     setRequestsOpen(true)
+    setSelectedRequest(null)
+    setRequestDetailError('')
     setRequestsLoading(true)
     setRequestsError('')
 
@@ -321,6 +522,42 @@ export default function FeedbackSupportPage() {
     }
   }
 
+  async function openRequestDetails(request) {
+    const token = getReaderToken()
+    if (!token) {
+      navigate('/login', { state: { returnTo: location.pathname } })
+      return
+    }
+
+    setSelectedRequest(request)
+    setRequestDetailLoading(true)
+    setRequestDetailError('')
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/support/requests/${request.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load request details.')
+      setSelectedRequest(data.request || request)
+    } catch (error) {
+      setRequestDetailError(error.message || 'Failed to load request details.')
+    } finally {
+      setRequestDetailLoading(false)
+    }
+  }
+
+  function closeRequests() {
+    setRequestsOpen(false)
+    setSelectedRequest(null)
+    setRequestDetailError('')
+  }
+
+  function backToRequestList() {
+    setSelectedRequest(null)
+    setRequestDetailError('')
+  }
+
   function resetForm() {
     removeScreenshot()
     setTopicId('')
@@ -329,6 +566,7 @@ export default function FeedbackSupportPage() {
     setMessage('')
     setSuccess(false)
     setStep(1)
+    closeRequests()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -339,14 +577,14 @@ export default function FeedbackSupportPage() {
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f8ef] text-[#178a55]">
             <CircleCheck className="h-8 w-8" strokeWidth={1.9} />
           </span>
-          <h1 className="mt-5 text-[22px] font-bold text-[#20202e] dark:text-white">Request submitted</h1>
+          <h1 className="mt-5 text-[22px] font-black text-[#20202e] dark:text-white">Request submitted</h1>
           <p className="mx-auto mt-2 max-w-[390px] text-[13px] leading-6 text-[#797684] dark:text-white/55">
             Your support request was received. You can check its status from My Support Requests.
           </p>
           <button
             type="button"
             onClick={loadRequests}
-            className="mt-6 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]"
+            className="mt-6 h-12 w-full rounded-full bg-[#7458e8] text-[13px] font-normal text-white active:scale-[0.99]"
           >
             View My Requests
           </button>
@@ -354,6 +592,20 @@ export default function FeedbackSupportPage() {
             Send another request
           </button>
         </section>
+
+        <RequestsModal
+          open={requestsOpen}
+          requests={requests}
+          loading={requestsLoading}
+          error={requestsError}
+          selectedRequest={selectedRequest}
+          detailLoading={requestDetailLoading}
+          detailError={requestDetailError}
+          onClose={closeRequests}
+          onOpenRequest={openRequestDetails}
+          onBackToList={backToRequestList}
+          onNewRequest={resetForm}
+        />
       </main>
     )
   }
@@ -374,8 +626,8 @@ export default function FeedbackSupportPage() {
 
         <div className="px-4 sm:px-5">
           {step === 1 ? (
-            <section className="rounded-[20px] bg-transparent py-4 dark:bg-transparent sm:py-6">
-              <h2 className="text-[18px] font-black tracking-[-0.025em] sm:text-[20px]">Choose a topic</h2>
+            <section className="rounded-[20px] bg-transparent p-4 dark:bg-transparent sm:p-6">
+              <h2 className="text-[17px] font-bold tracking-[-0.02em] sm:text-[18px]">Choose a topic</h2>
               <p className="mt-1 text-[12.5px] text-[#85818d] dark:text-white/50">We’ll help route your request.</p>
 
               <div className="mt-5 overflow-hidden rounded-[15px] bg-white dark:bg-[#171923]">
@@ -474,7 +726,7 @@ export default function FeedbackSupportPage() {
 
               {message ? <div className="mt-4 rounded-[13px] bg-[#fff1f2] px-3.5 py-3 text-[11.5px] font-bold text-[#bb4d52] shadow-[0_5px_15px_rgba(187,77,82,0.08)]">{message}</div> : null}
 
-              <button type="button" onClick={openReview} className="mt-5 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]">
+              <button type="button" onClick={openReview} className="mt-5 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white active:scale-[0.99]">
                 Continue to Review
               </button>
             </section>
@@ -482,7 +734,7 @@ export default function FeedbackSupportPage() {
 
           {step === 3 ? (
             <section className="rounded-[20px] bg-white p-4 shadow-[0_12px_32px_rgba(48,35,90,0.085)] dark:bg-[#171923] sm:p-6">
-              <h2 className="text-[17px] font-bold tracking-[-0.02em]">Review your request</h2>
+              <h2 className="text-[18px] font-bold tracking-[-0.02em]">Review your request</h2>
               <p className="mt-1 text-[12px] text-[#85818d] dark:text-white/50">Check the details before submitting.</p>
 
               <div className="mt-5 space-y-2.5">
@@ -518,7 +770,7 @@ export default function FeedbackSupportPage() {
                 <button type="button" onClick={() => setStep(2)} className="h-12 rounded-[14px] bg-[#f2eff8] text-[12.5px] font-normal text-[#5c5865] active:scale-[0.99] dark:bg-white/5 dark:text-white/70">
                   Edit
                 </button>
-                <button type="button" onClick={submitRequest} disabled={submitting} className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[#7458e8] text-[12.5px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99] disabled:opacity-60">
+                <button type="button" onClick={submitRequest} disabled={submitting} className="flex h-12 items-center justify-center gap-2 rounded-[14px] bg-[#7458e8] text-[12.5px] font-normal text-white active:scale-[0.99] disabled:opacity-60">
                   {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
                   {submitting ? 'Submitting...' : 'Submit Request'}
                 </button>
@@ -535,71 +787,19 @@ export default function FeedbackSupportPage() {
         </div>
       </div>
 
-      {requestsOpen ? (
-        <div className="fixed inset-0 z-[100]">
-          <button type="button" aria-label="Close requests" onClick={() => setRequestsOpen(false)} className="absolute inset-0 bg-black/40" />
-          <section className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[24px] bg-[#f8f7fb] shadow-2xl dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[20px]">
-            <header className="flex items-center justify-between bg-white px-4 py-3 shadow-[0_3px_15px_rgba(40,31,70,0.06)] dark:bg-[#171923]">
-              <div>
-                <h2 className="text-[16px] font-bold">My Support Requests</h2>
-                <p className="mt-0.5 text-[10.5px] text-[#918d98] dark:text-white/45">Track updates from Shadow support.</p>
-              </div>
-              <button type="button" onClick={() => setRequestsOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f0f4] active:scale-95 dark:bg-white/10">
-                <X className="h-4 w-4" />
-              </button>
-            </header>
-
-            <div className="max-h-[72vh] overflow-y-auto p-4">
-              {requestsLoading ? (
-                <div className="flex min-h-48 items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#7458e8]" /></div>
-              ) : requestsError ? (
-                <div className="rounded-[15px] bg-[#fff1f2] px-4 py-5 text-center text-[12px] font-bold text-[#b84d52] shadow-[0_6px_18px_rgba(187,77,82,0.08)]">{requestsError}</div>
-              ) : requests.length ? (
-                <div className="space-y-2.5">
-                  {requests.map((request) => {
-                    const topic = topics.find((item) => item.id === request.topic)
-                    const Icon = topic?.icon || FileText
-                    const status = request.status || 'submitted'
-                    return (
-                      <article key={request.id} className="rounded-[16px] bg-white p-4 shadow-[0_7px_20px_rgba(48,35,90,0.08)] dark:bg-[#171923]">
-                        <div className="flex items-start gap-3">
-                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${topic?.tone || 'bg-[#f0eaff] text-[#7458e8]'}`}>
-                            <Icon className="h-[18px] w-[18px]" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <h3 className="line-clamp-2 text-[13px] font-black leading-5">{request.subject}</h3>
-                              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9.5px] font-black ${statusStyles[status] || statusStyles.submitted}`}>
-                                {statusLabels[status] || status}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-[#9995a0] dark:text-white/40">
-                              <Clock3 className="h-3 w-3" />
-                              {formatDate(request.created_at)}
-                            </div>
-                            {request.admin_reply ? (
-                              <div className="mt-3 rounded-[11px] bg-[#f6f3ff] px-3 py-2.5 text-[11px] leading-5 text-[#5f5878] dark:bg-[#7458e8]/10 dark:text-white/60">
-                                <span className="font-black text-[#7458e8] dark:text-[#b9aaf7]">Shadow Support: </span>
-                                {request.admin_reply}
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-[16px] bg-white px-5 py-10 text-center shadow-[0_7px_20px_rgba(48,35,90,0.08)] dark:bg-[#171923]">
-                  <FileText className="mx-auto h-7 w-7 text-[#aaa6b0]" />
-                  <h3 className="mt-3 text-[14px] font-black">No support requests</h3>
-                  <p className="mt-1 text-[11.5px] text-[#918d98] dark:text-white/45">Your submitted requests will appear here.</p>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-      ) : null}
+      <RequestsModal
+        open={requestsOpen}
+        requests={requests}
+        loading={requestsLoading}
+        error={requestsError}
+        selectedRequest={selectedRequest}
+        detailLoading={requestDetailLoading}
+        detailError={requestDetailError}
+        onClose={closeRequests}
+        onOpenRequest={openRequestDetails}
+        onBackToList={backToRequestList}
+        onNewRequest={resetForm}
+      />
     </main>
   )
 }
