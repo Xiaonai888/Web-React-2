@@ -336,34 +336,42 @@ export default function CommentsModal({
           style={{ touchAction: 'none' }}
         />
 
-        {targetType !== 'story' ? (
-          <header className="shrink-0 bg-white px-4 pb-4">
-            <div className="grid grid-cols-3 items-center gap-2 text-center">
-              <button
-                type="button"
-                onClick={handleOpenEpisodeReactions}
-                className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
-                aria-label="View people who reacted"
-              >
-                <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
-                <span>{totalLikes.toLocaleString()}</span>
-              </button>
+        {targetType === 'story' ? (
+  <header className="shrink-0 bg-white px-4 pb-4">
+    <div className="flex justify-center">
+      <div className="rounded-full bg-[#f5f3fa] px-5 py-2 text-[14px] font-normal text-[#111827]">
+        {totalComments.toLocaleString()} comments
+      </div>
+    </div>
+  </header>
+) : (
+  <header className="shrink-0 bg-white px-4 pb-4">
+    <div className="grid grid-cols-3 items-center gap-2 text-center">
+      <button
+        type="button"
+        onClick={handleOpenEpisodeReactions}
+        className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+        aria-label="View people who reacted"
+      >
+        <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
+        <span>{totalLikes.toLocaleString()}</span>
+      </button>
 
-              <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
-                {totalComments.toLocaleString()} comments
-              </div>
+      <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
+        {totalComments.toLocaleString()} comments
+      </div>
 
-              <button
-                type="button"
-                onClick={handleOpenEpisodeEchoes}
-                className="text-[14px] font-normal text-[#111827] active:scale-95"
-                aria-label="View people who echoed"
-              >
-                {totalEcho.toLocaleString()} echo
-              </button>
-            </div>
-          </header>
-        ) : null}
+      <button
+        type="button"
+        onClick={handleOpenEpisodeEchoes}
+        className="text-[14px] font-normal text-[#111827] active:scale-95"
+        aria-label="View people who echoed"
+      >
+        {totalEcho.toLocaleString()} echo
+      </button>
+    </div>
+  </header>
+)}
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <CommentSection
