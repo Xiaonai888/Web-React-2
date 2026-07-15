@@ -193,7 +193,7 @@ function RequestsModal({
   return (
     <div className="fixed inset-0 z-[100]">
       <button type="button" aria-label="Close requests" onClick={onClose} className="absolute inset-0 bg-black/40" />
-      <section className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[24px] bg-[#f7f7f8] shadow-[0_-12px_40px_rgba(24,20,38,0.16)] dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[22px]">
+      <section className="absolute bottom-0 left-0 right-0 flex h-[88vh] flex-col overflow-hidden rounded-t-[24px] bg-[#f7f7f8] shadow-[0_-12px_40px_rgba(24,20,38,0.16)] dark:bg-[#0d0f16] sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:h-[620px] sm:max-h-[88vh] sm:w-[560px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[22px]">
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#d4d2d8] sm:hidden" />
         <header className="flex min-h-[64px] items-center gap-3 bg-white px-4 py-3 dark:bg-[#171923]">
           {selectedRequest ? (
@@ -214,7 +214,7 @@ function RequestsModal({
           </button>
         </header>
 
-        <div className="max-h-[calc(88vh-68px)] overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {selectedRequest ? (
             <div>
               {detailLoading ? (
