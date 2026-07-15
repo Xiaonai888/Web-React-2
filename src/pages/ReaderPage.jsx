@@ -1895,14 +1895,11 @@ function ReaderBottomActionBar({
   const storyId = story?.id || story?.story_id || episode?.story_id || ''
 
   const fallbackCommentTotal = Number(
-    story?.total_comments ||
-    story?.comment_count ||
-    story?.comments_count ||
-    episode?.total_comments ||
-    episode?.comment_count ||
-    episode?.comments_count ||
-    0
-  )
+  episode?.total_comments ||
+  episode?.comment_count ||
+  episode?.comments_count ||
+  0
+)
 
   const [commentTotal, setCommentTotal] = useState(fallbackCommentTotal)
 
@@ -1942,7 +1939,7 @@ function ReaderBottomActionBar({
     let ignore = false
 
     async function loadCommentTotal() {
-      if (!storyId) return
+      if (!episodeId) return
 
       try {
         const token = getReaderToken()
@@ -1978,7 +1975,7 @@ function ReaderBottomActionBar({
     return () => {
       ignore = true
     }
-  }, [storyId, commentRefreshKey, fallbackCommentTotal])
+  }, [episodeId, commentRefreshKey, fallbackCommentTotal])
 
   useEffect(() => {
     setProgressOpen(false)
