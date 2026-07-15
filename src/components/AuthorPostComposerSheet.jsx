@@ -578,7 +578,7 @@ export default function AuthorPostComposerSheet({
                 <ReviewOption icon="fa-solid fa-earth-asia" title="Who can see this" value="Public" />
                 <ReviewOption icon="fa-regular fa-comment" title="Reader comments" value="Everyone" />
                 <ReviewOption icon="fa-regular fa-clock" title="Publish time" value="Now" />
-                <ReviewOption imageSrc="/assets/icons/Add%20Story.svg" title="Story sharing" value="Off" />
+                <ReviewOption imageSrc="/assets/Icons/Add Story.svg" title="Story sharing" value="Off" />
               </div>
             </main>
           </>
