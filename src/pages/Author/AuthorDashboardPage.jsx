@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -476,7 +478,7 @@ export default function AuthorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[100px]">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[120px] md:pb-10">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
@@ -621,7 +623,7 @@ export default function AuthorDashboardPage() {
           </div>
         </section>
 
-        <section className="mt-4">
+        <section id="author-stories" className="mt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="relative">
               <div className="flex items-center gap-2">
@@ -704,7 +706,8 @@ export default function AuthorDashboardPage() {
             )}
           </div>
         </section>
-      </main>
+           </main>
+      <AuthorStudioBottomNav authorPagePath={authorPagePath} />
     </div>
   )
 }
