@@ -113,8 +113,8 @@ function Stepper({ step }) {
   ]
 
   return (
-    <div className="px-5 pb-6 pt-6 sm:px-8">
-      <div className="relative mx-auto flex max-w-[610px] justify-between">
+    <div className="px-4 pb-6 pt-6 sm:px-5">
+      <div className="relative mx-auto flex w-full justify-between">
         <div className="absolute left-[8%] right-[8%] top-[13px] h-[2px] rounded-full bg-[#e8e3f8] dark:bg-white/10" />
         <div
           className="absolute left-[8%] top-[13px] h-[2px] bg-[#7458e8] transition-all duration-300"
@@ -197,7 +197,7 @@ function RequestsModal({
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#d4d2d8] sm:hidden" />
         <header className="flex min-h-[64px] items-center gap-3 bg-white px-4 py-3 dark:bg-[#171923]">
           {selectedRequest ? (
-            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center text-black active:scale-95">
+            <button type="button" onClick={onBackToList} aria-label="Back to requests" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
               <ArrowLeft className="h-4 w-4" />
             </button>
           ) : null}
@@ -209,7 +209,7 @@ function RequestsModal({
               {selectedRequest ? selectedRequest.ticket_code : 'Track updates from Shadow support.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center text-black active:scale-95">
+          <button type="button" onClick={onClose} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-transparent text-black active:scale-95 active:bg-transparent">
             <X className="h-4 w-4" />
           </button>
         </header>
@@ -626,7 +626,7 @@ export default function FeedbackSupportPage() {
 
         <div className="px-4 sm:px-5">
           {step === 1 ? (
-            <section className="rounded-[20px] bg-transparent p-4 dark:bg-transparent sm:p-6">
+            <section className="rounded-[20px] bg-transparent py-4 dark:bg-transparent sm:py-6">
               <h2 className="text-[17px] font-bold tracking-[-0.02em] sm:text-[18px]">Choose a topic</h2>
               <p className="mt-1 text-[12.5px] text-[#85818d] dark:text-white/50">We’ll help route your request.</p>
 
@@ -659,7 +659,7 @@ export default function FeedbackSupportPage() {
           ) : null}
 
           {step === 2 ? (
-            <section className="rounded-[20px] bg-transparent p-4 dark:bg-transparent sm:p-6">
+            <section className="rounded-[20px] bg-transparent py-4 dark:bg-transparent sm:py-6">
               <div className="flex items-center gap-3">
                 {selectedTopic ? (
                   <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] ${selectedTopic.tone}`}>
