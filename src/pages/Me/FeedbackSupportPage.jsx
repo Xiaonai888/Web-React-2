@@ -339,18 +339,18 @@ export default function FeedbackSupportPage() {
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f8ef] text-[#178a55]">
             <CircleCheck className="h-8 w-8" strokeWidth={1.9} />
           </span>
-          <h1 className="mt-5 text-[22px] font-black text-[#20202e] dark:text-white">Request submitted</h1>
+          <h1 className="mt-5 text-[22px] font-bold text-[#20202e] dark:text-white">Request submitted</h1>
           <p className="mx-auto mt-2 max-w-[390px] text-[13px] leading-6 text-[#797684] dark:text-white/55">
             Your support request was received. You can check its status from My Support Requests.
           </p>
           <button
             type="button"
             onClick={loadRequests}
-            className="mt-6 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-black text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]"
+            className="mt-6 h-12 w-full rounded-[14px] bg-[#7458e8] text-[13px] font-normal text-white shadow-[0_8px_20px_rgba(116,88,232,0.2)] active:scale-[0.99]"
           >
             View My Requests
           </button>
-          <button type="button" onClick={resetForm} className="mt-3 h-11 text-[12.5px] font-black text-[#7458e8]">
+          <button type="button" onClick={resetForm} className="mt-3 h-11 text-[12.5px] font-normal text-[#7458e8]">
             Send another request
           </button>
         </section>
