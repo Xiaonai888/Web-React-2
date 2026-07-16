@@ -478,7 +478,7 @@ export default function AuthorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px] md:pb-10">
+    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
