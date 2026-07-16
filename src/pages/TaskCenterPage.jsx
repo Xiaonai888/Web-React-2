@@ -1492,7 +1492,7 @@ navigate(targetPath, {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+    <div className="min-h-screen bg-white pb-[110px]">
       <style>
         {`
           @keyframes shadowToast {
