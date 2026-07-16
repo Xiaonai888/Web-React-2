@@ -96,13 +96,13 @@ function NavButton({ label, active, onClick, children }) {
   )
 }
 
-export default function AuthorStudioBottomNav({ authorPagePath = '/author/page' }) {
+export default function AuthorStudioBottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
   const storiesActive = location.pathname === '/author/dashboard' && location.hash === '#author-stories'
   const dashboardActive = location.pathname === '/author/dashboard' && !storiesActive
   const insightsActive = location.pathname === '/author/income'
-  const profileActive = location.pathname === authorPagePath
+  const profileActive = location.pathname === '/author/profile'
 
   useEffect(() => {
     if (location.pathname !== '/author/dashboard' || location.hash !== '#author-stories') return
@@ -145,7 +145,7 @@ export default function AuthorStudioBottomNav({ authorPagePath = '/author/page' 
           <InsightsIcon active={insightsActive} />
         </NavButton>
 
-        <NavButton label="Profile" active={profileActive} onClick={() => navigate(authorPagePath)}>
+        <NavButton label="Profile" active={profileActive} onClick={() => navigate('/author/profile')}>
           <ProfileIcon active={profileActive} />
         </NavButton>
       </div>
