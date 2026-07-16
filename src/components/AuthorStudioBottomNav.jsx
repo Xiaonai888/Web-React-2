@@ -118,10 +118,10 @@ export default function AuthorStudioBottomNav({ authorPagePath = '/author/page' 
 
   return (
     <nav
-      className="fixed bottom-[calc(8px+env(safe-area-inset-bottom,0px))] left-3 right-3 z-[90] mx-auto max-w-[460px] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-[90] w-full"
       aria-label="Author Studio navigation"
     >
-      <div className="relative flex h-[62px] items-center rounded-[24px] bg-white/95 px-2 shadow-[0_10px_35px_rgba(77,63,132,0.2)] ring-1 ring-[#ebe7ff] backdrop-blur-xl">
+      <div className="relative flex min-h-[62px] w-full items-center rounded-none border-t border-[#ebe7ff] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(77,63,132,0.12)] backdrop-blur-xl">
         <NavButton label="Dashboard" active={dashboardActive} onClick={() => navigate('/author/dashboard')}>
           <DashboardIcon active={dashboardActive} />
         </NavButton>
