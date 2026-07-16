@@ -1,7 +1,11 @@
 import { NavLink } from 'react-router-dom'
 
-function StoriesIcon() {
-  return <img src="/assets/Icons/Stories.svg" alt="" aria-hidden="true" width="21" height="21" />
+function StoriesIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <path d="M3.5 5.5c3-1 5.7-.5 8.5 1.2v13c-2.8-1.7-5.5-2.2-8.5-1.2V5.5Zm17 0c-3-1-5.7-.5-8.5 1.2v13c2.8-1.7 5.5-2.2 8.5-1.2V5.5Z" fill={active ? '#F6C800' : 'white'} stroke="#111827" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function PlayIcon({ active }) {
