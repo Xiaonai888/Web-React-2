@@ -7,6 +7,63 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const AUTHOR_PREVIEW_ENABLED =
+  import.meta.env.DEV && import.meta.env.VITE_AUTHOR_PREVIEW === 'true'
+
+const MOCK_AUTHOR_PAGE = {
+  page_name: 'Dara',
+  page_username: 'dara-preview',
+  avatar_url: '/assets/Icons/shadow-icon-192.png',
+}
+
+const MOCK_STORIES = [
+  {
+    id: 'preview-story-1',
+    title: 'Falling Petals',
+    story_type: 'Novel',
+    status: 'published',
+    total_views: 8,
+    total_likes: 2,
+    total_comments: 1,
+    total_episodes: 12,
+    cover_url: '/assets/New Arrival/New Arrival 1.jpg',
+    main_genre: 'Romance',
+    story_language: 'Khmer',
+    created_at: '2026-07-01T08:00:00.000Z',
+    updated_at: '2026-07-14T08:00:00.000Z',
+  },
+  {
+    id: 'preview-story-2',
+    title: 'Moonlit Promise',
+    story_type: 'Novel',
+    status: 'draft',
+    total_views: 7,
+    total_likes: 1,
+    total_comments: 0,
+    total_episodes: 1,
+    cover_url: '/assets/New Arrival/New Arrival 2.jpg',
+    main_genre: 'Fantasy',
+    story_language: 'Khmer',
+    created_at: '2026-07-05T08:00:00.000Z',
+    updated_at: '2026-07-16T08:00:00.000Z',
+  },
+  {
+    id: 'preview-story-3',
+    title: 'Dear Soul, My Light',
+    story_type: 'Novel',
+    status: 'published',
+    total_views: 8,
+    total_likes: 3,
+    total_comments: 2,
+    total_episodes: 6,
+    cover_url: '/assets/New Arrival/New Arrival 3.jpg',
+    main_genre: 'Drama',
+    story_language: 'Khmer',
+    created_at: '2026-06-20T08:00:00.000Z',
+    updated_at: '2026-07-12T08:00:00.000Z',
+  },
+]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -205,25 +262,27 @@ function PageMenu({ open, onClose, onSelect }) {
   )
 }
 
-function TipBubble({ open }) {
-  if (!open) return null
-
+function StoriesLoadingState() {
   return (
-    <div className="absolute right-0 top-9 z-20 w-[230px] rounded-[16px] bg-[#111827] px-3.5 py-3 text-[12px] font-semibold leading-5 text-white shadow-xl">
-      Tap any cover to manage your story and add episodes.
-    </div>
-  )
-}
+    <div className="mt-3">
+      <div className="flex gap-3 overflow-hidden pb-4">
+        {[0, 1, 2].map((item) => (
+          <div
+            key={item}
+            className="shrink-0"
+            style={{ width: 'clamp(82px, calc((100vw - 56px) / 3), 126px)' }}
+          >
+            <div className="aspect-[3/4] animate-pulse rounded-[18px] bg-[#e9e2f8]" />
+            <div className="mx-auto mt-2 h-1.5 w-1.5 rounded-full bg-[#d6c7f4]" />
+          </div>
+        ))}
+      </div>
 
-function LoadingCard() {
-  return (
-    <div className="flex gap-3 rounded-[20px] border border-[#eceaf2] bg-white p-3 shadow-sm">
-      <div className="h-[112px] w-[78px] shrink-0 animate-pulse rounded-[14px] bg-[#eef0f4]" />
-      <div className="min-w-0 flex-1 py-1">
-        <div className="h-4 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
-        <div className="mt-3 h-4 w-1/2 animate-pulse rounded-full bg-[#eef0f4]" />
-        <div className="mt-5 h-3 w-3/4 animate-pulse rounded-full bg-[#eef0f4]" />
-        <div className="mt-4 h-3 w-1/2 animate-pulse rounded-full bg-[#eef0f4]" />
+      <div className="animate-pulse rounded-[22px] border border-[#e8def8] bg-white p-4 shadow-sm">
+        <div className="h-5 w-1/2 rounded-full bg-[#e9e2f8]" />
+        <div className="mt-3 h-4 w-2/3 rounded-full bg-[#f0ebf9]" />
+        <div className="mt-5 h-12 rounded-[14px] bg-[#f0ebf9]" />
+        <div className="mt-4 h-11 rounded-[14px] bg-[#e9e2f8]" />
       </div>
     </div>
   )
@@ -237,97 +296,117 @@ function EmptyCover({ title }) {
   )
 }
 
-function StoryCard({ story, onEdit, onAddEpisode }) {
-  const statusClass =
-    story.status === 'Published'
-      ? 'bg-[#ecfdf3] text-[#16803c]'
-      : story.status === 'Reviewing'
-        ? 'bg-[#fff7df] text-[#a56a00]'
-        : 'bg-[#f2f4f7] text-[#667085]'
-
+function StoryCoverButton({ story, active, onSelect }) {
   return (
-    <div className="flex gap-3 rounded-[20px] border border-[#eceaf2] bg-white p-3 shadow-sm">
-      <button
-        type="button"
-        onClick={() => onEdit(story)}
-        className="h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827] shadow-sm active:scale-[0.98]"
-        aria-label={`Manage ${story.title}`}
+    <button
+      type="button"
+      onClick={onSelect}
+      className="shrink-0 text-left"
+      style={{ width: 'clamp(82px, calc((100vw - 56px) / 3), 126px)' }}
+      aria-pressed={active}
+      aria-label={`Select ${story.title}`}
+    >
+      <div
+        className={`relative aspect-[3/4] overflow-hidden rounded-[18px] bg-[#2b174f] transition active:scale-[0.98] ${
+          active
+            ? 'ring-2 ring-[#8050e8] ring-offset-2 ring-offset-[#f7f4ff] shadow-[0_10px_24px_rgba(109,66,219,0.35)]'
+            : 'shadow-[0_8px_20px_rgba(50,27,91,0.14)]'
+        }`}
       >
         {story.cover ? (
           <img src={story.cover} alt={story.title} className="h-full w-full object-cover" />
         ) : (
           <EmptyCover title={story.title} />
         )}
-      </button>
 
-      <div className="min-w-0 flex-1 py-0.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <button
-              type="button"
-              onClick={() => onEdit(story)}
-              className="block max-w-full text-left"
-            >
-              <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{story.title}</div>
-            </button>
-
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">{story.type}</span>
-              <span className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-bold text-[#0b5cff]">{story.genre}</span>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${statusClass}`}>
-                {story.status}
-              </span>
-            </div>
-          </div>
-
-          <button type="button" onClick={() => onEdit(story)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95">
-            <i className="fa-solid fa-pen text-[12px]" />
-          </button>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1f103d]/95 to-transparent px-2 pb-2 pt-7 text-center">
+          <span className="line-clamp-1 text-[9.5px] font-bold text-white/90">
+            {story.episodes > 0 ? `Episode ${story.episodes}` : 'Story Info'}
+          </span>
         </div>
+      </div>
 
-        <div className="mt-3 text-[11.5px] text-[#8d94a1]">
-          Last updated <span className="font-bold text-[#555b66]">{story.updated}</span>
-        </div>
+      <div
+        className={`mx-auto mt-2 h-1.5 rounded-full transition-all ${
+          active ? 'w-5 bg-[#7c4dea]' : 'w-1.5 bg-[#d7cbed]'
+        }`}
+      />
+    </button>
+  )
+}
 
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] font-semibold text-[#555b66]">
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-regular fa-eye text-[11px]" />
+function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
+  const statusClass =
+    story.status === 'Published'
+      ? 'bg-[#eafaf0] text-[#16803c]'
+      : story.status === 'Reviewing'
+        ? 'bg-[#fff7df] text-[#a56a00]'
+        : 'bg-[#f0eaff] text-[#7040d8]'
+
+  return (
+    <div className="rounded-[22px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
+      <h3 className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] text-[#21143f]">{story.title}</h3>
+
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="rounded-full bg-[#f0eaff] px-2.5 py-1 text-[9.5px] font-extrabold text-[#7040d8]">{story.type}</span>
+        <span className="rounded-full bg-[#f5f1ff] px-2.5 py-1 text-[9.5px] font-extrabold text-[#8a5ce6]">{story.genre}</span>
+        <span className={`rounded-full px-2.5 py-1 text-[9.5px] font-extrabold ${statusClass}`}>
+          {story.status}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-4 divide-x divide-[#eee8f7]">
+        <div className="flex flex-col items-center gap-1 text-[#665c76]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+            <i className="fa-regular fa-eye text-[10px] text-[#8a5ce6]" />
             {story.views}
           </span>
+          <span className="text-[9px] font-semibold">Views</span>
+        </div>
 
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-solid fa-heart text-[10px] text-[#e5484d]" />
+        <div className="flex flex-col items-center gap-1 text-[#665c76]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+            <i className="fa-solid fa-heart text-[10px] text-[#a86cf2]" />
             {story.likes}
           </span>
+          <span className="text-[9px] font-semibold">Likes</span>
+        </div>
 
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-regular fa-comment text-[11px]" />
+        <div className="flex flex-col items-center gap-1 text-[#665c76]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+            <i className="fa-regular fa-comment text-[10px] text-[#8a5ce6]" />
             {story.comments}
           </span>
+          <span className="text-[9px] font-semibold">Comments</span>
+        </div>
 
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-solid fa-list text-[10px]" />
-            {story.episodes} EP
+        <div className="flex flex-col items-center gap-1 text-[#665c76]">
+          <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-[#35264f]">
+            <i className="fa-solid fa-list text-[9px] text-[#8a5ce6]" />
+            {story.episodes}
           </span>
+          <span className="text-[9px] font-semibold">Episodes</span>
         </div>
+      </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(story)}
-            className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white active:scale-95"
-          >
-            Manage
-          </button>
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => onAddEpisode(story)}
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
+        >
+          <i className="fa-solid fa-plus text-[11px]" />
+          Add Episode
+        </button>
 
-          <button
-            type="button"
-            onClick={() => onAddEpisode(story)}
-            className="rounded-full bg-[#0b5cff] px-3 py-1.5 text-[11px] font-extrabold text-white active:scale-95"
-          >
-            Add Episode
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onEdit(story)}
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-extrabold text-[#5c3cb2] active:scale-[0.98]"
+        >
+          <i className="fa-solid fa-gear text-[11px]" />
+          Manage
+        </button>
       </div>
     </div>
   )
@@ -338,16 +417,17 @@ export default function AuthorDashboardPage() {
   const location = useLocation()
   const returnTo = location.state?.returnTo || '/me'
   const [menuOpen, setMenuOpen] = useState(false)
-  const [tipOpen, setTipOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('Novel')
   const [stories, setStories] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [selectedStoryId, setSelectedStoryId] = useState(null)
+  const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [message, setMessage] = useState('')
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
   const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
 
-  const [authorPage, setAuthorPage] = useState(storedAuthorPage)
+  const [authorPage, setAuthorPage] = useState(
+    AUTHOR_PREVIEW_ENABLED ? MOCK_AUTHOR_PAGE : storedAuthorPage
+  )
 
   const author = {
   name: authorPage?.page_name || storedUser?.name || storedUser?.username || 'Author Page Name',
@@ -361,6 +441,11 @@ export default function AuthorDashboardPage() {
     : '/author/page'
 
   async function fetchMyAuthorPage() {
+    if (AUTHOR_PREVIEW_ENABLED) {
+      setAuthorPage(MOCK_AUTHOR_PAGE)
+      return MOCK_AUTHOR_PAGE
+    }
+
     const token = getAuthToken()
 
     if (!token) {
@@ -390,6 +475,13 @@ export default function AuthorDashboardPage() {
   }
 
   async function fetchMyStories() {
+    if (AUTHOR_PREVIEW_ENABLED) {
+      setMessage('')
+      setStories(MOCK_STORIES.map(normalizeStory))
+      setLoading(false)
+      return
+    }
+
     const token = getAuthToken()
 
     if (!token) {
@@ -444,13 +536,15 @@ export default function AuthorDashboardPage() {
     }
   }, [stories])
 
-  const filteredStories = useMemo(() => {
-    return stories.filter((story) => story.type === activeTab)
-  }, [stories, activeTab])
-
   const latestStory = useMemo(() => {
     return [...stories].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))[0] || null
   }, [stories])
+
+  const selectedStory = useMemo(() => {
+    if (stories.length === 0) return null
+
+    return stories.find((story) => String(story.id) === String(selectedStoryId)) || stories[0]
+  }, [selectedStoryId, stories])
 
   const handleMenuSelect = async (path) => {
     setMenuOpen(false)
@@ -490,27 +584,38 @@ export default function AuthorDashboardPage() {
     <div className="min-h-screen bg-[#f7f4ff] pb-[120px]">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-[#6d42db] via-[#7c4dea] to-[#9364f4] px-4 py-3 shadow-[0_4px_18px_rgba(80,43,150,0.2)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-[#ede9f4] bg-white px-4 py-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-[72px_1fr_72px] items-center">
           <button
             type="button"
             onClick={() => navigate(returnTo)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
+            className="flex h-9 w-9 items-center justify-center justify-self-start bg-transparent text-[#111827] active:opacity-60"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-white">Author Dashboard</h1>
+          <h1 className="text-center text-[17px] font-normal text-[#111827]">Author Dashboard</h1>
 
-         <button
-  type="button"
-  onClick={() => setMenuOpen(true)}
-  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
-  aria-label="Author tools"
->
-  <i className="fa-solid fa-ellipsis text-[16px]" />
-</button>
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/author/page/notifications')}
+              className="flex h-9 w-9 items-center justify-center bg-transparent text-[#111827] active:opacity-60"
+              aria-label="Notifications"
+            >
+              <i className="fa-regular fa-bell text-[16px]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className="flex h-9 w-9 items-center justify-center bg-transparent text-[#111827] active:opacity-60"
+              aria-label="Author tools"
+            >
+              <i className="fa-solid fa-ellipsis text-[16px]" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -674,91 +779,57 @@ export default function AuthorDashboardPage() {
           </div>
         </section>
 
-        <section id="author-stories" className="mt-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="relative">
-              <div className="flex items-center gap-2">
-                <h2 className="text-[17px] font-extrabold text-[#111827]">My Stories</h2>
-                <button
-                  type="button"
-                  onClick={() => setTipOpen((value) => !value)}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#555b66] shadow-sm ring-1 ring-[#eceaf2]"
-                  aria-label="Show edit tip"
-                >
-                  ?
-                </button>
-              </div>
-              <TipBubble open={tipOpen} />
-            </div>
-
-            <div className="text-[12px] font-bold text-[#8d94a1]">
-              {loading ? 'Loading...' : `${filteredStories.length} stories`}
+        <section id="author-stories" className="mt-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#21143f]">Stories</h2>
+            <div className="text-[11px] font-bold text-[#958ba8]">
+              {loading ? 'Loading...' : `${stories.length} stories`}
             </div>
           </div>
 
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3">
-            {['Novel', 'Manga', 'Chat Story'].map((tab) => (
+          {loading ? (
+            <StoriesLoadingState />
+          ) : stories.length > 0 && selectedStory ? (
+            <>
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-4 pt-1">
+                {stories.map((story) => (
+                  <StoryCoverButton
+                    key={story.id}
+                    story={story}
+                    active={String(story.id) === String(selectedStory.id)}
+                    onSelect={() => setSelectedStoryId(story.id)}
+                  />
+                ))}
+              </div>
+
+              <StoryDetailPanel
+                story={selectedStory}
+                onEdit={handleEditStory}
+                onAddEpisode={handleAddEpisode}
+              />
+            </>
+          ) : (
+            <div className="mt-3 rounded-[22px] border border-dashed border-[#d8c9f3] bg-white px-5 py-10 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f0eaff] text-[#7040d8]">
+                <i className="fa-solid fa-pen-nib text-[17px]" />
+              </div>
+
+              <div className="mt-3 text-[14px] font-extrabold text-[#21143f]">No stories yet</div>
+              <div className="mt-1 text-[12px] text-[#958ba8]">Create your first story to see it here.</div>
+
               <button
-                key={tab}
                 type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold ${
-                  activeTab === tab ? 'bg-[#111827] text-white' : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
-                }`}
+                onClick={() => handleCreateStory('Novel')}
+                className="mt-4 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
               >
-                {tab}
+                Create Story
               </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {loading ? (
-              <>
-                <LoadingCard />
-                <LoadingCard />
-              </>
-            ) : filteredStories.length > 0 ? (
-              filteredStories.map((story) => (
-                <StoryCard
-                  key={story.id}
-                  story={story}
-                  onEdit={handleEditStory}
-                  onAddEpisode={handleAddEpisode}
-                />
-              ))
-            ) : (
-              <div className="rounded-[22px] border border-dashed border-[#d8dbe3] bg-white px-5 py-10 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-                  <i className="fa-solid fa-pen-nib text-[17px]" />
-                </div>
-
-                <div className="mt-3 text-[14px] font-extrabold text-[#111827]">
-                  No {activeTab} stories yet
-                </div>
-
-                <div className="mt-1 text-[12px] text-[#8d94a1]">
-                  Create your first {activeTab} story or refresh after uploading.
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeTab === 'Novel') {
-                      handleCreateStory(activeTab)
-                    } else {
-                      handleComingSoon(activeTab)
-                    }
-                  }}
-                  className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
-                >
-                  {activeTab === 'Novel' ? `Create ${activeTab}` : `${activeTab} Coming Soon`}
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </section>
-           </main>
-      <AuthorStudioBottomNav authorPagePath={authorPagePath} />
+      </main>
+      <AuthorStudioBottomNav />
     </div>
   )
 }
+
