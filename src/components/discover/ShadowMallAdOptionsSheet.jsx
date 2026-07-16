@@ -86,29 +86,135 @@ export function hideShadowMallAdLocally(item) {
 }
 
 function ActionIcon({ type }) {
-  const icons = {
-    interested: 'fa-regular fa-circle-plus',
-    notInterested: 'fa-regular fa-circle-minus',
-    save: 'fa-regular fa-bookmark',
-    saved: 'fa-solid fa-bookmark',
-    hide: 'fa-regular fa-rectangle-xmark',
-    report: 'fa-regular fa-message-exclamation',
-    why: 'fa-regular fa-circle-info',
-    about: 'fa-regular fa-rectangle-list',
-    notify: 'fa-regular fa-bell',
-    notifyActive: 'fa-solid fa-bell',
-    copy: 'fa-regular fa-copy',
-    scam: 'fa-solid fa-triangle-exclamation',
-    inappropriate: 'fa-solid fa-eye-slash',
-    repeated: 'fa-solid fa-rotate',
-    other: 'fa-solid fa-ellipsis',
+  const commonProps = {
+    viewBox: '0 0 24 24',
+    className: 'h-[21px] w-[21px]',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.7,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+  }
+
+  if (type === 'interested') {
+    return (
+      <svg {...commonProps}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 8v8M8 12h8" />
+      </svg>
+    )
+  }
+
+  if (type === 'notInterested') {
+    return (
+      <svg {...commonProps}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8 12h8" />
+      </svg>
+    )
+  }
+
+  if (type === 'save' || type === 'saved') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6.5 4.5h11v15l-5.5-3.6-5.5 3.6z" />
+      </svg>
+    )
+  }
+
+  if (type === 'hide') {
+    return (
+      <svg {...commonProps}>
+        <rect x="4" y="5" width="16" height="14" rx="2" />
+        <path d="m9 9 6 6M15 9l-6 6" />
+      </svg>
+    )
+  }
+
+  if (type === 'report') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6 21V4" />
+        <path d="M6 5h10l-1.5 3L16 11H6" />
+      </svg>
+    )
+  }
+
+  if (type === 'why') {
+    return (
+      <svg {...commonProps}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5" />
+        <path d="M12 8h.01" />
+      </svg>
+    )
+  }
+
+  if (type === 'about') {
+    return (
+      <svg {...commonProps}>
+        <rect x="5" y="3.5" width="14" height="17" rx="2" />
+        <path d="M8 8h8M8 12h8M8 16h5" />
+      </svg>
+    )
+  }
+
+  if (type === 'notify' || type === 'notifyActive') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3z" />
+        <path d="M10 19a2.2 2.2 0 0 0 4 0" />
+      </svg>
+    )
+  }
+
+  if (type === 'copy') {
+    return (
+      <svg {...commonProps}>
+        <rect x="8" y="7" width="11" height="13" rx="2" />
+        <path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" />
+      </svg>
+    )
+  }
+
+  if (type === 'scam') {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 3 21 20H3z" />
+        <path d="M12 9v4M12 16h.01" />
+      </svg>
+    )
+  }
+
+  if (type === 'inappropriate') {
+    return (
+      <svg {...commonProps}>
+        <path d="M3 3l18 18" />
+        <path d="M10.6 10.7a2 2 0 0 0 2.7 2.7" />
+        <path d="M9.4 5.4A10.5 10.5 0 0 1 12 5c5.5 0 9 7 9 7a15 15 0 0 1-2.1 3" />
+        <path d="M6.2 6.2C4.2 7.7 3 10 3 12c0 0 3.5 7 9 7 1 0 2-.2 2.8-.5" />
+      </svg>
+    )
+  }
+
+  if (type === 'repeated') {
+    return (
+      <svg {...commonProps}>
+        <path d="M20 7h-9a5 5 0 0 0-5 5" />
+        <path d="m17 4 3 3-3 3" />
+        <path d="M4 17h9a5 5 0 0 0 5-5" />
+        <path d="m7 20-3-3 3-3" />
+      </svg>
+    )
   }
 
   return (
-    <i
-      className={`${icons[type] || 'fa-regular fa-circle'} text-[22px]`}
-      aria-hidden="true"
-    />
+    <svg {...commonProps}>
+      <circle cx="6" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
   )
 }
 
