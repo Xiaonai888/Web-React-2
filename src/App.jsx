@@ -21,6 +21,7 @@ import RegisterPage from './pages/Auth/RegisterPage'
 import Me from './pages/Me/Me'
 import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
+import AuthorProfilePage from './pages/Author/AuthorProfilePage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
 import StoryManagerPage from './pages/Author/StoryManagerPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
@@ -182,6 +183,7 @@ function AppShell() {
     '/event',
     '/author/create',
     '/author/dashboard',
+    '/author/profile',
     '/author/income',
     '/author/payment-method',
     '/author/benefits',
@@ -1028,6 +1030,7 @@ const shouldShowOpeningAds =
 
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
+        <Route path="/author/profile" element={<AuthorProfilePage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
