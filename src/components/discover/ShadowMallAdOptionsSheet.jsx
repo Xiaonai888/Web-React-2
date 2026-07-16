@@ -161,13 +161,19 @@ function ActionIcon({ type }) {
   }
 
   if (type === 'notify' || type === 'notifyActive') {
-    return (
-      <svg {...commonProps}>
-        <path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3z" />
-        <path d="M10 19a2.2 2.2 0 0 0 4 0" />
-      </svg>
-    )
-  }
+  const notificationsEnabled = type === 'notifyActive'
+
+  return (
+    <svg {...commonProps}>
+      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
+      <path d="M10 19h4" />
+
+      {!notificationsEnabled ? (
+        <path d="M4.5 4.5 19.5 19.5" />
+      ) : null}
+    </svg>
+  )
+}
 
   if (type === 'copy') {
     return (
@@ -239,9 +245,9 @@ function ActionButton({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold leading-5">
-          {title}
-        </span>
+        <span className="block text-[15px] font-normal leading-5">
+  {title}
+</span>
 
         {subtitle ? (
           <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400">
