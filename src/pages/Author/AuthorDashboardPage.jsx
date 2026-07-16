@@ -35,6 +35,14 @@ function formatDate(value) {
   return date.toLocaleDateString('en-GB')
 }
 
+function getGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
 function normalizeStory(story) {
   const status = story.status === 'published'
     ? 'Published'
@@ -64,11 +72,12 @@ function normalizeStory(story) {
   }
 }
 
-function StatItem({ value, label }) {
+function StatItem({ icon, value, label, iconClass }) {
   return (
-    <div className="text-center">
-      <div className="text-[16px] font-extrabold text-[#111827]">{value}</div>
-      <div className="mt-1 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#9aa1ad]">{label}</div>
+    <div className="flex min-w-0 flex-col items-center justify-center px-1 text-center">
+      <i className={`${icon} ${iconClass} text-[17px]`} />
+      <div className="mt-1.5 text-[17px] font-black text-[#21143f]">{value}</div>
+      <div className="mt-0.5 max-w-full truncate text-[9px] font-bold uppercase tracking-[0.04em] text-[#958ba8]">{label}</div>
     </div>
   )
 }
@@ -478,26 +487,26 @@ export default function AuthorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[120px]">
+    <div className="min-h-screen bg-[#f7f4ff] pb-[120px]">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-[#6d42db] via-[#7c4dea] to-[#9364f4] px-4 py-3 shadow-[0_4px_18px_rgba(80,43,150,0.2)]">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
             onClick={() => navigate(returnTo)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Author Dashboard</h1>
+          <h1 className="text-[17px] font-extrabold text-white">Author Dashboard</h1>
 
          <button
   type="button"
   onClick={() => setMenuOpen(true)}
-  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 backdrop-blur active:scale-95"
   aria-label="Author tools"
 >
   <i className="fa-solid fa-ellipsis text-[16px]" />
@@ -505,7 +514,7 @@ export default function AuthorDashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <main className="mx-auto max-w-5xl px-4">
         {message ? (
           <button
             type="button"
@@ -516,9 +525,14 @@ export default function AuthorDashboardPage() {
           </button>
         ) : null}
 
-        <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[24px] font-extrabold text-white shadow-sm">
+        <section className="relative -mx-4 overflow-hidden bg-gradient-to-br from-[#6d42db] via-[#8251e9] to-[#a476f4] px-5 pb-5 pt-6 shadow-[0_14px_35px_rgba(96,55,177,0.2)]">
+          <div className="absolute -left-12 top-5 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#d9c6ff]/25 blur-2xl" />
+          <i className="fa-solid fa-sparkles absolute right-[18%] top-7 text-[13px] text-white/40" />
+
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white/20 p-1 shadow-lg ring-1 ring-white/40">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#2b174f] text-[24px] font-extrabold text-white">
   {author.avatarUrl ? (
     <img
       src={author.avatarUrl}
@@ -528,64 +542,101 @@ export default function AuthorDashboardPage() {
   ) : (
     author.avatarLetter
   )}
-</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(authorPagePath)}
+                className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7444df] shadow-md ring-2 ring-[#8352e9] active:scale-95"
+                aria-label="Open author profile"
+              >
+                <i className="fa-solid fa-pen text-[9px]" />
+              </button>
+            </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[18px] font-extrabold text-[#111827]">{author.name}</div>
-
-             
+              <div className="text-[12px] font-semibold text-white/75">{getGreeting()},</div>
+              <div className="mt-0.5 line-clamp-1 text-[23px] font-black tracking-[-0.02em] text-white">{author.name}</div>
+              <div className="mt-1 text-[11.5px] font-medium text-white/75">Keep writing. Your story is waiting.</div>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 divide-x divide-[#eef0f4] rounded-[20px] bg-[#fafafe] px-2 py-3.5">
-            <StatItem value={stats.published} label="Published" />
-            <StatItem value={stats.drafts} label="Unpublished" />
-            <StatItem value={stats.views} label="Views" />
+          <div className="relative z-10 mt-6 grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[22px] bg-white px-1 py-3.5 shadow-[0_12px_28px_rgba(53,25,104,0.18)]">
+            <StatItem icon="fa-solid fa-book-open" iconClass="text-[#7c4dea]" value={stats.published} label="Published" />
+            <StatItem icon="fa-solid fa-file-lines" iconClass="text-[#a368f4]" value={stats.drafts} label="Drafts" />
+            <StatItem icon="fa-regular fa-eye" iconClass="text-[#8b74ea]" value={stats.views} label="Views" />
+            <button
+              type="button"
+              onClick={() => handleCreateStory('Novel')}
+              className="flex min-w-0 flex-col items-center justify-center px-1 text-center active:scale-95"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9b6af5] to-[#6d42db] text-white shadow-[0_6px_14px_rgba(109,66,219,0.35)]">
+                <i className="fa-solid fa-plus text-[12px]" />
+              </span>
+              <span className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.04em] text-[#6d42db]">New Story</span>
+            </button>
           </div>
         </section>
 
         {latestStory ? (
-          <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <section className="mt-5">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-[16px] font-extrabold text-[#111827]">Continue Writing</h2>
-                <p className="mt-0.5 text-[11.5px] font-medium text-[#8d94a1]">Continue your latest story</p>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eee7ff] text-[#7c4dea]">
+                  <i className="fa-solid fa-sparkles text-[11px]" />
+                </span>
+                <h2 className="text-[16px] font-extrabold text-[#21143f]">Continue Writing</h2>
               </div>
 
               <button
                 type="button"
                 onClick={() => handleEditStory(latestStory)}
-                className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+                className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#7c4dea] active:scale-95"
               >
-                Continue
+                View
+                <i className="fa-solid fa-chevron-right text-[9px]" />
               </button>
             </div>
 
-            <div className="mt-4 flex gap-3 rounded-[20px] bg-[#fafafe] p-3">
-              <button
-                type="button"
-                onClick={() => handleEditStory(latestStory)}
-                className="h-[98px] w-[70px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827] active:scale-[0.98]"
-                aria-label="Continue latest story"
-              >
-                {latestStory.cover ? (
-                  <img src={latestStory.cover} alt={latestStory.title} className="h-full w-full object-cover" />
-                ) : (
-                  <EmptyCover title={latestStory.title} />
-                )}
-              </button>
+            <button
+              type="button"
+              onClick={() => handleEditStory(latestStory)}
+              className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[24px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
+              aria-label={`Continue writing ${latestStory.title}`}
+            >
+              {latestStory.cover ? (
+                <img
+                  src={latestStory.cover}
+                  alt={latestStory.title}
+                  className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#b184f7]" />
+              )}
 
-              <div className="min-w-0 flex-1 py-1">
-                <div className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">{latestStory.title}</div>
-                <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#555b66] ring-1 ring-[#eceaf2]">
-                  {latestStory.type}
-                </div>
-                <div className="mt-3 text-[12px] text-[#8d94a1]">
-                  Last edited <span className="ml-1 font-extrabold text-[#111827]">{latestStory.lastEdited}</span>
-                </div>
-                <div className="mt-1 text-[11.5px] text-[#8d94a1]">Updated {latestStory.updated}</div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1f103d] via-[#3a1d66]/55 to-[#6d42db]/10" />
+              <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/20 blur-3xl" />
+
+              <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-extrabold text-[#6d42db] shadow-sm backdrop-blur">
+                <i className="fa-solid fa-pen-nib text-[9px]" />
+                Latest draft
               </div>
-            </div>
+
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-5">
+                <div className="min-w-0 flex-1 text-white">
+                  <div className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] sm:text-[22px]">{latestStory.title}</div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-semibold text-white/75">
+                    <span>{latestStory.lastEdited}</span>
+                    <span className="h-1 w-1 rounded-full bg-[#d8c7ff]" />
+                    <span>Updated {latestStory.updated}</span>
+                  </div>
+                </div>
+
+                <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#9a6af5] to-[#6d42db] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_8px_18px_rgba(36,15,77,0.3)] ring-1 ring-white/25">
+                  Continue
+                  <i className="fa-solid fa-arrow-right text-[10px]" />
+                </span>
+              </div>
+            </button>
           </section>
         ) : null}
 
