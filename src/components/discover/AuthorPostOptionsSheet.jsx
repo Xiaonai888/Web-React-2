@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -100,28 +100,60 @@ export function filterAuthorPostsByLocalPreferences(posts = []) {
 }
 
 function MenuIcon({ type }) {
+  if (type === 'interested' || type === 'notInterested') {
+    return (
+      <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px] border-current text-[14px] font-normal leading-none">
+        {type === 'interested' ? '+' : '−'}
+      </span>
+    )
+  }
+
+  if (type === 'controls') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[20px] w-[20px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M4 7h5M15 7h5M4 17h8M18 17h2" />
+        <circle cx="12" cy="7" r="2" />
+        <circle cx="15" cy="17" r="2" />
+      </svg>
+    )
+  }
+
+  if (type === 'unfollow' || type === 'reconnect') {
+    return (
+      <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+        <i className="fa-regular fa-user text-[18px]" />
+
+        <span className="absolute -bottom-0.5 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-white text-[11px] font-normal leading-none">
+          {type === 'unfollow' ? '−' : '+'}
+        </span>
+      </span>
+    )
+  }
+
   const icons = {
-    interested: 'fa-solid fa-circle-plus',
-    notInterested: 'fa-solid fa-circle-minus',
     save: 'fa-regular fa-bookmark',
-    saved: 'fa-solid fa-bookmark',
+    saved: 'fa-regular fa-bookmark',
     report: 'fa-regular fa-flag',
-    controls: 'fa-solid fa-sliders',
     favorite: 'fa-regular fa-star',
-    favoriteActive: 'fa-solid fa-star',
+    favoriteActive: 'fa-regular fa-star',
     snooze: 'fa-regular fa-clock',
-    unfollow: 'fa-solid fa-user-minus',
-    reconnect: 'fa-solid fa-user-plus',
   }
 
   return (
     <i
-      className={`${icons[type] || 'fa-regular fa-circle'} text-[22px]`}
+      className={`${icons[type] || 'fa-regular fa-circle'} text-[19px]`}
       aria-hidden="true"
     />
   )
 }
-
 function MenuButton({
   icon,
   title,
@@ -145,7 +177,7 @@ function MenuButton({
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold leading-5">
+        <span className="block text-[15px] font-normal leading-5">
           {title}
         </span>
 
@@ -177,6 +209,12 @@ export default function AuthorPostOptionsSheet({
   const [unfollowed, setUnfollowed] = useState(false)
   const [busyAction, setBusyAction] = useState('')
   const [message, setMessage] = useState('')
+const [dragY, setDragY] = useState(0)
+
+const dragRef = useRef({
+  active: false,
+  startY: 0,
+})
 
   const author = post?.author_page || {}
   const postId = post?.id || ''
@@ -193,8 +231,9 @@ export default function AuthorPostOptionsSheet({
     if (!open || !postId) return
 
     setScreen('quick')
-    setMessage('')
-    setBusyAction('')
+setMessage('')
+setBusyAction('')
+setDragY(0)
     setInterested(hasId(readArray(STORAGE_KEYS.interested), postId))
     setSaved(hasId(readArray(STORAGE_KEYS.savedPosts), postId))
     setFavorite(
@@ -230,6 +269,54 @@ export default function AuthorPostOptionsSheet({
   }, [onClose, open, screen])
 
   if (!open || !post) return null
+
+
+function closeSheet() {
+  dragRef.current.active = false
+  setDragY(0)
+  onClose?.()
+}
+
+function startDrag(event) {
+  dragRef.current = {
+    active: true,
+    startY: event.clientY,
+  }
+
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function moveDrag(event) {
+  if (!dragRef.current.active) return
+
+  const distance = event.clientY - dragRef.current.startY
+  setDragY(Math.max(0, distance))
+}
+
+function endDrag(event) {
+  const distance = Math.max(
+    0,
+    event.clientY - dragRef.current.startY
+  )
+
+  dragRef.current.active = false
+
+  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+
+  if (distance > 90) {
+    closeSheet()
+    return
+  }
+
+  setDragY(0)
+}
+
+function cancelDrag() {
+  dragRef.current.active = false
+  setDragY(0)
+}
 
   function chooseInterest(nextInterested) {
     const interestedItems = readArray(STORAGE_KEYS.interested)
@@ -387,12 +474,28 @@ export default function AuthorPostOptionsSheet({
       <button
         type="button"
         aria-label="Close post options"
-        onClick={onClose}
+        onClick={closeSheet}
         className="absolute inset-0 bg-black/45"
       />
 
-      <section className="relative max-h-[88dvh] w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl">
-        <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-gray-400" />
+      <section
+  className="relative w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl transition-transform duration-150"
+  style={{
+    height: 'min(510px, 88dvh)',
+    transform: `translateY(${dragY}px)`,
+  }}
+>
+        <button
+  type="button"
+  onPointerDown={startDrag}
+  onPointerMove={moveDrag}
+  onPointerUp={endDrag}
+  onPointerCancel={cancelDrag}
+  className="mx-auto mb-3 flex h-5 w-20 touch-none items-center justify-center"
+  aria-label="Drag down to close"
+>
+  <span className="h-1 w-12 rounded-full bg-gray-400" />
+</button>
 
         {screen === 'quick' ? (
           <>
@@ -480,7 +583,7 @@ export default function AuthorPostOptionsSheet({
               </div>
 
               <div className="min-w-0">
-                <div className="truncate text-[17px] font-semibold text-[#111827]">
+                <div className="truncate text-[17px] font-normal text-[#111827]">
                   Content preferences
                 </div>
                 <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400">
@@ -489,7 +592,7 @@ export default function AuthorPostOptionsSheet({
               </div>
             </div>
 
-            <div className="mb-2 px-2 text-[13px] font-semibold text-[#111827]">
+            <div className="mb-2 px-2 text-[13px] font-normal text-[#111827]">
               What you see
             </div>
 
@@ -553,8 +656,7 @@ export default function AuthorPostOptionsSheet({
                     : `Stop seeing new posts from ${authorName}`
                 }
                 onClick={() => changeFollowState(unfollowed)}
-                disabled={Boolean(busyAction)}
-                danger={!unfollowed}
+disabled={Boolean(busyAction)}
               />
             </div>
           </>
