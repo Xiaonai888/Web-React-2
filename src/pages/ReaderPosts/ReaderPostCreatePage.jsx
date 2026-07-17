@@ -10,6 +10,8 @@ import {
   writeReaderPostDraft,
 } from '../../features/reader-posts/readerPostDraft'
 
+const MAX_POST_LENGTH = 10000
+
 function getStoredUser() {
   try {
     return JSON.parse(
@@ -241,21 +243,30 @@ export default function ReaderPostCreatePage() {
               setContent(
                 event.target.value.slice(
                   0,
-                  1000
+                  MAX_POST_LENGTH
                 )
               )
             }
             placeholder="Share your thoughts..."
-            maxLength={1000}
+            maxLength={MAX_POST_LENGTH}
             className="min-h-[260px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
           />
 
-          <div className="mt-2 text-right text-[11px] font-normal text-[#9ca3af]">
-            {content.length}/1000
-          </div>
         </div>
 
         <div className="relative border-t border-[#eef0f4] bg-white px-4 py-4">
+          <div
+            className={`mb-3 text-right text-[11px] font-normal ${
+              content.length >= MAX_POST_LENGTH
+                ? 'text-[#dc2626]'
+                : content.length >= MAX_POST_LENGTH - 500
+                  ? 'text-[#d97706]'
+                  : 'text-[#9ca3af]'
+            }`}
+          >
+            {content.length.toLocaleString()} / {MAX_POST_LENGTH.toLocaleString()}
+          </div>
+
           <button
             type="button"
             onClick={() =>
