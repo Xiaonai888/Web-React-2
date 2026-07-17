@@ -14,6 +14,7 @@ import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
 import NotificationPage from './NotificationPage'
 import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
+import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 
 const SHOW_SHADOW_EXCLUSIVE = false
 
@@ -888,6 +889,8 @@ useEffect(() => {
     }}
   />
 ) : null}
+
+      {!showNotificationPopup ? <StoriesDailyCheckIn /> : null}
     </>
   )
 }
