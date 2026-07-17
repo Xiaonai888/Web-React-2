@@ -10,6 +10,8 @@ import ReaderPostOptionsSheet, {
 const API_BASE_URL =
   'https://shadow-backend-kucw.onrender.com'
 
+const MAX_POST_LENGTH = 10000
+
 function getAuthToken() {
   return (
     localStorage.getItem(
@@ -139,12 +141,21 @@ export default function ReaderPostCard({
     useState(false)
   const [message, setMessage] =
     useState('')
+  const [expanded, setExpanded] =
+    useState(false)
 
   const user = post?.user || {}
   const isOwner =
     Boolean(post?.is_owner) ||
     String(storedUser?.id || '') ===
       String(post?.user_id || '')
+
+  const postText = String(
+    post?.content || ''
+  )
+  const canCollapse =
+    postText.length > 520 ||
+    postText.split('\n').length > 8
 
   async function updatePost() {
     const text = content.trim()
@@ -326,9 +337,39 @@ export default function ReaderPostCard({
           </div>
         </div>
 
-        <p className="whitespace-pre-wrap break-words px-4 pb-4 text-[14px] font-normal leading-6 text-[#111827]">
-          {post.content}
-        </p>
+        <div className="px-4 pb-4">
+          <p
+            className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]"
+            style={
+              !expanded && canCollapse
+                ? {
+                    display: '-webkit-box',
+                    WebkitLineClamp: 8,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }
+                : undefined
+            }
+          >
+            {post.content}
+          </p>
+
+          {canCollapse ? (
+            <button
+              type="button"
+              onClick={() =>
+                setExpanded(
+                  (current) => !current
+                )
+              }
+              className="mt-1 text-[13px] font-semibold text-[#475569] active:opacity-70"
+            >
+              {expanded
+                ? 'See less'
+                : 'See more'}
+            </button>
+          ) : null}
+        </div>
 
         <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
           <span className="inline-flex items-center gap-1.5">
@@ -418,11 +459,12 @@ export default function ReaderPostCard({
             <textarea
               autoFocus
               value={content}
+              maxLength={MAX_POST_LENGTH}
               onChange={(event) =>
                 setContent(
                   event.target.value.slice(
                     0,
-                    1000
+                    MAX_POST_LENGTH
                   )
                 )
               }
@@ -430,7 +472,7 @@ export default function ReaderPostCard({
             />
 
             <div className="mt-2 text-right text-[11px] font-normal text-gray-400">
-              {content.length}/1000
+              {content.length.toLocaleString()} / {MAX_POST_LENGTH.toLocaleString()}
             </div>
 
             {message ? (
