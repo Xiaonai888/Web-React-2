@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+
 import { useLocation, useNavigate } from 'react-router-dom'
 
 function DashboardIcon({ active }) {
@@ -99,22 +99,12 @@ function NavButton({ label, active, onClick, children }) {
 export default function AuthorStudioBottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
-  const storiesActive = location.pathname === '/author/dashboard' && location.hash === '#author-stories'
-  const dashboardActive = location.pathname === '/author/dashboard' && !storiesActive
+  const storiesActive = location.pathname === '/author/stories'
+  const dashboardActive = location.pathname === '/author/dashboard'
   const insightsActive = location.pathname === '/author/insights'
   const profileActive = location.pathname === '/author/profile'
 
-  useEffect(() => {
-    if (location.pathname !== '/author/dashboard' || location.hash !== '#author-stories') return
-
-    window.requestAnimationFrame(() => {
-      document.getElementById('author-stories')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [location.hash, location.pathname])
-
-  const openStories = () => {
-    navigate('/author/dashboard#author-stories')
-  }
+  
 
   return (
     <nav
@@ -126,7 +116,7 @@ export default function AuthorStudioBottomNav() {
           <DashboardIcon active={dashboardActive} />
         </NavButton>
 
-        <NavButton label="Stories" active={storiesActive} onClick={openStories}>
+        <NavButton label="Stories" active={storiesActive} onClick={() => navigate('/author/stories')}>
           <StoriesIcon active={storiesActive} />
         </NavButton>
 
