@@ -50,7 +50,7 @@ import TermsPoliciesPage from './pages/Auth/TermsPoliciesPage'
 import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 import PremiumPage from './pages/Me/PremiumPage'
-import AuthorInsightsPage from './pages/AuthorAuthorInsightsPage'
+import AuthorInsightsPage from "./pages/Author/AuthorInsightsPage";
 
 
 
