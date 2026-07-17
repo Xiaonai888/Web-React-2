@@ -145,6 +145,7 @@ const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
+const CreateReaderStoryPage = lazy(() => import('./pages/ReaderStories/CreateReaderStoryPage'))
 const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
@@ -226,6 +227,7 @@ function AppShell() {
     '/help',
     '/feedback',
     '/author/stories',
+    '/reader/story/create',
     '/author/notifications',
   ]
 
@@ -1000,6 +1002,16 @@ const shouldShowOpeningAds =
   }
 />
       
+<Route
+  path="/reader/story/create"
+  element={
+    <LazyPage>
+      <CreateReaderStoryPage />
+    </LazyPage>
+  }
+/>
+
+
 <Route
   path="/author/page/story/create"
   element={<LazyPage><CreateAuthorStoryPage /></LazyPage>}
