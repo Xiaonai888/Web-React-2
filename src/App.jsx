@@ -122,6 +122,12 @@ const AuthorPageIncomePage = lazy(() => import('./pages/Author/AuthorPageIncomeP
 const AuthorPageWithdrawalPage = lazy(() => import('./pages/Author/AuthorPageWithdrawalPage'))
 const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchasePage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
+const ReaderPostCreatePage = lazy(() =>
+  import('./pages/ReaderPosts/ReaderPostCreatePage')
+)
+const ReaderPostReviewPage = lazy(() =>
+  import('./pages/ReaderPosts/ReaderPostReviewPage')
+)
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
@@ -204,6 +210,8 @@ function AppShell() {
     '/author/trash',
     '/comments',
     '/saved-posts',
+    '/reader/post/create',
+    '/reader/post/review',
     '/author/comment-protection',
     '/author/page-settings',
     '/author/page/edit',
@@ -855,6 +863,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <ShadowMallPurchasePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/reader/post/create"
+  element={
+    <LazyPage>
+      <ReaderPostCreatePage />
     </LazyPage>
   }
 />
