@@ -32,6 +32,32 @@ function getAdKey(item) {
   )
 }
 
+function getHiddenAdKey(item) {
+  const version = String(
+    item?.visibility_version ||
+      item?.updated_at ||
+      item?.created_at ||
+      1
+  )
+
+  return `${getAdKey(item)}::${version}`
+}
+
+function removeOldHiddenVersions(items, item) {
+  const adKey = getAdKey(item)
+  const versionPrefix = `${adKey}::`
+
+  return items.filter((storedItem) => {
+    const value = String(
+      typeof storedItem === 'object'
+        ? storedItem?.key || ''
+        : storedItem || ''
+    )
+
+    return value !== adKey && !value.startsWith(versionPrefix)
+  })
+}
+
 function hasKey(items, key) {
   return items.some((item) =>
     String(typeof item === 'object' ? item?.key : item) === String(key)
@@ -60,6 +86,7 @@ function getAdSnapshot(item) {
     profile_image_url: item?.profile_image_url || '',
     link_url: item?.link_url || '/shop',
     button_text: item?.button_text || item?.cta || 'Shop now',
+    visibility_version: Number(item?.visibility_version || 1),
     saved_at: new Date().toISOString(),
   }
 }
@@ -74,14 +101,22 @@ function getDestinationDomain(value) {
 }
 
 export function isShadowMallAdHidden(item) {
-  return hasKey(readArray(STORAGE_KEYS.hidden), getAdKey(item))
+  return hasKey(
+    readArray(STORAGE_KEYS.hidden),
+    getHiddenAdKey(item)
+  )
 }
 
 export function hideShadowMallAdLocally(item) {
-  const key = getAdKey(item)
+  const hiddenKey = getHiddenAdKey(item)
+  const currentItems = removeOldHiddenVersions(
+    readArray(STORAGE_KEYS.hidden),
+    item
+  )
+
   writeArray(
     STORAGE_KEYS.hidden,
-    addKey(readArray(STORAGE_KEYS.hidden), key)
+    addKey(currentItems, hiddenKey)
   )
 }
 
@@ -161,19 +196,18 @@ function ActionIcon({ type }) {
   }
 
   if (type === 'notify' || type === 'notifyActive') {
-  const notificationsEnabled = type === 'notifyActive'
+    const notificationsEnabled = type === 'notifyActive'
 
-  return (
-    <svg {...commonProps}>
-      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
-      <path d="M10 19h4" />
-
-      {!notificationsEnabled ? (
-        <path d="M4.5 4.5 19.5 19.5" />
-      ) : null}
-    </svg>
-  )
-}
+    return (
+      <svg {...commonProps}>
+        <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
+        <path d="M10 19h4" />
+        {!notificationsEnabled ? (
+          <path d="M4.5 4.5 19.5 19.5" />
+        ) : null}
+      </svg>
+    )
+  }
 
   if (type === 'copy') {
     return (
@@ -236,21 +270,21 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-4 px-4 py-3.5 text-left active:bg-black/[0.04] ${
+      className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-[7px] text-left active:bg-black/[0.04] ${
         danger ? 'text-red-600' : 'text-[#111827]'
       }`}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center">
         <ActionIcon type={icon} />
       </span>
 
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-normal leading-5">
-  {title}
-</span>
+          {title}
+        </span>
 
         {subtitle ? (
-          <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400">
+          <span className="mt-px block text-[11px] font-normal leading-4 text-gray-400">
             {subtitle}
           </span>
         ) : null}
@@ -489,7 +523,7 @@ export default function ShadowMallAdOptionsSheet({
         </button>
 
         <div className="min-w-0">
-          <div className="truncate text-[17px] font-semibold text-[#111827]">
+          <div className="truncate text-[17px] font-normal text-[#111827]">
             {title}
           </div>
           <div className="mt-0.5 text-[11px] font-normal text-gray-400">
@@ -521,7 +555,7 @@ export default function ShadowMallAdOptionsSheet({
           onPointerMove={moveDrag}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          className="mx-auto mb-3 flex h-5 w-20 touch-none items-center justify-center"
+          className="mx-auto mb-1 flex h-5 w-20 touch-none items-center justify-center"
           aria-label="Drag to close"
         >
           <span className="h-1 w-12 rounded-full bg-gray-400" />
@@ -529,7 +563,7 @@ export default function ShadowMallAdOptionsSheet({
 
         {screen === 'quick' ? (
           <>
-            <div className="mb-3 rounded-[16px] bg-[#f3f4f7]">
+            <div className="mb-2 space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
               <ActionButton
                 icon="interested"
                 title="Interested"
@@ -542,7 +576,6 @@ export default function ShadowMallAdOptionsSheet({
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="notInterested"
@@ -552,7 +585,7 @@ export default function ShadowMallAdOptionsSheet({
               />
             </div>
 
-            <div className="rounded-[16px] bg-[#f3f4f7]">
+            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
               <ActionButton
                 icon={saved ? 'saved' : 'save'}
                 title={saved ? 'Remove from saved' : 'Save ad'}
@@ -560,7 +593,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={toggleSaved}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="hide"
@@ -569,7 +601,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={hideAd}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="report"
@@ -578,7 +609,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={() => openScreen('report')}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="why"
@@ -589,7 +619,6 @@ export default function ShadowMallAdOptionsSheet({
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="about"
@@ -600,7 +629,6 @@ export default function ShadowMallAdOptionsSheet({
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon={notificationsOn ? 'notifyActive' : 'notify'}
@@ -613,7 +641,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={toggleNotifications}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="copy"
@@ -701,7 +728,7 @@ export default function ShadowMallAdOptionsSheet({
               'Choose the reason that best describes the problem'
             )}
 
-            <div className="rounded-[16px] bg-[#f3f4f7]">
+            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
               <ActionButton
                 icon="scam"
                 title="Scam or misleading promotion"
@@ -709,7 +736,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={() => submitReport('scam_or_misleading')}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="inappropriate"
@@ -718,7 +744,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={() => submitReport('inappropriate_content')}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="repeated"
@@ -727,7 +752,6 @@ export default function ShadowMallAdOptionsSheet({
                 onClick={() => submitReport('repeated_or_annoying')}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
 
               <ActionButton
                 icon="other"
