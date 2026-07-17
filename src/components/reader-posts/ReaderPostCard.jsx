@@ -1,4 +1,11 @@
-import { useMemo, useState } from 'react'
+import {
+  useMemo,
+  useState,
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+import ReaderPostOptionsSheet, {
+  ReaderPostDeleteConfirmSheet,
+} from './ReaderPostOptionsSheet'
 
 const API_BASE_URL =
   'https://shadow-backend-kucw.onrender.com'
@@ -70,6 +77,25 @@ function formatPostTime(value) {
   ).format(new Date(timestamp))
 }
 
+function getVisibilityIcon(value) {
+  if (
+    value === 'only_me' ||
+    value === 'private'
+  ) {
+    return 'fa-solid fa-lock'
+  }
+
+  if (value === 'friends') {
+    return 'fa-solid fa-user-group'
+  }
+
+  if (value === 'followers') {
+    return 'fa-solid fa-users'
+  }
+
+  return 'fa-solid fa-earth-americas'
+}
+
 function ReaderAvatar({ user }) {
   const name = user?.name || 'Reader'
 
@@ -94,11 +120,14 @@ export default function ReaderPostCard({
   onDeleted,
   onHidden,
 }) {
+  const navigate = useNavigate()
   const storedUser = useMemo(
     () => getStoredUser(),
     []
   )
   const [menuOpen, setMenuOpen] =
+    useState(false)
+  const [deleteOpen, setDeleteOpen] =
     useState(false)
   const [editorOpen, setEditorOpen] =
     useState(false)
@@ -121,7 +150,9 @@ export default function ReaderPostCard({
     const text = content.trim()
 
     if (!text) {
-      setMessage('Post text is required.')
+      setMessage(
+        'Post text is required.'
+      )
       return
     }
 
@@ -144,6 +175,7 @@ export default function ReaderPostCard({
           }),
         }
       )
+
       const data = await response
         .json()
         .catch(() => ({}))
@@ -175,12 +207,6 @@ export default function ReaderPostCard({
   }
 
   async function deletePost() {
-    const confirmed = window.confirm(
-      'Delete this post?'
-    )
-
-    if (!confirmed) return
-
     try {
       setDeleting(true)
 
@@ -194,6 +220,7 @@ export default function ReaderPostCard({
           },
         }
       )
+
       const data = await response
         .json()
         .catch(() => ({}))
@@ -209,6 +236,7 @@ export default function ReaderPostCard({
       }
 
       onDeleted?.(post.id)
+      setDeleteOpen(false)
     } catch (error) {
       window.alert(
         error.message ||
@@ -220,9 +248,38 @@ export default function ReaderPostCard({
     }
   }
 
+  function openEditor() {
+    setContent(post.content || '')
+    setMessage('')
+    setMenuOpen(false)
+    setEditorOpen(true)
+  }
+
+  function hidePost() {
+    onHidden?.(post.id)
+    setMenuOpen(false)
+  }
+
+  function viewReaderProfile() {
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    setMenuOpen(false)
+
+    if (username) {
+      navigate(
+        `/profile/${encodeURIComponent(username)}`
+      )
+    }
+  }
+
   return (
     <>
-      <article className="bg-white sm:rounded-[12px]">
+      <article
+        id={`reader-post-${post.id}`}
+        className="bg-white sm:rounded-[12px]"
+      >
         <div className="flex items-start gap-2 px-4 pb-3 pt-4">
           <ReaderAvatar user={user} />
 
@@ -239,75 +296,32 @@ export default function ReaderPostCard({
                       post.created_at
                     )}
                   </span>
+
                   {post.is_edited ? (
                     <>
                       <span>·</span>
                       <span>Edited</span>
                     </>
                   ) : null}
+
                   <span>·</span>
-                  <i className="fa-solid fa-earth-americas text-[10px]" />
+
+                  <i
+                    className={`${getVisibilityIcon(post.visibility)} text-[10px]`}
+                  />
                 </div>
               </div>
 
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMenuOpen(
-                      (current) => !current
-                    )
-                  }
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-                  aria-label="Post options"
-                >
-                  <i className="fa-solid fa-ellipsis" />
-                </button>
-
-                {menuOpen ? (
-                  <div className="absolute right-0 top-9 z-30 w-[160px] overflow-hidden rounded-[14px] border border-gray-100 bg-white p-1 shadow-xl">
-                    {isOwner ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setContent(
-                              post.content || ''
-                            )
-                            setMessage('')
-                            setEditorOpen(true)
-                            setMenuOpen(false)
-                          }}
-                          className="w-full rounded-[10px] px-3 py-2.5 text-left text-[13px] font-normal text-[#111827] active:bg-gray-50"
-                        >
-                          Edit post
-                        </button>
-                        <button
-                          type="button"
-                          onClick={deletePost}
-                          disabled={deleting}
-                          className="w-full rounded-[10px] px-3 py-2.5 text-left text-[13px] font-normal text-red-600 active:bg-red-50 disabled:opacity-60"
-                        >
-                          {deleting
-                            ? 'Deleting...'
-                            : 'Delete post'}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHidden?.(post.id)
-                          setMenuOpen(false)
-                        }}
-                        className="w-full rounded-[10px] px-3 py-2.5 text-left text-[13px] font-normal text-[#111827] active:bg-gray-50"
-                      >
-                        Hide post
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setMenuOpen(true)
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+                aria-label="Post options"
+              >
+                <i className="fa-solid fa-ellipsis text-[14px]" />
+              </button>
             </div>
           </div>
         </div>
@@ -319,7 +333,9 @@ export default function ReaderPostCard({
         <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
           <span className="inline-flex items-center gap-1.5">
             <i className="fa-regular fa-heart" />
-            {Number(post.like_count || 0)}
+            {Number(
+              post.like_count || 0
+            )}
           </span>
 
           <span className="inline-flex items-center gap-1.5">
@@ -331,10 +347,42 @@ export default function ReaderPostCard({
 
           <span className="inline-flex items-center gap-1.5">
             <i className="fa-solid fa-rotate-left text-[10px]" />
-            {Number(post.echo_count || 0)}
+            {Number(
+              post.echo_count || 0
+            )}
           </span>
         </div>
       </article>
+
+      <ReaderPostOptionsSheet
+        open={menuOpen}
+        post={post}
+        isOwner={isOwner}
+        onClose={() =>
+          setMenuOpen(false)
+        }
+        onEdit={openEditor}
+        onDelete={() => {
+          setMenuOpen(false)
+          setDeleteOpen(true)
+        }}
+        onHide={hidePost}
+        onViewProfile={
+          viewReaderProfile
+        }
+        onMessage={(text) =>
+          window.alert(text)
+        }
+      />
+
+      <ReaderPostDeleteConfirmSheet
+        open={deleteOpen}
+        deleting={deleting}
+        onCancel={() =>
+          setDeleteOpen(false)
+        }
+        onConfirm={deletePost}
+      />
 
       {editorOpen ? (
         <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/45 sm:items-center sm:p-4">
