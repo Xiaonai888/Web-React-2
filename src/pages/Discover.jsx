@@ -4,9 +4,16 @@ import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
+import DiscoverNewUpdatedStoriesSection from '../components/discover/DiscoverNewUpdatedStoriesSection'
+import DiscoverYouMightLikeSection from '../components/discover/DiscoverYouMightLikeSection'
+import DiscoverCompletedStoriesSection from '../components/discover/DiscoverCompletedStoriesSection'
 import AuthorPostOptionsSheet, {
   filterAuthorPostsByLocalPreferences,
 } from '../components/discover/AuthorPostOptionsSheet'
+import ShadowMallAdOptionsSheet, {
+  hideShadowMallAdLocally,
+  isShadowMallAdHidden,
+} from '../components/discover/ShadowMallAdOptionsSheet'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -467,10 +474,10 @@ function RealFollowedPostCard({
 
   return (
     <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-2 px-4 pb-3 pt-4">
         <Link
           to={pageUrl}
-          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
           aria-label={`Open ${authorName}`}
         >
           {author.avatar_url ? (
@@ -486,7 +493,7 @@ function RealFollowedPostCard({
           )}
         </Link>
 
-        <div className="min-w-0 flex-1">
+        <div className="-ml-1 min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <Link
@@ -496,11 +503,7 @@ function RealFollowedPostCard({
                 {authorName}
               </Link>
 
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
-                {pageUsername ? (
-                  <span>@{pageUsername}</span>
-                ) : null}
-                {pageUsername ? <span>·</span> : null}
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
                 <span>{formatPostTime(post.created_at)}</span>
                 <span>·</span>
                 <i className="fa-solid fa-earth-americas text-[10px]" />
@@ -508,22 +511,22 @@ function RealFollowedPostCard({
             </div>
 
             <button
-  type="button"
-  onClick={() => onMore?.(post)}
-  className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-  aria-label="More"
->
+              type="button"
+              onClick={() => onMore?.(post)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+              aria-label="More"
+            >
               <i className="fa-solid fa-ellipsis" />
             </button>
           </div>
-
-          {post.content ? (
-            <p className="mt-3 whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-[#111827]">
-  {post.content}
-</p>
-          ) : null}
         </div>
       </div>
+
+      {post.content ? (
+        <p className="whitespace-pre-wrap break-words px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827]">
+          {post.content}
+        </p>
+      ) : null}
 
       <RealPostImageGrid
         images={post.image_urls}
@@ -726,14 +729,11 @@ function PromotionLink({ to, className, children }) {
   )
 }
 
-function AdsCard({ item }) {
+function AdsCard({ item, onMore, onHide }) {
   const destination = item.link_url || '/shop'
-  const [hidden, setHidden] = useState(false)
   const [captionExpanded, setCaptionExpanded] = useState(false)
   const description = String(item.description || '')
   const hasMoreDescription = description.length > 110
-
-  if (hidden) return null
 
   return (
     <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
@@ -766,6 +766,7 @@ function AdsCard({ item }) {
 
         <button
           type="button"
+          onClick={() => onMore?.(item)}
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
           aria-label="More sponsored options"
         >
@@ -774,7 +775,7 @@ function AdsCard({ item }) {
 
         <button
           type="button"
-          onClick={() => setHidden(true)}
+          onClick={() => onHide?.(item)}
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
           aria-label="Hide sponsored promotion"
         >
@@ -1025,6 +1026,7 @@ export default function DiscoverPage() {
   const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
   const [optionsPost, setOptionsPost] = useState(null)
+  const [adOptionsItem, setAdOptionsItem] = useState(null)
   const commentCountBaseRef = useRef({
     postId: '',
     loadedCount: null,
@@ -1039,7 +1041,11 @@ export default function DiscoverPage() {
         const promotion = await fetchShadowMallPromotion()
 
         if (alive) {
-          setShadowMallPromotion(promotion)
+          setShadowMallPromotion(
+            promotion && !isShadowMallAdHidden(promotion)
+              ? promotion
+              : null
+          )
         }
       } catch {
         if (alive) {
@@ -1270,6 +1276,15 @@ export default function DiscoverPage() {
     )
   }
 
+  function hideShadowMallPromotion(item) {
+    if (item) {
+      hideShadowMallAdLocally(item)
+    }
+
+    setShadowMallPromotion(null)
+    setAdOptionsItem(null)
+  }
+
   function hidePostFromDiscover(postId) {
     setRealPosts((current) =>
       current.filter((post) => post.id !== postId)
@@ -1351,7 +1366,9 @@ export default function DiscoverPage() {
 
       <main className="pt-[58px]">
         <div className="mx-auto w-full max-w-[620px]">
-          <DiscoverStorySection />
+          <div className="sm:px-3 sm:pt-1.5">
+            <DiscoverStorySection />
+          </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
             {realPostsLoading ? (
@@ -1380,15 +1397,31 @@ export default function DiscoverPage() {
                 />
 
                 {index === 0 && shadowMallPromotion ? (
-                  <AdsCard item={shadowMallPromotion} />
+                  <AdsCard
+                    item={shadowMallPromotion}
+                    onMore={setAdOptionsItem}
+                    onHide={hideShadowMallPromotion}
+                  />
                 ) : null}
 
                 {index === 0 ? (
                   <DiscoverTrendingStoriesSection />
                 ) : null}
 
-                {index === Math.min(1, realPosts.length - 1) ? (
+                {index === 1 ? (
                   <DiscoverAuthorsYouMayLikeSection />
+                ) : null}
+
+                {index === 2 ? (
+                  <DiscoverNewUpdatedStoriesSection />
+                ) : null}
+
+                {index === 3 ? (
+                  <DiscoverYouMightLikeSection />
+                ) : null}
+
+                {index === 4 ? (
+                  <DiscoverCompletedStoriesSection />
                 ) : null}
                 
               </Fragment>
@@ -1420,6 +1453,13 @@ export default function DiscoverPage() {
           </section>
         </div>
       </main>
+
+      <ShadowMallAdOptionsSheet
+        open={Boolean(adOptionsItem)}
+        item={adOptionsItem}
+        onClose={() => setAdOptionsItem(null)}
+        onHide={hideShadowMallPromotion}
+      />
 
       <AuthorPostOptionsSheet
         open={Boolean(optionsPost)}
