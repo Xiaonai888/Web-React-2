@@ -14,6 +14,8 @@ import ShadowMallAdOptionsSheet, {
   hideShadowMallAdLocally,
   isShadowMallAdHidden,
 } from '../components/discover/ShadowMallAdOptionsSheet'
+import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
+import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -131,6 +133,93 @@ async function fetchFollowedPosts(token, cursor = '') {
   return data
 }
 
+
+async function fetchReaderPosts(token) {
+  if (!token) {
+    return {
+      posts: [],
+    }
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/reader-posts/feed?limit=20`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message ||
+        'Failed to load reader posts'
+    )
+  }
+
+  return data
+}
+
+function buildDiscoverTimeline(
+  authorPosts,
+  readerPosts
+) {
+  const items = [
+    ...(Array.isArray(authorPosts)
+      ? authorPosts.map((post) => ({
+          kind: 'author_post',
+          post,
+        }))
+      : []),
+    ...(Array.isArray(readerPosts)
+      ? readerPosts.map((post) => ({
+          kind: 'reader_post',
+          post,
+        }))
+      : []),
+  ].sort((left, right) => {
+    const rightTime = new Date(
+      right.post?.created_at || 0
+    ).getTime()
+    const leftTime = new Date(
+      left.post?.created_at || 0
+    ).getTime()
+
+    if (rightTime !== leftTime) {
+      return rightTime - leftTime
+    }
+
+    return String(right.post?.id || '')
+      .localeCompare(
+        String(left.post?.id || '')
+      )
+  })
+
+  let authorIndex = -1
+
+  return items.map((item, index) => {
+    if (item.kind === 'author_post') {
+      authorIndex += 1
+
+      return {
+        ...item,
+        timelineIndex: index,
+        authorIndex,
+      }
+    }
+
+    return {
+      ...item,
+      timelineIndex: index,
+      authorIndex: null,
+    }
+  })
+}
 
 async function fetchShadowMallPromotions() {
   const response = await fetch(
@@ -1028,6 +1117,9 @@ export default function DiscoverPage() {
   const [realPostsLoading, setRealPostsLoading] = useState(true)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
+  const [readerPosts, setReaderPosts] = useState([])
+  const [readerPostsLoading, setReaderPostsLoading] = useState(true)
+  const [readerPostsError, setReaderPostsError] = useState('')
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
 
   const uniqueShadowMallPromotions = useMemo(() => {
@@ -1096,6 +1188,56 @@ export default function DiscoverPage() {
       alive = false
     }
   }, [])
+
+  useEffect(() => {
+    let alive = true
+
+    async function loadReaderPosts() {
+      if (!token) {
+        if (alive) {
+          setReaderPosts([])
+          setReaderPostsLoading(false)
+          setReaderPostsError('')
+        }
+
+        return
+      }
+
+      try {
+        setReaderPostsLoading(true)
+        setReaderPostsError('')
+
+        const data =
+          await fetchReaderPosts(token)
+
+        if (!alive) return
+
+        setReaderPosts(
+          Array.isArray(data.posts)
+            ? data.posts
+            : []
+        )
+      } catch (error) {
+        if (!alive) return
+
+        setReaderPosts([])
+        setReaderPostsError(
+          error.message ||
+            'Failed to load reader posts'
+        )
+      } finally {
+        if (alive) {
+          setReaderPostsLoading(false)
+        }
+      }
+    }
+
+    loadReaderPosts()
+
+    return () => {
+      alive = false
+    }
+  }, [token])
 
   useEffect(() => {
     let alive = true
@@ -1221,6 +1363,46 @@ export default function DiscoverPage() {
     }
   }
 
+
+  const discoverTimeline = useMemo(
+    () =>
+      buildDiscoverTimeline(
+        realPosts,
+        readerPosts
+      ),
+    [realPosts, readerPosts]
+  )
+
+  function handleReaderPostCreated(post) {
+    if (!post?.id) return
+
+    setReaderPosts((current) => [
+      post,
+      ...current.filter(
+        (item) => item.id !== post.id
+      ),
+    ])
+  }
+
+  function handleReaderPostUpdated(post) {
+    if (!post?.id) return
+
+    setReaderPosts((current) =>
+      current.map((item) =>
+        item.id === post.id
+          ? post
+          : item
+      )
+    )
+  }
+
+  function removeReaderPost(postId) {
+    setReaderPosts((current) =>
+      current.filter(
+        (post) => post.id !== postId
+      )
+    )
+  }
 
   function openPostComments(post) {
     if (!post?.id) return
@@ -1409,22 +1591,42 @@ export default function DiscoverPage() {
       <main className="pt-[58px]">
         <div className="mx-auto w-full max-w-[620px]">
           <div className="sm:px-3 sm:pt-1.5">
-            <DiscoverStorySection />
+            <ReaderPostComposer
+              onCreated={handleReaderPostCreated}
+            />
+
+            <div className="mt-1">
+              <DiscoverStorySection />
+            </div>
           </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
-            {realPostsLoading ? (
+            {realPostsLoading ||
+            readerPostsLoading ? (
               <>
                 <RealPostSkeleton />
                 <RealPostSkeleton />
               </>
             ) : null}
 
-            {!realPostsLoading && realPostsError && !realPosts.length ? (
-              <RealFeedErrorState onRetry={retryRealPosts} />
+            {!realPostsLoading &&
+            !readerPostsLoading &&
+            !discoverTimeline.length &&
+            (realPostsError ||
+              readerPostsError) ? (
+              <RealFeedErrorState
+                onRetry={() => {
+                  retryRealPosts()
+                  window.location.reload()
+                }}
+              />
             ) : null}
 
-            {!realPostsLoading && !realPostsError && !realPosts.length ? (
+            {!realPostsLoading &&
+            !readerPostsLoading &&
+            !realPostsError &&
+            !readerPostsError &&
+            !discoverTimeline.length ? (
               <>
                 <RealFeedEmptyState />
 
@@ -1441,17 +1643,40 @@ export default function DiscoverPage() {
               </>
             ) : null}
 
-            {realPosts.map((post, index) => (
-              <Fragment key={post.id}>
-                <RealFollowedPostCard
-                  post={post}
-                  token={token}
-                  onReactionUpdated={handleRealPostReactionUpdated}
-                  onComment={openPostComments}
-                  onMore={setOptionsPost}
-                />
+            {discoverTimeline.map((entry) => (
+              <Fragment
+                key={`${entry.kind}-${entry.post.id}`}
+              >
+                {entry.kind === 'reader_post' ? (
+                  <ReaderPostCard
+                    post={entry.post}
+                    onUpdated={handleReaderPostUpdated}
+                    onDeleted={removeReaderPost}
+                    onHidden={removeReaderPost}
+                  />
+                ) : (
+                  <RealFollowedPostCard
+                    post={entry.post}
+                    token={token}
+                    onReactionUpdated={
+                      handleRealPostReactionUpdated
+                    }
+                    onComment={openPostComments}
+                    onMore={setOptionsPost}
+                  />
+                )}
 
-                {index === 0 && firstShadowMallPromotion ? (
+                {firstShadowMallPromotion &&
+                (
+                  (
+                    entry.kind === 'author_post' &&
+                    entry.authorIndex === 0
+                  ) ||
+                  (
+                    !realPosts.length &&
+                    entry.timelineIndex === 0
+                  )
+                ) ? (
                   <AdsCard
                     item={firstShadowMallPromotion}
                     onMore={setAdOptionsItem}
@@ -1459,30 +1684,35 @@ export default function DiscoverPage() {
                   />
                 ) : null}
 
-                {index === 0 ? (
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 0 ? (
                   <DiscoverTrendingStoriesSection />
                 ) : null}
 
-                {index === 1 ? (
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 1 ? (
                   <DiscoverAuthorsYouMayLikeSection />
                 ) : null}
 
-                {index === 2 ? (
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 2 ? (
                   <DiscoverNewUpdatedStoriesSection />
                 ) : null}
 
-                {index === 3 ? (
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 3 ? (
                   <DiscoverYouMightLikeSection />
                 ) : null}
 
-                {index === 4 ? (
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 4 ? (
                   <DiscoverCompletedStoriesSection />
                 ) : null}
-                
               </Fragment>
             ))}
 
-            {realPosts.length && !realPostsHasMore
+            {discoverTimeline.length &&
+            !realPostsHasMore
               ? remainingShadowMallPromotions.map(
                   (promotion) => (
                     <AdsCard
@@ -1494,7 +1724,13 @@ export default function DiscoverPage() {
                   )
                 )
               : null}
-      
+
+            {readerPostsError &&
+            discoverTimeline.length ? (
+              <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-normal text-red-600 ring-1 ring-red-100">
+                {readerPostsError}
+              </div>
+            ) : null}
 
             {realPostsError && realPosts.length ? (
               <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-bold text-red-600 ring-1 ring-red-100">
