@@ -185,6 +185,7 @@ function AppShell() {
     '/author/create',
     '/author/dashboard',
     '/author/profile',
+    '/author/insights',
     '/author/income',
     '/author/payment-method',
     '/author/benefits',
@@ -214,7 +215,6 @@ function AppShell() {
     '/about',
     '/help',
     '/feedback',
-    '/author/insights',
   ]
 
   const shouldHideFooter =
@@ -1033,6 +1033,7 @@ const shouldShowOpeningAds =
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
         <Route path="/author/profile" element={<AuthorProfilePage />} />
+        <Route path="/author/insights" element={<AuthorInsightsPage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
