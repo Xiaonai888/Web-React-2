@@ -600,7 +600,7 @@ export default function AuthorDashboardPage() {
           <div className="flex items-center justify-end">
             <button
               type="button"
-              onClick={() => navigate('/author/page/notifications')}
+              onClick={() => navigate('/author/notifications')}
               className="flex h-9 w-9 items-center justify-center bg-transparent text-[#111827] active:opacity-60"
               aria-label="Notifications"
             >
