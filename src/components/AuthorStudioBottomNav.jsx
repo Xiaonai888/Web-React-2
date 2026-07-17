@@ -101,7 +101,7 @@ export default function AuthorStudioBottomNav() {
   const location = useLocation()
   const storiesActive = location.pathname === '/author/dashboard' && location.hash === '#author-stories'
   const dashboardActive = location.pathname === '/author/dashboard' && !storiesActive
-  const insightsActive = location.pathname === '/author/income'
+  const insightsActive = location.pathname === '/author/insights'
   const profileActive = location.pathname === '/author/profile'
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function AuthorStudioBottomNav() {
           </button>
         </div>
 
-        <NavButton label="Insights" active={insightsActive} onClick={() => navigate('/author/income')}>
+        <NavButton label="Insights" active={insightsActive} onClick={() => navigate('/author/insights')}>
           <InsightsIcon active={insightsActive} />
         </NavButton>
 
