@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
+import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -139,20 +140,7 @@ function StatItem({ value, label }) {
   )
 }
 
-function HighlightCircle({ title, isAdd = false }) {
-  return (
-    <button type="button" className="shrink-0 text-center">
-      <div
-        className={`mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-full ${
-          isAdd ? 'border border-dashed border-[#cfd3dc] bg-white' : 'bg-[#e5e5e8]'
-        }`}
-      >
-        {isAdd ? <i className="fas fa-plus text-[18px] text-[#8d94a1]" /> : null}
-      </div>
-      <div className="mt-2 text-[11px] font-semibold text-[#111827]">{title}</div>
-    </button>
-  )
-}
+
 
 const PROFILE_LINK_OPTIONS = [
   { type: 'website', label: 'Website', icon: 'fas fa-globe' },
@@ -544,62 +532,13 @@ function EditProfileModal({
   )
 }
 
-function PostCard({ profile, text, imageTone = '#e5e5e8', time = 'Yesterday at 10:22 AM', menuItems }) {
-  const [postMenuOpen, setPostMenuOpen] = useState(false)
 
-  return (
-    <article className="bg-white md:overflow-hidden md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
-      <div className="flex items-start justify-between px-4 pt-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <AvatarImage profile={profile} sizeClass="h-12 w-12 text-[18px]" />
-
-          <div className="min-w-0">
-            <div className="line-clamp-1 text-[14px] font-extrabold text-[#111827]">
-              {profile.name}
-            </div>
-            <div className="mt-1 text-[11px] text-[#8d94a1]">{time}</div>
-          </div>
-        </div>
-
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setPostMenuOpen((value) => !value)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#111827] hover:bg-[#f5f3fa]"
-          >
-            <i className="fas fa-ellipsis-v text-[14px]" />
-          </button>
-
-          {postMenuOpen ? <DropdownMenu items={menuItems} /> : null}
-        </div>
-      </div>
-
-      <p className="px-4 pt-4 text-[13px] leading-5 text-[#111827]">{text}</p>
-
-      <div className="mt-4 aspect-square w-full" style={{ backgroundColor: imageTone }} />
-
-      <div className="flex items-center gap-5 px-4 py-3 text-[11px] text-[#111827]">
-        <span>
-          <i className="far fa-heart mr-1" />
-          198
-        </span>
-        <span>
-          <i className="far fa-comment mr-1" />
-          32
-        </span>
-        <span>
-          <i className="fas fa-retweet mr-1" />
-          25
-        </span>
-        <span className="ml-auto">😍 🙂 😊</span>
-      </div>
-    </article>
-  )
-}
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+const [readerPostCount, setReaderPostCount] = useState(0)
+const [profileTabMessage, setProfileTabMessage] = useState('')
   const [user, setUser] = useState(getStoredUser())
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
@@ -620,6 +559,11 @@ export default function ProfilePage() {
   location: user?.location || '',
   social_links: Array.isArray(user?.social_links) ? user.social_links.map((item) => ({ type: item?.type || 'link', url: item?.url || '' })).slice(0, 5) : [],
 })
+
+  function showProfileTabComingSoon(label) {
+  setProfileTabMessage(`${label} is coming soon.`)
+  window.setTimeout(() => setProfileTabMessage(''), 2200)
+}
 
   const isOwnProfile = true
 
@@ -656,7 +600,7 @@ export default function ProfilePage() {
       username: user?.username || 'username',
       avatarLetter: (user?.name || 'R').charAt(0).toUpperCase(),
       avatarUrl: avatarPreview || user?.avatar_url || '',
-      posts: '0',
+      posts: String(readerPostCount),
 followers: String(user?.followers_count || 0),
 following: String(user?.following_count || 0),
       bioTitle: user?.work || 'Add your work / job',
@@ -665,31 +609,11 @@ following: String(user?.following_count || 0),
       isPremium: Boolean(user?.is_premium),
       socialLinks: Array.isArray(user?.social_links) ? user.social_links.filter((item) => item?.url).slice(0, 5) : [],
     }
-  }, [avatarPreview, user])
-
+  }, [avatarPreview, readerPostCount, user])
   const profileMenuItems = ['Copy link', 'Report', 'Block']
-  const postMenuItems = isOwnProfile ? ['Edit', 'Delete', 'Hide'] : ['Report', 'Block', 'Hide']
+  
 
-  const demoPosts = [
-    {
-      id: 1,
-      text: 'Hello everyone!',
-      time: 'Yesterday at 10:22 AM',
-      imageTone: '#e5e5e8',
-    },
-    {
-      id: 2,
-      text: 'Today I started planning something new for my reader profile.',
-      time: 'Yesterday at 8:10 PM',
-      imageTone: '#eeeeef',
-    },
-    {
-      id: 3,
-      text: 'Small steps, but still moving forward.',
-      time: '2 days ago',
-      imageTone: '#e2e2e6',
-    },
-  ]
+  
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
@@ -1019,40 +943,42 @@ following: String(user?.following_count || 0),
             )}
           </section>
 
-          <section className="border-t border-[#f0eef6] px-4 py-4">
-            <div className="flex gap-4 overflow-x-auto pb-1">
-              <HighlightCircle title="Daily" />
-              <HighlightCircle title="Study" />
-              <HighlightCircle title="Travel" />
-              <HighlightCircle title="Shopping" />
-              {isOwnProfile ? <HighlightCircle title="New" isAdd /> : null}
-            </div>
-          </section>
+          
 
           <section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
-            <div className="grid grid-cols-3 text-center text-[12px] font-extrabold text-[#111827]">
-              <button className="relative py-3">
-                All
-                <span className="absolute bottom-0 left-1/2 h-[2px] w-8 -translate-x-1/2 rounded-full bg-[#111827]" />
-              </button>
-              <button className="py-3">Reels</button>
-              <button className="py-3">Photo</button>
-            </div>
-          </section>
+  <div className="flex items-center gap-1.5 px-4 py-2.5 text-[12px]">
+    <button className="rounded-full bg-[#f1f2f4] px-4 py-2 font-semibold text-[#111827]">
+      All
+    </button>
+
+    <button
+      type="button"
+      onClick={() => showProfileTabComingSoon('Reels')}
+      className="rounded-full px-4 py-2 font-normal text-[#6b7280]"
+    >
+      Reels
+    </button>
+
+    <button
+      type="button"
+      onClick={() => showProfileTabComingSoon('Photo')}
+      className="rounded-full px-4 py-2 font-normal text-[#6b7280]"
+    >
+      Photo
+    </button>
+  </div>
+
+  {profileTabMessage ? (
+    <div className="absolute left-4 top-[54px] z-30 rounded-[12px] bg-[#111827] px-3 py-2 text-[11px] font-normal text-white shadow-lg">
+      {profileTabMessage}
+    </div>
+  ) : null}
+</section>
         </div>
 
-        <section className="mt-2 space-y-2 md:mt-3 md:space-y-3">
-          {demoPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              profile={profile}
-              text={post.text}
-              time={post.time}
-              imageTone={post.imageTone}
-              menuItems={postMenuItems}
-            />
-          ))}
-        </section>
+        <ReaderProfilePostsPanel
+  onCountChange={setReaderPostCount}
+/>
       </main>
     </div>
   )
