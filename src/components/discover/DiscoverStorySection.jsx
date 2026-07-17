@@ -1,8 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import {
+  useNavigate,
+} from 'react-router-dom'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname ===
+    'localhost' ||
+  window.location.hostname ===
+    '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
@@ -12,38 +23,74 @@ const CREATE_STORY_ITEM = {
   label: 'Create story',
   avatar: '+',
   type: 'create',
-  image: 'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
+  image:
+    'linear-gradient(160deg, #1f2937 0%, #93c5fd 100%)',
 }
 
 function getAuthToken() {
   return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
+    localStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    sessionStorage.getItem(
+      'shadow_reader_token'
+    ) ||
     ''
   )
 }
 
 function getInitial(value) {
-  return String(value || 'S').trim().slice(0, 1).toUpperCase()
+  return String(value || 'S')
+    .trim()
+    .slice(0, 1)
+    .toUpperCase()
 }
 
 function formatStoryTime(value) {
-  const timestamp = new Date(value || 0).getTime()
+  const timestamp =
+    new Date(value || 0).getTime()
 
   if (!timestamp) return 'Just now'
 
-  const difference = Math.max(0, Date.now() - timestamp)
-  const minutes = Math.floor(difference / 60000)
-  const hours = Math.floor(minutes / 60)
+  const difference = Math.max(
+    0,
+    Date.now() - timestamp
+  )
+  const minutes = Math.floor(
+    difference / 60000
+  )
+  const hours = Math.floor(
+    minutes / 60
+  )
 
   if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) return `${hours}h`
+  if (minutes < 60) {
+    return `${minutes}m`
+  }
+  if (hours < 24) {
+    return `${hours}h`
+  }
 
   return 'Today'
 }
 
-function StaticStoryCard({ item, onClick }) {
+function getLatestStory(group) {
+  return [...(group?.stories || [])]
+    .sort(
+      (left, right) =>
+        new Date(
+          right.created_at || 0
+        ).getTime() -
+        new Date(
+          left.created_at || 0
+        ).getTime()
+    )[0] || null
+}
+
+function StaticStoryCard({
+  item,
+  onClick,
+}) {
   return (
     <button
       type="button"
@@ -51,56 +98,62 @@ function StaticStoryCard({ item, onClick }) {
       className="relative h-[168px] w-[102px] shrink-0 overflow-hidden rounded-[8px] bg-white text-left transition-transform active:scale-[0.98] sm:h-[170px] sm:w-[104px]"
       aria-label={item.name}
     >
-      <div className="absolute inset-0" style={{ background: item.image }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: item.image,
+        }}
+      />
+
       <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/5 to-black/65" />
 
       <div className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-[14px] font-black text-white">
         {item.avatar}
       </div>
 
-      {item.badge ? (
-        <div className="absolute right-2 top-3 rounded-full bg-[#f6b800] px-2 py-0.5 text-[9px] font-black text-[#111827] shadow-sm">
-          {item.badge}
-        </div>
-      ) : null}
-
-      {item.type === 'create' ? (
-        <div className="absolute left-1/2 top-[63px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white sm:top-[64px]">
-          +
-        </div>
-      ) : null}
+      <div className="absolute left-1/2 top-[63px] flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border-[3px] border-white bg-[#1677ff] text-[24px] font-black leading-none text-white sm:top-[64px]">
+        +
+      </div>
 
       <div className="absolute bottom-3 left-3 right-3">
         <div className="line-clamp-2 text-[13px] font-normal leading-[16px] text-white drop-shadow">
           {item.label}
         </div>
-        {item.type === 'feature' && item.name !== item.label ? (
-          <div className="mt-1 truncate text-[10px] font-bold text-white/80">{item.name}</div>
-        ) : null}
       </div>
     </button>
   )
 }
 
-function AuthorStoryCard({ group, onClick }) {
-  const author = group.author_page || {}
-  const latestStory = group.stories?.[group.stories.length - 1] || null
-  const isVideo = latestStory?.media_type === 'video'
-  const ringClass = group.has_unseen
-    ? 'ring-1 ring-inset ring-[#8b5cf6]'
-    : 'ring-1 ring-inset ring-[#cbd5e1]'
+function StoryCard({
+  group,
+  onClick,
+}) {
+  const creator =
+    group.creator || {}
+  const latestStory =
+    getLatestStory(group)
+  const isVideo =
+    latestStory?.media_type ===
+    'video'
+
+  const ringClass =
+    group.has_unseen
+      ? 'ring-2 ring-inset ring-[#8b5cf6]'
+      : 'ring-1 ring-inset ring-[#cbd5e1]'
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`relative h-[168px] w-[102px] shrink-0 overflow-hidden rounded-[8px] bg-[#111827] text-left transition-transform active:scale-[0.98] sm:h-[170px] sm:w-[104px] ${ringClass}`}
-      aria-label={`View ${author.page_name || 'author'} story`}
+      aria-label={`View ${creator.name || 'creator'} story`}
     >
       {latestStory?.media_url ? (
         isVideo ? (
           <video
-            src={latestStory.media_url}
+            src={
+              latestStory.media_url
+            }
             muted
             playsInline
             preload="metadata"
@@ -108,7 +161,9 @@ function AuthorStoryCard({ group, onClick }) {
           />
         ) : (
           <img
-            src={latestStory.media_url}
+            src={
+              latestStory.media_url
+            }
             alt=""
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
@@ -121,21 +176,29 @@ function AuthorStoryCard({ group, onClick }) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/5 to-black/80" />
 
       <div className="absolute left-2 top-2 h-9 w-9 overflow-hidden rounded-full border-[3px] border-white bg-[#111827]">
-        {author.avatar_url ? (
+        {creator.avatar_url ? (
           <img
-            src={author.avatar_url}
-            alt={author.page_name || ''}
+            src={creator.avatar_url}
+            alt={creator.name || ''}
             className="h-full w-full object-cover"
           />
         ) : (
           <span className="flex h-full w-full items-center justify-center text-[13px] font-black text-white">
-            {getInitial(author.page_name)}
+            {getInitial(
+              creator.name
+            )}
           </span>
         )}
       </div>
 
+      {creator.type === 'author' ? (
+        <div className="absolute right-2 top-3 rounded-full bg-[#f6b800] px-2 py-0.5 text-[8px] font-black text-[#111827] shadow-sm">
+          AUTHOR
+        </div>
+      ) : null}
+
       {group.stories?.length > 1 ? (
-        <div className="absolute right-2 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur">
+        <div className="absolute right-2 top-8 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur">
           {group.stories.length}
         </div>
       ) : null}
@@ -148,49 +211,131 @@ function AuthorStoryCard({ group, onClick }) {
 
       <div className="absolute bottom-3 left-3 right-3">
         <div className="line-clamp-2 text-[13px] font-normal leading-[16px] text-white drop-shadow">
-          {group.is_owner ? 'Your story' : author.page_name || 'Author story'}
+          {group.is_owner
+            ? 'Your story'
+            : creator.name ||
+              'Story'}
         </div>
+
         <div className="mt-1 truncate text-[10px] font-normal text-white/75">
-          {formatStoryTime(latestStory?.created_at)}
+          {formatStoryTime(
+            latestStory?.created_at
+          )}
         </div>
       </div>
     </button>
   )
 }
 
-function ViewerAvatar({ author }) {
+function ViewerAvatar({ creator }) {
   return (
     <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white/80 bg-[#111827]">
-      {author?.avatar_url ? (
+      {creator?.avatar_url ? (
         <img
-          src={author.avatar_url}
-          alt={author.page_name || ''}
+          src={creator.avatar_url}
+          alt={creator.name || ''}
           className="h-full w-full object-cover"
         />
       ) : (
         <span className="flex h-full w-full items-center justify-center text-[13px] font-black text-white">
-          {getInitial(author?.page_name)}
+          {getInitial(
+            creator?.name
+          )}
         </span>
       )}
     </div>
   )
 }
 
-function StoryViewer({ group, onClose, onViewed }) {
-  const [storyIndex, setStoryIndex] = useState(0)
-  const [progress, setProgress] = useState(0)
+function DeleteStorySheet({
+  open,
+  deleting,
+  onClose,
+  onDelete,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[200100]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+        aria-label="Cancel delete"
+      />
+
+      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[520px] rounded-t-[24px] bg-white px-4 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#9ca3af]" />
+
+        <h2 className="text-[16px] font-semibold text-[#111827]">
+          Delete this story?
+        </h2>
+
+        <p className="mt-2 text-[12px] font-normal leading-5 text-[#667085]">
+          This Reader Story will be removed from Discover.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={deleting}
+            className="h-11 rounded-full border border-[#d0d5dd] bg-white text-[13px] font-normal text-[#111827] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="h-11 rounded-full bg-[#e5484d] text-[13px] font-normal text-white disabled:opacity-60"
+          >
+            {deleting
+              ? 'Deleting...'
+              : 'Delete'}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function StoryViewer({
+  group,
+  onClose,
+  onViewed,
+  onDeleted,
+}) {
+  const [storyIndex, setStoryIndex] =
+    useState(0)
+  const [progress, setProgress] =
+    useState(0)
+  const [
+    deleteSheetOpen,
+    setDeleteSheetOpen,
+  ] = useState(false)
+  const [deleting, setDeleting] =
+    useState(false)
   const videoRef = useRef(null)
-  const stories = group?.stories || []
-  const story = stories[storyIndex] || null
-  const author = group?.author_page || {}
+
+  const stories =
+    group?.stories || []
+  const story =
+    stories[storyIndex] || null
+  const creator =
+    group?.creator || {}
 
   useEffect(() => {
     setStoryIndex(0)
     setProgress(0)
-  }, [group?.author_page?.id])
+  }, [group?.key])
 
   useEffect(() => {
-    if (!story || story.media_type === 'video') {
+    if (
+      !story ||
+      story.media_type === 'video'
+    ) {
       setProgress(0)
       return undefined
     }
@@ -198,71 +343,145 @@ function StoryViewer({ group, onClose, onViewed }) {
     const startedAt = Date.now()
     const duration = 5000
 
-    const timer = window.setInterval(() => {
-      const nextProgress = Math.min(100, ((Date.now() - startedAt) / duration) * 100)
-      setProgress(nextProgress)
+    const timer =
+      window.setInterval(() => {
+        const nextProgress = Math.min(
+          100,
+          (
+            (Date.now() -
+              startedAt) /
+            duration
+          ) * 100
+        )
 
-      if (nextProgress >= 100) {
-        window.clearInterval(timer)
+        setProgress(nextProgress)
 
-        if (storyIndex < stories.length - 1) {
-          setStoryIndex((current) => current + 1)
-          setProgress(0)
-        } else {
-          onClose()
+        if (nextProgress >= 100) {
+          window.clearInterval(timer)
+
+          if (
+            storyIndex <
+            stories.length - 1
+          ) {
+            setStoryIndex(
+              (current) =>
+                current + 1
+            )
+            setProgress(0)
+          } else {
+            onClose()
+          }
         }
-      }
-    }, 80)
+      }, 80)
 
-    return () => window.clearInterval(timer)
-  }, [story?.id, story?.media_type, storyIndex, stories.length, onClose])
+    return () =>
+      window.clearInterval(timer)
+  }, [
+    story?.id,
+    story?.media_type,
+    storyIndex,
+    stories.length,
+    onClose,
+  ])
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const previousOverflow =
+      document.body.style.overflow
+
+    document.body.style.overflow =
+      'hidden'
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.style.overflow =
+        previousOverflow
     }
   }, [])
 
   useEffect(() => {
     const token = getAuthToken()
 
-    if (!story?.id || story.has_viewed || group.is_owner || !token) return undefined
+    if (
+      !story?.id ||
+      story.has_viewed ||
+      group.is_owner ||
+      !token
+    ) {
+      return undefined
+    }
 
     let active = true
 
-    const timer = window.setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/author-stories/${encodeURIComponent(story.id)}/view`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        const data = await response.json().catch(() => ({}))
+    const timer =
+      window.setTimeout(
+        async () => {
+          try {
+            const endpoint =
+              story.source_type ===
+              'reader'
+                ? `/api/reader-stories/${encodeURIComponent(story.id)}/view`
+                : `/api/author-stories/${encodeURIComponent(story.id)}/view`
 
-        if (!response.ok || data.ok === false) return
+            const response =
+              await fetch(
+                `${API_BASE_URL}${endpoint}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization:
+                      `Bearer ${token}`,
+                  },
+                }
+              )
 
-        if (active) {
-          onViewed(story.id, Number(data.view_count || story.view_count || 0))
-        }
-      } catch {}
-    }, 500)
+            const data =
+              await response
+                .json()
+                .catch(() => ({}))
+
+            if (
+              !response.ok ||
+              data.ok === false
+            ) {
+              return
+            }
+
+            if (active) {
+              onViewed(
+                story.id,
+                story.source_type,
+                Number(
+                  data.view_count ||
+                    story.view_count ||
+                    0
+                )
+              )
+            }
+          } catch {}
+        },
+        500
+      )
 
     return () => {
       active = false
       window.clearTimeout(timer)
     }
-  }, [group.is_owner, onViewed, story?.has_viewed, story?.id, story?.view_count])
+  }, [
+    group.is_owner,
+    onViewed,
+    story?.has_viewed,
+    story?.id,
+    story?.source_type,
+    story?.view_count,
+  ])
 
   function goNext() {
-    if (storyIndex < stories.length - 1) {
-      setStoryIndex((current) => current + 1)
+    if (
+      storyIndex <
+      stories.length - 1
+    ) {
+      setStoryIndex(
+        (current) => current + 1
+      )
       setProgress(0)
       return
     }
@@ -272,7 +491,9 @@ function StoryViewer({ group, onClose, onViewed }) {
 
   function goPrevious() {
     if (storyIndex > 0) {
-      setStoryIndex((current) => current - 1)
+      setStoryIndex(
+        (current) => current - 1
+      )
       setProgress(0)
       return
     }
@@ -281,139 +502,297 @@ function StoryViewer({ group, onClose, onViewed }) {
 
     if (videoRef.current) {
       videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => {})
+      videoRef.current
+        .play()
+        .catch(() => {})
+    }
+  }
+
+  async function deleteStory() {
+    if (
+      !story?.id ||
+      story.source_type !== 'reader'
+    ) {
+      return
+    }
+
+    try {
+      setDeleting(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-stories/me/${encodeURIComponent(story.id)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization:
+              `Bearer ${getAuthToken()}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to delete story'
+        )
+      }
+
+      setDeleteSheetOpen(false)
+      onDeleted(
+        story.id,
+        group.key
+      )
+    } catch (error) {
+      window.alert(
+        error.message ||
+          'Failed to delete story'
+      )
+    } finally {
+      setDeleting(false)
     }
   }
 
   if (!story) return null
 
   return (
-    <div className="fixed inset-0 z-[200000] bg-black">
-      <div className="relative mx-auto h-[100dvh] w-full max-w-[520px] overflow-hidden bg-[#050712]">
-        {story.media_type === 'video' ? (
-          <video
-            key={story.id}
-            ref={videoRef}
-            src={story.media_url}
-            autoPlay
-            playsInline
-            onTimeUpdate={(event) => {
-              const duration = Number(event.currentTarget.duration || 0)
-              const currentTime = Number(event.currentTarget.currentTime || 0)
-
-              if (duration > 0) {
-                setProgress(Math.min(100, (currentTime / duration) * 100))
-              }
-            }}
-            onEnded={goNext}
-            className="h-full w-full object-contain"
-          />
-        ) : (
-          <>
-            <div
-              className="absolute inset-0 scale-110 bg-cover bg-center opacity-40 blur-3xl"
-              style={{ backgroundImage: `url(${story.media_url})` }}
-            />
-            <img
+    <>
+      <div className="fixed inset-0 z-[200000] bg-black">
+        <div className="relative mx-auto h-[100dvh] w-full max-w-[520px] overflow-hidden bg-[#050712]">
+          {story.media_type ===
+          'video' ? (
+            <video
               key={story.id}
+              ref={videoRef}
               src={story.media_url}
-              alt=""
-              className="relative h-full w-full object-contain"
+              autoPlay
+              playsInline
+              onTimeUpdate={(
+                event
+              ) => {
+                const duration =
+                  Number(
+                    event
+                      .currentTarget
+                      .duration || 0
+                  )
+                const currentTime =
+                  Number(
+                    event
+                      .currentTarget
+                      .currentTime || 0
+                  )
+
+                if (duration > 0) {
+                  setProgress(
+                    Math.min(
+                      100,
+                      (
+                        currentTime /
+                        duration
+                      ) * 100
+                    )
+                  )
+                }
+              }}
+              onEnded={goNext}
+              className="h-full w-full object-contain"
             />
-          </>
-        )}
+          ) : (
+            <>
+              <div
+                className="absolute inset-0 scale-110 bg-cover bg-center opacity-40 blur-3xl"
+                style={{
+                  backgroundImage:
+                    `url(${story.media_url})`,
+                }}
+              />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/65 via-transparent to-black/75" />
+              <img
+                key={story.id}
+                src={story.media_url}
+                alt=""
+                className="relative h-full w-full object-contain"
+              />
+            </>
+          )}
 
-        <div className="absolute inset-x-0 top-0 z-20 px-3 pt-[max(12px,env(safe-area-inset-top))]">
-          <div className="flex gap-1">
-            {stories.map((item, index) => {
-              const width =
-                index < storyIndex
-                  ? 100
-                  : index === storyIndex
-                    ? progress
-                    : 0
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/65 via-transparent to-black/75" />
 
-              return (
-                <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
-                  <div
-                    className="h-full rounded-full bg-white transition-[width] duration-75"
-                    style={{ width: `${width}%` }}
-                  />
+          <div className="absolute inset-x-0 top-0 z-20 px-3 pt-[max(12px,env(safe-area-inset-top))]">
+            <div className="flex gap-1">
+              {stories.map(
+                (item, index) => {
+                  const width =
+                    index <
+                    storyIndex
+                      ? 100
+                      : index ===
+                          storyIndex
+                        ? progress
+                        : 0
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="h-1 flex-1 overflow-hidden rounded-full bg-white/30"
+                    >
+                      <div
+                        className="h-full rounded-full bg-white transition-[width] duration-75"
+                        style={{
+                          width:
+                            `${width}%`,
+                        }}
+                      />
+                    </div>
+                  )
+                }
+              )}
+            </div>
+
+            <div className="mt-3 flex items-center gap-3">
+              <ViewerAvatar
+                creator={creator}
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="truncate text-[13px] font-black text-white">
+                    {creator.name ||
+                      'Story'}
+                  </div>
+
+                  {creator.type ===
+                  'author' ? (
+                    <span className="rounded-full bg-[#f6b800] px-2 py-0.5 text-[8px] font-black text-[#111827]">
+                      AUTHOR
+                    </span>
+                  ) : null}
                 </div>
-              )
-            })}
+
+                <div className="mt-0.5 text-[10px] font-bold text-white/65">
+                  {formatStoryTime(
+                    story.created_at
+                  )}
+                </div>
+              </div>
+
+              {group.is_owner &&
+              story.source_type ===
+                'reader' ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDeleteSheetOpen(
+                      true
+                    )
+                  }
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
+                  aria-label="Story options"
+                >
+                  <i className="fa-solid fa-ellipsis text-[16px]" />
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
+                aria-label="Close story"
+              >
+                <i className="fa-solid fa-xmark text-[20px]" />
+              </button>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-3">
-            <ViewerAvatar author={author} />
+          <button
+            type="button"
+            onClick={goPrevious}
+            className="absolute bottom-24 left-0 top-24 z-10 w-1/2"
+            aria-label="Previous story"
+          />
 
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-black text-white">
-                {author.page_name || 'Author'}
-              </div>
-              <div className="mt-0.5 text-[10px] font-bold text-white/65">
-                {formatStoryTime(story.created_at)}
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={goNext}
+            className="absolute bottom-24 right-0 top-24 z-10 w-1/2"
+            aria-label="Next story"
+          />
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur active:scale-95"
-              aria-label="Close story"
+          {group.is_owner ? (
+            <div
+              className={`absolute inset-x-5 z-20 ${
+                story.caption
+                  ? 'bottom-[104px]'
+                  : 'bottom-[max(32px,env(safe-area-inset-bottom))]'
+              }`}
             >
-              <i className="fa-solid fa-xmark text-[20px]" />
-            </button>
-          </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-[12px] font-black text-white backdrop-blur-xl">
+                <i className="fa-solid fa-eye text-[11px]" />
+                {Number(
+                  story.view_count || 0
+                )}{' '}
+                {Number(
+                  story.view_count || 0
+                ) === 1
+                  ? 'view'
+                  : 'views'}
+              </div>
+            </div>
+          ) : null}
+
+          {story.caption ? (
+            <div className="absolute inset-x-5 bottom-[max(32px,env(safe-area-inset-bottom))] z-20">
+              <div className="rounded-[18px] bg-black/40 px-4 py-3 text-center text-[14px] font-semibold leading-6 text-white backdrop-blur-xl">
+                {story.caption}
+              </div>
+            </div>
+          ) : null}
         </div>
-
-        <button
-          type="button"
-          onClick={goPrevious}
-          className="absolute bottom-24 left-0 top-24 z-10 w-1/2"
-          aria-label="Previous story"
-        />
-
-        <button
-          type="button"
-          onClick={goNext}
-          className="absolute bottom-24 right-0 top-24 z-10 w-1/2"
-          aria-label="Next story"
-        />
-
-        {group.is_owner ? (
-          <div className={`absolute inset-x-5 z-20 ${story.caption ? 'bottom-[104px]' : 'bottom-[max(32px,env(safe-area-inset-bottom))]'}`}>
-            <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-[12px] font-black text-white backdrop-blur-xl">
-              <i className="fa-solid fa-eye text-[11px]" />
-              {Number(story.view_count || 0)} {Number(story.view_count || 0) === 1 ? 'view' : 'views'}
-            </div>
-          </div>
-        ) : null}
-
-        {story.caption ? (
-          <div className="absolute inset-x-5 bottom-[max(32px,env(safe-area-inset-bottom))] z-20">
-            <div className="rounded-[18px] bg-black/40 px-4 py-3 text-center text-[14px] font-semibold leading-6 text-white backdrop-blur-xl">
-              {story.caption}
-            </div>
-          </div>
-        ) : null}
       </div>
-    </div>
+
+      <DeleteStorySheet
+        open={deleteSheetOpen}
+        deleting={deleting}
+        onClose={() =>
+          setDeleteSheetOpen(false)
+        }
+        onDelete={deleteStory}
+      />
+    </>
   )
 }
 
 export default function DiscoverStorySection() {
   const navigate = useNavigate()
-  const [groups, setGroups] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [activeGroup, setActiveGroup] = useState(null)
+  const [groups, setGroups] =
+    useState([])
+  const [loading, setLoading] =
+    useState(true)
+  const [
+    activeGroup,
+    setActiveGroup,
+  ] = useState(null)
 
-  const requestHeaders = useMemo(() => {
-    const token = getAuthToken()
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  }, [])
+  const requestHeaders = useMemo(
+    () => {
+      const token = getAuthToken()
+
+      return token
+        ? {
+            Authorization:
+              `Bearer ${token}`,
+          }
+        : {}
+    },
+    []
+  )
 
   useEffect(() => {
     let alive = true
@@ -422,22 +801,46 @@ export default function DiscoverStorySection() {
       try {
         setLoading(true)
 
-        const response = await fetch(`${API_BASE_URL}/api/author-stories/feed?limit=20`, {
-          headers: requestHeaders,
-        })
-        const data = await response.json().catch(() => ({}))
+        const response = await fetch(
+          `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
+          {
+            headers:
+              requestHeaders,
+            cache: 'no-store',
+          }
+        )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load stories')
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load stories'
+          )
         }
 
         if (alive) {
-          setGroups(Array.isArray(data.groups) ? data.groups : [])
+          setGroups(
+            Array.isArray(
+              data.groups
+            )
+              ? data.groups
+              : []
+          )
         }
       } catch {
-        if (alive) setGroups([])
+        if (alive) {
+          setGroups([])
+        }
       } finally {
-        if (alive) setLoading(false)
+        if (alive) {
+          setLoading(false)
+        }
       }
     }
 
@@ -448,30 +851,140 @@ export default function DiscoverStorySection() {
     }
   }, [requestHeaders])
 
-  const handleViewed = useCallback((storyId, viewCount) => {
-    function updateGroup(group) {
-      if (!group) return group
+  const handleViewed = useCallback(
+    (
+      storyId,
+      sourceType,
+      viewCount
+    ) => {
+      function updateGroup(group) {
+        if (!group) return group
 
-      const nextStories = (group.stories || []).map((story) =>
-        story.id === storyId
-          ? {
-              ...story,
-              has_viewed: true,
-              view_count: viewCount,
-            }
-          : story
+        const nextStories =
+          (group.stories || []).map(
+            (story) =>
+              story.id ===
+                storyId &&
+              story.source_type ===
+                sourceType
+                ? {
+                    ...story,
+                    has_viewed: true,
+                    view_count:
+                      viewCount,
+                  }
+                : story
+          )
+
+        return {
+          ...group,
+          stories: nextStories,
+          has_unseen:
+            nextStories.some(
+              (story) =>
+                !story.has_viewed
+            ),
+        }
+      }
+
+      setGroups((current) =>
+        current.map(updateGroup)
       )
 
-      return {
-        ...group,
-        stories: nextStories,
-        has_unseen: nextStories.some((story) => !story.has_viewed),
-      }
-    }
+      setActiveGroup(
+        (current) =>
+          updateGroup(current)
+      )
+    },
+    []
+  )
 
-    setGroups((current) => current.map(updateGroup))
-    setActiveGroup((current) => updateGroup(current))
-  }, [])
+  const handleDeleted =
+    useCallback(
+      (storyId, groupKey) => {
+        let shouldClose = false
+
+        setGroups((current) =>
+          current
+            .map((group) => {
+              if (
+                group.key !==
+                groupKey
+              ) {
+                return group
+              }
+
+              const stories =
+                (
+                  group.stories ||
+                  []
+                ).filter(
+                  (story) =>
+                    story.id !==
+                    storyId
+                )
+
+              if (!stories.length) {
+                shouldClose = true
+                return null
+              }
+
+              return {
+                ...group,
+                stories,
+                has_unseen:
+                  stories.some(
+                    (story) =>
+                      !story.has_viewed
+                  ),
+              }
+            })
+            .filter(Boolean)
+        )
+
+        setActiveGroup(
+          (current) => {
+            if (
+              !current ||
+              current.key !==
+                groupKey
+            ) {
+              return current
+            }
+
+            const stories =
+              (
+                current.stories ||
+                []
+              ).filter(
+                (story) =>
+                  story.id !==
+                  storyId
+              )
+
+            if (!stories.length) {
+              shouldClose = true
+              return null
+            }
+
+            return {
+              ...current,
+              stories,
+              has_unseen:
+                stories.some(
+                  (story) =>
+                    !story.has_viewed
+                ),
+            }
+          }
+        )
+
+        if (shouldClose) {
+          setActiveGroup(null)
+        }
+      },
+      []
+    )
 
   return (
     <>
@@ -479,14 +992,20 @@ export default function DiscoverStorySection() {
         <div className="no-scrollbar flex gap-1 overflow-x-auto px-3 sm:px-3">
           <StaticStoryCard
             item={CREATE_STORY_ITEM}
-            onClick={() => navigate('/author/page/story/create')}
+            onClick={() =>
+              navigate(
+                '/reader/story/create'
+              )
+            }
           />
 
           {groups.map((group) => (
-            <AuthorStoryCard
-              key={group.author_page?.id}
+            <StoryCard
+              key={group.key}
               group={group}
-              onClick={() => setActiveGroup(group)}
+              onClick={() =>
+                setActiveGroup(group)
+              }
             />
           ))}
 
@@ -499,8 +1018,11 @@ export default function DiscoverStorySection() {
       {activeGroup ? (
         <StoryViewer
           group={activeGroup}
-          onClose={() => setActiveGroup(null)}
+          onClose={() =>
+            setActiveGroup(null)
+          }
           onViewed={handleViewed}
+          onDeleted={handleDeleted}
         />
       ) : null}
     </>
