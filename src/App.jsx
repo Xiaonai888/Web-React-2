@@ -52,6 +52,7 @@ import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 import PremiumPage from './pages/Me/PremiumPage'
 import AuthorInsightsPage from "./pages/Author/AuthorInsightsPage";
 import AuthorStoriesPage from './pages/Author/AuthorStoriesPage'
+import StoryNotificationsPage from './pages/Author/StoryNotificationsPage'
 
 
 
@@ -217,6 +218,7 @@ function AppShell() {
     '/help',
     '/feedback',
     '/author/stories',
+    '/author/notifications',
   ]
 
   const shouldHideFooter =
@@ -1070,6 +1072,7 @@ const shouldShowOpeningAds =
         <Route path="/fast/studio" element={<LazyPage><FastStudioPage /></LazyPage>} />
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
+        <Route path="/author/notifications" element={<StoryNotificationsPage />} />
   
  
       </Routes>
