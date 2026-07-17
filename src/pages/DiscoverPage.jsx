@@ -132,20 +132,25 @@ async function fetchFollowedPosts(token, cursor = '') {
 }
 
 
-async function fetchShadowMallPromotion() {
+async function fetchShadowMallPromotions() {
   const response = await fetch(
-    `${API_BASE_URL}/api/shadow-mall/promotion`
+    `${API_BASE_URL}/api/shadow-mall/promotions?limit=100`,
+    {
+      cache: 'no-store',
+    }
   )
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
     throw new Error(
-      data.message || 'Failed to load Shadow Mall promotion'
+      data.message || 'Failed to load Shadow Mall promotions'
     )
   }
 
-  return data.promotion || null
+  return Array.isArray(data.promotions)
+    ? data.promotions
+    : []
 }
 
 
@@ -474,10 +479,10 @@ function RealFollowedPostCard({
 
   return (
     <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-2 px-4 pb-3 pt-4">
         <Link
           to={pageUrl}
-          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
           aria-label={`Open ${authorName}`}
         >
           {author.avatar_url ? (
@@ -493,7 +498,7 @@ function RealFollowedPostCard({
           )}
         </Link>
 
-        <div className="min-w-0 flex-1">
+        <div className="-ml-1 min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <Link
@@ -503,11 +508,7 @@ function RealFollowedPostCard({
                 {authorName}
               </Link>
 
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
-                {pageUsername ? (
-                  <span>@{pageUsername}</span>
-                ) : null}
-                {pageUsername ? <span>·</span> : null}
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
                 <span>{formatPostTime(post.created_at)}</span>
                 <span>·</span>
                 <i className="fa-solid fa-earth-americas text-[10px]" />
@@ -515,22 +516,22 @@ function RealFollowedPostCard({
             </div>
 
             <button
-  type="button"
-  onClick={() => onMore?.(post)}
-  className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-  aria-label="More"
->
+              type="button"
+              onClick={() => onMore?.(post)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+              aria-label="More"
+            >
               <i className="fa-solid fa-ellipsis" />
             </button>
           </div>
-
-          {post.content ? (
-            <p className="mt-3 whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-[#111827]">
-  {post.content}
-</p>
-          ) : null}
         </div>
       </div>
+
+      {post.content ? (
+        <p className="whitespace-pre-wrap break-words px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827]">
+          {post.content}
+        </p>
+      ) : null}
 
       <RealPostImageGrid
         images={post.image_urls}
@@ -1027,7 +1028,7 @@ export default function DiscoverPage() {
   const [realPostsLoading, setRealPostsLoading] = useState(true)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
-  const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
+  const [shadowMallPromotions, setShadowMallPromotions] = useState([])
   const [commentPost, setCommentPost] = useState(null)
   const [optionsPost, setOptionsPost] = useState(null)
   const [adOptionsItem, setAdOptionsItem] = useState(null)
@@ -1040,25 +1041,28 @@ export default function DiscoverPage() {
   useEffect(() => {
     let alive = true
 
-    async function loadShadowMallPromotion() {
+    async function loadShadowMallPromotions() {
       try {
-        const promotion = await fetchShadowMallPromotion()
+        const promotions =
+          await fetchShadowMallPromotions()
 
         if (alive) {
-          setShadowMallPromotion(
-            promotion && !isShadowMallAdHidden(promotion)
-              ? promotion
-              : null
+          setShadowMallPromotions(
+            promotions.filter(
+              (promotion) =>
+                promotion?.is_active !== false &&
+                !isShadowMallAdHidden(promotion)
+            )
           )
         }
       } catch {
         if (alive) {
-          setShadowMallPromotion(null)
+          setShadowMallPromotions([])
         }
       }
     }
 
-    loadShadowMallPromotion()
+    loadShadowMallPromotions()
 
     return () => {
       alive = false
@@ -1285,7 +1289,13 @@ export default function DiscoverPage() {
       hideShadowMallAdLocally(item)
     }
 
-    setShadowMallPromotion(null)
+    setShadowMallPromotions((current) =>
+      current.filter(
+        (promotion) =>
+          String(promotion?.id || '') !==
+          String(item?.id || '')
+      )
+    )
     setAdOptionsItem(null)
   }
 
@@ -1387,7 +1397,18 @@ export default function DiscoverPage() {
             ) : null}
 
             {!realPostsLoading && !realPostsError && !realPosts.length ? (
-              <RealFeedEmptyState />
+              <>
+                <RealFeedEmptyState />
+
+                {shadowMallPromotions.map((promotion) => (
+                  <AdsCard
+                    key={`empty-feed-ad-${promotion.id}`}
+                    item={promotion}
+                    onMore={setAdOptionsItem}
+                    onHide={hideShadowMallPromotion}
+                  />
+                ))}
+              </>
             ) : null}
 
             {realPosts.map((post, index) => (
@@ -1400,9 +1421,9 @@ export default function DiscoverPage() {
                   onMore={setOptionsPost}
                 />
 
-                {index === 0 && shadowMallPromotion ? (
+                {index === 0 && shadowMallPromotions[0] ? (
                   <AdsCard
-                    item={shadowMallPromotion}
+                    item={shadowMallPromotions[0]}
                     onMore={setAdOptionsItem}
                     onHide={hideShadowMallPromotion}
                   />
