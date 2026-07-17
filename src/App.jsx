@@ -51,6 +51,7 @@ import VisitorTracker from './components/VisitorTracker'
 import AuthorPageEditDetailsPage from './pages/Author/AuthorPageEditDetailsPage'
 import PremiumPage from './pages/Me/PremiumPage'
 import AuthorInsightsPage from "./pages/Author/AuthorInsightsPage";
+import AuthorStoriesPage from './pages/Author/AuthorStoriesPage'
 
 
 
@@ -215,6 +216,7 @@ function AppShell() {
     '/about',
     '/help',
     '/feedback',
+    '/author/stories',
   ]
 
   const shouldHideFooter =
@@ -1067,6 +1069,7 @@ const shouldShowOpeningAds =
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/fast/studio" element={<LazyPage><FastStudioPage /></LazyPage>} />
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
+        <Route path="/author/stories" element={<AuthorStoriesPage />} />
   
  
       </Routes>
