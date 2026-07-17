@@ -797,7 +797,7 @@ following: String(user?.following_count || 0),
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[92px]">
+    <div className="min-h-screen bg-white pb-[92px]">
       <AvatarCropModal
         open={avatarModalOpen}
         profile={profile}
@@ -833,7 +833,7 @@ following: String(user?.following_count || 0),
       />
 
 
-      <main className="mx-auto min-h-screen w-full bg-[#f5f3fa] md:max-w-[560px] md:py-4">
+      <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:py-4">
         <div className="overflow-hidden bg-white md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
           <header className="sticky top-0 z-30 border-b border-[#f0eef6] bg-white/95 px-4 py-3 backdrop-blur">
             <div className="flex items-center justify-between">
