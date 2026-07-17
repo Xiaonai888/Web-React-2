@@ -1029,6 +1029,34 @@ export default function DiscoverPage() {
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
+
+  const uniqueShadowMallPromotions = useMemo(() => {
+    const seenIds = new Set()
+
+    return shadowMallPromotions.filter((promotion) => {
+      const promotionId = String(
+        promotion?.id ?? ''
+      ).trim()
+
+      if (!promotionId || seenIds.has(promotionId)) {
+        return false
+      }
+
+      seenIds.add(promotionId)
+      return true
+    })
+  }, [shadowMallPromotions])
+
+  const firstShadowMallPromotion =
+    uniqueShadowMallPromotions[0] || null
+
+  const remainingShadowMallPromotions =
+    uniqueShadowMallPromotions.filter(
+      (promotion) =>
+        String(promotion.id) !==
+        String(firstShadowMallPromotion?.id)
+    )
+
   const [commentPost, setCommentPost] = useState(null)
   const [optionsPost, setOptionsPost] = useState(null)
   const [adOptionsItem, setAdOptionsItem] = useState(null)
@@ -1400,14 +1428,16 @@ export default function DiscoverPage() {
               <>
                 <RealFeedEmptyState />
 
-                {shadowMallPromotions.map((promotion) => (
-                  <AdsCard
-                    key={`empty-feed-ad-${promotion.id}`}
-                    item={promotion}
-                    onMore={setAdOptionsItem}
-                    onHide={hideShadowMallPromotion}
-                  />
-                ))}
+                {uniqueShadowMallPromotions.map(
+                  (promotion) => (
+                    <AdsCard
+                      key={`empty-feed-ad-${promotion.id}`}
+                      item={promotion}
+                      onMore={setAdOptionsItem}
+                      onHide={hideShadowMallPromotion}
+                    />
+                  )
+                )}
               </>
             ) : null}
 
@@ -1421,9 +1451,9 @@ export default function DiscoverPage() {
                   onMore={setOptionsPost}
                 />
 
-                {index === 0 && shadowMallPromotions[0] ? (
+                {index === 0 && firstShadowMallPromotion ? (
                   <AdsCard
-                    item={shadowMallPromotions[0]}
+                    item={firstShadowMallPromotion}
                     onMore={setAdOptionsItem}
                     onHide={hideShadowMallPromotion}
                   />
@@ -1452,57 +1482,17 @@ export default function DiscoverPage() {
               </Fragment>
             ))}
 
-                        {realPosts.map((post, index) => (
-              <Fragment key={post.id}>
-                <RealFollowedPostCard
-                  post={post}
-                  token={token}
-                  onReactionUpdated={handleRealPostReactionUpdated}
-                  onComment={openPostComments}
-                  onMore={setOptionsPost}
-                />
-
-                {index === 0 && shadowMallPromotions[0] ? (
-                  <AdsCard
-                    item={shadowMallPromotions[0]}
-                    onMore={setAdOptionsItem}
-                    onHide={hideShadowMallPromotion}
-                  />
-                ) : null}
-
-                {index === 0 ? (
-                  <DiscoverTrendingStoriesSection />
-                ) : null}
-
-                {index === 1 ? (
-                  <DiscoverAuthorsYouMayLikeSection />
-                ) : null}
-
-                {index === 2 ? (
-                  <DiscoverNewUpdatedStoriesSection />
-                ) : null}
-
-                {index === 3 ? (
-                  <DiscoverYouMightLikeSection />
-                ) : null}
-
-                {index === 4 ? (
-                  <DiscoverCompletedStoriesSection />
-                ) : null}
-              </Fragment>
-            ))}
-
             {realPosts.length && !realPostsHasMore
-              ? shadowMallPromotions
-                  .slice(1)
-                  .map((promotion) => (
+              ? remainingShadowMallPromotions.map(
+                  (promotion) => (
                     <AdsCard
                       key={`remaining-feed-ad-${promotion.id}`}
                       item={promotion}
                       onMore={setAdOptionsItem}
                       onHide={hideShadowMallPromotion}
                     />
-                  ))
+                  )
+                )
               : null}
       
 
