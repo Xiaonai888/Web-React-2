@@ -4,6 +4,7 @@ import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheet from '../components/reader/EchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
+import useReadingProgressSync from '../hooks/useReadingProgressSync'
 
 
 const API_BASE_URL =
@@ -3375,6 +3376,13 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
   const pagingPages = useMemo(() => {
     return createPagingPages(episode?.content || '', lineSpacing, fontSizePx)
   }, [episode?.content, fontSizePx, lineSpacing])
+
+  useReadingProgressSync({
+    storyId,
+    episodeId,
+    readingPercent: readingProgress,
+    enabled: Boolean(episode) && !loading && !lockedEpisode && adultAccepted,
+  })
 
 
 useEffect(() => {
