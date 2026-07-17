@@ -265,7 +265,14 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const hasReacted = Boolean(post.my_reaction)
   const reactionBusy = reactionBusyId === post.id
+  const postText = String(
+    post?.content || ''
+  )
+  const canCollapse =
+    postText.length > 520 ||
+    postText.split('\n').length > 8
 
+  const [expanded, setExpanded] = useState(false)
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
 const [pressTimer, setPressTimer] = useState(null)
 const activeReaction = AUTHOR_POST_REACTIONS.find((item) => item.type === post.my_reaction) || null
@@ -344,9 +351,39 @@ function cancelReactionPress() {
       </div>
 
       {post.content ? (
-        <p className="mt-2 whitespace-pre-wrap px-4 text-[16px] font-normal leading-7 text-[#111827]">
-          {post.content}
-        </p>
+        <div className="mt-2 px-4">
+          <p
+            className="whitespace-pre-wrap text-[16px] font-normal leading-7 text-[#111827]"
+            style={
+              !expanded && canCollapse
+                ? {
+                    display: '-webkit-box',
+                    WebkitLineClamp: 8,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }
+                : undefined
+            }
+          >
+            {post.content}
+          </p>
+
+          {canCollapse ? (
+            <button
+              type="button"
+              onClick={() =>
+                setExpanded(
+                  (current) => !current
+                )
+              }
+              className="mt-1 text-[13px] font-semibold text-[#475569] active:opacity-70"
+            >
+              {expanded
+                ? 'See less'
+                : 'See more'}
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <PostImageGrid images={postImages} onView={onViewImage} />
