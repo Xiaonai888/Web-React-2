@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import DailyPicksSection from '../components/DailyPicksSection'
+import ContinueReadingSection from '../components/ContinueReadingSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
 import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
@@ -840,6 +841,11 @@ useEffect(() => {
     <ShadowExclusiveSection />
   </div>
 ) : null}
+
+    <div className="my-6">
+  <ContinueReadingSection />
+</div>
+
 
             <div className="my-6">
               <DailyPicksSection />
