@@ -1452,6 +1452,60 @@ export default function DiscoverPage() {
               </Fragment>
             ))}
 
+                        {realPosts.map((post, index) => (
+              <Fragment key={post.id}>
+                <RealFollowedPostCard
+                  post={post}
+                  token={token}
+                  onReactionUpdated={handleRealPostReactionUpdated}
+                  onComment={openPostComments}
+                  onMore={setOptionsPost}
+                />
+
+                {index === 0 && shadowMallPromotions[0] ? (
+                  <AdsCard
+                    item={shadowMallPromotions[0]}
+                    onMore={setAdOptionsItem}
+                    onHide={hideShadowMallPromotion}
+                  />
+                ) : null}
+
+                {index === 0 ? (
+                  <DiscoverTrendingStoriesSection />
+                ) : null}
+
+                {index === 1 ? (
+                  <DiscoverAuthorsYouMayLikeSection />
+                ) : null}
+
+                {index === 2 ? (
+                  <DiscoverNewUpdatedStoriesSection />
+                ) : null}
+
+                {index === 3 ? (
+                  <DiscoverYouMightLikeSection />
+                ) : null}
+
+                {index === 4 ? (
+                  <DiscoverCompletedStoriesSection />
+                ) : null}
+              </Fragment>
+            ))}
+
+            {realPosts.length && !realPostsHasMore
+              ? shadowMallPromotions
+                  .slice(1)
+                  .map((promotion) => (
+                    <AdsCard
+                      key={`remaining-feed-ad-${promotion.id}`}
+                      item={promotion}
+                      onMore={setAdOptionsItem}
+                      onHide={hideShadowMallPromotion}
+                    />
+                  ))
+              : null}
+      
+
             {realPostsError && realPosts.length ? (
               <div className="rounded-[18px] bg-red-50 px-4 py-3 text-center text-[12px] font-bold text-red-600 ring-1 ring-red-100">
                 {realPostsError}
