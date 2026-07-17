@@ -191,13 +191,13 @@ export default function StoriesDailyCheckIn() {
             className="h-[58px] w-[58px] object-contain drop-shadow-[0_5px_8px_rgba(17,24,39,0.18)]"
           />
 
-          <span className="-mt-1 flex h-[24px] min-w-[68px] items-center justify-center gap-1 rounded-full border border-[#ff647d] bg-white/95 px-2 shadow-[0_4px_12px_rgba(17,24,39,0.18)] backdrop-blur-md">
-            <span className="text-[10px] font-black leading-none text-[#ff3f62]">Get</span>
-            <img src={rewardIcon} alt="" className="h-[14px] w-[14px] object-contain" />
-            <span className="text-[10px] font-black leading-none text-[#111827]">
-              {amount.toLocaleString()}
-            </span>
-          </span>
+          <span className="-mt-1 flex h-[24px] min-w-[68px] items-center justify-center gap-1 rounded-full border border-white bg-[#ff3f62] px-2 shadow-[0_4px_12px_rgba(17,24,39,0.18)]">
+  <span className="text-[10px] font-black leading-none text-white">Get</span>
+  <img src={rewardIcon} alt="" className="h-[14px] w-[14px] object-contain" />
+  <span className="text-[10px] font-black leading-none text-white">
+    {amount.toLocaleString()}
+  </span>
+</span>
         </button>
       ) : null}
 
