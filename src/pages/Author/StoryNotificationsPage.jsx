@@ -7,11 +7,13 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const filters = ['All', 'Unread', 'Comments', 'Income']
+const filters = ['All', 'Unread', 'Comments', 'Likes', 'Echoes', 'Income']
 
 const typeMap = {
   comments: 'Comments',
   comment: 'Comments',
+  like: 'Likes',
+  echo: 'Echoes',
   gift: 'Income',
   unlock: 'Income',
   income: 'Income',
@@ -21,16 +23,51 @@ const typeMap = {
   admin: 'System',
 }
 
-const iconMap = {
-  comments: 'fa-regular fa-comment',
-  comment: 'fa-regular fa-comment',
-  gift: 'fa-solid fa-gift',
-  unlock: 'fa-solid fa-gem',
-  income: 'fa-solid fa-wallet',
-  withdrawal: 'fa-solid fa-money-bill-transfer',
-  payout: 'fa-solid fa-money-check-dollar',
-  system: 'fa-solid fa-shield-halved',
-  admin: 'fa-solid fa-shield-halved',
+const actionMap = {
+  comments: {
+    icon: 'fa-solid fa-comment',
+    badge: 'bg-[#1877f2] text-white',
+  },
+  comment: {
+    icon: 'fa-solid fa-comment',
+    badge: 'bg-[#1877f2] text-white',
+  },
+  like: {
+    icon: 'fa-solid fa-heart',
+    badge: 'bg-[#f43f5e] text-white',
+  },
+  echo: {
+    icon: 'fa-solid fa-share',
+    badge: 'bg-[#7c3aed] text-white',
+  },
+  gift: {
+    icon: 'fa-solid fa-gift',
+    badge: 'bg-[#f59e0b] text-white',
+  },
+  unlock: {
+    icon: 'fa-solid fa-gem',
+    badge: 'bg-[#0891b2] text-white',
+  },
+  income: {
+    icon: 'fa-solid fa-wallet',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  withdrawal: {
+    icon: 'fa-solid fa-money-bill-transfer',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  payout: {
+    icon: 'fa-solid fa-money-check-dollar',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  system: {
+    icon: 'fa-solid fa-shield-halved',
+    badge: 'bg-[#111827] text-white',
+  },
+  admin: {
+    icon: 'fa-solid fa-shield-halved',
+    badge: 'bg-[#111827] text-white',
+  },
 }
 
 function getAuthToken() {
@@ -45,8 +82,13 @@ function getNotificationTypeLabel(type) {
   return typeMap[String(type || '').toLowerCase()] || 'System'
 }
 
-function getNotificationIcon(type) {
-  return iconMap[String(type || '').toLowerCase()] || 'fa-regular fa-bell'
+function getAction(type) {
+  return (
+    actionMap[String(type || '').toLowerCase()] || {
+      icon: 'fa-solid fa-bell',
+      badge: 'bg-[#111827] text-white',
+    }
+  )
 }
 
 function formatTime(value) {
@@ -77,6 +119,13 @@ function formatTime(value) {
 }
 
 function normalizeNotification(item) {
+  const metadata = item.metadata && typeof item.metadata === 'object' ? item.metadata : {}
+  const readerName =
+    metadata.reader_name ||
+    metadata.user_name ||
+    metadata.actor_name ||
+    ''
+
   return {
     id: item.id,
     type: item.type || 'system',
@@ -84,28 +133,44 @@ function normalizeNotification(item) {
     title: item.title || 'Notification',
     message: item.message || '',
     targetUrl: item.target_url || item.targetUrl || '',
+    metadata,
+    readerName,
+    readerAvatar:
+      metadata.reader_avatar_url ||
+      metadata.user_avatar_url ||
+      metadata.actor_avatar_url ||
+      '',
     unread: !Boolean(item.is_read),
     time: formatTime(item.created_at),
     createdAt: item.created_at || '',
   }
 }
 
-async function fetchStoryNotifications() {
+async function apiRequest(path, options = {}) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/authors/me/story-notifications`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
     },
   })
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load notifications')
+    throw new Error(data.message || 'Request failed')
   }
+
+  return data
+}
+
+async function fetchStoryNotifications() {
+  const data = await apiRequest('/api/authors/me/story-notifications')
 
   return {
     notifications: Array.isArray(data.notifications)
@@ -115,101 +180,132 @@ async function fetchStoryNotifications() {
   }
 }
 
-async function markNotificationRead(notificationId) {
-  const token = getAuthToken()
+function markNotificationRead(notificationId) {
+  return apiRequest(
+    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}/read`,
+    { method: 'PATCH' }
+  )
+}
 
-  if (!token || !notificationId) return
+function markNotificationUnread(notificationId) {
+  return apiRequest(
+    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}/unread`,
+    { method: 'PATCH' }
+  )
+}
 
-  await fetch(`${API_BASE_URL}/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}/read`, {
+function deleteNotification(notificationId) {
+  return apiRequest(
+    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}`,
+    { method: 'DELETE' }
+  )
+}
+
+function updateNotificationPreference(type, isEnabled) {
+  return apiRequest(
+    `/api/authors/me/story-notification-preferences/${encodeURIComponent(type)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ is_enabled: isEnabled }),
+    }
+  )
+}
+
+function markAllNotificationsRead() {
+  return apiRequest('/api/authors/me/story-notifications/read-all', {
     method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   })
 }
 
-async function markAllNotificationsRead() {
-  const token = getAuthToken()
+function NotificationAvatar({ notification }) {
+  const action = getAction(notification.type)
+  const fallbackText = String(notification.readerName || notification.typeLabel || 'N')
+    .trim()
+    .slice(0, 1)
+    .toUpperCase()
 
-  if (!token) throw new Error('Please login first')
-
-  const response = await fetch(`${API_BASE_URL}/api/authors/me/story-notifications/read-all`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to mark notifications as read')
-  }
-}
-
-function NotificationIcon({ notification }) {
   return (
-    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-      <i className={`${getNotificationIcon(notification.type)} text-[17px]`} />
-      {notification.unread ? (
-        <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
-      ) : null}
+    <div className="relative h-14 w-14 shrink-0">
+      {notification.readerAvatar ? (
+        <img
+          src={notification.readerAvatar}
+          alt=""
+          className="h-14 w-14 rounded-full object-cover ring-1 ring-black/5"
+        />
+      ) : (
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-black text-[#4b5563]">
+          {fallbackText}
+        </div>
+      )}
+
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white ${action.badge}`}
+      >
+        <i className={`${action.icon} text-[10px]`} />
+      </span>
     </div>
   )
 }
 
 function NotificationItem({ notification, onOpen, onOptions }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(notification)}
-      className={`flex w-full gap-3 px-4 py-3 text-left transition active:bg-[#eef0f4] ${
+    <div
+      className={`flex w-full items-start gap-3 px-4 py-3 transition ${
         notification.unread ? 'bg-[#eef6ff]' : 'bg-white'
       }`}
     >
-      <NotificationIcon notification={notification} />
+      <button
+        type="button"
+        onClick={() => onOpen(notification)}
+        className="flex min-w-0 flex-1 items-start gap-3 text-left active:opacity-80"
+      >
+        <NotificationAvatar notification={notification} />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <p
-              className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
-                notification.unread ? 'font-black' : 'font-semibold'
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p
+            className={`line-clamp-3 text-[14px] leading-5 text-[#111827] ${
+              notification.unread ? 'font-black' : 'font-semibold'
+            }`}
+          >
+            {notification.title}
+            {notification.message ? (
+              <span className="font-medium text-[#4b5563]"> · {notification.message}</span>
+            ) : null}
+          </p>
+
+          <div className="mt-1 flex items-center gap-2">
+            <span
+              className={`text-[12px] ${
+                notification.unread
+                  ? 'font-black text-[#1877f2]'
+                  : 'font-semibold text-[#8b93a1]'
               }`}
             >
-              {notification.title}
-              {notification.message ? (
-                <span className="font-semibold text-[#374151]"> · {notification.message}</span>
-              ) : null}
-            </p>
-
-            <div className="mt-1 flex items-center gap-2">
-              <span
-                className={`text-[12px] ${
-                  notification.unread ? 'font-black text-[#2563eb]' : 'font-semibold text-[#8b93a1]'
-                }`}
-              >
-                {notification.time}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
-              <span className="text-[12px] font-semibold text-[#8b93a1]">{notification.typeLabel}</span>
-            </div>
+              {notification.time}
+            </span>
+            <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
+            <span className="text-[12px] font-semibold text-[#8b93a1]">
+              {notification.typeLabel}
+            </span>
           </div>
-
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onOptions(notification)
-            }}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
-            aria-label="Notification options"
-          >
-            <i className="fa-solid fa-ellipsis text-[14px]" />
-          </button>
         </div>
+      </button>
+
+      <div className="flex shrink-0 items-center gap-1 pt-1">
+        {notification.unread ? (
+          <span className="h-3 w-3 rounded-full bg-[#1877f2]" />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => onOptions(notification)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#eef0f4]"
+          aria-label="Notification options"
+        >
+          <i className="fa-solid fa-ellipsis text-[15px]" />
+        </button>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -217,9 +313,10 @@ function NotificationGroup({ title, notifications, onOpen, onOptions }) {
   if (!notifications.length) return null
 
   return (
-    <section>
+    <section className="bg-white">
       <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">{title}</h2>
-      <div className="overflow-hidden border-y border-[#eef0f4] bg-white">
+
+      <div className="bg-white">
         {notifications.map((notification, index) => (
           <div
             key={notification.id}
@@ -239,14 +336,86 @@ function NotificationGroup({ title, notifications, onOpen, onOptions }) {
 
 function EmptyState({ filter }) {
   return (
-    <div className="mx-4 mt-5 rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+    <div className="bg-white px-6 py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
-      <h2 className="text-[17px] font-black text-[#111827]">No {filter.toLowerCase()} notifications</h2>
-      <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Story comments, Diamond unlocks, gifts, income, and publishing notices will appear here.
+      <h2 className="text-[17px] font-black text-[#111827]">
+        No {filter.toLowerCase()} notifications
+      </h2>
+      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+        Story comments, likes, echoes, Diamond unlocks, gifts, income, and publishing notices will appear here.
       </p>
+    </div>
+  )
+}
+
+function OptionsSheet({
+  notification,
+  loading,
+  onClose,
+  onToggleRead,
+  onDisableType,
+  onDelete,
+}) {
+  if (!notification) return null
+
+  return (
+    <div className="fixed inset-0 z-[80]">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+        aria-label="Close notification options"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-white pb-[max(20px,env(safe-area-inset-bottom))] shadow-2xl">
+        <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+
+        <div className="border-b border-[#eef0f4] px-5 pb-4 pt-3">
+          <p className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">
+            {notification.title}
+          </p>
+        </div>
+
+        <div className="px-3 py-2">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onToggleRead}
+            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
+              <i className={`fa-solid ${notification.unread ? 'fa-check' : 'fa-envelope'}`} />
+            </span>
+            {notification.unread ? 'Mark as read' : 'Mark as unread'}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onDisableType}
+            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
+              <i className="fa-solid fa-bell-slash" />
+            </span>
+            Turn off {notification.typeLabel.toLowerCase()} notifications
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onDelete}
+            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#dc2626] active:bg-[#fef2f2] disabled:opacity-50"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fef2f2]">
+              <i className="fa-solid fa-trash" />
+            </span>
+            Delete notification
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -257,7 +426,9 @@ export default function StoryNotificationsPage() {
   const [message, setMessage] = useState('')
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [selectedNotification, setSelectedNotification] = useState(null)
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -309,14 +480,79 @@ export default function StoryNotificationsPage() {
     setMessage('This notification does not have a target page yet.')
   }
 
-  function handleOptions() {
-    setMessage('Notification options will be connected later.')
+  async function handleToggleRead() {
+    if (!selectedNotification) return
+
+    try {
+      setActionLoading(true)
+
+      if (selectedNotification.unread) {
+        await markNotificationRead(selectedNotification.id)
+        setUnreadCount((current) => Math.max(0, current - 1))
+      } else {
+        await markNotificationUnread(selectedNotification.id)
+        setUnreadCount((current) => current + 1)
+      }
+
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === selectedNotification.id
+            ? { ...item, unread: !selectedNotification.unread }
+            : item
+        )
+      )
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to update notification')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleDisableType() {
+    if (!selectedNotification) return
+
+    try {
+      setActionLoading(true)
+      await updateNotificationPreference(selectedNotification.type, false)
+      setMessage(`${selectedNotification.typeLabel} notifications are turned off.`)
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to update notification preference')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!selectedNotification) return
+
+    try {
+      setActionLoading(true)
+      await deleteNotification(selectedNotification.id)
+
+      setNotifications((current) =>
+        current.filter((item) => item.id !== selectedNotification.id)
+      )
+
+      if (selectedNotification.unread) {
+        setUnreadCount((current) => Math.max(0, current - 1))
+      }
+
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to delete notification')
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   async function handleMarkAllRead() {
     try {
       await markAllNotificationsRead()
-      setNotifications((current) => current.map((item) => ({ ...item, unread: false })))
+      setNotifications((current) =>
+        current.map((item) => ({ ...item, unread: false }))
+      )
       setUnreadCount(0)
     } catch (error) {
       setMessage(error.message || 'Failed to mark notifications as read')
@@ -324,8 +560,8 @@ export default function StoryNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] pb-[92px]">
-      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-white pb-[92px]">
+      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white">
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
@@ -336,7 +572,9 @@ export default function StoryNotificationsPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-black text-[#111827]">Story Notifications</div>
+          <div className="text-[18px] font-black text-[#111827]">
+            Story Notifications
+          </div>
 
           <button
             type="button"
@@ -349,7 +587,7 @@ export default function StoryNotificationsPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[980px]">
+      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
         {message ? (
           <button
             type="button"
@@ -372,13 +610,15 @@ export default function StoryNotificationsPage() {
                   onClick={() => setActiveFilter(filter)}
                   className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
                     active
-                      ? 'bg-[#f3f4f6] font-medium text-[#111827]'
-                      : 'bg-transparent font-normal text-[#9ca3af]'
+                      ? 'bg-[#111827] font-bold text-white'
+                      : 'bg-[#f3f4f6] font-semibold text-[#6b7280]'
                   }`}
                 >
                   {filter}
                   {filter === 'Unread' && unreadCount > 0 ? (
-                    <span className="ml-1 text-[11px] font-black text-[#2563eb]">{unreadCount}</span>
+                    <span className="ml-1.5 text-[11px] font-black">
+                      {unreadCount}
+                    </span>
                   ) : null}
                 </button>
               )
@@ -389,19 +629,19 @@ export default function StoryNotificationsPage() {
         {loading ? (
           <EmptyState filter="loading" />
         ) : filteredNotifications.length ? (
-          <div>
+          <div className="bg-white">
             <NotificationGroup
               title="New"
               notifications={newNotifications}
               onOpen={handleOpen}
-              onOptions={handleOptions}
+              onOptions={setSelectedNotification}
             />
 
             <NotificationGroup
               title="Earlier"
               notifications={earlierNotifications}
               onOpen={handleOpen}
-              onOptions={handleOptions}
+              onOptions={setSelectedNotification}
             />
           </div>
         ) : (
@@ -410,6 +650,15 @@ export default function StoryNotificationsPage() {
       </main>
 
       <AuthorStudioBottomNav />
+
+      <OptionsSheet
+        notification={selectedNotification}
+        loading={actionLoading}
+        onClose={() => setSelectedNotification(null)}
+        onToggleRead={handleToggleRead}
+        onDisableType={handleDisableType}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }
