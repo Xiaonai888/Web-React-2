@@ -4167,126 +4167,120 @@ const handleReaderEcho = () => {
     openReaderEpisode(nextEpisode)
   }
 
-const endSwipeRef = useRef({
+const readerEndSentinelRef = useRef(null)
+const endGestureRef = useRef({
   startX: 0,
   startY: 0,
-  lastX: 0,
-  lastY: 0,
-  triggered: false,
+  wheelTotal: 0,
+  lastWheelAt: 0,
+  navigating: false,
 })
 
-const endWheelRef = useRef({
-  total: 0,
-  lastAt: 0,
-})
+useEffect(() => {
+  endGestureRef.current.navigating = false
+  endGestureRef.current.wheelTotal = 0
+}, [episodeId])
 
-const canAdvanceByGesture = () =>
-  Boolean(nextEpisode) &&
-  !loading &&
-  !lockedEpisode &&
-  readingMode === 'scroll' &&
-  !commentsOpen &&
-  !giftPopupOpen &&
-  !settingsOpen &&
-  !episodeListOpen &&
-  !fontSelectOpen &&
-  !resetOpen
+useEffect(() => {
+  const canAdvance = () =>
+    Boolean(nextEpisode) &&
+    !loading &&
+    !lockedEpisode &&
+    readingMode === 'scroll' &&
+    !commentsOpen &&
+    !giftPopupOpen &&
+    !settingsOpen &&
+    !episodeListOpen &&
+    !fontSelectOpen &&
+    !resetOpen &&
+    !endGestureRef.current.navigating
 
-const isReaderAtBottom = () => {
-  const documentHeight = Math.max(
-    document.documentElement.scrollHeight,
-    document.body?.scrollHeight || 0
-  )
+  const isEndVisible = () => {
+    const sentinel = readerEndSentinelRef.current
+    if (!sentinel) return false
 
-  return window.scrollY + window.innerHeight >= documentHeight - 160
-}
-
-const handleEndSwipeStart = (event) => {
-  if (event.touches.length !== 1) return
-
-  const touch = event.touches[0]
-
-  endSwipeRef.current = {
-    startX: touch.clientX,
-    startY: touch.clientY,
-    lastX: touch.clientX,
-    lastY: touch.clientY,
-    triggered: false,
-  }
-}
-
-const handleEndSwipeMove = (event) => {
-  const touch = event.touches?.[0]
-  const gesture = endSwipeRef.current
-
-  if (!touch || gesture.triggered || !canAdvanceByGesture()) return
-
-  gesture.lastX = touch.clientX
-  gesture.lastY = touch.clientY
-
-  const deltaX = gesture.lastX - gesture.startX
-  const deltaY = gesture.startY - gesture.lastY
-
-  if (
-    isReaderAtBottom() &&
-    deltaY >= 60 &&
-    deltaY > Math.abs(deltaX)
-  ) {
-    gesture.triggered = true
-    handleNext()
-  }
-}
-
-const handleEndSwipeEnd = (event) => {
-  const touch = event.changedTouches?.[0]
-  const gesture = endSwipeRef.current
-
-  if (touch) {
-    gesture.lastX = touch.clientX
-    gesture.lastY = touch.clientY
+    const rect = sentinel.getBoundingClientRect()
+    return rect.top <= window.innerHeight + 24
   }
 
-  const deltaX = gesture.lastX - gesture.startX
-  const deltaY = gesture.startY - gesture.lastY
-  const shouldAdvance =
-    !gesture.triggered &&
-    canAdvanceByGesture() &&
-    isReaderAtBottom() &&
-    deltaY >= 60 &&
-    deltaY > Math.abs(deltaX)
+  const advance = () => {
+    if (!canAdvance() || !isEndVisible()) return
 
-  endSwipeRef.current = {
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastY: 0,
-    triggered: false,
+    endGestureRef.current.navigating = true
+    endGestureRef.current.wheelTotal = 0
+    openReaderEpisode(nextEpisode)
   }
 
-  if (shouldAdvance) handleNext()
-}
+  const handleTouchStart = (event) => {
+    if (event.touches?.length !== 1) return
 
-const handleEndWheel = (event) => {
-  if (!canAdvanceByGesture() || event.deltaY <= 0 || !isReaderAtBottom()) {
-    endWheelRef.current.total = 0
-    return
+    const touch = event.touches[0]
+    endGestureRef.current.startX = touch.clientX
+    endGestureRef.current.startY = touch.clientY
   }
 
-  const now = Date.now()
+  const handleTouchEnd = (event) => {
+    const touch = event.changedTouches?.[0]
+    if (!touch || !canAdvance() || !isEndVisible()) return
 
-  if (now - endWheelRef.current.lastAt > 500) {
-    endWheelRef.current.total = 0
+    const deltaX = touch.clientX - endGestureRef.current.startX
+    const deltaY = endGestureRef.current.startY - touch.clientY
+
+    if (deltaY >= 55 && deltaY > Math.abs(deltaX)) {
+      advance()
+    }
   }
 
-  endWheelRef.current.lastAt = now
-  endWheelRef.current.total += event.deltaY
+  const handleWheel = (event) => {
+    if (event.deltaY <= 0 || !canAdvance() || !isEndVisible()) {
+      endGestureRef.current.wheelTotal = 0
+      return
+    }
 
-  if (endWheelRef.current.total >= 100) {
-    endWheelRef.current.total = 0
-    handleNext()
+    const now = Date.now()
+
+    if (now - endGestureRef.current.lastWheelAt > 500) {
+      endGestureRef.current.wheelTotal = 0
+    }
+
+    endGestureRef.current.lastWheelAt = now
+    endGestureRef.current.wheelTotal += event.deltaY
+
+    if (endGestureRef.current.wheelTotal >= 110) {
+      advance()
+    }
   }
-}
 
+  window.addEventListener('touchstart', handleTouchStart, {
+    capture: true,
+    passive: true,
+  })
+  window.addEventListener('touchend', handleTouchEnd, {
+    capture: true,
+    passive: true,
+  })
+  window.addEventListener('wheel', handleWheel, {
+    capture: true,
+    passive: true,
+  })
+
+  return () => {
+    window.removeEventListener('touchstart', handleTouchStart, true)
+    window.removeEventListener('touchend', handleTouchEnd, true)
+    window.removeEventListener('wheel', handleWheel, true)
+  }
+}, [
+  commentsOpen,
+  episodeListOpen,
+  fontSelectOpen,
+  giftPopupOpen,
+  loading,
+  lockedEpisode,
+  nextEpisode,
+  readingMode,
+  resetOpen,
+  settingsOpen,
+])
 
 const handleOpenPurchasePage = () => {
   navigate('/shop', {
@@ -4756,11 +4750,7 @@ return (
       </header>
 
       <main
-        onTouchStart={handleEndSwipeStart}
-        onTouchMove={handleEndSwipeMove}
-        onTouchEnd={handleEndSwipeEnd}
-        onWheel={handleEndWheel}
-        onClick={handleReaderDoubleTap}
+  onClick={handleReaderDoubleTap}
         className={`mx-auto max-w-3xl px-0 pt-[50px] pb-[92px] ${theme.page} sm:px-4`}
       >
         {loading ? <LoadingCard /> : null}
@@ -4910,12 +4900,15 @@ onUnlock={handleLockedDiamondUnlock}
             </section>
 
             {isLastReadingPage ? (
-  <ReaderEndPanel
-    story={story}
-    episode={episode}
-    onOpenComments={() => setCommentsOpen(true)}
-    onOpenGift={() => setGiftPopupOpen(true)}
-  />
+  <>
+    <ReaderEndPanel
+      story={story}
+      episode={episode}
+      onOpenComments={() => setCommentsOpen(true)}
+      onOpenGift={() => setGiftPopupOpen(true)}
+    />
+    <div ref={readerEndSentinelRef} className="h-px w-full" aria-hidden="true" />
+  </>
 ) : null}
           </>
         ) : null}
