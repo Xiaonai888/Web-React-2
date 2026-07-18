@@ -135,7 +135,7 @@ const ReaderShareProfilePage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderShareProfilePage')
 )
 
-const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
+
 
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
