@@ -182,7 +182,7 @@ export default function StoriesDailyCheckIn() {
           className="stories-daily-check-in fixed z-[99998] flex w-[68px] flex-col items-center active:scale-95 disabled:pointer-events-none disabled:opacity-70"
           style={{
             right: 'max(10px, calc((100vw - 480px) / 2 + 10px))',
-            bottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
+            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <img
