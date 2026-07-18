@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
@@ -537,11 +537,17 @@ function EditProfileModal({
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const storedUser = useMemo(() => getStoredUser(), [])
+  const requestedUsername = String(searchParams.get('username') || '').replace(/^@+/, '')
+  const isOwnProfile =
+    !requestedUsername ||
+    requestedUsername.toLowerCase() === String(storedUser?.username || '').toLowerCase()
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
-  const [user, setUser] = useState(getStoredUser())
+  const [user, setUser] = useState(storedUser)
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -576,21 +582,20 @@ export default function ProfilePage() {
   })
 }
   
-  const isOwnProfile = true
 
-  useEffect(() => {
+useEffect(() => {
   let ignore = false
 
   async function loadProfileStats() {
     try {
-      const currentUsername = user?.username
+      const targetUsername = requestedUsername || storedUser?.username
 
-      if (!currentUsername) return
+      if (!targetUsername) return
 
-      const freshUser = await fetchPublicUserProfile(currentUsername)
+      const freshUser = await fetchPublicUserProfile(targetUsername)
 
       if (!ignore && freshUser) {
-        saveStoredUser(freshUser)
+        if (isOwnProfile) saveStoredUser(freshUser)
         setUser(freshUser)
       }
     } catch (error) {
@@ -603,8 +608,7 @@ export default function ProfilePage() {
   return () => {
     ignore = true
   }
-}, [user?.username])
-
+}, [isOwnProfile, requestedUsername, storedUser?.username])
   const profile = useMemo(() => {
     return {
       name: user?.name || 'Reader Name',
@@ -944,12 +948,13 @@ following: String(user?.following_count || 0),
       Edit profile
     </button>
 
-    <button
-      type="button"
-      className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
-    >
-      Share profile
-    </button>
+   <button
+  type="button"
+  onClick={() => navigate('/profile/share')}
+  className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+>
+  Share profile
+</button>
 
     <button
   type="button"
@@ -973,12 +978,16 @@ following: String(user?.following_count || 0),
 )}
 
 
-            <ReaderDiscoverPeoplePanel
-  open={discoverPeopleOpen}
-  profileUsername={profile.username}
-  onFollowed={handleSuggestionFollowed}
-/>
+            {isOwnProfile ? (
+  <ReaderDiscoverPeoplePanel
+    open={discoverPeopleOpen}
+    profileUsername={profile.username}
+    onFollowed={handleSuggestionFollowed}
+  />
+) : null}
 </section>
+
+<section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
           
 
           <section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
@@ -1013,6 +1022,8 @@ following: String(user?.following_count || 0),
         </div>
 
         <ReaderProfilePostsPanel
+  username={profile.username}
+  isOwnProfile={isOwnProfile}
   onCountChange={setReaderPostCount}
 />
       </main>
