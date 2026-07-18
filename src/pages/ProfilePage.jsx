@@ -924,24 +924,40 @@ following: String(user?.following_count || 0),
 ) : null}
 
             {isOwnProfile ? (
-              <button
-                type="button"
-                onClick={() => navigate('/profile/edit')}
-                className="mt-4 h-10 w-full rounded-[14px] border border-[#cfd3dc] bg-white text-[13px] font-extrabold text-[#111827] transition hover:bg-[#f7f7fb] active:scale-[0.99]"
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button className="h-10 rounded-[14px] bg-[#0b5cff] text-[13px] font-extrabold text-white">
-                  Follow
-                </button>
-                <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
-                  Message
-                </button>
-              </div>
-            )}
-          </section>
+  <div className="mt-4 flex items-center gap-2">
+    <button
+      type="button"
+      onClick={() => navigate('/profile/edit')}
+      className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+    >
+      Edit profile
+    </button>
+
+    <button
+      type="button"
+      className="h-10 flex-1 rounded-[12px] bg-[#f3f4f6] text-[13px] font-normal text-[#111827] transition active:scale-[0.98]"
+    >
+      Share profile
+    </button>
+
+    <button
+      type="button"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
+      aria-label="Add people"
+    >
+      <i className="fa-solid fa-user-plus text-[14px]" />
+    </button>
+  </div>
+) : (
+  <div className="mt-4 grid grid-cols-2 gap-2">
+    <button className="h-10 rounded-[14px] bg-[#0b5cff] text-[13px] font-extrabold text-white">
+      Follow
+    </button>
+    <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
+      Message
+    </button>
+  </div>
+)}
 
           
 
