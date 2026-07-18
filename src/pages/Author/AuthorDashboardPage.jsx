@@ -65,6 +65,36 @@ const MOCK_STORIES = [
 ]
 
 function getAuthToken() {
+
+  const createStoryCards = [
+  {
+    key: 'novel',
+    title: 'Novel',
+    subtitle: 'Text episodes',
+    icon: 'fa-solid fa-book-open',
+    iconWrap: 'bg-[#F3E8FF] text-[#7C3AED]',
+    titleColor: 'text-[#7C3AED]',
+    soon: false,
+  },
+  {
+    key: 'manga',
+    title: 'Manga',
+    subtitle: 'Image chapters',
+    icon: 'fa-regular fa-image',
+    iconWrap: 'bg-[#FEE2E2] text-[#EF4444]',
+    titleColor: 'text-[#EF4444]',
+    soon: true,
+  },
+  {
+    key: 'chat-story',
+    title: 'Chat Story',
+    subtitle: 'Message style',
+    icon: 'fa-regular fa-comments',
+    iconWrap: 'bg-[#FFEDD5] text-[#F97316]',
+    titleColor: 'text-[#F97316]',
+    soon: true,
+  },
+]
   return (
     localStorage.getItem('shadow_reader_token') ||
     sessionStorage.getItem('shadow_reader_token') ||
@@ -787,39 +817,36 @@ export default function AuthorDashboardPage() {
           </section>
         ) : null}
 
-        <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div>
-            <h2 className="text-[16px] font-extrabold text-[#111827]">Create Story</h2>
-            <p className="mt-0.5 text-[11.5px] font-medium text-[#8d94a1]">Start a new story format</p>
-          </div>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+  {createStoryCards.map((item) => (
+    <button
+      key={item.key}
+      type="button"
+      disabled={item.soon}
+      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] border border-[#ece7f6] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
+    >
+      {item.soon ? (
+        <span className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold leading-none text-[#F97316] shadow-sm">
+          SOON
+        </span>
+      ) : null}
 
-          <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-            <StoryTypeButton
-  icon="fa-solid fa-book-open"
-  title="Novel"
-  subtitle="Text episodes"
-  onClick={() => handleCreateStory('Novel')}
-/>
+      <div
+        className={`mb-4 flex h-20 w-20 items-center justify-center rounded-full text-[34px] ${item.iconWrap}`}
+      >
+        <i className={item.icon} />
+      </div>
 
-<StoryTypeButton
-  icon="fa-solid fa-image"
-  title="Manga"
-  subtitle="Image chapters"
-  badge="Soon"
-  disabled
-  onClick={() => handleComingSoon('Manga')}
-/>
+      <div className={`text-[15px] font-extrabold ${item.titleColor}`}>
+        {item.title}
+      </div>
 
-<StoryTypeButton
-  icon="fa-solid fa-comments"
-  title="Chat Story"
-  subtitle="Message style"
-  badge="Soon"
-  disabled
-  onClick={() => handleComingSoon('Chat Story')}
-/>
-          </div>
-        </section>
+      <div className="mt-1 text-[12px] font-medium leading-4 text-[#8A86A3]">
+        {item.subtitle}
+      </div>
+    </button>
+  ))}
+</div>
 
         <section id="author-stories" className="mt-5">
           <div className="flex items-center justify-between gap-3">
@@ -874,4 +901,6 @@ export default function AuthorDashboardPage() {
     </div>
   )
 }
+
+
 
