@@ -128,6 +128,10 @@ const ReaderPostCreatePage = lazy(() =>
 const ReaderPostReviewPage = lazy(() =>
   import('./pages/ReaderPosts/ReaderPostReviewPage')
 )
+const ReaderDiscoverPeoplePage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderDiscoverPeoplePage')
+)
+const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
@@ -1054,8 +1058,16 @@ const shouldShowOpeningAds =
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/edit" element={<EditProfilePage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+<Route
+  path="/profile/discover-people"
+  element={
+    <LazyPage>
+      <ReaderDiscoverPeoplePage />
+    </LazyPage>
+  }
+/>
+<Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
