@@ -879,6 +879,11 @@ const shouldShowOpeningAds =
 />
 
         <Route
+  path="/reader/post/review"
+  element={<LazyPage><ReaderPostReviewPage /></LazyPage>}
+/>
+
+        <Route
   path="/discover"
   element={
     <LazyPage>
