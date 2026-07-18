@@ -986,8 +986,6 @@ following: String(user?.following_count || 0),
   />
 ) : null}
 </section>
-
-<section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
           
 
           <section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
