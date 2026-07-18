@@ -421,6 +421,7 @@ export default function AuthorDashboardPage() {
   const [selectedStoryId, setSelectedStoryId] = useState(null)
   const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [message, setMessage] = useState('')
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
   const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
@@ -474,6 +475,32 @@ export default function AuthorDashboardPage() {
     }
   }
 
+    async function fetchUnreadNotifications() {
+    if (AUTHOR_PREVIEW_ENABLED) return
+
+    const token = getAuthToken()
+    if (!token) return
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/story-notifications?limit=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok && data.ok !== false) {
+        setUnreadNotifications(Number(data.unread_count || 0))
+      }
+    } catch {
+      setUnreadNotifications(0)
+    }
+  }
+
   async function fetchMyStories() {
     if (AUTHOR_PREVIEW_ENABLED) {
       setMessage('')
@@ -521,6 +548,15 @@ export default function AuthorDashboardPage() {
   useEffect(() => {
     fetchMyAuthorPage()
     fetchMyStories()
+    fetchUnreadNotifications()
+
+    const intervalId = window.setInterval(fetchUnreadNotifications, 30000)
+    window.addEventListener('focus', fetchUnreadNotifications)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', fetchUnreadNotifications)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -599,13 +635,19 @@ export default function AuthorDashboardPage() {
 
           <div className="flex items-center justify-end">
             <button
-              type="button"
-              onClick={() => navigate('/author/notifications')}
-              className="flex h-9 w-9 items-center justify-center bg-transparent text-[#111827] active:opacity-60"
-              aria-label="Notifications"
-            >
-              <i className="fa-regular fa-bell text-[16px]" />
-            </button>
+  type="button"
+  onClick={() => navigate('/author/notifications')}
+  className="relative flex h-9 w-9 items-center justify-center bg-transparent text-[#111827] active:opacity-60"
+  aria-label="Notifications"
+>
+  <i className="fa-regular fa-bell text-[16px]" />
+
+  {unreadNotifications > 0 ? (
+    <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-[#f43f5e] px-1 text-[8px] font-black leading-none text-white">
+      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+    </span>
+  ) : null}
+</button>
 
             <button
               type="button"
