@@ -4167,6 +4167,62 @@ const handleReaderEcho = () => {
     openReaderEpisode(nextEpisode)
   }
 
+  const endSwipeRef = useRef({
+  startX: 0,
+  startY: 0,
+  armed: false,
+})
+
+const handleEndSwipeStart = (event) => {
+  if (
+    event.touches.length !== 1 ||
+    !nextEpisode ||
+    loading ||
+    lockedEpisode ||
+    readingMode !== 'scroll' ||
+    commentsOpen ||
+    giftPopupOpen ||
+    settingsOpen ||
+    episodeListOpen ||
+    fontSelectOpen ||
+    resetOpen
+  ) {
+    return
+  }
+
+  const touch = event.touches[0]
+  const root = document.documentElement
+  const atBottom =
+    window.scrollY + window.innerHeight >= root.scrollHeight - 8
+
+  endSwipeRef.current = {
+    startX: touch.clientX,
+    startY: touch.clientY,
+    armed: atBottom,
+  }
+}
+
+const handleEndSwipeEnd = (event) => {
+  const gesture = endSwipeRef.current
+  const touch = event.changedTouches?.[0]
+
+  endSwipeRef.current = {
+    startX: 0,
+    startY: 0,
+    armed: false,
+  }
+
+  if (!gesture.armed || !touch || !nextEpisode) return
+
+  const deltaX = touch.clientX - gesture.startX
+  const deltaY = gesture.startY - touch.clientY
+
+  if (deltaY >= 80 && deltaY > Math.abs(deltaX) * 1.2) {
+    handleNext()
+  }
+}
+
+
 const handleOpenPurchasePage = () => {
   navigate('/shop', {
     state: {
@@ -4635,7 +4691,9 @@ return (
       </header>
 
       <main
-        onClick={handleReaderDoubleTap}
+  onTouchStart={handleEndSwipeStart}
+  onTouchEnd={handleEndSwipeEnd}
+  onClick={handleReaderDoubleTap}
         className={`mx-auto max-w-3xl px-0 pt-[50px] pb-[92px] ${theme.page} sm:px-4`}
       >
         {loading ? <LoadingCard /> : null}
