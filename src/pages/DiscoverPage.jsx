@@ -1627,20 +1627,24 @@ export default function DiscoverPage() {
             !realPostsError &&
             !readerPostsError &&
             !discoverTimeline.length ? (
-              <>
-                <RealFeedEmptyState />
+             <>
+  <RealFeedEmptyState />
 
-                {uniqueShadowMallPromotions.map(
-                  (promotion) => (
-                    <AdsCard
-                      key={`empty-feed-ad-${promotion.id}`}
-                      item={promotion}
-                      onMore={setAdOptionsItem}
-                      onHide={hideShadowMallPromotion}
-                    />
-                  )
-                )}
-              </>
+  <DiscoverYouMightLikeSection />
+
+  {uniqueShadowMallPromotions.map(
+    (promotion) => (
+      <AdsCard
+        key={`empty-feed-ad-${promotion.id}`}
+        item={promotion}
+        onMore={setAdOptionsItem}
+        onHide={hideShadowMallPromotion}
+      />
+    )
+  )}
+
+  <DiscoverAuthorsYouMayLikeSection />
+</>
             ) : null}
 
             {discoverTimeline.map((entry) => (
@@ -1666,43 +1670,35 @@ export default function DiscoverPage() {
                   />
                 )}
 
-                {firstShadowMallPromotion &&
-                (
-                  (
-                    entry.kind === 'author_post' &&
-                    entry.authorIndex === 0
-                  ) ||
-                  (
-                    !realPosts.length &&
-                    entry.timelineIndex === 0
-                  )
-                ) ? (
-                  <AdsCard
-                    item={firstShadowMallPromotion}
-                    onMore={setAdOptionsItem}
-                    onHide={hideShadowMallPromotion}
-                  />
-                ) : null}
+                
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
                   <DiscoverTrendingStoriesSection />
                 ) : null}
 
-                {entry.kind === 'author_post' &&
-                entry.authorIndex === 1 ? (
-                  <DiscoverAuthorsYouMayLikeSection />
-                ) : null}
+                
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 2 ? (
                   <DiscoverNewUpdatedStoriesSection />
                 ) : null}
 
-                {entry.kind === 'author_post' &&
-                entry.authorIndex === 3 ? (
-                  <DiscoverYouMightLikeSection />
-                ) : null}
+                {entry.timelineIndex === 3 ? (
+  <>
+    <DiscoverYouMightLikeSection />
+
+    {firstShadowMallPromotion ? (
+      <AdsCard
+        item={firstShadowMallPromotion}
+        onMore={setAdOptionsItem}
+        onHide={hideShadowMallPromotion}
+      />
+    ) : null}
+
+    <DiscoverAuthorsYouMayLikeSection />
+  </>
+) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 4 ? (
@@ -1710,6 +1706,23 @@ export default function DiscoverPage() {
                 ) : null}
               </Fragment>
             ))}
+
+            {discoverTimeline.length > 0 &&
+discoverTimeline.length < 4 ? (
+  <>
+    <DiscoverYouMightLikeSection />
+
+    {firstShadowMallPromotion ? (
+      <AdsCard
+        item={firstShadowMallPromotion}
+        onMore={setAdOptionsItem}
+        onHide={hideShadowMallPromotion}
+      />
+    ) : null}
+
+    <DiscoverAuthorsYouMayLikeSection />
+  </>
+) : null}
 
             {discoverTimeline.length &&
             !realPostsHasMore
