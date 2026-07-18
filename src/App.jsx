@@ -1053,13 +1053,7 @@ const shouldShowOpeningAds =
   }
 />
 
-      
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
-        <Route path="/event" element={<EventPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-<Route
+        <Route
   path="/profile/discover-people"
   element={
     <LazyPage>
@@ -1067,7 +1061,14 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-<Route path="/profile/edit" element={<EditProfilePage />} />
+
+      
+        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
+        <Route path="/event" element={<EventPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfilePage />} />
         <Route path="/profile/edit/links" element={<EditProfileLinksPage />} />
         <Route path="/profile/:username/:listType" element={<ProfileFollowListPage />} />
         <Route path="/story/:id" element={<StoryDetailPage />} />
