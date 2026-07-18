@@ -71,9 +71,7 @@ function ReaderProfileSetupSection({ user, onEditAvatar }) {
 
   const completedCount = items.filter((item) => item.complete).length
 
-  if (completedCount === items.length) return null
-
-  return (
+return (
     <section className="mt-3 bg-white px-4 pb-7 pt-5 md:rounded-[24px]">
       <div className="mb-4">
         <h2 className="text-[17px] font-semibold text-[#111827]">Build your reader space</h2>
