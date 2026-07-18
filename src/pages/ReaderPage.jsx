@@ -4167,40 +4167,38 @@ const handleReaderEcho = () => {
     openReaderEpisode(nextEpisode)
   }
 
-  const endSwipeRef = useRef({
+const endSwipeRef = useRef({
   startX: 0,
   startY: 0,
-  armed: false,
 })
 
 const handleEndSwipeStart = (event) => {
-  if (
-    event.touches.length !== 1 ||
-    !nextEpisode ||
-    loading ||
-    lockedEpisode ||
-    readingMode !== 'scroll' ||
-    commentsOpen ||
-    giftPopupOpen ||
-    settingsOpen ||
-    episodeListOpen ||
-    fontSelectOpen ||
-    resetOpen
-  ) {
-    return
-  }
+  if (event.touches.length !== 1) return
 
   const touch = event.touches[0]
-  const root = document.documentElement
-  const atBottom =
-    window.scrollY + window.innerHeight >= root.scrollHeight - 8
 
   endSwipeRef.current = {
     startX: touch.clientX,
     startY: touch.clientY,
-    armed: atBottom,
   }
 }
+
+const handleEndSwipeEnd = (event) => {
+  const touch = event.changedTouches?.[0]
+  if (!touch || !nextEpisode || loading || lockedEpisode || readingMode !== 'scroll') return
+  if (commentsOpen || giftPopupOpen || settingsOpen || episodeListOpen || fontSelectOpen || resetOpen) return
+
+  const deltaX = touch.clientX - endSwipeRef.current.startX
+  const deltaY = endSwipeRef.current.startY - touch.clientY
+  const root = document.documentElement
+  const atBottom =
+    window.scrollY + window.innerHeight >= root.scrollHeight - 120
+
+  if (atBottom && deltaY >= 50 && deltaY > Math.abs(deltaX)) {
+    handleNext()
+  }
+}
+
 
 const handleEndSwipeEnd = (event) => {
   const gesture = endSwipeRef.current
