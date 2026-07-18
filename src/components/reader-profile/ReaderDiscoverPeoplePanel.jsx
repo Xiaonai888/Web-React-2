@@ -234,7 +234,7 @@ export default function ReaderDiscoverPeoplePanel({ open, onFollowed }) {
                     type="button"
                     onClick={() => handleFollow(user)}
                     disabled={following || busy}
-                    className={`mt-3 h-10 w-full rounded-[10px] text-[13px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
+                    className={`mt-3 h-9 w-full rounded-[9px] text-[12px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
                       following
                         ? 'bg-[#f3f4f6] text-[#111827]'
                         : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-sm'
