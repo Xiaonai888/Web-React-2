@@ -91,7 +91,7 @@ function PersonRow({ user, followBack, busy, onFollow, onHide }) {
         type="button"
         onClick={() => onFollow(user)}
         disabled={following || busy}
-        className={`h-9 min-w-[116px] rounded-[9px] px-4 text-[12px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
+        className={`h-8 min-w-[96px] rounded-[8px] px-3 text-[12px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
           following
             ? 'bg-[#f3f4f6] text-[#111827]'
             : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-sm'
