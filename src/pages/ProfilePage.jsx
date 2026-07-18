@@ -167,7 +167,7 @@ function normalizeProfileLinkUrl(url) {
 
 function AvatarImage({ profile, sizeClass = 'h-[92px] w-[92px] md:h-[96px] md:w-[96px]' }) {
   return (
-    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[34px] font-extrabold text-white ring-2 ring-[#f6b800] ${sizeClass}`}>
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[34px] font-extrabold text-white ${sizeClass}`}>
       {profile.avatarUrl ? (
         <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
       ) : (
