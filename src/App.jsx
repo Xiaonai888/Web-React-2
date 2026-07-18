@@ -131,7 +131,7 @@ const ReaderPostReviewPage = lazy(() =>
 const ReaderDiscoverPeoplePage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderDiscoverPeoplePage')
 )
-const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
+
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
