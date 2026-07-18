@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
+import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -537,8 +538,9 @@ function EditProfileModal({
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-const [readerPostCount, setReaderPostCount] = useState(0)
-const [profileTabMessage, setProfileTabMessage] = useState('')
+  const [readerPostCount, setReaderPostCount] = useState(0)
+  const [profileTabMessage, setProfileTabMessage] = useState('')
+  const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
   const [user, setUser] = useState(getStoredUser())
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
@@ -565,6 +567,15 @@ const [profileTabMessage, setProfileTabMessage] = useState('')
   window.setTimeout(() => setProfileTabMessage(''), 2200)
 }
 
+  function handleSuggestionFollowed() {
+  setUser((current) => {
+    if (!current) return current
+    const nextUser = { ...current, following_count: Number(current.following_count || 0) + 1 }
+    saveStoredUser(nextUser)
+    return nextUser
+  })
+}
+  
   const isOwnProfile = true
 
   useEffect(() => {
@@ -941,12 +952,14 @@ following: String(user?.following_count || 0),
     </button>
 
     <button
-      type="button"
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
-      aria-label="Add people"
-    >
-      <i className="fa-solid fa-user-plus text-[14px]" />
-    </button>
+  type="button"
+  onClick={() => setDiscoverPeopleOpen((current) => !current)}
+  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#f3f4f6] text-[#111827] transition active:scale-[0.98]"
+  aria-label="Discover people"
+  aria-expanded={discoverPeopleOpen}
+>
+  <i className="fa-solid fa-user-plus text-[14px]" />
+</button>
   </div>
 ) : (
   <div className="mt-4 grid grid-cols-2 gap-2">
@@ -959,6 +972,13 @@ following: String(user?.following_count || 0),
   </div>
 )}
 
+
+            <ReaderDiscoverPeoplePanel
+  open={discoverPeopleOpen}
+  profileUsername={profile.username}
+  onFollowed={handleSuggestionFollowed}
+/>
+</section>
           
 
           <section className="sticky top-[58px] z-20 border-y border-[#f0eef6] bg-white">
