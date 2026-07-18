@@ -12,27 +12,29 @@ const API_BASE_URL =
 const MODES = ['emoji', 'image', 'color']
 
 const EMOJI_BACKGROUNDS = [
-  { key: 'sunflower', label: 'Sunflower', src: '/assets/Share%20Profile/Sunflower.webp' },
-  { key: 'starfish', label: 'Starfish', src: '/assets/Share%20Profile/Starfish.webp' },
-  { key: 'heart', label: 'Heart', src: '/assets/Share%20Profile/Heart.webp' },
-  { key: 'butterfly', label: 'Butterfly', src: '/assets/Share%20Profile/Butterfly.webp' },
-  { key: 'moon', label: 'Moon', src: '/assets/Share%20Profile/Moon.webp' },
-  { key: 'flower', label: 'Flower', src: '/assets/Share%20Profile/Flower.webp' },
-  { key: 'book', label: 'Book', src: '/assets/Share%20Profile/Book.webp' },
-  { key: 'manga', label: 'Manga', src: '/assets/Share%20Profile/Manga.webp' },
-  { key: 'mapleleaf', label: 'Maple leaf', src: '/assets/Share%20Profile/Mapleleaf.webp' },
-  { key: 'snowman', label: 'Snowman', src: '/assets/Share%20Profile/Snowman.webp' },
+  { key: 'sunflower', label: 'Sunflower', src: '/assets/Share%20Profile/Sunflower.webp', qrColors: ['#8a4b00', '#c27803'] },
+  { key: 'starfish', label: 'Starfish', src: '/assets/Share%20Profile/Starfish.webp', qrColors: ['#92400e', '#c2410c'] },
+  { key: 'heart', label: 'Heart', src: '/assets/Share%20Profile/Heart.webp', qrColors: ['#be123c', '#db2777'] },
+  { key: 'butterfly', label: 'Butterfly', src: '/assets/Share%20Profile/Butterfly.webp', qrColors: ['#5b21b6', '#7c3aed'] },
+  { key: 'moon', label: 'Moon', src: '/assets/Share%20Profile/Moon.webp', qrColors: ['#854d0e', '#a16207'] },
+  { key: 'flower', label: 'Flower', src: '/assets/Share%20Profile/Flower.webp', qrColors: ['#9d174d', '#c026d3'] },
+  { key: 'book', label: 'Book', src: '/assets/Share%20Profile/Book.webp', qrColors: ['#5b21b6', '#9333ea'] },
+  { key: 'manga', label: 'Manga', src: '/assets/Share%20Profile/Manga.webp', qrColors: ['#be123c', '#7e22ce'] },
+  { key: 'mapleleaf', label: 'Maple leaf', src: '/assets/Share%20Profile/Mapleleaf.webp', qrColors: ['#7c2d12', '#c2410c'] },
+  { key: 'snowman', label: 'Snowman', src: '/assets/Share%20Profile/Snowman.webp', qrColors: ['#1e40af', '#475569'] },
 ]
 
 const COLOR_BACKGROUNDS = [
-  { key: 'sunset', label: 'Sunset', colors: ['#ffbf00', '#ff7a18', '#ff006e'] },
-  { key: 'violet', label: 'Violet', colors: ['#6d28d9', '#8b5cf6', '#c084fc'] },
-  { key: 'sky', label: 'Sky', colors: ['#0ea5e9', '#6366f1', '#a855f7'] },
-  { key: 'rose', label: 'Rose', colors: ['#fb7185', '#f472b6', '#c084fc'] },
-  { key: 'mint', label: 'Mint', colors: ['#34d399', '#22d3ee', '#60a5fa'] },
-  { key: 'peach', label: 'Peach', colors: ['#fed7aa', '#fb7185', '#f43f5e'] },
-  { key: 'night', label: 'Night', colors: ['#111827', '#312e81', '#7c3aed'] },
+  { key: 'sunset', label: 'Sunset', colors: ['#ffbf00', '#ff7a18', '#ff006e'], qrColors: ['#9a4300', '#be123c'] },
+  { key: 'violet', label: 'Violet', colors: ['#6d28d9', '#8b5cf6', '#c084fc'], qrColors: ['#4c1d95', '#7e22ce'] },
+  { key: 'sky', label: 'Sky', colors: ['#0ea5e9', '#6366f1', '#a855f7'], qrColors: ['#075985', '#4338ca'] },
+  { key: 'rose', label: 'Rose', colors: ['#fb7185', '#f472b6', '#c084fc'], qrColors: ['#9f1239', '#a21caf'] },
+  { key: 'mint', label: 'Mint', colors: ['#34d399', '#22d3ee', '#60a5fa'], qrColors: ['#047857', '#0369a1'] },
+  { key: 'peach', label: 'Peach', colors: ['#fed7aa', '#fb7185', '#f43f5e'], qrColors: ['#9a3412', '#be123c'] },
+  { key: 'night', label: 'Night', colors: ['#111827', '#312e81', '#7c3aed'], qrColors: ['#312e81', '#6d28d9'] },
 ]
+
+const IMAGE_QR_COLORS = ['#374151', '#111827']
 
 const CUSTOM_IMAGE_STORAGE_PREFIX = 'shadow-share-profile-custom:'
 const SHARE_SETTINGS_STORAGE_PREFIX = 'shadow-share-profile-settings:'
@@ -110,6 +112,35 @@ function canvasToBlob(canvas) {
   })
 }
 
+function drawThemedQr(ctx, qrImage, x, y, size, colors) {
+  const qrCanvas = document.createElement('canvas')
+  qrCanvas.width = size
+  qrCanvas.height = size
+
+  const qrCtx = qrCanvas.getContext('2d')
+
+  if (!qrCtx) {
+    ctx.drawImage(qrImage, x, y, size, size)
+    return
+  }
+
+  qrCtx.drawImage(qrImage, 0, 0, size, size)
+  qrCtx.globalCompositeOperation = 'source-in'
+
+  const gradient = qrCtx.createLinearGradient(0, 0, size, size)
+  const lastIndex = colors.length - 1
+
+  colors.forEach((color, index) => {
+    gradient.addColorStop(lastIndex ? index / lastIndex : 0, color)
+  })
+
+  qrCtx.fillStyle = gradient
+  qrCtx.fillRect(0, 0, size, size)
+  qrCtx.globalCompositeOperation = 'source-over'
+
+  ctx.drawImage(qrCanvas, x, y, size, size)
+}
+
 export default function ReaderShareProfilePage() {
   const navigate = useNavigate()
   const uploadInputRef = useRef(null)
@@ -151,9 +182,18 @@ export default function ReaderShareProfilePage() {
   const selectedEmoji =
     EMOJI_BACKGROUNDS.find((item) => item.key === emojiKey) || EMOJI_BACKGROUNDS[0]
   const selectedColor =
-    COLOR_BACKGROUNDS.find((item) => item.key === colorKey) || COLOR_BACKGROUNDS[0]
+  COLOR_BACKGROUNDS.find((item) => item.key === colorKey) || COLOR_BACKGROUNDS[0]
 
-  const backgroundStyle = useMemo(() => {
+const qrColors =
+  mode === 'color'
+    ? selectedColor.qrColors
+    : mode === 'emoji'
+      ? selectedEmoji.qrColors
+      : IMAGE_QR_COLORS
+
+const qrGradient = `linear-gradient(135deg, ${qrColors.join(', ')})`
+
+const backgroundStyle = useMemo(() => {
     if (mode === 'image' && customImage?.imageUrl) {
       return {
         backgroundImage: `url("${customImage.imageUrl}")`,
@@ -188,14 +228,14 @@ export default function ReaderShareProfilePage() {
     let cancelled = false
 
     QRCode.toDataURL(profileUrl, {
-      width: 900,
-      margin: 2,
-      errorCorrectionLevel: 'H',
-      color: {
-        dark: '#7c3aed',
-        light: '#ffffff',
-      },
-    })
+  width: 900,
+  margin: 2,
+  errorCorrectionLevel: 'H',
+  color: {
+    dark: '#000000ff',
+    light: '#00000000',
+  },
+})
       .then((value) => {
         if (!cancelled) setQrDataUrl(value)
       })
@@ -340,7 +380,7 @@ export default function ReaderShareProfilePage() {
     ctx.restore()
 
     const qrImage = await loadImage(qrDataUrl)
-    ctx.drawImage(qrImage, 210, 455, 660, 660)
+drawThemedQr(ctx, qrImage, 210, 455, 660, qrColors)
 
     ctx.fillStyle = '#111827'
     ctx.textAlign = 'center'
@@ -353,7 +393,7 @@ export default function ReaderShareProfilePage() {
     ctx.fillText('Shadow Reader Profile', 540, 1310)
 
     return canvasToBlob(canvas)
-  }, [customImage?.imageUrl, mode, qrDataUrl, selectedColor, selectedEmoji.src, username])
+  }, [customImage?.imageUrl, mode, qrColors, qrDataUrl, selectedColor, selectedEmoji.src, username])
 
   async function handleDownload() {
     try {
@@ -493,12 +533,23 @@ export default function ReaderShareProfilePage() {
           <section className="mx-auto w-full max-w-[456px] rounded-[28px] bg-white px-5 pb-7 pt-6 shadow-[0_18px_50px_rgba(17,24,39,0.18)]">
             <div className="mx-auto aspect-square w-full max-w-[330px] overflow-hidden rounded-[18px] bg-white">
               {qrDataUrl ? (
-                <img
-                  src={qrDataUrl}
-                  alt={`QR code for @${username}`}
-                  className="h-full w-full object-contain"
-                />
-              ) : (
+  <div
+    role="img"
+    aria-label={`QR code for @${username}`}
+    className="h-full w-full"
+    style={{
+      backgroundImage: qrGradient,
+      WebkitMaskImage: `url("${qrDataUrl}")`,
+      maskImage: `url("${qrDataUrl}")`,
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+    }}
+  />
+) : (
                 <div className="flex h-full w-full items-center justify-center">
                   <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#7c3aed]" />
                 </div>
