@@ -111,6 +111,24 @@ function FieldLabel({ children }) {
   return <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">{children}</label>
 }
 
+function getUsernameError(value) {
+  const username = String(value || '').trim()
+
+  if (!username) return 'Username is required.'
+  if (username.length < 3 || username.length > 30) {
+    return 'Username must be 3–30 characters.'
+  }
+  if (/\s/.test(username)) {
+    return 'Spaces are not allowed. Use English letters, numbers, or underscores.'
+  }
+
+  const invalidCharacter = username.match(/[^A-Za-z0-9_]/)?.[0]
+
+  return invalidCharacter
+    ? `"${invalidCharacter}" is not allowed. Use only English letters, numbers, and underscores.`
+    : ''
+}
+
 export default function EditProfilePage() {
   const navigate = useNavigate()
   const [user, setUser] = useState(getStoredUser())
@@ -118,8 +136,10 @@ export default function EditProfilePage() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+const [usernameTouched, setUsernameTouched] = useState(false)
 
-  const avatarLetter = useMemo(() => (form.name || user?.name || 'R').charAt(0).toUpperCase(), [form.name, user?.name])
+const usernameError = useMemo(() => getUsernameError(form.username), [form.username])
+const avatarLetter = useMemo(() => (form.name || user?.name || 'R').charAt(0).toUpperCase(), [form.name, user?.name])
 
   const activeLinks = useMemo(() => form.social_links.filter((item) => String(item?.url || '').trim()).slice(0, 5), [form.social_links])
 
@@ -175,11 +195,18 @@ export default function EditProfilePage() {
     }
 
     if (!form.name.trim()) {
-      setMessage('Display name is required')
-      return
-    }
+  setMessage('Display name is required')
+  return
+}
 
-    try {
+setUsernameTouched(true)
+
+if (usernameError) {
+  setMessage(usernameError)
+  return
+}
+
+try {
       setSaving(true)
       setMessage('')
 
@@ -274,16 +301,38 @@ export default function EditProfilePage() {
               <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change display name once every 2 weeks.</div>
             </div>
 
-            <div>
-              <FieldLabel>Username</FieldLabel>
-              <input
-                value={form.username}
-                onChange={(event) => updateField('username', event.target.value)}
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
-                placeholder="username"
-              />
-              <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">You can change username once every 1 week.</div>
-            </div>
+          <div>
+  <FieldLabel>Username</FieldLabel>
+  <input
+    value={form.username}
+    onChange={(event) => {
+      setUsernameTouched(true)
+      setMessage('')
+      updateField('username', event.target.value)
+    }}
+    onBlur={() => setUsernameTouched(true)}
+    maxLength={30}
+    spellCheck={false}
+    className={`h-12 w-full rounded-[16px] border bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:bg-white ${
+      usernameTouched && usernameError
+        ? 'border-[#e5484d] focus:border-[#e5484d]'
+        : 'border-[#e5e7eb] focus:border-[#111827]'
+    }`}
+    placeholder="Dara_123"
+  />
+  <div
+    className={`mt-1 text-[11px] font-bold ${
+      usernameTouched && usernameError ? 'text-[#e5484d]' : 'text-[#98a2b3]'
+    }`}
+  >
+    {usernameTouched && usernameError
+      ? usernameError
+      : 'Use 3–30 English letters, numbers, or underscores. No spaces.'}
+  </div>
+  <div className="mt-1 text-[11px] font-bold text-[#98a2b3]">
+    You can change your username once every 1 week.
+  </div>
+</div>
 
             <div>
               <FieldLabel>Work / Job</FieldLabel>
