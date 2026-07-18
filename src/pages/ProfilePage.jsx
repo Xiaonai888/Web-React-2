@@ -853,14 +853,18 @@ following: String(user?.following_count || 0),
           <header className="sticky top-0 z-30 border-b border-[#f0eef6] bg-white/95 px-4 py-3 backdrop-blur">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
-                  aria-label="Go back"
-                >
-                  <i className="fas fa-chevron-left text-[16px]" />
-                </button>
+               <button
+  type="button"
+  onClick={() =>
+    isOwnProfile
+      ? navigate('/me', { replace: true })
+      : navigate(-1)
+  }
+  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+  aria-label="Go back"
+>
+  <i className="fas fa-chevron-left text-[16px]" />
+</button>
 
                 <div className="min-w-0 text-[15px] font-extrabold text-[#111827]">
                   @{profile.username}
