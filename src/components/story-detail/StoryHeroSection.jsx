@@ -202,7 +202,7 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
         <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-end px-4 pb-14 sm:pb-14">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0 flex-1 text-left">
-              <h2 className="line-clamp-2 text-[22px] font-bold leading-[29px] text-white drop-shadow sm:text-[32px] sm:leading-[39px]">
+              <h2 className="whitespace-normal break-words [overflow-wrap:anywhere] text-[22px] font-bold leading-[32px] text-white drop-shadow sm:text-[32px] sm:leading-[42px]">
                 {story?.title || 'Untitled Story'}
               </h2>
 
