@@ -1022,6 +1022,8 @@ following: String(user?.following_count || 0),
         <ReaderProfilePostsPanel
   username={profile.username}
   isOwnProfile={isOwnProfile}
+  profileUser={user}
+  onEditAvatar={openAvatarEditor}
   onCountChange={setReaderPostCount}
 />
       </main>
