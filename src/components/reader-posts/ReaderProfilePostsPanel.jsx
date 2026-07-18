@@ -107,7 +107,7 @@ return (
             <button
               type="button"
               onClick={item.action}
-              className={`mt-auto min-h-10 rounded-[12px] px-5 text-[13px] font-semibold transition active:scale-[0.98] ${
+              className={`mt-auto min-h-10 rounded-[12px] px-5 text-[13px] font-normal transition active:scale-[0.98] ${
                 item.complete
                   ? 'bg-[#f1f2f4] text-[#111827]'
                   : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-[0_8px_18px_rgba(124,58,237,0.24)]'
