@@ -4170,7 +4170,36 @@ const handleReaderEcho = () => {
 const endSwipeRef = useRef({
   startX: 0,
   startY: 0,
+  lastX: 0,
+  lastY: 0,
+  triggered: false,
 })
+
+const endWheelRef = useRef({
+  total: 0,
+  lastAt: 0,
+})
+
+const canAdvanceByGesture = () =>
+  Boolean(nextEpisode) &&
+  !loading &&
+  !lockedEpisode &&
+  readingMode === 'scroll' &&
+  !commentsOpen &&
+  !giftPopupOpen &&
+  !settingsOpen &&
+  !episodeListOpen &&
+  !fontSelectOpen &&
+  !resetOpen
+
+const isReaderAtBottom = () => {
+  const documentHeight = Math.max(
+    document.documentElement.scrollHeight,
+    document.body?.scrollHeight || 0
+  )
+
+  return window.scrollY + window.innerHeight >= documentHeight - 160
+}
 
 const handleEndSwipeStart = (event) => {
   if (event.touches.length !== 1) return
@@ -4180,42 +4209,80 @@ const handleEndSwipeStart = (event) => {
   endSwipeRef.current = {
     startX: touch.clientX,
     startY: touch.clientY,
+    lastX: touch.clientX,
+    lastY: touch.clientY,
+    triggered: false,
   }
 }
 
-const handleEndSwipeEnd = (event) => {
-  const touch = event.changedTouches?.[0]
-  if (!touch || !nextEpisode || loading || lockedEpisode || readingMode !== 'scroll') return
-  if (commentsOpen || giftPopupOpen || settingsOpen || episodeListOpen || fontSelectOpen || resetOpen) return
+const handleEndSwipeMove = (event) => {
+  const touch = event.touches?.[0]
+  const gesture = endSwipeRef.current
 
-  const deltaX = touch.clientX - endSwipeRef.current.startX
-  const deltaY = endSwipeRef.current.startY - touch.clientY
-  const root = document.documentElement
-  const atBottom =
-    window.scrollY + window.innerHeight >= root.scrollHeight - 120
+  if (!touch || gesture.triggered || !canAdvanceByGesture()) return
 
-  if (atBottom && deltaY >= 50 && deltaY > Math.abs(deltaX)) {
+  gesture.lastX = touch.clientX
+  gesture.lastY = touch.clientY
+
+  const deltaX = gesture.lastX - gesture.startX
+  const deltaY = gesture.startY - gesture.lastY
+
+  if (
+    isReaderAtBottom() &&
+    deltaY >= 60 &&
+    deltaY > Math.abs(deltaX)
+  ) {
+    gesture.triggered = true
     handleNext()
   }
 }
 
-
 const handleEndSwipeEnd = (event) => {
-  const gesture = endSwipeRef.current
   const touch = event.changedTouches?.[0]
+  const gesture = endSwipeRef.current
+
+  if (touch) {
+    gesture.lastX = touch.clientX
+    gesture.lastY = touch.clientY
+  }
+
+  const deltaX = gesture.lastX - gesture.startX
+  const deltaY = gesture.startY - gesture.lastY
+  const shouldAdvance =
+    !gesture.triggered &&
+    canAdvanceByGesture() &&
+    isReaderAtBottom() &&
+    deltaY >= 60 &&
+    deltaY > Math.abs(deltaX)
 
   endSwipeRef.current = {
     startX: 0,
     startY: 0,
-    armed: false,
+    lastX: 0,
+    lastY: 0,
+    triggered: false,
   }
 
-  if (!gesture.armed || !touch || !nextEpisode) return
+  if (shouldAdvance) handleNext()
+}
 
-  const deltaX = touch.clientX - gesture.startX
-  const deltaY = gesture.startY - touch.clientY
+const handleEndWheel = (event) => {
+  if (!canAdvanceByGesture() || event.deltaY <= 0 || !isReaderAtBottom()) {
+    endWheelRef.current.total = 0
+    return
+  }
 
-  if (deltaY >= 80 && deltaY > Math.abs(deltaX) * 1.2) {
+  const now = Date.now()
+
+  if (now - endWheelRef.current.lastAt > 500) {
+    endWheelRef.current.total = 0
+  }
+
+  endWheelRef.current.lastAt = now
+  endWheelRef.current.total += event.deltaY
+
+  if (endWheelRef.current.total >= 100) {
+    endWheelRef.current.total = 0
     handleNext()
   }
 }
@@ -4689,9 +4756,11 @@ return (
       </header>
 
       <main
-  onTouchStart={handleEndSwipeStart}
-  onTouchEnd={handleEndSwipeEnd}
-  onClick={handleReaderDoubleTap}
+        onTouchStart={handleEndSwipeStart}
+        onTouchMove={handleEndSwipeMove}
+        onTouchEnd={handleEndSwipeEnd}
+        onWheel={handleEndWheel}
+        onClick={handleReaderDoubleTap}
         className={`mx-auto max-w-3xl px-0 pt-[50px] pb-[92px] ${theme.page} sm:px-4`}
       >
         {loading ? <LoadingCard /> : null}
