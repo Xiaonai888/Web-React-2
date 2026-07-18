@@ -978,7 +978,7 @@ following: String(user?.following_count || 0),
 )}
 
 
-            {isOwnProfile ? (
+           {isOwnProfile ? (
   <ReaderDiscoverPeoplePanel
     open={discoverPeopleOpen}
     profileUsername={profile.username}
