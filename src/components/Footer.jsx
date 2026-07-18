@@ -99,6 +99,23 @@ function SmileIcon({ active }) {
   )
 }
 
+function ChatStoryIcon({ active }) {
+  return (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <path
+        d="M4 5.5h11a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H9l-4 3v-3.5a3 3 0 0 1-1-2.2V5.5Z"
+        fill={active ? '#F6C800' : 'none'}
+        stroke="#111827"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="10.5" r="1" fill="#111827" />
+      <circle cx="11" cy="10.5" r="1" fill="#111827" />
+      <circle cx="14" cy="10.5" r="1" fill="#111827" />
+    </svg>
+  )
+}
+
 const NAV = [
   { to: '/', label: 'Stories', Icon: StoriesIcon },
   { to: '/chat-story', label: 'Chat Story', Icon: ChatStoryIcon },
