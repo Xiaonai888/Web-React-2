@@ -60,7 +60,7 @@ export default function ContinueReadingSection() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/reading-progress?limit=12`, {
+      const response = await fetch(`${API_BASE_URL}/api/reading-progress?limit=6`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
