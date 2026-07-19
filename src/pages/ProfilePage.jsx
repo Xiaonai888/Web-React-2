@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
+import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 
@@ -1132,6 +1133,12 @@ async function handleOtherProfileOption(action) {
   ) : null}
 </section>
         </div>
+
+        {isOwnProfile ? (
+          <div className="mt-2 md:mt-3">
+            <ReaderPostComposer />
+          </div>
+        ) : null}
 
         <ReaderProfilePostsPanel
   username={profile.username}
