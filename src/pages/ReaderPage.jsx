@@ -5,6 +5,7 @@ import EchoShareSheet from '../components/reader/EchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
+import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
 
 
 const API_BASE_URL =
@@ -3271,12 +3272,145 @@ function WebcomicReadingMissionCoin({
   )
 }
 
+function ContinuousEpisodeBlock({
+  entry,
+  index,
+  active,
+  theme,
+  story,
+  fontSizePx,
+  fontFamily,
+  lineSpacing,
+  onRegister,
+  onOpenComments,
+  onOpenGift,
+  onOpenLocked,
+  adultAccepted,
+}) {
+  const episode = entry?.episode || {}
+  const adultBlocked = Boolean(
+    episode?.is_adult && !adultAccepted
+  )
+  const adBlocked = Boolean(
+    entry?.gate?.ad_policy?.show_read_ad &&
+      entry?.gate?.advertisement?.image_url &&
+      !entry?.adFinished
+  )
+
+  return (
+    <section
+      ref={(node) => onRegister(entry.id, node)}
+      data-episode-id={entry.id}
+      className={index > 0 ? `border-t ${theme.border}` : ''}
+      style={{
+        contentVisibility: 'auto',
+        containIntrinsicSize: '900px',
+      }}
+    >
+      {index > 0 ? (
+        <div className={`${theme.card} px-4 pb-1 pt-8 sm:px-8`}>
+          <span className={`${theme.muted} text-[12px] font-semibold`}>
+            Episode {episode.episode_number || index + 1}
+          </span>
+        </div>
+      ) : null}
+
+      {adultBlocked ? (
+        <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
+          <div className="text-center">
+            <i className={`fa-solid fa-triangle-exclamation text-[26px] ${theme.muted}`} />
+            <p className={`mt-3 text-[13px] font-semibold ${theme.muted}`}>
+              Confirm the adult-content warning to continue.
+            </p>
+          </div>
+        </div>
+      ) : entry.locked ? (
+        <div className={`${theme.card} px-4 py-10 sm:px-8`}>
+          <div className={`mx-auto max-w-[430px] rounded-[24px] border ${theme.border} p-6 text-center`}>
+            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${theme.soft}`}>
+              <i className={`fa-solid fa-lock text-[20px] ${theme.text}`} />
+            </div>
+
+            <div className={`mt-4 text-[12px] font-semibold ${theme.muted}`}>
+              Episode {episode.episode_number || ''}
+            </div>
+
+            <h2 className={`mt-1 text-[22px] font-bold leading-8 ${theme.text}`}>
+              {episode.title || 'Locked Episode'}
+            </h2>
+
+            <p className={`mt-3 text-[13px] font-medium leading-6 ${theme.muted}`}>
+              This episode is locked. Open the unlock options to continue reading.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => onOpenLocked(entry)}
+              className={`mt-5 h-12 w-full rounded-full ${theme.button} text-[13px] font-bold active:scale-[0.99]`}
+            >
+              View unlock options
+            </button>
+          </div>
+        </div>
+      ) : adBlocked ? (
+        <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
+          <div className="text-center">
+            <i className={`fa-solid fa-play-circle text-[26px] ${theme.muted}`} />
+            <p className={`mt-3 text-[13px] font-semibold ${theme.muted}`}>
+              Advertisement required before this episode.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <section className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}>
+            <div className="px-4 py-5 sm:p-8">
+              <div className="mb-7">
+                <h1
+                  className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
+                  style={{ fontFamily }}
+                >
+                  {episode.title || 'Untitled Episode'}
+                </h1>
+              </div>
+
+              <article>
+                <ReadingText
+                  content={episode.content}
+                  fontSizePx={fontSizePx}
+                  fontFamily={fontFamily}
+                  lineSpacing={lineSpacing}
+                  theme={theme}
+                />
+              </article>
+            </div>
+          </section>
+
+          <ReaderEndPanel
+            story={story}
+            episode={episode}
+            onOpenComments={() => onOpenComments(episode)}
+            onOpenGift={onOpenGift}
+          />
+        </>
+      )}
+
+      <div
+        className={`h-px w-full ${active ? 'opacity-100' : 'opacity-0'}`}
+        aria-hidden="true"
+      />
+    </section>
+  )
+}
+
 export default function ReaderPage() {
   const SHOW_READER_COVER = false
   const SHOW_READER_INFO = false
   const navigate = useNavigate()
   const location = useLocation()
-  const { storyId, episodeId } = useParams()
+  const { storyId, episodeId: routeEpisodeId } = useParams()
+  const [activeEpisodeId, setActiveEpisodeId] = useState(routeEpisodeId)
+  const episodeId = activeEpisodeId || routeEpisodeId
   const expectedLocked = Boolean(location.state?.expectedLocked)
   const expectedStory = location.state?.storyPreview || null
   const expectedEpisode = location.state?.episodePreview || null
@@ -3318,6 +3452,7 @@ export default function ReaderPage() {
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(() => Number(localStorage.getItem('reader_auto_scroll_speed') || 1))
   const [adultWarningOpen, setAdultWarningOpen] = useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
+  const [adultConsentGranted, setAdultConsentGranted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [readerMoreOpen, setReaderMoreOpen] = useState(false)
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
@@ -3331,6 +3466,7 @@ export default function ReaderPage() {
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [reviewProgressSaved, setReviewProgressSaved] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [commentEpisode, setCommentEpisode] = useState(null)
   const [giftPopupOpen, setGiftPopupOpen] = useState(false)
 
 useEffect(() => {
@@ -3368,6 +3504,10 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
   useEffect(() => {
     activeReadingTargetRef.current = activeReadingTarget
   }, [activeReadingTarget])
+
+  useEffect(() => {
+    setAdultConsentGranted(false)
+  }, [storyId])
 
   const theme = READER_THEMES[themeName] || READER_THEMES.light
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
@@ -3541,14 +3681,17 @@ useEffect(() => {
     readingProgressRef.current = progress
   }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
 
-async function loadReaderAdStatus() {
-  if (!isUsableRouteId(storyId) || !isUsableRouteId(episodeId)) {
+async function loadReaderAdStatus(targetEpisodeId = episodeId) {
+  if (!isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
     return { ad_policy: null, advertisement: null }
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
-    headers: readerAuthHeaders(),
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
+    {
+      headers: readerAuthHeaders(),
+    }
+  )
 
   const data = await response.json().catch(() => ({}))
 
@@ -3564,11 +3707,94 @@ async function loadReaderAdStatus() {
     advertisement: data.advertisement || null,
   }
 }
-  
-  useEffect(() => {
+
+async function loadContinuousEpisode(targetEpisode) {
+  const targetId = String(
+    targetEpisode?.id || targetEpisode?.episode_id || ''
+  ).trim()
+
+  if (!targetId) return null
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${targetId}`,
+    {
+      headers: readerAuthHeaders(),
+      cache: 'no-store',
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (response.status === 423 || data.code === 'EPISODE_LOCKED') {
+    return {
+      id: targetId,
+      episode: data.episode || targetEpisode,
+      locked: true,
+      gate: null,
+      adFinished: true,
+    }
+  }
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load episode')
+  }
+
+  const gate = await loadReaderAdStatus(targetId).catch(() => ({
+    ad_policy: null,
+    advertisement: null,
+  }))
+  const requiresAd = Boolean(
+    gate?.ad_policy?.show_read_ad &&
+      gate?.advertisement?.image_url
+  )
+
+  return {
+    id: targetId,
+    episode: data.episode || targetEpisode,
+    locked: false,
+    gate,
+    adFinished: !requiresAd,
+  }
+}
+
+const continuousReader = useContinuousEpisodeReader({
+  enabled: readingMode === 'scroll',
+  storyId,
+  activeEpisodeId: episodeId,
+  episodes,
+  loadEpisode: loadContinuousEpisode,
+  onActiveEntry: (entry) => {
+    if (!entry?.episode) return
+
+    setActiveEpisodeId(String(entry.id))
+    setEpisode(entry.episode)
+    setLockedEpisode(Boolean(entry.locked))
+    setReadingProgress(0)
+    readingProgressRef.current = 0
+    qualifiedViewSentRef.current = false
+    setReviewProgressSaved(false)
+    setReaderAdPolicy(entry.gate?.ad_policy || null)
+    setReaderAdvertisement(entry.gate?.advertisement || null)
+    setReaderAdFinished(Boolean(entry.adFinished))
+    setReaderGateReady(true)
+    setReaderMoreOpen(false)
+    setCommentEpisode(null)
+
+    if (entry.episode.is_adult && !adultConsentGranted) {
+      setAdultAccepted(false)
+      setAdultWarningOpen(true)
+    } else {
+      setAdultAccepted(true)
+      setAdultWarningOpen(false)
+    }
+  },
+})
+
+useEffect(() => {
     let ignore = false
 
     async function loadReader() {
+      setActiveEpisodeId(routeEpisodeId)
       setLoading(!hasExpectedLockedPreview)
       setMessage('')
       setAutoScrollEnabled(false)
@@ -3582,7 +3808,7 @@ async function loadReaderAdStatus() {
         setEpisode(expectedEpisode)
       }
 
-      if (!isUsableRouteId(storyId) || !isUsableRouteId(episodeId)) {
+      if (!isUsableRouteId(storyId) || !isUsableRouteId(routeEpisodeId)) {
         setLoading(false)
         setReaderGateReady(true)
         setMessage('Invalid reading link. Please open the episode from its story page.')
@@ -3590,16 +3816,26 @@ async function loadReaderAdStatus() {
       }
 
       if (!getReaderToken()) {
-        navigate('/login')
+        navigate('/login', {
+          state: {
+            returnTo: `/story/${storyId}/episode/${routeEpisodeId}`,
+          },
+        })
         return
       }
 
       try {
         const [episodeResponse, episodesResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}`, {
-            headers: readerAuthHeaders(),
+          fetch(
+            `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${routeEpisodeId}`,
+            {
+              headers: readerAuthHeaders(),
+              cache: 'no-store',
+            }
+          ),
+          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes`, {
+            cache: 'no-store',
           }),
-          fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes`),
         ])
 
         const episodeData = await episodeResponse.json().catch(() => ({}))
@@ -3609,56 +3845,90 @@ async function loadReaderAdStatus() {
           throw new Error(episodesData.message || 'Episode list not found')
         }
 
-        if (episodeResponse.status === 423 || episodeData.code === 'EPISODE_LOCKED') {
-  if (ignore) return
+        const nextEpisodes = episodesData.episodes || []
 
-  setStory(episodeData.story || null)
-  setEpisode(episodeData.episode || null)
-  setEpisodes(episodesData.episodes || [])
-  setLockedEpisode(true)
-  setReaderAdPolicy(null)
-  setReadingProgress(0)
-  setReaderGateReady(true)
+        if (
+          episodeResponse.status === 423 ||
+          episodeData.code === 'EPISODE_LOCKED'
+        ) {
+          if (ignore) return
 
-  try {
-    await loadLockedUnlockStatus()
-  } catch {
-  setUnlockWallet(null)
-  setUnlockCoinAccess(null)
-  setUnlockVoucherAccess(null)
-  setUnlockPackageOptions([])
-}
+          setStory(episodeData.story || null)
+          setEpisode(episodeData.episode || null)
+          setEpisodes(nextEpisodes)
+          setLockedEpisode(true)
+          setReaderAdPolicy(null)
+          setReaderAdvertisement(null)
+          setReaderAdFinished(true)
+          setReadingProgress(0)
+          setReaderGateReady(true)
 
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-  return
-}
+          try {
+            await loadLockedUnlockStatus(routeEpisodeId)
+          } catch {
+            setUnlockWallet(null)
+            setUnlockCoinAccess(null)
+            setUnlockVoucherAccess(null)
+            setUnlockPackageOptions([])
+          }
+
+          continuousReader.setInitialEntry({
+            id: routeEpisodeId,
+            episode: episodeData.episode,
+            locked: true,
+            gate: null,
+            adFinished: true,
+          })
+
+          window.scrollTo({ top: 0, behavior: 'auto' })
+          return
+        }
 
         if (!episodeResponse.ok || episodeData.ok === false) {
           throw new Error(episodeData.message || 'Episode not found')
         }
 
-        const nextReaderAdStatus = await loadReaderAdStatus().catch(() => ({
-  ad_policy: null,
-  advertisement: null,
-}))
-if (ignore) return
+        const nextReaderAdStatus = await loadReaderAdStatus(
+          routeEpisodeId
+        ).catch(() => ({
+          ad_policy: null,
+          advertisement: null,
+        }))
 
-setStory(episodeData.story || null)
-setEpisode(episodeData.episode || null)
-setEpisodes(episodesData.episodes || [])
-setLockedEpisode(false)
-setReaderAdPolicy(nextReaderAdStatus.ad_policy)
-setReaderAdvertisement(nextReaderAdStatus.advertisement)
-setReadingProgress(0)
-setReaderGateReady(true)       
+        if (ignore) return
 
-        if (episodeData.episode?.is_adult) {
+        const requiresAd = Boolean(
+          nextReaderAdStatus.ad_policy?.show_read_ad &&
+            nextReaderAdStatus.advertisement?.image_url
+        )
+
+        setStory(episodeData.story || null)
+        setEpisode(episodeData.episode || null)
+        setEpisodes(nextEpisodes)
+        setLockedEpisode(false)
+        setReaderAdPolicy(nextReaderAdStatus.ad_policy)
+        setReaderAdvertisement(nextReaderAdStatus.advertisement)
+        setReaderAdFinished(!requiresAd)
+        setReadingProgress(0)
+        setReaderGateReady(true)
+
+        continuousReader.setInitialEntry({
+          id: routeEpisodeId,
+          episode: episodeData.episode,
+          locked: false,
+          gate: nextReaderAdStatus,
+          adFinished: !requiresAd,
+        })
+
+        if (episodeData.episode?.is_adult && !adultConsentGranted) {
           setAdultAccepted(false)
           setAdultWarningOpen(true)
         } else {
           setAdultAccepted(true)
           setAdultWarningOpen(false)
         }
+
+        window.scrollTo({ top: 0, behavior: 'auto' })
       } catch (error) {
         if (ignore) return
 
@@ -3677,29 +3947,70 @@ setReaderGateReady(true)
     return () => {
       ignore = true
     }
-  }, [episodeId, expectedEpisode, expectedStory, hasExpectedLockedPreview, navigate, storyId])
+  }, [
+    continuousReader.setInitialEntry,
+    expectedEpisode,
+    expectedStory,
+    hasExpectedLockedPreview,
+    navigate,
+    routeEpisodeId,
+    storyId,
+  ])
 
   useEffect(() => {
     if (readingMode === 'paging') return undefined
 
     const updateProgress = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
-      const progress = scrollHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100)) : 100
+      const section = continuousReader.getSectionNode(episodeId)
+
+      if (section) {
+        const rect = section.getBoundingClientRect()
+        const sectionTop = window.scrollY + rect.top
+        const sectionHeight = Math.max(1, section.offsetHeight)
+        const visibleOffset =
+          window.scrollY + window.innerHeight * 0.35 - sectionTop
+        const progress = Math.min(
+          100,
+          Math.max(0, (visibleOffset / sectionHeight) * 100)
+        )
+
+        setReadingProgress(progress)
+        readingProgressRef.current = progress
+        return
+      }
+
+      const scrollTop =
+        window.scrollY || document.documentElement.scrollTop
+      const scrollHeight =
+        document.documentElement.scrollHeight - window.innerHeight
+      const progress =
+        scrollHeight > 0
+          ? Math.min(
+              100,
+              Math.max(0, (scrollTop / scrollHeight) * 100)
+            )
+          : 100
 
       setReadingProgress(progress)
       readingProgressRef.current = progress
     }
 
     updateProgress()
-    window.addEventListener('scroll', updateProgress, { passive: true })
+    window.addEventListener('scroll', updateProgress, {
+      passive: true,
+    })
     window.addEventListener('resize', updateProgress)
 
     return () => {
       window.removeEventListener('scroll', updateProgress)
       window.removeEventListener('resize', updateProgress)
     }
-  }, [episodeId, readingMode])
+  }, [
+    continuousReader.entries.length,
+    continuousReader.getSectionNode,
+    episodeId,
+    readingMode,
+  ])
 
   useEffect(() => {
     if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) {
@@ -4106,23 +4417,38 @@ useEffect(() => {
   }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, readingMode, resetOpen, settingsOpen])
 
   const sortedReaderEpisodes = useMemo(() => {
-    return [...episodes].sort((a, b) => Number(a.episode_number || 0) - Number(b.episode_number || 0))
+    return [...episodes].sort(
+      (a, b) =>
+        Number(a.episode_number || 0) -
+        Number(b.episode_number || 0)
+    )
   }, [episodes])
 
-  const currentReaderEpisodeIndex = sortedReaderEpisodes.findIndex((item) => String(item.id) === String(episodeId))
+  const currentReaderEpisodeIndex = sortedReaderEpisodes.findIndex(
+    (item) => String(item.id) === String(episodeId)
+  )
 
   const previousEpisode =
-    currentReaderEpisodeIndex > 0 ? sortedReaderEpisodes[currentReaderEpisodeIndex - 1] : null
+    currentReaderEpisodeIndex > 0
+      ? sortedReaderEpisodes[currentReaderEpisodeIndex - 1]
+      : null
 
   const nextEpisode =
-    currentReaderEpisodeIndex >= 0 && currentReaderEpisodeIndex < sortedReaderEpisodes.length - 1
+    currentReaderEpisodeIndex >= 0 &&
+    currentReaderEpisodeIndex < sortedReaderEpisodes.length - 1
       ? sortedReaderEpisodes[currentReaderEpisodeIndex + 1]
       : null
 
-  const openReaderEpisode = (targetEpisode) => {
+  const openReaderEpisode = async (targetEpisode) => {
     if (!targetEpisode) return
 
+    if (readingMode === 'scroll') {
+      await continuousReader.scrollToEpisode(targetEpisode)
+      return
+    }
+
     navigate(`/story/${storyId}/episode/${targetEpisode.id}`, {
+      replace: true,
       state: {
         storyPreview: story,
         episodePreview: targetEpisode,
@@ -4133,9 +4459,12 @@ useEffect(() => {
 
   const cover = episode?.cover_url || story?.cover_url || ''
   const publishedDate = formatDate(episode?.published_at)
-  const characterCount = Number(episode?.character_count || episode?.content?.length || 0)
-  const isLastReadingPage = readingMode !== 'paging' || currentPageIndex >= Math.max(0, pagingPages.length - 1)
-
+  const characterCount = Number(
+    episode?.character_count || episode?.content?.length || 0
+  )
+  const isLastReadingPage =
+    readingMode !== 'paging' ||
+    currentPageIndex >= Math.max(0, pagingPages.length - 1)
 
 const handleReaderCopyLink = async () => {
   const link = window.location.href
@@ -4167,121 +4496,6 @@ const handleReaderEcho = () => {
     openReaderEpisode(nextEpisode)
   }
 
-const readerEndSentinelRef = useRef(null)
-const endGestureRef = useRef({
-  startX: 0,
-  startY: 0,
-  wheelTotal: 0,
-  lastWheelAt: 0,
-  navigating: false,
-})
-
-useEffect(() => {
-  endGestureRef.current.navigating = false
-  endGestureRef.current.wheelTotal = 0
-}, [episodeId])
-
-useEffect(() => {
-  const canAdvance = () =>
-    Boolean(nextEpisode) &&
-    !loading &&
-    !lockedEpisode &&
-    readingMode === 'scroll' &&
-    !commentsOpen &&
-    !giftPopupOpen &&
-    !settingsOpen &&
-    !episodeListOpen &&
-    !fontSelectOpen &&
-    !resetOpen &&
-    !endGestureRef.current.navigating
-
-  const isEndVisible = () => {
-    const sentinel = readerEndSentinelRef.current
-    if (!sentinel) return false
-
-    const rect = sentinel.getBoundingClientRect()
-    return rect.top <= window.innerHeight + 24
-  }
-
-  const advance = () => {
-    if (!canAdvance() || !isEndVisible()) return
-
-    endGestureRef.current.navigating = true
-    endGestureRef.current.wheelTotal = 0
-    openReaderEpisode(nextEpisode)
-  }
-
-  const handleTouchStart = (event) => {
-    if (event.touches?.length !== 1) return
-
-    const touch = event.touches[0]
-    endGestureRef.current.startX = touch.clientX
-    endGestureRef.current.startY = touch.clientY
-  }
-
-  const handleTouchEnd = (event) => {
-    const touch = event.changedTouches?.[0]
-    if (!touch || !canAdvance() || !isEndVisible()) return
-
-    const deltaX = touch.clientX - endGestureRef.current.startX
-    const deltaY = endGestureRef.current.startY - touch.clientY
-
-    if (deltaY >= 55 && deltaY > Math.abs(deltaX)) {
-      advance()
-    }
-  }
-
-  const handleWheel = (event) => {
-    if (event.deltaY <= 0 || !canAdvance() || !isEndVisible()) {
-      endGestureRef.current.wheelTotal = 0
-      return
-    }
-
-    const now = Date.now()
-
-    if (now - endGestureRef.current.lastWheelAt > 500) {
-      endGestureRef.current.wheelTotal = 0
-    }
-
-    endGestureRef.current.lastWheelAt = now
-    endGestureRef.current.wheelTotal += event.deltaY
-
-    if (endGestureRef.current.wheelTotal >= 110) {
-      advance()
-    }
-  }
-
-  window.addEventListener('touchstart', handleTouchStart, {
-    capture: true,
-    passive: true,
-  })
-  window.addEventListener('touchend', handleTouchEnd, {
-    capture: true,
-    passive: true,
-  })
-  window.addEventListener('wheel', handleWheel, {
-    capture: true,
-    passive: true,
-  })
-
-  return () => {
-    window.removeEventListener('touchstart', handleTouchStart, true)
-    window.removeEventListener('touchend', handleTouchEnd, true)
-    window.removeEventListener('wheel', handleWheel, true)
-  }
-}, [
-  commentsOpen,
-  episodeListOpen,
-  fontSelectOpen,
-  giftPopupOpen,
-  loading,
-  lockedEpisode,
-  nextEpisode,
-  readingMode,
-  resetOpen,
-  settingsOpen,
-])
-
 const handleOpenPurchasePage = () => {
   navigate('/shop', {
     state: {
@@ -4291,12 +4505,17 @@ const handleOpenPurchasePage = () => {
   })
 }
 
-  async function loadLockedUnlockStatus() {
-  if (!storyId || !episodeId) return
+  async function loadLockedUnlockStatus(
+  targetEpisodeId = episodeId
+) {
+  if (!storyId || !targetEpisodeId) return null
 
-  const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/status`, {
-    headers: readerAuthHeaders(),
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
+    {
+      headers: readerAuthHeaders(),
+    }
+  )
 
   const data = await response.json().catch(() => ({}))
 
@@ -4308,7 +4527,11 @@ const handleOpenPurchasePage = () => {
   setUnlockCoinAccess(data.coin_access || data.gem_access || null)
   setUnlockVoucherAccess(data.voucher_access || null)
   setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
-  setUnlockPackageOptions(Array.isArray(data.package_options) ? data.package_options : [])
+  setUnlockPackageOptions(
+    Array.isArray(data.package_options) ? data.package_options : []
+  )
+
+  return data
 }
 async function handleLockedCoinUnlock() {
   if (!unlockCoinAccess?.available) return
@@ -4476,6 +4699,13 @@ function showReadingRewardAnimation(coins) {
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
+const showFullLockedEpisode = Boolean(
+  lockedEpisode &&
+    episode &&
+    String(episodeId) === String(routeEpisodeId) &&
+    continuousReader.entries.length <= 1
+)
+const activeCommentsEpisode = commentEpisode || episode
 
 const readerControlsVisible =
   readerHeaderVisible &&
@@ -4539,8 +4769,9 @@ return (
 
       <AdultWarningModal
         open={adultWarningOpen}
-        onCancel={() => navigate(`/story/${storyId}`)}
+        onCancel={() => navigate(`/story/${storyId}`, { replace: true })}
         onContinue={() => {
+          setAdultConsentGranted(true)
           setAdultAccepted(true)
           setAdultWarningOpen(false)
         }}
@@ -4590,7 +4821,12 @@ return (
   episodes={episodes}
   currentEpisodeId={episodeId}
   storyId={storyId}
-  navigate={navigate}
+  navigate={(to, options = {}) =>
+    navigate(to, {
+      ...options,
+      replace: true,
+    })
+  }
   theme={theme}
 />
 
@@ -4604,12 +4840,19 @@ return (
   open={commentsOpen}
   story={story}
   targetType="episode"
-  targetId={episode?.id || episodeId}
+  targetId={activeCommentsEpisode?.id || episodeId}
   episodes={episodes}
-  title={episode?.title || story?.title || 'Comments'}
-  onClose={() => setCommentsOpen(false)}
+  title={
+    activeCommentsEpisode?.title ||
+    story?.title ||
+    'Comments'
+  }
+  onClose={() => {
+    setCommentsOpen(false)
+    setCommentEpisode(null)
+  }}
   onCommentChanged={handleCommentChanged}
-  key={`${storyId}-${episodeId}`}
+  key={`${storyId}-${activeCommentsEpisode?.id || episodeId}`}
 />
 
       <GiftPopup
@@ -4636,7 +4879,10 @@ return (
   blocking
   advertisementOverride={readerAdvertisement}
   key={`freeUnlock-${storyId}-${episodeId}`}
-  onFinish={() => setReaderAdFinished(true)}
+  onFinish={() => {
+    setReaderAdFinished(true)
+    continuousReader.markAdFinished(episodeId)
+  }}
 />
 ) : null}
 
@@ -4671,7 +4917,10 @@ return (
   onNext={() => openReaderEpisode(nextEpisode)}
   showSubscribeOnDoubleTap={readerDoubleTapVisible}
   onOpenChapters={() => setEpisodeListOpen(true)}
-  onOpenComments={() => setCommentsOpen(true)}
+  onOpenComments={() => {
+    setCommentEpisode(episode)
+    setCommentsOpen(true)
+  }}
   onOpenSettings={() => setSettingsOpen(true)}
 />
 
@@ -4691,6 +4940,7 @@ return (
   const returnSource = location.state?.returnSource
 
   navigate(`/story/${storyId}`, {
+    replace: true,
     state: {
       reopenEpisodeList: returnSource === 'modal',
     },
@@ -4761,7 +5011,7 @@ return (
           </section>
         ) : null}
 
-        {!loading && lockedEpisode && episode ? (
+        {!loading && showFullLockedEpisode ? (
   <LockedEpisodeCard
   theme={theme}
   story={story}
@@ -4782,7 +5032,50 @@ onUnlock={handleLockedDiamondUnlock}
 />
 ) : null}
 
-        {!loading && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
+        {!loading &&
+        !showFullLockedEpisode &&
+        readingMode === 'scroll' ? (
+          <div>
+            {continuousReader.entries.map((entry, index) => (
+              <ContinuousEpisodeBlock
+                key={entry.id}
+                entry={entry}
+                index={index}
+                active={String(entry.id) === String(episodeId)}
+                theme={theme}
+                story={story}
+                fontSizePx={fontSizePx}
+                fontFamily={activeFont.family}
+                lineSpacing={lineSpacing}
+                onRegister={continuousReader.registerSection}
+                onOpenComments={(targetEpisode) => {
+                  setCommentEpisode(targetEpisode)
+                  setCommentsOpen(true)
+                }}
+                onOpenGift={() => setGiftPopupOpen(true)}
+                adultAccepted={adultConsentGranted}
+                onOpenLocked={(lockedEntry) => {
+                  navigate(
+                    `/story/${storyId}/episode/${lockedEntry.id}`,
+                    {
+                      replace: true,
+                      state: {
+                        expectedLocked: true,
+                        storyPreview: story,
+                        episodePreview: lockedEntry.episode,
+                        returnSource:
+                          location.state?.returnSource ||
+                          'continuousReader',
+                      },
+                    }
+                  )
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {!loading && readingMode === 'paging' && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
           <>
             <section className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}>
               {SHOW_READER_COVER && cover ? (
@@ -4904,10 +5197,12 @@ onUnlock={handleLockedDiamondUnlock}
     <ReaderEndPanel
       story={story}
       episode={episode}
-      onOpenComments={() => setCommentsOpen(true)}
+      onOpenComments={() => {
+    setCommentEpisode(episode)
+    setCommentsOpen(true)
+  }}
       onOpenGift={() => setGiftPopupOpen(true)}
     />
-    <div ref={readerEndSentinelRef} className="h-px w-full" aria-hidden="true" />
   </>
 ) : null}
           </>
