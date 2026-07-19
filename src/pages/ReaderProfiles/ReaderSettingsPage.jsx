@@ -217,9 +217,9 @@ export default function ReaderSettingsPage() {
             <i className="fa-solid fa-chevron-left text-[18px]" />
           </button>
 
-          <h1 className="min-w-0 flex-1 truncate text-[20px] font-semibold">
-            Settings and activity
-          </h1>
+          <h1 className="min-w-0 flex-1 truncate text-[18px] font-semibold">
+  Settings and activity
+</h1>
         </div>
       </header>
 
@@ -229,9 +229,9 @@ export default function ReaderSettingsPage() {
             key={group.title}
             className={groupIndex ? 'border-t-[8px] border-[#f1f2f4]' : ''}
           >
-            <div className="px-5 pb-2 pt-5 text-[13px] font-semibold text-[#7d8490]">
-              {group.title}
-            </div>
+            <div className="px-5 pb-2 pt-5 text-[12.5px] font-medium text-[#7d8490]">
+  {group.title}
+</div>
 
             <div>
               {group.items.map((item) => (
