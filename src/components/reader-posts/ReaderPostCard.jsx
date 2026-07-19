@@ -1,16 +1,66 @@
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
 } from './ReaderPostOptionsSheet'
+import ReaderPostCommentsModal from './ReaderPostCommentsModal'
+import ReaderPostEchoShareSheet from './ReaderPostEchoShareSheet'
 
 const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
 const MAX_POST_LENGTH = 10000
+
+const READER_POST_REACTIONS = [
+  {
+    type: 'love',
+    label: 'Love',
+    src: '/assets/React/Love.svg',
+    text: '#ff2f5f',
+  },
+  {
+    type: 'haha',
+    label: 'Haha',
+    src: '/assets/React/Haha.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'wow',
+    label: 'Wow',
+    src: '/assets/React/Wow.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'sad',
+    label: 'Sad',
+    src: '/assets/React/Sad.svg',
+    text: '#3b82f6',
+  },
+  {
+    type: 'angry',
+    label: 'Angry',
+    src: '/assets/React/Angry.svg',
+    text: '#ef4444',
+  },
+  {
+    type: 'support',
+    label: 'Support',
+    src: '/assets/React/Support.svg',
+    text: '#16a34a',
+  },
+  {
+    type: 'touched',
+    label: 'Touched',
+    src: '/assets/React/Touched.svg',
+    text: '#8b5cf6',
+  },
+]
 
 function getAuthToken() {
   return (
@@ -38,6 +88,32 @@ function getStoredUser() {
   } catch {
     return null
   }
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) {
+    return '0'
+  }
+
+  if (number >= 1000000) {
+    return `${(
+      number / 1000000
+    ).toFixed(
+      number >= 10000000 ? 0 : 1
+    )}M`
+  }
+
+  if (number >= 1000) {
+    return `${(
+      number / 1000
+    ).toFixed(
+      number >= 10000 ? 0 : 1
+    )}k`
+  }
+
+  return String(number)
 }
 
 function formatPostTime(value) {
@@ -123,15 +199,29 @@ export default function ReaderPostCard({
   onHidden,
 }) {
   const navigate = useNavigate()
+  const reactionPressTimerRef =
+    useRef(null)
+  const reactionMessageTimerRef =
+    useRef(null)
+  const longPressOpenedRef =
+    useRef(false)
+  const reactionPickerRef =
+    useRef(null)
+
   const storedUser = useMemo(
     () => getStoredUser(),
     []
   )
+
   const [menuOpen, setMenuOpen] =
     useState(false)
   const [deleteOpen, setDeleteOpen] =
     useState(false)
   const [editorOpen, setEditorOpen] =
+    useState(false)
+  const [commentOpen, setCommentOpen] =
+    useState(false)
+  const [echoOpen, setEchoOpen] =
     useState(false)
   const [content, setContent] =
     useState(post?.content || '')
@@ -143,6 +233,34 @@ export default function ReaderPostCard({
     useState('')
   const [expanded, setExpanded] =
     useState(false)
+  const [
+    reactionPickerOpen,
+    setReactionPickerOpen,
+  ] = useState(false)
+  const [
+    reactionBusy,
+    setReactionBusy,
+  ] = useState(false)
+  const [
+    reactionType,
+    setReactionType,
+  ] = useState(
+    post?.my_reaction || null
+  )
+  const [
+    reactionCount,
+    setReactionCount,
+  ] = useState(
+    Number(post?.like_count || 0)
+  )
+  const [
+    reactionMessage,
+    setReactionMessage,
+  ] = useState('')
+  const [commentCount, setCommentCount] =
+    useState(Number(post?.comment_count || 0))
+  const [echoCount, setEchoCount] =
+    useState(Number(post?.echo_count || 0))
 
   const user = post?.user || {}
   const isOwner =
@@ -156,6 +274,284 @@ export default function ReaderPostCard({
   const canCollapse =
     postText.length > 520 ||
     postText.split('\n').length > 8
+
+  const activeReaction =
+    READER_POST_REACTIONS.find(
+      (reaction) =>
+        reaction.type === reactionType
+    ) || null
+
+  useEffect(() => {
+    setReactionCount(
+      Number(post?.like_count || 0)
+    )
+  }, [post?.like_count])
+
+  useEffect(() => {
+    setReactionType(
+      post?.my_reaction || null
+    )
+  }, [post?.my_reaction])
+
+  useEffect(() => {
+    setCommentCount(
+      Number(post?.comment_count || 0)
+    )
+  }, [post?.comment_count])
+
+  useEffect(() => {
+    setEchoCount(
+      Number(post?.echo_count || 0)
+    )
+  }, [post?.echo_count])
+
+  useEffect(() => {
+    if (!reactionPickerOpen) {
+      return undefined
+    }
+
+    function closeReactionPicker(event) {
+      if (
+        reactionPickerRef.current &&
+        !reactionPickerRef.current.contains(
+          event.target
+        )
+      ) {
+        setReactionPickerOpen(false)
+      }
+    }
+
+    document.addEventListener(
+      'pointerdown',
+      closeReactionPicker
+    )
+
+    return () => {
+      document.removeEventListener(
+        'pointerdown',
+        closeReactionPicker
+      )
+    }
+  }, [reactionPickerOpen])
+
+  useEffect(() => {
+    let ignore = false
+    const token = getAuthToken()
+
+    if (!post?.id || !token) {
+      return undefined
+    }
+
+    async function loadReactionStatus() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(post.id)}/reaction`,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+            cache: 'no-store',
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          ignore ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setReactionType(
+          data.my_reaction || null
+        )
+        setReactionCount(
+          Number(data.like_count || 0)
+        )
+      } catch {
+        return
+      }
+    }
+
+    loadReactionStatus()
+
+    return () => {
+      ignore = true
+    }
+  }, [post?.id])
+
+  useEffect(() => {
+    return () => {
+      if (
+        reactionPressTimerRef.current
+      ) {
+        window.clearTimeout(
+          reactionPressTimerRef.current
+        )
+      }
+
+      if (
+        reactionMessageTimerRef.current
+      ) {
+        window.clearTimeout(
+          reactionMessageTimerRef.current
+        )
+      }
+    }
+  }, [])
+
+  function showReactionMessage(text) {
+    setReactionMessage(text)
+
+    if (
+      reactionMessageTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionMessageTimerRef.current
+      )
+    }
+
+    reactionMessageTimerRef.current =
+      window.setTimeout(() => {
+        setReactionMessage('')
+      }, 1800)
+  }
+
+  async function updateReaction(
+    nextReactionType
+  ) {
+    if (!post?.id || reactionBusy) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      showReactionMessage(
+        'Please login first.'
+      )
+      return
+    }
+
+    try {
+      setReactionBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(post.id)}/reaction`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to update reaction'
+        )
+      }
+
+      const nextType = data.reacted
+        ? data.reaction_type ||
+          nextReactionType
+        : null
+      const nextCount = Number(
+        data.like_count || 0
+      )
+
+      setReactionType(nextType)
+      setReactionCount(nextCount)
+      setReactionPickerOpen(false)
+
+      onUpdated?.({
+        ...post,
+        like_count: nextCount,
+        my_reaction: nextType,
+        reaction_summary:
+          Array.isArray(
+            data.reaction_summary
+          )
+            ? data.reaction_summary
+            : [],
+      })
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to update reaction.'
+      )
+    } finally {
+      setReactionBusy(false)
+    }
+  }
+
+  function startReactionPress() {
+    if (reactionBusy) return
+
+    longPressOpenedRef.current = false
+
+    reactionPressTimerRef.current =
+      window.setTimeout(() => {
+        longPressOpenedRef.current =
+          true
+        reactionPressTimerRef.current =
+          null
+        setReactionPickerOpen(true)
+      }, 420)
+  }
+
+  function endReactionPress() {
+    if (
+      reactionPressTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionPressTimerRef.current
+      )
+      reactionPressTimerRef.current =
+        null
+    }
+
+    if (longPressOpenedRef.current) {
+      longPressOpenedRef.current = false
+      return
+    }
+
+    updateReaction('love')
+  }
+
+  function cancelReactionPress() {
+    if (
+      reactionPressTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionPressTimerRef.current
+      )
+      reactionPressTimerRef.current =
+        null
+    }
+
+    longPressOpenedRef.current = false
+  }
 
   async function updatePost() {
     const text = content.trim()
@@ -345,7 +741,8 @@ export default function ReaderPostCard({
                 ? {
                     display: '-webkit-box',
                     WebkitLineClamp: 8,
-                    WebkitBoxOrient: 'vertical',
+                    WebkitBoxOrient:
+                      'vertical',
                     overflow: 'hidden',
                   }
                 : undefined
@@ -372,28 +769,169 @@ export default function ReaderPostCard({
         </div>
 
         <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
-          <span className="inline-flex items-center gap-1.5">
-            <i className="fa-regular fa-heart" />
-            {Number(
-              post.like_count || 0
-            )}
-          </span>
+          <div
+            ref={reactionPickerRef}
+            className="relative"
+          >
+            {reactionPickerOpen ? (
+              <div className="absolute bottom-8 left-0 z-40 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
+                {READER_POST_REACTIONS.map(
+                  (reaction) => (
+                    <button
+                      key={
+                        reaction.type
+                      }
+                      type="button"
+                      disabled={
+                        reactionBusy
+                      }
+                      onClick={() =>
+                        updateReaction(
+                          reaction.type
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
+                      aria-label={
+                        reaction.label
+                      }
+                    >
+                      <img
+                        src={
+                          reaction.src
+                        }
+                        alt={
+                          reaction.label
+                        }
+                        className="h-8 w-8 object-contain"
+                      />
+                    </button>
+                  )
+                )}
+              </div>
+            ) : null}
 
-          <span className="inline-flex items-center gap-1.5">
-            <i className="fa-regular fa-comment" />
-            {Number(
-              post.comment_count || 0
-            )}
-          </span>
+            <button
+              type="button"
+              disabled={reactionBusy}
+              onPointerDown={
+                startReactionPress
+              }
+              onPointerUp={
+                endReactionPress
+              }
+              onPointerLeave={
+                cancelReactionPress
+              }
+              onPointerCancel={() => {
+                cancelReactionPress()
+                setReactionPickerOpen(false)
+              }}
+              onContextMenu={(event) =>
+                event.preventDefault()
+              }
+              className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+              style={{
+                color:
+                  activeReaction?.text ||
+                  undefined,
+              }}
+              aria-label={
+                activeReaction
+                  ? activeReaction.label
+                  : 'React'
+              }
+            >
+              {activeReaction ? (
+                <img
+                  src={
+                    activeReaction.src
+                  }
+                  alt=""
+                  aria-hidden="true"
+                  className="h-[17px] w-[17px] object-contain"
+                />
+              ) : (
+                <i className="fa-regular fa-heart text-[15px]" />
+              )}
 
-          <span className="inline-flex items-center gap-1.5">
-            <i className="fa-solid fa-rotate-left text-[10px]" />
-            {Number(
-              post.echo_count || 0
-            )}
-          </span>
+              {formatCompactNumber(
+                reactionCount
+              )}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setCommentOpen(true)}
+            className="inline-flex items-center gap-1.5 active:scale-95"
+            aria-label="Open comments"
+          >
+            <i className="fa-regular fa-comment text-[15px]" />
+            {formatCompactNumber(commentCount)}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEchoOpen(true)}
+            className="inline-flex items-center gap-1.5 active:scale-95"
+            aria-label="Echo this reader post"
+          >
+            <img
+              src="/assets/Icons/echo.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-[15px] w-[15px] object-contain opacity-70"
+            />
+            {formatCompactNumber(echoCount)}
+          </button>
         </div>
       </article>
+
+      {reactionMessage ? (
+        <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
+          {reactionMessage}
+        </div>
+      ) : null}
+
+      <ReaderPostCommentsModal
+        open={commentOpen}
+        postId={post.id}
+        postOwnerId={post.user_id}
+        commentsPermission={
+          post.comments_permission
+        }
+        reactionCount={reactionCount}
+        commentCount={commentCount}
+        echoCount={echoCount}
+        onClose={() => setCommentOpen(false)}
+        onTotalChange={(nextTotal) => {
+          setCommentCount(nextTotal)
+          onUpdated?.({
+            ...post,
+            comment_count: nextTotal,
+          })
+        }}
+      />
+
+      <ReaderPostEchoShareSheet
+        open={echoOpen}
+        post={post}
+        onClose={() => setEchoOpen(false)}
+        onEchoed={(nextEcho, nextTotal) => {
+          const total = Number(
+            nextTotal ??
+              (nextEcho
+                ? echoCount + 1
+                : echoCount)
+          )
+
+          setEchoCount(total)
+          onUpdated?.({
+            ...post,
+            echo_count: total,
+          })
+        }}
+      />
 
       <ReaderPostOptionsSheet
         open={menuOpen}
@@ -459,7 +997,9 @@ export default function ReaderPostCard({
             <textarea
               autoFocus
               value={content}
-              maxLength={MAX_POST_LENGTH}
+              maxLength={
+                MAX_POST_LENGTH
+              }
               onChange={(event) =>
                 setContent(
                   event.target.value.slice(
@@ -472,7 +1012,9 @@ export default function ReaderPostCard({
             />
 
             <div className="mt-2 text-right text-[11px] font-normal text-gray-400">
-              {content.length.toLocaleString()} / {MAX_POST_LENGTH.toLocaleString()}
+              {content.length.toLocaleString()}{' '}
+              /{' '}
+              {MAX_POST_LENGTH.toLocaleString()}
             </div>
 
             {message ? (
