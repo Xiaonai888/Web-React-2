@@ -79,6 +79,8 @@ const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const RomanceLatestPage = lazy(() => import('./pages/Genre/RomanceLatestPage'))
+const RomanceUpdatesPage = lazy(() => import('./pages/Genre/RomanceUpdatesPage'))
+const RomanceCompletedPage = lazy(() => import('./pages/Genre/RomanceCompletedPage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./pages/Genre/ActionGenrePage'))
 const ComedyGenrePage = lazy(() => import('./pages/Genre/ComedyGenrePage'))
@@ -242,6 +244,8 @@ function AppShell() {
     '/reader/story/create',
     '/author/notifications',
     '/genre/romance/latest',
+    '/genre/romance/updates',
+    '/genre/romance/completed',
   ]
 
   const shouldHideFooter =
@@ -1103,12 +1107,10 @@ const shouldShowOpeningAds =
         <Route path="/story/:storyId/rating" element={<RatingPage />} />
         <Route path="/story/:storyId/reaction" element={<ReactionPage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
-
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/terms" element={<TermsPoliciesPage />} />
         <Route path="/author/agreement" element={<TermsPoliciesPage />} />
-
         <Route path="/author/create" element={<CreateAuthorPage />} />
         <Route path="/author/dashboard" element={<AuthorDashboardPage />} />
         <Route path="/author/profile" element={<AuthorProfilePage />} />
@@ -1149,6 +1151,8 @@ const shouldShowOpeningAds =
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
         <Route path="/genre/romance/latest" element={<LazyPage><RomanceLatestPage /></LazyPage>} />
+        <Route path="/genre/romance/updates" element={<LazyPage><RomanceUpdatesPage /></LazyPage>} />
+        <Route path="/genre/romance/completed" element={<LazyPage><RomanceCompletedPage /></LazyPage>} />
   
  
       </Routes>
