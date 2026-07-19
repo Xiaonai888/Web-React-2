@@ -101,14 +101,24 @@ function SmileIcon({ active }) {
 
 function ChatStoryIcon() {
   return (
-    <img
-      src="/assets/Icons/Story%20Chat.svg"
-      alt=""
-      className="h-[21px] w-[21px] object-contain"
-    />
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <path
+        d="M5 5h8.5A2.5 2.5 0 0 1 16 7.5v5a2.5 2.5 0 0 1-2.5 2.5H10l-3.5 2.5.8-2.5H5a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 5 5Z"
+        fill="#fff"
+        stroke="#111827"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11 7h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 19 17h-2.2l.8 2.5-3.5-2.5H11a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 11 7Z"
+        fill="#fff"
+        stroke="#111827"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
-
 const NAV = [
   { to: '/', label: 'Stories', Icon: StoriesIcon },
   { to: '/chat-story', label: 'Chat Story', Icon: ChatStoryIcon },
