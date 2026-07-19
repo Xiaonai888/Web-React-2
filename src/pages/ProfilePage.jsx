@@ -975,10 +975,11 @@ async function handleOtherProfileOption(action) {
               <div className="relative">
                 {isOwnProfile ? (
                   <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
-                    aria-label="Profile menu"
-                  >
+  type="button"
+  onClick={() => navigate('/profile/settings')}
+  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+  aria-label="Profile menu"
+>
                     <i className="fa-solid fa-bars text-[17px]" />
                   </button>
                 ) : (
