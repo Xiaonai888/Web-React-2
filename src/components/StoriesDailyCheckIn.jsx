@@ -447,7 +447,7 @@ style={{
                             alt=""
                             className="h-5 w-5 object-contain"
                           />
-                          <span>{gift ? 'Claim Gift' : 'Claim Coin'}</span>
+                          <span>{gift ? 'Claim Gift' : 'Claim Coins'}</span>
                         </>
                       )}
                     </button>
