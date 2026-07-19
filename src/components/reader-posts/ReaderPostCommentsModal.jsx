@@ -1195,7 +1195,7 @@ export default function ReaderPostCommentsModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
+    <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
       <button
         type="button"
         onClick={onClose}
