@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom'
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 
 const quickButtons = [
-  { label: 'Latest', icon: 'fa-regular fa-calendar-plus' },
-  { label: 'Updates', icon: 'fa-regular fa-star' },
-  { label: 'Completed', icon: 'fa-regular fa-circle-check' },
+  { label: 'Latest', icon: 'fa-regular fa-calendar-plus', path: '/genre/romance/latest' },
+  { label: 'Updates', icon: 'fa-regular fa-star', path: '/genre/romance/updates' },
+  { label: 'Completed', icon: 'fa-regular fa-circle-check', path: '/genre/romance/completed' },
 ]
 
 function normalizeStory(item) {
@@ -412,21 +412,23 @@ export default function RomanceGenrePage({ embedded = false }) {
         </section>
 
         <section className="mt-4 px-4">
-          <div className="grid grid-cols-3 gap-2">
-            {quickButtons.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white text-[13px] font-[640] text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.98]"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#facc15] text-[12px] text-[#111827]">
-                  <i className={item.icon} />
-                </span>
-                <span className="truncate">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+  <div className="grid grid-cols-3 gap-2">
+    {quickButtons.map((item) => (
+      <button
+        key={item.label}
+        type="button"
+        onClick={() => navigate(item.path)}
+        className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white text-[13px] font-[640] text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.98]"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#facc15] text-[12px] text-[#111827]">
+          <i className={item.icon} />
+        </span>
+
+        <span className="truncate">{item.label}</span>
+      </button>
+    ))}
+  </div>
+</section>
 
         {loading ? <LoadingGrid /> : null}
 
