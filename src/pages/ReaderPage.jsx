@@ -1116,29 +1116,24 @@ function LockedEpisodeCard({
   story,
   episode,
   wallet,
-  coinAccess,
-  voucherAccess,
   packageOptions,
   autoUnlock,
   setAutoUnlock,
   unlocking,
   onPurchase,
   onUnlock,
-  onCoinUnlock,
-  onVoucherUnlock,
-  inline = false,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
-  const [showAutoHint, setShowAutoHint] = useState(false)
-  const [activeTab, setActiveTab] = useState('instant')
-  const [freeAccessView, setFreeAccessView] = useState('wallet')
+const [diamondBoxIndex, setDiamondBoxIndex] = useState(0)
+const [showAutoHint, setShowAutoHint] = useState(false)
   const backgroundImage = episode?.cover_url || story?.cover_url || ''
-  const coinBalance = Number(wallet?.coin_balance ?? wallet?.gem_balance ?? 0)
-  const voucherBalance = Number(wallet?.voucher_balance || 0)
-  const coinRequired = Number(coinAccess?.amount || 0)
-  const voucherRequired = Number(voucherAccess?.amount || 0)
-  const coinCanAccess = Boolean(coinAccess?.available) && (coinRequired <= 0 || coinBalance >= coinRequired)
-  const voucherCanAccess = Boolean(voucherAccess?.available) && (voucherRequired <= 0 || voucherBalance >= voucherRequired)
+
+  const diamondBoxSources = [
+  '/assets/Icons/Diamond box 2.png',
+  '/assets/Icons/Diamond%20box%202.png',
+  '/assets/Icons/Diamond box.png',
+  '/assets/Icons/Diamond.svg',
+]
 
   const singleOption =
     packageOptions.find((option) => option.key === 'single') || {
@@ -1166,8 +1161,8 @@ function LockedEpisodeCard({
     }
 
   const goPurchase = () => {
-    onPurchase?.()
-  }
+  onPurchase?.()
+}
 
   const handlePackageClick = (option) => {
     if (!option || unlocking || !option.enabled) return
@@ -1185,68 +1180,6 @@ function LockedEpisodeCard({
 
     onUnlock(option.key)
   }
-
-  const AccessTab = ({ active, children, onClick }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative h-11 flex-1 text-[13px] font-semibold transition ${
-        active ? 'text-[#111827]' : 'text-[#A7ADBA]'
-      }`}
-    >
-      {children}
-      {active ? (
-        <span className="absolute bottom-0 left-1/2 h-[2px] w-[76%] -translate-x-1/2 rounded-full bg-[#D6A300]" />
-      ) : null}
-    </button>
-  )
-
-  const PremiumRow = () => (
-    <button
-      type="button"
-      onClick={goPurchase}
-      className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 text-left active:scale-[0.995]"
-    >
-      <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
-        <img
-          src="/assets/Icons/Crown.svg"
-          alt=""
-          className="h-3.5 w-3.5 object-contain"
-          loading="lazy"
-          decoding="async"
-        />
-        Premium
-      </span>
-
-      <span className="min-w-0 flex-1 text-[12px] font-semibold leading-4 text-[#8D94A1]">
-        Enjoy 10% off every episode you unlock.
-      </span>
-
-      <i className="fa-solid fa-chevron-right text-[12px] text-[#9CA3AF]" />
-    </button>
-  )
-
-  const FreeAccessOption = ({ icon, title, subtitle, buttonText, disabled, onClick }) => (
-    <div className="flex min-h-[72px] items-center gap-3 rounded-[16px] border border-[#E5E7EB] bg-white px-3 py-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-  {icon}
-</span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-semibold text-[#111827]">{title}</span>
-        <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-[#667085]">{subtitle}</span>
-      </span>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onClick}
-        className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[11px] font-black text-white disabled:bg-[#D1D5DB] disabled:text-white"
-      >
-        {buttonText}
-      </button>
-    </div>
-  )
 
   const PackageButton = ({ option, primary = false }) => {
     if (!option) return null
@@ -1269,10 +1202,10 @@ function LockedEpisodeCard({
           className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
         >
           <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
-            <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-            <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
-            <span>to unlock this Ep.</span>
-          </span>
+  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+  <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
+  <span>to unlock this Ep.</span>
+</span>
         </button>
       )
     }
@@ -1285,14 +1218,14 @@ function LockedEpisodeCard({
         className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
       >
         {discount > 0 ? (
-          <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-            {discount}% OFF
-          </span>
+      <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
+  {discount}% OFF
+</span>
         ) : null}
 
         <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
-          <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-          <span className="text-[#111827]">{formatNumber(price)}</span>
+  <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
+  <span className="text-[#111827]">{formatNumber(price)}</span>
           {originalPrice > price ? (
             <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
               {formatNumber(originalPrice)}
@@ -1300,18 +1233,14 @@ function LockedEpisodeCard({
           ) : null}
           <span>to unlock {requestedCount || 'all'} Eps.</span>
         </span>
+
+        
       </button>
     )
   }
 
   return (
-    <div
-      className={
-        inline
-          ? 'relative min-h-[680px] overflow-hidden bg-[#111827]'
-          : 'fixed inset-x-0 bottom-0 top-[64px] z-[40] overflow-hidden px-0 pb-0'
-      }
-    >
+    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] overflow-hidden px-0 pb-0">
       {backgroundImage ? (
         <img
           src={backgroundImage}
@@ -1322,198 +1251,106 @@ function LockedEpisodeCard({
 
       <div className="absolute inset-0 bg-black/45" />
 
-      <div
-        className={
-          inline
-            ? 'relative z-10 flex min-h-[680px] items-end justify-center'
-            : 'relative z-10 flex h-full items-end justify-center md:items-center'
-        }
-      >
+      <div className="relative z-10 flex h-full items-end justify-center md:items-center">
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
-          <button
-            type="button"
-            onClick={goPurchase}
-            className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-20 pr-[104px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[15px] font-black italic leading-5 text-[#FFE36E]">
-                FIRST TOP-UP BONUS!
-              </div>
-
-              <div className="mt-0.5 truncate text-[11.5px] font-bold leading-4 text-white/90">
-                1 Free Book + 3 reading vouchers
-              </div>
-            </div>
-
+        <button
+          type="button"
+          onClick={goPurchase}
+          className="mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-1 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
+        >
+          <span className="-mb-0 -mt-3 -ml-1 flex h-[78px] w-[78px] shrink-0 items-end justify-center overflow-visible">
             <img
-              src="/assets/Icons/Manga%20girl.png"
+             src="/assets/Icons/Diamond%20box.png?v=box-new-1"
               alt=""
-              className="pointer-events-none absolute -right-0 -top-[36px] h-[107px] w-[137px] object-contain"
+              className="h-full w-full object-contain"
               loading="eager"
               decoding="async"
+              onError={() => {
+                setDiamondBoxIndex((current) => Math.min(current + 1, diamondBoxSources.length - 1))
+              }}
             />
-          </button>
+          </span>
 
-          <section
-            className={
-              inline
-                ? 'min-h-[340px] w-full rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]'
-                : 'max-h-[58vh] min-h-[340px] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]'
-            }
-          >
-            <div className="border-b border-[#E5E7EB] px-4 pt-2">
-              <div className="flex">
-                <AccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
-                  Instant Access
-                </AccessTab>
-
-                <AccessTab active={activeTab === 'free'} onClick={() => setActiveTab('free')}>
-                  Free Access
-                </AccessTab>
-              </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[16px] font-black italic leading-5 text-white">
+              Don’t Miss Out
             </div>
 
-            {activeTab === 'instant' ? (
-              <>
-                <PremiumRow />
+            <div className="mt-0.5 flex items-baseline gap-1 leading-4">
+              <span className="text-[15px] font-black italic text-[#FFE36E]">330</span>
+              <span className="text-[11px] font-medium italic text-white/90">Diamonds Await!</span>
+            </div>
+          </div>
 
-                <div className="overflow-hidden border-b border-[#E5E7EB]">
-                  <PackageButton option={singleOption} primary />
-                  <PackageButton option={displayMultiOption} />
-                </div>
+          <i className="fa-solid fa-chevron-right shrink-0 text-[18px] text-white/70" />
+        </button>
 
-                <div className="mt-4 flex items-center justify-between gap-3 px-5">
-                  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
-                    <span>My Diamonds:</span>
-                    <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
-                  </div>
+        <section className="max-h-[58vh] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-4 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
+          <div className="px-5 text-center">
+            <h2 className="text-[16px] font-semibold text-[#4B5563]">
+  Continue reading?
+</h2>
+          </div>
 
-                  <div className="relative flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAutoHint((value) => !value)}
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
-                      aria-label="Auto unlock info"
-                    >
-                      ?
-                    </button>
+          <div className="mt-5 overflow-hidden border-y border-[#E5E7EB]">
+            <PackageButton option={singleOption} primary />
+            <PackageButton option={displayMultiOption} />
+          </div>
 
-                    {showAutoHint ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowAutoHint(false)}
-                        className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
-                      >
-                        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
-                      </button>
-                    ) : null}
+          <div className="mt-4 flex items-center justify-between gap-3 px-5">
+  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#9CA3AF]">
+    <span>My Diamonds:</span>
+    <span className="font-black text-[#667085]">{formatNumber(diamondBalance)}</span>
+  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setAutoUnlock((value) => !value)}
-                      className="flex items-center gap-2"
-                    >
-                      <span className="text-[12px] font-bold text-[#9CA3AF]">
-                        Auto unlock
-                      </span>
+  <div className="relative flex items-center gap-2">
+    <button
+      type="button"
+      onClick={() => setShowAutoHint((value) => !value)}
+      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D6DAE2] bg-white text-[11px] font-black text-[#A0A6B0] shadow-sm active:scale-95"
+      aria-label="Auto unlock info"
+    >
+      ?
+    </button>
 
-                      <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
-                        autoUnlock
-                          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
-                          : 'bg-[#D1D6DE] shadow-inner'
-                      }`}>
-                        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
-                          autoUnlock ? 'left-[26px]' : 'left-1'
-                        }`} />
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {unlocking ? (
-                  <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
-                    Unlocking...
-                  </div>
-                ) : null}
-              </>
-            ) : (
-       <div className="space-y-2.5 px-3 py-4">
-  {freeAccessView === 'wallet' ? (
-    <>
-      <FreeAccessOption
-        icon={
-  <img
-    src="/assets/Icons/Shadow Coin.svg"
-    alt=""
-    className="mx-auto h-7 w-7 object-contain"
-    loading="lazy"
-    decoding="async"
-  />
-}
-        title={`Coins — ${formatNumber(coinBalance)} remaining`}
-        subtitle={`Access lasts ${Number(coinAccess?.access_days || 7)} days.`}
-        buttonText={coinCanAccess ? 'Access' : 'Not enough'}
-        disabled={unlocking || !coinCanAccess}
-        onClick={onCoinUnlock}
-      />
-
-      <FreeAccessOption
-        icon={
-  <img
-    src="/assets/Icons/Voucher.svg"
-    alt=""
-    className="h-7 w-7 object-contain"
-    loading="lazy"
-    decoding="async"
-  />
-}
-        title={`Vouchers — ${formatNumber(voucherBalance)} remaining`}
-        subtitle="Permanent unlock for this episode."
-        buttonText={voucherCanAccess ? 'Access' : 'Not enough'}
-        disabled={unlocking || !voucherCanAccess}
-        onClick={onVoucherUnlock}
-      />
-
+    {showAutoHint ? (
       <button
         type="button"
-        onClick={() => setFreeAccessView('more')}
-        className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
+        onClick={() => setShowAutoHint(false)}
+        className="absolute bottom-10 right-0 z-20 w-[260px] rounded-[16px] bg-[#111827] px-4 py-3 text-left text-[11px] font-bold leading-5 text-white shadow-xl"
       >
-        <span>More free methods</span>
-        <i className="fa-solid fa-chevron-right text-[10px]" />
+        Auto-unlock with Diamonds only. Free methods like Coins, Vouchers, or Story Cards won’t apply.
       </button>
-    </>
-  ) : (
-    <>
-      <FreeAccessOption
-        icon={<i className="fa-solid fa-play text-[15px] text-[#0B5CFF]" />}
-        title="Watch Video — Coming soon"
-        subtitle="Unlock for one read only."
-        buttonText="Watch"
-        disabled
-      />
+    ) : null}
 
-      <FreeAccessOption
-        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
-        title="Story Card — Coming soon"
-        subtitle="Permanent unlock for same story only."
-        buttonText="Access"
-        disabled
-      />
+    <button
+      type="button"
+      onClick={() => setAutoUnlock((value) => !value)}
+      className="flex items-center gap-2"
+    >
+      <span className="text-[12px] font-bold text-[#9CA3AF]">
+  Auto unlock
+</span>
 
-      <button
-        type="button"
-        onClick={() => setFreeAccessView('wallet')}
-        className="mx-auto flex items-center gap-1 px-2 pt-1 text-[12px] font-normal text-[#8D94A1] active:text-[#111827]"
-      >
-        <span>Coins & Vouchers</span>
-        <i className="fa-solid fa-chevron-right text-[10px]" />
-      </button>
-    </>
-  )}
+      <span className={`relative h-8 w-[54px] rounded-full p-1 transition-all duration-300 ${
+        autoUnlock
+          ? 'bg-[#111827] shadow-[0_6px_16px_rgba(17,24,39,0.28)]'
+          : 'bg-[#D1D6DE] shadow-inner'
+      }`}>
+        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] transition-all duration-300 ${
+          autoUnlock ? 'left-[26px]' : 'left-1'
+        }`} />
+      </span>
+    </button>
+  </div>
 </div>
-            )}
-          </section>
+
+          {unlocking ? (
+            <div className="mt-5 text-center text-[12px] font-black text-[#8D94A1]">
+              Unlocking...
+            </div>
+          ) : null}
+        </section>
         </div>
       </div>
     </div>
@@ -3303,20 +3140,12 @@ function ContinuousEpisodeBlock({
   onRegister,
   onOpenComments,
   onOpenGift,
+  onReachLocked,
   adultAccepted,
-  wallet,
-  coinAccess,
-  voucherAccess,
-  packageOptions,
-  autoUnlock,
-  setAutoUnlock,
-  unlocking,
-  onPurchase,
-  onUnlock,
-  onCoinUnlock,
-  onVoucherUnlock,
 }) {
   const episode = entry?.episode || {}
+  const lockedSectionRef = useRef(null)
+  const lockedOpenedRef = useRef(false)
   const adultBlocked = Boolean(
     episode?.is_adult && !adultAccepted
   )
@@ -3325,28 +3154,44 @@ function ContinuousEpisodeBlock({
       entry?.gate?.advertisement?.image_url &&
       !entry?.adFinished
   )
-  const unlockStatus = entry?.unlockStatus || {}
-  const inlineWallet = unlockStatus.wallet || wallet
-  const inlineCoinAccess =
-    unlockStatus.coin_access ||
-    unlockStatus.gem_access ||
-    coinAccess
-  const inlineVoucherAccess =
-    unlockStatus.voucher_access || voucherAccess
-  const inlinePackageOptions = Array.isArray(
-    unlockStatus.package_options
-  )
-    ? unlockStatus.package_options
-    : packageOptions
+
+  useEffect(() => {
+    lockedOpenedRef.current = false
+  }, [entry?.id])
+
+  useEffect(() => {
+    if (!entry?.locked || !lockedSectionRef.current) return undefined
+
+    const node = lockedSectionRef.current
+    const observer = new IntersectionObserver(
+      ([result]) => {
+        if (!result?.isIntersecting || lockedOpenedRef.current) return
+
+        lockedOpenedRef.current = true
+        onReachLocked?.(entry)
+      },
+      {
+        threshold: 0.01,
+        rootMargin: '0px 0px -8% 0px',
+      }
+    )
+
+    observer.observe(node)
+
+    return () => observer.disconnect()
+  }, [entry, onReachLocked])
 
   return (
     <section
-      ref={(node) => onRegister(entry.id, node)}
+      ref={(node) => {
+        lockedSectionRef.current = node
+        onRegister(entry.id, node)
+      }}
       data-episode-id={entry.id}
-      className={index > 0 ? `border-t ${theme.border}` : ''}
+      className={index > 0 && !entry.locked ? `border-t ${theme.border}` : ''}
       style={{
         contentVisibility: 'auto',
-        containIntrinsicSize: '900px',
+        containIntrinsicSize: entry.locked ? '1px' : '900px',
       }}
     >
       {adultBlocked ? (
@@ -3359,41 +3204,7 @@ function ContinuousEpisodeBlock({
           </div>
         </div>
       ) : entry.locked ? (
-        <LockedEpisodeCard
-          inline
-          story={story}
-          episode={episode}
-          wallet={inlineWallet}
-          coinAccess={inlineCoinAccess}
-          voucherAccess={inlineVoucherAccess}
-          packageOptions={inlinePackageOptions}
-          autoUnlock={autoUnlock}
-          setAutoUnlock={setAutoUnlock}
-          unlocking={unlocking}
-          onPurchase={() => onPurchase(entry.id)}
-          onUnlock={(packageKey) =>
-            onUnlock(
-              packageKey,
-              entry.id,
-              inlinePackageOptions,
-              inlineWallet
-            )
-          }
-          onCoinUnlock={() =>
-            onCoinUnlock(
-              entry.id,
-              inlineWallet,
-              inlineCoinAccess
-            )
-          }
-          onVoucherUnlock={() =>
-            onVoucherUnlock(
-              entry.id,
-              inlineWallet,
-              inlineVoucherAccess
-            )
-          }
-        />
+        <div className="h-px w-full" aria-hidden="true" />
       ) : adBlocked ? (
         <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
           <div className="text-center">
@@ -4865,17 +4676,57 @@ function showReadingRewardAnimation(coins) {
 
 const shouldShowReaderAd = readerGateReady && episode && adultAccepted && !lockedEpisode && readerAdPolicy?.show_read_ad && readerAdvertisement?.image_url
 const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
-const showFullLockedEpisode = Boolean(
-  lockedEpisode &&
-    episode &&
-    (
-      readingMode === 'paging' ||
-      (
-        String(episodeId) === String(routeEpisodeId) &&
-        continuousReader.entries.length <= 1
-      )
+
+const openContinuousLockedEpisode = (lockedEntry) => {
+  const targetId = String(
+    lockedEntry?.id || lockedEntry?.episode?.id || ''
+  ).trim()
+
+  if (!targetId || !lockedEntry?.episode) return
+
+  const unlock = lockedEntry.unlockStatus || {}
+  const nextPath = `/story/${storyId}/episode/${targetId}`
+
+  setActiveEpisodeId(targetId)
+  setEpisode(lockedEntry.episode)
+  setLockedEpisode(true)
+  setReadingProgress(0)
+  readingProgressRef.current = 0
+  setReaderAdPolicy(null)
+  setReaderAdvertisement(null)
+  setReaderAdFinished(true)
+  setReaderGateReady(true)
+  setReaderMoreOpen(false)
+  setBottomActionsVisible(false)
+  setReaderDoubleTapVisible(false)
+  setScrollSubscribePopupVisible(false)
+  setCommentEpisode(null)
+  setUnlockWallet(unlock.wallet || null)
+  setUnlockCoinAccess(
+    unlock.coin_access || unlock.gem_access || null
+  )
+  setUnlockVoucherAccess(unlock.voucher_access || null)
+  setUnlockPackageOptions(
+    Array.isArray(unlock.package_options)
+      ? unlock.package_options
+      : []
+  )
+  setUnlockAutoUnlock(Boolean(unlock.wallet?.auto_unlock))
+
+  if (window.location.pathname !== nextPath) {
+    window.history.replaceState(
+      window.history.state,
+      '',
+      nextPath
     )
-)
+  }
+
+  if (!unlock.wallet) {
+    loadLockedUnlockStatus(targetId).catch(() => {})
+  }
+}
+
+const showFullLockedEpisode = Boolean(lockedEpisode && episode)
 const activeCommentsEpisode = commentEpisode || episode
 
 const readerControlsVisible =
@@ -5225,17 +5076,7 @@ onUnlock={handleLockedDiamondUnlock}
                 }}
                 onOpenGift={() => setGiftPopupOpen(true)}
                 adultAccepted={adultConsentGranted}
-                wallet={unlockWallet}
-                coinAccess={unlockCoinAccess}
-                voucherAccess={unlockVoucherAccess}
-                packageOptions={unlockPackageOptions}
-                autoUnlock={unlockAutoUnlock}
-                setAutoUnlock={setUnlockAutoUnlock}
-                unlocking={unlockingEpisode}
-                onPurchase={handleOpenPurchasePage}
-                onUnlock={handleLockedDiamondUnlock}
-                onCoinUnlock={handleLockedCoinUnlock}
-                onVoucherUnlock={handleLockedVoucherUnlock}
+                onReachLocked={openContinuousLockedEpisode}
               />
             ))}
           </div>
