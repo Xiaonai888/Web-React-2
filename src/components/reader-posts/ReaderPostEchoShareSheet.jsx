@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 
@@ -67,14 +68,6 @@ const AUDIENCES = [
     subtitle: 'Keep this echo private.',
     icon: 'fa-solid fa-lock',
   },
-]
-
-const QUICK_READERS = [
-  'Pha Mey',
-  'Moon',
-  'Reader',
-  'Friend',
-  'Author',
 ]
 
 function getReaderToken() {
@@ -149,7 +142,7 @@ function getPostLink(post) {
     post?.user?.username || ''
   ).trim()
   const path = username
-    ? `/profile/${encodeURIComponent(username)}`
+    ? `/profile?username=${encodeURIComponent(username)}`
     : '/profile'
 
   return `${window.location.origin}${path}#reader-post-${post?.id || ''}`
@@ -175,7 +168,7 @@ function ShareCircle({
           className={`${icon} text-[22px]`}
         />
       </div>
-      <div className="mt-2 text-[12px] font-bold leading-4 text-[#111827]">
+      <div className="mt-2 text-[12px] font-normal leading-4 text-[#111827]">
         {label}
       </div>
     </button>
@@ -183,10 +176,15 @@ function ShareCircle({
 }
 
 function ReaderCircle({
-  name,
+  reader,
   active,
   onClick,
 }) {
+  const name =
+    reader?.name ||
+    reader?.username ||
+    'Reader'
+
   return (
     <button
       type="button"
@@ -194,18 +192,26 @@ function ReaderCircle({
       className="w-[76px] shrink-0 text-center active:scale-95"
     >
       <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[17px] font-black ring-2 ${
+        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[17px] font-semibold text-white ring-2 ${
           active
-            ? 'bg-[#111827] text-white ring-[#f6a800]'
-            : 'bg-[#e5e7eb] text-white ring-transparent'
+            ? 'ring-[#8b5cf6]'
+            : 'ring-transparent'
         }`}
       >
-        {name.slice(0, 1).toUpperCase()}
+        {reader?.avatar_url ? (
+          <img
+            src={reader.avatar_url}
+            alt={name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          name.slice(0, 1).toUpperCase()
+        )}
       </div>
       <div
-        className={`mt-2 line-clamp-2 text-[11.5px] font-bold leading-4 ${
+        className={`mt-2 line-clamp-2 text-[11.5px] font-semibold leading-4 ${
           active
-            ? 'text-[#111827]'
+            ? 'text-[#6d28d9]'
             : 'text-[#667085]'
         }`}
       >
@@ -224,7 +230,7 @@ function ChoiceSheet({
   onBack,
 }) {
   return (
-    <div className="fixed inset-0 z-[190] bg-white text-[#111827]">
+    <div className="fixed inset-0 z-[200010] bg-white text-[#111827]">
       <div className="flex items-center gap-3 border-b border-[#eceaf2] px-4 py-4">
         <button
           type="button"
@@ -235,11 +241,11 @@ function ChoiceSheet({
         </button>
 
         <div className="min-w-0 flex-1">
-          <h2 className="text-[22px] font-black leading-7">
+          <h2 className="text-[20px] font-normal leading-7">
             {title}
           </h2>
           {subtitle ? (
-            <p className="mt-1 text-[12px] font-semibold leading-5 text-[#8d94a1]">
+            <p className="mt-1 text-[12px] font-normal leading-5 text-[#8d94a1]">
               {subtitle}
             </p>
           ) : null}
@@ -266,10 +272,10 @@ function ChoiceSheet({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-[17px] font-black text-[#111827]">
+                <div className="text-[16px] font-normal text-[#111827]">
                   {item.title}
                 </div>
-                <div className="mt-0.5 text-[12.5px] font-semibold leading-5 text-[#8d94a1]">
+                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[#8d94a1]">
                   {item.subtitle}
                 </div>
               </div>
@@ -299,6 +305,11 @@ export default function ReaderPostEchoShareSheet({
   onClose,
   onEchoed,
 }) {
+  const sheetRef = useRef(null)
+  const dragStartYRef = useRef(0)
+  const dragOffsetRef = useRef(0)
+  const draggingRef = useRef(false)
+
   const [postText, setPostText] =
     useState('')
   const [message, setMessage] =
@@ -313,6 +324,14 @@ export default function ReaderPostEchoShareSheet({
     useState([])
   const [sending, setSending] =
     useState(false)
+  const [followers, setFollowers] =
+    useState([])
+  const [followersLoading, setFollowersLoading] =
+    useState(false)
+  const [followersError, setFollowersError] =
+    useState('')
+  const [dragOffset, setDragOffset] =
+    useState(0)
   const user = useMemo(
     () => getStoredUser(),
     []
@@ -326,11 +345,87 @@ export default function ReaderPostEchoShareSheet({
     if (!open) return undefined
 
     document.body.style.overflow = 'hidden'
+    dragOffsetRef.current = 0
+    setDragOffset(0)
 
     return () => {
       document.body.style.overflow = ''
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const token = getReaderToken()
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    if (!token || !username) {
+      setFollowers([])
+      setFollowersError('')
+      return undefined
+    }
+
+    let ignore = false
+
+    async function loadFollowers() {
+      try {
+        setFollowersLoading(true)
+        setFollowersError('')
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/users/${encodeURIComponent(username)}/followers?page=1&limit=50`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load followers'
+          )
+        }
+
+        if (!ignore) {
+          setFollowers(
+            Array.isArray(data.users)
+              ? data.users
+              : []
+          )
+        }
+      } catch (error) {
+        if (!ignore) {
+          setFollowers([])
+          setFollowersError(
+            error.message ||
+              'Failed to load followers.'
+          )
+        }
+      } finally {
+        if (!ignore) {
+          setFollowersLoading(false)
+        }
+      }
+    }
+
+    loadFollowers()
+
+    return () => {
+      ignore = true
+    }
+  }, [open, user?.username])
 
   if (!open) return null
 
@@ -387,13 +482,17 @@ export default function ReaderPostEchoShareSheet({
     )
   }
 
-  const handleReaderToggle = (name) => {
+  const handleReaderToggle = (readerId) => {
+    const value = String(readerId || '')
+
+    if (!value) return
+
     setSelectedReaders((current) =>
-      current.includes(name)
+      current.includes(value)
         ? current.filter(
-            (item) => item !== name
+            (item) => item !== value
           )
-        : [...current, name]
+        : [...current, value]
     )
   }
 
@@ -401,6 +500,42 @@ export default function ReaderPostEchoShareSheet({
     setMessage(
       'Tag reader is selected for the next update.'
     )
+  }
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    dragStartYRef.current = event.clientY
+    dragOffsetRef.current = 0
+    event.currentTarget.setPointerCapture?.(
+      event.pointerId
+    )
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextOffset = Math.max(
+      0,
+      event.clientY -
+        dragStartYRef.current
+    )
+
+    dragOffsetRef.current = nextOffset
+    setDragOffset(nextOffset)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+
+    if (dragOffsetRef.current > 80) {
+      onClose()
+      return
+    }
+
+    dragOffsetRef.current = 0
+    setDragOffset(0)
   }
 
   const handleEchoNow = async () => {
@@ -440,6 +575,8 @@ export default function ReaderPostEchoShareSheet({
             echo_text: postText.trim(),
             destination,
             audience,
+            selected_reader_ids:
+              selectedReaders,
           }),
         }
       )
@@ -484,7 +621,23 @@ export default function ReaderPostEchoShareSheet({
         audience_label:
           audienceItem.title,
         selected_readers:
-          selectedReaders,
+          followers
+            .filter((reader) =>
+              selectedReaders.includes(
+                String(reader.id)
+              )
+            )
+            .map((reader) => ({
+              id: reader.id,
+              name:
+                reader.name ||
+                reader.username ||
+                'Reader',
+              username:
+                reader.username || '',
+              avatar_url:
+                reader.avatar_url || '',
+            })),
         user_name: displayName,
         created_at:
           data.echo?.created_at ||
@@ -511,7 +664,7 @@ export default function ReaderPostEchoShareSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/40">
+    <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/40">
       <button
         type="button"
         aria-label="Close echo share"
@@ -519,12 +672,31 @@ export default function ReaderPostEchoShareSheet({
         className="absolute inset-0"
       />
 
-      <section className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]">
-        <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+      <section
+        ref={sheetRef}
+        className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: draggingRef.current
+            ? 'none'
+            : 'transform 220ms ease',
+        }}
+      >
+        <div
+          role="presentation"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[#f5f3fa]"
+          style={{ touchAction: 'none' }}
+        >
+          <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
+        </div>
 
         <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-black text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-semibold text-white">
               {user?.avatarUrl ||
               user?.avatar_url ? (
                 <img
@@ -541,7 +713,7 @@ export default function ReaderPostEchoShareSheet({
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-black text-[#111827]">
+              <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
                 {displayName}
               </div>
 
@@ -553,7 +725,7 @@ export default function ReaderPostEchoShareSheet({
                       'destination'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
                 >
                   <span>
                     {destinationItem.title}
@@ -568,7 +740,7 @@ export default function ReaderPostEchoShareSheet({
                       'audience'
                     )
                   }
-                  className="flex h-8 items-center gap-2 rounded-[12px] bg-[#eef0f4] px-3 text-[12px] font-black text-[#111827] active:scale-95"
+                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
                 >
                   <i
                     className={`${audienceItem.icon} text-[12px]`}
@@ -589,15 +761,15 @@ export default function ReaderPostEchoShareSheet({
                 event.target.value
               )
             }
-            rows={3}
+            rows={2}
             maxLength={280}
             placeholder="Say something..."
-            className="mt-4 w-full resize-none bg-transparent text-[18px] font-semibold leading-7 text-[#111827] outline-none placeholder:text-[#8d94a1]"
+            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:font-normal placeholder:text-[#98a2b3]"
           />
 
           <div className="mt-3 rounded-[16px] bg-[#f7f7fa] px-3 py-3 ring-1 ring-black/5">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-black text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-semibold text-white">
                 {post?.user?.avatar_url ? (
                   <img
                     src={
@@ -614,7 +786,7 @@ export default function ReaderPostEchoShareSheet({
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[13px] font-black text-[#111827]">
+                <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
                   {sourceName}
                 </div>
                 <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[#667085]">
@@ -638,7 +810,7 @@ export default function ReaderPostEchoShareSheet({
               type="button"
               onClick={handleEchoNow}
               disabled={sending}
-              className="h-11 rounded-[13px] bg-[#111827] px-5 text-[15px] font-black text-white active:scale-95 disabled:opacity-60"
+              className="h-11 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-6 text-[14px] font-normal text-white shadow-[0_8px_20px_rgba(139,92,246,0.28)] active:scale-95 disabled:opacity-60"
             >
               {sending
                 ? 'Echoing...'
@@ -648,33 +820,54 @@ export default function ReaderPostEchoShareSheet({
         </div>
 
         {message ? (
-          <div className="mt-3 rounded-[16px] bg-white px-4 py-3 text-[12px] font-bold text-[#667085] ring-1 ring-black/5">
+          <div className="mt-3 rounded-[16px] bg-white px-4 py-3 text-[12px] font-normal text-[#667085] ring-1 ring-black/5">
             {message}
           </div>
         ) : null}
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
             Readers
           </div>
           <div className="flex gap-4 overflow-x-auto pb-1">
-            {QUICK_READERS.map((name) => (
-              <ReaderCircle
-                key={name}
-                name={name}
-                active={selectedReaders.includes(
-                  name
-                )}
-                onClick={() =>
-                  handleReaderToggle(name)
-                }
-              />
-            ))}
+            {followersLoading ? (
+              Array.from({ length: 5 }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="w-[76px] shrink-0"
+                  >
+                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[#e5e7eb]" />
+                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[#e5e7eb]" />
+                  </div>
+                )
+              )
+            ) : followers.length ? (
+              followers.map((reader) => (
+                <ReaderCircle
+                  key={reader.id}
+                  reader={reader}
+                  active={selectedReaders.includes(
+                    String(reader.id)
+                  )}
+                  onClick={() =>
+                    handleReaderToggle(
+                      reader.id
+                    )
+                  }
+                />
+              ))
+            ) : (
+              <div className="py-3 text-[12px] font-normal text-[#98a2b3]">
+                {followersError ||
+                  'No followers yet.'}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="mt-5">
-          <div className="mb-3 text-[12px] font-black uppercase tracking-[0.08em] text-[#98a2b3]">
+          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
             Share outside Shadow
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2">
