@@ -178,7 +178,7 @@ const PAGING_CHARACTERS_PER_LINE = {
 }
 
 const READER_THEMES = {
-  light: {
+  white: {
     name: 'White',
     page: 'bg-[#FFFFFF]',
     card: 'bg-[#FFFFFF]',
@@ -3296,7 +3296,7 @@ export default function ReaderPage() {
   const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-sans-khmer')
   const [themeName, setThemeName] = useState(() => {
   const savedTheme = localStorage.getItem('reader_theme')
-  return savedTheme === 'paper' ? 'light' : savedTheme || 'light'
+  return savedTheme === 'light' ? 'white' : savedTheme || 'white'
 })
   const [brightness, setBrightness] = useState(() => Number(localStorage.getItem('reader_brightness') || 100))
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
@@ -3362,7 +3362,7 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
     setAdultConsentGranted(false)
   }, [storyId])
 
-  const theme = READER_THEMES[themeName] || READER_THEMES.light
+  const theme = READER_THEMES[themeName] || READER_THEMES.white
   const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const brightnessOpacity = Math.max(0, Math.min(0.35, (100 - brightness) / 125))
@@ -4635,7 +4635,7 @@ async function handleLockedDiamondUnlock(
   const handleResetSettings = () => {
     setFontSizeIndex(DEFAULT_FONT_SIZE_INDEX)
     setFontKey('noto-sans-khmer')
-    setThemeName('light')
+    setThemeName('white')
     setBrightness(100)
     setLineSpacing('comfort')
     setReadingMode('scroll')
