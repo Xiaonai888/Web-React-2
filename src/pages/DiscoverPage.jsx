@@ -16,6 +16,7 @@ import ShadowMallAdOptionsSheet, {
 } from '../components/discover/ShadowMallAdOptionsSheet'
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
+import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
@@ -830,7 +831,10 @@ function AdsCard({ item, onMore, onHide }) {
   const hasMoreDescription = description.length > 110
 
   return (
-    <article className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]">
+    <article
+  id={`shadow-mall-promotion-${item.id}`}
+  className="overflow-hidden bg-white ring-1 ring-gray-100 sm:rounded-[12px]"
+>
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-white">
           {item.profile_image_url ? (
@@ -947,38 +951,7 @@ function AdsCard({ item, onMore, onHide }) {
         </PromotionLink>
       </div>
 
-      <div className="flex items-center gap-6 px-4 py-2 text-[13px] font-normal text-gray-500">
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Like promotion"
-        >
-          <i className="fa-regular fa-heart text-[15px]" />
-          <span>{Number(item.like_count || 0)}</span>
-        </button>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Comment on promotion"
-        >
-          <i className="fa-regular fa-comment text-[15px]" />
-          <span>{Number(item.comment_count || 0)}</span>
-        </button>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Echo promotion"
-        >
-          <img
-            src="/assets/Icons/echo.svg"
-            alt=""
-            className="h-[15px] w-[15px] opacity-60"
-          />
-          <span>{Number(item.echo_count || 0)}</span>
-        </button>
-      </div>
+      <ShadowMallPromotionSocial promotion={item} />
     </article>
   )
 }
