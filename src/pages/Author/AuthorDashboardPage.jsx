@@ -653,57 +653,91 @@ export default function AuthorDashboardPage() {
           </button>
         ) : null}
 
-        <section className="relative -mx-4 overflow-hidden bg-gradient-to-br from-[#6d42db] via-[#8251e9] to-[#a476f4] px-5 pb-5 pt-6 shadow-[0_14px_35px_rgba(96,55,177,0.2)]">
-          <div className="absolute -left-12 top-5 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#d9c6ff]/25 blur-2xl" />
-          <i className="fa-solid fa-sparkles absolute right-[18%] top-7 text-[13px] text-white/40" />
+       <div className="relative -mx-4">
+  <section className="relative overflow-hidden bg-gradient-to-br from-[#6d42db] via-[#8251e9] to-[#a476f4] px-5 pb-[78px] pt-6 shadow-[0_14px_35px_rgba(96,55,177,0.2)]">
+    <div className="absolute -left-12 top-5 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+    <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#d9c6ff]/25 blur-2xl" />
+    <i className="fa-solid fa-sparkles absolute right-[18%] top-7 text-[13px] text-white/40" />
 
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white/20 p-1 shadow-lg ring-1 ring-white/40">
-              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#2b174f] text-[24px] font-extrabold text-white">
-  {author.avatarUrl ? (
-    <img
-      src={author.avatarUrl}
-      alt={author.name}
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    author.avatarLetter
-  )}
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate(authorPagePath)}
-                className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7444df] shadow-md ring-2 ring-[#8352e9] active:scale-95"
-                aria-label="Open author profile"
-              >
-                <i className="fa-solid fa-pen text-[9px]" />
-              </button>
-            </div>
+    <div className="relative z-10 flex items-center gap-4">
+      <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white/20 p-1 shadow-lg ring-1 ring-white/40">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#2b174f] text-[24px] font-extrabold text-white">
+          {author.avatarUrl ? (
+            <img
+              src={author.avatarUrl}
+              alt={author.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            author.avatarLetter
+          )}
+        </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-semibold text-white/75">{getGreeting()},</div>
-              <div className="mt-0.5 line-clamp-1 text-[23px] font-black tracking-[-0.02em] text-white">{author.name}</div>
-              <div className="mt-1 text-[11.5px] font-medium text-white/75">Keep writing. Your story is waiting.</div>
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={() => navigate(authorPagePath)}
+          className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#7444df] shadow-md ring-2 ring-[#8352e9] active:scale-95"
+          aria-label="Open author profile"
+        >
+          <i className="fa-solid fa-pen text-[9px]" />
+        </button>
+      </div>
 
-          <div className="relative z-10 mt-6 grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[22px] bg-white px-1 py-3.5 shadow-[0_12px_28px_rgba(53,25,104,0.18)]">
-            <StatItem icon="fa-solid fa-book-open" iconClass="text-[#7c4dea]" value={stats.published} label="Published" />
-            <StatItem icon="fa-solid fa-file-lines" iconClass="text-[#a368f4]" value={stats.drafts} label="Drafts" />
-            <StatItem icon="fa-regular fa-eye" iconClass="text-[#8b74ea]" value={stats.views} label="Views" />
-            <button
-              type="button"
-              onClick={() => handleCreateStory('Novel')}
-              className="flex min-w-0 flex-col items-center justify-center px-1 text-center active:scale-95"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9b6af5] to-[#6d42db] text-white shadow-[0_6px_14px_rgba(109,66,219,0.35)]">
-                <i className="fa-solid fa-plus text-[12px]" />
-              </span>
-              <span className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.04em] text-[#6d42db]">New Story</span>
-            </button>
-          </div>
-        </section>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12px] font-semibold text-white/75">
+          {getGreeting()},
+        </div>
+
+        <div className="mt-0.5 line-clamp-1 text-[23px] font-black tracking-[-0.02em] text-white">
+          {author.name}
+        </div>
+
+        <div className="mt-1 text-[11.5px] font-medium text-white/75">
+          Keep writing. Your story is waiting.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div className="relative z-20 -mt-[48px] rounded-t-[38px] bg-white px-4 pb-5 pt-4">
+    <div className="grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[22px] bg-white px-1 py-3.5 shadow-[0_12px_28px_rgba(53,25,104,0.18)] ring-1 ring-black/5">
+      <StatItem
+        icon="fa-solid fa-book-open"
+        iconClass="text-[#7c4dea]"
+        value={stats.published}
+        label="Published"
+      />
+
+      <StatItem
+        icon="fa-solid fa-file-lines"
+        iconClass="text-[#a368f4]"
+        value={stats.drafts}
+        label="Drafts"
+      />
+
+      <StatItem
+        icon="fa-regular fa-eye"
+        iconClass="text-[#8b74ea]"
+        value={stats.views}
+        label="Views"
+      />
+
+      <button
+        type="button"
+        onClick={() => handleCreateStory('Novel')}
+        className="flex min-w-0 flex-col items-center justify-center px-1 text-center active:scale-95"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9b6af5] to-[#6d42db] text-white shadow-[0_6px_14px_rgba(109,66,219,0.35)]">
+          <i className="fa-solid fa-plus text-[12px]" />
+        </span>
+
+        <span className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.04em] text-[#6d42db]">
+          New Story
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
 
         {latestStory ? (
           <section className="mt-5">
