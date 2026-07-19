@@ -134,7 +134,9 @@ const ReaderDiscoverPeoplePage = lazy(() =>
 const ReaderShareProfilePage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderShareProfilePage')
 )
-
+const ReaderSettingsPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderSettingsPage')
+)
 
 
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
@@ -1073,6 +1075,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <ReaderShareProfilePage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/profile/settings"
+  element={
+    <LazyPage>
+      <ReaderSettingsPage />
     </LazyPage>
   }
 />
