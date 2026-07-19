@@ -676,7 +676,7 @@ export default function ReaderPostCard({
 
     if (username) {
       navigate(
-        `/profile/${encodeURIComponent(username)}`
+        `/profile?username=${encodeURIComponent(username)}`
       )
     }
   }
@@ -688,13 +688,15 @@ export default function ReaderPostCard({
         className="bg-white sm:rounded-[12px]"
       >
         <div className="flex items-start gap-2 px-4 pb-3 pt-4">
-          <ReaderAvatar user={user} />
+          <button type="button" onClick={viewReaderProfile} className="shrink-0 rounded-full active:opacity-70">
+  <ReaderAvatar user={user} />
+</button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate text-[14px] font-semibold text-[#111827]">
-                  {user.name || 'Reader'}
+              <button type="button" onClick={viewReaderProfile} className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70">
+  {user.name || 'Reader'}
+</button>
                 </div>
 
                 <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
