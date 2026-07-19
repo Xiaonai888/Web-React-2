@@ -288,7 +288,7 @@ function StoryCoverButton({ story, active, onSelect }) {
       aria-label={`Select ${story.title}`}
     >
       <div
-        className={`relative aspect-[3/4] overflow-hidden rounded-[18px] bg-[#2b174f] transition active:scale-[0.98] ${
+        className={`relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[#2b174f] transition active:scale-[0.98] ${
           active
             ? 'ring-2 ring-[#8050e8] ring-offset-2 ring-offset-[#f7f4ff] shadow-[0_10px_24px_rgba(109,66,219,0.35)]'
             : 'shadow-[0_8px_20px_rgba(50,27,91,0.14)]'
@@ -325,7 +325,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         : 'bg-[#f0eaff] text-[#7040d8]'
 
   return (
-    <div className="rounded-[22px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
+    <div className="rounded-[12px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
       <h3 className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] text-[#21143f]">{story.title}</h3>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -374,7 +374,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         <button
           type="button"
           onClick={() => onAddEpisode(story)}
-          className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
         >
           <i className="fa-solid fa-plus text-[11px]" />
           Add Episode
@@ -383,7 +383,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         <button
           type="button"
           onClick={() => onEdit(story)}
-          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-extrabold text-[#5c3cb2] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-extrabold text-[#5c3cb2] active:scale-[0.98]"
         >
           <i className="fa-solid fa-gear text-[11px]" />
           Manage
@@ -699,7 +699,9 @@ export default function AuthorDashboardPage() {
           </div>
         </div>
 
-        <div className="relative z-10 mt-6 grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[22px] bg-white px-1 py-3.5 shadow-[0_12px_28px_rgba(53,25,104,0.2)]">
+        <div className="absolute inset-x-0 bottom-0 h-[86px] rounded-t-[44px] bg-white" />
+
+        <div className="relative z-20 mt-6 grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[12px] bg-white px-1 py-3.5 shadow-[0_12px_28px_rgba(53,25,104,0.2)] ring-1 ring-black/5">
           <StatItem
             icon="fa-solid fa-book-open"
             iconClass="text-[#7c4dea]"
@@ -760,7 +762,7 @@ export default function AuthorDashboardPage() {
             <button
               type="button"
               onClick={() => handleEditStory(latestStory)}
-              className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[24px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
+              className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[12px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
               aria-label={`Continue writing ${latestStory.title}`}
             >
               {latestStory.cover ? (
@@ -806,7 +808,7 @@ export default function AuthorDashboardPage() {
       key={item.key}
       type="button"
       disabled={item.soon}
-      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] border border-[#ece7f6] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
+      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[10px] border border-[#ece7f6] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
     >
       {item.soon ? (
         <span className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold leading-none text-[#F97316] shadow-sm">
