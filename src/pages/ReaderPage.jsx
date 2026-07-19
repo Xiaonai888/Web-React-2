@@ -1126,6 +1126,7 @@ function LockedEpisodeCard({
   onUnlock,
   onCoinUnlock,
   onVoucherUnlock,
+  inline = false,
 }) {
   const diamondBalance = Number(wallet?.diamond_balance || 0)
   const [showAutoHint, setShowAutoHint] = useState(false)
@@ -1304,7 +1305,13 @@ function LockedEpisodeCard({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[64px] z-[40] overflow-hidden px-0 pb-0">
+    <div
+      className={
+        inline
+          ? 'relative min-h-[680px] overflow-hidden bg-[#111827]'
+          : 'fixed inset-x-0 bottom-0 top-[64px] z-[40] overflow-hidden px-0 pb-0'
+      }
+    >
       {backgroundImage ? (
         <img
           src={backgroundImage}
@@ -1315,7 +1322,13 @@ function LockedEpisodeCard({
 
       <div className="absolute inset-0 bg-black/45" />
 
-      <div className="relative z-10 flex h-full items-end justify-center md:items-center">
+      <div
+        className={
+          inline
+            ? 'relative z-10 flex min-h-[680px] items-end justify-center'
+            : 'relative z-10 flex h-full items-end justify-center md:items-center'
+        }
+      >
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
           <button
             type="button"
@@ -1341,7 +1354,13 @@ function LockedEpisodeCard({
             />
           </button>
 
-          <section className="max-h-[58vh] min-h-[340px] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]">
+          <section
+            className={
+              inline
+                ? 'min-h-[340px] w-full rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)]'
+                : 'max-h-[58vh] min-h-[340px] w-full overflow-y-auto rounded-t-[26px] bg-white pb-5 pt-0 shadow-[0_-18px_50px_rgba(0,0,0,0.18)] md:rounded-[26px]'
+            }
+          >
             <div className="border-b border-[#E5E7EB] px-4 pt-2">
               <div className="flex">
                 <AccessTab active={activeTab === 'instant'} onClick={() => setActiveTab('instant')}>
@@ -3284,8 +3303,18 @@ function ContinuousEpisodeBlock({
   onRegister,
   onOpenComments,
   onOpenGift,
-  onOpenLocked,
   adultAccepted,
+  wallet,
+  coinAccess,
+  voucherAccess,
+  packageOptions,
+  autoUnlock,
+  setAutoUnlock,
+  unlocking,
+  onPurchase,
+  onUnlock,
+  onCoinUnlock,
+  onVoucherUnlock,
 }) {
   const episode = entry?.episode || {}
   const adultBlocked = Boolean(
@@ -3296,6 +3325,19 @@ function ContinuousEpisodeBlock({
       entry?.gate?.advertisement?.image_url &&
       !entry?.adFinished
   )
+  const unlockStatus = entry?.unlockStatus || {}
+  const inlineWallet = unlockStatus.wallet || wallet
+  const inlineCoinAccess =
+    unlockStatus.coin_access ||
+    unlockStatus.gem_access ||
+    coinAccess
+  const inlineVoucherAccess =
+    unlockStatus.voucher_access || voucherAccess
+  const inlinePackageOptions = Array.isArray(
+    unlockStatus.package_options
+  )
+    ? unlockStatus.package_options
+    : packageOptions
 
   return (
     <section
@@ -3307,10 +3349,6 @@ function ContinuousEpisodeBlock({
         containIntrinsicSize: '900px',
       }}
     >
-      <div className={`mt-4 text-[12px] font-semibold ${theme.muted}`}>
-  Episode {episode.episode_number || ''}
-</div>
-
       {adultBlocked ? (
         <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
           <div className="text-center">
@@ -3321,33 +3359,41 @@ function ContinuousEpisodeBlock({
           </div>
         </div>
       ) : entry.locked ? (
-        <div className={`${theme.card} px-4 py-10 sm:px-8`}>
-          <div className={`mx-auto max-w-[430px] rounded-[24px] border ${theme.border} p-6 text-center`}>
-            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${theme.soft}`}>
-              <i className={`fa-solid fa-lock text-[20px] ${theme.text}`} />
-            </div>
-
-            <div className={`mt-4 text-[12px] font-semibold ${theme.muted}`}>
-              Episode {episode.episode_number || ''}
-            </div>
-
-            <h2 className={`mt-1 text-[22px] font-bold leading-8 ${theme.text}`}>
-              {episode.title || 'Locked Episode'}
-            </h2>
-
-            <p className={`mt-3 text-[13px] font-medium leading-6 ${theme.muted}`}>
-              This episode is locked. Open the unlock options to continue reading.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => onOpenLocked(entry)}
-              className={`mt-5 h-12 w-full rounded-full ${theme.button} text-[13px] font-bold active:scale-[0.99]`}
-            >
-              View unlock options
-            </button>
-          </div>
-        </div>
+        <LockedEpisodeCard
+          inline
+          story={story}
+          episode={episode}
+          wallet={inlineWallet}
+          coinAccess={inlineCoinAccess}
+          voucherAccess={inlineVoucherAccess}
+          packageOptions={inlinePackageOptions}
+          autoUnlock={autoUnlock}
+          setAutoUnlock={setAutoUnlock}
+          unlocking={unlocking}
+          onPurchase={() => onPurchase(entry.id)}
+          onUnlock={(packageKey) =>
+            onUnlock(
+              packageKey,
+              entry.id,
+              inlinePackageOptions,
+              inlineWallet
+            )
+          }
+          onCoinUnlock={() =>
+            onCoinUnlock(
+              entry.id,
+              inlineWallet,
+              inlineCoinAccess
+            )
+          }
+          onVoucherUnlock={() =>
+            onVoucherUnlock(
+              entry.id,
+              inlineWallet,
+              inlineVoucherAccess
+            )
+          }
+        />
       ) : adBlocked ? (
         <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
           <div className="text-center">
@@ -3721,11 +3767,30 @@ async function loadContinuousEpisode(targetEpisode) {
 
   const data = await response.json().catch(() => ({}))
 
-  if (response.status === 423 || data.code === 'EPISODE_LOCKED') {
+  if (
+    response.status === 423 ||
+    data.code === 'EPISODE_LOCKED'
+  ) {
+    const unlockResponse = await fetch(
+      `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetId}/status`,
+      {
+        headers: readerAuthHeaders(),
+        cache: 'no-store',
+      }
+    )
+    const unlockData = await unlockResponse
+      .json()
+      .catch(() => ({}))
+    const unlockStatus =
+      unlockResponse.ok && unlockData.ok !== false
+        ? unlockData
+        : {}
+
     return {
       id: targetId,
       episode: data.episode || targetEpisode,
       locked: true,
+      unlockStatus,
       gate: null,
       adFinished: true,
     }
@@ -3775,6 +3840,27 @@ const continuousReader = useContinuousEpisodeReader({
     setReaderGateReady(true)
     setReaderMoreOpen(false)
     setCommentEpisode(null)
+    if (entry.locked) {
+      const unlock = entry.unlockStatus || {}
+
+      setUnlockWallet(unlock.wallet || null)
+      setUnlockCoinAccess(
+        unlock.coin_access || unlock.gem_access || null
+      )
+      setUnlockVoucherAccess(unlock.voucher_access || null)
+      setUnlockPackageOptions(
+        Array.isArray(unlock.package_options)
+          ? unlock.package_options
+          : []
+      )
+      setUnlockAutoUnlock(
+        Boolean(unlock.wallet?.auto_unlock)
+      )
+
+      if (!unlock.wallet) {
+        loadLockedUnlockStatus(entry.id).catch(() => {})
+      }
+    }
 
     if (entry.episode.is_adult && !adultConsentGranted) {
       setAdultAccepted(false)
@@ -4492,16 +4578,18 @@ const handleReaderEcho = () => {
     openReaderEpisode(nextEpisode)
   }
 
-const handleOpenPurchasePage = () => {
+const handleOpenPurchasePage = (
+  targetEpisodeId = episodeId
+) => {
   navigate('/shop', {
     state: {
       activeTab: 'Purchase',
-      from: `/story/${storyId}/episode/${episodeId}`,
+      from: `/story/${storyId}/episode/${targetEpisodeId}`,
     },
   })
 }
 
-  async function loadLockedUnlockStatus(
+async function loadLockedUnlockStatus(
   targetEpisodeId = episodeId
 ) {
   if (!storyId || !targetEpisodeId) return null
@@ -4510,30 +4598,48 @@ const handleOpenPurchasePage = () => {
     `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
     {
       headers: readerAuthHeaders(),
+      cache: 'no-store',
     }
   )
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to check unlock status')
+    throw new Error(
+      data.message || 'Failed to check unlock status'
+    )
   }
 
   setUnlockWallet(data.wallet || null)
-  setUnlockCoinAccess(data.coin_access || data.gem_access || null)
+  setUnlockCoinAccess(
+    data.coin_access || data.gem_access || null
+  )
   setUnlockVoucherAccess(data.voucher_access || null)
-  setUnlockAutoUnlock(Boolean(data.wallet?.auto_unlock))
+  setUnlockAutoUnlock(
+    Boolean(data.wallet?.auto_unlock)
+  )
   setUnlockPackageOptions(
-    Array.isArray(data.package_options) ? data.package_options : []
+    Array.isArray(data.package_options)
+      ? data.package_options
+      : []
   )
 
   return data
 }
-async function handleLockedCoinUnlock() {
-  if (!unlockCoinAccess?.available) return
 
-  const coinBalance = Number(unlockWallet?.coin_balance ?? unlockWallet?.gem_balance ?? 0)
-  const price = Number(unlockCoinAccess?.amount || 0)
+async function handleLockedCoinUnlock(
+  targetEpisodeId = episodeId,
+  targetWallet = unlockWallet,
+  targetCoinAccess = unlockCoinAccess
+) {
+  if (!targetCoinAccess?.available) return
+
+  const coinBalance = Number(
+    targetWallet?.coin_balance ??
+      targetWallet?.gem_balance ??
+      0
+  )
+  const price = Number(targetCoinAccess?.amount || 0)
 
   if (coinBalance < price) {
     setMessage('Not enough Coins.')
@@ -4543,33 +4649,55 @@ async function handleLockedCoinUnlock() {
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/gem`, {
-      method: 'POST',
-      headers: {
-        ...readerAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    })
+    const response = await fetch(
+      `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/gem`,
+      {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      }
+    )
 
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to unlock episode with Coins')
+      throw new Error(
+        data.message ||
+          'Failed to unlock episode with Coins'
+      )
     }
 
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `/story/${storyId}/episode/${targetEpisodeId}`
+    )
     window.location.reload()
   } catch (error) {
-    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode with Coins')
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message ||
+            'Failed to unlock episode with Coins'
+    )
   } finally {
     setUnlockingEpisode(false)
   }
 }
 
-  async function handleLockedVoucherUnlock() {
-  if (!unlockVoucherAccess?.available) return
+async function handleLockedVoucherUnlock(
+  targetEpisodeId = episodeId,
+  targetWallet = unlockWallet,
+  targetVoucherAccess = unlockVoucherAccess
+) {
+  if (!targetVoucherAccess?.available) return
 
-  const voucherBalance = Number(unlockWallet?.voucher_balance || 0)
-  const price = Number(unlockVoucherAccess?.amount || 0)
+  const voucherBalance = Number(
+    targetWallet?.voucher_balance || 0
+  )
+  const price = Number(targetVoucherAccess?.amount || 0)
 
   if (voucherBalance < price) {
     setMessage('Not enough Vouchers.')
@@ -4579,73 +4707,115 @@ async function handleLockedCoinUnlock() {
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/voucher`, {
-      method: 'POST',
-      headers: {
-        ...readerAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    })
+    const response = await fetch(
+      `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/voucher`,
+      {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      }
+    )
 
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to unlock episode with Voucher')
+      throw new Error(
+        data.message ||
+          'Failed to unlock episode with Voucher'
+      )
     }
 
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `/story/${storyId}/episode/${targetEpisodeId}`
+    )
     window.location.reload()
   } catch (error) {
-    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode with Voucher')
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message ||
+            'Failed to unlock episode with Voucher'
+    )
   } finally {
     setUnlockingEpisode(false)
   }
 }
-  
-  
-async function handleLockedDiamondUnlock(packageKey) {
-  const option = unlockPackageOptions.find((item) => item.key === packageKey)
-  const diamondBalance = Number(unlockWallet?.diamond_balance || 0)
+
+async function handleLockedDiamondUnlock(
+  packageKey,
+  targetEpisodeId = episodeId,
+  targetPackageOptions = unlockPackageOptions,
+  targetWallet = unlockWallet
+) {
+  const options = Array.isArray(targetPackageOptions)
+    ? targetPackageOptions
+    : []
+  const option = options.find(
+    (item) => item.key === packageKey
+  )
+  const diamondBalance = Number(
+    targetWallet?.diamond_balance || 0
+  )
   const price = Number(option?.price || 0)
 
   if (!option?.enabled) return
 
   if (diamondBalance < price) {
-  handleOpenPurchasePage()
-  return
-}
-  
+    handleOpenPurchasePage(targetEpisodeId)
+    return
+  }
+
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(`${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${episodeId}/package`, {
-  method: 'POST',
-  headers: {
-    ...readerAuthHeaders(),
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    package_key: packageKey,
-  }),
-})
+    const response = await fetch(
+      `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/package`,
+      {
+        method: 'POST',
+        headers: {
+          ...readerAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          package_key: packageKey,
+        }),
+      }
+    )
 
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
       if (data.code === 'INSUFFICIENT_DIAMONDS') {
-  navigate('/shop/mall/purchase', {
-    state: {
-      returnTo: `/story/${storyId}/episode/${episodeId}`,
-    },
-  })
-  return
-}
+        navigate('/shop/mall/purchase', {
+          state: {
+            returnTo: `/story/${storyId}/episode/${targetEpisodeId}`,
+          },
+        })
+        return
+      }
 
-      throw new Error(data.message || 'Failed to unlock episode')
+      throw new Error(
+        data.message || 'Failed to unlock episode'
+      )
     }
 
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `/story/${storyId}/episode/${targetEpisodeId}`
+    )
     window.location.reload()
   } catch (error) {
-    setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to unlock episode')
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message ||
+            'Failed to unlock episode'
+    )
   } finally {
     setUnlockingEpisode(false)
   }
@@ -4698,8 +4868,13 @@ const shouldBlockReaderContent = shouldShowReaderAd && !readerAdFinished
 const showFullLockedEpisode = Boolean(
   lockedEpisode &&
     episode &&
-    String(episodeId) === String(routeEpisodeId) &&
-    continuousReader.entries.length <= 1
+    (
+      readingMode === 'paging' ||
+      (
+        String(episodeId) === String(routeEpisodeId) &&
+        continuousReader.entries.length <= 1
+      )
+    )
 )
 const activeCommentsEpisode = commentEpisode || episode
 
@@ -5050,22 +5225,17 @@ onUnlock={handleLockedDiamondUnlock}
                 }}
                 onOpenGift={() => setGiftPopupOpen(true)}
                 adultAccepted={adultConsentGranted}
-                onOpenLocked={(lockedEntry) => {
-                  navigate(
-                    `/story/${storyId}/episode/${lockedEntry.id}`,
-                    {
-                      replace: true,
-                      state: {
-                        expectedLocked: true,
-                        storyPreview: story,
-                        episodePreview: lockedEntry.episode,
-                        returnSource:
-                          location.state?.returnSource ||
-                          'continuousReader',
-                      },
-                    }
-                  )
-                }}
+                wallet={unlockWallet}
+                coinAccess={unlockCoinAccess}
+                voucherAccess={unlockVoucherAccess}
+                packageOptions={unlockPackageOptions}
+                autoUnlock={unlockAutoUnlock}
+                setAutoUnlock={setUnlockAutoUnlock}
+                unlocking={unlockingEpisode}
+                onPurchase={handleOpenPurchasePage}
+                onUnlock={handleLockedDiamondUnlock}
+                onCoinUnlock={handleLockedCoinUnlock}
+                onVoucherUnlock={handleLockedVoucherUnlock}
               />
             ))}
           </div>
