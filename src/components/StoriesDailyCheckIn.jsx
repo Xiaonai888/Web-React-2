@@ -96,14 +96,8 @@ function RewardDay({ reward, currentDay, claimedToday }) {
   const icon = gift ? GIFT_IMAGE : COIN_IMAGE
 
   return (
-    <div className="min-w-0 text-center">
-      <div
-        className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full transition sm:h-11 sm:w-11 ${
-          isToday && !claimedToday
-            ? 'bg-[#fff3da] ring-2 ring-[#ff3f62] shadow-[0_6px_16px_rgba(255,63,98,0.22)]'
-            : 'bg-[#fff8e8] ring-1 ring-[#f7d899]'
-        } ${isFuture ? 'opacity-55' : ''}`}
-      >
+    <div className={`min-w-0 text-center transition-opacity ${isClaimed ? 'opacity-45' : 'opacity-100'}`}>
+      <div className="mx-auto flex h-10 w-10 items-center justify-center sm:h-11 sm:w-11">
         <img
           src={icon}
           alt=""
@@ -111,15 +105,9 @@ function RewardDay({ reward, currentDay, claimedToday }) {
           loading="eager"
           decoding="async"
         />
-
-        {isClaimed ? (
-          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#22c55e] text-[8px] text-white ring-2 ring-white">
-            <i className="fa-solid fa-check" />
-          </span>
-        ) : null}
       </div>
 
-      <div className={`mt-1.5 truncate text-[10px] font-black ${isFuture ? 'text-[#9ca3af]' : 'text-[#111827]'}`}>
+      <div className="mt-1.5 truncate text-[10px] font-black text-[#111827]">
         {gift ? 'Gift' : getRewardAmount(reward).toLocaleString()}
       </div>
 
@@ -128,56 +116,12 @@ function RewardDay({ reward, currentDay, claimedToday }) {
           isToday && !claimedToday
             ? 'text-[#ff3f62]'
             : isClaimed
-              ? 'text-[#22c55e]'
+              ? 'text-[#f59e0b]'
               : 'text-[#9ca3af]'
         }`}
       >
         {isClaimed ? 'Claimed' : isToday ? 'Today' : `Day ${day}`}
       </div>
-    </div>
-  )
-}
-
-function RewardSuccess({ reward, onClose }) {
-  const gift = isGiftReward(reward)
-  const icon = gift ? GIFT_IMAGE : COIN_IMAGE
-
-  return (
-    <div className="relative overflow-hidden rounded-[26px] bg-white px-6 pb-6 pt-8 text-center shadow-[0_28px_70px_rgba(17,24,39,0.28)]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: 12 }, (_, index) => (
-          <span
-            key={index}
-            className="shadow-checkin-spark absolute h-2 w-2 rounded-full bg-[#ffd54a]"
-            style={{
-              left: `${12 + ((index * 19) % 78)}%`,
-              top: `${10 + ((index * 23) % 68)}%`,
-              animationDelay: `${index * 55}ms`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#fff7d8] to-[#ffd66b] shadow-[0_16px_34px_rgba(245,158,11,0.28)]">
-        <div className="absolute inset-2 rounded-full border-2 border-white/80" />
-        <img
-          src={icon}
-          alt=""
-          className={`${gift ? 'h-16 w-16' : 'h-14 w-14'} relative z-10 object-contain shadow-checkin-reward-pop`}
-        />
-      </div>
-
-      <h2 className="relative mt-5 text-[28px] font-black leading-none text-[#111827]">Congrats!</h2>
-      <p className="relative mt-3 text-[13px] font-semibold text-[#8b93a1]">You received</p>
-      <p className="relative mt-1 text-[20px] font-black text-[#ff3f62]">{getRewardLabel(reward)}</p>
-
-      <button
-        type="button"
-        onClick={onClose}
-        className="relative mt-6 h-12 w-full rounded-full bg-gradient-to-r from-[#ff3158] to-[#ff5b72] text-[14px] font-black text-white shadow-[0_10px_24px_rgba(255,49,88,0.28)] active:scale-[0.98]"
-      >
-        Continue
-      </button>
     </div>
   )
 }
@@ -197,6 +141,14 @@ export default function StoriesDailyCheckIn() {
   const currentReward = rewards.find((item) => Number(item.day) === currentDay) || null
   const gift = isGiftReward(currentReward)
   const amount = getRewardAmount(currentReward)
+  const rewardClaimed = claimedToday || Boolean(successReward)
+  const titleText = successReward
+    ? isGiftReward(successReward)
+      ? 'Congrats! Gift Received'
+      : `Congrats! +${getRewardAmount(successReward).toLocaleString()} Coins`
+    : gift
+      ? 'Check-in for Gift'
+      : 'Check-in for Coins'
 
   const loadCheckIn = useCallback(async () => {
     const token = getReaderToken()
@@ -257,11 +209,36 @@ export default function StoriesDailyCheckIn() {
   useEffect(() => {
     if (!modalOpen) return undefined
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const scrollY = window.scrollY
+    const html = document.documentElement
+    const body = document.body
+    const previous = {
+      htmlOverflow: html.style.overflow,
+      htmlOverscrollBehavior: html.style.overscrollBehavior,
+      bodyOverflow: body.style.overflow,
+      bodyOverscrollBehavior: body.style.overscrollBehavior,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+    }
+
+    html.style.overflow = 'hidden'
+    html.style.overscrollBehavior = 'none'
+    body.style.overflow = 'hidden'
+    body.style.overscrollBehavior = 'none'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      html.style.overflow = previous.htmlOverflow
+      html.style.overscrollBehavior = previous.htmlOverscrollBehavior
+      body.style.overflow = previous.bodyOverflow
+      body.style.overscrollBehavior = previous.bodyOverscrollBehavior
+      body.style.position = previous.bodyPosition
+      body.style.top = previous.bodyTop
+      body.style.width = previous.bodyWidth
+      window.scrollTo(0, scrollY)
     }
   }, [modalOpen])
 
@@ -291,6 +268,7 @@ export default function StoriesDailyCheckIn() {
 
   async function claimReward() {
     if (claiming || claimedToday || !currentReward) return
+
 
     try {
       setClaiming(true)
@@ -378,7 +356,7 @@ export default function StoriesDailyCheckIn() {
           type="button"
           onClick={openModal}
           aria-label={gift ? 'Open daily gift' : `Open daily reward of ${amount} coins`}
-          className="stories-daily-check-in fixed z-[99998] flex w-[68px] flex-col items-center active:scale-95"
+          className="stories-daily-check-in fixed z-[99998] h-[70px] w-[72px] active:scale-95"
           style={{
             right: 'max(10px, calc((100vw - 480px) / 2 + 10px))',
             bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
@@ -387,10 +365,10 @@ export default function StoriesDailyCheckIn() {
           <img
             src="/assets/Icons/Login%20Streak.svg"
             alt=""
-            className="h-[58px] w-[58px] object-contain drop-shadow-[0_5px_8px_rgba(17,24,39,0.18)]"
+            className="absolute left-1/2 -top-1 z-10 h-[58px] w-[58px] -translate-x-1/2 object-contain drop-shadow-[0_5px_8px_rgba(17,24,39,0.18)]"
           />
 
-          <span className="-mt-1 flex h-[24px] min-w-[68px] items-center justify-center gap-1 rounded-full border border-white bg-[#ff3f62] px-2 shadow-[0_4px_12px_rgba(17,24,39,0.18)]">
+          <span className="absolute left-1/2 top-[45px] z-20 flex h-[24px] min-w-[68px] -translate-x-1/2 items-center justify-center gap-1 rounded-full border border-white bg-[#ff3f62] px-2 shadow-[0_4px_12px_rgba(17,24,39,0.18)]">
             <span className="text-[10px] font-black leading-none text-white">Get</span>
             <img src={gift ? GIFT_IMAGE : COIN_IMAGE} alt="" className="h-[14px] w-[14px] object-contain" />
             <span className="text-[10px] font-black leading-none text-white">{amount.toLocaleString()}</span>
@@ -399,7 +377,7 @@ export default function StoriesDailyCheckIn() {
       ) : null}
 
       {modalOpen ? (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-[#111827]/65 px-4 py-7 backdrop-blur-[3px]">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden overscroll-none bg-[#111827]/65 px-4 py-7 backdrop-blur-[3px]">
           <button
             type="button"
             onClick={closeModal}
@@ -408,56 +386,40 @@ export default function StoriesDailyCheckIn() {
           />
 
           <div className="shadow-checkin-modal-in relative z-10 w-full max-w-[430px]">
-            {successReward ? (
-              <RewardSuccess reward={successReward} onClose={closeModal} />
-            ) : (
-              <div className="relative pt-[72px]">
+            <div className="relative pt-[72px]">
                 <img
                   src={BANNER_IMAGE}
                   alt=""
-                  className="pointer-events-none absolute left-1/2 top-0 z-20 w-[92%] max-w-[395px] -translate-x-1/2 object-contain drop-shadow-[0_12px_22px_rgba(17,24,39,0.18)]"
+                  className="pointer-events-none absolute z-0 object-contain drop-shadow-[0_12px_22px_rgba(17,24,39,0.18)]"
+style={{
+  top: '-30px',
+  left: '50%',
+  width: '92%',
+  maxWidth: '260px',
+  transform: 'translateX(-50%) scale(1)',
+}}
                   loading="eager"
                   decoding="async"
                 />
 
-                <section className="relative overflow-hidden rounded-[30px] bg-gradient-to-b from-[#ff3158] via-[#ff4966] to-[#ff6d7f] px-4 pb-4 pt-[58px] shadow-[0_28px_70px_rgba(17,24,39,0.32)]">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur active:scale-95"
-                    aria-label="Close"
-                  >
-                    <i className="fa-solid fa-xmark text-[15px]" />
-                  </button>
-
-                  <div className="text-center text-white">
-                    <h2 className="text-[25px] font-black leading-tight">Daily Rewards</h2>
-                    <p className="mt-1 text-[12px] font-semibold text-white/85">Come back every day and grow your streak.</p>
+                <section className="relative z-10 overflow-hidden rounded-[30px] bg-gradient-to-b from-[#ff3158] via-[#ff4966] to-[#ff6d7f] px-4 pb-4 pt-[34px] shadow-[0_28px_70px_rgba(17,24,39,0.32)]">
+                  <div className="relative -top-1 text-center text-white">
+                    <h2 className="text-[25px] font-bold leading-tight text-white">{titleText}</h2>
                   </div>
 
-                  <div className="mt-4 rounded-[24px] bg-white px-3 pb-4 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                  <div className="mt-3 rounded-[24px] bg-white px-3 pb-4 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
                     <div className="grid grid-cols-7 gap-1">
                       {rewards.map((reward) => (
                         <RewardDay
                           key={reward.day}
                           reward={reward}
                           currentDay={currentDay}
-                          claimedToday={claimedToday}
+                          claimedToday={rewardClaimed}
                         />
                       ))}
                     </div>
 
-                    <div className="mt-5 rounded-[18px] bg-[#fff7e7] px-4 py-3 text-center ring-1 ring-[#ffe1aa]">
-                      <p className="text-[11px] font-bold text-[#9a6a24]">Today’s reward</p>
-                      <div className="mt-1 flex items-center justify-center gap-2">
-                        <img
-                          src={gift ? GIFT_IMAGE : COIN_IMAGE}
-                          alt=""
-                          className={`${gift ? 'h-7 w-7' : 'h-6 w-6'} object-contain`}
-                        />
-                        <span className="text-[16px] font-black text-[#111827]">{getRewardLabel(currentReward)}</span>
-                      </div>
-                    </div>
+                 
 
                     {message ? (
                       <div className="mt-3 rounded-full bg-[#fff1f3] px-4 py-2 text-center text-[11px] font-bold text-[#e11d48]">
@@ -468,25 +430,51 @@ export default function StoriesDailyCheckIn() {
                     <button
                       type="button"
                       onClick={claimReward}
-                      disabled={claiming || claimedToday}
-                      className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff3158] to-[#ff5b72] px-5 text-[14px] font-black text-white shadow-[0_10px_24px_rgba(255,49,88,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={claiming || rewardClaimed}
+                      className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff3158] to-[#ff5b72] px-5 text-[14px] font-bold text-white shadow-[0_10px_24px_rgba(255,49,88,0.28)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {claiming ? (
                         <>
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                           <span>Claiming...</span>
                         </>
+                      ) : rewardClaimed ? (
+                        <span>Claimed</span>
                       ) : (
                         <>
-                          <span>{gift ? 'Claim Today’s Gift' : `Claim ${amount.toLocaleString()} Coins`}</span>
-                          <i className="fa-solid fa-arrow-right text-[11px]" />
+                          <img
+                            src={gift ? GIFT_IMAGE : COIN_IMAGE}
+                            alt=""
+                            className="h-5 w-5 object-contain"
+                          />
+                          <span>{gift ? 'Claim Gift' : 'Claim Coin'}</span>
                         </>
                       )}
                     </button>
                   </div>
                 </section>
               </div>
-            )}
+
+            <button
+              type="button"
+              onClick={closeModal}
+              className="mx-auto mt-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/90 text-white transition active:scale-95"
+              aria-label="Close daily rewards"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M7 7l10 10" />
+                <path d="M17 7 7 17" />
+              </svg>
+            </button>
           </div>
         </div>
       ) : null}
