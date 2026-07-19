@@ -152,6 +152,194 @@ function clearReaderSession() {
   sessionStorage.removeItem('shadow_reader_user')
 }
 
+function ReaderSettingsIcon({ name }) {
+  const commonProps = {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: '1.7',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    className: 'h-[21px] w-[21px]',
+    'aria-hidden': true,
+  }
+
+  switch (name) {
+    case 'edit-profile':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="7" r="4" />
+          <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+        </svg>
+      )
+
+    case 'account-security':
+      return (
+        <svg {...commonProps}>
+          <path d="M12 3 20 6v5.5c0 4.8-3.2 8.1-8 9.5-4.8-1.4-8-4.7-8-9.5V6l8-3Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      )
+
+    case 'privacy':
+      return (
+        <svg {...commonProps}>
+          <rect x="5" y="10" width="14" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </svg>
+      )
+
+    case 'blocked-readers':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m5.7 5.7 12.6 12.6" />
+        </svg>
+      )
+
+    case 'saved-posts':
+      return (
+        <svg {...commonProps}>
+          <path d="M6 3.5h12v17l-6-4-6 4v-17Z" />
+        </svg>
+      )
+
+    case 'my-comments':
+      return (
+        <svg {...commonProps}>
+          <path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.5-.7L4 20l1.4-4A7.5 7.5 0 1 1 20 11.5Z" />
+        </svg>
+      )
+
+    case 'notifications':
+      return (
+        <svg {...commonProps}>
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+          <path d="M10 20h4" />
+        </svg>
+      )
+
+    case 'reading-history':
+      return (
+        <svg {...commonProps}>
+          <path d="M4 5v5h5" />
+          <path d="M5.5 16a8 8 0 1 0-.8-8" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      )
+
+    case 'echo-sharing':
+      return (
+        <svg {...commonProps}>
+          <path d="m17 3 4 4-4 4" />
+          <path d="M3 7h18" />
+          <path d="m7 21-4-4 4-4" />
+          <path d="M21 17H3" />
+        </svg>
+      )
+
+    case 'messages-replies':
+      return (
+        <svg {...commonProps}>
+          <path d="M21 12a8 8 0 0 1-8 8H5l-3 2 1-5a9 9 0 1 1 18-5Z" />
+          <path d="M8 12h8" />
+        </svg>
+      )
+
+    case 'tags-mentions':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1" />
+        </svg>
+      )
+
+    case 'comment-settings':
+      return (
+        <svg {...commonProps}>
+          <path d="M19 15a7 7 0 0 0-7-9H8a6 6 0 0 0-4 10.5L3 20l4-1.5A7 7 0 0 0 12 20" />
+          <circle cx="18" cy="18" r="3" />
+          <path d="M18 16.7v2.6M16.7 18h2.6" />
+        </svg>
+      )
+
+    case 'hidden-words':
+      return (
+        <svg {...commonProps}>
+          <path d="M3 3 21 21" />
+          <path d="M10.7 10.7a2 2 0 0 0 2.6 2.6" />
+          <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9 8 9 8a17.4 17.4 0 0 1-2 3.1" />
+          <path d="M6.6 6.6C4.3 8.3 3 12 3 12s3.5 8 9 8a9.8 9.8 0 0 0 4-.9" />
+        </svg>
+      )
+
+    case 'restricted-readers':
+      return (
+        <svg {...commonProps}>
+          <circle cx="9" cy="7" r="3" />
+          <path d="M3 20a6 6 0 0 1 12 0" />
+          <path d="M17 12v6" />
+          <path d="M14 15h6" />
+        </svg>
+      )
+
+    case 'language':
+      return (
+        <svg {...commonProps}>
+          <path d="M4 5h10" />
+          <path d="M9 3v2" />
+          <path d="M6 9c1.8 2.8 4.2 4.7 7 6" />
+          <path d="M13 7c-1.5 4-4.2 7.2-8 9" />
+          <path d="m15 20 3-8 3 8" />
+          <path d="M16 17h4" />
+        </svg>
+      )
+
+    case 'accessibility':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="4" r="2" />
+          <path d="M5 8h14" />
+          <path d="M12 6v7" />
+          <path d="m8 21 4-8 4 8" />
+        </svg>
+      )
+
+    case 'help-center':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.1c-.9.5-1.3 1-1.3 1.9" />
+          <path d="M12 17h.01" />
+        </svg>
+      )
+
+    case 'feedback-support':
+      return (
+        <svg {...commonProps}>
+          <path d="m22 2-7 20-4-9-9-4 20-7Z" />
+          <path d="m22 2-11 11" />
+        </svg>
+      )
+
+    case 'about-shadow':
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v6" />
+          <path d="M12 7h.01" />
+        </svg>
+      )
+
+    default:
+      return (
+        <svg {...commonProps}>
+          <circle cx="12" cy="12" r="9" />
+        </svg>
+      )
+  }
+}
+
 function SettingsRow({ item, onOpen }) {
   return (
     <button
@@ -160,8 +348,8 @@ function SettingsRow({ item, onOpen }) {
       className="flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition active:bg-[#f7f7f9]"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${item.icon} text-[20px]`} />
-      </span>
+  <ReaderSettingsIcon name={item.key} />
+</span>
 
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-normal text-[#111827]">
