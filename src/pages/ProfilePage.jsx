@@ -999,9 +999,27 @@ async function handleOtherProfileOption(action) {
 
           <section className="px-4 pb-4 pt-5">
             <div className="flex items-center gap-4">
-              <button type="button" onClick={openAvatarEditor} className="rounded-full active:scale-[0.98]" aria-label="Edit profile photo">
-                <AvatarImage profile={profile} />
-              </button>
+              <div className="relative shrink-0">
+  <button
+    type="button"
+    onClick={openAvatarEditor}
+    className="rounded-full active:scale-[0.98]"
+    aria-label="Edit profile photo"
+  >
+    <AvatarImage profile={profile} />
+  </button>
+
+  {isOwnProfile ? (
+    <button
+      type="button"
+      onClick={() => navigate('/reader/story/create')}
+      className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#111827] text-white shadow-sm active:scale-90"
+      aria-label="Add story"
+    >
+      <i className="fa-solid fa-plus text-[12px]" />
+    </button>
+  ) : null}
+</div>
 
               <div className="min-w-0 flex-1">
                 <div className="mb-4 flex items-center gap-2">
