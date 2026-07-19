@@ -1195,13 +1195,13 @@ export default function ReaderPostCommentsModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/45 sm:items-center sm:px-4">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute inset-0"
-        aria-label="Close comments"
-      />
+    <div className="fixed inset-0 z-[200000] flex items-end justify-center sm:items-center sm:px-4">
+  <button
+    type="button"
+    onClick={onClose}
+    className="absolute inset-0 bg-black/60"
+    aria-label="Close comments"
+  />
 
       <section
         ref={sheetRef}
