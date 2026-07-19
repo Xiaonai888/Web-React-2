@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
+import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -50,6 +51,49 @@ function saveAuthToken(token) {
   }
 
   sessionStorage.setItem('shadow_reader_token', token)
+}
+
+
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = dataUrl.split(',')
+  const mimeMatch = header.match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const binary = atob(base64)
+  const array = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    array[index] = binary.charCodeAt(index)
+  }
+
+  return new File([array], fileName, { type: mime })
+}
+
+async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
+  if (!imageDataUrl || String(imageDataUrl).startsWith('http')) {
+    return imageDataUrl || null
+  }
+
+  const file = dataUrlToFile(imageDataUrl, fileName)
+  const formData = new FormData()
+
+  formData.append('image', file)
+  formData.append('folder', folder)
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload image')
+  }
+
+  return data.image_url || data.imageUrl
 }
 
 async function fetchPublicUserProfile(username) {
@@ -543,7 +587,7 @@ export default function ProfilePage() {
   const isOwnProfile =
     !requestedUsername ||
     requestedUsername.toLowerCase() === String(storedUser?.username || '').toLowerCase()
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profileOptionsOpen, setProfileOptionsOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
@@ -625,9 +669,66 @@ following: String(user?.following_count || 0),
       socialLinks: Array.isArray(user?.social_links) ? user.social_links.filter((item) => item?.url).slice(0, 5) : [],
     }
   }, [avatarPreview, readerPostCount, user])
-  const profileMenuItems = ['Copy link', 'Report', 'Block']
-  
 
+  
+async function handleOtherProfileOption(action) {
+  const profileUrl = `${window.location.origin}/profile?username=${encodeURIComponent(profile.username)}`
+
+  setProfileOptionsOpen(false)
+
+  if (action === 'copy-link') {
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      setProfileTabMessage('Profile URL copied.')
+    } catch {
+      setProfileTabMessage(profileUrl)
+    }
+
+    window.setTimeout(
+      () => setProfileTabMessage(''),
+      2200
+    )
+    return
+  }
+
+  if (action === 'share-profile') {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: profile.name,
+          url: profileUrl,
+        })
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return
+        }
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      setProfileTabMessage('Profile URL copied.')
+    } catch {
+      setProfileTabMessage(profileUrl)
+    }
+
+    window.setTimeout(
+      () => setProfileTabMessage(''),
+      2200
+    )
+    return
+  }
+
+  setProfileTabMessage(
+    `${action.replaceAll('-', ' ')} is coming soon.`
+  )
+
+  window.setTimeout(
+    () => setProfileTabMessage(''),
+    2200
+  )
+}
   
 
   const handleCropComplete = useCallback((_, croppedPixels) => {
@@ -872,16 +973,24 @@ following: String(user?.following_count || 0),
               </div>
 
               <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setProfileMenuOpen((value) => !value)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
-                  aria-label="Profile menu"
-                >
-                  <i className="fas fa-ellipsis-v text-[15px]" />
-                </button>
-
-                {profileMenuOpen ? <DropdownMenu items={profileMenuItems} /> : null}
+                {isOwnProfile ? (
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+                    aria-label="Profile menu"
+                  >
+                    <i className="fa-solid fa-bars text-[17px]" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setProfileOptionsOpen(true)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f5f3fa] active:scale-95"
+                    aria-label="Reader profile options"
+                  >
+                    <i className="fa-solid fa-ellipsis-vertical text-[16px]" />
+                  </button>
+                )}
               </div>
             </div>
           </header>
@@ -1030,7 +1139,20 @@ following: String(user?.following_count || 0),
   onEditAvatar={openAvatarEditor}
   onCountChange={setReaderPostCount}
 />
-      </main>
+
+<ReaderProfileOptionsSheet
+  open={
+    !isOwnProfile &&
+    profileOptionsOpen
+  }
+  onClose={() =>
+    setProfileOptionsOpen(false)
+  }
+  onSelect={
+    handleOtherProfileOption
+  }
+/>
+</main>
     </div>
   )
 }
