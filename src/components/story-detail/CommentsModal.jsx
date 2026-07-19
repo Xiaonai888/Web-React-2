@@ -29,6 +29,7 @@ export default function CommentsModal({
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
   const draggingRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [episodeEchoTotal, setEpisodeEchoTotal] = useState(0)
   const [episodeLikeTotal, setEpisodeLikeTotal] = useState(0)
@@ -56,10 +57,12 @@ export default function CommentsModal({
     if (!open) return undefined
 
     setDragOffset(0)
+    setDragging(false)
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = previousOverflow
     }
   }, [open])
 
@@ -274,7 +277,11 @@ export default function CommentsModal({
   }
 
   const handleDragStart = (event) => {
+    if (!event.isPrimary) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
     draggingRef.current = true
+    setDragging(true)
     startYRef.current = getPointerY(event)
     currentYRef.current = getPointerY(event)
     event.currentTarget.setPointerCapture?.(event.pointerId)
@@ -301,6 +308,7 @@ export default function CommentsModal({
     )
 
     draggingRef.current = false
+    setDragging(false)
 
     if (distance > 70) {
       onClose()
@@ -311,31 +319,36 @@ export default function CommentsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/45 px-0 sm:items-center sm:px-4">
+    <div className="fixed inset-0 z-[200000] flex items-end justify-center sm:items-center sm:px-4">
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0"
+        className="absolute inset-0 bg-black/60"
         aria-label="Close comments"
       />
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100vh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100vh-24px)] sm:rounded-[28px]"
-        style={{ transform: `translateY(${dragOffset}px)` }}
+        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: dragging
+            ? 'none'
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'transform',
+        }}
       >
-        <div
-  role="presentation"
-  onPointerDown={handleDragStart}
-  onPointerMove={handleDragMove}
-  onPointerUp={handleDragEnd}
-  onPointerCancel={handleDragEnd}
-  className="shrink-0 cursor-grab bg-white px-4 pt-2.5 pb-0"
-  style={{ touchAction: 'none' }}
-/>
-
         {targetType === 'story' ? (
-  <header className="shrink-0 bg-white px-4 pb-4">
+  <header
+    role="presentation"
+    onPointerDown={handleDragStart}
+    onPointerMove={handleDragMove}
+    onPointerUp={handleDragEnd}
+    onPointerCancel={handleDragEnd}
+    onLostPointerCapture={handleDragEnd}
+    className="shrink-0 cursor-grab touch-none bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    style={{ touchAction: 'none' }}
+  >
     <div className="flex justify-center">
       <div className="rounded-full bg-[#f5f3fa] px-5 py-2 text-[14px] font-normal text-[#111827]">
         {totalComments.toLocaleString()} comments
@@ -343,7 +356,16 @@ export default function CommentsModal({
     </div>
   </header>
 ) : (
-  <header className="shrink-0 bg-white px-4 pb-4">
+  <header
+    role="presentation"
+    onPointerDown={handleDragStart}
+    onPointerMove={handleDragMove}
+    onPointerUp={handleDragEnd}
+    onPointerCancel={handleDragEnd}
+    onLostPointerCapture={handleDragEnd}
+    className="shrink-0 cursor-grab touch-none bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    style={{ touchAction: 'none' }}
+  >
     <div className="grid grid-cols-3 items-center gap-2 text-center">
       <button
         type="button"
