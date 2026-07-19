@@ -3307,13 +3307,9 @@ function ContinuousEpisodeBlock({
         containIntrinsicSize: '900px',
       }}
     >
-      {index > 0 ? (
-        <div className={`${theme.card} px-4 pb-1 pt-8 sm:px-8`}>
-          <span className={`${theme.muted} text-[12px] font-semibold`}>
-            Episode {episode.episode_number || index + 1}
-          </span>
-        </div>
-      ) : null}
+      <div className={`mt-4 text-[12px] font-semibold ${theme.muted}`}>
+  Episode {episode.episode_number || ''}
+</div>
 
       {adultBlocked ? (
         <div className={`${theme.card} flex min-h-[58vh] items-center justify-center px-4 py-10`}>
