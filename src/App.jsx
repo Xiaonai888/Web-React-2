@@ -78,6 +78,7 @@ const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
+const RomanceLatestPage = lazy(() => import('./pages/Genre/RomanceLatestPage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./pages/Genre/ActionGenrePage'))
 const ComedyGenrePage = lazy(() => import('./pages/Genre/ComedyGenrePage'))
@@ -240,6 +241,7 @@ function AppShell() {
     '/author/stories',
     '/reader/story/create',
     '/author/notifications',
+    '/genre/romance/latest',
   ]
 
   const shouldHideFooter =
@@ -1146,6 +1148,7 @@ const shouldShowOpeningAds =
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
+        <Route path="/genre/romance/latest" element={<LazyPage><RomanceLatestPage /></LazyPage>} />
   
  
       </Routes>
