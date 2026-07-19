@@ -402,7 +402,7 @@ export default function RomanceGenrePage({ embedded = false }) {
               </picture>
             ) : (
               <div className="flex h-full w-full items-center justify-between px-5">
-                <div className="text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
                 <i className="fa-solid fa-heart text-[42px] text-white/85" />
               </div>
             )}
