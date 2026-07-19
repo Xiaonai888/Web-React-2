@@ -143,16 +143,14 @@ export default function DiscoverAuthorsYouMayLikeSection() {
                 '/api/authors/discover?limit=12'
               )
           } catch {
-            suggestions =
-              await requestAuthors(
-                token,
-                '/api/authors/top?limit=20'
-              )
+            suggestions = []
           }
-        } else {
+        }
+
+        if (!suggestions.length) {
           suggestions =
             await requestAuthors(
-              '',
+              token,
               '/api/authors/top?limit=20'
             )
         }
