@@ -179,8 +179,8 @@ const PAGING_CHARACTERS_PER_LINE = {
 const READER_THEMES = {
   light: {
     name: 'White',
-    page: 'bg-white',
-    card: 'bg-white',
+    page: 'bg-[#FFFFFF]',
+    card: 'bg-[#FFFFFF]',
     text: 'text-[#24201b]',
     muted: 'text-[#8a8175]',
     soft: 'bg-[#f3f4f6]',
