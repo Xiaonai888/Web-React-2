@@ -803,25 +803,12 @@ function RealFeedErrorState({ onRetry }) {
 
 function PromotionLink({ to, className, children }) {
   const destination = String(to || '/shop').trim() || '/shop'
-
-  if (/^https?:\/\//i.test(destination)) {
-    return (
-      <a
-        href={destination}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={className}
-      >
-        {children}
-      </a>
-    )
+  const url = new URL(destination, window.location.origin)
+  const internalHosts = new Set([window.location.hostname, 'shadowerabook.site', 'www.shadowerabook.site'])
+  if (internalHosts.has(url.hostname)) {
+    return <Link to={`${url.pathname}${url.search}${url.hash}`} className={className}>{children}</Link>
   }
-
-  return (
-    <Link to={destination} className={className}>
-      {children}
-    </Link>
-  )
+  return <a href={destination} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>
 }
 
 function AdsCard({ item, onMore, onHide }) {
