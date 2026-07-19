@@ -1213,19 +1213,17 @@ export default function ReaderPostCommentsModal({
             : 'transform 220ms ease',
         }}
       >
-        <div
-          role="presentation"
-          onPointerDown={startDrag}
-          onPointerMove={moveDrag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          className="flex h-10 shrink-0 cursor-grab items-center justify-center bg-white"
-          style={{ touchAction: 'none' }}
-        >
-          <div className="h-1.5 w-12 rounded-full bg-[#d1d5db]" />
-        </div>
-
-        <header className="shrink-0 border-b border-[#eef0f4] bg-white px-4 pb-3">
+       
+        <header
+  role="presentation"
+  onPointerDown={startDrag}
+  onPointerMove={moveDrag}
+  onPointerUp={endDrag}
+  onPointerCancel={endDrag}
+  onLostPointerCapture={endDrag}
+  className="shrink-0 cursor-grab touch-none border-b border-[#eef0f4] bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+  style={{ touchAction: 'none' }}
+>
           <div className="grid grid-cols-3 items-center gap-2 text-center">
             <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
               <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
