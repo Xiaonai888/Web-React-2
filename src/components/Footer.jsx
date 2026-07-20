@@ -1,9 +1,13 @@
 import { NavLink } from 'react-router-dom'
 
-function StoriesIcon() {
+function StoriesIcon({ active }) {
   return (
     <img
-      src="/assets/Icons/Stories.svg"
+      src={
+        active
+          ? '/assets/Icons/Stories-active.svg'
+          : '/assets/Icons/Stories.svg'
+      }
       alt=""
       className="h-[21px] w-[21px] object-contain"
     />
@@ -57,23 +61,32 @@ function CompassIcon({ active }) {
 function BookIcon({ active }) {
   return (
     <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
-      <path
-        d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12H7a2 2 0 0 1-2-2V4.5Z"
+      <g
         fill={active ? '#F6C800' : 'none'}
         stroke="#111827"
-        strokeWidth="1.9"
+        strokeWidth="1.7"
+        strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <path
-        d="M7 19a2 2 0 0 1 0-4h11"
+      >
+        <path d="M4.5 18V6.5c0-.55.45-1 1-1h3V18Z" />
+        <path d="M8.5 18V4.5c0-.55.45-1 1-1h3c.55 0 1 .45 1 1V18Z" />
+        <path d="M13.5 7.2 17 6.3c.54-.14 1.08.19 1.21.73L20.8 17.1c.14.54-.19 1.08-.73 1.21l-3.47.89-3.1-12Z" />
+        <path d="M3 18.5h18v2H3z" />
+      </g>
+
+      <g
         fill="none"
         stroke="#111827"
-        strokeWidth="1.9"
+        strokeWidth="1.7"
         strokeLinecap="round"
-      />
+      >
+        <path d="M10 7h2" />
+        <path d="M15.5 10.4 18.2 9.7" />
+      </g>
     </svg>
   )
 }
+
 
 function SmileIcon({ active }) {
   return (
@@ -101,16 +114,9 @@ function SmileIcon({ active }) {
 
 function ChatStoryIcon({ active }) {
   return (
-    <span
-      className="flex h-[21px] w-[21px] items-center justify-center rounded-full"
-      style={{
-        backgroundColor: active ? '#F6C800' : 'transparent',
-      }}
-    >
-      <i
-        className="fa-regular fa-comments text-[17px]"
-        style={{ color: '#111827' }}
-      />
+    <span className="relative flex h-[21px] w-[21px] items-center justify-center">
+      {active && <i className="fa-solid fa-comments absolute scale-[0.82] text-[17px] text-[#F6C800]" />}
+      <i className="fa-regular fa-comments relative z-10 text-[17px] text-[#111827]" />
     </span>
   )
 }
