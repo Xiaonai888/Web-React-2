@@ -382,9 +382,15 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
 function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
   const [search, setSearch] = useState('')
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customTag, setCustomTag] = useState('')
 
   useEffect(() => {
-    if (open) setSelected(value || [])
+    if (!open) return
+    setSelected(value || [])
+    setSearch('')
+    setCustomOpen(false)
+    setCustomTag('')
   }, [open, value])
 
   if (!open) return null
@@ -400,11 +406,17 @@ function TagSheet({ open, value, onClose, onSave }) {
   }
 
   const addCustom = () => {
-    const tag = search.trim()
-    if (!tag || selected.includes(tag) || selected.length >= 6) return
-    setSelected((current) => [...current, tag])
-    setSearch('')
-  }
+  const tag = customTag.trim()
+  const exists = selected.some(
+    (item) => item.toLowerCase() === tag.toLowerCase()
+  )
+
+  if (!tag || exists || selected.length >= 6) return
+
+  setSelected((current) => [...current, tag])
+  setCustomTag('')
+  setCustomOpen(false)
+}
 
   return (
     <div className="fixed inset-0 z-[130] bg-white">
@@ -431,17 +443,46 @@ function TagSheet({ open, value, onClose, onSave }) {
           />
         </div>
 
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="text-[14px] font-extrabold text-[#111827]">Selected ({selected.length}/6)</div>
-          <button
-            type="button"
-            onClick={addCustom}
-            disabled={!search.trim() || selected.length >= 6}
-            className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#d0d5dd]"
-          >
-            + Custom
-          </button>
-        </div>
+        <div className="mb-5">
+  <div className="flex items-center justify-between gap-3">
+    <div className="text-[14px] font-extrabold text-[#111827]">
+      Selected ({selected.length}/6)
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setCustomOpen((current) => !current)}
+      disabled={selected.length >= 6}
+      className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#d0d5dd]"
+    >
+      + Custom
+    </button>
+  </div>
+
+  {customOpen ? (
+    <div className="mt-3 flex items-center gap-2 rounded-[16px] bg-[#f2f4f7] p-2">
+      <input
+        value={customTag}
+        onChange={(event) => setCustomTag(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') addCustom()
+        }}
+        placeholder="Write your custom tag"
+        autoFocus
+        className="h-10 min-w-0 flex-1 bg-transparent px-3 text-[13px] text-[#111827] outline-none"
+      />
+
+      <button
+        type="button"
+        onClick={addCustom}
+        disabled={!customTag.trim() || selected.length >= 6}
+        className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-extrabold text-white disabled:bg-[#d0d5dd]"
+      >
+        Add
+      </button>
+    </div>
+  ) : null}
+</div>
 
         {selected.length ? (
           <div className="mb-7 flex flex-wrap gap-2">
