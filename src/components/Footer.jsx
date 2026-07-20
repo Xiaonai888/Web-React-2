@@ -99,21 +99,21 @@ function SmileIcon({ active }) {
   )
 }
 
-function ChatStoryIcon() {
+function ChatStoryIcon({ active }) {
   return (
     <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
       <path
-        d="M5 5h8.5A2.5 2.5 0 0 1 16 7.5v5a2.5 2.5 0 0 1-2.5 2.5H10l-3.5 2.5.8-2.5H5a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 5 5Z"
-        fill="#fff"
+        d="M4.5 5.5h8A2.5 2.5 0 0 1 15 8v3.5a2.5 2.5 0 0 1-2.5 2.5H9l-3.5 2.5.7-2.5H4.5A2.5 2.5 0 0 1 2 11.5V8a2.5 2.5 0 0 1 2.5-2.5Z"
+        fill={active ? '#F6C800' : 'none'}
         stroke="#111827"
-        strokeWidth="1.9"
+        strokeWidth="1.6"
         strokeLinejoin="round"
       />
       <path
-        d="M11 7h8a2.5 2.5 0 0 1 2.5 2.5v5A2.5 2.5 0 0 1 19 17h-2.2l.8 2.5-3.5-2.5H11a2.5 2.5 0 0 1-2.5-2.5v-5A2.5 2.5 0 0 1 11 7Z"
-        fill="#fff"
+        d="M11.5 8h6A2.5 2.5 0 0 1 20 10.5V14a2.5 2.5 0 0 1-2.5 2.5H16l.7 2.5-3.5-2.5h-1.7A2.5 2.5 0 0 1 9 14v-3.5A2.5 2.5 0 0 1 11.5 8Z"
+        fill={active ? '#F6C800' : 'none'}
         stroke="#111827"
-        strokeWidth="1.9"
+        strokeWidth="1.6"
         strokeLinejoin="round"
       />
     </svg>
