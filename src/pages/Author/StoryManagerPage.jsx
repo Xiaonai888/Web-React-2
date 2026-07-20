@@ -414,6 +414,8 @@ export default function StoryManagerPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState('published')
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
   const [selectedEpisode, setSelectedEpisode] = useState(null)
   const [deleteEpisode, setDeleteEpisode] = useState(null)
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
@@ -430,10 +432,25 @@ export default function StoryManagerPage() {
   )
 
   const visibleEpisodes = activeTab === 'published' ? publishedEpisodes : draftEpisodes
+const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
+const pageStart = (currentPage - 1) * pageSize
+const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
 
-  const totalCharacters = useMemo(() => getTotalCharacters(episodes), [episodes])
+const paginatedEpisodes = useMemo(
+  () => visibleEpisodes.slice(pageStart, pageEnd),
+  [visibleEpisodes, pageStart, pageEnd]
+)
+
+const totalCharacters = useMemo(() => getTotalCharacters(episodes), [episodes])
   const storyUpdatedLabel = useMemo(() => getStoryUpdatedLabel(story, episodes), [story, episodes])
   const libraryAdds = formatCompactNumber(story?.library_count || story?.total_library || story?.total_subscribers || 0)
+  useEffect(() => {
+  setCurrentPage(1)
+}, [activeTab, pageSize])
+
+useEffect(() => {
+  if (currentPage > totalPages) setCurrentPage(totalPages)
+}, [currentPage, totalPages])
 
   useEffect(() => {
     let ignore = false
@@ -841,17 +858,57 @@ export default function StoryManagerPage() {
               </div>
 
               {visibleEpisodes.length ? (
-                <div className="space-y-3">
-                  {visibleEpisodes.map((episode) => (
-                    <EpisodeRow
-                      key={episode.id}
-                      episode={episode}
-                      onOpen={handleEditEpisode}
-                      onMore={setSelectedEpisode}
-                    />
-                  ))}
-                </div>
-              ) : (
+  <>
+    <div className="space-y-3">
+      {paginatedEpisodes.map((episode) => (
+        <EpisodeRow
+          key={episode.id}
+          episode={episode}
+          onOpen={handleEditEpisode}
+          onMore={setSelectedEpisode}
+        />
+      ))}
+    </div>
+
+    {visibleEpisodes.length >= 10 ? (
+      <div className="mt-3 flex items-center justify-end gap-2 rounded-[12px] bg-[#eef0f3] px-3 py-2 text-[11px] font-semibold text-[#667085]">
+        <span>EP/Page:</span>
+
+        <select
+          value={pageSize}
+          onChange={(event) => setPageSize(Number(event.target.value))}
+          className="h-7 rounded-md border border-[#d8dde5] bg-white px-2 text-[11px] font-semibold text-[#111827] outline-none"
+        >
+          <option value={10}>10</option>
+          <option value={30}>30</option>
+          <option value={50}>50</option>
+        </select>
+
+        <span className="min-w-[78px] text-center">
+          {pageStart + 1}–{pageEnd} of {visibleEpisodes.length}
+        </span>
+
+        <button
+          type="button"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          className="flex h-7 w-7 items-center justify-center rounded-full active:bg-white disabled:opacity-25"
+        >
+          <i className="fa-solid fa-chevron-left text-[10px]" />
+        </button>
+
+        <button
+          type="button"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          className="flex h-7 w-7 items-center justify-center rounded-full active:bg-white disabled:opacity-25"
+        >
+          <i className="fa-solid fa-chevron-right text-[10px]" />
+        </button>
+      </div>
+    ) : null}
+  </>
+) : (
                 <div className="rounded-[24px] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
                     <i className="fa-regular fa-file-lines text-[22px]" />
