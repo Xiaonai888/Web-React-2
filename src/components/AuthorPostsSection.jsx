@@ -258,7 +258,7 @@ function PostImageGrid({ images, onView }) {
   )
 }
 
-function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onEcho, onViewImage, onMessage }) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
