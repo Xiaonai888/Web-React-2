@@ -183,7 +183,7 @@ export default function WalletPage() {
     <div className="min-h-screen bg-white pb-8">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
         <div className="flex h-14 items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100" aria-label="Go back">
+          <button type="button" onClick={() => navigate('/me', { replace: true })} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100" aria-label="Go back">
             <i className="fas fa-chevron-left text-[18px] text-gray-700" />
           </button>
           <h1 className="flex-1 text-[18px] font-bold tracking-tight text-neutral-900">Wallet</h1>
