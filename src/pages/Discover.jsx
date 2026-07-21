@@ -1274,13 +1274,15 @@ export default function DiscoverPage() {
   }
 
   function hideShadowMallPromotion(item) {
-    if (item) {
-      hideShadowMallAdLocally(item)
-    }
-
-    setShadowMallPromotion(null)
-    setAdOptionsItem(null)
+  if (item) {
+    hideShadowMallAdLocally(item)
   }
+
+  setShadowMallPromotions((current) =>
+    current.filter((promotion) => promotion.id !== item?.id)
+  )
+  setAdOptionsItem(null)
+}
 
   function hidePostFromDiscover(postId) {
     setRealPosts((current) =>
