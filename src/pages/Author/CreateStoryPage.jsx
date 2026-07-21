@@ -575,7 +575,13 @@ export default function CreateStoryPage() {
   const [searchParams] = useSearchParams()
   const editStoryId = searchParams.get('editStoryId')
   const isEditMode = Boolean(editStoryId)
+  const requestedType = searchParams.get('type')
+  const initialStoryType =
+  requestedType === 'Chat Story' || requestedType === 'chat-story'
+    ? 'Chat Story'
+    : 'Novel'
 
+  const [storyType, setStoryType] = useState(initialStoryType)
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
@@ -693,6 +699,7 @@ export default function CreateStoryPage() {
 
         const story = data.story || {}
 
+        setStoryType(story.story_type || 'Novel')
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
@@ -979,6 +986,7 @@ if (cropMode === 'slide') {
           },
           body: JSON.stringify({
             title: title.trim(),
+            story_type: storyType,
             story_language: language,
             main_genre: genre,
             story_status: storyStatus,
