@@ -507,7 +507,7 @@ setSuccessOpen(true)
             {isFirstEpisode ? (
               <div className="flex gap-3">
                 <i className="fa-solid fa-check mt-1 text-[12px] text-[#16803c]" />
-                <span>The first episode is free for readers and does not generate income.</span>
+                <span>Episodes 1–5 are free for readers and do not generate paid income.</span>
               </div>
             ) : null}
 
