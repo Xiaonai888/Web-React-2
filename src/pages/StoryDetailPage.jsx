@@ -580,7 +580,7 @@ setSubscribed(isSubscribed)
 
     const alreadyUnlocked = unlockedEpisodeIds.includes(episode.id)
 
-    if (episode.is_locked && Number(episode.episode_number || 0) > 1 && !alreadyUnlocked) {
+    if (episode.is_locked && Number(episode.episode_number || 0) > 5 && !alreadyUnlocked) {
       navigate(`/story/${realStoryId}/episode/${episode.id}`, {
         state: {
           expectedLocked: true,
