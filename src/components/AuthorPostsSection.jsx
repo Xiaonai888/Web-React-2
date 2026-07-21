@@ -451,18 +451,10 @@ function cancelReactionPress() {
   {formatCompactNumber(post.comment_count)}
 </button>
 
-  <button
-    type="button"
-    onClick={() => onEcho(post)}
-    className="inline-flex items-center gap-1.5 active:scale-95"
-  >
-    <img
-  src="/assets/Icons/echo.svg"
-  alt=""
-  className="h-[15px] w-[15px] object-contain"
+ <AuthorPostEchoAction
+  post={post}
+  author={author}
 />
-{formatCompactNumber(post.echo_count)}
-  </button>
 </div>
     </article>
   )
