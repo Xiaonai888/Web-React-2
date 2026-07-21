@@ -21,7 +21,7 @@ function formatDate(value) {
 
 function EpisodeRow({ episode, story, onOpenEpisode }) {
   const cover = episode.cover_url || story?.cover_url || ''
-  const locked = episode.is_locked && Number(episode.episode_number || 0) > 1
+  const locked = episode.is_locked && Number(episode.episode_number || 0) > 5
   const date = formatDate(episode.created_at || episode.published_at || episode.updated_at)
   const likes = formatShortNumber(episode.total_likes || episode.likes_count || episode.likes || 0)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
