@@ -132,20 +132,15 @@ async function fetchFollowedPosts(token, cursor = '') {
 }
 
 
-async function fetchShadowMallPromotion() {
-  const response = await fetch(
-    `${API_BASE_URL}/api/shadow-mall/promotion`
-  )
-
+async function fetchShadowMallPromotions() {
+  const response = await fetch(`${API_BASE_URL}/api/shadow-mall/promotions?limit=20`)
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || 'Failed to load Shadow Mall promotion'
-    )
+    throw new Error(data.message || 'Failed to load Shadow Mall promotions')
   }
 
-  return data.promotion || null
+  return Array.isArray(data.promotions) ? data.promotions : []
 }
 
 
