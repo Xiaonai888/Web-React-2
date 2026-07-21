@@ -168,6 +168,29 @@ function isUsableRouteId(value) {
   return Boolean(text && text !== 'undefined' && text !== 'null')
 }
 
+function shouldShowToBeContinued(story, episodes, episode) {
+  if (String(story?.story_status || '').trim().toLowerCase() === 'completed') return false
+  const currentNumber = Number(episode?.episode_number || 0)
+  if (currentNumber <= 0) return false
+  return !(episodes || []).some((item) =>
+    String(item?.status || 'published').toLowerCase() === 'published' &&
+    Number(item?.episode_number || 0) > currentNumber
+  )
+}
+
+function ToBeContinued({ theme }) {
+  return (
+    <div className={`px-4 pb-8 pt-3 text-center ${theme.card}`}>
+      <div className={`text-[15px] font-medium tracking-[0.08em] ${theme.muted}`}>to be continued</div>
+      <div className="mx-auto mt-4 flex max-w-[260px] items-center gap-3">
+        <span className={`h-px flex-1 border-t ${theme.border}`} />
+        <span className="text-[15px]">❤️</span>
+        <span className={`h-px flex-1 border-t ${theme.border}`} />
+      </div>
+    </div>
+  )
+}
+
 const REVIEW_READ_PROGRESS_PERCENT = 85
 const PAGING_LINES_PER_PAGE = 20
 
@@ -3552,6 +3575,7 @@ function ContinuousEpisodeBlock({
   onOpenGift,
   onReachLocked,
   adultAccepted,
+  showToBeContinued,
 }) {
   const episode = entry?.episode || {}
   const lockedSectionRef = useRef(null)
@@ -3648,6 +3672,8 @@ function ContinuousEpisodeBlock({
               </article>
             </div>
           </section>
+
+          {showToBeContinued ? <ToBeContinued theme={theme} /> : null}
 
           <ReaderEndPanel
             story={story}
@@ -5556,6 +5582,7 @@ onUnlock={handleLockedDiamondUnlock}
                 active={String(entry.id) === String(episodeId)}
                 theme={theme}
                 story={story}
+                showToBeContinued={shouldShowToBeContinued(story, episodes, entry.episode)}
                 fontSizePx={fontSizePx}
                 fontFamily={activeFont.family}
                 lineSpacing={lineSpacing}
@@ -5690,18 +5717,22 @@ onUnlock={handleLockedDiamondUnlock}
             </section>
 
             {isLastReadingPage ? (
-  <>
-    <ReaderEndPanel
-      story={story}
-      episode={episode}
-      onOpenComments={() => {
-    setCommentEpisode(episode)
-    setCommentsOpen(true)
-  }}
-      onOpenGift={() => setGiftPopupOpen(true)}
-    />
-  </>
-) : null}
+              <>
+                {shouldShowToBeContinued(story, episodes, episode) ? (
+                  <ToBeContinued theme={theme} />
+                ) : null}
+
+                <ReaderEndPanel
+                  story={story}
+                  episode={episode}
+                  onOpenComments={() => {
+                    setCommentEpisode(episode)
+                    setCommentsOpen(true)
+                  }}
+                  onOpenGift={() => setGiftPopupOpen(true)}
+                />
+              </>
+            ) : null}
           </>
         ) : null}
       </main>
