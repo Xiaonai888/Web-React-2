@@ -488,7 +488,7 @@ export default function AuthorIncomePage() {
                 <div>
                   <div className="text-[15px] font-black text-[#111827]">Income Rules</div>
                   <p className="mt-1 text-[12.5px] font-medium leading-6 text-[#8d94a1]">
-                    Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and free first episodes do not count as paid income yet.
+                    Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.
                   </p>
                   
                 </div>
