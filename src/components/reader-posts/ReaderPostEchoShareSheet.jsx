@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import {
   useEffect,
   useMemo,
@@ -150,6 +151,7 @@ function getPostLink(post) {
 
 function ShareCircle({
   icon,
+  iconNode,
   label,
   bg = 'bg-white',
   color = 'text-[#111827]',
@@ -164,9 +166,9 @@ function ShareCircle({
       <div
         className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 ${bg} ${color}`}
       >
-        <i
-          className={`${icon} text-[22px]`}
-        />
+        {iconNode || (
+  <i className={`${icon} text-[22px]`} />
+)}
       </div>
       <div className="mt-2 text-[12px] font-normal leading-4 text-[#111827]">
         {label}
@@ -663,14 +665,14 @@ export default function ReaderPostEchoShareSheet({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/40">
-      <button
-        type="button"
-        aria-label="Close echo share"
-        onClick={onClose}
-        className="absolute inset-0"
-      />
+  return createPortal(
+  <div className="fixed inset-0 z-[200000] flex items-end justify-center">
+    <button
+      type="button"
+      aria-label="Close echo share"
+      onClick={onClose}
+      className="absolute inset-0 bg-black/60"
+    />
 
       <section
         ref={sheetRef}
@@ -810,7 +812,7 @@ export default function ReaderPostEchoShareSheet({
               type="button"
               onClick={handleEchoNow}
               disabled={sending}
-              className="h-11 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-6 text-[14px] font-normal text-white shadow-[0_8px_20px_rgba(139,92,246,0.28)] active:scale-95 disabled:opacity-60"
+              className="h-9 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-5 text-[13px] font-normal text-white shadow-[0_6px_16px_rgba(139,92,246,0.24)] active:scale-95 disabled:opacity-60"
             >
               {sending
                 ? 'Echoing...'
@@ -872,10 +874,21 @@ export default function ReaderPostEchoShareSheet({
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2">
             <ShareCircle
-              icon="fa-solid fa-link"
-              label="Copy link"
-              onClick={handleCopyLink}
-            />
+  label="Copy link"
+  iconNode={
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-[23px] w-[23px]"
+    >
+      <path d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15" />
+      <path d="M14 11a5 5 0 0 0-7.07 0l-2 2A5 5 0 0 0 12 20.07l1.15-1.15" />
+    </svg>
+  }
+  onClick={handleCopyLink}
+/>
             <ShareCircle
               icon="fa-brands fa-telegram"
               label="Telegram"
@@ -925,6 +938,7 @@ export default function ReaderPostEchoShareSheet({
           }}
         />
       ) : null}
-    </div>
+        </div>,
+    document.body
   )
 }
