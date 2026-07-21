@@ -18,6 +18,7 @@ import ShadowMallAdOptionsSheet, {
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
+import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
