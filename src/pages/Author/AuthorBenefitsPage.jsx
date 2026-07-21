@@ -229,8 +229,8 @@ export default function AuthorBenefitsPage() {
             />
             <RuleRow
               positive={false}
-              title="Free first episode"
-              text="Free first episode access helps readers discover your story, but it does not count as paid income."
+              title="Free first 5 episodes"
+text="Episodes 1–5 help readers discover your story, but they do not count as paid income."
             />
             <RuleRow
               positive={false}
