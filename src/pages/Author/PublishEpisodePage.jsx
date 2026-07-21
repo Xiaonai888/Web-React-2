@@ -186,7 +186,7 @@ function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onA
             </p>
 
             <div className="mt-5 rounded-[18px] bg-[#f5f8ff] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#0b5cff]">
-              Note: The first episode is free for readers. Income usually starts from Episode 2.
+              Note: The first episode is free for readers. Income usually starts from Episode 6.
             </div>
           </>
         ) : (
