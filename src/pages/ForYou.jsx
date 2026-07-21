@@ -403,7 +403,7 @@ useEffect(() => {
 
   useEffect(() => {
   if (
-    contentGenre !== 'today' ||
+    (!titleOnlySections && contentGenre !== 'today') ||
     !window.Swiper ||
     slides.length === 0
   ) {
@@ -458,7 +458,7 @@ useEffect(() => {
         swiperRef.current = null
       }
     }
-  }, [slides, contentGenre])
+  }, [slides, contentGenre, titleOnlySections])
 
   return (
     <>
