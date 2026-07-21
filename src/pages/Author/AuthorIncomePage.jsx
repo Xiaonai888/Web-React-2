@@ -334,7 +334,7 @@ export default function AuthorIncomePage() {
         <p>Your income is shown as money, but the system records earnings from Diamond unlocks.</p>
         <p>Your share depends on your Quest stage.</p>
         <p>Payouts are processed automatically every 15th. You don’t need to request withdrawal.</p>
-        <p>Free unlocks, Gems, Vouchers, Story Cards, and free first episodes don’t count as paid income yet.</p>
+        <p>Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.</p>
       </div>
 
       <button
