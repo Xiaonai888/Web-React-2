@@ -1018,7 +1018,7 @@ export default function DiscoverPage() {
   const [realPostsLoading, setRealPostsLoading] = useState(true)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
-  const [shadowMallPromotion, setShadowMallPromotion] = useState(null)
+  const [shadowMallPromotions, setShadowMallPromotions] = useState([])
   const [commentPost, setCommentPost] = useState(null)
   const [optionsPost, setOptionsPost] = useState(null)
   const [adOptionsItem, setAdOptionsItem] = useState(null)
@@ -1029,33 +1029,35 @@ export default function DiscoverPage() {
   })
 
   useEffect(() => {
-    let alive = true
+  let alive = true
 
-    async function loadShadowMallPromotion() {
-      try {
-        const promotion = await fetchShadowMallPromotion()
+  async function loadShadowMallPromotions() {
+    try {
+      const promotions = await fetchShadowMallPromotions()
 
-        if (alive) {
-          setShadowMallPromotion(
-            promotion && !isShadowMallAdHidden(promotion)
-              ? promotion
-              : null
+      if (alive) {
+        setShadowMallPromotions(
+          promotions.filter(
+            (item) =>
+              item &&
+              !isShadowMallAdHidden(item)
           )
-        }
-      } catch {
-        if (alive) {
-          setShadowMallPromotion(null)
-        }
+        )
+      }
+    } catch {
+      if (alive) {
+        setShadowMallPromotions([])
       }
     }
+  }
 
-    loadShadowMallPromotion()
+  loadShadowMallPromotions()
 
-    return () => {
-      alive = false
-    }
-  }, [])
-
+  return () => {
+    alive = false
+  }
+}, [])
+  
   useEffect(() => {
     let alive = true
 
