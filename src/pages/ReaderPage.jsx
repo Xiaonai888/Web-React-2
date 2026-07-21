@@ -2644,14 +2644,16 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
           {sortedEpisodes.map((item) => {
             const active = String(item.id) === String(currentEpisodeId)
             const read = readEpisodeIds.includes(String(item.id))
-            const locked = Boolean(
-  item.is_locked ||
-  item.locked ||
-  item.access_locked ||
-  item.requires_unlock ||
-  item.is_premium ||
-  item.lock_type
-)
+            const locked =
+  Number(item.episode_number || 0) > 5 &&
+  Boolean(
+    item.is_locked ||
+    item.locked ||
+    item.access_locked ||
+    item.requires_unlock ||
+    item.is_premium ||
+    item.lock_type
+  )
 
 const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
 
