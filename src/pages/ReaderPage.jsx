@@ -3677,7 +3677,10 @@ export default function ReaderPage() {
   const expectedLocked = Boolean(location.state?.expectedLocked)
   const expectedStory = location.state?.storyPreview || null
   const expectedEpisode = location.state?.episodePreview || null
-  const hasExpectedLockedPreview = expectedLocked && Boolean(expectedEpisode)
+  const hasExpectedLockedPreview =
+  expectedLocked &&
+  Boolean(expectedEpisode) &&
+  Number(expectedEpisode.episode_number || 0) > 5
   const autoScrollFrameRef = useRef(null)
   const qualifiedViewSentRef = useRef(false)
   const readingProgressRef = useRef(0)
