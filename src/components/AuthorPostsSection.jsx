@@ -968,26 +968,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         />
       )}
 
-
-<EchoShareSheet
-  open={Boolean(echoPost)}
-  story={echoPost ? {
-    id: echoPost.id,
-    title: echoPost.content || 'Author post',
-    cover_url: echoPost.image_urls?.[0] || '',
-    main_genre: 'Author Post',
-    author_page: {
-      page_name: author?.page_name || 'Author',
-      page_username: author?.page_username || '',
-    },
-  } : null}
-  onClose={() => setEchoPost(null)}
-  onEchoed={() => {
-    setEchoPost(null)
-    onMessage?.('Echo posted.')
-  }}
-/>
-
       <AuthorPostComposerSheet
         open={composerOpen}
         author={author}
