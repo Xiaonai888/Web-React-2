@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import {
   useEffect,
   useMemo,
@@ -595,6 +596,7 @@ export default function ReaderPostCommentsModal({
   const sheetRef = useRef(null)
   const composerRef = useRef(null)
   const dragStartYRef = useRef(0)
+  const dragCurrentYRef = useRef(0)
   const draggingRef = useRef(false)
 
   const currentUser = useMemo(
@@ -638,6 +640,8 @@ export default function ReaderPostCommentsModal({
     useState(null)
   const [hiddenIds, setHiddenIds] =
     useState(() => new Set())
+  const [dragging, setDragging] =
+    useState(false)
   const [dragOffset, setDragOffset] =
     useState(0)
 
@@ -669,14 +673,19 @@ export default function ReaderPostCommentsModal({
   useEffect(() => {
     if (!open) return undefined
 
-    document.body.style.overflow = 'hidden'
+    const previousOverflow =
+      document.body.style.overflow
+
     setDragOffset(0)
+    setDragging(false)
+    document.body.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow =
+        previousOverflow
     }
   }, [open])
-
+  
   const showToast = (value) => {
     setToast(value)
     window.clearTimeout(showToast.timer)
@@ -1160,8 +1169,21 @@ export default function ReaderPostCommentsModal({
   }
 
   const startDrag = (event) => {
+    if (!event.isPrimary) return
+
+    if (
+      event.pointerType === 'mouse' &&
+      event.button !== 0
+    ) {
+      return
+    }
+
     draggingRef.current = true
+    setDragging(true)
+
     dragStartYRef.current = event.clientY
+    dragCurrentYRef.current = event.clientY
+
     event.currentTarget.setPointerCapture?.(
       event.pointerId
     )
@@ -1169,6 +1191,8 @@ export default function ReaderPostCommentsModal({
 
   const moveDrag = (event) => {
     if (!draggingRef.current) return
+
+    dragCurrentYRef.current = event.clientY
 
     setDragOffset(
       Math.max(
@@ -1182,9 +1206,16 @@ export default function ReaderPostCommentsModal({
   const endDrag = () => {
     if (!draggingRef.current) return
 
-    draggingRef.current = false
+    const distance = Math.max(
+      0,
+      dragCurrentYRef.current -
+        dragStartYRef.current
+    )
 
-    if (dragOffset > 70) {
+    draggingRef.current = false
+    setDragging(false)
+
+    if (distance > 70) {
       onClose()
       return
     }
@@ -1194,36 +1225,37 @@ export default function ReaderPostCommentsModal({
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[200000] flex items-end justify-center sm:items-center sm:px-4">
-  <button
-    type="button"
-    onClick={onClose}
-    className="absolute inset-0 bg-black/60"
-    aria-label="Close comments"
-  />
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60"
+        aria-label="Close comments"
+      />
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100vh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100vh-24px)] sm:rounded-[28px]"
+        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
-          transition: draggingRef.current
+          transition: dragging
             ? 'none'
-            : 'transform 220ms ease',
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'transform',
         }}
       >
        
         <header
-  role="presentation"
-  onPointerDown={startDrag}
-  onPointerMove={moveDrag}
-  onPointerUp={endDrag}
-  onPointerCancel={endDrag}
-  onLostPointerCapture={endDrag}
-  className="shrink-0 cursor-grab touch-none border-b border-[#eef0f4] bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
-  style={{ touchAction: 'none' }}
->
+          role="presentation"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onLostPointerCapture={endDrag}
+          className="shrink-0 cursor-grab touch-none border-b border-[#eef0f4] bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+        >
           <div className="grid grid-cols-3 items-center gap-2 text-center">
             <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
               <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
@@ -1491,6 +1523,7 @@ export default function ReaderPostCommentsModal({
           }
         />
       </section>
-    </div>
+    </div>,
+    document.body
   )
 }
