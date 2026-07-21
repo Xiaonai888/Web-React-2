@@ -5406,39 +5406,29 @@ return (
       className={lockedHeaderActive ? '!text-white' : theme.text}
     />
 
-    <div className="min-w-0 px-3 text-center">
-      {!lockedHeaderActive ? (
-        <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
-          {story?.title || 'Reader'}
-        </h1>
-      ) : null}
-    </div>
+    <div className="min-w-0 flex-1 px-3 text-center">
+  {lockedHeaderActive ? (
+    <h1 className="line-clamp-1 text-[14.5px] font-extrabold text-white">
+      {continuousLockedEntry?.episode?.title ||
+        episode?.title ||
+        'Untitled Episode'}
+    </h1>
+  ) : (
+    <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
+      {story?.title || 'Reader'}
+    </h1>
+  )}
+</div>
 
     <div className="relative">
-      {lockedHeaderActive ? (
-  <button
-    type="button"
-    onClick={() =>
-      navigate(`/story/${storyId}`, {
-        replace: true,
-      })
-    }
-    className="flex h-9 items-center gap-1.5 rounded-full border border-white/25 bg-black px-2.5 text-[13px] font-extrabold text-white shadow-[0_3px_12px_rgba(0,0,0,0.35)] active:scale-95"
-    aria-label="Story information"
-  >
-    <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-[#F6C800] text-[11px] font-black text-[#111111]">
-      <i className="fa-solid fa-info" />
-    </span>
-    <span>INFO</span>
-  </button>
-) : (
-        <ReaderIconButton
-          icon="fa-solid fa-ellipsis-vertical"
-          label="More options"
-          onClick={() => setReaderMoreOpen((value) => !value)}
-          className={theme.text}
-        />
-      )}
+  {!lockedHeaderActive ? (
+    <>
+      <ReaderIconButton
+        icon="fa-solid fa-ellipsis-vertical"
+        label="More options"
+        onClick={() => setReaderMoreOpen((value) => !value)}
+        className={theme.text}
+      />
 
       {readerMoreOpen ? (
         <div className="absolute right-0 top-10 z-[80] w-[158px] overflow-hidden rounded-[8px] border border-[#e5e7eb] bg-white shadow-[0_12px_30px_rgba(17,24,39,0.16)]">
@@ -5470,7 +5460,11 @@ return (
           </button>
         </div>
       ) : null}
-    </div>
+    </>
+  ) : (
+    <span className="block h-10 w-10" aria-hidden="true" />
+  )}
+</div>
   </div>
 </header>
 
