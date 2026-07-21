@@ -93,8 +93,8 @@ function PaymentProfileModal({ value, saving, message, onChange, onClose, onSave
             <i className="fas fa-times text-[14px]" />
           </button>
         </div>
-        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Payment account name</label>
-        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder="KEO DARIYA" className="mt-2 h-12 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[14px] font-bold uppercase text-[#111111] outline-none focus:border-[#111111]" />
+        <label className="text-[11px] font-normal uppercase tracking-[0.1em] text-[#6B7280]">Payment account name</label>
+        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder="KEO DARIYA" className="mt-2 h-12 w-full rounded-[16px] border border-[#E5E7EB] bg-[#F8F8F8] px-4 text-[14px] font-normal uppercase text-[#111111] outline-none focus:border-[#111111]" />
         {message ? <p className="mt-3 text-center text-[12px] font-bold text-[#111111]">{message}</p> : null}
         <button type="button" onClick={onSave} disabled={saving} className="mt-4 h-12 w-full rounded-[18px] bg-[#111111] text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-60">{saving ? 'Saving...' : 'Save'}</button>
         <button type="button" onClick={onClose} className="mt-3 h-12 w-full rounded-[18px] border border-[#E5E7EB] bg-white text-[14px] font-normal text-[#111111] active:scale-[0.99]">Cancel</button>
