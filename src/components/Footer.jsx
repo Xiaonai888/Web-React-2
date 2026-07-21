@@ -123,9 +123,9 @@ function ChatStoryIcon({ active }) {
 
 const NAV = [
   { to: '/', label: 'Stories', Icon: StoriesIcon },
+  { to: '/manga', label: 'Manga', Icon: BookIcon },
   { to: '/chat-story', label: 'Chat Story', Icon: ChatStoryIcon },
   { to: '/discover', label: 'Discover', Icon: CompassIcon },
-  { to: '/library', label: 'Library', Icon: BookIcon },
   { to: '/me', label: 'Mine', Icon: SmileIcon },
 ]
 
