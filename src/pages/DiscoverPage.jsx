@@ -710,18 +710,10 @@ function RealFollowedPostCard({
           <span>{Number(post.comment_count || 0)}</span>
         </button>
 
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Echo"
-        >
-          <img
-            src="/assets/Icons/echo.svg"
-            alt=""
-            className="h-[15px] w-[15px] opacity-60"
-          />
-          <span>{Number(post.echo_count || 0)}</span>
-        </button>
+        <AuthorPostEchoAction
+  post={post}
+  author={author}
+/>
       </div>
 
       {reactionError ? (
