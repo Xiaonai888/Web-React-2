@@ -61,7 +61,9 @@ function ReverseIcon() {
 
 function EpisodeListItem({ episode, story, onOpenEpisode }) {
   const cover = episode.cover_url || story?.cover_url || ''
-  const locked = Boolean(episode.is_locked)
+  const locked =
+  Number(episode.episode_number || 0) > 5 &&
+  Boolean(episode.is_locked)
   const date = formatDate(episode.published_at || episode.created_at || episode.updated_at)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
 
