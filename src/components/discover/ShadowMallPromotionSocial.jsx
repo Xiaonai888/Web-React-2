@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import ReportModal from '../ReportModal'
 import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
 
 const API_BASE_URL =
