@@ -14,6 +14,16 @@ function StoriesIcon({ active }) {
   )
 }
 
+function MangaIcon({ active }) {
+  return (
+    <img
+      src={active ? '/assets/Icons/Manga-active.svg' : '/assets/Icons/Manga.svg'}
+      alt=""
+      className="h-[21px] w-[21px] object-contain"
+    />
+  )
+}
+
 function PlayIcon({ active }) {
   return (
     <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
@@ -123,7 +133,7 @@ function ChatStoryIcon({ active }) {
 
 const NAV = [
   { to: '/', label: 'Stories', Icon: StoriesIcon },
-  { to: '/manga', label: 'Manga', Icon: BookIcon },
+  { to: '/manga', label: 'Manga', Icon: MangaIcon },
   { to: '/chat-story', label: 'Chat Story', Icon: ChatStoryIcon },
   { to: '/discover', label: 'Discover', Icon: CompassIcon },
   { to: '/me', label: 'Mine', Icon: SmileIcon },
