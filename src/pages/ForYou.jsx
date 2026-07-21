@@ -142,7 +142,7 @@ function ComingSoonPanel({ title }) {
 
 const SHOW_STORY_TYPE_TABS = false
 
-export default function ForYou() {
+export default function ForYou({ slideSectionKey = 'home_top_slider' }) {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -382,7 +382,7 @@ useEffect(() => {
   useEffect(() => {
     async function fetchSlides() {
       try {
-        const res = await fetch(`${API_URL}/api/slides?section_key=home_top_slider`)
+        const res = await fetch(`${API_URL}/api/slides?section_key=${slideSectionKey}`)
         const data = await res.json()
 
         if (!res.ok || !data.ok) {
@@ -399,7 +399,7 @@ useEffect(() => {
     }
 
     fetchSlides()
-  }, [])
+  }, [slideSectionKey])
 
   useEffect(() => {
   if (
