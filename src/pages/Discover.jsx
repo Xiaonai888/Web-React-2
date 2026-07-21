@@ -1029,34 +1029,34 @@ export default function DiscoverPage() {
   })
 
   useEffect(() => {
-  let alive = true
+    let alive = true
 
-  async function loadShadowMallPromotions() {
-    try {
-      const promotions = await fetchShadowMallPromotions()
+    async function loadShadowMallPromotions() {
+      try {
+        const promotions = await fetchShadowMallPromotions()
 
-      if (alive) {
-        setShadowMallPromotions(
-          promotions.filter(
-            (item) =>
-              item &&
-              !isShadowMallAdHidden(item)
+        if (alive) {
+          setShadowMallPromotions(
+            promotions.filter(
+              (item) =>
+                item &&
+                !isShadowMallAdHidden(item)
+            )
           )
-        )
-      }
-    } catch {
-      if (alive) {
-        setShadowMallPromotions([])
+        }
+      } catch {
+        if (alive) {
+          setShadowMallPromotions([])
+        }
       }
     }
-  }
 
-  loadShadowMallPromotions()
+    loadShadowMallPromotions()
 
-  return () => {
-    alive = false
-  }
-}, [])
+    return () => {
+      alive = false
+    }
+  }, [])
   
   useEffect(() => {
     let alive = true
@@ -1274,15 +1274,17 @@ export default function DiscoverPage() {
   }
 
   function hideShadowMallPromotion(item) {
-  if (item) {
-    hideShadowMallAdLocally(item)
-  }
+    if (item) {
+      hideShadowMallAdLocally(item)
+    }
 
-  setShadowMallPromotions((current) =>
-    current.filter((promotion) => promotion.id !== item?.id)
-  )
-  setAdOptionsItem(null)
-}
+    setShadowMallPromotions((current) =>
+      current.filter(
+        (promotion) => promotion.id !== item?.id
+      )
+    )
+    setAdOptionsItem(null)
+  }
 
   function hidePostFromDiscover(postId) {
     setRealPosts((current) =>
@@ -1315,6 +1317,15 @@ export default function DiscoverPage() {
       )
     )
   }
+
+  const pinnedPromotions = shadowMallPromotions
+    .filter((promotion) => Boolean(promotion.is_pinned))
+    .slice(0, 3)
+
+  const regularPromotion =
+    shadowMallPromotions.find(
+      (promotion) => !Boolean(promotion.is_pinned)
+    ) || null
 
   useEffect(() => {
     function handleScroll() {
@@ -1370,6 +1381,15 @@ export default function DiscoverPage() {
           </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
+            {pinnedPromotions.map((promotion) => (
+              <AdsCard
+                key={`pinned-promotion-${promotion.id}`}
+                item={promotion}
+                onMore={setAdOptionsItem}
+                onHide={hideShadowMallPromotion}
+              />
+            ))}
+
             {realPostsLoading ? (
               <>
                 <RealPostSkeleton />
@@ -1395,9 +1415,9 @@ export default function DiscoverPage() {
                   onMore={setOptionsPost}
                 />
 
-                {index === 0 && shadowMallPromotion ? (
+                {index === 0 && regularPromotion ? (
                   <AdsCard
-                    item={shadowMallPromotion}
+                    item={regularPromotion}
                     onMore={setAdOptionsItem}
                     onHide={hideShadowMallPromotion}
                   />
