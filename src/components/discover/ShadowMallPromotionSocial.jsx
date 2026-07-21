@@ -4,6 +4,8 @@ import {
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
+import ReportModal from '../ReportModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -315,16 +317,48 @@ function Avatar({ user, small = false }) {
   )
 }
 
+function MenuRow({
+  icon,
+  label,
+  danger = false,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left active:bg-[#f3f4f6] ${
+        danger
+          ? 'text-[#dc2626]'
+          : 'text-[#111827]'
+      }`}
+    >
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+          danger
+            ? 'bg-[#fff1f2] text-[#dc2626]'
+            : 'bg-[#f3f4f6] text-[#111827]'
+        }`}
+      >
+        <i className={`${icon} text-[17px]`} />
+      </span>
+      <span className="text-[16px] font-normal">
+        {label}
+      </span>
+    </button>
+  )
+}
+
 function CommentOptionsSheet({
   comment,
   currentUserId,
-  allowReply = true,
   onClose,
   onReply,
   onCopy,
   onEdit,
   onDelete,
   onHide,
+  onReport,
 }) {
   if (!comment) return null
 
@@ -333,92 +367,61 @@ function CommentOptionsSheet({
     String(comment.user_id || '') ===
       String(currentUserId)
 
-  const run = (action) => {
+  const runAction = (action) => {
     onClose()
     action?.()
   }
 
   return (
-    <div className="fixed inset-0 z-[200030] flex items-end justify-center bg-black/40">
+    <div className="fixed inset-0 z-[290] flex items-end justify-center">
       <button
         type="button"
-        aria-label="Close comment options"
         onClick={onClose}
-        className="absolute inset-0"
+        aria-label="Close comment options"
+        className="absolute inset-0 bg-black/40"
       />
 
-      <section className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-5 sm:rounded-[28px]">
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+      <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
-        {allowReply ? (
-          <button
-            type="button"
-            onClick={() => run(onReply)}
-            className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[#111827] active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-              <i className="fa-solid fa-reply text-[16px]" />
-            </span>
-            <span className="text-[16px] font-normal">
-              Reply
-            </span>
-          </button>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={() => run(onCopy)}
-          className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[#111827] active:bg-[#f3f4f6]"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-            <i className="fa-regular fa-copy text-[16px]" />
-          </span>
-          <span className="text-[16px] font-normal">
-            Copy comment
-          </span>
-        </button>
+        <MenuRow
+          icon="fa-regular fa-comment"
+          label="Reply"
+          onClick={() => runAction(onReply)}
+        />
+        <MenuRow
+          icon="fa-regular fa-copy"
+          label="Copy"
+          onClick={() => runAction(onCopy)}
+        />
 
         {ownsComment ? (
           <>
-            <button
-              type="button"
-              onClick={() => run(onEdit)}
-              className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[#111827] active:bg-[#f3f4f6]"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-                <i className="fa-regular fa-pen-to-square text-[16px]" />
-              </span>
-              <span className="text-[16px] font-normal">
-                Edit comment
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => run(onDelete)}
-              className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[#dc2626] active:bg-[#fff1f2]"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f2]">
-                <i className="fa-regular fa-trash-can text-[16px]" />
-              </span>
-              <span className="text-[16px] font-normal">
-                Delete comment
-              </span>
-            </button>
+            <MenuRow
+              icon="fa-regular fa-pen-to-square"
+              label="Edit"
+              onClick={() => runAction(onEdit)}
+            />
+            <MenuRow
+              icon="fa-regular fa-trash-can"
+              label="Delete"
+              danger
+              onClick={() => runAction(onDelete)}
+            />
           </>
         ) : (
-          <button
-            type="button"
-            onClick={() => run(onHide)}
-            className="flex w-full items-center gap-4 rounded-[16px] px-2 py-3.5 text-left text-[#111827] active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-              <i className="fa-regular fa-eye-slash text-[16px]" />
-            </span>
-            <span className="text-[16px] font-normal">
-              Hide comment
-            </span>
-          </button>
+          <>
+            <MenuRow
+              icon="fa-regular fa-flag"
+              label="Report comment"
+              onClick={() => runAction(onReport)}
+            />
+            <MenuRow
+              icon="fa-regular fa-eye-slash"
+              label="Hide this comment"
+              onClick={() => runAction(onHide)}
+            />
+          </>
         )}
       </section>
     </div>
@@ -433,35 +436,79 @@ function ReplyComposer({
   sending,
 }) {
   return (
-    <div className="mt-3 rounded-[18px] bg-[#f3f4f6] p-3">
-      <textarea
-        value={value}
-        maxLength={COMMENT_LIMIT}
-        rows={2}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        placeholder="Write a reply..."
-        className="w-full resize-none bg-transparent text-[13px] font-normal leading-5 text-[#111827] outline-none placeholder:text-[#98a2b3]"
-      />
-
-      <div className="mt-2 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="h-8 rounded-full px-3 text-[12px] font-normal text-[#667085]"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={
-            sending || !value.trim()
+    <div className="mt-3 flex items-end gap-2">
+      <div className="flex min-w-0 flex-1 items-center rounded-[20px] bg-[#f3f4f6] px-3 py-2">
+        <input
+          value={value}
+          maxLength={COMMENT_LIMIT}
+          onChange={(event) =>
+            onChange(event.target.value)
           }
-          className="h-8 rounded-full bg-[#111827] px-4 text-[12px] font-normal text-white disabled:bg-[#d0d5dd]"
+          placeholder="Write a reply..."
+          className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mb-1 text-[12px] font-normal text-[#98a2b3]"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onClick={onSend}
+        disabled={!value.trim() || sending}
+        className="mb-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
+        aria-label="Send reply"
+      >
+        <i
+          className={`fa-solid ${
+            sending
+              ? 'fa-spinner animate-spin'
+              : 'fa-paper-plane'
+          } text-[12px]`}
+        />
+      </button>
+    </div>
+  )
+}
+
+function ReplyItem({ reply, onLike }) {
+  return (
+    <div className="flex gap-2">
+      <Avatar user={reply.user} small />
+
+      <div className="min-w-0 flex-1">
+        <div className="inline-block max-w-full rounded-[16px] bg-[#f3f4f6] px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-semibold text-[#111827]">
+              {reply.user?.name || 'Reader'}
+            </span>
+            <span className="text-[10px] font-normal text-[#98a2b3]">
+              {formatTime(reply.created_at)}
+            </span>
+          </div>
+          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
+            {reply.text}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onLike(reply.id)}
+          className={`ml-3 mt-1 text-[11px] font-semibold ${
+            reply.liked
+              ? 'text-[#e5484d]'
+              : 'text-[#98a2b3]'
+          }`}
         >
-          {sending ? 'Sending...' : 'Reply'}
+          {reply.liked ? 'Liked' : 'Like'}
+          {reply.likes
+            ? ` · ${reply.likes}`
+            : ''}
         </button>
       </div>
     </div>
@@ -477,8 +524,8 @@ function CommentItem({
   onEdit,
   onDelete,
   onHide,
+  onReport,
   sendingReply,
-  small = false,
 }) {
   const [menuOpen, setMenuOpen] =
     useState(false)
@@ -487,7 +534,8 @@ function CommentItem({
   const [replyText, setReplyText] =
     useState('')
   const [repliesShown, setRepliesShown] =
-    useState(true)
+    useState(false)
+
   const replies = Array.isArray(
     comment.replies
   )
@@ -510,24 +558,15 @@ function CommentItem({
   }
 
   return (
-    <article
-      className={
-        small ? 'py-2' : 'px-4 py-4'
-      }
-    >
+    <article className="px-4 py-4">
       <div className="flex gap-3">
-        <Avatar
-          user={comment.user}
-          small={small}
-        />
+        <Avatar user={comment.user} />
 
         <div className="min-w-0 flex-1">
           <div className="relative pr-8">
             <button
               type="button"
-              onClick={() =>
-                setMenuOpen(true)
-              }
+              onClick={() => setMenuOpen(true)}
               className="inline-block max-w-full rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-left active:bg-[#ebeef2]"
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -549,9 +588,7 @@ function CommentItem({
 
             <button
               type="button"
-              onClick={() =>
-                setMenuOpen(true)
-              }
+              onClick={() => setMenuOpen(true)}
               className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full text-[#98a2b3] active:scale-95"
               aria-label="Comment options"
             >
@@ -562,9 +599,7 @@ function CommentItem({
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[#98a2b3]">
             <button
               type="button"
-              onClick={() =>
-                onLike(comment.id)
-              }
+              onClick={() => onLike(comment.id)}
               className={
                 comment.liked
                   ? 'text-[#e5484d]'
@@ -579,16 +614,14 @@ function CommentItem({
                 : ''}
             </button>
 
-            {!small ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setReplyOpen(true)
-                }
-              >
-                Reply
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() =>
+                setReplyOpen(true)
+              }
+            >
+              Reply
+            </button>
 
             {replies.length ? (
               <button
@@ -625,26 +658,13 @@ function CommentItem({
             />
           ) : null}
 
-          {repliesShown &&
-          replies.length ? (
-            <div className="mt-3 space-y-2 border-l-2 border-[#eef1f5] pl-3">
+          {repliesShown && replies.length ? (
+            <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
               {replies.map((reply) => (
-                <CommentItem
+                <ReplyItem
                   key={reply.id}
-                  comment={reply}
-                  currentUserId={
-                    currentUserId
-                  }
+                  reply={reply}
                   onLike={onLike}
-                  onReply={onReply}
-                  onCopy={onCopy}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onHide={onHide}
-                  sendingReply={
-                    sendingReply
-                  }
-                  small
                 />
               ))}
             </div>
@@ -653,23 +673,15 @@ function CommentItem({
       </div>
 
       <CommentOptionsSheet
-        comment={
-          menuOpen ? comment : null
-        }
+        comment={menuOpen ? comment : null}
         currentUserId={currentUserId}
-        allowReply={!small}
-        onClose={() =>
-          setMenuOpen(false)
-        }
-        onReply={() =>
-          setReplyOpen(true)
-        }
+        onClose={() => setMenuOpen(false)}
+        onReply={() => setReplyOpen(true)}
         onCopy={() => onCopy(comment)}
         onEdit={() => onEdit(comment)}
-        onDelete={() =>
-          onDelete(comment)
-        }
+        onDelete={() => onDelete(comment)}
         onHide={() => onHide(comment)}
+        onReport={() => onReport(comment)}
       />
     </article>
   )
@@ -686,15 +698,8 @@ function EditCommentSheet({
   if (!comment) return null
 
   return (
-    <div className="fixed inset-0 z-[200040] flex items-end justify-center bg-black/40">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute inset-0"
-        aria-label="Close edit comment"
-      />
-
-      <section className="relative w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:mb-5 sm:rounded-[28px]">
+    <div className="absolute inset-0 z-[100] flex items-end justify-center bg-black/35 px-4">
+      <section className="w-full max-w-xl rounded-t-[26px] bg-white px-5 pb-6 pt-4 shadow-2xl sm:mb-6 sm:rounded-[26px]">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
 
         <div className="flex items-center justify-between">
@@ -704,10 +709,10 @@ function EditCommentSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa]"
             aria-label="Close edit comment"
           >
-            <i className="fa-solid fa-xmark text-[18px]" />
+            <i className="fa-solid fa-xmark text-[13px]" />
           </button>
         </div>
 
@@ -724,9 +729,7 @@ function EditCommentSheet({
         <button
           type="button"
           onClick={onSave}
-          disabled={
-            !value.trim() || saving
-          }
+          disabled={!value.trim() || saving}
           className="mt-4 h-11 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white disabled:bg-[#d0d5dd]"
         >
           {saving
@@ -741,15 +744,19 @@ function EditCommentSheet({
 function CommentsModal({
   open,
   promotion,
-  reactionCount,
-  commentCount,
-  echoCount,
+  reactionCount = 0,
+  commentCount = 0,
+  echoCount = 0,
   onClose,
   onTotalChange,
 }) {
+  const promotionId = promotion?.id
+  const sheetRef = useRef(null)
+  const composerRef = useRef(null)
   const dragStartYRef = useRef(0)
-  const dragOffsetRef = useRef(0)
+  const dragCurrentYRef = useRef(0)
   const draggingRef = useRef(false)
+
   const currentUser = useMemo(
     () => getStoredUser(),
     []
@@ -763,26 +770,43 @@ function CommentsModal({
     useState([])
   const [sort, setSort] =
     useState('top')
+  const [sortOpen, setSortOpen] =
+    useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] =
+    useState(false)
+  const [total, setTotal] = useState(
+    Number(commentCount || 0)
+  )
   const [loading, setLoading] =
     useState(false)
-  const [text, setText] =
-    useState('')
+  const [loadingMore, setLoadingMore] =
+    useState(false)
+  const [text, setText] = useState('')
   const [sending, setSending] =
     useState(false)
   const [sendingReply, setSendingReply] =
     useState(false)
-  const [toast, setToast] =
-    useState('')
-  const [hiddenIds, setHiddenIds] =
-    useState(() => new Set())
+  const [toast, setToast] = useState('')
   const [editComment, setEditComment] =
     useState(null)
   const [editText, setEditText] =
     useState('')
   const [savingEdit, setSavingEdit] =
     useState(false)
+  const [reportComment, setReportComment] =
+    useState(null)
+  const [hiddenIds, setHiddenIds] =
+    useState(() => new Set())
+  const [dragging, setDragging] =
+    useState(false)
   const [dragOffset, setDragOffset] =
     useState(0)
+
+  const selectedSort =
+    SORT_OPTIONS.find(
+      (option) => option.value === sort
+    ) || SORT_OPTIONS[0]
 
   const visibleComments = useMemo(
     () =>
@@ -795,11 +819,31 @@ function CommentsModal({
     [comments, hiddenIds]
   )
 
+  const commentingDisabled = false
+
+  useEffect(() => {
+    setTotal(Number(commentCount || 0))
+  }, [commentCount])
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow =
+      document.body.style.overflow
+
+    setDragOffset(0)
+    setDragging(false)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow
+    }
+  }, [open])
+  
   const showToast = (value) => {
     setToast(value)
-    window.clearTimeout(
-      showToast.timer
-    )
+    window.clearTimeout(showToast.timer)
     showToast.timer = window.setTimeout(
       () => setToast(''),
       1700
@@ -811,180 +855,190 @@ function CommentsModal({
       0,
       Number(value || 0)
     )
+    setTotal(nextTotal)
     onTotalChange?.(nextTotal)
   }
 
-  useEffect(() => {
-    if (!open) return undefined
+  const buildListUrl = (nextPage) => {
+    const sortValue =
+      sort === 'all' ? 'newest' : sort
 
-    document.body.style.overflow =
-      'hidden'
-    setDragOffset(0)
-    dragOffsetRef.current = 0
+    return `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(promotionId)}/comments?page=${nextPage}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
+  }
 
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open || !promotion?.id) {
-      return
-    }
+  async function fetchComments(
+    nextPage = 1,
+    append = false
+  ) {
+    if (!promotionId) return
 
     const token = getAuthToken()
 
     if (!token) {
       setComments([])
-      showToast(
-        'Please login to view comments.'
-      )
+      setLoading(false)
+      showToast('Please login to view comments.')
       return
     }
 
-    let ignore = false
+    try {
+      append
+        ? setLoadingMore(true)
+        : setLoading(true)
 
-    async function loadComments() {
-      try {
-        setLoading(true)
+      const response = await fetch(
+        buildListUrl(nextPage),
+        {
+          headers: token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {},
+          cache: 'no-store',
+        }
+      )
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(
-            promotion.id
-          )}/comments?page=1&limit=${COMMENT_PAGE_SIZE}&sort=${sort}`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-            cache: 'no-store',
-          }
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to load comments'
         )
-
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              'Failed to load comments'
-          )
-        }
-
-        if (!ignore) {
-          const normalized = Array.isArray(
-            data.comments
-          )
-            ? data.comments.map(
-                normalizeComment
-              )
-            : []
-
-          setComments(normalized)
-          applyTotal(
-            data.total ??
-              normalized.length
-          )
-        }
-      } catch (error) {
-        if (!ignore) {
-          showToast(
-            error.message ||
-              'Failed to load comments.'
-          )
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
       }
+
+      const normalized = Array.isArray(
+        data.comments
+      )
+        ? data.comments.map(
+            normalizeComment
+          )
+        : []
+
+      setComments((current) =>
+        append
+          ? [...current, ...normalized]
+          : normalized
+      )
+      setPage(Number(data.page || nextPage))
+      setHasMore(Boolean(data.has_more))
+      applyTotal(
+        data.total ?? normalized.length
+      )
+    } catch (error) {
+      showToast(
+        error.message ||
+          'Failed to load comments.'
+      )
+    } finally {
+      append
+        ? setLoadingMore(false)
+        : setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (!open || !promotionId) return
 
     setComments([])
+    setPage(1)
+    setHasMore(false)
     setHiddenIds(new Set())
-    loadComments()
+    fetchComments(1, false)
+  }, [open, promotionId, sort])
 
-    return () => {
-      ignore = true
-    }
-  }, [open, promotion?.id, sort])
+  const updateCommentLocal = (
+    commentId,
+    changes
+  ) => {
+    setComments((current) =>
+      current.map((comment) => {
+        if (comment.id === commentId) {
+          return {
+            ...comment,
+            ...changes,
+          }
+        }
 
-  async function createComment(
-    commentText,
-    parentId = null
-  ) {
-    const token = getAuthToken()
-
-    if (!token) {
-      showToast(
-        'Please login to comment.'
-      )
-      return null
-    }
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(
-        promotion.id
-      )}/comments`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type':
-            'application/json',
-          Authorization:
-            `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          text: commentText,
-          parent_id: parentId,
-        }),
-      }
+        return {
+          ...comment,
+          replies: (comment.replies || []).map(
+            (reply) =>
+              reply.id === commentId
+                ? {
+                    ...reply,
+                    ...changes,
+                  }
+                : reply
+          ),
+        }
+      })
     )
-
-    const data = await response
-      .json()
-      .catch(() => ({}))
-
-    if (
-      !response.ok ||
-      data.ok === false
-    ) {
-      throw new Error(
-        data.message ||
-          'Failed to create comment'
-      )
-    }
-
-    applyTotal(
-      data.comment_count ??
-        Number(commentCount || 0) + 1
-    )
-
-    return normalizeComment(data.comment)
   }
 
   async function sendComment() {
-    if (!text.trim() || sending) {
+    if (
+      !text.trim() ||
+      sending ||
+      commentingDisabled
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      showToast('Please login to comment.')
       return
     }
 
     try {
       setSending(true)
-      const created = await createComment(
-        text.trim()
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(promotionId)}/comments`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            text: text.trim(),
+          }),
+        }
       )
 
-      if (created) {
-        setComments((current) => [
-          created,
-          ...current,
-        ])
-        setText('')
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to create comment'
+        )
       }
+
+      setComments((current) => [
+        normalizeComment(data.comment),
+        ...current,
+      ])
+      setText('')
+      applyTotal(
+        data.comment_count ?? total + 1
+      )
     } catch (error) {
       showToast(
         error.message ||
@@ -999,30 +1053,67 @@ function CommentsModal({
     parentId,
     replyText
   ) {
+    const token = getAuthToken()
+
+    if (!token) {
+      showToast('Please login to reply.')
+      return false
+    }
+
     try {
       setSendingReply(true)
-      const created = await createComment(
-        replyText,
-        parentId
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(promotionId)}/comments`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            text: replyText,
+            parent_id: parentId,
+          }),
+        }
       )
 
-      if (!created) return false
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to create reply'
+        )
+      }
+
+      const createdReply = normalizeComment(
+        data.comment
+      )
 
       setComments((current) =>
         current.map((comment) =>
-          String(comment.id) ===
-          String(parentId)
+          comment.id === parentId
             ? {
                 ...comment,
                 replies: [
                   ...(comment.replies || []),
-                  created,
+                  createdReply,
                 ],
               }
             : comment
         )
       )
-
+      applyTotal(
+        data.comment_count ?? total + 1
+      )
       return true
     } catch (error) {
       showToast(
@@ -1039,17 +1130,13 @@ function CommentsModal({
     const token = getAuthToken()
 
     if (!token) {
-      showToast(
-        'Please login to like.'
-      )
+      showToast('Please login to like.')
       return
     }
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(
-          commentId
-        )}/like`,
+        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(commentId)}/like`,
         {
           method: 'POST',
           headers: {
@@ -1073,18 +1160,10 @@ function CommentsModal({
         )
       }
 
-      setComments((current) =>
-        updateCommentTree(
-          current,
-          commentId,
-          {
-            liked: Boolean(data.liked),
-            likes: Number(
-              data.likes || 0
-            ),
-          }
-        )
-      )
+      updateCommentLocal(commentId, {
+        liked: Boolean(data.liked),
+        likes: Number(data.likes || 0),
+      })
     } catch (error) {
       showToast(
         error.message ||
@@ -1110,11 +1189,6 @@ function CommentsModal({
     }
   }
 
-  function openEdit(comment) {
-    setEditComment(comment)
-    setEditText(comment.text || '')
-  }
-
   async function saveEdit() {
     if (
       !editComment ||
@@ -1135,9 +1209,7 @@ function CommentsModal({
       setSavingEdit(true)
 
       const response = await fetch(
-        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(
-          editComment.id
-        )}`,
+        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(editComment.id)}`,
         {
           method: 'PATCH',
           headers: {
@@ -1169,13 +1241,9 @@ function CommentsModal({
       const updated = normalizeComment(
         data.comment
       )
-
-      setComments((current) =>
-        updateCommentTree(
-          current,
-          editComment.id,
-          updated
-        )
+      updateCommentLocal(
+        editComment.id,
+        updated
       )
       setEditComment(null)
       setEditText('')
@@ -1198,19 +1266,9 @@ function CommentsModal({
       return
     }
 
-    if (
-      !window.confirm(
-        'Delete this comment?'
-      )
-    ) {
-      return
-    }
-
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(
-          comment.id
-        )}`,
+        `${API_BASE_URL}/api/shadow-mall/promotion-comments/${encodeURIComponent(comment.id)}`,
         {
           method: 'DELETE',
           headers: {
@@ -1235,18 +1293,24 @@ function CommentsModal({
       }
 
       setComments((current) =>
-        removeCommentTree(
-          current,
-          comment.id
-        )
+        current
+          .filter(
+            (item) =>
+              item.id !== comment.id
+          )
+          .map((item) => ({
+            ...item,
+            replies: (
+              item.replies || []
+            ).filter(
+              (reply) =>
+                reply.id !== comment.id
+            ),
+          }))
       )
       applyTotal(
         data.comment_count ??
-          Math.max(
-            0,
-            Number(commentCount || 0) -
-              1
-          )
+          Math.max(0, total - 1)
       )
       showToast('Comment deleted.')
     } catch (error) {
@@ -1257,22 +1321,31 @@ function CommentsModal({
     }
   }
 
-  function hideComment(comment) {
+  const hideComment = (comment) => {
     setHiddenIds((current) => {
       const next = new Set(current)
       next.add(String(comment.id))
       return next
     })
-    showToast(
-      'Comment hidden on your device.'
-    )
+    showToast('Comment hidden on your device.')
   }
 
   const startDrag = (event) => {
+    if (!event.isPrimary) return
+
+    if (
+      event.pointerType === 'mouse' &&
+      event.button !== 0
+    ) {
+      return
+    }
+
     draggingRef.current = true
-    dragStartYRef.current =
-      event.clientY
-    dragOffsetRef.current = 0
+    setDragging(true)
+
+    dragStartYRef.current = event.clientY
+    dragCurrentYRef.current = event.clientY
+
     event.currentTarget.setPointerCapture?.(
       event.pointerId
     )
@@ -1281,227 +1354,339 @@ function CommentsModal({
   const moveDrag = (event) => {
     if (!draggingRef.current) return
 
-    const nextOffset = Math.max(
-      0,
-      event.clientY -
-        dragStartYRef.current
-    )
+    dragCurrentYRef.current = event.clientY
 
-    dragOffsetRef.current = nextOffset
-    setDragOffset(nextOffset)
+    setDragOffset(
+      Math.max(
+        0,
+        event.clientY -
+          dragStartYRef.current
+      )
+    )
   }
 
   const endDrag = () => {
     if (!draggingRef.current) return
 
-    draggingRef.current = false
+    const distance = Math.max(
+      0,
+      dragCurrentYRef.current -
+        dragStartYRef.current
+    )
 
-    if (dragOffsetRef.current > 70) {
+    draggingRef.current = false
+    setDragging(false)
+
+    if (distance > 70) {
       onClose()
       return
     }
 
-    dragOffsetRef.current = 0
     setDragOffset(0)
   }
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-[200000] flex items-end justify-center bg-black/40">
+  return createPortal(
+    <div className="fixed inset-0 z-[200000] flex items-end justify-center sm:items-center sm:px-4">
       <button
         type="button"
-        aria-label="Close comments"
         onClick={onClose}
-        className="absolute inset-0"
+        className="absolute inset-0 bg-black/60"
+        aria-label="Close comments"
       />
 
       <section
-        className="relative flex max-h-[92vh] w-full max-w-[620px] flex-col overflow-hidden rounded-t-[30px] bg-white shadow-2xl sm:mb-5 sm:rounded-[30px]"
+        ref={sheetRef}
+        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
-          transition: draggingRef.current
+          transition: dragging
             ? 'none'
-            : 'transform 220ms ease',
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'transform',
         }}
       >
-        <div
+       
+        <header
           role="presentation"
           onPointerDown={startDrag}
           onPointerMove={moveDrag}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          className="flex h-7 shrink-0 cursor-grab items-center justify-center"
+          onLostPointerCapture={endDrag}
+          className="shrink-0 cursor-grab touch-none border-b border-[#eef0f4] bg-white px-4 pb-3 pt-2.5 active:cursor-grabbing"
           style={{ touchAction: 'none' }}
         >
-          <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
-        </div>
-
-        <div className="flex items-center justify-between border-b border-[#eceef2] px-4 pb-3">
-          <div>
-            <h2 className="text-[18px] font-semibold text-[#111827]">
-              Comments
-            </h2>
-            <div className="mt-1 flex items-center gap-3 text-[11px] font-normal text-[#98a2b3]">
+          <div className="grid grid-cols-3 items-center gap-2 text-center">
+            <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
+              <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
               <span>
                 {formatCompactNumber(
                   reactionCount
-                )}{' '}
-                reactions
+                )}
               </span>
-              <span>
-                {formatCompactNumber(
-                  commentCount
-                )}{' '}
-                comments
-              </span>
+            </div>
+
+            <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
+              {formatCompactNumber(total)}{' '}
+              comments
+            </div>
+
+            <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
+              <img
+                src="/assets/Icons/echo.svg"
+                alt=""
+                aria-hidden="true"
+                className="h-[14px] w-[14px] object-contain opacity-75"
+              />
               <span>
                 {formatCompactNumber(
                   echoCount
-                )}{' '}
-                echoes
+                )}
               </span>
             </div>
           </div>
+        </header>
 
+        <div className="relative z-10 shrink-0 bg-white px-4 py-2">
           <button
             type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center text-[#111827]"
-            aria-label="Close comments"
+            onClick={() => setSortOpen(true)}
+            className="flex items-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
           >
-            <i className="fa-solid fa-xmark text-[18px]" />
+            <span>{selectedSort.label}</span>
+            <i className="fa-solid fa-chevron-down text-[10px]" />
           </button>
         </div>
 
-        <div className="flex shrink-0 gap-2 border-b border-[#eceef2] px-4 py-3">
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() =>
-                setSort(option.value)
-              }
-              className={`h-8 rounded-full px-4 text-[12px] font-normal ${
-                sort === option.value
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-[#f3f4f6] text-[#667085]'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="space-y-4 p-4">
-              {Array.from({
-                length: 4,
-              }).map((_, index) => (
-                <div
-                  key={index}
-                  className="flex animate-pulse gap-3"
-                >
-                  <div className="h-10 w-10 rounded-full bg-[#e5e7eb]" />
-                  <div className="flex-1">
-                    <div className="h-20 rounded-[18px] bg-[#f3f4f6]" />
-                  </div>
-                </div>
-              ))}
+          {loading && !visibleComments.length ? (
+            <div className="space-y-3 px-4 py-4">
+              {Array.from({ length: 5 }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="h-20 animate-pulse rounded-[18px] bg-[#f3f4f6]"
+                  />
+                )
+              )}
             </div>
           ) : visibleComments.length ? (
-            visibleComments.map(
-              (comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  currentUserId={
-                    currentUserId
-                  }
-                  onLike={toggleLike}
-                  onReply={sendReply}
-                  onCopy={copyComment}
-                  onEdit={openEdit}
-                  onDelete={
-                    deleteComment
-                  }
-                  onHide={hideComment}
-                  sendingReply={
-                    sendingReply
-                  }
-                />
-              )
-            )
+            <>
+              {visibleComments.map(
+                (comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    currentUserId={
+                      currentUserId
+                    }
+                    onLike={toggleLike}
+                    onReply={sendReply}
+                    onCopy={copyComment}
+                    onEdit={(selected) => {
+                      setEditComment(selected)
+                      setEditText(
+                        selected.text || ''
+                      )
+                    }}
+                    onDelete={deleteComment}
+                    onHide={hideComment}
+                    onReport={setReportComment}
+                    sendingReply={
+                      sendingReply
+                    }
+                  />
+                )
+              )}
+
+              {hasMore ? (
+                <div className="px-4 py-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fetchComments(
+                        page + 1,
+                        true
+                      )
+                    }
+                    disabled={loadingMore}
+                    className="h-11 w-full rounded-full bg-[#f5f3fa] text-[13px] font-normal text-[#111827] disabled:text-[#98a2b3]"
+                  >
+                    {loadingMore
+                      ? 'Loading...'
+                      : 'Load more comments'}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
-            <div className="px-5 py-16 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#667085]">
-                <i className="fa-regular fa-comment text-[22px]" />
+            <div className="px-5 py-12 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+                <i className="fa-regular fa-comments text-[22px]" />
               </div>
-              <div className="mt-4 text-[15px] font-semibold text-[#111827]">
+              <h3 className="mt-4 text-[17px] font-semibold text-[#111827]">
                 No comments yet
-              </div>
-              <div className="mt-1 text-[12px] font-normal text-[#98a2b3]">
-                Be the first to comment.
-              </div>
+              </h3>
+              <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-normal leading-6 text-[#667085]">
+                Start the conversation and share what you think about this post.
+              </p>
+              {!commentingDisabled ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    composerRef.current?.focus()
+                  }
+                  className="mt-5 h-11 rounded-full bg-[#111827] px-5 text-[13px] font-normal text-white active:scale-95"
+                >
+                  Write a comment
+                </button>
+              ) : null}
             </div>
           )}
         </div>
 
-        <div className="shrink-0 border-t border-[#eceef2] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3">
-          <div className="flex items-end gap-3">
-            <Avatar user={currentUser} />
-
-            <div className="flex min-w-0 flex-1 items-end rounded-[20px] bg-[#f3f4f6] px-4 py-2">
+        <div className="shrink-0 border-t border-[#eef1f5] bg-white px-3 py-3">
+          <div className="mx-auto flex max-w-3xl items-end gap-2">
+            <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[#f3f4f6] px-4 py-2">
               <textarea
+                ref={composerRef}
                 value={text}
                 maxLength={COMMENT_LIMIT}
-                rows={1}
+                disabled={
+                  commentingDisabled ||
+                  sending
+                }
                 onChange={(event) =>
                   setText(event.target.value)
                 }
-                placeholder="Write a comment..."
-                className="max-h-28 min-h-[28px] min-w-0 flex-1 resize-none bg-transparent py-1 text-[13.5px] font-normal leading-5 text-[#111827] outline-none placeholder:text-[#98a2b3]"
-              />
-
-              <button
-                type="button"
-                onClick={sendComment}
-                disabled={
-                  sending || !text.trim()
+                rows={1}
+                placeholder={
+                  commentingDisabled
+                    ? 'Comments are turned off for this post.'
+                    : 'Write a comment...'
                 }
-                className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
-                aria-label="Send comment"
-              >
-                {sending ? (
-                  <i className="fa-solid fa-circle-notch animate-spin text-[12px]" />
-                ) : (
-                  <i className="fa-solid fa-arrow-up text-[12px]" />
-                )}
-              </button>
+                className="max-h-[118px] min-h-[24px] w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3] disabled:cursor-not-allowed"
+              />
             </div>
+
+            <button
+              type="button"
+              onClick={sendComment}
+              disabled={
+                !text.trim() ||
+                sending ||
+                commentingDisabled
+              }
+              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95 disabled:bg-[#d0d5dd]"
+              aria-label="Send comment"
+            >
+              <i
+                className={`fa-solid ${
+                  sending
+                    ? 'fa-spinner animate-spin'
+                    : 'fa-paper-plane'
+                } text-[13px]`}
+              />
+            </button>
           </div>
         </div>
+
+        {toast ? (
+          <div className="absolute bottom-[88px] left-1/2 z-[120] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-lg">
+            {toast}
+          </div>
+        ) : null}
+
+        {sortOpen ? (
+          <div className="absolute inset-0 z-[110] flex items-end justify-center bg-black/35">
+            <button
+              type="button"
+              onClick={() =>
+                setSortOpen(false)
+              }
+              className="absolute inset-0"
+              aria-label="Close comment filter"
+            />
+
+            <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-5 pb-5 pt-4 shadow-2xl sm:mb-4 sm:rounded-[28px]">
+              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+
+              {SORT_OPTIONS.map((option) => {
+                const active =
+                  sort === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setSort(option.value)
+                      setSortOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-[#f8fafc]"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-normal text-[#111827]">
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-[13px] font-normal leading-5 text-[#667085]">
+                        {option.description}
+                      </span>
+                    </span>
+
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        active
+                          ? 'border-[#111827] bg-[#111827]'
+                          : 'border-[#d0d5dd] bg-white'
+                      }`}
+                    >
+                      {active ? (
+                        <i className="fa-solid fa-check text-[10px] text-white" />
+                      ) : null}
+                    </span>
+                  </button>
+                )
+              })}
+            </section>
+          </div>
+        ) : null}
+
+        <EditCommentSheet
+          comment={editComment}
+          value={editText}
+          onChange={setEditText}
+          onClose={() => {
+            setEditComment(null)
+            setEditText('')
+          }}
+          onSave={saveEdit}
+          saving={savingEdit}
+        />
+
+        <ReportModal
+          open={Boolean(reportComment)}
+          reportType="comment"
+          targetId={reportComment?.id}
+          targetTitle={
+            reportComment
+              ? `${
+                  reportComment.user?.name ||
+                  'Reader'
+                }: ${String(
+                  reportComment.text || ''
+                ).slice(0, 80)}`
+              : ''
+          }
+          onClose={() =>
+            setReportComment(null)
+          }
+        />
       </section>
-
-      {toast ? (
-        <div className="fixed left-1/2 top-20 z-[200060] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
-          {toast}
-        </div>
-      ) : null}
-
-      <EditCommentSheet
-        comment={editComment}
-        value={editText}
-        onChange={setEditText}
-        onClose={() => {
-          setEditComment(null)
-          setEditText('')
-        }}
-        onSave={saveEdit}
-        saving={savingEdit}
-      />
-    </div>
+    </div>,
+    document.body
   )
 }
 
