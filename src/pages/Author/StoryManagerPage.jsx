@@ -420,6 +420,14 @@ export default function StoryManagerPage() {
   const [deleteEpisode, setDeleteEpisode] = useState(null)
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  useEffect(() => {
+  if (!selectedEpisode && !deleteEpisode && !trashStoryOpen) return undefined
+  const previousOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  return () => {
+    document.body.style.overflow = previousOverflow
+  }
+}, [selectedEpisode, deleteEpisode, trashStoryOpen])
 
   const publishedEpisodes = useMemo(
     () => episodes.filter((episode) => episode.status === 'published'),
