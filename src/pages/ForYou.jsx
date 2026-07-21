@@ -18,7 +18,7 @@ import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 
 const SHOW_SHADOW_EXCLUSIVE = false
-
+const STORY_SECTION_TITLES = ['Shadow Spotlight', 'Continue Reading', 'Daily Picks', 'Trending Now', 'Update Today', "Editor's Weekly Picks", 'New Arrivals', 'Top Novel', 'Event & Perks Hub', 'You Might Like']
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -142,7 +142,7 @@ function ComingSoonPanel({ title }) {
 
 const SHOW_STORY_TYPE_TABS = false
 
-export default function ForYou({ slideSectionKey = 'home_top_slider' }) {
+export default function ForYou({ slideSectionKey = 'home_top_slider', titleOnlySections = false }) {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -720,7 +720,7 @@ useEffect(() => {
            onTouchEnd={handleContentTouchEnd}
          >
 
-           {contentGenre !== 'today' ? (
+           {contentGenre !== 'today' && !titleOnlySections ? (
   <EmbeddedGenreRouter
     key={contentGenre}
     genreSlug={contentGenre}
@@ -831,6 +831,16 @@ useEffect(() => {
     </button>
   ))}
 </div>
+    {titleOnlySections ? (
+  <div className="px-4 py-2">
+    {STORY_SECTION_TITLES.map((title) => (
+      <div key={title} className="my-8">
+        <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900">{title}</h2>
+      </div>
+    ))}
+  </div>
+) : (
+  <>
 
             <div className="my-6">
               <ShadowSpotlight />
@@ -881,6 +891,9 @@ useEffect(() => {
               <YouMightLikeSection />
             </div>
   </>
+)}
+
+      </>
 )}
           </div>
         )}
