@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
-import EchoShareSheet from './reader/EchoShareSheet'
+import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReportModal from './ReportModal'
 
 const API_BASE_URL =
