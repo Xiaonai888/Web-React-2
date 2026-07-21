@@ -2899,18 +2899,16 @@ export default function ShadowMallPromotionSocial({
         }
       />
 
-      <EchoShareSheet
-        open={echoOpen}
-        promotion={promotion}
-        onClose={() =>
-          setEchoOpen(false)
-        }
-        onEchoed={(_, nextTotal) =>
-          setEchoCount(
-            Number(nextTotal || 0)
-          )
-        }
-      />
+      <SocialEchoShareSheet
+  open={echoOpen}
+  sourceType="shadow_mall_promotion" sourceId={promotion?.id}
+  sourceName={promotion?.sponsor || 'Shadow Mall'} sourceAvatarUrl={promotion?.profile_image_url || ''}
+  sourceContent={promotion?.description || promotion?.title || 'Shadow Mall promotion'}
+  sourceImageUrl={promotion?.image_url || promotion?.profile_image_url || ''} sourceLabel="Shadow Mall promotion"
+  endpoint={`${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(promotion?.id || '')}/echoes`}
+  shareUrl={getPromotionLink(promotion)} onClose={() => setEchoOpen(false)}
+  onEchoed={(_, nextTotal) => setEchoCount(Number(nextTotal || 0))}
+/>
     </>
   )
 }
