@@ -19,7 +19,7 @@ function MangaIcon({ active }) {
     <img
       src={active ? '/assets/Icons/Manga-active.svg' : '/assets/Icons/Manga.svg'}
       alt=""
-      className="h-[21px] w-[21px] object-contain"
+      className="my-[1px] h-[19px] w-[19px] object-contain"
     />
   )
 }
