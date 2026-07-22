@@ -409,6 +409,7 @@ function MenuButton({
 
 function CommentMenu({
   isOpen,
+  allowReply = true,
   targetType,
   permissions,
   comment,
@@ -451,13 +452,15 @@ function CommentMenu({
       <section className="relative w-full max-w-3xl rounded-t-[28px] bg-white px-2 pb-[max(18px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:mb-4 sm:rounded-[28px]">
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
 
-        <MenuButton
-          icon="fa-regular fa-comment"
-          label="Reply"
-          onClick={() =>
-            runAction(onReply)
-          }
-        />
+        {allowReply ? (
+          <MenuButton
+            icon="fa-regular fa-comment"
+            label="Reply"
+            onClick={() =>
+              runAction(onReply)
+            }
+          />
+        ) : null}
 
         <MenuButton
           icon="fa-regular fa-copy"
@@ -682,6 +685,120 @@ function ReplyComposer({
             } text-[12px]`}
           />
         </button>
+      </div>
+    </div>
+  )
+}
+
+function ReplyItem({
+  reply,
+  story,
+  targetType,
+  onCopy,
+  onEdit,
+  onDelete,
+  onHide,
+  onUnhide,
+  onPin,
+  onUnpin,
+  onSpoiler,
+  onUnspoiler,
+  onBan,
+  onReport,
+}) {
+  const [menuOpen, setMenuOpen] =
+    useState(false)
+  const currentUser = getCurrentUser()
+  const ownsReply = Boolean(
+    reply.user_id &&
+      currentUser.id &&
+      String(reply.user_id) ===
+        String(currentUser.id)
+  )
+  const author = isStoryAuthor(
+    currentUser,
+    story
+  )
+  const admin = currentUser.is_admin
+  const permissions = {
+    ownsComment: ownsReply,
+    isOwner: ownsReply && !admin,
+    isOtherReader:
+      !ownsReply && !author && !admin,
+    isAuthor: author && !admin,
+    isAdmin: admin,
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Avatar
+        user={{
+          name: reply.name || 'Reader',
+          avatar_url:
+            reply.avatar_url || '',
+        }}
+        size="h-8 w-8"
+        textSize="text-[11px]"
+      />
+
+      <div className="relative min-w-0 flex-1 pr-8">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="inline-block max-w-full rounded-[16px] bg-[#f3f4f6] px-3 py-2 text-left active:bg-[#ebeef2]"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-semibold text-[#111827]">
+              {reply.name || 'Reader'}
+            </span>
+
+            <span className="text-[10px] font-normal text-[#98a2b3]">
+              {formatTime(reply.created_at)}
+            </span>
+          </div>
+
+          <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
+            {reply.text}
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[#98a2b3] active:scale-95"
+          aria-label="Reply options"
+        >
+          <i className="fa-solid fa-ellipsis text-[13px]" />
+        </button>
+
+        <CommentMenu
+          isOpen={menuOpen}
+          allowReply={false}
+          targetType={targetType}
+          permissions={permissions}
+          comment={reply}
+          onReply={null}
+          onCopy={() => onCopy(reply)}
+          onEdit={() => onEdit(reply)}
+          onDelete={() => onDelete(reply)}
+          onHide={() => onHide(reply)}
+          onUnhide={() => onUnhide(reply)}
+          onPin={() => onPin(reply)}
+          onUnpin={() => onUnpin(reply)}
+          onSpoiler={() =>
+            onSpoiler(reply)
+          }
+          onUnspoiler={() =>
+            onUnspoiler(reply)
+          }
+          onBan={() => onBan(reply)}
+          onReport={() =>
+            onReport(reply)
+          }
+          onClose={() =>
+            setMenuOpen(false)
+          }
+        />
       </div>
     </div>
   )
@@ -1070,44 +1187,23 @@ function CommentItem({
           replies.length ? (
             <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
               {replies.map((reply) => (
-                <div
+                <ReplyItem
                   key={reply.id}
-                  className="flex gap-2"
-                >
-                  <Avatar
-                    user={{
-                      name:
-                        reply.name ||
-                        'Reader',
-                      avatar_url:
-                        reply.avatar_url ||
-                        '',
-                    }}
-                    size="h-8 w-8"
-                    textSize="text-[11px]"
-                  />
-
-                  <div className="min-w-0">
-                    <div className="inline-block rounded-[16px] bg-[#f3f4f6] px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-semibold text-[#111827]">
-                          {reply.name ||
-                            'Reader'}
-                        </span>
-
-                        <span className="text-[10px] font-normal text-[#98a2b3]">
-                          {formatTime(
-                            reply.created_at
-                          )}
-                        </span>
-                      </div>
-
-                      <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
-                        {reply.text}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  reply={reply}
+                  story={story}
+                  targetType={targetType}
+                  onCopy={onCopy}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onHide={onHide}
+                  onUnhide={onUnhide}
+                  onPin={onPin}
+                  onUnpin={onUnpin}
+                  onSpoiler={onSpoiler}
+                  onUnspoiler={onUnspoiler}
+                  onBan={onBan}
+                  onReport={onReport}
+                />
               ))}
             </div>
           ) : null}
@@ -2138,7 +2234,7 @@ export default function CommentSection({
     }
   }
 
-const handleDeleteComment =
+  const handleDeleteComment =
     async (comment) => {
       if (!token) {
         showToast(
