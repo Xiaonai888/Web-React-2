@@ -1360,11 +1360,11 @@ function LockedEpisodeCard({
           >
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-black italic leading-5 text-[#FFE36E]">
-                FIRST TOP-UP BONUS!
+                FIRST TOP-UP $10+ BONUS!
               </div>
 
               <div className="mt-0.5 truncate text-[11.5px] font-bold leading-4 text-white/90">
-                1 Free Book + 3 reading vouchers
+                1 Free Book Pass + 3 reading vouchers
               </div>
             </div>
 
