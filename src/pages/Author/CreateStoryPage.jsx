@@ -1014,10 +1014,13 @@ if (cropMode === 'slide') {
       }
 
       if (!isEditMode) {
-        localStorage.removeItem('create_story_draft')
-        navigate(`/author/story/${storyId}/episode/create?type=${storyType}`)
-        return
-      }
+  localStorage.removeItem('create_story_draft')
+  const nextPath = isChatStory
+    ? `/author/story/${storyId}/chat/characters`
+    : `/author/story/${storyId}/episode/create?type=${storyType}`
+  navigate(nextPath)
+  return
+}
 
       navigate('/author/dashboard')
     } catch (error) {
