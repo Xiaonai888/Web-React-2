@@ -467,8 +467,7 @@ function CommentMenu({
           }
         />
 
-        {isAuthorPost &&
-        ownsComment ? (
+        {ownsComment ? (
           <>
             <MenuButton
               icon="fa-regular fa-trash-can"
@@ -489,39 +488,7 @@ function CommentMenu({
           </>
         ) : null}
 
-        {isAuthorPost &&
-        !ownsComment ? (
-          <>
-            <MenuButton
-              icon="fa-regular fa-flag"
-              label="Report Comment"
-              onClick={() =>
-                runAction(onReport)
-              }
-            />
-
-            <MenuButton
-              icon="fa-regular fa-eye-slash"
-              label="Hide this comment"
-              onClick={() =>
-                runAction(onHide)
-              }
-            />
-          </>
-        ) : null}
-
-        {!isAuthorPost &&
-        permissions.isOwner ? (
-          <MenuButton
-            icon="fa-regular fa-pen-to-square"
-            label="Edit"
-            onClick={() =>
-              runAction(onEdit)
-            }
-          />
-        ) : null}
-
-        {!isAuthorPost &&
+        {!ownsComment &&
         permissions.isOtherReader ? (
           <>
             <MenuButton
@@ -542,66 +509,79 @@ function CommentMenu({
           </>
         ) : null}
 
-        {!isAuthorPost &&
-        permissions.isAuthor &&
-        !ownsComment ? (
+        {!ownsComment &&
+        permissions.isAuthor ? (
           <>
             <MenuButton
-              icon="fa-solid fa-thumbtack"
-              label={
-                comment.is_pinned
-                  ? 'Unpin comment'
-                  : 'Pin comment'
-              }
-              onClick={() =>
-                runAction(
-                  comment.is_pinned
-                    ? onUnpin
-                    : onPin
-                )
-              }
-            />
-
-            <MenuButton
-              icon="fa-regular fa-eye-slash"
-              label="Hide comment"
-              onClick={() =>
-                runAction(onHide)
-              }
-            />
-
-            <MenuButton
-              icon="fa-solid fa-ban"
-              label="Ban user"
+              icon="fa-regular fa-trash-can"
+              label="Delete"
               danger
               onClick={() =>
-                runAction(onBan)
+                runAction(onDelete)
               }
             />
 
-            <MenuButton
-              icon={
-                comment.is_spoiler
-                  ? 'fa-regular fa-eye'
-                  : 'fa-solid fa-triangle-exclamation'
-              }
-              label={
-                comment.is_spoiler
-                  ? 'Remove spoiler mark'
-                  : 'Spoiler mark'
-              }
-              onClick={() =>
-                runAction(
-                  comment.is_spoiler
-                    ? onUnspoiler
-                    : onSpoiler
-                )
-              }
-            />
+            {!isAuthorPost ? (
+              <>
+                <MenuButton
+                  icon="fa-solid fa-thumbtack"
+                  label={
+                    comment.is_pinned
+                      ? 'Unpin comment'
+                      : 'Pin comment'
+                  }
+                  onClick={() =>
+                    runAction(
+                      comment.is_pinned
+                        ? onUnpin
+                        : onPin
+                    )
+                  }
+                />
+
+                <MenuButton
+                  icon="fa-regular fa-eye-slash"
+                  label="Hide comment"
+                  onClick={() =>
+                    runAction(onHide)
+                  }
+                />
+
+                <MenuButton
+                  icon="fa-solid fa-ban"
+                  label="Ban user"
+                  danger
+                  onClick={() =>
+                    runAction(onBan)
+                  }
+                />
+
+                <MenuButton
+                  icon={
+                    comment.is_spoiler
+                      ? 'fa-regular fa-eye'
+                      : 'fa-solid fa-triangle-exclamation'
+                  }
+                  label={
+                    comment.is_spoiler
+                      ? 'Remove spoiler mark'
+                      : 'Spoiler mark'
+                  }
+                  onClick={() =>
+                    runAction(
+                      comment.is_spoiler
+                        ? onUnspoiler
+                        : onSpoiler
+                    )
+                  }
+                />
+              </>
+            ) : null}
           </>
         ) : null}
 
-        {!isAuthorPost &&
+        {!ownsComment &&
+        !isAuthorPost &&
         permissions.isAdmin ? (
           <>
             <MenuButton
@@ -647,6 +627,7 @@ function CommentMenu({
     </div>
   )
 }
+
 
 function ReplyComposer({
   value,
@@ -2157,29 +2138,28 @@ export default function CommentSection({
     }
   }
 
-  const handleDeleteComment =
+const handleDeleteComment =
     async (comment) => {
-      const ownsComment =
-        comment?.user_id &&
-        currentUser.id &&
-        String(comment.user_id) ===
-          String(currentUser.id)
-
-      if (
-        targetType !==
-          'author_post' ||
-        !ownsComment
-      ) {
-        await handleModerate(
-          comment,
-          'delete'
+      if (!token) {
+        showToast(
+          'Please login again.'
         )
         return
       }
 
-      if (!token) {
-        showToast(
-          'Please login again.'
+      const confirmed = window.confirm(
+        'Move this comment to Trash? It can be recovered for 30 days.'
+      )
+
+      if (!confirmed) return
+
+      if (
+        targetType !==
+        'author_post'
+      ) {
+        await handleModerate(
+          comment,
+          'delete'
         )
         return
       }
@@ -2220,13 +2200,13 @@ export default function CommentSection({
 
         updateComments(nextComments)
         updateTotal(
-          data.comment_count ??
-            countCommentTree(
-              nextComments
-            )
+          Math.max(
+            0,
+            totalComments - 1
+          )
         )
         showToast(
-          'Comment deleted.'
+          'Comment moved to Trash.'
         )
       } catch (error) {
         showToast(
@@ -2235,6 +2215,7 @@ export default function CommentSection({
         )
       }
     }
+
 
   const handleModerate = async (
     comment,
