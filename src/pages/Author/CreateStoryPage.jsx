@@ -575,6 +575,9 @@ export default function CreateStoryPage() {
   const [searchParams] = useSearchParams()
   const editStoryId = searchParams.get('editStoryId')
   const isEditMode = Boolean(editStoryId)
+  const requestedStoryType = String(searchParams.get('type') || 'novel').toLowerCase() === 'manga' ? 'manga' : 'novel'
+  const [storyType, setStoryType] = useState(requestedStoryType)
+  const isManga = storyType === 'manga'
 
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
@@ -620,6 +623,7 @@ export default function CreateStoryPage() {
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
     if (!saved) return
 
+    setStoryType(saved.storyType === 'manga' ? 'manga' : requestedStoryType)
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
@@ -629,7 +633,7 @@ export default function CreateStoryPage() {
     setIsAdult(!!saved.isAdult)
     setOriginalAccepted(!!saved.originalAccepted)
     setAgreementAccepted(!!saved.agreementAccepted)
-  }, [isEditMode])
+  }, [isEditMode, requestedStoryType])
 
   useEffect(() => {
     async function fetchGenres() {
@@ -693,6 +697,7 @@ export default function CreateStoryPage() {
 
         const story = data.story || {}
 
+        setStoryType(story.story_type === 'manga' ? 'manga' : 'novel')
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
@@ -979,6 +984,7 @@ if (cropMode === 'slide') {
           },
           body: JSON.stringify({
             title: title.trim(),
+            story_type: storyType,
             story_language: language,
             main_genre: genre,
             story_status: storyStatus,
@@ -1007,7 +1013,7 @@ if (cropMode === 'slide') {
 
       if (!isEditMode) {
         localStorage.removeItem('create_story_draft')
-        navigate(`/author/story/${storyId}/episode/create`)
+        navigate(`/author/story/${storyId}/episode/create?type=${storyType}`)
         return
       }
 
@@ -1027,17 +1033,17 @@ if (cropMode === 'slide') {
 
 const cropTitle =
   cropMode === 'cover'
-    ? 'Crop Book Cover'
+    ? `Crop ${isManga ? 'Manga' : 'Book'} Cover`
     : cropMode === 'landscape'
       ? 'Crop Landscape Thumbnail'
-      : 'Crop Story Slide'
+      : `Crop ${isManga ? 'Manga' : 'Story'} Slide`
 
 const cropHelper =
   cropMode === 'cover'
-    ? 'Drag the image to fit the vertical 2:3 book cover.'
+    ? `Drag the image to fit the vertical 2:3 ${isManga ? 'manga' : 'book'} cover.`
     : cropMode === 'landscape'
       ? 'Drag the image to fit the horizontal 16:9 thumbnail.'
-      : 'Drag the image to fit the 16:9 story slide.'
+      : `Drag the image to fit the 16:9 ${isManga ? 'manga' : 'story'} slide.`
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
@@ -1088,7 +1094,9 @@ const cropHelper =
           </button>
 
           <h1 className="text-[17px] font-extrabold text-[#111827]">
-            {isEditMode ? 'Edit Story' : 'Create Story'}
+            {isEditMode
+              ? isManga ? 'Edit Manga' : 'Edit Story'
+              : isManga ? 'Create Manga' : 'Create Story'}
           </h1>
 
           <div className="h-9 w-9" />
@@ -1099,8 +1107,8 @@ const cropHelper =
         {!isEditMode ? (
           <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
             <div className="grid grid-cols-3 gap-2">
-              <Step number="1" title="Story Info" active />
-              <Step number="2" title="First Episode" />
+              <Step number="1" title={isManga ? 'Manga Info' : 'Story Info'} active />
+              <Step number="2" title={isManga ? 'First Manga Episode' : 'First Episode'} />
               <Step number="3" title="Publish" />
             </div>
           </section>
@@ -1122,7 +1130,7 @@ const cropHelper =
         {!pageLoading ? (
           <>
             <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <FieldLabel required>Book Cover</FieldLabel>
+              <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
@@ -1140,7 +1148,7 @@ const cropHelper =
                         >
                           <img
                             src={coverPreview}
-                            alt="Portrait Book Cover"
+                            alt={isManga ? 'Portrait Manga Cover' : 'Portrait Book Cover'}
                             className="h-full w-full object-cover"
                             draggable="false"
                             onDragStart={(event) => event.preventDefault()}
@@ -1248,7 +1256,7 @@ const cropHelper =
                 <div className="min-w-0">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-[13px] font-extrabold text-[#111827]">Story Slides ({slides.length}/5)</div>
+                      <div className="text-[13px] font-extrabold text-[#111827]">{isManga ? 'Manga Slides' : 'Story Slides'} ({slides.length}/5)</div>
                       <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
                     </div>
 
@@ -1287,7 +1295,7 @@ const cropHelper =
                       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                         <i className="fa-solid fa-images text-[15px]" />
                       </div>
-                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add Story Slide</div>
+                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add {isManga ? 'Manga' : 'Story'} Slide</div>
                       <div className="mt-1 text-[11px] text-[#8d94a1]">Drag / pinch / zoom crop</div>
                       <input
                         type="file"
@@ -1304,23 +1312,23 @@ const cropHelper =
               </div>
 
               <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
-                Portrait cover uses 2:3 crop. Landscape thumbnail and story slides use 16:9 crop. Tap an image again to adjust crop.
+                Portrait cover uses 2:3 crop. Landscape thumbnail and {isManga ? 'manga' : 'story'} slides use 16:9 crop. Tap an image again to adjust crop.
               </div>
             </section>
 
             <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <FieldLabel required>Story Title</FieldLabel>
-              <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter story title" />
+              <FieldLabel required>{isManga ? 'Manga Title' : 'Story Title'}</FieldLabel>
+              <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isManga ? 'Enter manga title' : 'Enter story title'} />
 
               <div className="mt-5">
-                <FieldLabel required>Story Language</FieldLabel>
+                <FieldLabel required>{isManga ? 'Manga Language' : 'Story Language'}</FieldLabel>
                 <SelectInput value={language} onChange={(event) => setLanguage(event.target.value)}>
                   {languages.map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </SelectInput>
                 <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
-                  Choose the language used inside your story.
+                  Choose the language used inside your {isManga ? 'manga' : 'story'}.
                 </p>
               </div>
 
@@ -1333,7 +1341,7 @@ const cropHelper =
               </div>
 
               <div className="mt-5">
-                <FieldLabel required>Story Status</FieldLabel>
+                <FieldLabel required>{isManga ? 'Manga Status' : 'Story Status'}</FieldLabel>
                 <div className="grid grid-cols-3 gap-2">
                   {storyStatusOptions.map((item) => (
                     <button
@@ -1397,7 +1405,6 @@ const cropHelper =
                   <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                     {updateDayOptions.map((day) => {
                       const active = updateDays.includes(day.value)
-
                       return (
                         <button
                           key={day.value}
@@ -1419,8 +1426,8 @@ const cropHelper =
 
               <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
                 <div>
-                  <div className="text-[13px] font-extrabold text-[#111827]">18+ Story</div>
-                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole story is adult-only</div>
+                  <div className="text-[13px] font-extrabold text-[#111827]">18+ {isManga ? 'Manga' : 'Story'}</div>
+                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole {isManga ? 'manga' : 'story'} is adult-only</div>
                 </div>
                 <Toggle checked={isAdult} onClick={() => setIsAdult((value) => !value)} label="Toggle 18+ story" />
               </div>
@@ -1437,7 +1444,7 @@ const cropHelper =
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Write a strong story summary. Recommended 400–1200 characters."
+                placeholder={isManga ? 'Write a strong manga summary. Recommended 400–1200 characters.' : 'Write a strong story summary. Recommended 400–1200 characters.'}
                 className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
               />
             </section>
@@ -1445,7 +1452,7 @@ const cropHelper =
             <section className="mt-4 space-y-3">
               <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
                 <input type="checkbox" checked={originalAccepted} onChange={(event) => setOriginalAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
-                <span>I confirm this story is my original work and I have the right to publish it.</span>
+                <span>I confirm this {isManga ? 'manga' : 'story'} is my original work and I have the right to publish it.</span>
               </label>
 
               <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
@@ -1472,7 +1479,13 @@ const cropHelper =
                 disabled={!canSave}
                 className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
               >
-                {loading ? (isEditMode ? 'Saving Changes...' : 'Uploading & Creating...') : isEditMode ? 'Save Changes' : 'Create Story'}
+                {loading
+                  ? isEditMode
+                    ? 'Saving Changes...'
+                    : `Uploading & Creating ${isManga ? 'Manga' : 'Story'}...`
+                  : isEditMode
+                    ? 'Save Changes'
+                    : `Create ${isManga ? 'Manga' : 'Story'}`}
               </button>
             </section>
           </>
