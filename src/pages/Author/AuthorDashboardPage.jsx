@@ -81,7 +81,7 @@ const createStoryCards = [
     icon: 'fa-regular fa-image',
     iconWrap: 'bg-[#FEE2E2] text-[#EF4444]',
     titleColor: 'text-[#EF4444]',
-    soon: true,
+    soon: false,
   },
   {
     key: 'chat-story',
@@ -140,7 +140,7 @@ function normalizeStory(story) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    type: story.story_type || 'Novel',
+    type: story.story_type === 'manga' ? 'Manga' : 'Novel',
     status,
     rawStatus: story.status || 'draft',
     updated: formatDate(story.updated_at || story.created_at),
@@ -231,7 +231,7 @@ function PageMenu({ open, onClose, onSelect }) {
         </div>
 
         <div className="space-y-1">
-          
+
           <ToolRow icon="fa-solid fa-chart-line" title="My Income" subtitle="Earnings and payout details" onClick={() => onSelect('/author/income')} />
           <ToolRow icon="fa-solid fa-gift" title="Quest" subtitle="Tasks and creator rewards" onClick={() => onSelect('/author/quest')} />
           <ToolRow icon="fa-solid fa-crown" title="Author Benefits" subtitle="Creator programs and support" onClick={() => onSelect('/author/benefits')} />
@@ -727,7 +727,7 @@ export default function AuthorDashboardPage() {
 
           <button
             type="button"
-            onClick={() => handleCreateStory('Novel')}
+            onClick={() => handleCreateStory('novel')}
             className="flex min-w-0 flex-col items-center justify-center px-1 text-center active:scale-95"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9b6af5] to-[#6d42db] text-white shadow-[0_6px_14px_rgba(109,66,219,0.35)]">
@@ -808,6 +808,7 @@ export default function AuthorDashboardPage() {
     <button
       key={item.key}
       type="button"
+      onClick={() => (item.soon ? handleComingSoon(item.title) : handleCreateStory(item.key))}
       disabled={item.soon}
       className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] border border-[#ece7f6] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
     >
@@ -874,7 +875,7 @@ export default function AuthorDashboardPage() {
 
               <button
                 type="button"
-                onClick={() => handleCreateStory('Novel')}
+                onClick={() => handleCreateStory('novel')}
                 className="mt-4 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-5 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
               >
                 Create Story
@@ -889,6 +890,3 @@ export default function AuthorDashboardPage() {
     </div>
   )
 }
-
-
-
