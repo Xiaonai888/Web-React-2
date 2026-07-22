@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
+import ImageDropZone from '../../components/common/ImageDropZone'
 import {
   MANGA_MAX_FILES_PER_PICK,
   MANGA_MAX_PAGES,
@@ -377,8 +378,14 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
           : 'Ready'
 
   return (
-    <div className="overflow-hidden rounded-[20px] border border-[#e5e7eb] bg-white shadow-sm">
-      <div className="relative aspect-[2/3] overflow-hidden bg-[#f2f4f7]">
+    <ImageDropZone
+      onFiles={(files) => onReplace(page.id, files[0] || null)}
+      disabled={busy || disabled}
+      className="rounded-[20px]"
+      label="Drop replacement page here"
+    >
+      <div className="overflow-hidden rounded-[20px] border border-[#e5e7eb] bg-white shadow-sm">
+        <div className="relative aspect-[2/3] overflow-hidden bg-[#f2f4f7]">
         <img src={page.previewUrl || page.imageUrl} alt={`Manga page ${index + 1}`} className="h-full w-full object-contain" />
         <div className="absolute left-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-black/75 px-2 text-[11px] font-black text-white">
           {index + 1}
@@ -461,6 +468,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
         ) : null}
       </div>
     </div>
+    </ImageDropZone>
   )
 }
 
@@ -1148,52 +1156,58 @@ export default function EpisodeEditorPage() {
                   </div>
                 </div>
 
-                {episodeCover ? (
-                  <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left">
-                    <div className="aspect-[16/9] w-full overflow-hidden">
-                      <img src={episodeCover} alt="Episode Cover" className="h-full w-full object-cover" />
-                    </div>
-                    <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
-                      <div>
-                        <div className="text-[12px] font-extrabold text-[#111827]">Cover loaded</div>
-                        <div className="mt-0.5 text-[11px] text-[#8d94a1]">Upload a new image to replace it</div>
+                <ImageDropZone
+                  onFiles={(files) => handleCoverChange(files[0] || null)}
+                  className="rounded-[18px]"
+                  label="Drop episode cover here"
+                >
+                  {episodeCover ? (
+                    <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left">
+                      <div className="aspect-[16/9] w-full overflow-hidden">
+                        <img src={episodeCover} alt="Episode Cover" className="h-full w-full object-cover" />
                       </div>
-                      <label className="cursor-pointer rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
-                        Replace
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            handleCoverChange(event.target.files?.[0] || null)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                    <div className="flex aspect-[16/9] w-full items-center justify-center text-center">
-                      <div>
-                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                          <i className="fa-regular fa-image text-[15px]" />
+                      <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
+                        <div>
+                          <div className="text-[12px] font-extrabold text-[#111827]">Cover loaded</div>
+                          <div className="mt-0.5 text-[11px] text-[#8d94a1]">Drop or upload a new image to replace it</div>
                         </div>
-                        <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Tap to Upload Cover</div>
-                        <div className="mt-1 text-[11px] text-[#8d94a1]">Drag, pinch, or zoom to crop</div>
+                        <label className="cursor-pointer rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
+                          Replace
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => {
+                              handleCoverChange(event.target.files?.[0] || null)
+                              event.target.value = ''
+                            }}
+                          />
+                        </label>
                       </div>
                     </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        handleCoverChange(event.target.files?.[0] || null)
-                        event.target.value = ''
-                      }}
-                    />
-                  </label>
-                )}
+                  ) : (
+                    <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                      <div className="flex aspect-[16/9] w-full items-center justify-center text-center">
+                        <div>
+                          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                            <i className="fa-regular fa-image text-[15px]" />
+                          </div>
+                          <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Drop or Tap Cover</div>
+                          <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          handleCoverChange(event.target.files?.[0] || null)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  )}
+                </ImageDropZone>
               </div>
             </section>
 
@@ -1211,32 +1225,40 @@ export default function EpisodeEditorPage() {
                   </div>
                 </div>
 
-                <label
-                  className={`mt-4 flex min-h-[120px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center ${
-                    mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES
-                      ? 'pointer-events-none opacity-55'
-                      : 'cursor-pointer'
-                  }`}
+                <ImageDropZone
+                  onFiles={handlePickMangaPages}
+                  multiple
+                  disabled={mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES}
+                  className="mt-4 rounded-[20px]"
+                  label="Drop manga pages here"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                    <i className="fa-solid fa-images text-[17px]" />
-                  </div>
-                  <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
-                    {mangaUploadPending ? 'Uploading pages...' : 'Add Manga Pages'}
-                  </div>
-                  <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, or WebP</div>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    className="hidden"
-                    disabled={mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES}
-                    onChange={(event) => {
-                      handlePickMangaPages(event.target.files)
-                      event.target.value = ''
-                    }}
-                  />
-                </label>
+                  <label
+                    className={`flex min-h-[120px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center ${
+                      mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES
+                        ? 'pointer-events-none opacity-55'
+                        : 'cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                      <i className="fa-solid fa-images text-[17px]" />
+                    </div>
+                    <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
+                      {mangaUploadPending ? 'Uploading pages...' : 'Drop or Add Manga Pages'}
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, or WebP · Up to 10 each time</div>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      className="hidden"
+                      disabled={mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES}
+                      onChange={(event) => {
+                        handlePickMangaPages(event.target.files)
+                        event.target.value = ''
+                      }}
+                    />
+                  </label>
+                </ImageDropZone>
 
                 {mangaPages.length ? (
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
