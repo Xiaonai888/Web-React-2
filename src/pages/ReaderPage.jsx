@@ -4366,39 +4366,16 @@ useEffect(() => {
 
     const characterCount = Number(episode.character_count || episode.content?.length || 0)
     const isShortEpisode = characterCount > 0 && characterCount < 3000
-    const requiredSeconds = isShortEpisode ? 10 : 20
-    const progressRuleEnabled = false
-    const requiredProgress = isShortEpisode ? 60 : 20
-    let activeSeconds = 0
+    useEffect(() => {
+  if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) return
+  qualifiedViewSentRef.current = true
+  fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`, {
+    method: 'POST',
+    headers: readerAuthHeaders(),
+  }).then(async (response) => console.log('VIEW TEST:', response.status, await response.json().catch(() => ({}))))
+    .catch((error) => { qualifiedViewSentRef.current = false; console.error('VIEW TEST ERROR:', error) })
+}, [adultAccepted, episode, episodeId, loading, storyId])
 
-    async function sendQualifiedView() {
-      if (qualifiedViewSentRef.current) return
-
-      qualifiedViewSentRef.current = true
-
-      await fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`, {
-        method: 'POST',
-        headers: readerAuthHeaders(),
-      }).catch(() => {})
-    }
-
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-
-      activeSeconds += 1
-
-      const progressPassed = !progressRuleEnabled || readingProgressRef.current >= requiredProgress
-
-      if (activeSeconds >= requiredSeconds && progressPassed) {
-        window.clearInterval(timer)
-        sendQualifiedView()
-      }
-    }, 1000)
-
-    return () => {
-      window.clearInterval(timer)
-    }
-  }, [adultAccepted, episode, episodeId, loading, storyId])
 
   useEffect(() => {
     let cancelled = false
