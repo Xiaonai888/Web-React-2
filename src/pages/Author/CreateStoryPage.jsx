@@ -576,10 +576,11 @@ export default function CreateStoryPage() {
   const [searchParams] = useSearchParams()
   const editStoryId = searchParams.get('editStoryId')
   const isEditMode = Boolean(editStoryId)
-  const requestedStoryType = String(searchParams.get('type') || 'novel').toLowerCase() === 'manga' ? 'manga' : 'novel'
+  const typeFromUrl = String(searchParams.get('type') || 'novel').toLowerCase()
+  const requestedStoryType = ['novel', 'manga', 'chat_story'].includes(typeFromUrl) ? typeFromUrl : 'novel'
   const [storyType, setStoryType] = useState(requestedStoryType)
   const isManga = storyType === 'manga'
-
+  const isChatStory = storyType === 'chat_story'
   const [title, setTitle] = useState('')
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
@@ -624,7 +625,7 @@ export default function CreateStoryPage() {
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
     if (!saved) return
 
-    setStoryType(saved.storyType === 'manga' ? 'manga' : requestedStoryType)
+    setStoryType(['novel', 'manga', 'chat_story'].includes(saved.storyType) ? saved.storyType : requestedStoryType)
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
@@ -698,7 +699,7 @@ export default function CreateStoryPage() {
 
         const story = data.story || {}
 
-        setStoryType(story.story_type === 'manga' ? 'manga' : 'novel')
+        setStoryType(['novel', 'manga', 'chat_story'].includes(story.story_type) ? story.story_type : 'novel')
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
