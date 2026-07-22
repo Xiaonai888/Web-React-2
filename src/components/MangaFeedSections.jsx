@@ -51,10 +51,6 @@ function MangaCard({ story, onOpen }) {
           }}
         />
 
-        <span className="absolute left-0 top-0 rounded-br-[8px] bg-[#F6B800] px-2 py-1 text-[9px] font-black uppercase leading-none text-[#111827]">
-          Manga
-        </span>
-
         {story.is_adult ? (
           <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-1 text-[9px] font-extrabold text-[#e5484d] shadow-sm">
             18+
