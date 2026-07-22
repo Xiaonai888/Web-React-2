@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
+import ImageDropZone from '../../components/common/ImageDropZone'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1139,58 +1140,64 @@ const cropHelper =
                       Portrait Cover
                     </div>
 
-                    {coverPreview ? (
-                      <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                        <button
-                          type="button"
-                          onClick={handleEditCoverCrop}
-                          className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
-                        >
-                          <img
-                            src={coverPreview}
-                            alt={isManga ? 'Portrait Manga Cover' : 'Portrait Book Cover'}
-                            className="h-full w-full object-cover"
-                            draggable="false"
-                            onDragStart={(event) => event.preventDefault()}
-                          />
-                        </button>
-
-                        <div className="border-t border-[#eceaf2] bg-white p-2">
-                          <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
-                            Replace
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(event) => {
-                                handleCoverChange(event.target.files?.[0] || null)
-                                event.target.value = ''
-                              }}
+                    <ImageDropZone
+                      onFiles={(files) => handleCoverChange(files[0] || null)}
+                      className="rounded-[18px]"
+                      label="Drop cover image here"
+                    >
+                      {coverPreview ? (
+                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                          <button
+                            type="button"
+                            onClick={handleEditCoverCrop}
+                            className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
+                          >
+                            <img
+                              src={coverPreview}
+                              alt={isManga ? 'Portrait Manga Cover' : 'Portrait Book Cover'}
+                              className="h-full w-full object-cover"
+                              draggable="false"
+                              onDragStart={(event) => event.preventDefault()}
                             />
-                          </label>
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                        <div className="px-3">
-                          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                            <i className="fa-solid fa-upload text-[14px]" />
-                          </div>
-                          <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Tap Cover</div>
-                          <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
-                        </div>
+                          </button>
 
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            handleCoverChange(event.target.files?.[0] || null)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                    )}
+                          <div className="border-t border-[#eceaf2] bg-white p-2">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                              Replace
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  handleCoverChange(event.target.files?.[0] || null)
+                                  event.target.value = ''
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                          <div className="px-3">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                              <i className="fa-solid fa-upload text-[14px]" />
+                            </div>
+                            <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Drop or Tap Cover</div>
+                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
+                          </div>
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => {
+                              handleCoverChange(event.target.files?.[0] || null)
+                              event.target.value = ''
+                            }}
+                          />
+                        </label>
+                      )}
+                    </ImageDropZone>
                   </div>
 
                   <div>
@@ -1198,58 +1205,64 @@ const cropHelper =
                       Landscape Thumbnail
                     </div>
 
-                    {landscapePreview ? (
-                      <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                        <button
-                          type="button"
-                          onClick={handleEditLandscapeCrop}
-                          className="block aspect-video w-full overflow-hidden bg-[#fafafe]"
-                        >
-                          <img
-                            src={landscapePreview}
-                            alt="Landscape Thumbnail"
-                            className="h-full w-full object-cover"
-                            draggable="false"
-                            onDragStart={(event) => event.preventDefault()}
-                          />
-                        </button>
-
-                        <div className="border-t border-[#eceaf2] bg-white p-2">
-                          <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
-                            Replace
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(event) => {
-                                handleLandscapeChange(event.target.files?.[0] || null)
-                                event.target.value = ''
-                              }}
+                    <ImageDropZone
+                      onFiles={(files) => handleLandscapeChange(files[0] || null)}
+                      className="rounded-[18px]"
+                      label="Drop thumbnail image here"
+                    >
+                      {landscapePreview ? (
+                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                          <button
+                            type="button"
+                            onClick={handleEditLandscapeCrop}
+                            className="block aspect-video w-full overflow-hidden bg-[#fafafe]"
+                          >
+                            <img
+                              src={landscapePreview}
+                              alt="Landscape Thumbnail"
+                              className="h-full w-full object-cover"
+                              draggable="false"
+                              onDragStart={(event) => event.preventDefault()}
                             />
-                          </label>
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                        <div className="px-3">
-                          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                            <i className="fa-solid fa-image text-[14px]" />
-                          </div>
-                          <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Add Thumbnail</div>
-                          <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
-                        </div>
+                          </button>
 
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            handleLandscapeChange(event.target.files?.[0] || null)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                    )}
+                          <div className="border-t border-[#eceaf2] bg-white p-2">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                              Replace
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  handleLandscapeChange(event.target.files?.[0] || null)
+                                  event.target.value = ''
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                          <div className="px-3">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                              <i className="fa-solid fa-image text-[14px]" />
+                            </div>
+                            <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Drop or Add Thumbnail</div>
+                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
+                          </div>
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => {
+                              handleLandscapeChange(event.target.files?.[0] || null)
+                              event.target.value = ''
+                            }}
+                          />
+                        </label>
+                      )}
+                    </ImageDropZone>
                   </div>
                 </div>
 
@@ -1277,37 +1290,44 @@ const cropHelper =
                     </label>
                   </div>
 
-                  {slides.length ? (
-                    <div className="space-y-2">
-                      {slides.map((slide, index) => (
-                        <SlideRow
-                          key={slide.id}
-                          slide={slide}
-                          index={index}
-                          onEdit={handleEditSlideCrop}
-                          onDelete={handleDeleteSlide}
-                          onToggle={handleToggleSlide}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                      <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                        <i className="fa-solid fa-images text-[15px]" />
+                  <ImageDropZone
+                    onFiles={(files) => handleAddSlide(files[0] || null)}
+                    disabled={slides.length >= 5}
+                    className="rounded-[20px]"
+                    label="Drop slide image here"
+                  >
+                    {slides.length ? (
+                      <div className="space-y-2">
+                        {slides.map((slide, index) => (
+                          <SlideRow
+                            key={slide.id}
+                            slide={slide}
+                            index={index}
+                            onEdit={handleEditSlideCrop}
+                            onDelete={handleDeleteSlide}
+                            onToggle={handleToggleSlide}
+                          />
+                        ))}
                       </div>
-                      <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Add {isManga ? 'Manga' : 'Story'} Slide</div>
-                      <div className="mt-1 text-[11px] text-[#8d94a1]">Drag / pinch / zoom crop</div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(event) => {
-                          handleAddSlide(event.target.files?.[0] || null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-                  )}
+                    ) : (
+                      <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                          <i className="fa-solid fa-images text-[15px]" />
+                        </div>
+                        <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Drop or Add {isManga ? 'Manga' : 'Story'} Slide</div>
+                        <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            handleAddSlide(event.target.files?.[0] || null)
+                            event.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </ImageDropZone>
                 </div>
               </div>
 
