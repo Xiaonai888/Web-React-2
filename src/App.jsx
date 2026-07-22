@@ -24,6 +24,7 @@ import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 import AuthorProfilePage from './pages/Author/AuthorProfilePage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
+import ChatStoryCharactersPage from './pages/Author/ChatStoryCharactersPage'
 import StoryManagerPage from './pages/Author/StoryManagerPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
 import PublishEpisodePage from './pages/Author/PublishEpisodePage'
@@ -1118,6 +1119,7 @@ const shouldShowOpeningAds =
         <Route path="/author/profile" element={<AuthorProfilePage />} />
         <Route path="/author/insights" element={<AuthorInsightsPage />} />
         <Route path="/author/create-story" element={<CreateStoryPage />} />
+        <Route path="/author/story/:storyId/chat/characters" element={<ChatStoryCharactersPage />} />
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
