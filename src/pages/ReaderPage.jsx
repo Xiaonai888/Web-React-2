@@ -4359,22 +4359,147 @@ useEffect(() => {
     readingMode,
   ])
 
-  useEffect(() => {
-    if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) {
+    useEffect(() => {
+    if (
+      !storyId ||
+      !episodeId ||
+      !episode ||
+      loading ||
+      lockedEpisode ||
+      !adultAccepted ||
+      qualifiedViewSentRef.current
+    ) {
       return undefined
     }
 
-    const characterCount = Number(episode.character_count || episode.content?.length || 0)
-    const isShortEpisode = characterCount > 0 && characterCount < 3000
-    useEffect(() => {
-  if (!storyId || !episodeId || !episode || loading || !adultAccepted || qualifiedViewSentRef.current) return
-  qualifiedViewSentRef.current = true
-  fetch(`${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`, {
-    method: 'POST',
-    headers: readerAuthHeaders(),
-  }).then(async (response) => console.log('VIEW TEST:', response.status, await response.json().catch(() => ({}))))
-    .catch((error) => { qualifiedViewSentRef.current = false; console.error('VIEW TEST ERROR:', error) })
-}, [adultAccepted, episode, episodeId, loading, storyId])
+    qualifiedViewSentRef.current = true
+
+    const characterCount = Number(
+      episode.character_count || episode.content?.length || 0
+    )
+    const isShortEpisode =
+      characterCount > 0 && characterCount < 3000
+    const requiredSeconds = isShortEpisode ? 10 : 20
+    const requiredProgress = isShortEpisode ? 60 : 20
+
+    let activeSeconds = 0
+    let qualifiedTimer = null
+    let qualifiedRequestBusy = false
+    let cancelled = false
+
+    async function requestView(mode) {
+      const response = await fetch(
+        `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`,
+        {
+          method: 'POST',
+          headers: {
+            ...readerAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ mode }),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to count view')
+      }
+
+      console.log('VIEW FLOW:', mode, data.view)
+
+      return data.view || {}
+    }
+
+    function startQualifiedViewRule() {
+      qualifiedTimer = window.setInterval(async () => {
+        if (
+          cancelled ||
+          qualifiedRequestBusy ||
+          document.visibilityState !== 'visible'
+        ) {
+          return
+        }
+
+        activeSeconds += 1
+
+        if (
+          activeSeconds < requiredSeconds ||
+          readingProgressRef.current < requiredProgress
+        ) {
+          return
+        }
+
+        qualifiedRequestBusy = true
+        window.clearInterval(qualifiedTimer)
+        qualifiedTimer = null
+
+        try {
+          const result = await requestView('qualified')
+
+          if (
+            !cancelled &&
+            !result.counted &&
+            result.reason !== 'cooldown'
+          ) {
+            qualifiedViewSentRef.current = false
+          }
+        } catch (error) {
+          if (!cancelled) {
+            qualifiedViewSentRef.current = false
+            console.error('VIEW FLOW ERROR:', error)
+          }
+        }
+      }, 1000)
+    }
+
+    async function beginViewFlow() {
+      try {
+        const result = await requestView('fast')
+
+        if (cancelled) return
+
+        if (
+          result.counted ||
+          result.reason === 'fast_cooldown'
+        ) {
+          return
+        }
+
+        if (
+          result.reason === 'qualified_view_required' ||
+          result.requires_qualified_view === true
+        ) {
+          startQualifiedViewRule()
+          return
+        }
+
+        qualifiedViewSentRef.current = false
+      } catch (error) {
+        if (!cancelled) {
+          qualifiedViewSentRef.current = false
+          console.error('VIEW FLOW ERROR:', error)
+        }
+      }
+    }
+
+    beginViewFlow()
+
+    return () => {
+      cancelled = true
+
+      if (qualifiedTimer) {
+        window.clearInterval(qualifiedTimer)
+      }
+    }
+  }, [
+    adultAccepted,
+    episode,
+    episodeId,
+    loading,
+    lockedEpisode,
+    storyId,
+  ])
 
 
   useEffect(() => {
