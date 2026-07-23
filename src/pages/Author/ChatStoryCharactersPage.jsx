@@ -342,18 +342,51 @@ function GallerySheet({
   )
 }
 
-function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, editing, onNicknameChange, onRoleGroupChange, onChatSideChange, onChangeImage, onDelete, onClose, onSave }) {
+function CharacterEditor({
+  open,
+  group,
+  image,
+  nickname,
+  roleGroup,
+  chatSide,
+  editing,
+  onNicknameChange,
+  onRoleGroupChange,
+  onChatSideChange,
+  onChangeImage,
+  onDelete,
+  onClose,
+  onSave,
+}) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
   if (!open || !group) return null
 
   return (
     <div className="fixed inset-0 z-[190] flex items-center justify-center bg-black/45 px-4">
-      <div className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl">
+      <div
+        className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-[18px] font-extrabold text-[#111827]">
+            <h2 className="text-[17px] font-bold text-[#111827]">
               {editing ? 'Edit character' : 'Character details'}
             </h2>
-            <div className="mt-1 text-[11px] font-bold" style={{ color: group.accent }}>
+
+            <div
+              className="mt-1 text-[11px] font-medium"
+              style={{ color: group.accent }}
+            >
               {group.title}
             </div>
           </div>
@@ -361,7 +394,7 @@ function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, ed
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f7f6fa] text-[#111827]"
           >
             <i className="fa-solid fa-xmark text-[14px]" />
           </button>
@@ -382,48 +415,67 @@ function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, ed
           <button
             type="button"
             onClick={onChangeImage}
-            className="mt-3 rounded-full bg-[#f5f3fa] px-4 py-2 text-[10.5px] font-extrabold text-[#667085]"
+            className="mt-3 rounded-full bg-[#f8f7fb] px-4 py-2 text-[10.5px] font-medium text-[#667085]"
           >
             Change profile image
           </button>
         </div>
 
-        <label className="mt-5 block text-[12px] font-extrabold text-[#111827]">
-          Nickname {roleGroup === 'background' ? <span className="font-semibold text-[#98a2b3]">(optional)</span> : null}
+        <label className="mt-5 block text-[12px] font-bold text-[#111827]">
+          Nickname
+          {roleGroup === 'background' ? (
+            <span className="ml-1 font-normal text-[#98a2b3]">
+              (optional)
+            </span>
+          ) : null}
         </label>
 
         <input
           value={nickname}
           onChange={(event) => onNicknameChange(event.target.value)}
-          placeholder={roleGroup === 'background' ? 'Example: Guard, Maid 1, Doctor' : 'Enter character nickname'}
+          placeholder={
+            roleGroup === 'background'
+              ? 'Example: Guard, Maid 1, Doctor'
+              : 'Enter character nickname'
+          }
           maxLength={40}
-          className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
+          className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[14px] font-normal text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
         />
 
-        <label className="mt-4 block text-[12px] font-extrabold text-[#111827]">Character group</label>
-        <select
-          value={roleGroup}
-          onChange={(event) => onRoleGroupChange(event.target.value)}
-          className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[13px] font-bold text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
-        >
-          {ROLE_GROUPS.map((item) => (
-            <option key={item.key} value={item.key}>
-              {item.title}
-            </option>
-          ))}
-        </select>
+        <label className="mt-4 block text-[12px] font-bold text-[#111827]">
+          Character group
+        </label>
 
-        <label className="mt-4 block text-[12px] font-extrabold text-[#111827]">Chat side</label>
+        <div className="relative mt-2">
+          <select
+            value={roleGroup}
+            onChange={(event) => onRoleGroupChange(event.target.value)}
+            className="h-12 w-full appearance-none rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 pr-14 text-[13px] font-normal text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
+          >
+            {ROLE_GROUPS.map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+
+          <i className="fa-solid fa-chevron-down pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[11px] text-[#667085]" />
+        </div>
+
+        <label className="mt-4 block text-[12px] font-bold text-[#111827]">
+          Chat side
+        </label>
+
         <div className="mt-2 grid grid-cols-2 gap-3">
           {['left', 'right'].map((side) => (
             <button
               key={side}
               type="button"
               onClick={() => onChatSideChange(side)}
-              className={`h-11 rounded-[14px] text-[11px] font-extrabold ${
+              className={`h-11 rounded-[14px] text-[11px] font-medium ${
                 chatSide === side
                   ? 'bg-[#111827] text-white'
-                  : 'bg-[#f5f3fa] text-[#667085]'
+                  : 'bg-[#f8f7fb] text-[#667085]'
               }`}
             >
               {side === 'left' ? 'Left side' : 'Right side'}
@@ -434,7 +486,7 @@ function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, ed
         <button
           type="button"
           onClick={onSave}
-          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9262ef] to-[#6d42db] text-[13px] font-extrabold text-white active:scale-[0.99]"
+          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9262ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99]"
         >
           Save character
         </button>
@@ -443,7 +495,7 @@ function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, ed
           <button
             type="button"
             onClick={onDelete}
-            className="mt-3 h-11 w-full rounded-full bg-[#fff1f2] text-[12px] font-extrabold text-[#e11d48]"
+            className="mt-3 h-11 w-full rounded-full bg-[#fff7f8] text-[12px] font-medium text-[#e11d48]"
           >
             Delete character
           </button>
