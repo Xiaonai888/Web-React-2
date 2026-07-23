@@ -838,7 +838,11 @@ export default function ChatStoryCharactersPage() {
         }))
       )
 
-      showToast(continueAfterSave ? 'Step 2 saved. The new Chat Editor is the next stage.' : 'Characters saved successfully.')
+      if (continueAfterSave) {
+  navigate(`/author/story/${storyId}/chat/editor`)
+  return
+}
+showToast('Characters saved successfully.')
     } catch (error) {
       showToast(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to save characters')
     } finally {
