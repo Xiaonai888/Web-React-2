@@ -2839,12 +2839,16 @@ export default function CommentSection({
       </div>
 
       {toast ? (
-        <div
-          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/35 px-4"
-        >
-          {toast}
-        </div>
-      ) : null}
+  <div
+    className={`${
+      isModal
+        ? 'absolute'
+        : 'fixed'
+    } bottom-[88px] left-1/2 z-[310] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-lg`}
+  >
+    {toast}
+  </div>
+) : null}
 
       {warningDialog ? (
         <div
