@@ -1319,7 +1319,7 @@ return (
                       <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
                     </div>
 
-                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-bold ${
+                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
                       slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
                     }`}>
                       + Add
@@ -1414,10 +1414,10 @@ return (
                       key={item}
                       type="button"
                       onClick={() => setStoryStatus(item)}
-                      className={`h-11 rounded-[14px] text-[12px] font-bold transition active:scale-[0.99] ${
+                      className={`h-10 rounded-full text-[12px] font-normal transition active:scale-95 ${
                         storyStatus === item
-                          ? 'bg-[#111827] text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)]'
-                          : 'bg-[#fafafe] text-[#555b66] ring-1 ring-[#e5e7eb]'
+                          ? 'bg-[#111827] text-white'
+                          : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
                       }`}
                     >
                       {item}
