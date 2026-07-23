@@ -46,9 +46,15 @@ function ContinueReadingCard({ item }) {
   )
 }
 
-export default function ContinueReadingSection() {
+export default function ContinueReadingSection({
+  storyType = '',
+}) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   const loadProgress = useCallback(async () => {
     const token = getReaderToken()
@@ -60,39 +66,79 @@ export default function ContinueReadingSection() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/reading-progress?limit=6`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: 'no-store',
-      })
+      const limit = normalizedStoryType ? 30 : 6
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reading-progress?limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load reading progress')
+        throw new Error(
+          data.message ||
+          'Failed to load reading progress'
+        )
       }
 
-      setItems(Array.isArray(data.items) ? data.items : [])
+      const sourceItems = Array.isArray(data.items)
+        ? data.items
+        : []
+
+      const visibleItems = normalizedStoryType
+        ? sourceItems.filter(
+            (item) =>
+              String(
+                item?.story?.story_type ||
+                item?.story_type ||
+                ''
+              )
+                .trim()
+                .toLowerCase() ===
+              normalizedStoryType
+          )
+        : sourceItems
+
+      setItems(visibleItems.slice(0, 6))
     } catch {
       setItems([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [normalizedStoryType])
 
   useEffect(() => {
     loadProgress()
 
     function refreshWhenVisible() {
-      if (document.visibilityState === 'visible') loadProgress()
+      if (document.visibilityState === 'visible') {
+        loadProgress()
+      }
     }
 
     window.addEventListener('focus', loadProgress)
-    document.addEventListener('visibilitychange', refreshWhenVisible)
+
+    document.addEventListener(
+      'visibilitychange',
+      refreshWhenVisible
+    )
 
     return () => {
-      window.removeEventListener('focus', loadProgress)
-      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      window.removeEventListener(
+        'focus',
+        loadProgress
+      )
+
+      document.removeEventListener(
+        'visibilitychange',
+        refreshWhenVisible
+      )
     }
   }, [loadProgress])
 
