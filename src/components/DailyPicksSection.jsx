@@ -251,9 +251,15 @@ function LoadingGrid() {
   )
 }
 
-export default function DailyPicksSection() {
+export default function DailyPicksSection({
+  storyType = '',
+}) {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   useEffect(() => {
     let ignore = false
@@ -262,42 +268,79 @@ export default function DailyPicksSection() {
       try {
         setLoading(true)
 
-        const [popularResponse, updatedResponse] = await Promise.all([
-          fetch(
-            addStoryLanguageParam(
-              `${API_BASE_URL}/api/public/stories?limit=36&sort=likes`
-            )
-          ),
-          fetch(
-            addStoryLanguageParam(
-              `${API_BASE_URL}/api/public/stories?limit=60&sort=updated`
-            )
-          ),
-        ])
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(
+              normalizedStoryType
+            )}`
+          : ''
 
-        const [popularData, updatedData] = await Promise.all([
-          popularResponse.json().catch(() => ({})),
-          updatedResponse.json().catch(() => ({})),
-        ])
+        const [popularResponse, updatedResponse] =
+          await Promise.all([
+            fetch(
+              addStoryLanguageParam(
+                `${API_BASE_URL}/api/public/stories?limit=36&sort=likes${storyTypeQuery}`
+              )
+            ),
+            fetch(
+              addStoryLanguageParam(
+                `${API_BASE_URL}/api/public/stories?limit=60&sort=updated${storyTypeQuery}`
+              )
+            ),
+          ])
 
-        if (!popularResponse.ok || popularData.ok === false) {
-          throw new Error(popularData.message || 'Failed to load popular daily picks')
+        const [popularData, updatedData] =
+          await Promise.all([
+            popularResponse.json().catch(() => ({})),
+            updatedResponse.json().catch(() => ({})),
+          ])
+
+        if (
+          !popularResponse.ok ||
+          popularData.ok === false
+        ) {
+          throw new Error(
+            popularData.message ||
+            'Failed to load popular daily picks'
+          )
         }
 
-        if (!updatedResponse.ok || updatedData.ok === false) {
-          throw new Error(updatedData.message || 'Failed to load updated daily picks')
+        if (
+          !updatedResponse.ok ||
+          updatedData.ok === false
+        ) {
+          throw new Error(
+            updatedData.message ||
+            'Failed to load updated daily picks'
+          )
         }
 
         if (!ignore) {
+          const sourceStories = [
+            ...(popularData.stories || []),
+            ...(updatedData.stories || []),
+          ].filter(
+            (story) =>
+              !normalizedStoryType ||
+              String(story?.story_type || '')
+                .trim()
+                .toLowerCase() ===
+                normalizedStoryType
+          )
+
           const dailyStories = selectDailyStories(
-            [...(popularData.stories || []), ...(updatedData.stories || [])],
+            sourceStories,
             6
           )
 
-          setStories(dailyStories.map(normalizeStory))
+          setStories(
+            dailyStories.map(normalizeStory)
+          )
         }
       } catch (error) {
-        console.error('DailyPicksSection fetch error:', error)
+        console.error(
+          'DailyPicksSection fetch error:',
+          error
+        )
 
         if (!ignore) {
           setStories([])
@@ -314,7 +357,7 @@ export default function DailyPicksSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
   if (loading) {
     return <LoadingGrid />
@@ -328,7 +371,9 @@ export default function DailyPicksSection() {
     <section className="px-3 pb-2 md:px-4">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[20px] lg:text-[21px]">📖</span>
+          <span className="text-[20px] lg:text-[21px]">
+            📖
+          </span>
 
           <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
             Daily Picks
@@ -346,7 +391,10 @@ export default function DailyPicksSection() {
 
       <div className="grid grid-cols-2 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
         {stories.map((book) => (
-          <DailyPickCard key={book.id} book={book} />
+          <DailyPickCard
+            key={book.id}
+            book={book}
+          />
         ))}
       </div>
     </section>
