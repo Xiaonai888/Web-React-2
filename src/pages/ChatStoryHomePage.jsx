@@ -110,9 +110,11 @@ function SectionHeader({ icon, title, onMore }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3 px-4">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-[22px] leading-none">{icon}</span>
-        <h2 className="truncate text-[20px] font-black tracking-[-0.02em] text-[#292d33]">{title}</h2>
-      </div>
+  <span className="text-[17px] leading-none">{icon}</span>
+  <h2 className="truncate text-[16px] font-bold leading-5 text-[#20242b]">
+    {title}
+  </h2>
+</div>
 
       <button
         type="button"
