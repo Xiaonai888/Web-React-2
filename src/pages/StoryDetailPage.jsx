@@ -737,6 +737,11 @@ setSubscribed(isSubscribed)
         <StoryStatsSection
           story={story}
           episodes={episodes}
+          onOpenLikes={() =>
+  navigate(`/interactions/story/${realStoryId}/likes`, {
+    state: { sourceName: story.title || 'Story' },
+  })
+}
           onOpenRating={() => navigate(`/story/${realStoryId}/rating`)}
           onOpenRanking={() => {
   setCommentsOpen(false)
