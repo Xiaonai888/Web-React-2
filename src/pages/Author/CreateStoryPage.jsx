@@ -1417,7 +1417,7 @@ return (
 
               <div className="mt-5">
                 <FieldLabel required>Main Genre</FieldLabel>
-                <button type="button" onClick={() => setGenreOpen(true)} className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-left text-[14px] font-semibold text-[#111827]">
+                <button type="button" onClick={() => setGenreOpen(true)} className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-left text-[14px] font-normal text-[#111827]">
                   {genre || 'Choose genre'}
                   <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
                 </button>
@@ -1493,7 +1493,7 @@ return (
                           key={day.value}
                           type="button"
                           onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
-                          className={`h-10 rounded-full text-[12px] font-bold transition active:scale-95 ${
+                          className={`h-10 rounded-full text-[12px] font-normal transition active:scale-95 ${
                             active
                               ? 'bg-[#111827] text-white'
                               : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
