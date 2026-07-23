@@ -231,6 +231,7 @@ export default function PublishEpisodePage() {
   const episodeId = searchParams.get('episodeId') || searchParams.get('episode_id')
   const isFirstEpisode = searchParams.get('first') !== '0'
   const isChatStory = searchParams.get('type') === 'chat_story'
+  const isManga = searchParams.get('type') === 'manga'
 
   const [isAdultEpisode, setIsAdultEpisode] = useState(false)
   const [releaseOption, setReleaseOption] = useState('publish')
@@ -362,7 +363,43 @@ setSuccessOpen(true)
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+    <div
+      className={`min-h-screen bg-[#f5f3fa] pb-[110px] ${
+        isManga ? 'manga-red-theme' : ''
+      }`}
+    >
+      <style>{`
+        .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
+        .manga-red-theme button:not(:disabled)[class*="bg-[#0b5cff]"] {
+          background-color: #e5484d !important;
+        }
+
+        .manga-red-theme button[class*="border-[#111827]"] {
+          border-color: #e5484d !important;
+        }
+
+        .manga-red-theme
+          button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
+          box-shadow: 0 14px 30px rgba(229, 72, 77, 0.28) !important;
+        }
+
+        @keyframes mangaSoftPulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 14px 30px rgba(229, 72, 77, 0.22);
+          }
+
+          50% {
+            transform: scale(1.025);
+            box-shadow: 0 18px 38px rgba(229, 72, 77, 0.34);
+          }
+        }
+
+        .manga-red-theme button[class*="animate-[softPulse"] {
+          animation: mangaSoftPulse 1.8s ease-in-out infinite !important;
+        }
+      `}</style>
+
       <Toast message={toast} onClose={() => setToast('')} />
 
       <SuccessModal
@@ -378,7 +415,9 @@ setSuccessOpen(true)
   onAddEpisode={() => {
   const path = isChatStory
     ? `/author/story/${storyId}/chat/editor?new=1&first=0`
-    : `/author/story/${storyId}/episode/create?first=0&fromPublishSuccess=1`
+    : `/author/story/${storyId}/episode/create?first=0&fromPublishSuccess=1&type=${
+        isManga ? 'manga' : 'novel'
+      }`
   navigate('/author/dashboard', { replace: true })
   setTimeout(() => navigate(path), 0)
 }}
