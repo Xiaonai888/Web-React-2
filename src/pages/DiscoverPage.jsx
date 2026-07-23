@@ -20,7 +20,12 @@ import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
 
-const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 
 const AUTHOR_POST_REACTIONS = [
@@ -666,38 +671,50 @@ function RealFollowedPostCard({
             </>
           ) : null}
 
-          <button
-            type="button"
-            disabled={reactionBusy}
-            onPointerDown={startReactionPress}
-            onPointerUp={endReactionPress}
-            onPointerLeave={cancelReactionPress}
-            onPointerCancel={cancelReactionPress}
-            onContextMenu={(event) => event.preventDefault()}
-            className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+          <div
+            className="inline-flex items-center gap-1.5"
             style={{
               color: activeReaction?.text || undefined,
             }}
-            aria-label={
-              activeReaction
-                ? `${activeReaction.label} reaction`
-                : 'Like'
-            }
           >
-            {reactionBusy ? (
-              <i className="fa-solid fa-circle-notch animate-spin" />
-            ) : activeReaction ? (
-              <img
-                src={activeReaction.src}
-                alt={activeReaction.label}
-                className="h-[17px] w-[17px] object-contain"
-              />
-            ) : (
-              <i className="fa-regular fa-heart text-[15px]" />
-            )}
+            <button
+              type="button"
+              disabled={reactionBusy}
+              onPointerDown={startReactionPress}
+              onPointerUp={endReactionPress}
+              onPointerLeave={cancelReactionPress}
+              onPointerCancel={cancelReactionPress}
+              onContextMenu={(event) => event.preventDefault()}
+              className="active:scale-95 disabled:opacity-60"
+              aria-label={
+                activeReaction
+                  ? `${activeReaction.label} reaction`
+                  : 'Like'
+              }
+            >
+              {reactionBusy ? (
+                <i className="fa-solid fa-circle-notch animate-spin" />
+              ) : activeReaction ? (
+                <img
+                  src={activeReaction.src}
+                  alt={activeReaction.label}
+                  className="h-[17px] w-[17px] object-contain"
+                />
+              ) : (
+                <i className="fa-regular fa-heart text-[15px]" />
+              )}
+            </button>
 
-            <span>{Number(post.like_count || 0)}</span>
-          </button>
+            <Link
+              to={`/interactions/author_post/${post.id}/likes`}
+              state={{ sourceName: authorName }}
+              onClick={() => setReactionPickerOpen(false)}
+              className="active:scale-95"
+              aria-label="View people who reacted"
+            >
+              {Number(post.like_count || 0)}
+            </Link>
+          </div>
         </div>
 
         <button
