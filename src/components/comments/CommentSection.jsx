@@ -1439,7 +1439,7 @@ function EditCommentSheet({
   if (!comment) return null
 
   return (
-    <div className="absolute inset-0 z-[290] flex items-end justify-center bg-black/40">
+    <div className="fixed inset-0 z-[290] flex items-end justify-center bg-black/40">
       <button
         type="button"
         onClick={onCancel}
@@ -2852,11 +2852,7 @@ export default function CommentSection({
 
       {warningDialog ? (
         <div
-          className={`${
-            isModal
-              ? 'absolute'
-              : 'fixed'
-          } inset-0 z-[300] flex items-center justify-center bg-black/35 px-4`}
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/35 px-4"
         >
           <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 shadow-2xl">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
