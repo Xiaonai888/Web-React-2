@@ -1,5 +1,54 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = String(dataUrl).split(',')
+  const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  return new File([bytes], fileName, { type: mime })
+}
+
+async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
+  if (!String(imageDataUrl || '').startsWith('data:image/')) return imageDataUrl || null
+
+  const formData = new FormData()
+  formData.append('image', dataUrlToFile(imageDataUrl, `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`))
+  formData.append('folder', 'chat_story_character')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload character image')
+  }
+
+  return data.image_url || data.imageUrl || null
+}
+
 
 const ROLE_GROUPS = [
   {
@@ -325,6 +374,52 @@ export default function ChatStoryCharactersPage() {
   const [selectedImage, setSelectedImage] = useState('')
   const [nickname, setNickname] = useState('')
   const [toast, setToast] = useState('')
+  const [pageLoading, setPageLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    async function loadCharacters() {
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      if (!storyId) {
+        setPageLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/chat/characters`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load characters')
+        }
+
+        setCharacters(
+          (data.characters || []).map((character) => ({
+            id: character.id,
+            group: character.role_group,
+            image: character.avatar_url || '',
+            nickname: character.nickname || '',
+            avatarSource: character.avatar_source || 'device',
+            chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
+          }))
+        )
+      } catch (error) {
+        showToast(error.message || 'Failed to load characters')
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    loadCharacters()
+  }, [navigate, storyId])
 
   const activeGroup = ROLE_GROUPS.find((group) => group.key === activeGroupKey) || null
 
@@ -413,6 +508,8 @@ export default function ChatStoryCharactersPage() {
           group: activeGroup.key,
           image: selectedImage,
           nickname: cleanNickname,
+          avatarSource: 'device',
+          chatSide: activeGroup.key === 'main' ? 'right' : 'left',
         },
       ])
     }
@@ -421,13 +518,68 @@ export default function ChatStoryCharactersPage() {
     showToast(editingId ? 'Character updated.' : 'Character added.')
   }
 
-  const handleSavePage = () => {
+  const handleSavePage = async (continueAfterSave = false) => {
     if (!canContinue) {
       showToast('Add at least 2 characters, including 1 main character.')
       return
     }
 
-    showToast('Character UI saved. Database connection is next.')
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      const uploadedCharacters = []
+
+      for (let index = 0; index < characters.length; index += 1) {
+        const character = characters[index]
+        const avatarUrl = await uploadCharacterImage(token, character.image, storyId, index)
+
+        uploadedCharacters.push({
+          role_group: character.group,
+          nickname: character.nickname || null,
+          avatar_url: avatarUrl,
+          avatar_source: character.avatarSource || 'device',
+          chat_side: character.chatSide || (character.group === 'main' ? 'right' : 'left'),
+        })
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/chat/characters`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ characters: uploadedCharacters }),
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to save characters')
+      }
+
+      setCharacters(
+        (data.characters || []).map((character) => ({
+          id: character.id,
+          group: character.role_group,
+          image: character.avatar_url || '',
+          nickname: character.nickname || '',
+          avatarSource: character.avatar_source || 'device',
+          chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
+        }))
+      )
+
+      showToast(continueAfterSave ? 'Characters saved. Step 3 UI is next.' : 'Characters saved successfully.')
+    } catch (error) {
+      showToast(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to save characters')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -489,15 +641,22 @@ export default function ChatStoryCharactersPage() {
 
           <button
             type="button"
-            onClick={handleSavePage}
+            onClick={() => handleSavePage(false)}
+            disabled={saving || pageLoading}
             className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95"
           >
-            Save
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
+        {pageLoading ? (
+          <div className="mb-4 rounded-[18px] bg-white px-4 py-3 text-center text-[12px] font-bold text-[#667085] shadow-sm ring-1 ring-black/5">
+            Loading characters...
+          </div>
+        ) : null}
+
         <section className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title="Story Info" />
@@ -541,11 +700,11 @@ export default function ChatStoryCharactersPage() {
 
         <button
           type="button"
-          disabled={!canContinue}
-          onClick={() => showToast('Step 3 Chat Editor will be connected after this page.')}
-          className={`mt-5 h-12 w-full rounded-full text-[13px] font-extrabold text-white ${canContinue ? 'bg-[#111827] active:scale-[0.99]' : 'bg-[#d0d5dd]'}`}
+          disabled={!canContinue || saving || pageLoading}
+          onClick={() => handleSavePage(true)}
+          className={`mt-5 h-12 w-full rounded-full text-[13px] font-extrabold text-white ${canContinue && !saving && !pageLoading ? 'bg-[#111827] active:scale-[0.99]' : 'bg-[#d0d5dd]'}`}
         >
-          Next: Create Chat
+          {saving ? 'Saving...' : 'Next: Create Chat'}
         </button>
       </main>
     </div>
