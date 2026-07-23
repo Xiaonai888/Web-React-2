@@ -240,8 +240,11 @@ export default function CommentsModal({
             0
         )
 
-  const handleOpenEpisodeReactions = () => {
-    if (targetType !== 'episode' || !story?.id || !activeEpisodeId) return
+  const handleOpenReactions = () => {
+  if (!activeEpisodeId) return
+
+  if (targetType === 'episode') {
+    if (!story?.id) return
 
     sessionStorage.setItem(
       'shadow_reopen_episode_comments',
@@ -250,10 +253,22 @@ export default function CommentsModal({
 
     onClose()
     navigate(`/story/${story.id}/episode/${activeEpisodeId}/reactions`)
+    return
   }
 
-  const handleOpenEpisodeEchoes = () => {
-    if (targetType !== 'episode' || !story?.id || !activeEpisodeId) return
+  if (targetType === 'author_post' || targetType === 'reader_post') {
+    onClose()
+    navigate(`/interactions/${targetType}/${activeEpisodeId}/likes`, {
+      state: { sourceName: title || 'Post' },
+    })
+  }
+}
+
+  const handleOpenEchoes = () => {
+  if (!activeEpisodeId) return
+
+  if (targetType === 'episode') {
+    if (!story?.id) return
 
     sessionStorage.setItem(
       'shadow_reopen_episode_comments',
@@ -262,7 +277,16 @@ export default function CommentsModal({
 
     onClose()
     navigate(`/story/${story.id}/episode/${activeEpisodeId}/echoes`)
+    return
   }
+
+  if (targetType === 'author_post' || targetType === 'reader_post') {
+    onClose()
+    navigate(`/interactions/${targetType}/${activeEpisodeId}/echoes`, {
+      state: { sourceName: title || 'Post' },
+    })
+  }
+}
 
   const handleEpisodeCommentTotalChange = (total) => {
     if (targetType !== 'episode' || !activeEpisodeId) return
@@ -369,7 +393,7 @@ export default function CommentsModal({
     <div className="grid grid-cols-3 items-center gap-2 text-center">
       <button
         type="button"
-        onClick={handleOpenEpisodeReactions}
+        onClick={handleOpenReactions}
         className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
         aria-label="View people who reacted"
       >
@@ -383,7 +407,7 @@ export default function CommentsModal({
 
       <button
         type="button"
-        onClick={handleOpenEpisodeEchoes}
+        onClick={handleOpenEchoes}
         className="text-[14px] font-normal text-[#111827] active:scale-95"
         aria-label="View people who echoed"
       >
