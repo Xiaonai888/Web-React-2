@@ -90,16 +90,49 @@ function normalizeStory(story, index = 0) {
   }
 }
 
-async function fetchRankingItems(tab, categoryLabel) {
-  const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${tab.endpoint}`))
+async function fetchRankingItems(
+  tab,
+  categoryLabel,
+  storyType = ''
+) {
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
+
+  const separator = tab.endpoint.includes('?') ? '&' : '?'
+  const endpoint = normalizedStoryType
+    ? `${tab.endpoint}${separator}story_type=${encodeURIComponent(
+        normalizedStoryType
+      )}`
+    : tab.endpoint
+
+  const response = await fetch(
+    addStoryLanguageParam(`${API_BASE_URL}${endpoint}`)
+  )
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || `Failed to load ${categoryLabel}`)
+    throw new Error(
+      data.message || `Failed to load ${categoryLabel}`
+    )
   }
 
-  const rows = Array.isArray(data.stories) ? data.stories : []
-  const filteredRows = tab.filter ? rows.filter(tab.filter) : rows
+  const rows = Array.isArray(data.stories)
+    ? data.stories
+    : []
+
+  const storyTypeRows = normalizedStoryType
+    ? rows.filter(
+        (story) =>
+          String(story?.story_type || '')
+            .trim()
+            .toLowerCase() === normalizedStoryType
+      )
+    : rows
+
+  const filteredRows = tab.filter
+    ? storyTypeRows.filter(tab.filter)
+    : storyTypeRows
 
   return filteredRows.slice(0, 6).map(normalizeStory)
 }
@@ -207,134 +240,83 @@ function LoadingRanking() {
   )
 }
 
-export default function TopNovelSection() {
+export default function TopNovelSection({
+  storyType = '',
+}) {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState(rankingTabs[0].label)
-  const [realDataByCategory, setRealDataByCategory] = useState({})
+  const [activeCategory, setActiveCategory] = useState(
+    rankingTabs[0].label
+  )
+  const [realDataByCategory, setRealDataByCategory] =
+    useState({})
   const [loading, setLoading] = useState(true)
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   useEffect(() => {
     let ignore = false
 
-    async function preloadRankingTabs() {
-      const firstTab = rankingTabs[0]
+    async function loadRankingTabs() {
+      setLoading(true)
+      setRealDataByCategory({})
 
-      try {
-        setLoading(true)
-
-        const firstItems = await fetchRankingItems(firstTab, firstTab.label)
-
-        if (ignore) return
-
-        setRealDataByCategory({
-          [firstTab.label]: firstItems,
-        })
-      } catch (error) {
-        console.error('Ranking first tab fetch error:', error)
-
-        if (ignore) return
-
-        setRealDataByCategory({
-  [firstTab.label]: [],
-})
-      } finally {
-        if (!ignore) setLoading(false)
-      }
-
-      const restTabs = rankingTabs.slice(1)
       const entries = await Promise.all(
-        restTabs.map(async (tab) => {
+        rankingTabs.map(async (tab) => {
           try {
-            const items = await fetchRankingItems(tab, tab.label)
+            const items = await fetchRankingItems(
+              tab,
+              tab.label,
+              normalizedStoryType
+            )
+
             return [tab.label, items]
           } catch (error) {
-            console.error(`Ranking preload error: ${tab.label}`, error)
+            console.error(
+              `Ranking preload error: ${tab.label}`,
+              error
+            )
+
             return [tab.label, []]
           }
         })
       )
 
       if (!ignore) {
-        setRealDataByCategory((current) => ({
-          ...current,
-          ...Object.fromEntries(entries),
-        }))
+        setRealDataByCategory(
+          Object.fromEntries(entries)
+        )
+        setLoading(false)
       }
     }
 
-    preloadRankingTabs()
+    loadRankingTabs()
 
     return () => {
       ignore = true
     }
-  }, [])
-  
-
-  useEffect(() => {
-    let ignore = false
-
-    async function fetchRankingCategory() {
-      try {
-        if (realDataByCategory[activeCategory]) return
-
-        setLoading(true)
-
-        const tab = getActiveTabConfig(activeCategory)
-        const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}${tab.endpoint}`))
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || `Failed to load ${activeCategory}`)
-        }
-
-        const rows = Array.isArray(data.stories) ? data.stories : []
-        const filteredRows = tab.filter ? rows.filter(tab.filter) : rows
-        const stories = filteredRows.slice(0, 6).map(normalizeStory)
-        const nextStories = stories
-
-        if (!ignore) {
-          setRealDataByCategory((current) => ({
-            ...current,
-            [activeCategory]: nextStories,
-          }))
-        }
-      } catch (error) {
-        console.error('Ranking section fetch error:', error)
-
-        if (!ignore) {
-          setRealDataByCategory((current) => ({
-            ...current,
-            [activeCategory]: [],
-          }))
-        }
-      } finally {
-        if (!ignore) setLoading(false)
-      }
-    }
-
-    fetchRankingCategory()
-
-    return () => {
-      ignore = true
-    }
-  }, [activeCategory, realDataByCategory])
+  }, [normalizedStoryType])
 
   const filteredData = useMemo(() => {
-    const activeData = realDataByCategory[activeCategory]
-
-    if (activeData) return activeData
-
-    return []
+    return realDataByCategory[activeCategory] || []
   }, [activeCategory, realDataByCategory])
 
   const rankingGroups = useMemo(() => {
     const items = filteredData.slice(0, 6)
 
-    return [items.slice(0, 3), items.slice(3, 6)].filter((group) => group.length)
+    return [
+      items.slice(0, 3),
+      items.slice(3, 6),
+    ].filter((group) => group.length)
   }, [filteredData])
 
-  if (loading && !realDataByCategory[rankingTabs[0].label]) {
+  if (loading) {
     return <LoadingRanking />
+  }
+
+  if (!rankingGroups.length) {
+    return null
   }
 
   return (
@@ -342,7 +324,10 @@ export default function TopNovelSection() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[20px] lg:text-[21px]">🏆</span>
+            <span className="text-[20px] lg:text-[21px]">
+              🏆
+            </span>
+
             <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
               Ranking
             </h2>
@@ -360,13 +345,16 @@ export default function TopNovelSection() {
 
         <div className="mb-5 flex gap-4 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] [&::-webkit-scrollbar]:hidden">
           {rankingTabs.map((tab) => {
-            const isActive = activeCategory === tab.label
+            const isActive =
+              activeCategory === tab.label
 
             return (
               <button
                 key={tab.label}
                 type="button"
-                onClick={() => setActiveCategory(tab.label)}
+                onClick={() =>
+                  setActiveCategory(tab.label)
+                }
                 className={`relative inline-flex h-[34px] shrink-0 items-center px-0.5 text-[13px] leading-none transition-colors active:scale-[0.98] ${
                   isActive
                     ? 'font-extrabold text-[#111827]'
@@ -374,9 +362,12 @@ export default function TopNovelSection() {
                 }`}
               >
                 {tab.label}
+
                 <span
                   className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 rounded-full bg-[#facc15] transition-all duration-200 ${
-                    isActive ? 'w-[82%] opacity-100' : 'w-0 opacity-0'
+                    isActive
+                      ? 'w-[82%] opacity-100'
+                      : 'w-0 opacity-0'
                   }`}
                 />
               </button>
@@ -384,25 +375,29 @@ export default function TopNovelSection() {
           })}
         </div>
 
-                <div className="-mr-4 flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] md:mr-0 md:grid md:max-w-[760px] md:grid-cols-2 md:gap-5 md:overflow-visible md:pb-0 md:pr-0 [&::-webkit-scrollbar]:hidden">
-          {rankingGroups.map((group, groupIndex) => (
-            <div
-              key={groupIndex}
-              className="grid w-[calc(100vw-106px)] max-w-[330px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
-            >
-              {group.map((item) => (
-                <RankingBookCard
-                  key={item.id}
-                  item={item}
-                  onOpen={() => {
-                    if (!item.isFallback) navigate(item.link)
-                  }}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+        <div className="-mr-4 flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] md:mr-0 md:grid md:max-w-[760px] md:grid-cols-2 md:gap-5 md:overflow-visible md:pb-0 md:pr-0 [&::-webkit-scrollbar]:hidden">
+          {rankingGroups.map(
+            (group, groupIndex) => (
+              <div
+                key={groupIndex}
+                className="grid w-[calc(100vw-106px)] max-w-[330px] shrink-0 snap-start grid-rows-3 gap-2 md:w-full md:max-w-none md:shrink md:gap-2.5"
+              >
+                {group.map((item) => (
+                  <RankingBookCard
+                    key={item.id}
+                    item={item}
+                    onOpen={() => {
+                      if (!item.isFallback) {
+                        navigate(item.link)
+                      }
+                    }}
+                  />
+                ))}
               </div>
+            )
+          )}
+        </div>
+      </div>
     </section>
   )
 }
