@@ -29,7 +29,7 @@ function StatItem({ label, value, icon, onClick }) {
   )
 }
 
-export default function StoryStatsSection({ story, episodes, onOpenRating, onOpenRanking }) {
+export default function StoryStatsSection({ story, episodes, onOpenLikes, onOpenRating, onOpenRanking }) {
   const rank = Number(story?.rank_by_views || 0)
   const rating = Number(story?.rating_average || story?.rating || 0)
   const showRank = rank > 0 && rank <= 100
@@ -62,10 +62,11 @@ export default function StoryStatsSection({ story, episodes, onOpenRating, onOpe
 
         <div className="grid grid-cols-3 gap-2 px-5 py-5">
           <StatItem
-            label="Likes"
-            value={formatShortNumber(story?.total_likes)}
-            icon="fa-regular fa-heart"
-          />
+  label="Likes"
+  value={formatShortNumber(story?.total_likes)}
+  icon="fa-regular fa-heart"
+  onClick={onOpenLikes}
+/>
 
           <StatItem
             label="Views"
