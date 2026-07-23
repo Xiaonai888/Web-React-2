@@ -84,13 +84,13 @@ const createStoryCards = [
     soon: false,
   },
   {
-    key: 'chat-story',
+    key: 'chat_story',
     title: 'Chat Story',
     subtitle: 'Message style',
     icon: 'fa-regular fa-comments',
     iconWrap: 'bg-[#FFEDD5] text-[#F97316]',
     titleColor: 'text-[#F97316]',
-    soon: true,
+    soon: false,
   },
 ]
 
@@ -140,7 +140,11 @@ function normalizeStory(story) {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    type: story.story_type === 'manga' ? 'Manga' : 'Novel',
+    type: story.story_type === 'manga'
+  ? 'Manga'
+  : story.story_type === 'chat_story'
+    ? 'Chat Story'
+    : 'Novel',
     status,
     rawStatus: story.status || 'draft',
     updated: formatDate(story.updated_at || story.created_at),
@@ -594,8 +598,11 @@ export default function AuthorDashboardPage() {
 }
 
   const handleAddEpisode = (story) => {
-    navigate(`/author/story/${story.id}/episode/create?first=0`)
-  }
+  const path = story.type === 'Chat Story'
+    ? `/author/story/${story.id}/chat/editor`
+    : `/author/story/${story.id}/episode/create?first=0`
+  navigate(path)
+}
 
   return (
     <div className="min-h-screen bg-[#f7f4ff] pb-[120px]">
