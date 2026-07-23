@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -215,6 +215,7 @@ function ChatMessage({ message, character, onDelete }) {
 export default function ChatStoryEditorPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const [searchParams] = useSearchParams()
   const messagesEndRef = useRef(null)
   const [characters, setCharacters] = useState([])
   const [messages, setMessages] = useState([])
@@ -223,8 +224,12 @@ export default function ChatStoryEditorPage() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [episodeTitle, setEpisodeTitle] = useState('Episode 1')
+  const [episodeId, setEpisodeId] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
+  const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
+  const startNewEpisode = searchParams.get('new') === '1'
 
   const characterMap = useMemo(() => {
     return characters.reduce((result, character) => {
@@ -250,6 +255,14 @@ export default function ChatStoryEditorPage() {
   }
 
   useEffect(() => {
+    if (startNewEpisode) {
+      localStorage.removeItem(storageKey)
+      setMessages([])
+      setEpisodeTitle('New Episode')
+      setEpisodeId('')
+      return
+    }
+
     const saved = localStorage.getItem(storageKey)
 
     if (saved) {
@@ -257,20 +270,22 @@ export default function ChatStoryEditorPage() {
         const parsed = JSON.parse(saved)
         setMessages(Array.isArray(parsed.messages) ? parsed.messages : [])
         setEpisodeTitle(parsed.episodeTitle || 'Episode 1')
+        setEpisodeId(parsed.episodeId || '')
       } catch {
         localStorage.removeItem(storageKey)
       }
     }
-  }, [storageKey])
+  }, [startNewEpisode, storageKey])
 
   useEffect(() => {
     const payload = JSON.stringify({
       episodeTitle,
+      episodeId,
       messages,
       updatedAt: new Date().toISOString(),
     })
     localStorage.setItem(storageKey, payload)
-  }, [episodeTitle, messages, storageKey])
+  }, [episodeId, episodeTitle, messages, storageKey])
 
   useEffect(() => {
     async function loadCharacters() {
@@ -322,6 +337,48 @@ export default function ChatStoryEditorPage() {
   }, [navigate, storyId])
 
   useEffect(() => {
+    async function loadRequestedEpisode() {
+      if (!requestedEpisodeId || startNewEpisode) return
+
+      const token = getAuthToken()
+      if (!token) return
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/stories/${storyId}/episodes/${requestedEpisodeId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load Chat Story episode')
+        }
+
+        const parsed = JSON.parse(String(data.episode?.content || ''))
+        if (parsed?.format !== 'shadow_chat_story_v1') {
+          throw new Error('This episode is not a Chat Story episode')
+        }
+
+        setEpisodeId(data.episode.id)
+        setEpisodeTitle(data.episode.title || parsed.episode_title || 'Episode')
+        setMessages(
+          (parsed.messages || []).map((message) => ({
+            id: message.id || makeId(),
+            type: message.type === 'chat' ? 'chat' : 'aside',
+            characterId: message.character_id || null,
+            text: message.text || '',
+            createdAt: message.created_at || new Date().toISOString(),
+          }))
+        )
+      } catch (error) {
+        showToast(error.message || 'Failed to load Chat Story episode')
+      }
+    }
+
+    loadRequestedEpisode()
+  }, [requestedEpisodeId, startNewEpisode, storyId])
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
@@ -358,6 +415,85 @@ export default function ChatStoryEditorPage() {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
       sendMessage()
+    }
+  }
+
+  const saveAndContinue = async () => {
+    const cleanTitle = episodeTitle.trim()
+
+    if (!cleanTitle) {
+      showToast('Please enter an episode title.')
+      return
+    }
+
+    if (!messages.length) {
+      showToast('Add at least one Chat or ASIDE message.')
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/save`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            episode_id: episodeId || requestedEpisodeId || null,
+            title: cleanTitle,
+            messages: messages.map((message) => ({
+              id: message.id,
+              type: message.type,
+              character_id: message.characterId || null,
+              text: message.text,
+              created_at: message.createdAt || null,
+            })),
+            is_locked: true,
+          }),
+        }
+      )
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to save Chat Story episode')
+      }
+
+      const savedEpisodeId = data.episode?.id
+      const firstValue = data.is_first_episode ? '1' : '0'
+
+      setEpisodeId(savedEpisodeId)
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          episodeTitle: cleanTitle,
+          episodeId: savedEpisodeId,
+          messages,
+          updatedAt: new Date().toISOString(),
+        })
+      )
+
+      navigate(
+        `/author/story/${storyId}/episode/publish?episodeId=${savedEpisodeId}&first=${firstValue}&type=chat_story`
+      )
+    } catch (error) {
+      showToast(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend.'
+          : error.message || 'Failed to save Chat Story episode'
+      )
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -401,12 +537,11 @@ export default function ChatStoryEditorPage() {
 
           <button
             type="button"
-            onClick={() =>
-              showToast('Database save and Publish are the next stage.')
-            }
-            className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95"
+            onClick={saveAndContinue}
+            disabled={saving || loading || !messages.length}
+            className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Next
+            {saving ? 'Saving...' : 'Next'}
           </button>
         </div>
       </header>
