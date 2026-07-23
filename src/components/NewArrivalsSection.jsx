@@ -124,12 +124,18 @@ function LoadingGrid() {
   )
 }
 
-export default function NewArrivalsSection() {
+export default function NewArrivalsSection({
+  storyType = '',
+}) {
   const navigate = useNavigate()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
   const storyLanguage = getStoryLanguageLabel()
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   useEffect(() => {
     let ignore = false
@@ -139,35 +145,63 @@ export default function NewArrivalsSection() {
         setLoading(true)
         setLoadFailed(false)
 
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(
+              normalizedStoryType
+            )}`
+          : ''
+
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=48&sort=latest`
+            `${API_BASE_URL}/api/public/stories?limit=48&sort=latest${storyTypeQuery}`
           )
         )
+
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load new arrivals')
+          throw new Error(
+            data.message ||
+            'Failed to load new arrivals'
+          )
         }
 
         if (ignore) return
 
         const newestBooks = (data.stories || [])
-          .filter((story) => Number(story.total_episodes || 0) >= 1)
-          .filter((story) => !isCompletedStory(story))
+          .filter(
+            (story) =>
+              !normalizedStoryType ||
+              String(story?.story_type || '')
+                .trim()
+                .toLowerCase() ===
+                normalizedStoryType
+          )
+          .filter(
+            (story) =>
+              Number(story.total_episodes || 0) >= 1
+          )
+          .filter(
+            (story) => !isCompletedStory(story)
+          )
           .map(normalizeStory)
           .slice(0, 12)
 
         setBooks(newestBooks)
       } catch (error) {
-        console.error('NewArrivalsSection fetch error:', error)
+        console.error(
+          'NewArrivalsSection fetch error:',
+          error
+        )
 
         if (!ignore) {
           setLoadFailed(true)
           setBooks([])
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
@@ -176,7 +210,7 @@ export default function NewArrivalsSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
   if (loading) {
     return <LoadingGrid />
@@ -186,7 +220,10 @@ export default function NewArrivalsSection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[20px] lg:text-[21px]">🚀</span>
+          <span className="text-[20px] lg:text-[21px]">
+            🚀
+          </span>
+
           <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
             New Arrivals
           </h2>
@@ -204,22 +241,30 @@ export default function NewArrivalsSection() {
 
       {books.length ? (
         <div className="-mr-4 flex gap-3 overflow-x-auto overscroll-x-contain pb-2 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [touch-action:pan-x_pan-y] sm:-mr-5 sm:pr-5 lg:mr-0 lg:grid lg:grid-cols-6 lg:gap-3 lg:overflow-visible lg:pb-0 lg:pr-0 [&::-webkit-scrollbar]:hidden">
-  {books.map((book) => (
-    <div key={book.id} className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)] lg:w-auto lg:min-w-0">
-      <BookCard
-        book={book}
-        onClick={() => navigate(book.link)}
-      />
-    </div>
-  ))}
-</div>
+          {books.map((book) => (
+            <div
+              key={book.id}
+              className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)] lg:w-auto lg:min-w-0"
+            >
+              <BookCard
+                book={book}
+                onClick={() =>
+                  navigate(book.link)
+                }
+              />
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="rounded-[22px] bg-[#f8f8fb] px-4 py-6 text-center">
           <div className="text-[14px] font-extrabold text-[#111827]">
             {loadFailed
               ? 'Could not load new arrivals'
-              : `No ${storyLanguage} new stories yet`}
+              : normalizedStoryType === 'manga'
+                ? 'No Manga new arrivals yet'
+                : `No ${storyLanguage} new stories yet`}
           </div>
+
           <div className="mt-1 text-[12px] text-[#8d94a1]">
             Only published stories with at least one episode are shown.
           </div>
