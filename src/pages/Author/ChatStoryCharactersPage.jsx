@@ -853,11 +853,16 @@ export default function ChatStoryCharactersPage() {
     showToast(editingId ? 'Character updated. Press Save to keep changes.' : 'Character added.')
   }
 
-  const handleSavePage = async (continueAfterSave = false) => {
-    if (!canContinue) {
-      showToast('Add at least 2 characters, including 1 main character.')
-      return
-    }
+  const handleSavePage = async () => {
+  if (totalCharacters < 2) {
+    showToast('Add at least 2 characters before creating the chat.')
+    return
+  }
+
+  if (groupedCharacters.main.length < 1) {
+    showToast('Add at least 1 character to Main Characters.')
+    return
+  }
 
     const token = getAuthToken()
 
@@ -909,11 +914,7 @@ export default function ChatStoryCharactersPage() {
         }))
       )
 
-      if (continueAfterSave) {
-  navigate(`/author/story/${storyId}/chat/editor`)
-  return
-}
-showToast('Characters saved successfully.')
+      navigate(`/author/story/${storyId}/chat/editor`)
     } catch (error) {
       showToast(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to save characters')
     } finally {
@@ -1005,13 +1006,13 @@ showToast('Characters saved successfully.')
           </div>
 
           <button
-            type="button"
-            onClick={() => handleSavePage(false)}
-            disabled={saving || pageLoading}
-            className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95"
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+  type="button"
+  onClick={handleSavePage}
+  disabled={saving || pageLoading}
+  className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-bold text-white shadow-sm active:scale-95 disabled:opacity-60"
+>
+  {saving ? 'Saving...' : 'Save'}
+</button>
         </div>
       </header>
 
@@ -1043,34 +1044,34 @@ showToast('Characters saved successfully.')
         ))}
 
         <section className="mt-6 rounded-[20px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-center gap-3">
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${canContinue ? 'bg-[#eafaf2] text-[#16803c]' : 'bg-[#f1ecff] text-[#7c3aed]'}`}>
-              <i className={`fa-solid ${canContinue ? 'fa-check' : 'fa-shield-halved'} text-[14px]`} />
-            </span>
+  <div className="flex items-center gap-3">
+    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${canContinue ? 'bg-[#eafaf2] text-[#16803c]' : 'bg-[#f1ecff] text-[#7c3aed]'}`}>
+      <i className={`fa-solid ${canContinue ? 'fa-check' : 'fa-shield-halved'} text-[14px]`} />
+    </span>
 
-            <div className="min-w-0">
-              <div className="text-[12.5px] font-extrabold text-[#111827]">
-                {canContinue ? 'Characters are ready' : 'Add at least 2 characters to continue'}
-              </div>
-              <div className="mt-1 text-[10.5px] leading-4 text-[#667085]">
-                At least one character must be in Main Characters.
-              </div>
-            </div>
-          </div>
-        </section>
+    <div className="min-w-0">
+      <div className="text-[12.5px] font-extrabold text-[#111827]">
+        {canContinue ? 'Characters are ready' : 'Add at least 2 characters to continue'}
+      </div>
+      <div className="mt-1 text-[10.5px] leading-4 text-[#667085]">
+        At least one character must be in Main Characters.
+      </div>
+    </div>
+  </div>
+</section>
 
-        <div className="mt-3 text-center text-[9px] font-semibold text-[#98a2b3]">
-          Story ID: {storyId || 'Not found'}
-        </div>
+<div className="mt-3 text-center text-[9px] font-semibold text-[#98a2b3]">
+  Story ID: {storyId || 'Not found'}
+</div>
 
-        <button
-          type="button"
-          disabled={!canContinue || saving || pageLoading}
-          onClick={() => handleSavePage(true)}
-          className={`mt-5 h-12 w-full rounded-full text-[13px] font-extrabold text-white ${canContinue && !saving && !pageLoading ? 'bg-[#111827] active:scale-[0.99]' : 'bg-[#d0d5dd]'}`}
-        >
-          {saving ? 'Saving...' : 'Next: Create Chat'}
-        </button>
+<button
+  type="button"
+  disabled={!canContinue || saving || pageLoading}
+  onClick={() => handleSavePage(true)}
+  className={`mt-5 h-12 w-full rounded-full text-[13px] font-extrabold text-white ${canContinue && !saving && !pageLoading ? 'bg-[#111827] active:scale-[0.99]' : 'bg-[#d0d5dd]'}`}
+>
+  {saving ? 'Saving...' : 'Next: Create Chat'}
+</button>
       </main>
     </div>
   )
