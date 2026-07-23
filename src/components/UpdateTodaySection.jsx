@@ -134,9 +134,15 @@ function LoadingSkeleton() {
   )
 }
 
-export default function UpdateTodaySection() {
+export default function UpdateTodaySection({
+  storyType = '',
+}) {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   useEffect(() => {
     let ignore = false
@@ -145,22 +151,48 @@ export default function UpdateTodaySection() {
       try {
         setLoading(true)
 
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(
+              normalizedStoryType
+            )}`
+          : ''
+
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=7&sort=updated`
+            `${API_BASE_URL}/api/public/stories?limit=7&sort=updated${storyTypeQuery}`
           )
         )
+
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load published stories')
+          throw new Error(
+            data.message ||
+            'Failed to load published stories'
+          )
         }
 
         if (ignore) return
 
-        setStories((data.stories || []).map(normalizeStory))
+        const visibleStories = (
+          data.stories || []
+        ).filter(
+          (story) =>
+            !normalizedStoryType ||
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() ===
+              normalizedStoryType
+        )
+
+        setStories(
+          visibleStories.map(normalizeStory)
+        )
       } catch (error) {
-        console.error('UpdateTodaySection fetch error:', error)
+        console.error(
+          'UpdateTodaySection fetch error:',
+          error
+        )
 
         if (!ignore) {
           setStories([])
@@ -177,12 +209,19 @@ export default function UpdateTodaySection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
-  const updateBooks = useMemo(() => stories.slice(0, 6), [stories])
+  const updateBooks = useMemo(
+    () => stories.slice(0, 6),
+    [stories]
+  )
 
   if (loading) {
     return <LoadingSkeleton />
+  }
+
+  if (!updateBooks.length) {
+    return null
   }
 
   return (
@@ -190,7 +229,10 @@ export default function UpdateTodaySection() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[20px] lg:text-[21px]">🎉</span>
+            <span className="text-[20px] lg:text-[21px]">
+              🎉
+            </span>
+
             <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
               Update Today
             </h2>
@@ -207,7 +249,10 @@ export default function UpdateTodaySection() {
 
         <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:grid-cols-6 md:gap-x-3 md:gap-y-5">
           {updateBooks.map((book) => (
-            <SmallBookCard key={book.id} book={book} />
+            <SmallBookCard
+              key={book.id}
+              book={book}
+            />
           ))}
         </div>
       </div>
