@@ -157,26 +157,44 @@ export default function ChatStoryHomePage() {
   return (
     <div className="min-h-screen bg-white pb-[110px]">
       <header className="sticky top-0 z-40 bg-white/95 px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] backdrop-blur">
-        <div className="mx-auto flex max-w-6xl justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => navigate('/search')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#1f2329] active:bg-[#f4f2f8]"
-            aria-label="Search"
-          >
-            <i className="fa-solid fa-magnifying-glass text-[19px]" />
-          </button>
+  <div className="mx-auto flex max-w-6xl items-center justify-between">
+    <h1 className="text-[21px] font-black tracking-[-0.02em] text-[#1f2329]">
+      Chat
+    </h1>
 
-          <button
-            type="button"
-            onClick={() => navigate('/chat-stories/categories')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#1f2329] active:bg-[#f4f2f8]"
-            aria-label="Categories"
-          >
-            <i className="fa-solid fa-sliders text-[17px]" />
-          </button>
-        </div>
-      </header>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => navigate('/search')}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-[#1f2329] active:bg-[#f4f2f8]"
+        aria-label="Search"
+      >
+        <i className="fa-solid fa-magnifying-glass text-[19px]" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => navigate('/chat-stories/categories')}
+        className="flex h-10 w-10 items-center justify-center rounded-full text-[#1f2329] active:bg-[#f4f2f8]"
+        aria-label="Genres"
+      >
+        <svg
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
 
       <main className="mx-auto max-w-6xl">
         <section className="pt-2">
