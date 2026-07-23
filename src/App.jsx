@@ -26,6 +26,7 @@ import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 import AuthorProfilePage from './pages/Author/AuthorProfilePage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
 import ChatStoryCharactersPage from './pages/Author/ChatStoryCharactersPage'
+import ChatStoryCharacterProfilePage from './pages/Author/ChatStoryCharacterProfilePage'
 import ChatStoryEditorPage from './pages/Author/ChatStoryEditorPage'
 import StoryManagerPage from './pages/Author/StoryManagerPage'
 import EpisodeEditorPage from './pages/Author/EpisodeEditorPage'
@@ -1108,6 +1109,11 @@ const shouldShowOpeningAds =
       <ReaderSettingsPage />
     </LazyPage>
   }
+/>
+
+        <Route
+  path="/author/story/:storyId/chat/characters/:characterId/profile"
+  element={<ChatStoryCharacterProfilePage />}
 />
 
       
