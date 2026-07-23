@@ -230,6 +230,7 @@ export default function PublishEpisodePage() {
 
   const episodeId = searchParams.get('episodeId') || searchParams.get('episode_id')
   const isFirstEpisode = searchParams.get('first') !== '0'
+  const isChatStory = searchParams.get('type') === 'chat_story'
 
   const [isAdultEpisode, setIsAdultEpisode] = useState(false)
   const [releaseOption, setReleaseOption] = useState('publish')
@@ -258,9 +259,11 @@ export default function PublishEpisodePage() {
   }
 
   const handlePreview = () => {
-    navigate(`/author/story/${storyId}/episode/preview?episodeId=${episodeId || ''}`)
-  }
-
+  const path = isChatStory
+    ? `/author/story/${storyId}/chat/editor?episodeId=${episodeId || ''}`
+    : `/author/story/${storyId}/episode/preview?episodeId=${episodeId || ''}`
+  navigate(path)
+}
   const getApiStatus = () => {
     if (releaseOption === 'schedule') return 'scheduled'
     if (releaseOption === 'draft') return 'draft'
@@ -373,11 +376,12 @@ setSuccessOpen(true)
     }, 0)
   }}
   onAddEpisode={() => {
-    navigate('/author/dashboard', { replace: true })
-    setTimeout(() => {
-      navigate(`/author/story/${storyId}/episode/create?first=0&fromPublishSuccess=1`)
-    }, 0)
-  }}
+  const path = isChatStory
+    ? `/author/story/${storyId}/chat/editor?new=1&first=0`
+    : `/author/story/${storyId}/episode/create?first=0&fromPublishSuccess=1`
+  navigate('/author/dashboard', { replace: true })
+  setTimeout(() => navigate(path), 0)
+}}
 />
 
       <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
@@ -398,7 +402,7 @@ setSuccessOpen(true)
             onClick={handlePreview}
             className="rounded-full bg-[#f5f3fa] px-3.5 py-2 text-[11.5px] font-extrabold text-[#111827] active:scale-95"
           >
-            Preview
+            {isChatStory ? 'Edit Chat' : 'Preview'}
           </button>
         </div>
       </header>
@@ -530,7 +534,7 @@ setSuccessOpen(true)
             disabled={loading}
             className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
           >
-            Preview
+            {isChatStory ? 'Edit Chat' : 'Preview'}
           </button>
 
           <button
