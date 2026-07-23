@@ -1137,14 +1137,14 @@ export default function EpisodeEditorPage() {
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {isFirstEpisode ? (
-          <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-            <div className="grid grid-cols-3 gap-2">
-              <Step number="1" title={isManga ? 'Manga Info' : 'Story Info'} />
-              <Step number="2" title={stepTitle} active />
-              <Step number="3" title="Publish" />
-            </div>
-          </section>
-        ) : null}
+  <section className="hidden rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
+    <div className="grid grid-cols-3 gap-2">
+      <Step number="1" title={isManga ? 'Manga Info' : 'Story Info'} />
+      <Step number="2" title={stepTitle} active />
+      <Step number="3" title="Publish" />
+    </div>
+  </section>
+) : null}
 
         {pageLoading ? (
           <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
