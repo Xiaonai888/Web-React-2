@@ -112,15 +112,26 @@ function Step({ number, title, active }) {
 }
 
 function BottomSheet({ open, onClose, children }) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-end bg-black/45" onClick={onClose}>
+    <div className="fixed inset-0 z-[180] flex items-end bg-black/45">
       <div
         className="w-full rounded-t-[28px] bg-white px-4 pb-[calc(22px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e2e5ea]" />
         {children}
       </div>
     </div>
@@ -161,36 +172,44 @@ function HelpSheet({ group, onClose }) {
 function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
   return (
     <BottomSheet open={open} onClose={onClose}>
-      <h2 className="text-center text-[18px] font-extrabold text-[#111827]">Choose profile image</h2>
+      <h2 className="text-center text-[16px] font-bold text-[#111827]">
+        Choose profile image
+      </h2>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <button
           type="button"
           onClick={onDevice}
-          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#eefaff] px-3 text-center active:scale-[0.98]"
+          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#f6fcff] px-3 text-center active:scale-[0.98]"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d9f4ff] text-[#147ca5]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eaf8ff] text-[#2692bc]">
             <i className="fa-regular fa-image text-[22px]" />
           </span>
-          <span className="mt-3 text-[13px] font-extrabold text-[#111827]">Upload from device</span>
+
+          <span className="mt-3 text-[13px] font-medium text-[#111827]">
+            Upload from device
+          </span>
         </button>
 
         <button
           type="button"
           onClick={onShadowGallery}
-          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#fff0f4] px-3 text-center active:scale-[0.98]"
+          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#fff7f9] px-3 text-center active:scale-[0.98]"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ffe0e8] text-[#e5486d]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff0f4] text-[#ee6484]">
             <i className="fa-regular fa-address-card text-[22px]" />
           </span>
-          <span className="mt-3 text-[13px] font-extrabold text-[#111827]">Shadow gallery</span>
+
+          <span className="mt-3 text-[13px] font-medium text-[#111827]">
+            Shadow gallery
+          </span>
         </button>
       </div>
 
       <button
         type="button"
         onClick={onClose}
-        className="mt-4 h-12 w-full rounded-full bg-[#f5f3fa] text-[13px] font-extrabold text-[#111827]"
+        className="mt-4 h-12 w-full rounded-full bg-[#faf9fc] text-[13px] font-medium text-[#111827]"
       >
         Cancel
       </button>
