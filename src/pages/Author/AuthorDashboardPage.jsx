@@ -599,7 +599,7 @@ export default function AuthorDashboardPage() {
 
   const handleAddEpisode = (story) => {
   const path = story.type === 'Chat Story'
-    ? `/author/story/${story.id}/chat/editor`
+    ? `/author/story/${story.id}/chat/editor?new=1&first=0`
     : `/author/story/${story.id}/episode/create?first=0`
   navigate(path)
 }
