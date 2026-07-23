@@ -527,7 +527,7 @@ export default function ChatStoryEditorPage() {
               value={episodeTitle}
               onChange={(event) => setEpisodeTitle(event.target.value)}
               maxLength={80}
-              className="h-6 w-full bg-transparent text-center text-[16px] font-extrabold text-[#111827] outline-none"
+              className="h-6 w-full bg-transparent text-center text-[16px] font-bold text-[#111827] outline-none"
               aria-label="Episode title"
             />
             <div className="mt-0.5 text-center text-[9px] font-bold text-[#98a2b3]">
@@ -547,7 +547,7 @@ export default function ChatStoryEditorPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+        <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title="Story Info" done />
             <Step number="2" title="Characters" done />
