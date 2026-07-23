@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
@@ -259,6 +260,7 @@ function PostImageGrid({ images, onView }) {
 }
 
 function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
+  const navigate = useNavigate()
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
@@ -423,23 +425,38 @@ function cancelReactionPress() {
       </div>
     ) : null}
 
-    <button
-      type="button"
-      disabled={reactionBusy}
-      onPointerDown={startReactionPress}
-      onPointerUp={endReactionPress}
-      onPointerLeave={cancelReactionPress}
-      onContextMenu={(event) => event.preventDefault()}
-      className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
-      style={{ color: activeReaction?.text || undefined }}
-    >
-      {activeReaction ? (
-        <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
-      ) : (
-        <i className="fa-regular fa-heart text-[15px]" />
-      )}
-      {formatCompactNumber(post.like_count)}
-    </button>
+   <div
+  className="inline-flex items-center gap-1.5"
+  style={{ color: activeReaction?.text || undefined }}
+>
+  <button
+    type="button"
+    disabled={reactionBusy}
+    onPointerDown={startReactionPress}
+    onPointerUp={endReactionPress}
+    onPointerLeave={cancelReactionPress}
+    onContextMenu={(event) => event.preventDefault()}
+    className="active:scale-95 disabled:opacity-60"
+  >
+    {activeReaction ? (
+      <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
+    ) : (
+      <i className="fa-regular fa-heart text-[15px]" />
+    )}
+  </button>
+
+  <button
+    type="button"
+    onClick={() =>
+      navigate(`/interactions/author_post/${post.id}/likes`, {
+        state: { sourceName: 'Author Post' },
+      })
+    }
+    className="active:scale-95"
+  >
+    {formatCompactNumber(post.like_count)}
+  </button>
+</div>
   </div>
 
   <button
