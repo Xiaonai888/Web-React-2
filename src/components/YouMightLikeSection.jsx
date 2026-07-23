@@ -106,9 +106,15 @@ function LoadingGrid() {
   )
 }
 
-export default function YouMightLikeSection() {
+export default function YouMightLikeSection({
+  storyType = '',
+}) {
   const [realBooks, setRealBooks] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
 
   useEffect(() => {
     let ignore = false
@@ -117,26 +123,66 @@ export default function YouMightLikeSection() {
       try {
         setLoading(true)
 
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(
+              normalizedStoryType
+            )}`
+          : ''
+
         const response = await fetch(
-          addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=30&sort=popular`)
+          addStoryLanguageParam(
+            `${API_BASE_URL}/api/public/stories?limit=30&sort=popular${storyTypeQuery}`
+          )
         )
-        const data = await response.json().catch(() => ({}))
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load You Might Like')
+          throw new Error(
+            data.message ||
+            'Failed to load You Might Like'
+          )
         }
 
         if (ignore) return
 
-        setRealBooks((data.stories || []).map(normalizeStory))
+        const visibleStories = (
+          data.stories || []
+        )
+          .filter(
+            (story) =>
+              !normalizedStoryType ||
+              String(story?.story_type || '')
+                .trim()
+                .toLowerCase() ===
+                normalizedStoryType
+          )
+          .filter(
+            (story) =>
+              !normalizedStoryType ||
+              Boolean(
+                String(story?.cover_url || '').trim()
+              )
+          )
+
+        setRealBooks(
+          visibleStories.map(normalizeStory)
+        )
       } catch (error) {
-        console.error('YouMightLikeSection fetch error:', error)
+        console.error(
+          'YouMightLikeSection fetch error:',
+          error
+        )
 
         if (!ignore) {
           setRealBooks([])
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
@@ -145,14 +191,26 @@ export default function YouMightLikeSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
   const books = useMemo(() => {
-    return realBooks.length ? realBooks : fallbackBooks
-  }, [realBooks])
+    if (realBooks.length) {
+      return realBooks
+    }
+
+    if (normalizedStoryType) {
+      return []
+    }
+
+    return fallbackBooks
+  }, [normalizedStoryType, realBooks])
 
   if (loading) {
     return <LoadingGrid />
+  }
+
+  if (!books.length) {
+    return null
   }
 
   return (
@@ -160,7 +218,10 @@ export default function YouMightLikeSection() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[20px] lg:text-[21px]">🙂</span>
+            <span className="text-[20px] lg:text-[21px]">
+              🙂
+            </span>
+
             <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
               You Might Like
             </h2>
@@ -177,7 +238,10 @@ export default function YouMightLikeSection() {
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 lg:gap-x-3 lg:gap-y-6">
           {books.map((book) => (
-            <BookCard key={book.id} book={book} />
+            <BookCard
+              key={book.id}
+              book={book}
+            />
           ))}
         </div>
       </div>
