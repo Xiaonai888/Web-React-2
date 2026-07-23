@@ -1408,7 +1408,7 @@ function LockedEpisodeCard({
           <button
             type="button"
             onClick={goPurchase}
-            className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-20 pr-[104px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
+            className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-5 pr-[150px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
           >
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15px] font-black italic leading-5 text-[#FFE36E]">
