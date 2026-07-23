@@ -1097,9 +1097,11 @@ export default function EpisodeEditorPage() {
           </button>
 
           <div className="text-center">
-  <h1 className={`text-[17px] font-extrabold ${isManga ? 'text-[#e5484d]' : 'text-[#111827]'}`}>
-    {isManga ? `${isEditMode ? 'Edit' : 'Add'} Manga Episode` : pageTitle}
-  </h1>
+  <h1 className="text-[17px] font-bold text-[#111827]">
+  {isManga
+    ? `${isEditMode ? 'Edit' : 'Add'} Manga Episode`
+    : pageTitle}
+</h1>
 </div>
 
           <div className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[10px] font-extrabold text-[#667085]">
