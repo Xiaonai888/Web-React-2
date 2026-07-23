@@ -1082,12 +1082,18 @@ async function handleToggleLike() {
   </span>
 
   <span
-    className={`text-[11px] font-normal transition-colors duration-200 ${
-      liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
-    }`}
-  >
-    {formatCompactNumber(likeCount)}
-  </span>
+  onClick={(event) => {
+    event.stopPropagation()
+    const targetStoryId = story?.id || story?.story_id
+    if (!targetStoryId || !episodeId) return
+    navigate(`/story/${targetStoryId}/episode/${episodeId}/reactions`)
+  }}
+  className={`cursor-pointer text-[11px] font-normal transition-colors duration-200 ${
+    liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
+  }`}
+>
+  {formatCompactNumber(likeCount)}
+</span>
 </button>
 
         <button
