@@ -400,26 +400,29 @@ function CharacterEditor({
           </button>
         </div>
 
-        <div className="mt-5 flex flex-col items-center">
-          <div
-            className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full"
-            style={{ backgroundColor: group.soft }}
-          >
-            {image ? (
-              <img src={image} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <i className="fa-solid fa-user text-[34px] text-white" />
-            )}
-          </div>
+        <div className="mt-5 flex justify-center">
+  <div className="relative">
+    <div
+      className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
+      style={{ backgroundColor: group.soft }}
+    >
+      {image ? (
+        <img src={image} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <i className="fa-solid fa-user text-[38px] text-white" />
+      )}
+    </div>
 
-          <button
-            type="button"
-            onClick={onChangeImage}
-            className="mt-3 rounded-full bg-[#f8f7fb] px-4 py-2 text-[10.5px] font-medium text-[#667085]"
-          >
-            Change profile image
-          </button>
-        </div>
+    <button
+      type="button"
+      onClick={onChangeImage}
+      className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md active:scale-95"
+      aria-label="Replace profile image"
+    >
+      <i className="fa-solid fa-camera text-[13px]" />
+    </button>
+  </div>
+</div>
 
         <label className="mt-5 block text-[12px] font-bold text-[#111827]">
           Nickname
