@@ -233,6 +233,9 @@ function normalizeApiComment(comment) {
     parent_id:
       comment?.parent_id || null,
     text: comment?.text || '',
+    is_deleted: Boolean(
+      comment?.is_deleted
+    ),
     type: comment?.type || 'text',
     likes: Number(comment?.likes || 0),
     liked: Boolean(comment?.liked),
@@ -322,6 +325,55 @@ function removeCommentTree(
         commentId
       ),
     }))
+}
+
+function applyDeletedCommentTree(
+  comments,
+  commentId
+) {
+  return comments.flatMap((comment) => {
+    const replies = Array.isArray(
+      comment.replies
+    )
+      ? comment.replies
+      : []
+
+    if (
+      String(comment.id) ===
+      String(commentId)
+    ) {
+      if (!replies.length) {
+        return []
+      }
+
+      return [
+        {
+          ...comment,
+          user_id: null,
+          text: 'Comment deleted',
+          is_deleted: true,
+          is_pinned: false,
+          is_hidden: false,
+          is_spoiler: false,
+          likes: 0,
+          liked: false,
+          name: 'Reader',
+          avatar_url: '',
+          replies,
+        },
+      ]
+    }
+
+    return [
+      {
+        ...comment,
+        replies: applyDeletedCommentTree(
+          replies,
+          commentId
+        ),
+      },
+    ]
+  })
 }
 
 function Avatar({
@@ -957,6 +1009,74 @@ function CommentItem({
     } finally {
       setReplySending(false)
     }
+  }
+
+  if (comment.is_deleted) {
+    return (
+      <article
+        className="px-4 py-4"
+        id={`comment-${comment.id}`}
+      >
+        <div className="flex gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#98a2b3]">
+            <i className="fa-regular fa-comment-dots text-[15px]" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="inline-flex min-h-12 items-center rounded-[18px] bg-[#f3f4f6] px-4 py-3">
+              <span className="text-[13px] italic text-[#98a2b3]">
+                Comment deleted
+              </span>
+            </div>
+
+            {replies.length ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setRepliesShown(
+                    (value) => !value
+                  )
+                }
+                className="mt-2 block pl-3 text-[12px] text-[#667085]"
+              >
+                {repliesShown
+                  ? 'Hide replies'
+                  : `View ${replies.length} ${
+                      replies.length > 1
+                        ? 'replies'
+                        : 'reply'
+                    }`}
+              </button>
+            ) : null}
+
+            {repliesShown &&
+            replies.length ? (
+              <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
+                {replies.map((reply) => (
+                  <ReplyItem
+                    key={reply.id}
+                    reply={reply}
+                    story={story}
+                    targetType={targetType}
+                    onCopy={onCopy}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onHide={onHide}
+                    onUnhide={onUnhide}
+                    onPin={onPin}
+                    onUnpin={onUnpin}
+                    onSpoiler={onSpoiler}
+                    onUnspoiler={onUnspoiler}
+                    onBan={onBan}
+                    onReport={onReport}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </article>
+    )
   }
 
   return (
@@ -2289,17 +2409,14 @@ export default function CommentSection({
         }
 
         const nextComments =
-          removeCommentTree(
+          applyDeletedCommentTree(
             comments,
             comment.id
           )
 
         updateComments(nextComments)
         updateTotal(
-          Math.max(
-            0,
-            totalComments - 1
-          )
+          totalComments - 1
         )
         showToast(
           'Comment moved to Trash.'
@@ -2369,18 +2486,16 @@ export default function CommentSection({
 
       if (action === 'delete') {
         const nextComments =
-          removeCommentTree(
+          applyDeletedCommentTree(
             comments,
             comment.id
           )
         updateComments(nextComments)
         updateTotal(
-          countCommentTree(
-            nextComments
-          )
+          totalComments - 1
         )
         showToast(
-          'Comment deleted.'
+          'Comment moved to Trash.'
         )
         return
       }
