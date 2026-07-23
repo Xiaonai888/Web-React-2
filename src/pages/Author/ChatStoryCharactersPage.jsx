@@ -489,7 +489,7 @@ function CharacterEditor({
   )
 }
 
-function CharacterCard({ character, index, group, onClick }) {
+function CharacterCard({ character, index, group, onClick, onEditProfile }) {
   return (
     <button
       type="button"
@@ -518,9 +518,16 @@ function CharacterCard({ character, index, group, onClick }) {
         {character.nickname || 'Unnamed role'}
       </span>
 
-      <span className="mt-1 line-clamp-1 w-full text-[9.5px] font-bold" style={{ color: group.accent }}>
-        {group.shortTitle}
-      </span>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onEditProfile()
+        }}
+        className="mt-1 text-[10px] font-medium text-[#98a2b3]"
+      >
+        Edit Profile <span aria-hidden="true">›</span>
+      </button>
     </button>
   )
 }
@@ -546,7 +553,7 @@ function AddCharacterCard({ group, onClick }) {
   )
 }
 
-function RoleSection({ group, characters, onHelp, onAdd, onEdit }) {
+function RoleSection({ group, characters, onHelp, onAdd, onEdit, onEditProfile }) {
   return (
     <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
@@ -583,6 +590,7 @@ function RoleSection({ group, characters, onHelp, onAdd, onEdit }) {
             index={index}
             group={group}
             onClick={() => onEdit(character)}
+            onEditProfile={() => onEditProfile(character)}
           />
         ))}
 
@@ -983,7 +991,7 @@ export default function ChatStoryCharactersPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="line-clamp-1 text-[17px] font-bold text-[#111827]">Build Your Cast</h1>
+            <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">Build Your Cast</h1>
             <div className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#7c3aed]">
               Chat Story
             </div>
@@ -1007,7 +1015,7 @@ export default function ChatStoryCharactersPage() {
           </div>
         ) : null}
 
-        <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
+        <section className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title="Story Info" />
             <Step number="2" title="Characters" active />
@@ -1024,38 +1032,11 @@ export default function ChatStoryCharactersPage() {
             onHelp={() => setHelpGroup(group)}
             onAdd={() => openAddCharacter(group.key)}
             onEdit={openEditCharacter}
+            onEditProfile={(character) =>
+              navigate(`/author/story/${storyId}/chat/characters/${character.id}/profile`)
+            }
           />
         ))}
-
-        <section className="mt-6 rounded-[20px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/5">
-  <div className="flex items-center gap-3">
-    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${canContinue ? 'bg-[#eafaf2] text-[#16803c]' : 'bg-[#f1ecff] text-[#7c3aed]'}`}>
-      <i className={`fa-solid ${canContinue ? 'fa-check' : 'fa-shield-halved'} text-[14px]`} />
-    </span>
-
-    <div className="min-w-0">
-      <div className="text-[12.5px] font-extrabold text-[#111827]">
-        {canContinue ? 'Characters are ready' : 'Add at least 2 characters to continue'}
-      </div>
-      <div className="mt-1 text-[10.5px] leading-4 text-[#667085]">
-        At least one character must be in Main Characters.
-      </div>
-    </div>
-  </div>
-</section>
-
-<div className="mt-3 text-center text-[9px] font-semibold text-[#98a2b3]">
-  Story ID: {storyId || 'Not found'}
-</div>
-
-<button
-  type="button"
-  disabled={!canContinue || saving || pageLoading}
-  onClick={() => handleSavePage(true)}
-  className={`mt-5 h-12 w-full rounded-full text-[13px] font-extrabold text-white ${canContinue && !saving && !pageLoading ? 'bg-[#111827] active:scale-[0.99]' : 'bg-[#d0d5dd]'}`}
->
-  {saving ? 'Saving...' : 'Next: Create Chat'}
-</button>
       </main>
     </div>
   )
