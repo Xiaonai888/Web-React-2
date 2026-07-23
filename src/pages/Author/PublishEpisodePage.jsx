@@ -369,36 +369,37 @@ setSuccessOpen(true)
       }`}
     >
       <style>{`
-        .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
-        .manga-red-theme button:not(:disabled)[class*="bg-[#0b5cff]"] {
-          background-color: #e5484d !important;
-        }
+  .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
+  .manga-red-theme button:not(:disabled)[class*="bg-[#0b5cff]"],
+  .manga-red-theme button:not(:disabled)[class*="bg-[#e5484d]"] {
+    background-color: #FE526E !important;
+  }
 
-        .manga-red-theme button[class*="border-[#111827]"] {
-          border-color: #e5484d !important;
-        }
+  .manga-red-theme button[class*="border-[#111827]"] {
+    border-color: #FE526E !important;
+  }
 
-        .manga-red-theme
-          button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
-          box-shadow: 0 14px 30px rgba(229, 72, 77, 0.28) !important;
-        }
+  .manga-red-theme
+    button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
+    box-shadow: 0 14px 30px rgba(254, 82, 110, 0.28) !important;
+  }
 
-        @keyframes mangaSoftPulse {
-          0%, 100% {
-            transform: scale(1);
-            box-shadow: 0 14px 30px rgba(229, 72, 77, 0.22);
-          }
+  @keyframes mangaSoftPulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 14px 30px rgba(254, 82, 110, 0.22);
+    }
 
-          50% {
-            transform: scale(1.025);
-            box-shadow: 0 18px 38px rgba(229, 72, 77, 0.34);
-          }
-        }
+    50% {
+      transform: scale(1.025);
+      box-shadow: 0 18px 38px rgba(254, 82, 110, 0.34);
+    }
+  }
 
-        .manga-red-theme button[class*="animate-[softPulse"] {
-          animation: mangaSoftPulse 1.8s ease-in-out infinite !important;
-        }
-      `}</style>
+  .manga-red-theme button[class*="animate-[softPulse"] {
+    animation: mangaSoftPulse 1.8s ease-in-out infinite !important;
+  }
+`}</style>
 
       <Toast message={toast} onClose={() => setToast('')} />
 
