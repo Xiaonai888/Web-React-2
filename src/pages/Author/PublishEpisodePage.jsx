@@ -435,7 +435,7 @@ setSuccessOpen(true)
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Publish</h1>
+          <h1 className="text-[17px] font-bold text-[#111827]">Publish</h1>
 
           <button
             type="button"
@@ -448,13 +448,24 @@ setSuccessOpen(true)
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-          <div className="grid grid-cols-3 gap-2">
-            <Step number="1" title="Story Info" />
-            <Step number="2" title={isFirstEpisode ? 'First Episode' : 'Episode'} />
-            <Step number="3" title="Publish" active />
-          </div>
-        </section>
+        <section className="hidden rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
+  <div className={`grid gap-2 ${isChatStory ? 'grid-cols-4' : 'grid-cols-3'}`}>
+    <Step number="1" title="Story Info" />
+
+    {isChatStory ? (
+      <>
+        <Step number="2" title="Characters" />
+        <Step number="3" title="Chat" />
+        <Step number="4" title="Publish" active />
+      </>
+    ) : (
+      <>
+        <Step number="2" title={isFirstEpisode ? 'First Episode' : 'Episode'} />
+        <Step number="3" title="Publish" active />
+      </>
+    )}
+  </div>
+</section>
 
         {!episodeId ? (
           <section className="mt-4 rounded-[18px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold leading-5 text-[#e5484d]">
