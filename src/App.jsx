@@ -5,6 +5,7 @@ import Fast from './pages/Fast'
 import Footer from './components/Footer'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
+import ChatStoryHomePage from './pages/ChatStoryHomePage'
 import Library from './pages/Library'
 import ShopPage from './pages/ShopPage'
 import WalletPage from './pages/WalletPage'
@@ -289,6 +290,7 @@ const shouldShowOpeningAds =
       <Routes>
         <Route path="/" element={<ForYou />} />
         <Route path="/manga" element={<MangaPage />} />
+        <Route path="/chat-story" element={<ChatStoryHomePage />} />
         <Route path="/fast" element={<Fast />} />
         <Route path="/chat-story" element={<ComingSoon title="Chat Story" />} />
         <Route path="/library" element={<Library />} />
