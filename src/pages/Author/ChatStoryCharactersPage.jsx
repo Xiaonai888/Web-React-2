@@ -491,44 +491,47 @@ function CharacterEditor({
 
 function CharacterCard({ character, index, group, onClick, onEditProfile }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_5px_18px_rgba(15,23,42,0.07)] ring-1 ring-black/5 active:scale-[0.98]"
-    >
-      <span
-        className="absolute left-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-[8px] px-1.5 text-[10px] font-extrabold"
-        style={{ backgroundColor: group.soft, color: group.accent }}
+    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_5px_18px_rgba(15,23,42,0.07)] ring-1 ring-black/5">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full flex-col items-center justify-center active:scale-[0.98]"
       >
-        {index + 1}
-      </span>
+        <span
+          className="absolute left-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-[8px] px-1.5 text-[10px] font-extrabold"
+          style={{ backgroundColor: group.soft, color: group.accent }}
+        >
+          {index + 1}
+        </span>
 
-      <span
-        className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full"
-        style={{ backgroundColor: group.soft }}
-      >
-        {character.image ? (
-          <img src={character.image} alt={character.nickname || group.shortTitle} className="h-full w-full object-cover" />
-        ) : (
-          <i className="fa-solid fa-user text-[27px] text-white" />
-        )}
-      </span>
+        <span
+          className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full"
+          style={{ backgroundColor: group.soft }}
+        >
+          {character.image ? (
+            <img
+              src={character.image}
+              alt={character.nickname || group.shortTitle}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <i className="fa-solid fa-user text-[27px] text-white" />
+          )}
+        </span>
 
-      <span className="mt-3 line-clamp-1 w-full text-[12px] font-extrabold text-[#111827]">
-        {character.nickname || 'Unnamed role'}
-      </span>
+        <span className="mt-3 line-clamp-1 w-full text-[12px] font-extrabold text-[#111827]">
+          {character.nickname || 'Unnamed role'}
+        </span>
+      </button>
 
       <button
         type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          onEditProfile()
-        }}
-        className="mt-1 text-[10px] font-medium text-[#98a2b3]"
+        onClick={onEditProfile}
+        className="mt-1 text-[10px] font-medium text-[#98a2b3] active:text-[#667085]"
       >
         Edit Profile <span aria-hidden="true">›</span>
       </button>
-    </button>
+    </div>
   )
 }
 
