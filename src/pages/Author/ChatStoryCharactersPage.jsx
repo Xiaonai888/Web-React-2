@@ -660,6 +660,13 @@ export default function ChatStoryCharactersPage() {
             nickname: character.nickname || '',
             avatarSource: character.avatar_source || 'device',
             chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
+            gender: character.gender || '',
+            birthday: character.birthday || '',
+            heightCm: character.height_cm || '',
+            occupation: character.occupation || '',
+            personality: character.personality || '',
+            relationship: character.relationship || '',
+            bio: character.bio || '',
           }))
         )
       } catch (error) {
@@ -876,11 +883,19 @@ export default function ChatStoryCharactersPage() {
         const avatarUrl = await uploadCharacterImage(token, character.image, storyId, index)
 
         uploadedCharacters.push({
+          id: character.id,
           role_group: character.group,
           nickname: character.nickname || null,
           avatar_url: avatarUrl,
           avatar_source: character.avatarSource || 'device',
           chat_side: character.chatSide || (character.group === 'main' ? 'right' : 'left'),
+          gender: character.gender || null,
+          birthday: character.birthday || null,
+          height_cm: character.heightCm === '' ? null : character.heightCm,
+          occupation: character.occupation || null,
+          personality: character.personality || null,
+          relationship: character.relationship || null,
+          bio: character.bio || null,
         })
       }
 
@@ -906,6 +921,13 @@ export default function ChatStoryCharactersPage() {
           nickname: character.nickname || '',
           avatarSource: character.avatar_source || 'device',
           chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
+          gender: character.gender || '',
+          birthday: character.birthday || '',
+          heightCm: character.height_cm || '',
+          occupation: character.occupation || '',
+          personality: character.personality || '',
+          relationship: character.relationship || '',
+          bio: character.bio || '',
         }))
       )
 
