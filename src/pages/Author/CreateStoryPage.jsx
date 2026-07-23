@@ -158,9 +158,9 @@ function SelectInput(props) {
   return (
     <div className="relative">
       <select
-        {...props}
-        className="h-12 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 pr-10 text-[14px] font-semibold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-      />
+  {...props}
+  className="h-12 w-full appearance-none rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 pr-10 text-[14px] font-normal text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+/>
       <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[#98a2b3]" />
     </div>
   )
@@ -1176,7 +1176,8 @@ return (
 
         {!pageLoading ? (
           <>
-            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <div className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5 md:contents">
+            <section className="bg-white p-4 md:mt-4 md:rounded-[24px] md:shadow-sm md:ring-1 md:ring-black/5">
               <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
@@ -1382,9 +1383,25 @@ return (
               </div>
             </section>
 
-            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <section className="border-t border-[#eceef2] bg-white p-4 md:mt-4 md:rounded-[24px] md:border-0 md:shadow-sm md:ring-1 md:ring-black/5">
               <FieldLabel required>{isManga ? 'Manga Title' : 'Story Title'}</FieldLabel>
               <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isManga ? 'Enter manga title' : 'Enter story title'} />
+
+              <div className="mt-5">
+                <div className="mb-2 flex items-end justify-between gap-3">
+                  <FieldLabel>Description</FieldLabel>
+                  <div className={`text-[11px] font-bold ${descriptionCount > 5000 ? 'text-[#e5484d]' : 'text-[#8d94a1]'}`}>
+                    {descriptionCount}/5000
+                  </div>
+                </div>
+
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder={isManga ? 'Write a strong manga summary. Recommended 400–1200 characters.' : 'Write a strong story summary. Recommended 400–1200 characters.'}
+                  className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+                />
+              </div>
 
               <div className="mt-5">
                 <FieldLabel required>{isManga ? 'Manga Language' : 'Story Language'}</FieldLabel>
@@ -1499,29 +1516,13 @@ return (
               </div>
             </section>
 
-            <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <div className="mb-2 flex items-end justify-between gap-3">
-                <FieldLabel>Description</FieldLabel>
-                <div className={`text-[11px] font-bold ${descriptionCount > 5000 ? 'text-[#e5484d]' : 'text-[#8d94a1]'}`}>
-                  {descriptionCount}/5000
-                </div>
-              </div>
-
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder={isManga ? 'Write a strong manga summary. Recommended 400–1200 characters.' : 'Write a strong story summary. Recommended 400–1200 characters.'}
-                className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-              />
-            </section>
-
-            <section className="mt-4 space-y-3">
-              <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
+            <section className="border-t border-[#eceef2] bg-white md:mt-4 md:space-y-3 md:border-0 md:bg-transparent">
+              <label className="flex items-start gap-3 bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] md:rounded-[18px] md:shadow-sm md:ring-1 md:ring-black/5">
                 <input type="checkbox" checked={originalAccepted} onChange={(event) => setOriginalAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
                 <span>I confirm this {isManga ? 'manga' : 'story'} is my original work and I have the right to publish it.</span>
               </label>
 
-              <label className="flex items-start gap-3 rounded-[18px] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] shadow-sm ring-1 ring-black/5">
+              <label className="flex items-start gap-3 border-t border-[#eceef2] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] md:rounded-[18px] md:border-0 md:shadow-sm md:ring-1 md:ring-black/5">
                 <input type="checkbox" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
                 <span>
                   I agree to the{' '}
@@ -1537,6 +1538,7 @@ return (
                 </span>
               </label>
             </section>
+            </div>
 
             <section className="mt-5 pb-8">
               <button
