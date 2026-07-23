@@ -1118,11 +1118,19 @@ return (
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">
-            {isEditMode
-              ? isManga ? 'Edit Manga' : 'Edit Story'
-              : isManga ? 'Create Manga' : 'Create Story'}
-          </h1>
+          <h1 className="text-[17px] font-bold text-[#111827]">
+  {isEditMode
+    ? isManga
+      ? 'Edit Manga'
+      : isChatStory
+        ? 'Edit Chat Story'
+        : 'Edit Novel'
+    : isManga
+      ? 'Create Manga'
+      : isChatStory
+        ? 'Create Chat Story'
+        : 'Create Novel'}
+</h1>
 
           <div className="h-9 w-9" />
         </div>
@@ -1130,14 +1138,28 @@ return (
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         {!isEditMode ? (
-          <section className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-            <div className="grid grid-cols-3 gap-2">
-              <Step number="1" title={isManga ? 'Manga Info' : 'Story Info'} active />
-              <Step number="2" title={isManga ? 'First Manga Episode' : 'First Episode'} />
-              <Step number="3" title="Publish" />
-            </div>
-          </section>
-        ) : null}
+  <section className="hidden rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
+    <div className={`grid gap-2 ${isChatStory ? 'grid-cols-4' : 'grid-cols-3'}`}>
+      <Step number="1" title={isManga ? 'Manga Info' : 'Story Info'} active />
+
+      {isChatStory ? (
+        <>
+          <Step number="2" title="Characters" />
+          <Step number="3" title="Chat" />
+          <Step number="4" title="Publish" />
+        </>
+      ) : (
+        <>
+          <Step
+            number="2"
+            title={isManga ? 'First Manga Episode' : 'First Episode'}
+          />
+          <Step number="3" title="Publish" />
+        </>
+      )}
+    </div>
+  </section>
+) : null}
 
         {pageLoading ? (
           <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
