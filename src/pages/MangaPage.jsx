@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, Grid2X2, Search } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import MangaFeedSections from '../components/MangaFeedSections'
+import ShadowSpotlight from '../components/ShadowSpotlight'
+import ContinueReadingSection from '../components/ContinueReadingSection'
+import DailyPicksSection from '../components/DailyPicksSection'
+import TrendingNowSection from '../components/TrendingNowSection'
+import UpdateTodaySection from '../components/UpdateTodaySection'
+import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
+import NewArrivalsSection from '../components/NewArrivalsSection'
+import TopNovelSection from '../components/TopNovelSection'
+import EventPerksHubSection from '../components/EventPerksHubSection'
+import YouMightLikeSection from '../components/YouMightLikeSection'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 import NotificationPage from './NotificationPage'
 
@@ -363,7 +373,51 @@ export default function MangaPage() {
         ))}
       </div>
 
-      <MangaFeedSections genre={activeGenre} />
+      {activeGenre === 'today' ? (
+        <>
+          <div className="my-6">
+            <ShadowSpotlight />
+          </div>
+
+          <div className="my-6">
+            <ContinueReadingSection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <DailyPicksSection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <TrendingNowSection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <UpdateTodaySection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <EditorWeeklyPicksSection />
+          </div>
+
+          <div className="my-6">
+            <NewArrivalsSection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <TopNovelSection storyType="manga" />
+          </div>
+
+          <div className="my-6">
+            <EventPerksHubSection />
+          </div>
+
+          <div className="my-6">
+            <YouMightLikeSection storyType="manga" />
+          </div>
+        </>
+      ) : (
+        <MangaFeedSections genre={activeGenre} />
+      )}
 
       {showNotificationPopup ? (
         <NotificationPage
