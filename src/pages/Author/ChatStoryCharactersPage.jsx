@@ -198,15 +198,142 @@ function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
   )
 }
 
-function CharacterEditor({ open, group, image, nickname, onNicknameChange, onClose, onSave }) {
+
+function GallerySheet({
+  open,
+  loading,
+  error,
+  images,
+  categories,
+  selectedCategory,
+  onCategoryChange,
+  onSelect,
+  onRetry,
+  onClose,
+}) {
+  if (!open) return null
+
+  const visibleImages =
+    selectedCategory === 'All'
+      ? images
+      : images.filter((item) => item.category === selectedCategory)
+
+  return (
+    <div className="fixed inset-0 z-[185] flex items-end bg-black/45" onClick={onClose}>
+      <div
+        className="max-h-[86vh] w-full overflow-hidden rounded-t-[28px] bg-white pb-[calc(18px+env(safe-area-inset-bottom))] shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="px-4 pt-3">
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[18px] font-extrabold text-[#111827]">Shadow gallery</h2>
+              <p className="mt-1 text-[11px] text-[#667085]">Choose a profile image for this character.</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+        </div>
+
+        {categories.length ? (
+          <div className="mt-4 flex gap-2 overflow-x-auto px-4 pb-2">
+            {['All', ...categories].map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => onCategoryChange(category)}
+                className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-extrabold ${
+                  selectedCategory === category
+                    ? 'bg-[#111827] text-white'
+                    : 'bg-[#f5f3fa] text-[#667085]'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-2 max-h-[62vh] overflow-y-auto px-4 pb-4">
+          {loading ? (
+            <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+              <i className="fa-solid fa-spinner fa-spin text-[24px] text-[#7c3aed]" />
+              <div className="mt-3 text-[12px] font-bold text-[#667085]">Loading gallery...</div>
+            </div>
+          ) : error ? (
+            <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f2] text-[#e11d48]">
+                <i className="fa-solid fa-triangle-exclamation text-[20px]" />
+              </span>
+              <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Gallery could not load</div>
+              <div className="mt-1 max-w-[280px] text-[11px] leading-5 text-[#667085]">{error}</div>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[11px] font-extrabold text-white"
+              >
+                Try again
+              </button>
+            </div>
+          ) : visibleImages.length ? (
+            <div className="grid grid-cols-3 gap-3 pt-2 sm:grid-cols-4 md:grid-cols-5">
+              {visibleImages.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelect(item)}
+                  className="overflow-hidden rounded-[18px] bg-[#f5f3fa] text-left shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+                >
+                  <div className="aspect-square overflow-hidden bg-[#f3f4f6]">
+                    <img
+                      src={item.image_url}
+                      alt={item.alt_text || item.title || 'Character avatar'}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="line-clamp-1 px-2 py-2 text-[9.5px] font-bold text-[#667085]">
+                    {item.title || item.category || 'Character'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f3e8ff] text-[#7c3aed]">
+                <i className="fa-regular fa-images text-[21px]" />
+              </span>
+              <div className="mt-3 text-[13px] font-extrabold text-[#111827]">No images in this gallery yet</div>
+              <div className="mt-1 max-w-[290px] text-[11px] leading-5 text-[#667085]">
+                Add active image URLs to the Chat Story avatar gallery in Supabase.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CharacterEditor({ open, group, image, nickname, roleGroup, chatSide, editing, onNicknameChange, onRoleGroupChange, onChatSideChange, onChangeImage, onDelete, onClose, onSave }) {
   if (!open || !group) return null
 
   return (
     <div className="fixed inset-0 z-[190] flex items-center justify-center bg-black/45 px-4">
-      <div className="w-full max-w-[420px] rounded-[28px] bg-white p-5 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-[18px] font-extrabold text-[#111827]">Character details</h2>
+            <h2 className="text-[18px] font-extrabold text-[#111827]">
+              {editing ? 'Edit character' : 'Character details'}
+            </h2>
             <div className="mt-1 text-[11px] font-bold" style={{ color: group.accent }}>
               {group.title}
             </div>
@@ -221,7 +348,7 @@ function CharacterEditor({ open, group, image, nickname, onNicknameChange, onClo
           </button>
         </div>
 
-        <div className="mt-5 flex justify-center">
+        <div className="mt-5 flex flex-col items-center">
           <div
             className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full"
             style={{ backgroundColor: group.soft }}
@@ -232,19 +359,58 @@ function CharacterEditor({ open, group, image, nickname, onNicknameChange, onClo
               <i className="fa-solid fa-user text-[34px] text-white" />
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={onChangeImage}
+            className="mt-3 rounded-full bg-[#f5f3fa] px-4 py-2 text-[10.5px] font-extrabold text-[#667085]"
+          >
+            Change profile image
+          </button>
         </div>
 
         <label className="mt-5 block text-[12px] font-extrabold text-[#111827]">
-          Nickname {group.key === 'background' ? <span className="font-semibold text-[#98a2b3]">(optional)</span> : null}
+          Nickname {roleGroup === 'background' ? <span className="font-semibold text-[#98a2b3]">(optional)</span> : null}
         </label>
 
         <input
           value={nickname}
           onChange={(event) => onNicknameChange(event.target.value)}
-          placeholder={group.key === 'background' ? 'Example: Guard, Maid 1, Doctor' : 'Enter character nickname'}
+          placeholder={roleGroup === 'background' ? 'Example: Guard, Maid 1, Doctor' : 'Enter character nickname'}
           maxLength={40}
           className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
         />
+
+        <label className="mt-4 block text-[12px] font-extrabold text-[#111827]">Character group</label>
+        <select
+          value={roleGroup}
+          onChange={(event) => onRoleGroupChange(event.target.value)}
+          className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[13px] font-bold text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
+        >
+          {ROLE_GROUPS.map((item) => (
+            <option key={item.key} value={item.key}>
+              {item.title}
+            </option>
+          ))}
+        </select>
+
+        <label className="mt-4 block text-[12px] font-extrabold text-[#111827]">Chat side</label>
+        <div className="mt-2 grid grid-cols-2 gap-3">
+          {['left', 'right'].map((side) => (
+            <button
+              key={side}
+              type="button"
+              onClick={() => onChatSideChange(side)}
+              className={`h-11 rounded-[14px] text-[11px] font-extrabold ${
+                chatSide === side
+                  ? 'bg-[#111827] text-white'
+                  : 'bg-[#f5f3fa] text-[#667085]'
+              }`}
+            >
+              {side === 'left' ? 'Left side' : 'Right side'}
+            </button>
+          ))}
+        </div>
 
         <button
           type="button"
@@ -253,6 +419,16 @@ function CharacterEditor({ open, group, image, nickname, onNicknameChange, onClo
         >
           Save character
         </button>
+
+        {editing ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mt-3 h-11 w-full rounded-full bg-[#fff1f2] text-[12px] font-extrabold text-[#e11d48]"
+          >
+            Delete character
+          </button>
+        ) : null}
       </div>
     </div>
   )
@@ -376,6 +552,15 @@ export default function ChatStoryCharactersPage() {
   const [toast, setToast] = useState('')
   const [pageLoading, setPageLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [avatarSource, setAvatarSource] = useState('device')
+  const [characterGroup, setCharacterGroup] = useState('main')
+  const [chatSide, setChatSide] = useState('right')
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [galleryLoading, setGalleryLoading] = useState(false)
+  const [galleryError, setGalleryError] = useState('')
+  const [galleryImages, setGalleryImages] = useState([])
+  const [galleryCategories, setGalleryCategories] = useState([])
+  const [galleryCategory, setGalleryCategory] = useState('All')
 
   useEffect(() => {
     async function loadCharacters() {
@@ -421,7 +606,7 @@ export default function ChatStoryCharactersPage() {
     loadCharacters()
   }, [navigate, storyId])
 
-  const activeGroup = ROLE_GROUPS.find((group) => group.key === activeGroupKey) || null
+  const activeGroup = ROLE_GROUPS.find((group) => group.key === characterGroup || group.key === activeGroupKey) || null
 
   const groupedCharacters = useMemo(() => {
     return ROLE_GROUPS.reduce((result, group) => {
@@ -440,63 +625,145 @@ export default function ChatStoryCharactersPage() {
 
   const openAddCharacter = (groupKey) => {
     setActiveGroupKey(groupKey)
+    setCharacterGroup(groupKey)
     setEditingId('')
     setSelectedImage('')
     setNickname('')
+    setAvatarSource('device')
+    setChatSide(groupKey === 'main' ? 'right' : 'left')
     setSourceOpen(true)
   }
 
   const openEditCharacter = (character) => {
     setActiveGroupKey(character.group)
+    setCharacterGroup(character.group)
     setEditingId(character.id)
     setSelectedImage(character.image || '')
     setNickname(character.nickname || '')
+    setAvatarSource(character.avatarSource || 'device')
+    setChatSide(character.chatSide || (character.group === 'main' ? 'right' : 'left'))
     setEditorOpen(true)
+  }
+
+  const openImageSourceFromEditor = () => {
+    setEditorOpen(false)
+    setSourceOpen(true)
   }
 
   const chooseDeviceImage = () => {
     setSourceOpen(false)
+    setAvatarSource('device')
     fileInputRef.current?.click()
   }
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
-    if (!file) return
+    if (!file) {
+      if (editingId || nickname) setEditorOpen(true)
+      return
+    }
 
     if (!file.type.startsWith('image/')) {
       showToast('Please choose an image file.')
+      if (editingId || nickname) setEditorOpen(true)
+      return
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image must be 8 MB or smaller.')
+      if (editingId || nickname) setEditorOpen(true)
       return
     }
 
     const reader = new FileReader()
     reader.onload = () => {
       setSelectedImage(String(reader.result || ''))
+      setAvatarSource('device')
       setEditorOpen(true)
     }
     reader.readAsDataURL(file)
   }
 
+  const loadShadowGallery = async () => {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setGalleryLoading(true)
+      setGalleryError('')
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/chat/avatar-gallery?limit=200`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load Shadow gallery')
+      }
+
+      setGalleryImages(data.images || [])
+      setGalleryCategories(data.categories || [])
+    } catch (error) {
+      setGalleryError(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to load gallery')
+    } finally {
+      setGalleryLoading(false)
+    }
+  }
+
   const openShadowGallery = () => {
     setSourceOpen(false)
-    showToast('Shadow gallery will connect in the next step.')
+    setGalleryCategory('All')
+    setGalleryOpen(true)
+    loadShadowGallery()
+  }
+
+  const selectGalleryImage = (item) => {
+    setSelectedImage(item.image_url || '')
+    setAvatarSource('shadow_gallery')
+    setGalleryOpen(false)
+    setEditorOpen(true)
+  }
+
+  const deleteCharacter = () => {
+    if (!editingId) return
+    const confirmed = window.confirm('Delete this character?')
+    if (!confirmed) return
+
+    setCharacters((current) => current.filter((character) => character.id !== editingId))
+    setEditorOpen(false)
+    setEditingId('')
+    showToast('Character deleted. Press Save to update the database.')
   }
 
   const saveCharacter = () => {
-    if (!activeGroup) return
+    const selectedGroup = ROLE_GROUPS.find((group) => group.key === characterGroup)
+    if (!selectedGroup) return
 
     const cleanNickname = nickname.trim()
 
-    if (activeGroup.key !== 'background' && !cleanNickname) {
+    if (characterGroup !== 'background' && !cleanNickname) {
       showToast('Please enter a nickname.')
       return
+    }
+
+    const nextCharacter = {
+      group: characterGroup,
+      image: selectedImage,
+      nickname: cleanNickname,
+      avatarSource,
+      chatSide,
     }
 
     if (editingId) {
       setCharacters((current) =>
         current.map((character) =>
           character.id === editingId
-            ? { ...character, image: selectedImage, nickname: cleanNickname }
+            ? { ...character, ...nextCharacter }
             : character
         )
       )
@@ -505,17 +772,14 @@ export default function ChatStoryCharactersPage() {
         ...current,
         {
           id: makeId(),
-          group: activeGroup.key,
-          image: selectedImage,
-          nickname: cleanNickname,
-          avatarSource: 'device',
-          chatSide: activeGroup.key === 'main' ? 'right' : 'left',
+          ...nextCharacter,
         },
       ])
     }
 
+    setActiveGroupKey(characterGroup)
     setEditorOpen(false)
-    showToast(editingId ? 'Character updated.' : 'Character added.')
+    showToast(editingId ? 'Character updated. Press Save to keep changes.' : 'Character added.')
   }
 
   const handleSavePage = async (continueAfterSave = false) => {
@@ -574,7 +838,7 @@ export default function ChatStoryCharactersPage() {
         }))
       )
 
-      showToast(continueAfterSave ? 'Characters saved. Step 3 UI is next.' : 'Characters saved successfully.')
+      showToast(continueAfterSave ? 'Step 2 saved. The new Chat Editor is the next stage.' : 'Characters saved successfully.')
     } catch (error) {
       showToast(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to save characters')
     } finally {
@@ -611,12 +875,38 @@ export default function ChatStoryCharactersPage() {
         onShadowGallery={openShadowGallery}
       />
 
+      <GallerySheet
+        open={galleryOpen}
+        loading={galleryLoading}
+        error={galleryError}
+        images={galleryImages}
+        categories={galleryCategories}
+        selectedCategory={galleryCategory}
+        onCategoryChange={setGalleryCategory}
+        onSelect={selectGalleryImage}
+        onRetry={loadShadowGallery}
+        onClose={() => {
+          setGalleryOpen(false)
+          if (editingId || nickname) setEditorOpen(true)
+        }}
+      />
+
       <CharacterEditor
         open={editorOpen}
         group={activeGroup}
         image={selectedImage}
         nickname={nickname}
+        roleGroup={characterGroup}
+        chatSide={chatSide}
+        editing={Boolean(editingId)}
         onNicknameChange={setNickname}
+        onRoleGroupChange={(value) => {
+          setCharacterGroup(value)
+          if (!editingId) setChatSide(value === 'main' ? 'right' : 'left')
+        }}
+        onChatSideChange={setChatSide}
+        onChangeImage={openImageSourceFromEditor}
+        onDelete={deleteCharacter}
         onClose={() => setEditorOpen(false)}
         onSave={saveCharacter}
       />
