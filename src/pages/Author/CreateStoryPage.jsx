@@ -1056,20 +1056,21 @@ return (
     }`}
   >
     <style>{`
-      .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
-      .manga-red-theme label[class*="bg-[#111827]"] {
-        background-color: #e5484d !important;
-      }
+  .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
+  .manga-red-theme button:not(:disabled)[class*="bg-[#e5484d]"],
+  .manga-red-theme label[class*="bg-[#111827]"] {
+    background-color: #FE526E !important;
+  }
 
-      .manga-red-theme button[class*="text-[#0b5cff]"] {
-        color: #e5484d !important;
-      }
+  .manga-red-theme button[class*="text-[#0b5cff]"] {
+    color: #FE526E !important;
+  }
 
-      .manga-red-theme
-        button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
-        box-shadow: 0 14px 30px rgba(229, 72, 77, 0.28) !important;
-      }
-    `}</style>
+  .manga-red-theme
+    button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
+    box-shadow: 0 14px 30px rgba(254, 82, 110, 0.28) !important;
+  }
+`}</style>
 
     <Toast message={toast} onClose={() => setToast('')} />
 
