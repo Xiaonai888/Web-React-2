@@ -160,6 +160,10 @@ const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
+const SocialInteractionUsersPage = lazy(() =>
+  import('./pages/SocialInteractionUsersPage')
+)
+
 const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
 const CreateReaderStoryPage = lazy(() => import('./pages/ReaderStories/CreateReaderStoryPage'))
 const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
@@ -260,7 +264,8 @@ function AppShell() {
   location.pathname.startsWith('/author/page/') ||
   location.pathname.startsWith('/shop/mall/') ||
   location.pathname.startsWith('/profile/') ||
-  location.pathname.startsWith('/notifications/')
+  location.pathname.startsWith('/notifications/') ||
+  location.pathname.startsWith('/interactions/')
   const readerToken =
   sessionStorage.getItem('shadow_reader_token') ||
   localStorage.getItem('shadow_reader_token') ||
@@ -1027,7 +1032,12 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-      
+        
+<Route
+  path="/interactions/:sourceType/:sourceId/:interactionType"
+  element={<LazyPage><SocialInteractionUsersPage /></LazyPage>}
+/>
+        
 <Route
   path="/reader/story/create"
   element={
