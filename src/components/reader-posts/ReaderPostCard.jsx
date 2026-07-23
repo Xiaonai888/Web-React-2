@@ -13,7 +13,10 @@ import ReaderPostEchoShareSheet from './ReaderPostEchoShareSheet'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  'https://shadow-backend-kucw.onrender.com'
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 const MAX_POST_LENGTH = 10000
 
@@ -820,54 +823,76 @@ export default function ReaderPostCard({
               </div>
             ) : null}
 
-            <button
-              type="button"
-              disabled={reactionBusy}
-              onPointerDown={
-                startReactionPress
-              }
-              onPointerUp={
-                endReactionPress
-              }
-              onPointerLeave={
-                cancelReactionPress
-              }
-              onPointerCancel={() => {
-                cancelReactionPress()
-                setReactionPickerOpen(false)
-              }}
-              onContextMenu={(event) =>
-                event.preventDefault()
-              }
-              className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+            <div
+              className="inline-flex items-center gap-1.5"
               style={{
                 color:
                   activeReaction?.text ||
                   undefined,
               }}
-              aria-label={
-                activeReaction
-                  ? activeReaction.label
-                  : 'React'
-              }
             >
-              {activeReaction ? (
-                <img
-                  src={
-                    activeReaction.src
-                  }
-                  alt=""
-                  aria-hidden="true"
-                  className="h-[17px] w-[17px] object-contain"
-                />
-              ) : (
-                <i className="fa-regular fa-heart text-[15px]" />
-              )}
+              <button
+                type="button"
+                disabled={reactionBusy}
+                onPointerDown={
+                  startReactionPress
+                }
+                onPointerUp={
+                  endReactionPress
+                }
+                onPointerLeave={
+                  cancelReactionPress
+                }
+                onPointerCancel={() => {
+                  cancelReactionPress()
+                  setReactionPickerOpen(false)
+                }}
+                onContextMenu={(event) =>
+                  event.preventDefault()
+                }
+                className="active:scale-95 disabled:opacity-60"
+                aria-label={
+                  activeReaction
+                    ? activeReaction.label
+                    : 'React'
+                }
+              >
+                {activeReaction ? (
+                  <img
+                    src={
+                      activeReaction.src
+                    }
+                    alt=""
+                    aria-hidden="true"
+                    className="h-[17px] w-[17px] object-contain"
+                  />
+                ) : (
+                  <i className="fa-regular fa-heart text-[15px]" />
+                )}
+              </button>
 
-              {formatCompactNumber(
-                reactionCount
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/interactions/reader_post/${post.id}/likes`,
+                    {
+                      state: {
+                        sourceName:
+                          user?.name ||
+                          'Reader Post',
+                      },
+                    }
+                  )
+                }
+                className="active:scale-95"
+                aria-label="View people who reacted"
+              >
+                {formatCompactNumber(
+                  reactionCount
+                )}
+              </button>
+            </div>
           </div>
 
           <button
@@ -880,20 +905,43 @@ export default function ReaderPostCard({
             {formatCompactNumber(commentCount)}
           </button>
 
-          <button
-            type="button"
-            onClick={() => setEchoOpen(true)}
-            className="inline-flex items-center gap-1.5 active:scale-95"
-            aria-label="Echo this reader post"
-          >
-            <img
-              src="/assets/Icons/echo.svg"
-              alt=""
-              aria-hidden="true"
-              className="h-[15px] w-[15px] object-contain opacity-70"
-            />
-            {formatCompactNumber(echoCount)}
-          </button>
+          <div className="inline-flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setEchoOpen(true)}
+              className="active:scale-95"
+              aria-label="Echo this reader post"
+            >
+              <img
+                src="/assets/Icons/echo.svg"
+                alt=""
+                aria-hidden="true"
+                className="h-[15px] w-[15px] object-contain opacity-70"
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/interactions/reader_post/${post.id}/echoes`,
+                  {
+                    state: {
+                      sourceName:
+                        user?.name ||
+                        'Reader Post',
+                    },
+                  }
+                )
+              }
+              className="active:scale-95"
+              aria-label="View people who echoed"
+            >
+              {formatCompactNumber(
+                echoCount
+              )}
+            </button>
+          </div>
         </div>
       </article>
 
