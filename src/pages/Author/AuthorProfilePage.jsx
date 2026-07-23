@@ -285,7 +285,14 @@ export default function AuthorProfilePage() {
                     </h1>
                   </button>
 
-                  
+                  <button
+  type="button"
+  onClick={() => navigate('/me')}
+  className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] active:scale-[0.99]"
+>
+  <span>Switch Profile</span>
+  <i className="fa-solid fa-chevron-down text-[9px]" />
+</button>
                 </div>
               </div>
 
