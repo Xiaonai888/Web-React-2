@@ -983,7 +983,7 @@ export default function ChatStoryCharactersPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">Build Your Cast</h1>
+            <h1 className="line-clamp-1 text-[17px] font-bold text-[#111827]">Build Your Cast</h1>
             <div className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#7c3aed]">
               Chat Story
             </div>
@@ -1007,7 +1007,7 @@ export default function ChatStoryCharactersPage() {
           </div>
         ) : null}
 
-        <section className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+        <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title="Story Info" />
             <Step number="2" title="Characters" active />
