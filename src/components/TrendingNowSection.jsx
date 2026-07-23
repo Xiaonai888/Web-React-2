@@ -96,7 +96,9 @@ function LoadingGrid() {
   )
 }
 
-export default function TrendingNowSection() {
+export default function TrendingNowSection({
+  storyType = '',
+}) {
   const navigate = useNavigate()
   const scrollRef = useRef(null)
   const isDraggingRef = useRef(false)
@@ -107,6 +109,10 @@ export default function TrendingNowSection() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const normalizedStoryType = String(storyType || '')
+    .trim()
+    .toLowerCase()
+
   useEffect(() => {
     let ignore = false
 
@@ -114,22 +120,50 @@ export default function TrendingNowSection() {
       try {
         setLoading(true)
 
+        const storyTypeQuery = normalizedStoryType
+          ? `&story_type=${encodeURIComponent(
+              normalizedStoryType
+            )}`
+          : ''
+
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=9&sort=popular`
+            `${API_BASE_URL}/api/public/stories?limit=9&sort=popular${storyTypeQuery}`
           )
         )
+
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load trending stories')
+          throw new Error(
+            data.message ||
+            'Failed to load trending stories'
+          )
         }
 
         if (!ignore) {
-          setStories((data.stories || []).map(normalizeStory).slice(0, 9))
+          const visibleStories = (
+            data.stories || []
+          ).filter(
+            (story) =>
+              !normalizedStoryType ||
+              String(story?.story_type || '')
+                .trim()
+                .toLowerCase() ===
+                normalizedStoryType
+          )
+
+          setStories(
+            visibleStories
+              .map(normalizeStory)
+              .slice(0, 9)
+          )
         }
       } catch (error) {
-        console.error('TrendingNowSection fetch error:', error)
+        console.error(
+          'TrendingNowSection fetch error:',
+          error
+        )
 
         if (!ignore) {
           setStories([])
@@ -146,21 +180,28 @@ export default function TrendingNowSection() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [normalizedStoryType])
 
   const handleMouseDown = (event) => {
     const container = scrollRef.current
-    if (!container || window.innerWidth < 768) return
+
+    if (!container || window.innerWidth < 768) {
+      return
+    }
 
     isDraggingRef.current = true
     dragMovedRef.current = false
-    startXRef.current = event.pageX - container.offsetLeft
+    startXRef.current =
+      event.pageX - container.offsetLeft
     scrollLeftRef.current = container.scrollLeft
   }
 
   const handleMouseMove = (event) => {
     const container = scrollRef.current
-    if (!container || !isDraggingRef.current) return
+
+    if (!container || !isDraggingRef.current) {
+      return
+    }
 
     event.preventDefault()
 
@@ -171,7 +212,8 @@ export default function TrendingNowSection() {
       dragMovedRef.current = true
     }
 
-    container.scrollLeft = scrollLeftRef.current - walk * 1.4
+    container.scrollLeft =
+      scrollLeftRef.current - walk * 1.4
   }
 
   const stopMouseDrag = () => {
@@ -191,12 +233,23 @@ export default function TrendingNowSection() {
     return <LoadingGrid />
   }
 
-  const books = stories.length ? stories : fallbackTrendingStories
+  const books = stories.length
+    ? stories
+    : normalizedStoryType
+      ? []
+      : fallbackTrendingStories
+
+  if (!books.length) {
+    return null
+  }
 
   return (
     <section className="px-3 pb-2 pt-0 md:px-4 md:pt-0">
       <div className="flex items-center gap-2">
-        <span className="text-[24px] leading-none">🔥</span>
+        <span className="text-[24px] leading-none">
+          🔥
+        </span>
+
         <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
           Trending Now
         </h2>
@@ -209,7 +262,10 @@ export default function TrendingNowSection() {
         onMouseUp={stopMouseDrag}
         onMouseLeave={stopMouseDrag}
         className="scrollbar-none mt-4 grid grid-cols-3 gap-x-2 gap-y-4 md:flex md:cursor-grab md:gap-3 md:overflow-x-auto md:select-none md:active:cursor-grabbing"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
       >
         {books.map((book) => (
           <div
@@ -218,7 +274,9 @@ export default function TrendingNowSection() {
           >
             <TrendingBookCard
               book={book}
-              onOpen={() => handleBookOpen(book.id)}
+              onOpen={() =>
+                handleBookOpen(book.id)
+              }
             />
           </div>
         ))}
