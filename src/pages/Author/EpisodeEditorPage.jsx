@@ -1046,8 +1046,32 @@ export default function EpisodeEditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      <Toast message={toast} onClose={() => setToast('')} />
+  <div
+    className={`min-h-screen bg-[#f5f3fa] pb-[110px] ${
+      isManga ? 'manga-red-theme' : ''
+    }`}
+  >
+    <style>{`
+      .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
+      .manga-red-theme label[class*="bg-[#111827]"] {
+        background-color: #e5484d !important;
+      }
+
+      .manga-red-theme button[class*="text-[#0b5cff]"] {
+        color: #e5484d !important;
+      }
+
+      .manga-red-theme input[type="range"] {
+        accent-color: #e5484d;
+      }
+
+      .manga-red-theme
+        button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
+        box-shadow: 0 14px 30px rgba(229, 72, 77, 0.28) !important;
+      }
+    `}</style>
+
+    <Toast message={toast} onClose={() => setToast('')} />
 
       <CropCoverModal
         open={cropOpen}
