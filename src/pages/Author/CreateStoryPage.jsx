@@ -123,13 +123,13 @@ function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-extrabold ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
           active ? 'bg-[#111827] text-white' : 'bg-[#f2f4f7] text-[#667085]'
         }`}
       >
         {number}
       </div>
-      <div className={`line-clamp-1 text-[12px] font-extrabold ${active ? 'text-[#111827]' : 'text-[#98a2b3]'}`}>
+      <div className={`line-clamp-1 text-[12px] font-bold ${active ? 'text-[#111827]' : 'text-[#98a2b3]'}`}>
         {title}
       </div>
     </div>
@@ -138,7 +138,7 @@ function Step({ number, title, active }) {
 
 function FieldLabel({ children, required = false }) {
   return (
-    <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
+    <label className="mb-2 block text-[13px] font-bold text-[#111827]">
       {children}
       {required ? <span className="ml-1 text-[#e5484d]">*</span> : null}
     </label>
@@ -218,7 +218,7 @@ function CropImageModal({
         <div className="w-full rounded-[26px] bg-white p-4 shadow-2xl">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[17px] font-extrabold text-[#111827]">{title}</h2>
+              <h2 className="text-[17px] font-bold text-[#111827]">{title}</h2>
               <p className="mt-1 text-[11px] leading-4 text-[#8d94a1]">{helper}</p>
             </div>
 
@@ -278,7 +278,7 @@ function CropImageModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99]"
+              className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-bold text-[#111827] active:scale-[0.99]"
             >
               Cancel
             </button>
@@ -286,7 +286,7 @@ function CropImageModal({
             <button
               type="button"
               onClick={onSave}
-              className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+              className="h-12 rounded-full bg-[#111827] text-[13px] font-bold text-white active:scale-[0.99]"
             >
               Save Crop
             </button>
@@ -319,8 +319,8 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa]">
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
-          <h2 className="text-[17px] font-extrabold text-[#111827]">Add Genre</h2>
-          <button type="button" onClick={() => onSave(selected)} className="text-[14px] font-extrabold text-[#0b5cff]">
+          <h2 className="text-[17px] font-bold text-[#111827]">Add Genre</h2>
+          <button type="button" onClick={() => onSave(selected)} className="text-[14px] font-bold text-[#0b5cff]">
             Save
           </button>
         </div>
@@ -338,7 +338,7 @@ function GenreSheet({ open, value, options = fallbackGenres, loading = false, on
         </div>
 
         <div className="mb-5">
-          <div className="text-[14px] font-extrabold text-[#111827]">Please select the genre that best represents your story.</div>
+          <div className="text-[14px] font-bold text-[#111827]">Please select the genre that best represents your story.</div>
           <div className="mt-2 text-[12px] text-[#667085]">Only one genre can be selected.</div>
         </div>
 
@@ -426,8 +426,8 @@ function TagSheet({ open, value, onClose, onSave }) {
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa]">
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
-          <h2 className="text-[17px] font-extrabold text-[#111827]">Add Tags</h2>
-          <button type="button" onClick={() => onSave(selected)} className="text-[14px] font-extrabold text-[#0b5cff]">
+          <h2 className="text-[17px] font-bold text-[#111827]">Add Tags</h2>
+          <button type="button" onClick={() => onSave(selected)} className="text-[14px] font-bold text-[#0b5cff]">
             Save
           </button>
         </div>
@@ -446,7 +446,7 @@ function TagSheet({ open, value, onClose, onSave }) {
 
         <div className="mb-5">
   <div className="flex items-center justify-between gap-3">
-    <div className="text-[14px] font-extrabold text-[#111827]">
+    <div className="text-[14px] font-bold text-[#111827]">
       Selected ({selected.length}/6)
     </div>
 
@@ -454,7 +454,7 @@ function TagSheet({ open, value, onClose, onSave }) {
       type="button"
       onClick={() => setCustomOpen((current) => !current)}
       disabled={selected.length >= 6}
-      className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white disabled:bg-[#d0d5dd]"
+      className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
     >
       + Custom
     </button>
@@ -477,7 +477,7 @@ function TagSheet({ open, value, onClose, onSave }) {
         type="button"
         onClick={addCustom}
         disabled={!customTag.trim() || selected.length >= 6}
-        className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-extrabold text-white disabled:bg-[#d0d5dd]"
+        className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
       >
         Add
       </button>
@@ -500,7 +500,7 @@ function TagSheet({ open, value, onClose, onSave }) {
           </div>
         ) : null}
 
-        <div className="mb-3 text-[14px] font-extrabold text-[#111827]">All Tags</div>
+        <div className="mb-3 text-[14px] font-bold text-[#111827]">All Tags</div>
         <div className="flex flex-wrap gap-2">
           {visibleTags.map((tag) => (
             <button
@@ -554,13 +554,13 @@ function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
       </button>
 
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-extrabold text-[#111827]">Slide {index + 1}</div>
+        <div className="text-[13px] font-bold text-[#111827]">Slide {index + 1}</div>
         <div className="mt-1 text-[11px] text-[#8d94a1]">
           {slide.existing ? 'Old slide loaded' : 'Tap image to edit crop'}
         </div>
       </div>
 
-      <button type="button" onClick={() => onToggle(index)} className={`rounded-full px-3 py-1.5 text-[10.5px] font-extrabold ${slide.active ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
+      <button type="button" onClick={() => onToggle(index)} className={`rounded-full px-3 py-1.5 text-[10.5px] font-bold ${slide.active ? 'bg-[#ecfdf3] text-[#16803c]' : 'bg-[#f2f4f7] text-[#667085]'}`}>
         {slide.active ? 'Active' : 'Inactive'}
       </button>
 
@@ -1182,7 +1182,7 @@ return (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
                   <div>
-                    <div className="mb-2 text-[12px] font-extrabold text-[#111827]">
+                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
                       Portrait Cover
                     </div>
 
@@ -1208,7 +1208,7 @@ return (
                           </button>
 
                           <div className="border-t border-[#eceaf2] bg-white p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
                               Replace
                               <input
                                 type="file"
@@ -1228,7 +1228,7 @@ return (
                             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                               <i className="fa-solid fa-upload text-[14px]" />
                             </div>
-                            <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Drop or Tap Cover</div>
+                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Tap Cover</div>
                             <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
                           </div>
 
@@ -1247,7 +1247,7 @@ return (
                   </div>
 
                   <div>
-                    <div className="mb-2 text-[12px] font-extrabold text-[#111827]">
+                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
                       Landscape Thumbnail
                     </div>
 
@@ -1273,7 +1273,7 @@ return (
                           </button>
 
                           <div className="border-t border-[#eceaf2] bg-white p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-extrabold text-white active:scale-95">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
                               Replace
                               <input
                                 type="file"
@@ -1293,7 +1293,7 @@ return (
                             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                               <i className="fa-solid fa-image text-[14px]" />
                             </div>
-                            <div className="mt-2 text-[12px] font-extrabold text-[#111827]">Drop or Add Thumbnail</div>
+                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Add Thumbnail</div>
                             <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
                           </div>
 
@@ -1315,11 +1315,11 @@ return (
                 <div className="min-w-0">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-[13px] font-extrabold text-[#111827]">{isManga ? 'Manga Slides' : 'Story Slides'} ({slides.length}/5)</div>
+                      <div className="text-[13px] font-bold text-[#111827]">{isManga ? 'Manga Slides' : 'Story Slides'} ({slides.length}/5)</div>
                       <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
                     </div>
 
-                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-extrabold ${
+                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-bold ${
                       slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
                     }`}>
                       + Add
@@ -1360,7 +1360,7 @@ return (
                         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
                           <i className="fa-solid fa-images text-[15px]" />
                         </div>
-                        <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Drop or Add {isManga ? 'Manga' : 'Story'} Slide</div>
+                        <div className="mt-3 text-[13px] font-bold text-[#111827]">Drop or Add {isManga ? 'Manga' : 'Story'} Slide</div>
                         <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
                         <input
                           type="file"
@@ -1414,7 +1414,7 @@ return (
                       key={item}
                       type="button"
                       onClick={() => setStoryStatus(item)}
-                      className={`h-11 rounded-[14px] text-[12px] font-extrabold transition active:scale-[0.99] ${
+                      className={`h-11 rounded-[14px] text-[12px] font-bold transition active:scale-[0.99] ${
                         storyStatus === item
                           ? 'bg-[#111827] text-white shadow-[0_10px_24px_rgba(17,24,39,0.18)]'
                           : 'bg-[#fafafe] text-[#555b66] ring-1 ring-[#e5e7eb]'
@@ -1451,7 +1451,7 @@ return (
                 <div className="rounded-[18px] bg-[#fafafe] px-4 py-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-[13px] font-extrabold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
+                      <div className="text-[13px] font-bold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
                       <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
                         Display only. This does not schedule posts.
                       </div>
@@ -1461,7 +1461,7 @@ return (
                       <button
                         type="button"
                         onClick={() => setUpdateDays([])}
-                        className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] ring-1 ring-[#eceaf2]"
+                        className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-[#667085] ring-1 ring-[#eceaf2]"
                       >
                         Clear
                       </button>
@@ -1476,7 +1476,7 @@ return (
                           key={day.value}
                           type="button"
                           onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
-                          className={`h-10 rounded-full text-[12px] font-extrabold transition active:scale-95 ${
+                          className={`h-10 rounded-full text-[12px] font-bold transition active:scale-95 ${
                             active
                               ? 'bg-[#111827] text-white'
                               : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
@@ -1492,7 +1492,7 @@ return (
 
               <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
                 <div>
-                  <div className="text-[13px] font-extrabold text-[#111827]">18+ {isManga ? 'Manga' : 'Story'}</div>
+                  <div className="text-[13px] font-bold text-[#111827]">18+ {isManga ? 'Manga' : 'Story'}</div>
                   <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole {isManga ? 'manga' : 'story'} is adult-only</div>
                 </div>
                 <Toggle checked={isAdult} onClick={() => setIsAdult((value) => !value)} label="Toggle 18+ story" />
@@ -1530,7 +1530,7 @@ return (
                     onClick={() => {
                       window.open('/author/agreement', '_blank', 'noopener,noreferrer')
                     }}
-                    className="font-extrabold text-[#0b5cff]"
+                    className="font-bold text-[#0b5cff]"
                   >
                     Shadow Author Agreement.
                   </button>
@@ -1543,7 +1543,7 @@ return (
                 type="button"
                 onClick={handleSaveStory}
                 disabled={!canSave}
-                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
+                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
               >
                 {loading
                   ? isEditMode
