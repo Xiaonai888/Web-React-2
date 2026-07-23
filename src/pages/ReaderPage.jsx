@@ -655,6 +655,52 @@ function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
   )
 }
 
+function MangaEpisodePages({
+  pages = [],
+  title = 'Manga episode',
+}) {
+  const orderedPages = useMemo(() => {
+    return (Array.isArray(pages) ? pages : [])
+      .filter((page) => page?.image_url)
+      .sort(
+        (first, second) =>
+          Number(first?.sort_order || 0) -
+          Number(second?.sort_order || 0)
+      )
+  }, [pages])
+
+  if (!orderedPages.length) {
+    return (
+      <p className="px-4 pb-6 text-[15px] font-semibold text-[#8a8175]">
+        No manga pages found.
+      </p>
+    )
+  }
+
+  return (
+    <div className="w-full overflow-hidden bg-white">
+      {orderedPages.map((page, index) => {
+        const width = Number(page.width || 0)
+        const height = Number(page.height || 0)
+
+        return (
+          <img
+            key={page.id || `${page.image_url}-${index}`}
+            src={page.image_url}
+            alt={`${title} — Page ${index + 1}`}
+            width={width > 0 ? width : undefined}
+            height={height > 0 ? height : undefined}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            draggable={false}
+            className="block h-auto w-full"
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 function PagingReadingText({ pages, pageIndex, setPageIndex, fontSizePx, fontFamily, lineSpacing, theme, onReadingActivity }) {
   const [flashDirection, setFlashDirection] = useState('')
   const flashTimerRef = useRef(null)
@@ -2667,16 +2713,14 @@ function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, s
           {sortedEpisodes.map((item) => {
             const active = String(item.id) === String(currentEpisodeId)
             const read = readEpisodeIds.includes(String(item.id))
-            const locked =
-  Number(item.episode_number || 0) > 5 &&
-  Boolean(
-    item.is_locked ||
-    item.locked ||
-    item.access_locked ||
-    item.requires_unlock ||
-    item.is_premium ||
-    item.lock_type
-  )
+            const locked = Boolean(
+              item.is_locked ||
+              item.locked ||
+              item.access_locked ||
+              item.requires_unlock ||
+              item.is_premium ||
+              item.lock_type
+            )
 
 const titleColor = active ? 'text-[#111827]' : 'text-[#b6bcc6]'
 
@@ -3578,6 +3622,15 @@ function ContinuousEpisodeBlock({
   showToBeContinued,
 }) {
   const episode = entry?.episode || {}
+  const isManga =
+    String(
+      story?.story_type ||
+      episode?.story_type ||
+      ''
+    )
+      .trim()
+      .toLowerCase() === 'manga'
+
   const lockedSectionRef = useRef(null)
   const lockedOpenedRef = useRef(false)
   const adultBlocked = Boolean(
@@ -3650,28 +3703,37 @@ function ContinuousEpisodeBlock({
         </div>
       ) : (
         <>
-          <section className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}>
-            <div className="px-4 py-5 sm:p-8">
-              <div className="mb-7">
-                <h1
-                  className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
-                  style={{ fontFamily }}
-                >
-                  {episode.title || 'Untitled Episode'}
-                </h1>
-              </div>
+          <section
+  className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
+>
+  <div className="px-4 pb-5 pt-5 sm:px-8 sm:pt-8">
+    <div className={isManga ? 'mb-4' : 'mb-7'}>
+      <h1
+        className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
+        style={{ fontFamily }}
+      >
+        {episode.title || 'Untitled Episode'}
+      </h1>
+    </div>
+  </div>
 
-              <article>
-                <ReadingText
-                  content={episode.content}
-                  fontSizePx={fontSizePx}
-                  fontFamily={fontFamily}
-                  lineSpacing={lineSpacing}
-                  theme={theme}
-                />
-              </article>
-            </div>
-          </section>
+  {isManga ? (
+    <MangaEpisodePages
+      pages={episode.pages}
+      title={episode.title}
+    />
+  ) : (
+    <article className="px-4 pb-5 sm:px-8 sm:pb-8">
+      <ReadingText
+        content={episode.content}
+        fontSizePx={fontSizePx}
+        fontFamily={fontFamily}
+        lineSpacing={lineSpacing}
+        theme={theme}
+      />
+    </article>
+  )}
+</section>
 
           {showToBeContinued ? <ToBeContinued theme={theme} /> : null}
 
@@ -3704,9 +3766,8 @@ export default function ReaderPage() {
   const expectedStory = location.state?.storyPreview || null
   const expectedEpisode = location.state?.episodePreview || null
   const hasExpectedLockedPreview =
-  expectedLocked &&
-  Boolean(expectedEpisode) &&
-  Number(expectedEpisode.episode_number || 0) > 5
+    expectedLocked &&
+    Boolean(expectedEpisode)
   const autoScrollFrameRef = useRef(null)
   const qualifiedViewSentRef = useRef(false)
   const readingProgressRef = useRef(0)
@@ -3805,13 +3866,50 @@ const [savingSubscribe, setSavingSubscribe] = useState(false)
     setAdultConsentGranted(false)
   }, [storyId])
 
-  const theme = READER_THEMES[themeName] || READER_THEMES.white
-  const activeFont = FONT_OPTIONS.find((font) => font.key === fontKey) || FONT_OPTIONS[0]
-  const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
-  const brightnessOpacity = Math.max(0, Math.min(0.35, (100 - brightness) / 125))
-  const pagingPages = useMemo(() => {
-    return createPagingPages(episode?.content || '', lineSpacing, fontSizePx)
-  }, [episode?.content, fontSizePx, lineSpacing])
+  const theme =
+  READER_THEMES[themeName] ||
+  READER_THEMES.white
+
+const activeFont =
+  FONT_OPTIONS.find(
+    (font) => font.key === fontKey
+  ) || FONT_OPTIONS[0]
+
+const fontSizePx =
+  FONT_SIZE_LEVELS[fontSizeIndex] ||
+  FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
+
+const brightnessOpacity = Math.max(
+  0,
+  Math.min(0.35, (100 - brightness) / 125)
+)
+
+const isMangaStory =
+  String(
+    story?.story_type ||
+    episode?.story_type ||
+    ''
+  )
+    .trim()
+    .toLowerCase() === 'manga'
+
+const effectiveReadingMode =
+  isMangaStory ? 'scroll' : readingMode
+
+const pagingPages = useMemo(() => {
+  if (isMangaStory) return []
+
+  return createPagingPages(
+    episode?.content || '',
+    lineSpacing,
+    fontSizePx
+  )
+}, [
+  episode?.content,
+  fontSizePx,
+  isMangaStory,
+  lineSpacing,
+])
 
   useReadingProgressSync({
     storyId,
@@ -3953,29 +4051,77 @@ useEffect(() => {
   }
 
   useEffect(() => {
-    if (readingMode !== 'paging') return
-    const savedPage = Number(localStorage.getItem(getPagingKey(storyId, episodeId)) || 0)
-    setCurrentPageIndex(Number.isFinite(savedPage) && savedPage >= 0 ? savedPage : 0)
-  }, [episodeId, readingMode, storyId])
+  if (effectiveReadingMode !== 'paging') return
+
+  const savedPage = Number(
+    localStorage.getItem(
+      getPagingKey(storyId, episodeId)
+    ) || 0
+  )
+
+  setCurrentPageIndex(
+    Number.isFinite(savedPage) &&
+    savedPage >= 0
+      ? savedPage
+      : 0
+  )
+}, [
+  effectiveReadingMode,
+  episodeId,
+  storyId,
+])
 
   useEffect(() => {
-    if (readingMode !== 'paging') return
+  if (effectiveReadingMode !== 'paging') return
 
-    const maxPageIndex = Math.max(0, pagingPages.length - 1)
-    setCurrentPageIndex((current) => Math.min(Math.max(0, current), maxPageIndex))
-  }, [pagingPages.length, readingMode])
+  const maxPageIndex = Math.max(
+    0,
+    pagingPages.length - 1
+  )
 
-  useEffect(() => {
-    if (readingMode !== 'paging') return
+  setCurrentPageIndex((current) =>
+    Math.min(
+      Math.max(0, current),
+      maxPageIndex
+    )
+  )
+}, [
+  effectiveReadingMode,
+  pagingPages.length,
+])
 
-    localStorage.setItem(getPagingKey(storyId, episodeId), String(currentPageIndex))
+ useEffect(() => {
+  if (effectiveReadingMode !== 'paging') return
 
-    const totalPages = Math.max(1, pagingPages.length)
-    const progress = Math.min(100, Math.max(0, ((currentPageIndex + 1) / totalPages) * 100))
+  localStorage.setItem(
+    getPagingKey(storyId, episodeId),
+    String(currentPageIndex)
+  )
 
-    setReadingProgress(progress)
-    readingProgressRef.current = progress
-  }, [currentPageIndex, episodeId, pagingPages.length, readingMode, storyId])
+  const totalPages = Math.max(
+    1,
+    pagingPages.length
+  )
+
+  const progress = Math.min(
+    100,
+    Math.max(
+      0,
+      ((currentPageIndex + 1) /
+        totalPages) *
+        100
+    )
+  )
+
+  setReadingProgress(progress)
+  readingProgressRef.current = progress
+}, [
+  currentPageIndex,
+  effectiveReadingMode,
+  episodeId,
+  pagingPages.length,
+  storyId,
+])
 
 async function loadReaderAdStatus(targetEpisodeId = episodeId) {
   if (!isUsableRouteId(storyId) || !isUsableRouteId(targetEpisodeId)) {
@@ -4073,7 +4219,7 @@ async function loadContinuousEpisode(targetEpisode) {
 }
 
 const continuousReader = useContinuousEpisodeReader({
-  enabled: readingMode === 'scroll',
+  enabled: effectiveReadingMode === 'scroll',
   storyId,
   activeEpisodeId: episodeId,
   episodes,
@@ -4305,7 +4451,7 @@ useEffect(() => {
   ])
 
   useEffect(() => {
-    if (readingMode === 'paging') return undefined
+    if (effectiveReadingMode === 'paging') return undefined
 
     const updateProgress = () => {
       const section = continuousReader.getSectionNode(episodeId)
@@ -4355,8 +4501,8 @@ useEffect(() => {
   }, [
     continuousReader.entries.length,
     continuousReader.getSectionNode,
+    effectiveReadingMode,
     episodeId,
-    readingMode,
   ])
 
     useEffect(() => {
@@ -4835,7 +4981,7 @@ useEffect(() => {
       autoScrollFrameRef.current = null
     }
 
-    if (readingMode !== 'scroll' || !autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
+    if (effectiveReadingMode !== 'scroll' || !autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
       return undefined
     }
 
@@ -4863,7 +5009,7 @@ useEffect(() => {
         autoScrollFrameRef.current = null
       }
     }
-  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, episodeListOpen, fontSelectOpen, loading, readingMode, resetOpen, settingsOpen])
+  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, effectiveReadingMode, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
 
   const sortedReaderEpisodes = useMemo(() => {
     return [...episodes].sort(
@@ -4891,7 +5037,7 @@ useEffect(() => {
   const openReaderEpisode = async (targetEpisode) => {
     if (!targetEpisode) return
 
-    if (readingMode === 'scroll') {
+    if (effectiveReadingMode === 'scroll') {
       await continuousReader.scrollToEpisode(targetEpisode)
       return
     }
@@ -4912,7 +5058,7 @@ useEffect(() => {
     episode?.character_count || episode?.content?.length || 0
   )
   const isLastReadingPage =
-    readingMode !== 'paging' ||
+    effectiveReadingMode !== 'paging' ||
     currentPageIndex >= Math.max(0, pagingPages.length - 1)
 
 const handleReaderCopyLink = async () => {
@@ -5331,7 +5477,7 @@ return (
     <div className="min-h-screen bg-[#FFFFFF] pb-[110px]">
       
 
-      {readingMode === 'scroll' && autoScrollEnabled ? (
+      {effectiveReadingMode === 'scroll' && autoScrollEnabled ? (
         <button
           type="button"
           onClick={() => setAutoScrollEnabled(false)}
@@ -5388,8 +5534,12 @@ return (
         setBrightness={setBrightness}
         lineSpacing={lineSpacing}
         setLineSpacing={setLineSpacing}
-        readingMode={readingMode}
-        setReadingMode={setReadingMode}
+        readingMode={effectiveReadingMode}
+        setReadingMode={(nextMode) => {
+          if (!isMangaStory) {
+            setReadingMode(nextMode)
+          }
+        }}
         autoScrollEnabled={autoScrollEnabled}
         setAutoScrollEnabled={setAutoScrollEnabled}
         autoScrollSpeed={autoScrollSpeed}
@@ -5674,7 +5824,7 @@ onUnlock={handleLockedDiamondUnlock}
         {!loading &&
         !showFullLockedEpisode &&
         !showContinuousLockedEpisode &&
-        readingMode === 'scroll' ? (
+effectiveReadingMode === 'scroll' ? (
           <div>
             {continuousReader.entries.map((entry, index) => (
               <ContinuousEpisodeBlock
@@ -5701,7 +5851,12 @@ onUnlock={handleLockedDiamondUnlock}
           </div>
         ) : null}
 
-        {!loading && readingMode === 'paging' && episode && adultAccepted && !lockedEpisode && !shouldBlockReaderContent ? (
+        {!loading &&
+effectiveReadingMode === 'paging' &&
+episode &&
+adultAccepted &&
+!lockedEpisode &&
+!shouldBlockReaderContent ? (
           <>
             <section className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}>
               {SHOW_READER_COVER && cover ? (
@@ -5792,7 +5947,7 @@ onUnlock={handleLockedDiamondUnlock}
 </div>
 
                 <article>
-                  {readingMode === 'paging' ? (
+                  {effectiveReadingMode === 'paging' ? (
   <PagingReadingText
     pages={pagingPages}
     pageIndex={currentPageIndex}
