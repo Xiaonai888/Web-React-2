@@ -374,7 +374,7 @@ function CharacterEditor({
   return (
     <div className="fixed inset-0 z-[190] flex items-center justify-center bg-black/45 px-4">
       <div
-        className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[28px] bg-white p-5 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[14px] bg-white p-5 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3">
@@ -465,26 +465,7 @@ function CharacterEditor({
           <i className="fa-solid fa-chevron-down pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[11px] text-[#667085]" />
         </div>
 
-        <label className="mt-4 block text-[12px] font-bold text-[#111827]">
-          Chat side
-        </label>
-
-        <div className="mt-2 grid grid-cols-2 gap-3">
-          {['left', 'right'].map((side) => (
-            <button
-              key={side}
-              type="button"
-              onClick={() => onChatSideChange(side)}
-              className={`h-11 rounded-[14px] text-[11px] font-medium ${
-                chatSide === side
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-[#f8f7fb] text-[#667085]'
-              }`}
-            >
-              {side === 'left' ? 'Left side' : 'Right side'}
-            </button>
-          ))}
-        </div>
+        
 
         <button
           type="button"
