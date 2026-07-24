@@ -361,7 +361,7 @@ export default function AuthorStoriesPage() {
           </div>
         ) : null}
 
-        <section className="flex rounded-[23px] border border-[#e8e3f1] bg-white px-1.5 py-3 shadow-[0_8px_26px_rgba(71,55,110,0.07)]">
+        <section className="flex rounded-[14px] border border-[#e8e3f1] bg-white px-1.5 py-3 shadow-[0_8px_26px_rgba(71,55,110,0.07)]">
           <StatItem icon="fa-solid fa-book-open" label="All" value={formatCompactNumber(stats.all)} />
           <StatItem icon="fa-regular fa-circle-check" label="Published" value={formatCompactNumber(stats.published)} />
           <StatItem icon="fa-regular fa-file-lines" label="Drafts" value={formatCompactNumber(stats.drafts)} />
