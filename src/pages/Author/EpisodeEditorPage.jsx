@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Image as ImageIcon,
+  Italic,
+  Search,
+  WandSparkles,
+} from 'lucide-react'
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import {
@@ -383,7 +393,7 @@ function Step({ number, title, active }) {
   )
 }
 
-function ToolButton({ icon, label, onClick, active = false, disabled = false }) {
+function ToolButton({ Icon, label, onClick, active = false, disabled = false }) {
   return (
     <button
       type="button"
@@ -395,10 +405,10 @@ function ToolButton({ icon, label, onClick, active = false, disabled = false }) 
       aria-label={label}
       title={label}
     >
-      <i
-        className={`${icon} text-[17px] ${
-          active ? 'text-[#FE526E]' : 'text-[#111827]'
-        }`}
+      <Icon
+        size={19}
+        strokeWidth={1.7}
+        className={active ? 'text-[#FE526E]' : 'text-[#111827]'}
       />
     </button>
   )
@@ -659,7 +669,7 @@ function EpisodeDetailsSheet({
           </div>
 
           <div className="mt-4">
-            <label className="mb-2 block text-[13px] font-bold text-[#111827]">
+            <label className="mb-2 block text-[13px] font-semibold text-[#111827]">
               Episode Title <span className="text-[#e5484d]">*</span>
             </label>
             <input
@@ -668,7 +678,7 @@ function EpisodeDetailsSheet({
               maxLength={200}
               autoFocus
               placeholder="Enter episode title"
-              className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] font-bold text-[#111827] outline-none placeholder:font-bold placeholder:text-[#a5aab4]"
+              className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] font-semibold text-[#111827] outline-none placeholder:font-semibold placeholder:text-[#a5aab4]"
             />
           </div>
 
@@ -1770,7 +1780,7 @@ export default function EpisodeEditorPage() {
           className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#f0f1f3] text-left active:bg-[#fafafa]"
         >
           <div
-            className={`min-w-0 flex-1 truncate text-[14px] font-bold ${
+            className={`min-w-0 flex-1 truncate text-[14px] font-semibold ${
               episodeTitle ? 'text-[#111827]' : 'text-[#a5aab4]'
             }`}
           >
@@ -1922,47 +1932,52 @@ export default function EpisodeEditorPage() {
                   <div className="fixed inset-x-0 bottom-0 z-[90] bg-white pb-[env(safe-area-inset-bottom)]">
                     <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto bg-white px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <ToolButton
-                        icon="fa-solid fa-bold"
-                        label="Bold"
-                        active={boldActive}
-                        onClick={() => runEditorCommand('bold')}
-                      />
-                      <ToolButton
-                        icon="fa-solid fa-italic"
-                        label="Italic"
-                        active={italicActive}
-                        onClick={() => runEditorCommand('italic')}
-                      />
-                      <ToolButton
-                        icon={`fa-solid ${
-                          alignmentMode === 'center'
-                            ? 'fa-align-center'
-                            : alignmentMode === 'right'
-                              ? 'fa-align-right'
-                              : 'fa-align-left'
-                        }`}
-                        label={`Align ${alignmentMode}`}
-                        onClick={handleAlignmentChange}
-                      />
-                      <ToolButton
-                        icon={inlineImageUploading ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-image'}
-                        label="Insert image"
-                        disabled={inlineImageUploading}
-                        onClick={() => {
-                          saveEditorSelection()
-                          imageInputRef.current?.click()
-                        }}
-                      />
-                      <ToolButton
-                        icon="fa-solid fa-wand-magic-sparkles"
-                        label="AI Space"
-                        onClick={() => setCleanModalOpen(true)}
-                      />
-                      <ToolButton
-                        icon="fa-solid fa-magnifying-glass"
-                        label="Find and Replace"
-                        onClick={() => setFindReplaceOpen(true)}
-                      />
+  Icon={Bold}
+  label="Bold"
+  active={boldActive}
+  onClick={() => runEditorCommand('bold')}
+/>
+
+<ToolButton
+  Icon={Italic}
+  label="Italic"
+  active={italicActive}
+  onClick={() => runEditorCommand('italic')}
+/>
+
+<ToolButton
+  Icon={
+    alignmentMode === 'center'
+      ? AlignCenter
+      : alignmentMode === 'right'
+        ? AlignRight
+        : AlignLeft
+  }
+  label={`Align ${alignmentMode}`}
+  onClick={handleAlignmentChange}
+/>
+
+<ToolButton
+  Icon={ImageIcon}
+  label="Insert image"
+  disabled={inlineImageUploading}
+  onClick={() => {
+    saveEditorSelection()
+    imageInputRef.current?.click()
+  }}
+/>
+
+<ToolButton
+  Icon={WandSparkles}
+  label="AI Space"
+  onClick={() => setCleanModalOpen(true)}
+/>
+
+<ToolButton
+  Icon={Search}
+  label="Find and Replace"
+  onClick={() => setFindReplaceOpen(true)}
+/>
                     </div>
                   </div>
                 ) : null}
