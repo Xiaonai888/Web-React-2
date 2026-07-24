@@ -34,7 +34,6 @@ const updateDayOptions = [
   { value: 'Sat', label: 'Sat' },
   { value: 'Sun', label: 'Sun' },
 ]
-const storyStatusOptions = ['New', 'Ongoing', 'Completed']
 
 function getAuthToken() {
   return (
@@ -585,6 +584,7 @@ export default function CreateStoryPage() {
   const [language, setLanguage] = useState('Khmer')
   const [genre, setGenre] = useState('Romance')
   const [storyStatus, setStoryStatus] = useState('New')
+  const [unfinishedStoryStatus, setUnfinishedStoryStatus] = useState('New')
   const [genreOptions, setGenreOptions] = useState(fallbackGenres)
   const [genresLoading, setGenresLoading] = useState(false)
   const [tags, setTags] = useState([])
@@ -629,7 +629,9 @@ export default function CreateStoryPage() {
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
-    setStoryStatus(saved.storyStatus || 'New')
+    const savedStoryStatus = saved.storyStatus || 'New'
+    setStoryStatus(savedStoryStatus)
+    setUnfinishedStoryStatus(savedStoryStatus === 'Completed' ? 'New' : savedStoryStatus)
     setTags(saved.tags || [])
     setDescription(saved.description || '')
     setIsAdult(!!saved.isAdult)
@@ -703,7 +705,15 @@ export default function CreateStoryPage() {
         setTitle(story.title || '')
         setLanguage(story.story_language || 'Khmer')
         setGenre(story.main_genre || 'Romance')
-        setStoryStatus(story.story_status || 'New')
+        const loadedStoryStatus = story.story_status || 'New'
+        setStoryStatus(loadedStoryStatus)
+        setUnfinishedStoryStatus(
+          loadedStoryStatus === 'Completed'
+            ? Number(story.total_episodes || 0) > 1
+              ? 'Ongoing'
+              : 'New'
+            : loadedStoryStatus
+        )
         setTags(Array.isArray(story.tags) ? story.tags : [])
         setUpdateDays(Array.isArray(story.update_days) ? story.update_days : [])
         setDescription(story.description || '')
@@ -1423,27 +1433,29 @@ return (
                 </button>
               </div>
 
-              <div className="mt-5">
-                <FieldLabel required>{isManga ? 'Manga Status' : 'Story Status'}</FieldLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {storyStatusOptions.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setStoryStatus(item)}
-                      className={`h-10 rounded-full text-[12px] font-normal transition active:scale-95 ${
-                        storyStatus === item
-                          ? 'bg-[#111827] text-white'
-                          : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+              <div className="mt-5 flex items-center justify-between gap-4 border-t border-[#eceef2] pt-5">
+                <div>
+                  <div className="text-[13px] font-bold text-[#111827]">Completed</div>
+                  <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">
+                    {storyStatus === 'Completed'
+                      ? 'This story will appear as End.'
+                      : 'New changes to Ongoing automatically after more episodes are published.'}
+                  </div>
                 </div>
-                <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
-                  This will appear on story detail as {genre || 'Genre'} / {storyStatus}.
-                </p>
+
+                <Toggle
+                  checked={storyStatus === 'Completed'}
+                  onClick={() => {
+                    if (storyStatus === 'Completed') {
+                      setStoryStatus(unfinishedStoryStatus)
+                      return
+                    }
+
+                    setUnfinishedStoryStatus(storyStatus)
+                    setStoryStatus('Completed')
+                  }}
+                  label="Toggle completed story"
+                />
               </div>
 
               <div className="mt-5">
