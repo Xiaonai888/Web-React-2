@@ -708,7 +708,7 @@ export default function AuthorDashboardPage() {
 
       <div className="relative z-20 -mx-4 -mt-[28px] min-h-[calc(100vh-120px)] rounded-t-[20px] bg-white px-4 pb-[170px] pt-[34px]">
   <div className="-translate-y-[50px]">
-    <div className="grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[12px] bg-white px-1 py-3.5 ring-1 ring-black/5">
+    <div className="grid grid-cols-4 divide-x divide-[#eee8f7] rounded-[12px] bg-white px-1 py-3.5">
           <StatItem
             icon="fa-solid fa-book-open"
             iconClass="text-[#7c4dea]"
@@ -815,7 +815,7 @@ export default function AuthorDashboardPage() {
       type="button"
       onClick={() => (item.soon ? handleComingSoon(item.title) : handleCreateStory(item.key))}
       disabled={item.soon}
-      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] border border-[#ece7f6] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
+      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
     >
       {item.soon ? (
         <span className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold leading-none text-[#F97316] shadow-sm">
