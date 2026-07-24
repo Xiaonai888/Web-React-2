@@ -1061,9 +1061,14 @@ const cropHelper =
       : `Drag the image to fit the 16:9 ${isManga ? 'manga' : 'story'} slide.`
 return (
   <div
-    className={`min-h-screen bg-[#f5f3fa] pb-[110px] ${
-      isManga ? 'manga-red-theme' : ''
-    }`}
+    className={`create-story-page min-h-screen bg-white pb-[110px] ${
+  isManga ? 'manga-red-theme' : ''
+}`}
+style={{
+  backgroundImage: 'linear-gradient(90deg, #F2EEFF 0%, #FFF8E8 100%)',
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: '100% 230px',
+}}
   >
     <style>{`
   .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
@@ -1080,8 +1085,23 @@ return (
     button:not(:disabled)[class*="shadow-[0_14px_30px_rgba(17,24,39,0.25)]"] {
     box-shadow: 0 14px 30px rgba(254, 82, 110, 0.28) !important;
   }
-`}</style>
 
+  .create-story-page [class*="rounded-[24px]"],
+  .create-story-page [class*="rounded-[22px]"],
+  .create-story-page [class*="rounded-[20px]"],
+  .create-story-page [class*="rounded-[18px]"],
+  .create-story-page [class*="rounded-[16px]"] {
+    border-radius: 12px !important;
+  }
+
+  .create-story-page [class*="ring-1"] {
+    --tw-ring-shadow: 0 0 #0000 !important;
+  }
+
+  .create-story-page [class*="border-[#"] {
+    border-color: transparent !important;
+  }
+`}</style>
     <Toast message={toast} onClose={() => setToast('')} />
 
       <CropImageModal
@@ -1122,9 +1142,9 @@ return (
         }}
       />
 
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+      <header className="sticky top-0 z-50 bg-transparent px-4 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95" aria-label="Go back">
+          <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center text-black active:scale-95" aria-label="Go back">
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
