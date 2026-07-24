@@ -115,6 +115,14 @@ const STORY_TAG_OPTIONS = STORY_TAG_GROUPS.flatMap(
   (group) => group.tags
 )
 
+function getAuthToken() {
+  return (
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token') ||
+    ''
+  )
+}
+
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
   const mimeMatch = header.match(/:(.*?);/)
