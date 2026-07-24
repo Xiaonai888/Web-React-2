@@ -866,7 +866,7 @@ return {
               />
             </>
           ) : (
-            <div className="mt-3 rounded-[22px] border border-dashed border-[#d8c9f3] bg-white px-5 py-10 text-center">
+            <div className="mt-3 rounded-[14px] border border-dashed border-[#d8c9f3] bg-white px-5 py-10 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f0eaff] text-[#7040d8]">
                 <i className="fa-solid fa-pen-nib text-[17px]" />
               </div>
