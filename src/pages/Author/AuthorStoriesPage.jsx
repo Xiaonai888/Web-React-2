@@ -167,7 +167,7 @@ function LoadingCard() {
 
 function EmptyState({ searching, onCreate }) {
   return (
-    <div className="col-span-full rounded-[24px] border border-dashed border-[#d9cff6] bg-white px-6 py-12 text-center">
+    <div className="col-span-full rounded-[10px] border border-dashed border-[#d9cff6] bg-white px-6 py-12 text-center">
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0eaff] text-[#744af3]">
         <i className={`fa-solid ${searching ? 'fa-magnifying-glass' : 'fa-feather-pointed'} text-[20px]`} />
       </span>
