@@ -150,6 +150,7 @@ function normalizeStory(story) {
     updated: formatDate(story.updated_at || story.created_at),
     views: formatCompactNumber(story.total_views),
     likes: formatCompactNumber(story.total_likes),
+    rawLikes: Number(story.total_likes || 0),
     comments: formatCompactNumber(story.total_comments),
     episodes: Number(story.total_episodes || 0),
     cover: story.cover_url || '',
@@ -549,12 +550,14 @@ export default function AuthorDashboardPage() {
     const published = stories.filter((story) => story.rawStatus === 'published').length
     const drafts = stories.filter((story) => story.rawStatus !== 'published').length
     const views = stories.reduce((sum, story) => sum + Number(String(story.views).replace(/[^\d.]/g, '') || 0), 0)
+const likes = stories.reduce((sum, story) => sum + story.rawLikes, 0)
 
-    return {
-      published: String(published).padStart(2, '0'),
-      drafts: String(drafts).padStart(2, '0'),
-      views: formatCompactNumber(views),
-    }
+return {
+  published: String(published).padStart(2, '0'),
+  drafts: String(drafts).padStart(2, '0'),
+  views: formatCompactNumber(views),
+  likes: formatCompactNumber(likes),
+}
   }, [stories])
 
   const latestStory = useMemo(() => {
@@ -730,19 +733,12 @@ export default function AuthorDashboardPage() {
             label="Views"
           />
 
-          <button
-            type="button"
-            onClick={() => handleCreateStory('novel')}
-            className="flex min-w-0 flex-col items-center justify-center px-1 text-center active:scale-95"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9b6af5] to-[#6d42db] text-white shadow-[0_6px_14px_rgba(109,66,219,0.35)]">
-              <i className="fa-solid fa-plus text-[12px]" />
-            </span>
-
-            <span className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.04em] text-[#6d42db]">
-              New Story
-            </span>
-          </button>
+          <StatItem
+  icon="fa-solid fa-heart"
+  iconClass="text-[#a368f4]"
+  value={stats.likes}
+  label="Likes"
+/>
         </div>
 
         {latestStory ? (
