@@ -32,6 +32,23 @@ const API_BASE_URL =
 
 const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 30000
+const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
+const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
+const STORY_TAG_OPTIONS = [
+  'CEO',
+  'Slow Burn',
+  'Enemies to Lovers',
+  'Time Travel',
+  'Revenge',
+  'Strong Female Lead',
+  'Hidden Identity',
+  'Royalty',
+  'Magic',
+  'Supernatural',
+  'Second Chance',
+  'Cold Male Lead',
+]
+const UPDATE_DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 function getAuthToken() {
   return (
@@ -747,6 +764,379 @@ function EpisodeDetailsSheet({
   )
 }
 
+function SettingsToggle({ checked, onClick, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+        checked ? 'bg-[#111827]' : 'bg-[#d0d5dd]'
+      }`}
+      aria-label={label}
+    >
+      <span
+        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
+          checked ? 'left-6' : 'left-1'
+        }`}
+      />
+    </button>
+  )
+}
+
+function PublishSettingsSheet({
+  open,
+  showStorySettings,
+  genreOptions,
+  storyLanguage,
+  onStoryLanguageChange,
+  mainGenre,
+  onMainGenreChange,
+  storyTags,
+  tagDraft,
+  onTagDraftChange,
+  onAddTag,
+  onRemoveTag,
+  updateDays,
+  onToggleUpdateDay,
+  storyStatus,
+  onStoryStatusChange,
+  storyAdult,
+  onStoryAdultChange,
+  episodeAdult,
+  onEpisodeAdultChange,
+  releaseOption,
+  onReleaseOptionChange,
+  scheduleDate,
+  onScheduleDateChange,
+  scheduleTime,
+  onScheduleTimeChange,
+  saving,
+  onClose,
+  onSave,
+}) {
+  if (!open) return null
+
+  const actionLabel =
+    releaseOption === 'schedule'
+      ? 'Schedule Episode'
+      : releaseOption === 'draft'
+        ? 'Save as Draft'
+        : 'Publish Episode'
+
+  const canSave =
+    Boolean(mainGenre && storyLanguage) &&
+    (releaseOption !== 'schedule' || Boolean(scheduleDate && scheduleTime)) &&
+    !saving
+
+  return (
+    <div
+      className="fixed inset-0 z-[175] flex items-end bg-black/35 sm:items-center sm:justify-center sm:px-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center gap-3 border-b border-[#eceef2] bg-white px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+            aria-label="Close publish settings"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-bold text-[#111827]">Publish Settings</h2>
+            <p className="mt-0.5 text-[11px] text-[#8d94a1]">
+              Complete the details before releasing this episode.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto bg-[#fafafa] px-4 py-4">
+          {showStorySettings ? (
+            <section className="rounded-[12px] bg-white p-4">
+              <h3 className="text-[14px] font-bold text-[#111827]">Complete Story Info</h3>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                    Story Language
+                  </span>
+                  <select
+                    value={storyLanguage}
+                    onChange={(event) => onStoryLanguageChange(event.target.value)}
+                    className="h-11 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[13px] text-[#111827] outline-none"
+                  >
+                    {STORY_LANGUAGES.map((language) => (
+                      <option key={language} value={language}>
+                        {language}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                    Main Genre
+                  </span>
+                  <select
+                    value={mainGenre}
+                    onChange={(event) => onMainGenreChange(event.target.value)}
+                    className="h-11 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[13px] text-[#111827] outline-none"
+                  >
+                    {genreOptions.map((genre) => (
+                      <option key={genre} value={genre}>
+                        {genre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[12px] font-semibold text-[#111827]">Tags</div>
+                    <div className="mt-0.5 text-[10.5px] text-[#8d94a1]">
+                      Choose up to 6 tags.
+                    </div>
+                  </div>
+                  <div className="text-[10.5px] text-[#8d94a1]">{storyTags.length}/6</div>
+                </div>
+
+                {storyTags.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {storyTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => onRemoveTag(tag)}
+                        className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] text-white"
+                      >
+                        {tag} ×
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 flex items-center gap-2 rounded-[10px] bg-[#f7f7fa] p-1.5">
+                  <input
+                    value={tagDraft}
+                    onChange={(event) => onTagDraftChange(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        onAddTag()
+                      }
+                    }}
+                    placeholder="Add a custom tag"
+                    className="h-9 min-w-0 flex-1 bg-transparent px-2 text-[12px] text-[#111827] outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={onAddTag}
+                    disabled={!tagDraft.trim() || storyTags.length >= 6}
+                    className="h-9 rounded-full bg-[#111827] px-4 text-[11px] text-white disabled:bg-[#d0d5dd]"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {STORY_TAG_OPTIONS.filter((tag) => !storyTags.includes(tag)).map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => onAddTag(tag)}
+                      disabled={storyTags.length >= 6}
+                      className="rounded-full bg-[#f2f4f7] px-3 py-1.5 text-[11px] text-[#555b66] disabled:opacity-40"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="text-[12px] font-semibold text-[#111827]">Update Days</div>
+                <div className="mt-3 grid grid-cols-7 gap-1.5">
+                  {UPDATE_DAY_OPTIONS.map((day) => {
+                    const active = updateDays.includes(day)
+
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => onToggleUpdateDay(day)}
+                        className={`h-9 rounded-[9px] text-[10.5px] ${
+                          active
+                            ? 'bg-[#111827] text-white'
+                            : 'bg-[#f2f4f7] text-[#555b66]'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="text-[12px] font-semibold text-[#111827]">Story Status</div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {['New', 'Ongoing', 'Completed'].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => onStoryStatusChange(status)}
+                      className={`h-10 rounded-full text-[11px] ${
+                        storyStatus === status
+                          ? 'bg-[#111827] text-white'
+                          : 'bg-[#f2f4f7] text-[#555b66]'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
+                <div>
+                  <div className="text-[12px] font-semibold text-[#111827]">18+ Story</div>
+                  <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
+                    Show an adult-content warning for the whole story.
+                  </div>
+                </div>
+                <SettingsToggle
+                  checked={storyAdult}
+                  onClick={() => onStoryAdultChange(!storyAdult)}
+                  label="Toggle 18+ story"
+                />
+              </div>
+            </section>
+          ) : null}
+
+          <section className={`${showStorySettings ? 'mt-4' : ''} rounded-[12px] bg-white p-4`}>
+            <h3 className="text-[14px] font-bold text-[#111827]">Episode Release</h3>
+
+            <div className="mt-4 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
+              <div>
+                <div className="text-[12px] font-semibold text-[#111827]">18+ Episode</div>
+                <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
+                  Show a warning before readers open this episode.
+                </div>
+              </div>
+              <SettingsToggle
+                checked={episodeAdult}
+                onClick={() => onEpisodeAdultChange(!episodeAdult)}
+                label="Toggle 18+ episode"
+              />
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {[
+                {
+                  value: 'publish',
+                  title: 'Publish Now',
+                  subtitle: 'Make this episode public immediately.',
+                },
+                {
+                  value: 'schedule',
+                  title: 'Schedule',
+                  subtitle: 'Choose a date and time to publish automatically.',
+                },
+                {
+                  value: 'draft',
+                  title: 'Save as Draft',
+                  subtitle: 'Keep this episode private and finish it later.',
+                },
+              ].map((option) => {
+                const active = releaseOption === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => onReleaseOptionChange(option.value)}
+                    className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left ${
+                      active
+                        ? 'bg-[#111827] text-white'
+                        : 'bg-[#f7f7fa] text-[#111827]'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12px] font-semibold">{option.title}</div>
+                      <div
+                        className={`mt-0.5 text-[10.5px] leading-4 ${
+                          active ? 'text-white/70' : 'text-[#8d94a1]'
+                        }`}
+                      >
+                        {option.subtitle}
+                      </div>
+                    </div>
+                    <div
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        active
+                          ? 'border-white bg-white text-[#111827]'
+                          : 'border-[#d0d5dd] bg-white'
+                      }`}
+                    >
+                      {active ? <i className="fa-solid fa-check text-[9px]" /> : null}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {releaseOption === 'schedule' ? (
+              <div className="mt-4 grid gap-3 rounded-[10px] bg-[#f7f7fa] p-3 sm:grid-cols-2">
+                <label>
+                  <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
+                    Date
+                  </span>
+                  <input
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(event) => onScheduleDateChange(event.target.value)}
+                    className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
+                    Time
+                  </span>
+                  <input
+                    type="time"
+                    value={scheduleTime}
+                    onChange={(event) => onScheduleTimeChange(event.target.value)}
+                    className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
+                  />
+                </label>
+              </div>
+            ) : null}
+          </section>
+        </div>
+
+        <div className="shrink-0 bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!canSave}
+            className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+          >
+            {saving ? 'Saving...' : actionLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetry, disabled }) {
   const busy = ['queued', 'processing', 'uploading'].includes(page.status)
   const statusLabel =
@@ -895,6 +1285,22 @@ export default function EpisodeEditorPage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
   const [currentEpisodeId, setCurrentEpisodeId] = useState(editEpisodeId || '')
+  const [currentEpisodeNumber, setCurrentEpisodeNumber] = useState(isFirstEpisode ? 1 : null)
+  const [storyRecord, setStoryRecord] = useState(null)
+  const [genreOptions, setGenreOptions] = useState(FALLBACK_GENRES)
+  const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
+  const [storyLanguage, setStoryLanguage] = useState('Khmer')
+  const [mainGenre, setMainGenre] = useState('Romance')
+  const [storyTags, setStoryTags] = useState([])
+  const [tagDraft, setTagDraft] = useState('')
+  const [storyUpdateDays, setStoryUpdateDays] = useState([])
+  const [storyStatus, setStoryStatus] = useState('New')
+  const [storyAdult, setStoryAdult] = useState(false)
+  const [episodeAdult, setEpisodeAdult] = useState(false)
+  const [releaseOption, setReleaseOption] = useState('publish')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
+  const [settingsSaving, setSettingsSaving] = useState(false)
   const [episodeDetailsOpen, setEpisodeDetailsOpen] = useState(false)
   const [draftEpisodeTitle, setDraftEpisodeTitle] = useState('')
   const [draftEpisodeCover, setDraftEpisodeCover] = useState('')
@@ -1012,6 +1418,31 @@ export default function EpisodeEditorPage() {
   useEffect(() => {
     let cancelled = false
 
+    async function loadGenres() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/genres`)
+        const data = await response.json().catch(() => ({}))
+        const names = (data.genres || []).map((item) => item.name).filter(Boolean)
+
+        if (!cancelled && response.ok && names.length) {
+          setGenreOptions(names)
+          setMainGenre((current) => (names.includes(current) ? current : names[0]))
+        }
+      } catch {
+        if (!cancelled) setGenreOptions(FALLBACK_GENRES)
+      }
+    }
+
+    loadGenres()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
     async function loadPageData() {
       const token = getAuthToken()
 
@@ -1033,8 +1464,21 @@ export default function EpisodeEditorPage() {
           throw new Error(storyData.message || 'Failed to load story')
         }
 
-        const resolvedType = storyData.story?.story_type === 'manga' ? 'manga' : 'novel'
-        if (!cancelled) setStoryType(resolvedType)
+        const loadedStory = storyData.story || {}
+        const resolvedType = loadedStory.story_type === 'manga' ? 'manga' : 'novel'
+
+        if (!cancelled) {
+          setStoryRecord(loadedStory)
+          setStoryType(resolvedType)
+          setStoryLanguage(loadedStory.story_language || 'Khmer')
+          setMainGenre(loadedStory.main_genre || 'Romance')
+          setStoryTags(Array.isArray(loadedStory.tags) ? loadedStory.tags.slice(0, 6) : [])
+          setStoryUpdateDays(
+            Array.isArray(loadedStory.update_days) ? loadedStory.update_days : []
+          )
+          setStoryStatus(loadedStory.story_status || 'New')
+          setStoryAdult(Boolean(loadedStory.is_adult))
+        }
 
         if (!isEditMode) return
 
@@ -1059,6 +1503,8 @@ export default function EpisodeEditorPage() {
         setOriginalCover(episode.cover_url || '')
         setContent(normalizeEpisodeHtml(episode.content || ''))
         setOldEpisodeStatus(episode.status || 'draft')
+        setEpisodeAdult(Boolean(episode.is_adult))
+        setCurrentEpisodeNumber(Number(episode.episode_number || 1))
         setCoverChanged(false)
         setMangaPages(
           (episode.pages || []).map((page, index) => ({
@@ -1520,6 +1966,7 @@ export default function EpisodeEditorPage() {
     }
 
     setCurrentEpisodeId(episodeId)
+    setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
 
@@ -1646,16 +2093,178 @@ useEffect(() => {
     await handleSaveDraft()
   }
 
+  const addStoryTag = (value = tagDraft) => {
+    const tag = String(value || '').trim()
+    if (!tag || storyTags.length >= 6) return
+    if (storyTags.some((item) => item.toLowerCase() === tag.toLowerCase())) return
+
+    setStoryTags((current) => [...current, tag])
+    setTagDraft('')
+  }
+
+  const removeStoryTag = (tag) => {
+    setStoryTags((current) => current.filter((item) => item !== tag))
+  }
+
+  const toggleStoryUpdateDay = (day) => {
+    setStoryUpdateDays((current) =>
+      current.includes(day)
+        ? current.filter((item) => item !== day)
+        : [...current, day]
+    )
+  }
+
+  const saveStorySettings = async (token) => {
+    if (!storyRecord) throw new Error('Story information is still loading.')
+
+    const slides = (storyRecord.slides || []).map((slide, index) => ({
+      image_url: slide.image_url,
+      sort_order: Number(slide.sort_order ?? index),
+      is_active: slide.is_active !== false,
+    }))
+
+    const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: storyRecord.title,
+        story_type: storyRecord.story_type || storyType,
+        story_language: storyLanguage,
+        main_genre: mainGenre,
+        story_status: storyStatus,
+        tags: storyTags,
+        update_days: storyUpdateDays,
+        description: storyRecord.description || null,
+        is_adult: storyAdult,
+        cover_url: storyRecord.cover_url || null,
+        landscape_thumbnail_url: storyRecord.landscape_thumbnail_url || null,
+        slides,
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to update story information.')
+    }
+
+    setStoryRecord(data.story || storyRecord)
+  }
+
+  const handleSavePublishSettings = async () => {
+    if (settingsSaving) return
+
+    if (!currentEpisodeId) {
+      setMessage('Missing episode id. Close this popup and click Next again.')
+      return
+    }
+
+    if (releaseOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
+      setMessage('Please choose schedule date and time.')
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setSettingsSaving(true)
+      setMessage('')
+
+      if (isFirstEpisode || currentEpisodeNumber === 1) {
+        await saveStorySettings(token)
+      }
+
+      const status =
+        releaseOption === 'schedule'
+          ? 'scheduled'
+          : releaseOption === 'draft'
+            ? 'draft'
+            : 'published'
+
+      const scheduledAt =
+        releaseOption === 'schedule'
+          ? new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
+          : null
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/episodes/${currentEpisodeId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status,
+            scheduled_at: scheduledAt,
+            is_adult: episodeAdult,
+          }),
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        const blockedWords =
+          data.blocked_words_found || data.blockedWordsFound || []
+
+        if (data.code === 'BLOCKED_WORDS_FOUND' || blockedWords.length) {
+          navigate(`/author/story/${storyId}/episode/publish-warning`, {
+            replace: true,
+            state: {
+              episodeId: currentEpisodeId,
+              blockedWords,
+            },
+          })
+          return
+        }
+
+        throw new Error(data.message || 'Failed to save publish settings.')
+      }
+
+      setPublishSettingsOpen(false)
+      setOldEpisodeStatus(status)
+      setHasUnsavedChanges(false)
+      setSaveStatus('Saved')
+      showToast(
+        releaseOption === 'schedule'
+          ? 'Episode scheduled.'
+          : releaseOption === 'draft'
+            ? 'Draft saved.'
+            : 'Episode published.'
+      )
+
+      window.setTimeout(() => {
+        navigate(`/author/story/${storyId}/manage`)
+      }, 500)
+    } catch (error) {
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend. Make sure backend is deployed or running.'
+          : error.message || 'Failed to save publish settings.'
+      )
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
   const handleNext = async () => {
     try {
       setLoading(true)
       const saved = await handleSaveEpisode({ goToPublish: true })
       if (!saved) return
 
-      const firstParam = isFirstEpisode && saved.episodeNumber === 1 ? '1' : '0'
-      navigate(
-        `/author/story/${storyId}/episode/publish?episodeId=${saved.episodeId}&first=${firstParam}&type=${storyType}`
-      )
+      setCurrentEpisodeId(saved.episodeId)
+      setCurrentEpisodeNumber(Number(saved.episodeNumber || currentEpisodeNumber || 1))
+      setPublishSettingsOpen(true)
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
@@ -1716,6 +2325,38 @@ useEffect(() => {
 `}</style>
 
     <Toast message={toast} onClose={() => setToast('')} />
+
+      <PublishSettingsSheet
+        open={publishSettingsOpen}
+        showStorySettings={isFirstEpisode || currentEpisodeNumber === 1}
+        genreOptions={genreOptions}
+        storyLanguage={storyLanguage}
+        onStoryLanguageChange={setStoryLanguage}
+        mainGenre={mainGenre}
+        onMainGenreChange={setMainGenre}
+        storyTags={storyTags}
+        tagDraft={tagDraft}
+        onTagDraftChange={setTagDraft}
+        onAddTag={addStoryTag}
+        onRemoveTag={removeStoryTag}
+        updateDays={storyUpdateDays}
+        onToggleUpdateDay={toggleStoryUpdateDay}
+        storyStatus={storyStatus}
+        onStoryStatusChange={setStoryStatus}
+        storyAdult={storyAdult}
+        onStoryAdultChange={setStoryAdult}
+        episodeAdult={episodeAdult}
+        onEpisodeAdultChange={setEpisodeAdult}
+        releaseOption={releaseOption}
+        onReleaseOptionChange={setReleaseOption}
+        scheduleDate={scheduleDate}
+        onScheduleDateChange={setScheduleDate}
+        scheduleTime={scheduleTime}
+        onScheduleTimeChange={setScheduleTime}
+        saving={settingsSaving}
+        onClose={() => setPublishSettingsOpen(false)}
+        onSave={handleSavePublishSettings}
+      />
 
       <EpisodeDetailsSheet
         open={episodeDetailsOpen}
