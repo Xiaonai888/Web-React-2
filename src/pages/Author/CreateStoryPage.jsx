@@ -297,6 +297,92 @@ function CropImageModal({
 }
 
 
+
+function StoryTextSheet({
+  open,
+  title,
+  helper,
+  value,
+  onChange,
+  onClose,
+  onSave,
+  multiline = false,
+  maxLength = 200,
+}) {
+  if (!open) return null
+
+  const canSave = Boolean(value.trim()) && value.length <= maxLength
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-end bg-black/35" onClick={onClose}>
+      <div
+        className="w-full rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#d9dce3]" />
+
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
+              aria-label="Close editor"
+            >
+              <i className="fa-solid fa-xmark text-[15px]" />
+            </button>
+
+            <h2 className="min-w-0 flex-1 truncate text-center text-[17px] font-bold text-[#111827]">
+              {title}
+            </h2>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!canSave}
+              className="min-w-[52px] text-right text-[14px] font-bold text-[#0b5cff] disabled:text-[#c5c9d2]"
+            >
+              Save
+            </button>
+          </div>
+
+          <div className="mt-3 rounded-[12px] bg-[#f7f7fa] p-4">
+            {multiline ? (
+              <>
+                <textarea
+                  value={value}
+                  onChange={(event) => onChange(event.target.value)}
+                  maxLength={maxLength}
+                  autoFocus
+                  placeholder="Tell readers what makes your story worth opening."
+                  className="min-h-[220px] max-h-[46vh] w-full resize-none bg-transparent text-[15px] leading-7 text-[#111827] outline-none"
+                />
+
+                <div className="mt-3 text-right text-[11px] font-medium text-[#8d94a1]">
+                  {value.length}/{maxLength}
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  value={value}
+                  onChange={(event) => onChange(event.target.value)}
+                  maxLength={maxLength}
+                  autoFocus
+                  placeholder="Add a title readers will remember"
+                  className="h-12 w-full bg-transparent text-[15px] text-[#111827] outline-none"
+                />
+
+                <div className="mt-3 text-[11.5px] leading-5 text-[#8d94a1]">{helper}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
   const [selected, setSelected] = useState(value || 'Romance')
   const [search, setSearch] = useState('')
@@ -610,6 +696,11 @@ export default function CreateStoryPage() {
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(false)
+  const [mediaOpen, setMediaOpen] = useState(false)
+  const [titleOpen, setTitleOpen] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [draftTitle, setDraftTitle] = useState('')
+  const [draftDescription, setDraftDescription] = useState('')
 
   const [cropOpen, setCropOpen] = useState(false)
   const [cropMode, setCropMode] = useState('cover')
@@ -749,7 +840,16 @@ export default function CreateStoryPage() {
   }, [editStoryId, navigate])
 
   const descriptionCount = description.length
-  const canSave = title.trim() && genre && originalAccepted && agreementAccepted && descriptionCount <= 5000 && !loading && !pageLoading
+  const basicInfoComplete = Boolean(coverPreview && title.trim() && description.trim())
+  const canSave = isEditMode
+    ? title.trim() &&
+      genre &&
+      originalAccepted &&
+      agreementAccepted &&
+      descriptionCount <= 5000 &&
+      !loading &&
+      !pageLoading
+    : basicInfoComplete && descriptionCount <= 5000 && !loading && !pageLoading
 
   const showToast = (text) => {
     setToast(text)
@@ -963,7 +1063,17 @@ if (cropMode === 'slide') {
       return
     }
 
-    if (!originalAccepted || !agreementAccepted) {
+    if (!isEditMode && !coverPreview) {
+      setMessage('Please add a portrait cover.')
+      return
+    }
+
+    if (!isEditMode && !description.trim()) {
+      setMessage('Please add your story summary.')
+      return
+    }
+
+    if (isEditMode && (!originalAccepted || !agreementAccepted)) {
       setMessage('Please confirm the rights and author agreement.')
       return
     }
@@ -1144,6 +1254,269 @@ return (
         }}
       />
 
+
+      <StoryTextSheet
+        open={titleOpen}
+        title={isManga ? 'Manga Title' : 'Story Title'}
+        helper="Keep it clear, memorable, and easy to recognize."
+        value={draftTitle}
+        onChange={setDraftTitle}
+        onClose={() => setTitleOpen(false)}
+        onSave={() => {
+          setTitle(draftTitle.trim())
+          setTitleOpen(false)
+        }}
+      />
+
+      <StoryTextSheet
+        open={summaryOpen}
+        title="Story Summary"
+        value={draftDescription}
+        onChange={setDraftDescription}
+        onClose={() => setSummaryOpen(false)}
+        onSave={() => {
+          setDescription(draftDescription.trim())
+          setSummaryOpen(false)
+        }}
+        multiline
+        maxLength={5000}
+      />
+
+      {mediaOpen && !isEditMode ? (
+        <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#fafafa]">
+          <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
+            <div className="mx-auto flex max-w-5xl items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setMediaOpen(false)}
+                className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
+                aria-label="Close cover and media"
+              >
+                <i className="fa-solid fa-chevron-left text-[15px]" />
+              </button>
+
+              <h2 className="text-[17px] font-bold text-[#111827]">Cover & Media</h2>
+
+              <button
+                type="button"
+                onClick={() => setMediaOpen(false)}
+                className="min-w-[52px] text-right text-[14px] font-bold text-[#0b5cff]"
+              >
+                Save
+              </button>
+            </div>
+          </header>
+
+          <main className="mx-auto max-w-5xl px-4 py-5">
+            <section className="rounded-[12px] bg-white p-4 shadow-sm">
+              <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
+                  <div>
+                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
+                      Portrait Cover
+                    </div>
+
+                    <ImageDropZone
+                      onFiles={(files) => handleCoverChange(files[0] || null)}
+                      className="rounded-[18px]"
+                      label="Drop cover image here"
+                    >
+                      {coverPreview ? (
+                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                          <button
+                            type="button"
+                            onClick={handleEditCoverCrop}
+                            className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
+                          >
+                            <img
+                              src={coverPreview}
+                              alt={isManga ? 'Portrait Manga Cover' : 'Portrait Book Cover'}
+                              className="h-full w-full object-cover"
+                              draggable="false"
+                              onDragStart={(event) => event.preventDefault()}
+                            />
+                          </button>
+
+                          <div className="border-t border-[#eceaf2] bg-white p-2">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
+                              Replace
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  handleCoverChange(event.target.files?.[0] || null)
+                                  event.target.value = ''
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                          <div className="px-3">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                              <i className="fa-solid fa-upload text-[14px]" />
+                            </div>
+                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Tap Cover</div>
+                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
+                          </div>
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => {
+                              handleCoverChange(event.target.files?.[0] || null)
+                              event.target.value = ''
+                            }}
+                          />
+                        </label>
+                      )}
+                    </ImageDropZone>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
+                      Landscape Thumbnail
+                    </div>
+
+                    <ImageDropZone
+                      onFiles={(files) => handleLandscapeChange(files[0] || null)}
+                      className="rounded-[18px]"
+                      label="Drop thumbnail image here"
+                    >
+                      {landscapePreview ? (
+                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
+                          <button
+                            type="button"
+                            onClick={handleEditLandscapeCrop}
+                            className="block aspect-video w-full overflow-hidden bg-[#fafafe]"
+                          >
+                            <img
+                              src={landscapePreview}
+                              alt="Landscape Thumbnail"
+                              className="h-full w-full object-cover"
+                              draggable="false"
+                              onDragStart={(event) => event.preventDefault()}
+                            />
+                          </button>
+
+                          <div className="border-t border-[#eceaf2] bg-white p-2">
+                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
+                              Replace
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  handleLandscapeChange(event.target.files?.[0] || null)
+                                  event.target.value = ''
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                          <div className="px-3">
+                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                              <i className="fa-solid fa-image text-[14px]" />
+                            </div>
+                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Add Thumbnail</div>
+                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
+                          </div>
+
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => {
+                              handleLandscapeChange(event.target.files?.[0] || null)
+                              event.target.value = ''
+                            }}
+                          />
+                        </label>
+                      )}
+                    </ImageDropZone>
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-bold text-[#111827]">{isManga ? 'Manga Slides' : 'Story Slides'} ({slides.length}/5)</div>
+                      <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
+                    </div>
+
+                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
+                      slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
+                    }`}>
+                      + Add
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={slides.length >= 5}
+                        onChange={(event) => {
+                          handleAddSlide(event.target.files?.[0] || null)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <ImageDropZone
+                    onFiles={(files) => handleAddSlide(files[0] || null)}
+                    disabled={slides.length >= 5}
+                    className="rounded-[20px]"
+                    label="Drop slide image here"
+                  >
+                    {slides.length ? (
+                      <div className="space-y-2">
+                        {slides.map((slide, index) => (
+                          <SlideRow
+                            key={slide.id}
+                            slide={slide}
+                            index={index}
+                            onEdit={handleEditSlideCrop}
+                            onDelete={handleDeleteSlide}
+                            onToggle={handleToggleSlide}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
+                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+                          <i className="fa-solid fa-images text-[15px]" />
+                        </div>
+                        <div className="mt-3 text-[13px] font-bold text-[#111827]">Drop or Add {isManga ? 'Manga' : 'Story'} Slide</div>
+                        <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            handleAddSlide(event.target.files?.[0] || null)
+                            event.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </ImageDropZone>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
+                Portrait cover uses 2:3 crop. Landscape thumbnail and {isManga ? 'manga' : 'story'} slides use 16:9 crop. Tap an image again to adjust crop.
+              </div>
+            </section>
+          </main>
+        </div>
+      ) : null}
+
       <header className="sticky top-0 z-50 bg-transparent px-4 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center text-black active:scale-95" aria-label="Go back">
@@ -1208,7 +1581,8 @@ return (
 
         {!pageLoading ? (
           <>
-            <div className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5 md:contents">
+            {isEditMode ? (
+              <div className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5 md:contents">
             <section className="bg-white p-4 md:mt-4 md:rounded-[24px] md:shadow-sm md:ring-1 md:ring-black/5">
               <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
 
@@ -1572,7 +1946,87 @@ return (
                 </span>
               </label>
             </section>
-            </div>
+              </div>
+            ) : (
+              <section className="mt-6 overflow-hidden rounded-[12px] bg-white shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setMediaOpen(true)}
+                  className="flex min-h-[148px] w-full items-center gap-4 px-5 py-5 text-left active:bg-[#fafafa]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15px] font-bold text-[#111827]">
+                      Cover <span className="text-[#e5484d]">*</span>
+                    </div>
+                    <div className="mt-1 text-[11.5px] leading-5 text-[#8d94a1]">
+                      Add the portrait cover readers will see first.
+                    </div>
+                  </div>
+
+                  {coverPreview ? (
+                    <img
+                      src={coverPreview}
+                      alt={isManga ? 'Manga Cover' : 'Book Cover'}
+                      className="h-[108px] w-[72px] shrink-0 rounded-[10px] object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-[108px] w-[72px] shrink-0 flex-col items-center justify-center rounded-[10px] bg-[#f7f7fa] text-[#a7acb6]">
+                      <i className="fa-solid fa-plus text-[24px]" />
+                      <span className="mt-2 text-[10px] font-medium">Add cover</span>
+                    </div>
+                  )}
+
+                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c4c8d1]" />
+                </button>
+
+                <div className="mx-5 h-px bg-[#f0f1f3]" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraftTitle(title)
+                    setTitleOpen(true)
+                  }}
+                  className="flex min-h-[72px] w-full items-center gap-4 px-5 py-4 text-left active:bg-[#fafafa]"
+                >
+                  <div className="w-[112px] shrink-0 text-[14px] font-bold text-[#111827]">
+                    Story Title <span className="text-[#e5484d]">*</span>
+                  </div>
+
+                  <div className={`min-w-0 flex-1 truncate text-right text-[13px] ${
+                    title ? 'text-[#555b66]' : 'text-[#a5aab4]'
+                  }`}>
+                    {title || 'Add your story title'}
+                  </div>
+
+                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c4c8d1]" />
+                </button>
+
+                <div className="mx-5 h-px bg-[#f0f1f3]" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraftDescription(description)
+                    setSummaryOpen(true)
+                  }}
+                  className="flex min-h-[78px] w-full items-center gap-4 px-5 py-4 text-left active:bg-[#fafafa]"
+                >
+                  <div className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[14px] font-bold text-[#111827]">
+                    <span>Description</span>
+                    <span className="text-[#e5484d]">*</span>
+                  </div>
+
+                  <div className={`min-w-0 flex-1 truncate text-right text-[13px] ${
+                    description ? 'text-[#555b66]' : 'text-[#a5aab4]'
+                  }`}>
+                    {description || 'Tell readers what makes your story worth opening.'}
+                  </div>
+
+                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c4c8d1]" />
+                </button>
+              </section>
+            )}
 
             <section className="mt-5 pb-8">
               <button
@@ -1587,7 +2041,7 @@ return (
                     : `Uploading & Creating ${isManga ? 'Manga' : 'Story'}...`
                   : isEditMode
                     ? 'Save Changes'
-                    : `Create ${isManga ? 'Manga' : 'Story'}`}
+                    : 'Create Story'}
               </button>
             </section>
           </>
