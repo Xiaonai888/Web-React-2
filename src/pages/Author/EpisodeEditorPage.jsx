@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
-import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
+import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import {
   MANGA_MAX_FILES_PER_PICK,
@@ -65,6 +65,244 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
 
   const data = await response.json().catch(() => ({}))
 
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload image')
+  }
+
+  return data.image_url || data.imageUrl
+}
+
+function escapeEpisodeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function isSafeEpisodeImageUrl(value) {
+  const source = String(value || '').trim()
+  if (!source) return false
+
+  try {
+    const url = new URL(source, window.location.origin)
+    return ['http:', 'https:'].includes(url.protocol)
+  } catch {
+    return false
+  }
+}
+
+function sanitizeEpisodeHtml(value) {
+  const source = String(value || '')
+  if (!source.trim()) return ''
+  if (typeof DOMParser === 'undefined') return escapeEpisodeHtml(source)
+
+  const parsed = new DOMParser().parseFromString(`<div>${source}</div>`, 'text/html')
+  const inputRoot = parsed.body.firstElementChild
+  const outputDocument = document.implementation.createHTMLDocument('')
+  const outputRoot = outputDocument.createElement('div')
+
+  const appendSafeNode = (inputNode, outputParent) => {
+    if (inputNode.nodeType === Node.TEXT_NODE) {
+      outputParent.appendChild(outputDocument.createTextNode(inputNode.textContent || ''))
+      return
+    }
+
+    if (inputNode.nodeType !== Node.ELEMENT_NODE) return
+
+    const tagName = inputNode.tagName.toLowerCase()
+
+    if (tagName === 'br') {
+      outputParent.appendChild(outputDocument.createElement('br'))
+      return
+    }
+
+    if (tagName === 'img') {
+      const sourceUrl = inputNode.getAttribute('src')
+      if (!isSafeEpisodeImageUrl(sourceUrl)) return
+      const image = outputDocument.createElement('img')
+      image.setAttribute('src', new URL(sourceUrl, window.location.origin).href)
+      image.setAttribute('alt', String(inputNode.getAttribute('alt') || 'Episode image').slice(0, 200))
+      outputParent.appendChild(image)
+      return
+    }
+
+    const safeTag =
+      tagName === 'b' || tagName === 'strong'
+        ? 'strong'
+        : tagName === 'i' || tagName === 'em'
+          ? 'em'
+          : tagName === 'p' || tagName === 'div'
+            ? 'p'
+            : null
+
+    if (!safeTag) {
+      Array.from(inputNode.childNodes).forEach((child) => appendSafeNode(child, outputParent))
+      return
+    }
+
+    const outputElement = outputDocument.createElement(safeTag)
+
+    if (safeTag === 'p') {
+      const alignment = String(inputNode.style?.textAlign || inputNode.getAttribute('align') || '').toLowerCase()
+      if (['left', 'center', 'right'].includes(alignment)) {
+        outputElement.style.textAlign = alignment
+      }
+    }
+
+    Array.from(inputNode.childNodes).forEach((child) => appendSafeNode(child, outputElement))
+    outputParent.appendChild(outputElement)
+  }
+
+  Array.from(inputRoot?.childNodes || []).forEach((child) => appendSafeNode(child, outputRoot))
+  return outputRoot.innerHTML
+}
+
+function plainTextToEpisodeHtml(value) {
+  const source = String(value || '').replace(/\r\n/g, '\n').trim()
+  if (!source) return ''
+
+  return source
+    .split(/\n\s*\n+/)
+    .map((paragraph) => `<p>${escapeEpisodeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+    .join('')
+}
+
+function normalizeEpisodeHtml(value) {
+  const source = String(value || '')
+  if (!source.trim()) return ''
+  return /<(?:p|div|br|strong|b|em|i|img)\b/i.test(source)
+    ? sanitizeEpisodeHtml(source)
+    : plainTextToEpisodeHtml(source)
+}
+
+function episodeHtmlToPlainText(value) {
+  const source = String(value || '')
+  if (!source.trim()) return ''
+  if (typeof DOMParser === 'undefined') return source.replace(/<[^>]+>/g, ' ')
+
+  const parsed = new DOMParser().parseFromString(`<div>${source}</div>`, 'text/html')
+  const root = parsed.body.firstElementChild
+  if (!root) return ''
+
+  const parts = []
+  root.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || ''
+      if (text.trim()) parts.push(text)
+      return
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE || node.tagName === 'IMG') return
+    const text = node.textContent || ''
+    if (text.trim()) parts.push(text)
+  })
+
+  return parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
+function hasEpisodeContent(value) {
+  const source = String(value || '')
+  return Boolean(episodeHtmlToPlainText(source).trim() || /<img\b[^>]*src=/i.test(source))
+}
+
+function cleanEpisodeHtmlSpacing(value) {
+  const safeHtml = sanitizeEpisodeHtml(value)
+  if (!safeHtml) return ''
+
+  const parsed = new DOMParser().parseFromString(`<div>${safeHtml}</div>`, 'text/html')
+  const root = parsed.body.firstElementChild
+  const blocks = []
+
+  Array.from(root?.childNodes || []).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = String(node.textContent || '').trim()
+      if (text) blocks.push({ html: escapeEpisodeHtml(text), text, alignment: 'left' })
+      return
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+
+    if (node.tagName === 'IMG' || node.querySelector?.('img')) {
+      blocks.push({ html: node.outerHTML, text: '', image: true, alignment: 'left' })
+      return
+    }
+
+    const text = String(node.textContent || '').replace(/\s+/g, ' ').trim()
+    const alignment = ['left', 'center', 'right'].includes(String(node.style?.textAlign || '').toLowerCase())
+      ? String(node.style.textAlign).toLowerCase()
+      : 'left'
+
+    if (!text) {
+      blocks.push({ empty: true })
+      return
+    }
+
+    blocks.push({ html: node.innerHTML.trim(), text, alignment })
+  })
+
+  const output = []
+  let buffer = null
+
+  const flush = () => {
+    if (!buffer) return
+    const alignmentStyle = buffer.alignment === 'left' ? '' : ` style="text-align: ${buffer.alignment}"`
+    output.push(`<p${alignmentStyle}>${buffer.html}</p>`)
+    buffer = null
+  }
+
+  blocks.forEach((block) => {
+    if (block.empty) {
+      flush()
+      return
+    }
+
+    if (block.image) {
+      flush()
+      output.push(block.html)
+      return
+    }
+
+    if (!buffer) {
+      buffer = { ...block }
+      return
+    }
+
+    if (
+      block.alignment !== buffer.alignment ||
+      isDialogueOrSpecialLine(block.text) ||
+      endsWithSentencePunctuation(buffer.text)
+    ) {
+      flush()
+      buffer = { ...block }
+      return
+    }
+
+    buffer.html = `${buffer.html} ${block.html}`
+    buffer.text = `${buffer.text} ${block.text}`
+  })
+
+  flush()
+  return sanitizeEpisodeHtml(output.join(''))
+}
+
+async function uploadEpisodeInlineImage({ token, file, storyId }) {
+  if (!file) throw new Error('Choose an image first.')
+  if (!file.type?.startsWith('image/')) throw new Error('Please choose an image file.')
+  if (file.size > 5 * 1024 * 1024) throw new Error('Image must be 5 MB or smaller.')
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('folder', 'episode_content')
+
+  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
   if (!response.ok || data.ok === false) {
     throw new Error(data.message || 'Failed to upload image')
   }
@@ -145,15 +383,22 @@ function Step({ number, title, active }) {
   )
 }
 
-function ToolButton({ icon, label, onClick }) {
+function ToolButton({ icon, label, onClick, active = false, disabled = false }) {
   return (
     <button
       type="button"
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+      disabled={disabled}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ring-1 active:scale-95 disabled:opacity-45 ${
+        active
+          ? 'bg-[#111827] text-white ring-[#111827]'
+          : 'bg-white text-[#111827] ring-[#eceaf2]'
+      }`}
       aria-label={label}
+      title={label}
     >
-      <i className={`${icon} text-[17px]`} />
+      <i className={`${icon} text-[14px]`} />
     </button>
   )
 }
@@ -616,13 +861,19 @@ export default function EpisodeEditorPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [content, setContent] = useState('')
   const [mangaPages, setMangaPages] = useState([])
-  const textareaRef = useRef(null)
+  const editorRef = useRef(null)
+  const imageInputRef = useRef(null)
+  const savedSelectionRef = useRef(null)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
-const [editorFocused, setEditorFocused] = useState(false)
+  const [editorFocused, setEditorFocused] = useState(false)
+  const [alignmentMode, setAlignmentMode] = useState('left')
+  const [boldActive, setBoldActive] = useState(false)
+  const [italicActive, setItalicActive] = useState(false)
+  const [inlineImageUploading, setInlineImageUploading] = useState(false)
   const [toast, setToast] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -634,7 +885,8 @@ const [editorFocused, setEditorFocused] = useState(false)
   const [draftCoverChanged, setDraftCoverChanged] = useState(false)
 
   const isManga = storyType === 'manga'
-  const characterCount = content.length
+  const plainContent = useMemo(() => episodeHtmlToPlainText(content), [content])
+  const characterCount = plainContent.length
   const completedMangaPages = mangaPages.filter((page) => page.status === 'done')
   const mangaErrorCount = mangaPages.filter((page) => page.status === 'error').length
   const mangaUploadPending = mangaPages.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
@@ -790,7 +1042,7 @@ const [editorFocused, setEditorFocused] = useState(false)
         setEpisodeTitle(episode.title || '')
         setEpisodeCover(episode.cover_url || '')
         setOriginalCover(episode.cover_url || '')
-        setContent(episode.content || '')
+        setContent(normalizeEpisodeHtml(episode.content || ''))
         setOldEpisodeStatus(episode.status || 'draft')
         setCoverChanged(false)
         setMangaPages(
@@ -824,28 +1076,147 @@ const [editorFocused, setEditorFocused] = useState(false)
     }
   }, [editEpisodeId, isEditMode, navigate, storyId])
 
-  const handleContentChange = (event) => {
-    setContent(event.target.value)
+  const syncEditorContent = useCallback((nextHtml, markChanged = true) => {
+    const safeHtml = sanitizeEpisodeHtml(nextHtml)
+    setContent(safeHtml)
+
+    if (editorRef.current && editorRef.current.innerHTML !== safeHtml) {
+      editorRef.current.innerHTML = safeHtml
+    }
+
+    if (markChanged) markUnsaved()
+  }, [])
+
+  useEffect(() => {
+    if (!editorRef.current) return
+    const safeHtml = normalizeEpisodeHtml(content)
+    if (editorRef.current.innerHTML !== safeHtml) {
+      editorRef.current.innerHTML = safeHtml
+    }
+  }, [content, pageLoading])
+
+  const updateFormattingState = useCallback(() => {
+    if (!editorRef.current || !editorRef.current.contains(document.activeElement)) return
+
+    setBoldActive(Boolean(document.queryCommandState('bold')))
+    setItalicActive(Boolean(document.queryCommandState('italic')))
+
+    if (document.queryCommandState('justifyCenter')) {
+      setAlignmentMode('center')
+    } else if (document.queryCommandState('justifyRight')) {
+      setAlignmentMode('right')
+    } else {
+      setAlignmentMode('left')
+    }
+  }, [])
+
+  const saveEditorSelection = useCallback(() => {
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    if (!editor || !selection?.rangeCount) return
+
+    const range = selection.getRangeAt(0)
+    if (!editor.contains(range.commonAncestorContainer)) return
+    savedSelectionRef.current = range.cloneRange()
+    updateFormattingState()
+  }, [updateFormattingState])
+
+  const restoreEditorSelection = useCallback(() => {
+    const editor = editorRef.current
+    const range = savedSelectionRef.current
+    if (!editor) return
+
+    editor.focus()
+    if (!range) return
+
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }, [])
+
+  const handleEditorInput = (event) => {
+    setContent(event.currentTarget.innerHTML)
     markUnsaved()
+    saveEditorSelection()
   }
 
-  const handleSmartReplaceContent = (nextContent) => {
-    setContent(nextContent)
+  const runEditorCommand = (command, value = null) => {
+    restoreEditorSelection()
+    document.execCommand(command, false, value)
+    setContent(editorRef.current?.innerHTML || '')
     markUnsaved()
-    showToast('Text updated. Please review before saving.')
+    saveEditorSelection()
+  }
+
+  const handleAlignmentChange = () => {
+    const nextAlignment =
+      alignmentMode === 'left' ? 'center' : alignmentMode === 'center' ? 'right' : 'left'
+    const command =
+      nextAlignment === 'center'
+        ? 'justifyCenter'
+        : nextAlignment === 'right'
+          ? 'justifyRight'
+          : 'justifyLeft'
+
+    runEditorCommand(command)
+    setAlignmentMode(nextAlignment)
+  }
+
+  const insertHtmlAtSelection = (html) => {
+    restoreEditorSelection()
+
+    if (document.queryCommandSupported?.('insertHTML')) {
+      document.execCommand('insertHTML', false, html)
+    } else {
+      const selection = window.getSelection()
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null
+      if (!range) return
+      const fragment = range.createContextualFragment(html)
+      range.deleteContents()
+      range.insertNode(fragment)
+    }
+
+    setContent(editorRef.current?.innerHTML || '')
+    markUnsaved()
+    saveEditorSelection()
+  }
+
+  const handleInlineImagePick = async (file) => {
+    if (!file) return
+
+    try {
+      const token = getAuthToken()
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      setInlineImageUploading(true)
+      const imageUrl = await uploadEpisodeInlineImage({ token, file, storyId })
+      if (!imageUrl) throw new Error('Image URL was missing.')
+
+      insertHtmlAtSelection(
+        `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
+      )
+      showToast('Image added.')
+    } catch (error) {
+      showToast(error.message || 'Could not add image.')
+    } finally {
+      setInlineImageUploading(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
   }
 
   const handleConfirmCleanParagraphs = () => {
-    const cleanedContent = cleanBrokenParagraphs(content)
+    const cleanedContent = cleanEpisodeHtmlSpacing(content)
     setCleanModalOpen(false)
 
-    if (cleanedContent === content.trim()) {
+    if (cleanedContent === sanitizeEpisodeHtml(content)) {
       showToast('No broken paragraph spacing found.')
       return
     }
 
-    setContent(cleanedContent)
-    markUnsaved()
+    syncEditorContent(cleanedContent)
     showToast('Paragraphs cleaned. Please review before saving.')
   }
 
@@ -881,21 +1252,11 @@ const [editorFocused, setEditorFocused] = useState(false)
   }
 
   const handleUndo = () => {
-    const editor = textareaRef.current
-    if (!editor) return
-    editor.focus()
-    document.execCommand('undo')
-    setContent(editor.value)
-    markUnsaved()
+    runEditorCommand('undo')
   }
 
   const handleRedo = () => {
-    const editor = textareaRef.current
-    if (!editor) return
-    editor.focus()
-    document.execCommand('redo')
-    setContent(editor.value)
-    markUnsaved()
+    runEditorCommand('redo')
   }
 
   const onCropComplete = useCallback((_, croppedPixels) => {
@@ -1063,7 +1424,7 @@ const [editorFocused, setEditorFocused] = useState(false)
         return null
       }
     } else {
-      if (goToPublish && !content.trim()) {
+      if (goToPublish && !hasEpisodeContent(content)) {
         setMessage('Please write some episode content.')
         return null
       }
@@ -1117,7 +1478,7 @@ const [editorFocused, setEditorFocused] = useState(false)
         body: JSON.stringify({
           title: episodeTitle.trim(),
           cover_url: episodeCoverUrl,
-          content: isManga ? '' : content,
+          content: isManga ? '' : sanitizeEpisodeHtml(content),
           pages: isManga ? pagesPayload : undefined,
           is_adult: false,
           status: forceDraft ? 'draft' : isEditMode ? oldEpisodeStatus : 'draft',
@@ -1223,6 +1584,27 @@ const [editorFocused, setEditorFocused] = useState(false)
     }`}
   >
     <style>{`
+  .rich-episode-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #a5aab4;
+    pointer-events: none;
+  }
+
+  .rich-episode-editor p,
+  .rich-episode-editor div {
+    min-height: 1.5em;
+    margin: 0 0 1em;
+  }
+
+  .rich-episode-editor img {
+    display: block;
+    width: 100%;
+    max-height: 70vh;
+    margin: 1rem 0;
+    border-radius: 12px;
+    object-fit: contain;
+  }
+
   .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
   .manga-red-theme button:not(:disabled)[class*="bg-[#e5484d]"],
   .manga-red-theme label[class*="bg-[#111827]"] {
@@ -1285,12 +1667,14 @@ const [editorFocused, setEditorFocused] = useState(false)
             onCancel={() => setCleanModalOpen(false)}
             onClean={handleConfirmCleanParagraphs}
           />
-          <SmartFindReplacePanel
+          <RichFindReplacePanel
             open={findReplaceOpen}
-            content={content}
-            textareaRef={textareaRef}
-            onClose={() => setFindReplaceOpen(false)}
-            onReplace={handleSmartReplaceContent}
+            editorRef={editorRef}
+            onClose={() => {
+              setFindReplaceOpen(false)
+              window.setTimeout(() => editorRef.current?.focus(), 60)
+            }}
+            onChange={(nextHtml) => syncEditorContent(nextHtml)}
           />
         </>
       ) : null}
@@ -1405,53 +1789,10 @@ const [editorFocused, setEditorFocused] = useState(false)
       </section>
 
             {isManga ? (
-              <section className="bg-white px-4 pb-4 pt-0 md:mt-4 md:rounded-[12px] md:p-4 md:shadow-sm">
-  <textarea
-    ref={textareaRef}
-    value={content}
-    onChange={handleContentChange}
-    onFocus={() => setEditorFocused(true)}
-    onBlur={() => {
-      window.setTimeout(() => {
-        setEditorFocused(false)
-        setSaveStatus('Saved')
-      }, 180)
-    }}
-    placeholder="Start writing your episode..."
-    className="min-h-[calc(100vh-150px)] w-full resize-none bg-white px-0 py-3 text-[15px] leading-8 text-[#111827] outline-none md:min-h-[520px] md:rounded-[10px] md:px-4"
-  />
-
-  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-    <div className="text-[12px] font-bold text-[#555b66]">
-      {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
-    </div>
-    <div className="text-[12px] font-bold text-[#8d94a1]">{estimatedReadTime}</div>
-  </div>
-
-  {warningText ? (
-    <div className="mt-3 rounded-[12px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
-      {warningText}
-    </div>
-  ) : null}
-
-  {editorFocused ? (
-    <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#eceef2] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(17,24,39,0.08)]">
-      <div className="mx-auto flex max-w-5xl items-center gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ToolButton icon="fa-solid fa-bold" label="Bold" />
-        <ToolButton icon="fa-solid fa-italic" label="Italic" />
-        <ToolButton icon="fa-regular fa-image" label="Insert image" />
-        <ToolButton
-          icon="fa-solid fa-magnifying-glass"
-          label="Find and Replace"
-          onClick={() => setFindReplaceOpen(true)}
-        />
-        <ToolButton icon="fa-solid fa-align-left" label="Align left" />
-        <ToolButton icon="fa-solid fa-align-center" label="Align center" />
-        <ToolButton icon="fa-solid fa-align-right" label="Align right" />
-      </div>
-    </div>
-  ) : null}
-</section>
+              <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-[15px] font-extrabold text-[#111827]">Manga Pages</h2>
                     <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
                       Choose up to 10 images each time. Maximum 2 MB per image and 100 pages per episode.
                     </p>
@@ -1529,39 +1870,39 @@ const [editorFocused, setEditorFocused] = useState(false)
                 )}
               </section>
             ) : (
-              <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
-                <div className="mb-3">
-                  <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
-                  <p className="mt-0.5 text-[11px] text-[#8d94a1]">Edit text and save changes.</p>
-                </div>
+              <section className="bg-white px-4 pb-4 pt-0 md:mt-4 md:rounded-[12px] md:p-4 md:shadow-sm">
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  role="textbox"
+                  aria-multiline="true"
+                  data-placeholder="Start writing your episode..."
+                  onInput={handleEditorInput}
+                  onFocus={() => {
+                    setEditorFocused(true)
+                    saveEditorSelection()
+                  }}
+                  onBlur={() => {
+                    window.setTimeout(() => {
+                      if (findReplaceOpen || cleanModalOpen || inlineImageUploading) return
+                      setEditorFocused(false)
+                      setSaveStatus('Saved')
+                    }, 220)
+                  }}
+                  onKeyUp={saveEditorSelection}
+                  onMouseUp={saveEditorSelection}
+                  onTouchEnd={saveEditorSelection}
+                  className="rich-episode-editor min-h-[calc(100vh-150px)] w-full bg-white px-0 py-3 text-[15px] leading-8 text-[#111827] outline-none md:min-h-[520px] md:rounded-[10px] md:px-4"
+                />
 
-                <div className="mb-3 flex items-center gap-2 overflow-x-auto rounded-[12px] bg-[#fafafe] p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <ToolButton icon="fa-solid fa-bold" label="Bold" />
-                  <ToolButton icon="fa-solid fa-italic" label="Italic" />
-                  <ToolButton icon="fa-solid fa-minus" label="Divider" />
-                  <ToolButton icon="fa-regular fa-image" label="Insert image" />
-                  <ToolButton
-                    icon="fa-solid fa-wand-magic-sparkles"
-                    label="Clean Paragraphs"
-                    onClick={() => setCleanModalOpen(true)}
-                  />
-                  <ToolButton
-                    icon="fa-solid fa-magnifying-glass"
-                    label="Find & Replace"
-                    onClick={() => setFindReplaceOpen(true)}
-                  />
-                </div>
-
-                <div className="bg-white sm:rounded-[12px] sm:border sm:border-[#e5e7eb] sm:p-3">
-                  <textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={handleContentChange}
-                    onBlur={() => setSaveStatus('Saved')}
-                    placeholder="Start writing your episode..."
-                    className="min-h-[calc(100vh-300px)] w-full resize-none bg-white px-0 py-4 text-[15px] leading-8 text-[#111827] outline-none sm:min-h-[520px] sm:rounded-[10px] sm:px-4"
-                  />
-                </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handleInlineImagePick(event.target.files?.[0] || null)}
+                />
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-[12px] font-bold text-[#555b66]">
@@ -1571,8 +1912,57 @@ const [editorFocused, setEditorFocused] = useState(false)
                 </div>
 
                 {warningText ? (
-                  <div className="mt-3 rounded-[16px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
+                  <div className="mt-3 rounded-[12px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
                     {warningText}
+                  </div>
+                ) : null}
+
+                {editorFocused ? (
+                  <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#eceef2] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(17,24,39,0.08)]">
+                    <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto bg-[#fafafe] px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <ToolButton
+                        icon="fa-solid fa-bold"
+                        label="Bold"
+                        active={boldActive}
+                        onClick={() => runEditorCommand('bold')}
+                      />
+                      <ToolButton
+                        icon="fa-solid fa-italic"
+                        label="Italic"
+                        active={italicActive}
+                        onClick={() => runEditorCommand('italic')}
+                      />
+                      <ToolButton
+                        icon={`fa-solid ${
+                          alignmentMode === 'center'
+                            ? 'fa-align-center'
+                            : alignmentMode === 'right'
+                              ? 'fa-align-right'
+                              : 'fa-align-left'
+                        }`}
+                        label={`Align ${alignmentMode}`}
+                        onClick={handleAlignmentChange}
+                      />
+                      <ToolButton
+                        icon={inlineImageUploading ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-image'}
+                        label="Insert image"
+                        disabled={inlineImageUploading}
+                        onClick={() => {
+                          saveEditorSelection()
+                          imageInputRef.current?.click()
+                        }}
+                      />
+                      <ToolButton
+                        icon="fa-solid fa-wand-magic-sparkles"
+                        label="AI Space"
+                        onClick={() => setCleanModalOpen(true)}
+                      />
+                      <ToolButton
+                        icon="fa-solid fa-magnifying-glass"
+                        label="Find and Replace"
+                        onClick={() => setFindReplaceOpen(true)}
+                      />
+                    </div>
                   </div>
                 ) : null}
               </section>
