@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
-
+import StorySortMenu from '../../components/author/StorySortMenu'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -411,19 +411,7 @@ export default function AuthorStoriesPage() {
 
         <div className="mb-3 mt-5 flex items-center justify-between gap-3">
           <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#19151f]">Your Library</h2>
-          <label className="relative flex min-w-0 items-center text-[#6f687c]">
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className="max-w-[155px] appearance-none bg-transparent py-2 pl-2 pr-7 text-right text-[12px] font-semibold outline-none"
-              aria-label="Sort stories"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
-              ))}
-            </select>
-            <i className="fa-solid fa-chevron-down pointer-events-none absolute right-1 text-[10px] text-[#494152]" />
-          </label>
+          <StorySortMenu value={sort} options={SORT_OPTIONS} onChange={setSort} />
         </div>
 
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
