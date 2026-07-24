@@ -379,7 +379,11 @@ function StoryTextSheet({
               onClick={onOpenGuide}
               className="mt-3 flex w-full items-center gap-2 rounded-[10px] px-2 py-2.5 text-left active:bg-[#f7f7fa]"
             >
-              <span className="text-[16px]" aria-hidden="true">💡</span>
+              <img
+  src="/assets/Icons/Hint.svg"
+  alt=""
+  className="h-[16px] w-[16px] shrink-0 object-contain"
+/>
               <span className="min-w-0 truncate text-[13px] text-[#667085]">
   Need help choosing a title?
 </span>
