@@ -115,6 +115,8 @@ const STORY_TAG_OPTIONS = STORY_TAG_GROUPS.flatMap(
   (group) => group.tags
 )
 
+const UPDATE_DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
