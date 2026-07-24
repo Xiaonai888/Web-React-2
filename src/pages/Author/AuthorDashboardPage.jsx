@@ -634,10 +634,10 @@ return {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
             aria-label="Go back"
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
 
-          <h1 className="text-[17px] font-semibold text-white">
+          <h1 className="text-[15px] font-normal text-white">
             Author Dashboard
           </h1>
 
@@ -648,7 +648,7 @@ return {
               className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
               aria-label="Notifications"
             >
-              <i className="fa-regular fa-bell text-[16px] font-normal" />
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 21h4" strokeLinecap="round" /></svg>
 
               {unreadNotifications > 0 ? (
                 <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#8251e9] bg-[#f43f5e] px-1 text-[8px] font-black leading-none text-white">
@@ -663,7 +663,7 @@ return {
   className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
   aria-label="Mailbox"
 >
-  <i className="fa-regular fa-envelope text-[17px] font-normal" />
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
 </button>
           </div>
         </div>
