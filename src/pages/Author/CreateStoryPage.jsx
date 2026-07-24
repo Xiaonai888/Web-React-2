@@ -1061,14 +1061,16 @@ const cropHelper =
       : `Drag the image to fit the 16:9 ${isManga ? 'manga' : 'story'} slide.`
 return (
   <div
-    className={`create-story-page min-h-screen bg-white pb-[110px] ${
-  isManga ? 'manga-red-theme' : ''
-}`}
-style={{
-  backgroundImage: 'linear-gradient(90deg, #F2EEFF 0%, #FFF8E8 100%)',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '100% 230px',
-}}
+    className={`create-story-page min-h-screen bg-[#fafafa] pb-[110px] ${
+      isManga ? 'manga-red-theme' : ''
+    }`}
+    style={{
+      backgroundColor: '#FAFAFA',
+      backgroundImage:
+        'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,0.18) 38%, rgba(250,250,250,0.72) 76%, #FAFAFA 100%), linear-gradient(90deg, #F2EEFF 0%, #FFF8E8 100%)',
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: '100% 270px, 100% 270px',
+    }}
   >
     <style>{`
   .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
