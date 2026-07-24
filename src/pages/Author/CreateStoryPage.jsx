@@ -307,7 +307,8 @@ function StoryTextSheet({
   onSave,
   multiline = false,
   maxLength = 200,
-  guideLabel = '',
+  guideText = '',
+  guideAction = '',
   onOpenGuide = null,
 }) {
   if (!open) return null
@@ -373,24 +374,24 @@ function StoryTextSheet({
             )}
           </div>
 
-          {guideLabel && onOpenGuide ? (
+          {guideText && guideAction && onOpenGuide ? (
             <button
               type="button"
               onClick={onOpenGuide}
               className="mt-3 flex w-full items-center gap-2 rounded-[10px] px-2 py-2.5 text-left active:bg-[#f7f7fa]"
             >
               <img
-  src="/assets/Icons/Hint.svg"
-  alt=""
-  className="h-[16px] w-[16px] shrink-0 object-contain"
-/>
+                src="/assets/Icons/Hint.svg"
+                alt=""
+                className="h-[16px] w-[16px] shrink-0 object-contain"
+              />
               <span className="min-w-0 truncate text-[13px] text-[#667085]">
-  Need help choosing a title?
-</span>
-<span className="ml-1 shrink-0 text-[13px] font-normal text-[#e5484d]">
-  Get title ideas
-</span>
-<i className="fa-solid fa-chevron-right ml-0.5 shrink-0 text-[10px] text-[#e5484d]" />
+                {guideText}
+              </span>
+              <span className="ml-0.5 shrink-0 text-[13px] font-medium text-[#e5484d]">
+                {guideAction}
+              </span>
+              <i className="fa-solid fa-chevron-right shrink-0 text-[9px] text-[#e5484d]" />
             </button>
           ) : null}
         </div>
@@ -1281,7 +1282,8 @@ return (
           setTitle(draftTitle.trim())
           setTitleOpen(false)
         }}
-        guideLabel="Need help choosing a title? Get title ideas"
+        guideText="Need help choosing a title?"
+        guideAction="Get title ideas"
         onOpenGuide={() => {
           setTitleOpen(false)
           navigate('/author/story/title-guide')
@@ -1300,6 +1302,12 @@ return (
         }}
         multiline
         maxLength={5000}
+        guideText="Need help writing a description?"
+        guideAction="Get ideas"
+        onOpenGuide={() => {
+          setSummaryOpen(false)
+          navigate('/author/story/description-guide')
+        }}
       />
 
       {mediaOpen && !isEditMode ? (
