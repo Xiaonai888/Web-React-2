@@ -726,6 +726,30 @@ export default function EpisodeEditorPage() {
     markUnsaved()
   }
 
+  const handleTitleBlur = () => {
+    if (!episodeTitle.trim()) return
+    setEpisodeTitle(episodeTitle.trim())
+    setSaveStatus('Saved')
+  }
+
+  const handleUndo = () => {
+    const editor = textareaRef.current
+    if (!editor) return
+    editor.focus()
+    document.execCommand('undo')
+    setContent(editor.value)
+    markUnsaved()
+  }
+
+  const handleRedo = () => {
+    const editor = textareaRef.current
+    if (!editor) return
+    editor.focus()
+    document.execCommand('redo')
+    setContent(editor.value)
+    markUnsaved()
+  }
+
   const onCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
   }, [])
@@ -1047,7 +1071,7 @@ export default function EpisodeEditorPage() {
 
   return (
   <div
-    className={`min-h-screen bg-[#fafafa] pb-[110px] ${
+    className={`min-h-screen bg-white pb-[110px] sm:bg-[#fafafa] ${
       isManga ? 'manga-red-theme' : ''
     }`}
   >
@@ -1110,32 +1134,50 @@ export default function EpisodeEditorPage() {
         </>
       ) : null}
 
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-[#f0f1f3] bg-white px-3 py-2.5">
+        <div className="mx-auto flex max-w-5xl items-center gap-2">
           <button
             type="button"
             onClick={handleBack}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
             aria-label="Go back"
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <i className="fa-solid fa-chevron-left text-[16px]" />
           </button>
 
-          <div className="text-center">
-  <h1 className="text-[17px] font-bold text-[#111827]">
-  {isManga
-    ? `${isEditMode ? 'Edit' : 'Add'} Manga Episode`
-    : pageTitle}
-</h1>
-</div>
-
-          <div className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[10px] font-extrabold text-[#667085]">
-            {saveStatus}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[12px] font-bold text-[#555b66]">
+              {isManga
+                ? `${completedMangaPages.length} pages`
+                : `${characterCount.toLocaleString()} / ${MIN_CHARACTERS.toLocaleString()} characters`}
+            </div>
+            <div className="mt-0.5 text-[10px] text-[#8d94a1]">{saveStatus}</div>
           </div>
+
+          {!isManga ? (
+            <>
+              <button
+                type="button"
+                onClick={handleUndo}
+                className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+                aria-label="Undo"
+              >
+                <i className="fa-solid fa-rotate-left text-[17px]" />
+              </button>
+              <button
+                type="button"
+                onClick={handleRedo}
+                className="flex h-9 w-9 shrink-0 items-center justify-center text-[#98a2b3] active:scale-95"
+                aria-label="Redo"
+              >
+                <i className="fa-solid fa-rotate-right text-[17px]" />
+              </button>
+            </>
+          ) : null}
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <main className="mx-auto max-w-5xl px-0 pt-0 sm:px-4 sm:pt-4">
         {isFirstEpisode ? (
   <section className="hidden rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
     <div className="grid grid-cols-3 gap-2">
@@ -1147,7 +1189,7 @@ export default function EpisodeEditorPage() {
 ) : null}
 
         {pageLoading ? (
-          <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <section className="mx-4 mt-4 rounded-[12px] bg-white p-6 text-center shadow-sm sm:mx-0">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
             <div className="text-[13px] font-bold text-[#667085]">Loading episode data...</div>
           </section>
@@ -1157,7 +1199,7 @@ export default function EpisodeEditorPage() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mt-4 w-full rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[12px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d] sm:mx-0 sm:w-full"
           >
             {message}
           </button>
@@ -1165,19 +1207,17 @@ export default function EpisodeEditorPage() {
 
         {!pageLoading ? (
   <>
-    <div className="mt-4 overflow-hidden rounded-[12px] bg-white shadow-sm md:contents">
-      <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
-              <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
-                Episode Title <span className="text-[#e5484d]">*</span>
-              </label>
+    <div className="overflow-hidden bg-white sm:mt-4 sm:rounded-[12px] sm:shadow-sm md:contents">
+      <section className="bg-white px-4 pb-4 pt-3 sm:p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
               <input
                 value={episodeTitle}
                 onChange={handleTitleChange}
+                onBlur={handleTitleBlur}
                 placeholder="Enter episode title"
-                className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
+                className="w-full border-0 border-b border-[#f0f1f3] bg-transparent px-0 py-3 text-[19px] font-bold text-[#111827] outline-none placeholder:font-bold placeholder:text-[#a5aab4]"
               />
 
-              <div className="mt-5">
+              <div className="mt-4">
                 <div className="mb-2">
                   <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
                   <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
@@ -1241,7 +1281,7 @@ export default function EpisodeEditorPage() {
             </section>
 
             {isManga ? (
-              <section className="border-t border-[#f0f1f3] bg-white p-4 md:mt-4 md:rounded-[12px] md:border-0 md:shadow-sm">
+              <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-[15px] font-extrabold text-[#111827]">Manga Pages</h2>
@@ -1322,18 +1362,13 @@ export default function EpisodeEditorPage() {
                 )}
               </section>
             ) : (
-              <section className="border-t border-[#f0f1f3] bg-white p-4 md:mt-4 md:rounded-[12px] md:border-0 md:shadow-sm">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
-                    <p className="mt-0.5 text-[11px] text-[#8d94a1]">Edit text and save changes.</p>
-                  </div>
-                  <div className="rounded-full bg-[#f5f3fa] px-3 py-1.5 text-[11px] font-extrabold text-[#555b66]">
-                    {saveStatus}
-                  </div>
+              <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
+                <div className="mb-3">
+                  <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
+                  <p className="mt-0.5 text-[11px] text-[#8d94a1]">Edit text and save changes.</p>
                 </div>
 
-                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[18px] bg-[#fafafe] p-2">
+                <div className="mb-3 flex items-center gap-2 overflow-x-auto rounded-[12px] bg-[#fafafe] p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <ToolButton icon="fa-solid fa-bold" label="Bold" />
                   <ToolButton icon="fa-solid fa-italic" label="Italic" />
                   <ToolButton icon="fa-solid fa-minus" label="Divider" />
@@ -1348,18 +1383,16 @@ export default function EpisodeEditorPage() {
                     label="Find & Replace"
                     onClick={() => setFindReplaceOpen(true)}
                   />
-                  <div className="mx-1 h-8 w-px bg-[#e5e7eb]" />
-                  <ToolButton icon="fa-solid fa-rotate-left" label="Undo" />
-                  <ToolButton icon="fa-solid fa-rotate-right" label="Redo" />
                 </div>
 
-                <div className="rounded-[20px] border border-[#d9dde6] bg-white p-3">
+                <div className="bg-white sm:rounded-[12px] sm:border sm:border-[#e5e7eb] sm:p-3">
                   <textarea
                     ref={textareaRef}
                     value={content}
                     onChange={handleContentChange}
+                    onBlur={() => setSaveStatus('Saved')}
                     placeholder="Start writing your episode..."
-                    className="min-h-[520px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-white px-4 py-4 text-[15px] leading-8 text-[#111827] outline-none"
+                    className="min-h-[calc(100vh-300px)] w-full resize-none bg-white px-0 py-4 text-[15px] leading-8 text-[#111827] outline-none sm:min-h-[520px] sm:rounded-[10px] sm:px-4"
                   />
                 </div>
 
@@ -1376,10 +1409,10 @@ export default function EpisodeEditorPage() {
                   </div>
                 ) : null}
               </section>
-            )            )}
+            )}
             </div>
 
-            <section className="mt-5 grid grid-cols-2 gap-3 pb-8">
+            <section className="mx-4 mt-5 grid grid-cols-2 gap-3 pb-8 sm:mx-0">
               <button
                 type="button"
                 onClick={handleSaveDraft}
