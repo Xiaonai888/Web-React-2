@@ -436,7 +436,9 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/35 px-4">
       <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 text-center shadow-2xl">
-        <h2 className="text-[18px] font-extrabold text-[#111827]">Unsaved Changes</h2>
+        <h2 className="text-[18px] font-bold text-[#111827]">
+  Unsaved Changes
+</h2>
         <p className="mt-3 text-[13px] leading-6 text-[#555b66]">
           This episode has unsaved edits. Save your draft or discard your changes.
         </p>
@@ -445,21 +447,21 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
           <button
             type="button"
             onClick={onKeepEditing}
-            className="rounded-full border border-[#e4e7ec] bg-white px-3 py-2.5 text-[12px] font-extrabold text-[#111827] active:scale-95"
+            className="rounded-full border border-[#e4e7ec] bg-white px-3 py-2.5 text-[12px] font-normal text-[#111827] active:scale-95"
           >
             Keep Editing
           </button>
           <button
             type="button"
             onClick={onDiscard}
-            className="rounded-full border border-[#f0b8b8] bg-white px-3 py-2.5 text-[12px] font-extrabold text-[#c04444] active:scale-95"
+            className="rounded-full border border-[#f0b8b8] bg-white px-3 py-2.5 text-[12px] font-normal text-[#c04444] active:scale-95"
           >
             Discard
           </button>
           <button
             type="button"
             onClick={onSaveDraft}
-            className="rounded-full bg-[#111827] px-3 py-2.5 text-[12px] font-extrabold text-white active:scale-95"
+            className="rounded-full bg-[#111827] px-3 py-2.5 text-[12px] font-normal text-white active:scale-95"
           >
             Save Draft
           </button>
