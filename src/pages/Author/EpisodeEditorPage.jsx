@@ -150,10 +150,10 @@ function ToolButton({ icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-[#eceaf2] active:scale-95"
+      className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
       aria-label={label}
     >
-      <i className={`${icon} text-[14px]`} />
+      <i className={`${icon} text-[17px]`} />
     </button>
   )
 }
@@ -622,6 +622,7 @@ export default function EpisodeEditorPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
+const [editorFocused, setEditorFocused] = useState(false)
   const [toast, setToast] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1404,10 +1405,53 @@ export default function EpisodeEditorPage() {
       </section>
 
             {isManga ? (
-              <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-[15px] font-extrabold text-[#111827]">Manga Pages</h2>
+              <section className="bg-white px-4 pb-4 pt-0 md:mt-4 md:rounded-[12px] md:p-4 md:shadow-sm">
+  <textarea
+    ref={textareaRef}
+    value={content}
+    onChange={handleContentChange}
+    onFocus={() => setEditorFocused(true)}
+    onBlur={() => {
+      window.setTimeout(() => {
+        setEditorFocused(false)
+        setSaveStatus('Saved')
+      }, 180)
+    }}
+    placeholder="Start writing your episode..."
+    className="min-h-[calc(100vh-150px)] w-full resize-none bg-white px-0 py-3 text-[15px] leading-8 text-[#111827] outline-none md:min-h-[520px] md:rounded-[10px] md:px-4"
+  />
+
+  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="text-[12px] font-bold text-[#555b66]">
+      {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
+    </div>
+    <div className="text-[12px] font-bold text-[#8d94a1]">{estimatedReadTime}</div>
+  </div>
+
+  {warningText ? (
+    <div className="mt-3 rounded-[12px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
+      {warningText}
+    </div>
+  ) : null}
+
+  {editorFocused ? (
+    <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#eceef2] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(17,24,39,0.08)]">
+      <div className="mx-auto flex max-w-5xl items-center gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ToolButton icon="fa-solid fa-bold" label="Bold" />
+        <ToolButton icon="fa-solid fa-italic" label="Italic" />
+        <ToolButton icon="fa-regular fa-image" label="Insert image" />
+        <ToolButton
+          icon="fa-solid fa-magnifying-glass"
+          label="Find and Replace"
+          onClick={() => setFindReplaceOpen(true)}
+        />
+        <ToolButton icon="fa-solid fa-align-left" label="Align left" />
+        <ToolButton icon="fa-solid fa-align-center" label="Align center" />
+        <ToolButton icon="fa-solid fa-align-right" label="Align right" />
+      </div>
+    </div>
+  ) : null}
+</section>
                     <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
                       Choose up to 10 images each time. Maximum 2 MB per image and 100 pages per episode.
                     </p>
