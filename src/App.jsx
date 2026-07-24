@@ -25,6 +25,7 @@ import CreateAuthorPage from './pages/Author/CreateAuthorPage'
 import AuthorDashboardPage from './pages/Author/AuthorDashboardPage'
 import AuthorProfilePage from './pages/Author/AuthorProfilePage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
+import StoryTitleGuidePage from './pages/Author/StoryTitleGuidePage'
 import ChatStoryCharactersPage from './pages/Author/ChatStoryCharactersPage'
 import ChatStoryCharacterProfilePage from './pages/Author/ChatStoryCharacterProfilePage'
 import ChatStoryEditorPage from './pages/Author/ChatStoryEditorPage'
@@ -1116,7 +1117,7 @@ const shouldShowOpeningAds =
   element={<ChatStoryCharacterProfilePage />}
 />
 
-      
+        <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
