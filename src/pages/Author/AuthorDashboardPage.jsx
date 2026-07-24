@@ -621,11 +621,9 @@ export default function AuthorDashboardPage() {
           </button>
         ) : null}
 
-      <section className="relative -mx-4 min-h-[245px] overflow-hidden bg-gradient-to-br from-[#6d42db] via-[#8251e9] to-[#a476f4] px-4 pb-[54px] pt-[calc(12px+env(safe-area-inset-top))] shadow-[0_14px_35px_rgba(96,55,177,0.22)]">
-        <div className="absolute -left-12 top-8 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#d9c6ff]/25 blur-2xl" />
-        <i className="fa-solid fa-sparkles absolute right-[18%] top-16 text-[13px] text-white/40" />
-
+     <section className="relative -mx-4 min-h-[245px] overflow-hidden px-4 pb-[54px] pt-[calc(12px+env(safe-area-inset-top))] shadow-[0_14px_35px_rgba(96,55,177,0.22)]">
+  <img src="/assets/Icons/Picture/Wing 1.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
+  <div className="absolute inset-0 bg-black/15" />
         <div className="relative z-20 flex items-center justify-between">
           <button
             type="button"
