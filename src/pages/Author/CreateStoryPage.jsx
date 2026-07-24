@@ -301,13 +301,14 @@ function CropImageModal({
 function StoryTextSheet({
   open,
   title,
-  helper,
   value,
   onChange,
   onClose,
   onSave,
   multiline = false,
   maxLength = 200,
+  guideLabel = '',
+  onOpenGuide = null,
 }) {
   if (!open) return null
 
@@ -316,23 +317,21 @@ function StoryTextSheet({
   return (
     <div className="fixed inset-0 z-[150] flex items-end bg-black/35" onClick={onClose}>
       <div
-        className="w-full rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+        className="w-full rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#d9dce3]" />
-
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
+              className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
               aria-label="Close editor"
             >
-              <i className="fa-solid fa-xmark text-[15px]" />
+              <i className="fa-solid fa-xmark text-[14px]" />
             </button>
 
-            <h2 className="min-w-0 flex-1 truncate text-center text-[17px] font-bold text-[#111827]">
+            <h2 className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-[#111827]">
               {title}
             </h2>
 
@@ -340,13 +339,13 @@ function StoryTextSheet({
               type="button"
               onClick={onSave}
               disabled={!canSave}
-              className="min-w-[52px] text-right text-[14px] font-bold text-[#0b5cff] disabled:text-[#c5c9d2]"
+              className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#d0d5dd]"
             >
               Save
             </button>
           </div>
 
-          <div className="mt-3 rounded-[12px] bg-[#f7f7fa] p-4">
+          <div className="mt-4">
             {multiline ? (
               <>
                 <textarea
@@ -355,28 +354,38 @@ function StoryTextSheet({
                   maxLength={maxLength}
                   autoFocus
                   placeholder="Tell readers what makes your story worth opening."
-                  className="min-h-[220px] max-h-[46vh] w-full resize-none bg-transparent text-[15px] leading-7 text-[#111827] outline-none"
+                  className="min-h-[190px] max-h-[42vh] w-full resize-none rounded-[10px] bg-[#f7f7fa] px-3 py-3 text-[14px] leading-6 text-[#111827] outline-none"
                 />
 
-                <div className="mt-3 text-right text-[11px] font-medium text-[#8d94a1]">
+                <div className="mt-2 text-right text-[11px] font-medium text-[#8d94a1]">
                   {value.length}/{maxLength}
                 </div>
               </>
             ) : (
-              <>
-                <input
-                  value={value}
-                  onChange={(event) => onChange(event.target.value)}
-                  maxLength={maxLength}
-                  autoFocus
-                  placeholder="Add a title readers will remember"
-                  className="h-12 w-full bg-transparent text-[15px] text-[#111827] outline-none"
-                />
-
-                <div className="mt-3 text-[11.5px] leading-5 text-[#8d94a1]">{helper}</div>
-              </>
+              <input
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                maxLength={maxLength}
+                autoFocus
+                placeholder="Add your story title"
+                className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] text-[#111827] outline-none"
+              />
             )}
           </div>
+
+          {guideLabel && onOpenGuide ? (
+            <button
+              type="button"
+              onClick={onOpenGuide}
+              className="mt-3 flex w-full items-center gap-2 rounded-[10px] px-2 py-2.5 text-left active:bg-[#f7f7fa]"
+            >
+              <span className="text-[16px]" aria-hidden="true">💡</span>
+              <span className="min-w-0 flex-1 truncate text-[13px] text-[#667085]">
+                {guideLabel}
+              </span>
+              <i className="fa-solid fa-chevron-right text-[11px] text-[#c4c8d1]" />
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
@@ -1258,7 +1267,6 @@ return (
       <StoryTextSheet
         open={titleOpen}
         title={isManga ? 'Manga Title' : 'Story Title'}
-        helper="Keep it clear, memorable, and easy to recognize."
         value={draftTitle}
         onChange={setDraftTitle}
         onClose={() => setTitleOpen(false)}
@@ -1266,11 +1274,16 @@ return (
           setTitle(draftTitle.trim())
           setTitleOpen(false)
         }}
+        guideLabel="Need help choosing a title? Get title ideas"
+        onOpenGuide={() => {
+          setTitleOpen(false)
+          navigate('/author/story/title-guide')
+        }}
       />
 
       <StoryTextSheet
         open={summaryOpen}
-        title="Story Summary"
+        title="Description"
         value={draftDescription}
         onChange={setDraftDescription}
         onClose={() => setSummaryOpen(false)}
