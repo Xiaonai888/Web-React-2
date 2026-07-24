@@ -875,33 +875,28 @@ function PublishSettingsSheet({
   }}
   onClick={(event) => event.stopPropagation()}
 >
+  
+
   <div
-    className="flex h-6 shrink-0 touch-none items-center justify-center bg-white sm:hidden"
-    onTouchStart={handleDragStart}
-    onTouchMove={handleDragMove}
-    onTouchEnd={handleDragEnd}
-    onTouchCancel={handleDragEnd}
+  className="flex touch-none items-center gap-3 bg-white px-4 py-3"
+  onTouchStart={handleDragStart}
+  onTouchMove={handleDragMove}
+  onTouchEnd={handleDragEnd}
+  onTouchCancel={handleDragEnd}
+>
+  <button
+    type="button"
+    onClick={onClose}
+    className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+    aria-label="Close publish"
   >
-    <div className="h-1 w-10 rounded-full bg-[#d0d5dd]" />
-  </div>
+    <i className="fa-solid fa-xmark text-[14px]" />
+  </button>
 
-  <div className="flex items-center gap-3 border-b border-[#f0f1f3] bg-white px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-            aria-label="Close publish settings"
-          >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[15px] font-bold text-[#111827]">Publish Settings</h2>
-            <p className="mt-0.5 text-[11px] text-[#8d94a1]">
-              Complete the details before releasing this episode.
-            </p>
-          </div>
-        </div>
+  <h2 className="text-[15px] font-bold text-[#111827]">
+    Publish
+  </h2>
+</div>
 
         <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
           {showStorySettings ? (
