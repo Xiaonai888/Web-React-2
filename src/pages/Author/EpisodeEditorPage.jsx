@@ -1857,10 +1857,23 @@ function PublishSettingsSheet({
     )
   }
 
-  const canSave =
-    Boolean(mainGenre && storyLanguage && storyTags.length > 0) &&
-    (releaseOption !== 'schedule' || Boolean(scheduleDate && scheduleTime)) &&
-    !saving
+  const storyDetailsValid =
+  !showStorySettings ||
+  Boolean(
+    storyLanguage?.trim() &&
+    mainGenre?.trim() &&
+    Array.isArray(storyTags) &&
+    storyTags.length > 0
+  )
+
+const releaseOptionValid =
+  releaseOption !== 'schedule' ||
+  Boolean(scheduleDate && scheduleTime)
+
+const canSave =
+  storyDetailsValid &&
+  releaseOptionValid &&
+  !saving
 
   const tagSummary = storyTags.length
     ? storyTags.join(', ')
