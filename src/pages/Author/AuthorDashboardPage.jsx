@@ -655,13 +655,13 @@ export default function AuthorDashboardPage() {
             </button>
 
             <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
-              aria-label="Author tools"
-            >
-              <i className="fa-solid fa-ellipsis text-[16px]" />
-            </button>
+  type="button"
+  onClick={() => navigate('/author/page/notifications')}
+  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
+  aria-label="Mailbox"
+>
+  <i className="fa-regular fa-envelope text-[18px]" />
+</button>
           </div>
         </div>
 
