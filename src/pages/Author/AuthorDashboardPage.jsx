@@ -815,7 +815,7 @@ export default function AuthorDashboardPage() {
       type="button"
       onClick={() => (item.soon ? handleComingSoon(item.title) : handleCreateStory(item.key))}
       disabled={item.soon}
-      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[20px] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
+      className="relative flex min-h-[170px] flex-col items-center justify-center rounded-[14px] bg-white px-3 py-5 text-center shadow-[0_4px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98] disabled:cursor-default"
     >
       {item.soon ? (
         <span className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold leading-none text-[#F97316] shadow-sm">
