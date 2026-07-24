@@ -814,14 +814,45 @@ function PublishSettingsSheet({
   onClose,
   onSave,
 }) {
-  if (!open) return null
+  const [dragY, setDragY] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragStartY = useRef(0)
 
-  const actionLabel =
-    releaseOption === 'schedule'
-      ? 'Schedule Episode'
-      : releaseOption === 'draft'
-        ? 'Save as Draft'
-        : 'Publish Episode'
+  useEffect(() => {
+    if (!open) return undefined
+
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [open])
+
+  const handleDragStart = (event) => {
+    dragStartY.current = event.touches[0].clientY
+    setDragging(true)
+  }
+
+  const handleDragMove = (event) => {
+    const distance = event.touches[0].clientY - dragStartY.current
+    setDragY(Math.max(0, distance))
+  }
+
+  const handleDragEnd = () => {
+    if (dragY >= 90) {
+      onClose()
+    }
+
+    setDragY(0)
+    setDragging(false)
+  }
+
+  if (!open) return null
 
   const canSave =
     Boolean(mainGenre && storyLanguage) &&
@@ -834,10 +865,27 @@ function PublishSettingsSheet({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex shrink-0 items-center gap-3 border-b border-[#eceef2] bg-white px-4 py-3">
+      <div
+  className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
+    dragging ? '' : 'transition-transform duration-200'
+  }`}
+  style={{
+    transform: `translateY(${dragY}px)`,
+    willChange: 'transform',
+  }}
+  onClick={(event) => event.stopPropagation()}
+>
+  <div
+    className="flex h-6 shrink-0 touch-none items-center justify-center bg-white sm:hidden"
+    onTouchStart={handleDragStart}
+    onTouchMove={handleDragMove}
+    onTouchEnd={handleDragEnd}
+    onTouchCancel={handleDragEnd}
+  >
+    <div className="h-1 w-10 rounded-full bg-[#d0d5dd]" />
+  </div>
+
+  <div className="flex items-center gap-3 border-b border-[#f0f1f3] bg-white px-4 py-3">
           <button
             type="button"
             onClick={onClose}
@@ -855,7 +903,7 @@ function PublishSettingsSheet({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#fafafa] px-4 py-4">
+        <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
           {showStorySettings ? (
             <section className="rounded-[12px] bg-white p-4">
               <h3 className="text-[14px] font-bold text-[#111827]">Complete Story Info</h3>
@@ -1020,7 +1068,7 @@ function PublishSettingsSheet({
             </section>
           ) : null}
 
-          <section className={`${showStorySettings ? 'mt-4' : ''} rounded-[12px] bg-white p-4`}>
+          <section className={showStorySettings ? 'mt-7 border-t border-[#f0f1f3] pt-6' : ''}>
             <h3 className="text-[14px] font-bold text-[#111827]">Episode Release</h3>
 
             <div className="mt-4 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
@@ -1129,7 +1177,7 @@ function PublishSettingsSheet({
             disabled={!canSave}
             className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
           >
-            {saving ? 'Saving...' : actionLabel}
+            {saving ? 'Saving...' : 'Publish'}
           </button>
         </div>
       </div>
