@@ -6,7 +6,9 @@ import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
-
+import RichEpisodeContent, {
+  episodeContentToPlainText,
+} from '../components/reader/RichEpisodeContent'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -503,7 +505,7 @@ function getSegmentLength(value) {
 }
 
 function createPagingPages(content, lineSpacing, fontSizePx) {
-  const paragraphs = splitParagraphs(content)
+  const paragraphs = splitParagraphs(episodeContentToPlainText(content))
   const baseCharactersPerLine = PAGING_CHARACTERS_PER_LINE[lineSpacing] || PAGING_CHARACTERS_PER_LINE.comfort
   const charactersPerLine = Math.max(18, Math.floor((baseCharactersPerLine * 17) / Math.max(15, Number(fontSizePx || 17))))
   const pages = []
@@ -626,32 +628,14 @@ function getInitialFontSizeIndex() {
 }
 
 function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
-  const paragraphs = useMemo(() => splitParagraphs(content), [content])
-  const lineHeightClass = LINE_SPACING_OPTIONS[lineSpacing]?.className || LINE_SPACING_OPTIONS.comfort.className
-
-  if (!paragraphs.length) {
-    return (
-      <p className={`text-[15px] font-semibold leading-8 ${theme.muted}`}>
-        No episode content found.
-      </p>
-    )
-  }
-
   return (
-    <div className={lineSpacing === 'compact' ? 'space-y-5' : lineSpacing === 'normal' ? 'space-y-6' : 'space-y-7'}>
-      {paragraphs.map((paragraph, index) => (
-        <p
-          key={`${paragraph.slice(0, 20)}-${index}`}
-          className={`${theme.text} ${lineHeightClass} whitespace-pre-line tracking-[0.003em] [overflow-wrap:normal] [word-break:normal]`}
-          style={{
-            fontFamily,
-            fontSize: `${fontSizePx}px`,
-          }}
-        >
-          {paragraph}
-        </p>
-      ))}
-    </div>
+    <RichEpisodeContent
+      content={content}
+      fontSizePx={fontSizePx}
+      fontFamily={fontFamily}
+      lineSpacing={lineSpacing}
+      theme={theme}
+    />
   )
 }
 
