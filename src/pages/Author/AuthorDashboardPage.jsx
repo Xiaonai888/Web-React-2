@@ -804,7 +804,7 @@ return {
           </section>
         ) : null}
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+       <div className="hidden mt-4 grid grid-cols-3 gap-3">
   {createStoryCards.map((item) => (
     <button
       key={item.key}
