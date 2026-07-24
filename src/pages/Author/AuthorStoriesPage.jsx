@@ -167,7 +167,7 @@ function LoadingCard() {
 
 function EmptyState({ searching, onCreate }) {
   return (
-    <div className="col-span-full rounded-[10px] border border-dashed border-[#d9cff6] bg-white px-6 py-12 text-center">
+    <div className="col-span-full rounded-[14px] bg-white px-6 py-12 text-center">
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0eaff] text-[#744af3]">
         <i className={`fa-solid ${searching ? 'fa-magnifying-glass' : 'fa-feather-pointed'} text-[20px]`} />
       </span>
@@ -361,7 +361,7 @@ export default function AuthorStoriesPage() {
           </div>
         ) : null}
 
-        <section className="flex rounded-[14px] border border-[#e8e3f1] bg-white px-1.5 py-3 shadow-[0_8px_26px_rgba(71,55,110,0.07)]">
+        <section className="flex rounded-[14px] bg-white px-1.5 py-3 shadow-[0_8px_26px_rgba(71,55,110,0.07)]">
           <StatItem icon="fa-solid fa-book-open" label="All" value={formatCompactNumber(stats.all)} />
           <StatItem icon="fa-regular fa-circle-check" label="Published" value={formatCompactNumber(stats.published)} />
           <StatItem icon="fa-regular fa-file-lines" label="Drafts" value={formatCompactNumber(stats.drafts)} />
@@ -398,11 +398,11 @@ export default function AuthorStoriesPage() {
               key={item.id}
               type="button"
               onClick={() => setFilter(item.id)}
-              className={`min-w-[76px] flex-1 whitespace-nowrap rounded-full border px-4 py-2.5 text-[12px] font-extrabold transition active:scale-95 sm:flex-none sm:px-6 ${
-                filter === item.id
-                  ? 'border-[#e1d7ff] bg-[#eee8ff] text-[#7046ef]'
-                  : 'border-[#e6e1ed] bg-white text-[#403949]'
-              }`}
+              className={`min-w-[76px] flex-1 whitespace-nowrap rounded-full border px-4 py-2.5 text-[12px] font-normal transition active:scale-95 sm:flex-none sm:px-6 ${
+  filter === item.id
+    ? 'border-[#e1d7ff] bg-[#eee8ff] text-[#7046ef]'
+    : 'border-[#e6e1ed] bg-white text-[#403949]'
+}`}
             >
               {item.label}
             </button>
