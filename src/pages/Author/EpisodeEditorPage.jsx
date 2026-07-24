@@ -1152,7 +1152,7 @@ function PublishSettingsSheet({
   }
 
   const canSave =
-    Boolean(mainGenre && storyLanguage) &&
+    Boolean(mainGenre && storyLanguage && storyTags.length > 0) &&
     (releaseOption !== 'schedule' || Boolean(scheduleDate && scheduleTime)) &&
     !saving
 
@@ -1203,7 +1203,7 @@ function PublishSettingsSheet({
 
               <div className="mt-4">
                 <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  Story Language
+                  <span className="mr-1 text-[#e5484d]">*</span>Story Language
                 </span>
                 <div className="relative">
                   <select
@@ -1223,7 +1223,7 @@ function PublishSettingsSheet({
 
               <div className="mt-4">
                 <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  Main Genre
+                  <span className="mr-1 text-[#e5484d]">*</span>Main Genre
                 </span>
                 <button
                   type="button"
@@ -1239,7 +1239,7 @@ function PublishSettingsSheet({
 
               <div className="mt-4">
                 <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  Tags
+                  <span className="mr-1 text-[#e5484d]">*</span>Tags
                 </span>
                 <button
                   type="button"
