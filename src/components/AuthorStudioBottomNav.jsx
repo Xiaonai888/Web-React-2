@@ -261,7 +261,7 @@ export default function AuthorStudioBottomNav() {
         className="fixed inset-x-0 bottom-0 z-[90] w-full"
         aria-label="Author Studio navigation"
       >
-        <div className="relative flex min-h-[62px] w-full items-center rounded-none border-t border-[#ebe7ff] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(77,63,132,0.12)] backdrop-blur-xl">
+        <div className="relative flex min-h-[62px] w-full items-center rounded-none border-t border-[#ebe7ff] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
           <NavButton label="Dashboard" active={dashboardActive} onClick={() => navigate('/author/dashboard')}>
             <DashboardIcon active={dashboardActive} />
           </NavButton>
@@ -274,7 +274,7 @@ export default function AuthorStudioBottomNav() {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="flex h-[58px] w-[58px] -translate-y-[13px] items-center justify-center rounded-full bg-gradient-to-br from-[#8468ff] to-[#5c3df2] text-white shadow-[0_10px_24px_rgba(100,72,246,0.42)] ring-[5px] ring-[#f5f3fa] transition active:scale-95"
+              className="flex h-[58px] w-[58px] -translate-y-[13px] items-center justify-center rounded-full bg-gradient-to-br from-[#8468ff] to-[#5c3df2] text-white ring-[5px] ring-[#f5f3fa] transition active:scale-95"
               aria-label="Create story"
             >
               <FeatherIcon />
