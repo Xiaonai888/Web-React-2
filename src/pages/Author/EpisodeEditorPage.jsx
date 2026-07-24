@@ -1967,6 +1967,55 @@ useEffect(() => {
               </section>
             ) : (
               <section className="bg-white px-4 pb-4 pt-0 md:mt-4 md:rounded-[12px] md:p-4 md:shadow-sm">
+                <div className="hidden items-center gap-2 bg-white py-2 md:flex">
+  <ToolButton
+    Icon={Bold}
+    label="Bold"
+    active={boldActive}
+    onClick={() => runEditorCommand('bold')}
+  />
+
+  <ToolButton
+    Icon={Italic}
+    label="Italic"
+    active={italicActive}
+    onClick={() => runEditorCommand('italic')}
+  />
+
+  <ToolButton
+    Icon={
+      alignmentMode === 'center'
+        ? AlignCenter
+        : alignmentMode === 'right'
+          ? AlignRight
+          : AlignLeft
+    }
+    label={`Align ${alignmentMode}`}
+    onClick={handleAlignmentChange}
+  />
+
+  <ToolButton
+    Icon={ImageIcon}
+    label="Insert image"
+    disabled={inlineImageUploading}
+    onClick={() => {
+      saveEditorSelection()
+      imageInputRef.current?.click()
+    }}
+  />
+
+  <ToolButton
+    Icon={WandSparkles}
+    label="AI Space"
+    onClick={() => setCleanModalOpen(true)}
+  />
+
+  <ToolButton
+    Icon={Search}
+    label="Find and Replace"
+    onClick={() => setFindReplaceOpen(true)}
+  />
+</div>
                 <div
                   ref={editorRef}
                   contentEditable
@@ -2001,7 +2050,7 @@ useEffect(() => {
                 />
 
                 {editorFocused ? (
-                  <div className="fixed inset-x-0 bottom-0 z-[90] bg-white pb-[env(safe-area-inset-bottom)]">
+                  <div className="fixed inset-x-0 bottom-0 z-[90] bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
                     <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto bg-white px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <ToolButton
   Icon={Bold}
