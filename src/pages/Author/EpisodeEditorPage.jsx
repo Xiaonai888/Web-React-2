@@ -1164,8 +1164,9 @@ export default function EpisodeEditorPage() {
         ) : null}
 
         {!pageLoading ? (
-          <>
-            <section className="mt-4 rounded-[12px] bg-white p-4 shadow-sm">
+  <>
+    <div className="mt-4 overflow-hidden rounded-[12px] bg-white shadow-sm md:contents">
+      <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
               <label className="mb-2 block text-[13px] font-extrabold text-[#111827]">
                 Episode Title <span className="text-[#e5484d]">*</span>
               </label>
@@ -1240,7 +1241,7 @@ export default function EpisodeEditorPage() {
             </section>
 
             {isManga ? (
-              <section className="mt-4 rounded-[12px] bg-white p-4 shadow-sm">
+              <section className="border-t border-[#f0f1f3] bg-white p-4 md:mt-4 md:rounded-[12px] md:border-0 md:shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-[15px] font-extrabold text-[#111827]">Manga Pages</h2>
@@ -1321,7 +1322,7 @@ export default function EpisodeEditorPage() {
                 )}
               </section>
             ) : (
-              <section className="mt-4 rounded-[12px] bg-white p-4 shadow-sm">
+              <section className="border-t border-[#f0f1f3] bg-white p-4 md:mt-4 md:rounded-[12px] md:border-0 md:shadow-sm">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-[15px] font-extrabold text-[#111827]">Write Episode</h2>
@@ -1375,7 +1376,8 @@ export default function EpisodeEditorPage() {
                   </div>
                 ) : null}
               </section>
-            )}
+            )            )}
+            </div>
 
             <section className="mt-5 grid grid-cols-2 gap-3 pb-8">
               <button
