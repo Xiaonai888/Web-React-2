@@ -3199,7 +3199,9 @@ useEffect(() => {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to update story information.')
+      throw new Error(
+  data.error || data.message || 'Failed to update story information.'
+)
     }
 
     setStoryRecord(data.story || storyRecord)
