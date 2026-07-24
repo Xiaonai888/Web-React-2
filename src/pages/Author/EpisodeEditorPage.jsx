@@ -784,7 +784,14 @@ function SettingsToggle({ checked, onClick, label }) {
 }
 
 
-function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, onClose, onSave }) {
+function GenreSheet({
+  open,
+  value,
+  options = FALLBACK_GENRES,
+  loading = false,
+  onClose,
+  onSave,
+}) {
   const [selected, setSelected] = useState(value || 'Romance')
   const [search, setSearch] = useState('')
 
@@ -801,8 +808,8 @@ function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, o
   )
 
   return (
-    <div className="fixed inset-0 z-[190] overflow-y-auto bg-white">
-      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
+    <div className="fixed inset-0 z-[190] overflow-y-auto bg-[#f7f7f7]">
+      <header className="sticky top-0 z-10 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
@@ -812,7 +819,11 @@ function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, o
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
-          <h2 className="text-[17px] font-bold text-[#111827]">Add Genre</h2>
+
+          <h2 className="text-[17px] font-bold text-[#111827]">
+            Add Genre
+          </h2>
+
           <button
             type="button"
             onClick={() => onSave(selected)}
@@ -824,8 +835,9 @@ function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, o
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-5">
-        <div className="mb-5 flex h-12 items-center rounded-full bg-[#f2f4f7] px-4">
+        <div className="mb-5 flex h-12 items-center rounded-full bg-white px-4">
           <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -838,52 +850,46 @@ function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, o
           <div className="text-[14px] font-bold text-[#111827]">
             Please select the genre that best represents your story.
           </div>
+
           <div className="mt-2 text-[12px] text-[#667085]">
             Only one genre can be selected.
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {loading ? (
-            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-              Loading genres...
-            </div>
-          ) : null}
+        {loading ? (
+          <div className="py-10 text-center text-[13px] text-[#8d94a1]">
+            Loading genres...
+          </div>
+        ) : null}
 
-          {!loading && visibleGenres.length === 0 ? (
-            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-              No genres found.
-            </div>
-          ) : null}
+        {!loading && visibleGenres.length === 0 ? (
+          <div className="py-10 text-center text-[13px] text-[#8d94a1]">
+            No genres found.
+          </div>
+        ) : null}
 
-          {!loading
-            ? visibleGenres.map((genre) => (
+        {!loading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {visibleGenres.map((genre) => {
+              const active = selected === genre
+
+              return (
                 <button
                   key={genre}
                   type="button"
                   onClick={() => setSelected(genre)}
-                  className={`flex items-center gap-3 rounded-[16px] px-4 py-3 text-left text-[14px] font-bold ${
-                    selected === genre
-                      ? 'bg-[#111827] text-white'
-                      : 'bg-[#fafafe] text-[#111827] ring-1 ring-[#eceaf2]'
+                  className={`flex h-[76px] items-center justify-center rounded-[12px] px-3 text-center text-[14px] font-bold transition active:scale-[0.98] ${
+                    active
+                      ? 'border-2 border-[#FE526E] bg-white text-[#FE526E]'
+                      : 'border border-transparent bg-white text-[#111827]'
                   }`}
                 >
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded border ${
-                      selected === genre
-                        ? 'border-white bg-white text-[#111827]'
-                        : 'border-[#d0d5dd] bg-white'
-                    }`}
-                  >
-                    {selected === genre ? (
-                      <i className="fa-solid fa-check text-[10px]" />
-                    ) : null}
-                  </span>
                   {genre}
                 </button>
-              ))
-            : null}
-        </div>
+              )
+            })}
+          </div>
+        ) : null}
       </main>
     </div>
   )
