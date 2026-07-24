@@ -380,10 +380,13 @@ function StoryTextSheet({
               className="mt-3 flex w-full items-center gap-2 rounded-[10px] px-2 py-2.5 text-left active:bg-[#f7f7fa]"
             >
               <span className="text-[16px]" aria-hidden="true">💡</span>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-[#667085]">
-                {guideLabel}
-              </span>
-              <i className="fa-solid fa-chevron-right text-[11px] text-[#c4c8d1]" />
+              <span className="min-w-0 truncate text-[13px] text-[#667085]">
+  Need help choosing a title?
+</span>
+<span className="ml-1 shrink-0 text-[13px] font-bold text-[#e5484d]">
+  Get title ideas
+</span>
+<i className="fa-solid fa-chevron-right ml-0.5 shrink-0 text-[10px] text-[#e5484d]" />
             </button>
           ) : null}
         </div>
