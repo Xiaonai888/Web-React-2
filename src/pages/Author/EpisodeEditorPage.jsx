@@ -1211,6 +1211,7 @@ function PublishSettingsSheet({
     setDragging(false)
     setGenreOpen(false)
     setTagOpen(false)
+    setLanguagePickerOpen(false)
   }, [open])
 
   const handleDragStart = (event) => {
@@ -1274,286 +1275,307 @@ function PublishSettingsSheet({
     : 'Choose up to 6 tags'
 
   return (
-    <LanguageWheelPicker
-  open={languagePickerOpen}
-  value={storyLanguage}
-  onClose={() => setLanguagePickerOpen(false)}
-  onSave={(language) => {
-    onStoryLanguageChange(language)
-    setLanguagePickerOpen(false)
-  }}
-/>
-      <div
-        className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
-          dragging ? '' : 'transition-transform duration-200'
-        }`}
-        style={{
-          transform: `translateY(${dragY}px)`,
-          willChange: 'transform',
+    <>
+      <LanguageWheelPicker
+        open={languagePickerOpen}
+        value={storyLanguage}
+        onClose={() => setLanguagePickerOpen(false)}
+        onSave={(language) => {
+          onStoryLanguageChange(language)
+          setLanguagePickerOpen(false)
         }}
-        onClick={(event) => event.stopPropagation()}
+      />
+
+      <div
+        className="fixed inset-0 z-[175] flex items-end bg-black/35 sm:items-center sm:justify-center sm:px-4"
+        onClick={onClose}
       >
         <div
-          className="flex touch-none items-center gap-3 bg-white px-4 py-3"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          onTouchCancel={handleDragEnd}
+          className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
+            dragging ? '' : 'transition-transform duration-200'
+          }`}
+          style={{
+            transform: `translateY(${dragY}px)`,
+            willChange: 'transform',
+          }}
+          onClick={(event) => event.stopPropagation()}
         >
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-            aria-label="Close publish"
+          <div
+            className="flex touch-none items-center gap-3 bg-white px-4 py-3"
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            onTouchCancel={handleDragEnd}
           >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+              aria-label="Close publish"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
 
-          <h2 className="text-[15px] font-bold text-[#111827]">Publish</h2>
-        </div>
+            <h2 className="text-[15px] font-bold text-[#111827]">Publish</h2>
+          </div>
 
-        <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
-          {showStorySettings ? (
-            <section>
-              <h3 className="text-[14px] font-bold text-[#111827]">
-                Complete Story Info
-              </h3>
+          <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
+            {showStorySettings ? (
+              <section>
+                <h3 className="text-[14px] font-bold text-[#111827]">
+                  Complete Story Info
+                </h3>
 
-              
-
-              <div className="mt-4">
-                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  <span className="mr-1 text-[#e5484d]">*</span>Main Genre
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setGenreOpen(true)}
-                  className="flex h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 text-left active:bg-[#f2f4f7]"
-                >
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-[#111827]">
-                    {mainGenre || 'Choose a genre'}
+                <div className="mt-4">
+                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                    <span className="mr-1 text-[#e5484d]">*</span>Story Language
                   </span>
-                  <i className="fa-solid fa-chevron-right mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
-                </button>
-              </div>
-
-              <div className="mt-4">
-                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  <span className="mr-1 text-[#e5484d]">*</span>Tags
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setTagOpen(true)}
-                  className="flex min-h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 py-2.5 text-left active:bg-[#f2f4f7]"
-                >
-                  <span
-                    className={`min-w-0 flex-1 truncate text-[12px] ${
-                      storyTags.length ? 'text-[#111827]' : 'text-[#8d94a1]'
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => setLanguagePickerOpen(true)}
+                    className="flex h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] pl-3 pr-2 text-left active:bg-[#f2f4f7]"
                   >
-                    {tagSummary}
-                  </span>
-                  <span className="ml-3 shrink-0 text-[10.5px] text-[#8d94a1]">
-                    {storyTags.length}/6
-                  </span>
-                  <i className="fa-solid fa-chevron-right ml-2 mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
-                </button>
-              </div>
-
-              <div className="mt-5">
-                <div className="text-[12px] font-semibold text-[#111827]">
-                  Update Days
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-[#111827]">
+                      {storyLanguage || 'Choose language'}
+                    </span>
+                    <i className="fa-solid fa-chevron-right mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
+                  </button>
                 </div>
-                <div className="mt-3 grid grid-cols-7 gap-1.5">
-                  {UPDATE_DAY_OPTIONS.map((day) => {
-                    const active = updateDays.includes(day)
 
-                    return (
+                <div className="mt-4">
+                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                    <span className="mr-1 text-[#e5484d]">*</span>Main Genre
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setGenreOpen(true)}
+                    className="flex h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 text-left active:bg-[#f2f4f7]"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-[#111827]">
+                      {mainGenre || 'Choose a genre'}
+                    </span>
+                    <i className="fa-solid fa-chevron-right mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                    <span className="mr-1 text-[#e5484d]">*</span>Tags
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTagOpen(true)}
+                    className="flex min-h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 py-2.5 text-left active:bg-[#f2f4f7]"
+                  >
+                    <span
+                      className={`min-w-0 flex-1 truncate text-[12px] ${
+                        storyTags.length ? 'text-[#111827]' : 'text-[#8d94a1]'
+                      }`}
+                    >
+                      {tagSummary}
+                    </span>
+                    <span className="ml-3 shrink-0 text-[10.5px] text-[#8d94a1]">
+                      {storyTags.length}/6
+                    </span>
+                    <i className="fa-solid fa-chevron-right ml-2 mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
+                  </button>
+                </div>
+
+                <div className="mt-5">
+                  <div className="text-[12px] font-semibold text-[#111827]">
+                    Update Days
+                  </div>
+                  <div className="mt-3 grid grid-cols-7 gap-1.5">
+                    {UPDATE_DAY_OPTIONS.map((day) => {
+                      const active = updateDays.includes(day)
+
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => onToggleUpdateDay(day)}
+                          className={`h-9 rounded-[9px] text-[10.5px] ${
+                            active
+                              ? 'bg-[#111827] text-white'
+                              : 'bg-[#f2f4f7] text-[#555b66]'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="text-[12px] font-semibold text-[#111827]">
+                    Story Status
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {['New', 'Ongoing', 'Completed'].map((status) => (
                       <button
-                        key={day}
+                        key={status}
                         type="button"
-                        onClick={() => onToggleUpdateDay(day)}
-                        className={`h-9 rounded-[9px] text-[10.5px] ${
-                          active
+                        onClick={() => onStoryStatusChange(status)}
+                        className={`h-10 rounded-full text-[11px] ${
+                          storyStatus === status
                             ? 'bg-[#111827] text-white'
                             : 'bg-[#f2f4f7] text-[#555b66]'
                         }`}
                       >
-                        {day}
+                        {status}
                       </button>
-                    )
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-5">
-                <div className="text-[12px] font-semibold text-[#111827]">
-                  Story Status
+                <div className="mt-5 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
+                  <div>
+                    <div className="text-[12px] font-semibold text-[#111827]">
+                      18+ Story
+                    </div>
+                    <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
+                      Show an adult-content warning for the whole story.
+                    </div>
+                  </div>
+                  <SettingsToggle
+                    checked={storyAdult}
+                    onClick={() => onStoryAdultChange(!storyAdult)}
+                    label="Toggle 18+ story"
+                  />
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {['New', 'Ongoing', 'Completed'].map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => onStoryStatusChange(status)}
-                      className={`h-10 rounded-full text-[11px] ${
-                        storyStatus === status
-                          ? 'bg-[#111827] text-white'
-                          : 'bg-[#f2f4f7] text-[#555b66]'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </section>
+            ) : null}
 
-              <div className="mt-5 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
+            <section
+              className={
+                showStorySettings
+                  ? 'mt-7 border-t border-[#f0f1f3] pt-6'
+                  : ''
+              }
+            >
+              <h3 className="text-[14px] font-bold text-[#111827]">
+                Episode Release
+              </h3>
+
+              <div className="mt-4 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
                 <div>
                   <div className="text-[12px] font-semibold text-[#111827]">
-                    18+ Story
+                    18+ Episode
                   </div>
                   <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
-                    Show an adult-content warning for the whole story.
+                    Show a warning before readers open this episode.
                   </div>
                 </div>
                 <SettingsToggle
-                  checked={storyAdult}
-                  onClick={() => onStoryAdultChange(!storyAdult)}
-                  label="Toggle 18+ story"
+                  checked={episodeAdult}
+                  onClick={() => onEpisodeAdultChange(!episodeAdult)}
+                  label="Toggle 18+ episode"
                 />
               </div>
-            </section>
-          ) : null}
 
-          <section
-            className={
-              showStorySettings
-                ? 'mt-7 border-t border-[#f0f1f3] pt-6'
-                : ''
-            }
-          >
-            <h3 className="text-[14px] font-bold text-[#111827]">
-              Episode Release
-            </h3>
+              <div className="mt-4 space-y-2">
+                {[
+                  {
+                    value: 'publish',
+                    title: 'Publish Now',
+                    subtitle: 'Make this episode public immediately.',
+                  },
+                  {
+                    value: 'schedule',
+                    title: 'Schedule',
+                    subtitle: 'Choose a date and time to publish automatically.',
+                  },
+                  {
+                    value: 'draft',
+                    title: 'Save as Draft',
+                    subtitle: 'Keep this episode private and finish it later.',
+                  },
+                ].map((option) => {
+                  const active = releaseOption === option.value
 
-            <div className="mt-4 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
-              <div>
-                <div className="text-[12px] font-semibold text-[#111827]">
-                  18+ Episode
-                </div>
-                <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
-                  Show a warning before readers open this episode.
-                </div>
-              </div>
-              <SettingsToggle
-                checked={episodeAdult}
-                onClick={() => onEpisodeAdultChange(!episodeAdult)}
-                label="Toggle 18+ episode"
-              />
-            </div>
-
-            <div className="mt-4 space-y-2">
-              {[
-                {
-                  value: 'publish',
-                  title: 'Publish Now',
-                  subtitle: 'Make this episode public immediately.',
-                },
-                {
-                  value: 'schedule',
-                  title: 'Schedule',
-                  subtitle: 'Choose a date and time to publish automatically.',
-                },
-                {
-                  value: 'draft',
-                  title: 'Save as Draft',
-                  subtitle: 'Keep this episode private and finish it later.',
-                },
-              ].map((option) => {
-                const active = releaseOption === option.value
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => onReleaseOptionChange(option.value)}
-                    className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left ${
-                      active
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-[#f7f7fa] text-[#111827]'
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[12px] font-semibold">
-                        {option.title}
-                      </div>
-                      <div
-                        className={`mt-0.5 text-[10.5px] leading-4 ${
-                          active ? 'text-white/70' : 'text-[#8d94a1]'
-                        }`}
-                      >
-                        {option.subtitle}
-                      </div>
-                    </div>
-                    <div
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => onReleaseOptionChange(option.value)}
+                      className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left ${
                         active
-                          ? 'border-white bg-white text-[#111827]'
-                          : 'border-[#d0d5dd] bg-white'
+                          ? 'bg-[#111827] text-white'
+                          : 'bg-[#f7f7fa] text-[#111827]'
                       }`}
                     >
-                      {active ? (
-                        <i className="fa-solid fa-check text-[9px]" />
-                      ) : null}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-
-            {releaseOption === 'schedule' ? (
-              <div className="mt-4 grid gap-3 rounded-[10px] bg-[#f7f7fa] p-3 sm:grid-cols-2">
-                <label>
-                  <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
-                    Date
-                  </span>
-                  <input
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(event) => onScheduleDateChange(event.target.value)}
-                    className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
-                  />
-                </label>
-
-                <label>
-                  <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
-                    Time
-                  </span>
-                  <input
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(event) => onScheduleTimeChange(event.target.value)}
-                    className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
-                  />
-                </label>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12px] font-semibold">
+                          {option.title}
+                        </div>
+                        <div
+                          className={`mt-0.5 text-[10.5px] leading-4 ${
+                            active ? 'text-white/70' : 'text-[#8d94a1]'
+                          }`}
+                        >
+                          {option.subtitle}
+                        </div>
+                      </div>
+                      <div
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                          active
+                            ? 'border-white bg-white text-[#111827]'
+                            : 'border-[#d0d5dd] bg-white'
+                        }`}
+                      >
+                        {active ? (
+                          <i className="fa-solid fa-check text-[9px]" />
+                        ) : null}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-            ) : null}
-          </section>
-        </div>
 
-        <div className="shrink-0 bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={!canSave}
-            className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
-          >
-            {saving ? 'Saving...' : 'Publish'}
-          </button>
+              {releaseOption === 'schedule' ? (
+                <div className="mt-4 grid gap-3 rounded-[10px] bg-[#f7f7fa] p-3 sm:grid-cols-2">
+                  <label>
+                    <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
+                      Date
+                    </span>
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(event) => onScheduleDateChange(event.target.value)}
+                      className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
+                    />
+                  </label>
+
+                  <label>
+                    <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
+                      Time
+                    </span>
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(event) => onScheduleTimeChange(event.target.value)}
+                      className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </section>
+          </div>
+
+          <div className="shrink-0 bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!canSave}
+              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+            >
+              {saving ? 'Saving...' : 'Publish'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
