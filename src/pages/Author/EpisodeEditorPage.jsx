@@ -366,6 +366,129 @@ function CropCoverModal({
   )
 }
 
+
+function EpisodeDetailsSheet({
+  open,
+  title,
+  cover,
+  onTitleChange,
+  onCoverChange,
+  onRemoveCover,
+  onClose,
+  onSave,
+}) {
+  if (!open) return null
+
+  const canSave = Boolean(title.trim())
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-end bg-black/35" onClick={onClose}>
+      <div
+        className="max-h-[88vh] w-full overflow-y-auto rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+              aria-label="Close episode details"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+
+            <h2 className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-[#111827]">
+              Episode Details
+            </h2>
+
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!canSave}
+              className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#d0d5dd]"
+            >
+              Save
+            </button>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-2 block text-[13px] font-bold text-[#111827]">
+              Episode Title <span className="text-[#e5484d]">*</span>
+            </label>
+            <input
+              value={title}
+              onChange={(event) => onTitleChange(event.target.value)}
+              maxLength={200}
+              autoFocus
+              placeholder="Enter episode title"
+              className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] font-bold text-[#111827] outline-none placeholder:font-bold placeholder:text-[#a5aab4]"
+            />
+          </div>
+
+          <div className="mt-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[13px] font-bold text-[#111827]">Episode Cover</div>
+              <div className="text-[11px] text-[#8d94a1]">Optional</div>
+            </div>
+            <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
+              If empty, the story cover will be used. Recommended 16:9.
+            </p>
+
+            {cover ? (
+              <div className="mt-3 overflow-hidden rounded-[12px] bg-[#f7f7fa]">
+                <div className="aspect-video w-full overflow-hidden">
+                  <img src={cover} alt="Episode Cover" className="h-full w-full object-cover" />
+                </div>
+
+                <div className="flex items-center gap-2 p-3">
+                  <label className="flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[12px] font-bold text-white active:scale-95">
+                    Replace
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        onCoverChange(event.target.files?.[0] || null)
+                        event.target.value = ''
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={onRemoveCover}
+                    className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#f2f4f7] text-[12px] font-bold text-[#555b66] active:scale-95"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="mt-3 flex aspect-video cursor-pointer flex-col items-center justify-center rounded-[12px] bg-[#f7f7fa] text-center active:scale-[0.99]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
+                  <i className="fa-regular fa-image text-[14px]" />
+                </div>
+                <div className="mt-3 text-[13px] font-bold text-[#111827]">Add Episode Cover</div>
+                <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    onCoverChange(event.target.files?.[0] || null)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetry, disabled }) {
   const busy = ['queued', 'processing', 'uploading'].includes(page.status)
   const statusLabel =
@@ -504,6 +627,10 @@ export default function EpisodeEditorPage() {
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
   const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
+  const [episodeDetailsOpen, setEpisodeDetailsOpen] = useState(false)
+  const [draftEpisodeTitle, setDraftEpisodeTitle] = useState('')
+  const [draftEpisodeCover, setDraftEpisodeCover] = useState('')
+  const [draftCoverChanged, setDraftCoverChanged] = useState(false)
 
   const isManga = storyType === 'manga'
   const characterCount = content.length
@@ -721,15 +848,35 @@ export default function EpisodeEditorPage() {
     showToast('Paragraphs cleaned. Please review before saving.')
   }
 
-  const handleTitleChange = (event) => {
-    setEpisodeTitle(event.target.value)
-    markUnsaved()
+  const openEpisodeDetails = () => {
+    setDraftEpisodeTitle(episodeTitle)
+    setDraftEpisodeCover(episodeCover)
+    setDraftCoverChanged(coverChanged)
+    setEpisodeDetailsOpen(true)
   }
 
-  const handleTitleBlur = () => {
-    if (!episodeTitle.trim()) return
-    setEpisodeTitle(episodeTitle.trim())
-    setSaveStatus('Saved')
+  const closeEpisodeDetails = () => {
+    setDraftEpisodeTitle(episodeTitle)
+    setDraftEpisodeCover(episodeCover)
+    setDraftCoverChanged(coverChanged)
+    setEpisodeDetailsOpen(false)
+  }
+
+  const saveEpisodeDetails = () => {
+    const nextTitle = draftEpisodeTitle.trim()
+    if (!nextTitle) return
+
+    const detailsChanged =
+      nextTitle !== episodeTitle ||
+      draftEpisodeCover !== episodeCover ||
+      draftCoverChanged !== coverChanged
+
+    setEpisodeTitle(nextTitle)
+    setEpisodeCover(draftEpisodeCover)
+    setCoverChanged(draftCoverChanged)
+    setEpisodeDetailsOpen(false)
+
+    if (detailsChanged) markUnsaved()
   }
 
   const handleUndo = () => {
@@ -762,7 +909,7 @@ export default function EpisodeEditorPage() {
     setCrop({ x: 0, y: 0 })
     setZoom(1)
     setCroppedAreaPixels(null)
-    setCoverChanged(true)
+    setDraftCoverChanged(true)
     setCropOpen(true)
   }
 
@@ -774,10 +921,9 @@ export default function EpisodeEditorPage() {
 
     try {
       const croppedImage = await getCroppedImage(tempCover, croppedAreaPixels)
-      setEpisodeCover(croppedImage)
-      setCoverChanged(true)
+      setDraftEpisodeCover(croppedImage)
+      setDraftCoverChanged(true)
       setCropOpen(false)
-      markUnsaved()
     } catch {
       showToast('Could not save crop. Please try another image.')
     }
@@ -1098,6 +1244,20 @@ export default function EpisodeEditorPage() {
 
     <Toast message={toast} onClose={() => setToast('')} />
 
+      <EpisodeDetailsSheet
+        open={episodeDetailsOpen}
+        title={draftEpisodeTitle}
+        cover={draftEpisodeCover}
+        onTitleChange={setDraftEpisodeTitle}
+        onCoverChange={handleCoverChange}
+        onRemoveCover={() => {
+          setDraftEpisodeCover('')
+          setDraftCoverChanged(true)
+        }}
+        onClose={closeEpisodeDetails}
+        onSave={saveEpisodeDetails}
+      />
+
       <CropCoverModal
         open={cropOpen}
         image={tempCover}
@@ -1174,6 +1334,15 @@ export default function EpisodeEditorPage() {
               </button>
             </>
           ) : null}
+
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={!isValidForNext}
+            className="ml-1 h-9 shrink-0 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:opacity-40"
+          >
+            {loading ? 'Saving...' : 'Next'}
+          </button>
         </div>
       </header>
 
@@ -1208,77 +1377,31 @@ export default function EpisodeEditorPage() {
         {!pageLoading ? (
   <>
     <div className="overflow-hidden bg-white sm:mt-4 sm:rounded-[12px] sm:shadow-sm md:contents">
-      <section className="bg-white px-4 pb-4 pt-3 sm:p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
-              <input
-                value={episodeTitle}
-                onChange={handleTitleChange}
-                onBlur={handleTitleBlur}
-                placeholder="Enter episode title"
-                className="w-full border-0 border-b border-[#f0f1f3] bg-transparent px-0 py-3 text-[19px] font-bold text-[#111827] outline-none placeholder:font-bold placeholder:text-[#a5aab4]"
-              />
+      <section className="bg-white px-4 py-3 md:mt-4 md:rounded-[12px] md:shadow-sm">
+        <button
+          type="button"
+          onClick={openEpisodeDetails}
+          className="flex min-h-[54px] w-full items-center gap-3 border-b border-[#f0f1f3] text-left active:bg-[#fafafa]"
+        >
+          <div
+            className={`min-w-0 flex-1 truncate text-[14px] font-bold ${
+              episodeTitle ? 'text-[#111827]' : 'text-[#a5aab4]'
+            }`}
+          >
+            {episodeTitle || 'Enter episode title'}
+          </div>
 
-              <div className="mt-4">
-                <div className="mb-2">
-                  <div className="text-[13px] font-extrabold text-[#111827]">Episode Cover</div>
-                  <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                    Optional. If empty, story cover will be used. Recommended 16:9.
-                  </div>
-                </div>
+          {episodeCover ? (
+            <img
+              src={episodeCover}
+              alt=""
+              className="h-9 w-16 shrink-0 rounded-[8px] object-cover"
+            />
+          ) : null}
 
-                <ImageDropZone
-                  onFiles={(files) => handleCoverChange(files[0] || null)}
-                  className="rounded-[18px]"
-                  label="Drop episode cover here"
-                >
-                  {episodeCover ? (
-                    <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafefe] text-left">
-                      <div className="aspect-[16/9] w-full overflow-hidden">
-                        <img src={episodeCover} alt="Episode Cover" className="h-full w-full object-cover" />
-                      </div>
-                      <div className="flex items-center justify-between gap-3 border-t border-[#eceaf2] bg-white px-4 py-3">
-                        <div>
-                          <div className="text-[12px] font-extrabold text-[#111827]">Cover loaded</div>
-                          <div className="mt-0.5 text-[11px] text-[#8d94a1]">Drop or upload a new image to replace it</div>
-                        </div>
-                        <label className="cursor-pointer rounded-full bg-[#111827] px-3 py-1.5 text-[11px] font-extrabold text-white">
-                          Replace
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(event) => {
-                              handleCoverChange(event.target.files?.[0] || null)
-                              event.target.value = ''
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ) : (
-                    <label className="block cursor-pointer overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                      <div className="flex aspect-[16/9] w-full items-center justify-center text-center">
-                        <div>
-                          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                            <i className="fa-regular fa-image text-[15px]" />
-                          </div>
-                          <div className="mt-3 text-[13px] font-extrabold text-[#111827]">Drop or Tap Cover</div>
-                          <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
-                        </div>
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(event) => {
-                          handleCoverChange(event.target.files?.[0] || null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-                  )}
-                </ImageDropZone>
-              </div>
-            </section>
+          <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
+        </button>
+      </section>
 
             {isManga ? (
               <section className="bg-white p-4 md:mt-4 md:rounded-[12px] md:shadow-sm">
