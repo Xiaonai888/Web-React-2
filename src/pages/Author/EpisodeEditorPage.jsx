@@ -1321,6 +1321,425 @@ function AdultHintPopup({ open, title, description, onClose }) {
   )
 }
 
+const RELEASE_OPTION_ITEMS = [
+  {
+    value: 'publish',
+    title: 'Publish Now',
+    subtitle: 'Make this episode public immediately.',
+  },
+  {
+    value: 'schedule',
+    title: 'Schedule',
+    subtitle: 'Choose a future date and time.',
+  },
+  {
+    value: 'draft',
+    title: 'Save as Draft',
+    subtitle: 'Keep this episode private and finish it later.',
+  },
+]
+
+const RELEASE_OPTION_LABELS = {
+  publish: 'Publish Now',
+  schedule: 'Schedule',
+  draft: 'Save as Draft',
+}
+
+function padScheduleNumber(value) {
+  return String(value).padStart(2, '0')
+}
+
+function getScheduleDays(year, month) {
+  return new Date(year, month, 0).getDate()
+}
+
+function formatScheduleLabel(date, time) {
+  if (!date || !time) return 'Choose date & time'
+
+  const value = new Date(`${date}T${time}:00`)
+
+  if (Number.isNaN(value.getTime())) {
+    return 'Choose date & time'
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(value)
+}
+
+function ReleaseOptionSheet({
+  open,
+  value,
+  onClose,
+  onSelect,
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[230] flex items-end bg-black/35 sm:items-center sm:justify-center sm:px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full rounded-t-[18px] bg-white px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-4 sm:max-w-[420px] sm:rounded-[18px]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-[14px] font-bold text-[#111827]">
+            Release Option
+          </h3>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center text-[#111827]"
+            aria-label="Close release options"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div className="mt-3 space-y-1">
+          {RELEASE_OPTION_ITEMS.map((option) => {
+            const active = value === option.value
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onSelect(option.value)}
+                className="flex w-full items-center gap-3 py-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-[13px] ${
+                      active
+                        ? 'font-semibold text-[#111827]'
+                        : 'font-normal text-[#344054]'
+                    }`}
+                  >
+                    {option.title}
+                  </div>
+
+                  <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+                    {option.subtitle}
+                  </div>
+                </div>
+
+                <div
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                    active
+                      ? 'border-[#FE526E] bg-[#FE526E] text-white'
+                      : 'border-[#d0d5dd] bg-white'
+                  }`}
+                >
+                  {active ? (
+                    <i className="fa-solid fa-check text-[9px]" />
+                  ) : null}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScheduleWheelColumn({
+  items,
+  value,
+  onChange,
+  className = 'w-[52px]',
+}) {
+  const listRef = useRef(null)
+  const itemHeight = 44
+
+  useEffect(() => {
+    const index = Math.max(
+      0,
+      items.findIndex(
+        (item) => String(item.value) === String(value)
+      )
+    )
+
+    const frame = window.requestAnimationFrame(() => {
+      listRef.current?.scrollTo({
+        top: index * itemHeight,
+        behavior: 'auto',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [items.length, value])
+
+  return (
+    <div className={`relative h-[132px] overflow-hidden ${className}`}>
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-11 -translate-y-1/2 rounded-[8px] bg-[#f2f4f7]" />
+
+      <div
+        ref={listRef}
+        onScroll={(event) => {
+          const index = Math.round(
+            event.currentTarget.scrollTop / itemHeight
+          )
+
+          const safeIndex = Math.max(
+            0,
+            Math.min(items.length - 1, index)
+          )
+
+          onChange(items[safeIndex].value)
+        }}
+        className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto py-11 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {items.map((item) => {
+          const active = String(item.value) === String(value)
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => {
+                onChange(item.value)
+
+                const index = items.findIndex(
+                  (entry) =>
+                    String(entry.value) === String(item.value)
+                )
+
+                listRef.current?.scrollTo({
+                  top: index * itemHeight,
+                  behavior: 'smooth',
+                })
+              }}
+              className={`flex h-11 w-full snap-center items-center justify-center text-[14px] transition ${
+                active
+                  ? 'font-semibold text-[#111827]'
+                  : 'font-normal text-[#98a2b3] opacity-40'
+              }`}
+            >
+              {item.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-30 bg-[linear-gradient(to_bottom,#ffffff_0%,rgba(255,255,255,0.88)_18%,transparent_40%,transparent_60%,rgba(255,255,255,0.88)_82%,#ffffff_100%)]" />
+    </div>
+  )
+}
+
+function ScheduleWheelPicker({
+  open,
+  date,
+  time,
+  onClose,
+  onSave,
+}) {
+  const now = new Date()
+  const defaultTime = new Date(Date.now() + 60 * 60 * 1000)
+
+  const [year, setYear] = useState(defaultTime.getFullYear())
+  const [month, setMonth] = useState(defaultTime.getMonth() + 1)
+  const [day, setDay] = useState(defaultTime.getDate())
+  const [hour, setHour] = useState(defaultTime.getHours())
+  const [minute, setMinute] = useState(defaultTime.getMinutes())
+
+  useEffect(() => {
+    if (!open) return
+
+    let initial =
+      date && time
+        ? new Date(`${date}T${time}:00`)
+        : new Date(Date.now() + 60 * 60 * 1000)
+
+    if (
+      Number.isNaN(initial.getTime()) ||
+      initial.getTime() <= Date.now()
+    ) {
+      initial = new Date(Date.now() + 60 * 60 * 1000)
+    }
+
+    initial.setSeconds(0, 0)
+
+    setYear(initial.getFullYear())
+    setMonth(initial.getMonth() + 1)
+    setDay(initial.getDate())
+    setHour(initial.getHours())
+    setMinute(initial.getMinutes())
+  }, [open, date, time])
+
+  useEffect(() => {
+    const maximumDay = getScheduleDays(year, month)
+
+    if (day > maximumDay) {
+      setDay(maximumDay)
+    }
+  }, [year, month, day])
+
+  const years = useMemo(() => {
+    const firstYear = now.getFullYear()
+    const lastYear = Math.max(firstYear + 5, year)
+
+    return Array.from(
+      { length: lastYear - firstYear + 1 },
+      (_, index) => {
+        const value = firstYear + index
+        return { value, label: String(value) }
+      }
+    )
+  }, [year])
+
+  const months = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        value: index + 1,
+        label: padScheduleNumber(index + 1),
+      })),
+    []
+  )
+
+  const days = useMemo(
+    () =>
+      Array.from(
+        { length: getScheduleDays(year, month) },
+        (_, index) => ({
+          value: index + 1,
+          label: padScheduleNumber(index + 1),
+        })
+      ),
+    [year, month]
+  )
+
+  const hours = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, index) => ({
+        value: index,
+        label: padScheduleNumber(index),
+      })),
+    []
+  )
+
+  const minutes = useMemo(
+    () =>
+      Array.from({ length: 60 }, (_, index) => ({
+        value: index,
+        label: padScheduleNumber(index),
+      })),
+    []
+  )
+
+  if (!open) return null
+
+  const selectedDate = new Date(
+    year,
+    month - 1,
+    day,
+    hour,
+    minute,
+    0,
+    0
+  )
+
+  const isPast = selectedDate.getTime() <= Date.now()
+
+  return (
+    <div
+      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[360px] rounded-[18px] bg-white px-4 pb-4 pt-3"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-9 px-2 text-[13px] font-normal text-[#667085]"
+          >
+            Cancel
+          </button>
+
+          <h3 className="text-[14px] font-bold text-[#111827]">
+            Schedule Release
+          </h3>
+
+          <button
+            type="button"
+            disabled={isPast}
+            onClick={() =>
+              onSave(
+                `${year}-${padScheduleNumber(month)}-${padScheduleNumber(day)}`,
+                `${padScheduleNumber(hour)}:${padScheduleNumber(minute)}`
+              )
+            }
+            className="h-9 px-2 text-[13px] font-semibold text-[#FE526E] disabled:text-[#d0d5dd]"
+          >
+            OK
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <ScheduleWheelColumn
+            items={years}
+            value={year}
+            onChange={setYear}
+            className="w-[68px]"
+          />
+
+          <ScheduleWheelColumn
+            items={months}
+            value={month}
+            onChange={setMonth}
+          />
+
+          <ScheduleWheelColumn
+            items={days}
+            value={day}
+            onChange={setDay}
+          />
+
+          <ScheduleWheelColumn
+            items={hours}
+            value={hour}
+            onChange={setHour}
+          />
+
+          <span className="text-[16px] font-semibold text-[#111827]">
+            :
+          </span>
+
+          <ScheduleWheelColumn
+            items={minutes}
+            value={minute}
+            onChange={setMinute}
+          />
+        </div>
+
+        <div className="mt-2 grid grid-cols-5 text-center text-[10px] font-normal text-[#98a2b3]">
+          <span>Year</span>
+          <span>Month</span>
+          <span>Day</span>
+          <span>Hour</span>
+          <span>Minute</span>
+        </div>
+
+        {isPast ? (
+          <div className="mt-3 text-center text-[11px] font-normal text-[#D92D20]">
+            Please choose a future date and time.
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function PublishSettingsSheet({
   open,
   showStorySettings,
@@ -1357,6 +1776,8 @@ function PublishSettingsSheet({
   const dragStartY = useRef(0)
   const [languagePickerOpen, setLanguagePickerOpen] = useState(false)
   const [activeHint, setActiveHint] = useState('')
+  const [releasePickerOpen, setReleasePickerOpen] = useState(false)
+  const [schedulePickerOpen, setSchedulePickerOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return undefined
@@ -1381,6 +1802,8 @@ function PublishSettingsSheet({
     setTagOpen(false)
     setLanguagePickerOpen(false)
     setActiveHint('')
+    setReleasePickerOpen(false)
+    setSchedulePickerOpen(false)
   }, [open])
 
   const handleDragStart = (event) => {
@@ -1458,6 +1881,36 @@ function PublishSettingsSheet({
   description="Turn this on when this episode contains mature or adult content. Readers will see a warning before opening the episode."
   onClose={() => setActiveHint('')}
 />
+
+      <ReleaseOptionSheet
+  open={releasePickerOpen}
+  value={releaseOption}
+  onClose={() => setReleasePickerOpen(false)}
+  onSelect={(option) => {
+    setReleasePickerOpen(false)
+
+    if (option === 'schedule') {
+      setSchedulePickerOpen(true)
+      return
+    }
+
+    onReleaseOptionChange(option)
+  }}
+/>
+
+<ScheduleWheelPicker
+  open={schedulePickerOpen}
+  date={scheduleDate}
+  time={scheduleTime}
+  onClose={() => setSchedulePickerOpen(false)}
+  onSave={(nextDate, nextTime) => {
+    onScheduleDateChange(nextDate)
+    onScheduleTimeChange(nextTime)
+    onReleaseOptionChange('schedule')
+    setSchedulePickerOpen(false)
+  }}
+/>
+      
       <LanguageWheelPicker
         open={languagePickerOpen}
         value={storyLanguage}
@@ -1664,92 +2117,45 @@ function PublishSettingsSheet({
                 />
               </div>
 
-              <div className="mt-4 space-y-2">
-                {[
-                  {
-                    value: 'publish',
-                    title: 'Publish Now',
-                    subtitle: 'Make this episode public immediately.',
-                  },
-                  {
-                    value: 'schedule',
-                    title: 'Schedule',
-                    subtitle: 'Choose a date and time to publish automatically.',
-                  },
-                  {
-                    value: 'draft',
-                    title: 'Save as Draft',
-                    subtitle: 'Keep this episode private and finish it later.',
-                  },
-                ].map((option) => {
-                  const active = releaseOption === option.value
+              <div className="mt-5 space-y-1">
+  <button
+    type="button"
+    onClick={() => setReleasePickerOpen(true)}
+    className="flex w-full items-center justify-between gap-4 py-3 text-left"
+  >
+    <span className="text-[12px] font-normal text-[#111827]">
+      Release Option
+    </span>
 
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => onReleaseOptionChange(option.value)}
-                      className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left ${
-                        active
-                          ? 'bg-[#111827] text-white'
-                          : 'bg-[#f7f7fa] text-[#111827]'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[12px] font-semibold">
-                          {option.title}
-                        </div>
-                        <div
-                          className={`mt-0.5 text-[10.5px] leading-4 ${
-                            active ? 'text-white/70' : 'text-[#8d94a1]'
-                          }`}
-                        >
-                          {option.subtitle}
-                        </div>
-                      </div>
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                          active
-                            ? 'border-white bg-white text-[#111827]'
-                            : 'border-[#d0d5dd] bg-white'
-                        }`}
-                      >
-                        {active ? (
-                          <i className="fa-solid fa-check text-[9px]" />
-                        ) : null}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+    <span className="flex min-w-0 items-center gap-3">
+      <span className="truncate text-[12px] font-normal text-[#555b66]">
+        {RELEASE_OPTION_LABELS[releaseOption] || 'Publish Now'}
+      </span>
 
-              {releaseOption === 'schedule' ? (
-                <div className="mt-4 grid gap-3 rounded-[10px] bg-[#f7f7fa] p-3 sm:grid-cols-2">
-                  <label>
-                    <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
-                      Date
-                    </span>
-                    <input
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(event) => onScheduleDateChange(event.target.value)}
-                      className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
-                    />
-                  </label>
+      <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
+    </span>
+  </button>
 
-                  <label>
-                    <span className="mb-2 block text-[11px] font-semibold text-[#555b66]">
-                      Time
-                    </span>
-                    <input
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(event) => onScheduleTimeChange(event.target.value)}
-                      className="h-11 w-full rounded-[9px] bg-white px-3 text-[13px] text-[#111827] outline-none"
-                    />
-                  </label>
-                </div>
-              ) : null}
+  {releaseOption === 'schedule' ? (
+    <button
+      type="button"
+      onClick={() => setSchedulePickerOpen(true)}
+      className="flex w-full items-center justify-between gap-4 py-3 text-left"
+    >
+      <span className="text-[12px] font-normal text-[#111827]">
+        Release Time
+      </span>
+
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="truncate text-[12px] font-normal text-[#555b66]">
+          {formatScheduleLabel(scheduleDate, scheduleTime)}
+        </span>
+
+        <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
+      </span>
+    </button>
+  ) : null}
+</div>
             </section>
           </div>
 
