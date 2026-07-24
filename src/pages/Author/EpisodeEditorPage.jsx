@@ -34,29 +34,86 @@ const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 30000
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
-const STORY_TAG_OPTIONS = [
-  'CEO',
-  'Slow Burn',
-  'Enemies to Lovers',
-  'Time Travel',
-  'Revenge',
-  'Strong Female Lead',
-  'Hidden Identity',
-  'Royalty',
-  'Magic',
-  'Supernatural',
-  'Second Chance',
-  'Cold Male Lead',
+const STORY_TAG_GROUPS = [
+  {
+    name: 'Characters',
+    tags: [
+      'CEO',
+      'Strong Female Lead',
+      'Cold Male Lead',
+      'Hidden Identity',
+      'Royalty',
+      'Villain',
+      'Mafia',
+      'Vampire',
+    ],
+  },
+  {
+    name: 'Relationship',
+    tags: [
+      'Slow Burn',
+      'Enemies to Lovers',
+      'Age Gap',
+      'Childhood Sweetheart',
+      'Second Chance',
+      'Contract Marriage',
+      'Love After Marriage',
+      'Forbidden Love',
+    ],
+  },
+  {
+    name: 'Plot',
+    tags: [
+      'Revenge',
+      'Time Travel',
+      'Rebirth',
+      'Mystery',
+      'Adventure',
+      'Action',
+      'Tragic',
+      'Fated',
+    ],
+  },
+  {
+    name: 'Setting & World',
+    tags: [
+      'School Life',
+      'Historical',
+      'Modern Fantasy',
+      'Ancient Romance',
+      'Supernatural',
+      'Magic',
+      'Sci-Fi',
+      'Urban Romance',
+    ],
+  },
+  {
+    name: 'Mood & Theme',
+    tags: [
+      'Sweet',
+      'Dark Romance',
+      'Comedy',
+      'Healing',
+      'Emotional',
+      'Suspense',
+      'Family',
+      'Friendship',
+    ],
+  },
+  {
+    name: 'LGBTQ+',
+    tags: [
+      'Boys’ Love',
+      'Girls’ Love',
+      'Omegaverse',
+      'LGBTQ+',
+    ],
+  },
 ]
-const UPDATE_DAY_OPTIONS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
+const STORY_TAG_OPTIONS = STORY_TAG_GROUPS.flatMap(
+  (group) => group.tags
+)
 
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
@@ -898,27 +955,30 @@ function GenreSheet({
 function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
   const [search, setSearch] = useState('')
+  const [activeGroup, setActiveGroup] = useState('All')
   const [customOpen, setCustomOpen] = useState(false)
   const [customTag, setCustomTag] = useState('')
 
   useEffect(() => {
     if (!open) return
+
     setSelected(value || [])
     setSearch('')
+    setActiveGroup('All')
     setCustomOpen(false)
     setCustomTag('')
   }, [open, value])
 
   if (!open) return null
 
-  const visibleTags = STORY_TAG_OPTIONS.filter((tag) =>
-    tag.toLowerCase().includes(search.trim().toLowerCase())
-  )
-
   const toggleTag = (tag) => {
     setSelected((current) => {
-      if (current.includes(tag)) return current.filter((item) => item !== tag)
+      if (current.includes(tag)) {
+        return current.filter((item) => item !== tag)
+      }
+
       if (current.length >= 6) return current
+
       return [...current, tag]
     })
   }
@@ -936,9 +996,24 @@ function TagSheet({ open, value, onClose, onSave }) {
     setCustomOpen(false)
   }
 
+  const query = search.trim().toLowerCase()
+
+  const visibleGroups = STORY_TAG_GROUPS
+    .filter(
+      (group) =>
+        activeGroup === 'All' || group.name === activeGroup
+    )
+    .map((group) => ({
+      ...group,
+      tags: group.tags.filter((tag) =>
+        tag.toLowerCase().includes(query)
+      ),
+    }))
+    .filter((group) => group.tags.length > 0)
+
   return (
     <div className="fixed inset-0 z-[190] overflow-y-auto bg-white">
-      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
+      <header className="sticky top-0 z-10 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
@@ -948,11 +1023,15 @@ function TagSheet({ open, value, onClose, onSave }) {
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
-          <h2 className="text-[17px] font-bold text-[#111827]">Add Tags</h2>
+
+          <h2 className="text-[17px] font-bold text-[#111827]">
+            Add Tags
+          </h2>
+
           <button
             type="button"
             onClick={() => onSave(selected)}
-            className="text-[14px] font-bold text-[#0b5cff]"
+            className="text-[14px] font-normal text-[#0b5cff]"
           >
             Save
           </button>
@@ -960,19 +1039,39 @@ function TagSheet({ open, value, onClose, onSave }) {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-5">
-        <div className="mb-4 flex h-12 items-center rounded-full bg-[#f2f4f7] px-4">
-          <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+        <div className="flex h-12 items-center rounded-full bg-[#f5f5f7] px-4">
+          <i className="fa-solid fa-magnifying-glass mr-3 text-[#a5aab4]" />
+
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search Tag"
-            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+            placeholder="Search & Custom Tags"
+            className="min-w-0 flex-1 bg-transparent text-[14px] font-normal text-[#111827] outline-none placeholder:text-[#a5aab4]"
           />
         </div>
 
-        <div className="mb-5">
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {['All', ...STORY_TAG_GROUPS.map((group) => group.name)].map(
+            (group) => (
+              <button
+                key={group}
+                type="button"
+                onClick={() => setActiveGroup(group)}
+                className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
+                  activeGroup === group
+                    ? 'bg-[#e9ecef] text-[#111827]'
+                    : 'bg-[#f7f7f7] text-[#98a2b3]'
+                }`}
+              >
+                {group}
+              </button>
+            )
+          )}
+        </div>
+
+        <div className="mt-6">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[14px] font-bold text-[#111827]">
+            <div className="text-[14px] font-normal text-[#111827]">
               Selected ({selected.length}/6)
             </div>
 
@@ -980,68 +1079,96 @@ function TagSheet({ open, value, onClose, onSave }) {
               type="button"
               onClick={() => setCustomOpen((current) => !current)}
               disabled={selected.length >= 6}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white disabled:bg-[#d0d5dd]"
             >
               + Custom
             </button>
           </div>
 
           {customOpen ? (
-            <div className="mt-3 flex items-center gap-2 rounded-[16px] bg-[#f2f4f7] p-2">
+            <div className="mt-3 flex items-center gap-2 rounded-[12px] bg-[#f5f5f7] p-2">
               <input
                 value={customTag}
-                onChange={(event) => setCustomTag(event.target.value)}
+                onChange={(event) =>
+                  setCustomTag(event.target.value)
+                }
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') addCustom()
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    addCustom()
+                  }
                 }}
                 placeholder="Write your custom tag"
                 autoFocus
-                className="h-10 min-w-0 flex-1 bg-transparent px-3 text-[13px] text-[#111827] outline-none"
+                className="h-10 min-w-0 flex-1 bg-transparent px-3 text-[13px] font-normal text-[#111827] outline-none"
               />
 
               <button
                 type="button"
                 onClick={addCustom}
-                disabled={!customTag.trim() || selected.length >= 6}
-                className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
+                disabled={
+                  !customTag.trim() || selected.length >= 6
+                }
+                className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-normal text-white disabled:bg-[#d0d5dd]"
               >
                 Add
               </button>
             </div>
           ) : null}
+
+          {selected.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {selected.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className="rounded-full bg-[#FFF1F3] px-4 py-2 text-[12px] font-normal text-[#FE526E]"
+                >
+                  {tag}
+                  <span className="ml-2 text-[#FE526E]">×</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
 
-        {selected.length ? (
-          <div className="mb-7 flex flex-wrap gap-2">
-            {selected.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                className="rounded-full bg-[#111827] px-3 py-1.5 text-[12px] font-bold text-white"
-              >
-                {tag} ×
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <div className="mt-7 space-y-7">
+          {visibleGroups.map((group) => (
+            <section key={group.name}>
+              <h3 className="text-[15px] font-bold text-[#111827]">
+                {group.name}
+              </h3>
 
-        <div className="mb-3 text-[14px] font-bold text-[#111827]">All Tags</div>
-        <div className="flex flex-wrap gap-2">
-          {visibleTags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              className={`rounded-full px-4 py-2 text-[12px] font-bold ${
-                selected.includes(tag)
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-[#f5f3fa] text-[#111827]'
-              }`}
-            >
-              {tag}
-            </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {group.tags.map((tag) => {
+                  const active = selected.includes(tag)
+
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      disabled={!active && selected.length >= 6}
+                      className={`rounded-full px-4 py-2 text-[12px] font-normal ${
+                        active
+  ? 'bg-[#FFF1F3] text-[#FE526E]'
+  : 'bg-[#f7f7f7] text-[#98a2b3]'
+                      } disabled:opacity-40`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
           ))}
+
+          {!visibleGroups.length ? (
+            <div className="py-10 text-center text-[13px] font-normal text-[#98a2b3]">
+              No tags found.
+            </div>
+          ) : null}
         </div>
       </main>
     </div>
