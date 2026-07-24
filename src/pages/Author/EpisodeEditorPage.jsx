@@ -1042,6 +1042,118 @@ function TagSheet({ open, value, onClose, onSave }) {
   )
 }
 
+function LanguageWheelPicker({ open, value, onClose, onSave }) {
+  const listRef = useRef(null)
+  const itemHeight = 48
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const index = Math.max(0, STORY_LANGUAGES.indexOf(value))
+    setSelectedIndex(index)
+
+    const frame = window.requestAnimationFrame(() => {
+      listRef.current?.scrollTo({
+        top: index * itemHeight,
+        behavior: 'auto',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [open, value])
+
+  if (!open) return null
+
+  const selectedLanguage =
+    STORY_LANGUAGES[selectedIndex] || STORY_LANGUAGES[0]
+
+  return (
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center bg-black/35 px-6"
+      onClick={(event) => {
+        event.stopPropagation()
+        onClose()
+      }}
+    >
+      <div
+        className="w-full max-w-[320px] rounded-[18px] bg-white p-4 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-9 px-2 text-[13px] text-[#667085]"
+          >
+            Cancel
+          </button>
+
+          <h3 className="text-[14px] font-bold text-[#111827]">
+            Story Language
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => onSave(selectedLanguage)}
+            className="h-9 px-2 text-[13px] font-semibold text-[#111827]"
+          >
+            Done
+          </button>
+        </div>
+
+        <div className="relative mt-3 h-[192px] overflow-hidden">
+          <div className="pointer-events-none absolute inset-x-2 top-1/2 z-10 h-12 -translate-y-1/2 rounded-[10px] bg-[#f2f4f7]" />
+
+          <div
+            ref={listRef}
+            onScroll={(event) => {
+              const index = Math.round(
+                event.currentTarget.scrollTop / itemHeight
+              )
+
+              setSelectedIndex(
+                Math.max(
+                  0,
+                  Math.min(STORY_LANGUAGES.length - 1, index)
+                )
+              )
+            }}
+            className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto py-[72px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {STORY_LANGUAGES.map((language, index) => {
+              const active = selectedIndex === index
+
+              return (
+                <button
+                  key={language}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIndex(index)
+                    listRef.current?.scrollTo({
+                      top: index * itemHeight,
+                      behavior: 'smooth',
+                    })
+                  }}
+                  className={`flex h-12 w-full snap-center items-center justify-center text-[15px] transition ${
+                    active
+                      ? 'font-semibold text-[#111827]'
+                      : 'font-normal text-[#98a2b3] opacity-40'
+                  }`}
+                >
+                  {language}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 z-30 bg-[linear-gradient(to_bottom,#ffffff_0%,rgba(255,255,255,0.82)_20%,transparent_42%,transparent_58%,rgba(255,255,255,0.82)_80%,#ffffff_100%)]" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PublishSettingsSheet({
   open,
   showStorySettings,
@@ -1076,6 +1188,7 @@ function PublishSettingsSheet({
   const [genreOpen, setGenreOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const dragStartY = useRef(0)
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return undefined
@@ -1161,10 +1274,15 @@ function PublishSettingsSheet({
     : 'Choose up to 6 tags'
 
   return (
-    <div
-      className="fixed inset-0 z-[175] flex items-end bg-black/35 sm:items-center sm:justify-center sm:px-4"
-      onClick={onClose}
-    >
+    <LanguageWheelPicker
+  open={languagePickerOpen}
+  value={storyLanguage}
+  onClose={() => setLanguagePickerOpen(false)}
+  onSave={(language) => {
+    onStoryLanguageChange(language)
+    setLanguagePickerOpen(false)
+  }}
+/>
       <div
         className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
           dragging ? '' : 'transition-transform duration-200'
@@ -1201,25 +1319,7 @@ function PublishSettingsSheet({
                 Complete Story Info
               </h3>
 
-              <div className="mt-4">
-                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                  <span className="mr-1 text-[#e5484d]">*</span>Story Language
-                </span>
-                <div className="relative">
-                  <select
-                    value={storyLanguage}
-                    onChange={(event) => onStoryLanguageChange(event.target.value)}
-                    className="h-11 w-full appearance-none rounded-[10px] bg-[#f7f7fa] px-3 pr-11 text-[13px] text-[#111827] outline-none"
-                  >
-                    {STORY_LANGUAGES.map((language) => (
-                      <option key={language} value={language}>
-                        {language}
-                      </option>
-                    ))}
-                  </select>
-                  <i className="fa-solid fa-chevron-right pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#98a2b3]" />
-                </div>
-              </div>
+              
 
               <div className="mt-4">
                 <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
