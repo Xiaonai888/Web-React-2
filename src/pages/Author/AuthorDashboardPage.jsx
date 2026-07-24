@@ -648,7 +648,7 @@ return {
               className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
               aria-label="Notifications"
             >
-              <i className="fa-regular fa-bell text-[16px]" />
+              <i className="fa-regular fa-bell text-[16px] font-normal" />
 
               {unreadNotifications > 0 ? (
                 <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#8251e9] bg-[#f43f5e] px-1 text-[8px] font-black leading-none text-white">
@@ -663,7 +663,7 @@ return {
   className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
   aria-label="Mailbox"
 >
-  <i className="fa-regular fa-envelope text-[18px]" />
+  <i className="fa-regular fa-envelope text-[17px] font-normal" />
 </button>
           </div>
         </div>
@@ -697,7 +697,7 @@ return {
               {getGreeting()},
             </div>
 
-            <div className="mt-0.5 line-clamp-1 text-[23px] font-black tracking-[-0.02em] text-white">
+            <div className="mt-0.5 line-clamp-1 text-[20px] font-bold tracking-[-0.01em] text-white">
               {author.name}
             </div>
 
