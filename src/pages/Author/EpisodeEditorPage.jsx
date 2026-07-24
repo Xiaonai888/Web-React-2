@@ -783,19 +783,276 @@ function SettingsToggle({ checked, onClick, label }) {
   )
 }
 
+
+function GenreSheet({ open, value, options = FALLBACK_GENRES, loading = false, onClose, onSave }) {
+  const [selected, setSelected] = useState(value || 'Romance')
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    setSelected(value || 'Romance')
+    setSearch('')
+  }, [open, value])
+
+  if (!open) return null
+
+  const visibleGenres = options.filter((genre) =>
+    genre.toLowerCase().includes(search.trim().toLowerCase())
+  )
+
+  return (
+    <div className="fixed inset-0 z-[190] overflow-y-auto bg-white">
+      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa]"
+            aria-label="Back to publish"
+          >
+            <i className="fa-solid fa-chevron-left text-[14px]" />
+          </button>
+          <h2 className="text-[17px] font-bold text-[#111827]">Add Genre</h2>
+          <button
+            type="button"
+            onClick={() => onSave(selected)}
+            className="text-[14px] font-bold text-[#0b5cff]"
+          >
+            Save
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 py-5">
+        <div className="mb-5 flex h-12 items-center rounded-full bg-[#f2f4f7] px-4">
+          <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search Genre"
+            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+          />
+        </div>
+
+        <div className="mb-5">
+          <div className="text-[14px] font-bold text-[#111827]">
+            Please select the genre that best represents your story.
+          </div>
+          <div className="mt-2 text-[12px] text-[#667085]">
+            Only one genre can be selected.
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+              Loading genres...
+            </div>
+          ) : null}
+
+          {!loading && visibleGenres.length === 0 ? (
+            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
+              No genres found.
+            </div>
+          ) : null}
+
+          {!loading
+            ? visibleGenres.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => setSelected(genre)}
+                  className={`flex items-center gap-3 rounded-[16px] px-4 py-3 text-left text-[14px] font-bold ${
+                    selected === genre
+                      ? 'bg-[#111827] text-white'
+                      : 'bg-[#fafafe] text-[#111827] ring-1 ring-[#eceaf2]'
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded border ${
+                      selected === genre
+                        ? 'border-white bg-white text-[#111827]'
+                        : 'border-[#d0d5dd] bg-white'
+                    }`}
+                  >
+                    {selected === genre ? (
+                      <i className="fa-solid fa-check text-[10px]" />
+                    ) : null}
+                  </span>
+                  {genre}
+                </button>
+              ))
+            : null}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function TagSheet({ open, value, onClose, onSave }) {
+  const [selected, setSelected] = useState(value || [])
+  const [search, setSearch] = useState('')
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customTag, setCustomTag] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    setSelected(value || [])
+    setSearch('')
+    setCustomOpen(false)
+    setCustomTag('')
+  }, [open, value])
+
+  if (!open) return null
+
+  const visibleTags = STORY_TAG_OPTIONS.filter((tag) =>
+    tag.toLowerCase().includes(search.trim().toLowerCase())
+  )
+
+  const toggleTag = (tag) => {
+    setSelected((current) => {
+      if (current.includes(tag)) return current.filter((item) => item !== tag)
+      if (current.length >= 6) return current
+      return [...current, tag]
+    })
+  }
+
+  const addCustom = () => {
+    const tag = customTag.trim()
+    const exists = selected.some(
+      (item) => item.toLowerCase() === tag.toLowerCase()
+    )
+
+    if (!tag || exists || selected.length >= 6) return
+
+    setSelected((current) => [...current, tag])
+    setCustomTag('')
+    setCustomOpen(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[190] overflow-y-auto bg-white">
+      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa]"
+            aria-label="Back to publish"
+          >
+            <i className="fa-solid fa-chevron-left text-[14px]" />
+          </button>
+          <h2 className="text-[17px] font-bold text-[#111827]">Add Tags</h2>
+          <button
+            type="button"
+            onClick={() => onSave(selected)}
+            className="text-[14px] font-bold text-[#0b5cff]"
+          >
+            Save
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 py-5">
+        <div className="mb-4 flex h-12 items-center rounded-full bg-[#f2f4f7] px-4">
+          <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search Tag"
+            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
+          />
+        </div>
+
+        <div className="mb-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[14px] font-bold text-[#111827]">
+              Selected ({selected.length}/6)
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCustomOpen((current) => !current)}
+              disabled={selected.length >= 6}
+              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
+            >
+              + Custom
+            </button>
+          </div>
+
+          {customOpen ? (
+            <div className="mt-3 flex items-center gap-2 rounded-[16px] bg-[#f2f4f7] p-2">
+              <input
+                value={customTag}
+                onChange={(event) => setCustomTag(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') addCustom()
+                }}
+                placeholder="Write your custom tag"
+                autoFocus
+                className="h-10 min-w-0 flex-1 bg-transparent px-3 text-[13px] text-[#111827] outline-none"
+              />
+
+              <button
+                type="button"
+                onClick={addCustom}
+                disabled={!customTag.trim() || selected.length >= 6}
+                className="h-10 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white disabled:bg-[#d0d5dd]"
+              >
+                Add
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {selected.length ? (
+          <div className="mb-7 flex flex-wrap gap-2">
+            {selected.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className="rounded-full bg-[#111827] px-3 py-1.5 text-[12px] font-bold text-white"
+              >
+                {tag} ×
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mb-3 text-[14px] font-bold text-[#111827]">All Tags</div>
+        <div className="flex flex-wrap gap-2">
+          {visibleTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleTag(tag)}
+              className={`rounded-full px-4 py-2 text-[12px] font-bold ${
+                selected.includes(tag)
+                  ? 'bg-[#111827] text-white'
+                  : 'bg-[#f5f3fa] text-[#111827]'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}
+
 function PublishSettingsSheet({
   open,
   showStorySettings,
   genreOptions,
+  genresLoading = false,
   storyLanguage,
   onStoryLanguageChange,
   mainGenre,
   onMainGenreChange,
   storyTags,
-  tagDraft,
-  onTagDraftChange,
-  onAddTag,
-  onRemoveTag,
+  onStoryTagsChange,
   updateDays,
   onToggleUpdateDay,
   storyStatus,
@@ -816,6 +1073,8 @@ function PublishSettingsSheet({
 }) {
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [genreOpen, setGenreOpen] = useState(false)
+  const [tagOpen, setTagOpen] = useState(false)
   const dragStartY = useRef(0)
 
   useEffect(() => {
@@ -831,6 +1090,14 @@ function PublishSettingsSheet({
       document.body.style.overflow = bodyOverflow
       document.documentElement.style.overflow = htmlOverflow
     }
+  }, [open])
+
+  useEffect(() => {
+    if (open) return
+    setDragY(0)
+    setDragging(false)
+    setGenreOpen(false)
+    setTagOpen(false)
   }, [open])
 
   const handleDragStart = (event) => {
@@ -854,10 +1121,44 @@ function PublishSettingsSheet({
 
   if (!open) return null
 
+  if (genreOpen) {
+    return (
+      <GenreSheet
+        open
+        value={mainGenre}
+        options={genreOptions}
+        loading={genresLoading}
+        onClose={() => setGenreOpen(false)}
+        onSave={(genre) => {
+          onMainGenreChange(genre)
+          setGenreOpen(false)
+        }}
+      />
+    )
+  }
+
+  if (tagOpen) {
+    return (
+      <TagSheet
+        open
+        value={storyTags}
+        onClose={() => setTagOpen(false)}
+        onSave={(tags) => {
+          onStoryTagsChange(tags)
+          setTagOpen(false)
+        }}
+      />
+    )
+  }
+
   const canSave =
     Boolean(mainGenre && storyLanguage) &&
     (releaseOption !== 'schedule' || Boolean(scheduleDate && scheduleTime)) &&
     !saving
+
+  const tagSummary = storyTags.length
+    ? storyTags.join(', ')
+    : 'Choose up to 6 tags'
 
   return (
     <div
@@ -865,53 +1166,50 @@ function PublishSettingsSheet({
       onClick={onClose}
     >
       <div
-      <div
-  className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
-    dragging ? '' : 'transition-transform duration-200'
-  }`}
-  style={{
-    transform: `translateY(${dragY}px)`,
-    willChange: 'transform',
-  }}
-  onClick={(event) => event.stopPropagation()}
->
-  
+        className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[18px] bg-white sm:max-w-[680px] sm:rounded-[18px] ${
+          dragging ? '' : 'transition-transform duration-200'
+        }`}
+        style={{
+          transform: `translateY(${dragY}px)`,
+          willChange: 'transform',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div
+          className="flex touch-none items-center gap-3 bg-white px-4 py-3"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          onTouchCancel={handleDragEnd}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+            aria-label="Close publish"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
 
-  <div
-  className="flex touch-none items-center gap-3 bg-white px-4 py-3"
-  onTouchStart={handleDragStart}
-  onTouchMove={handleDragMove}
-  onTouchEnd={handleDragEnd}
-  onTouchCancel={handleDragEnd}
->
-  <button
-    type="button"
-    onClick={onClose}
-    className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-    aria-label="Close publish"
-  >
-    <i className="fa-solid fa-xmark text-[14px]" />
-  </button>
-
-  <h2 className="text-[15px] font-bold text-[#111827]">
-    Publish
-  </h2>
-</div>
+          <h2 className="text-[15px] font-bold text-[#111827]">Publish</h2>
+        </div>
 
         <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
           {showStorySettings ? (
-            <section className="rounded-[12px] bg-white p-4">
-              <h3 className="text-[14px] font-bold text-[#111827]">Complete Story Info</h3>
+            <section>
+              <h3 className="text-[14px] font-bold text-[#111827]">
+                Complete Story Info
+              </h3>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label>
-                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                    Story Language
-                  </span>
+              <div className="mt-4">
+                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                  Story Language
+                </span>
+                <div className="relative">
                   <select
                     value={storyLanguage}
                     onChange={(event) => onStoryLanguageChange(event.target.value)}
-                    className="h-11 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[13px] text-[#111827] outline-none"
+                    className="h-11 w-full appearance-none rounded-[10px] bg-[#f7f7fa] px-3 pr-11 text-[13px] text-[#111827] outline-none"
                   >
                     {STORY_LANGUAGES.map((language) => (
                       <option key={language} value={language}>
@@ -919,92 +1217,53 @@ function PublishSettingsSheet({
                       </option>
                     ))}
                   </select>
-                </label>
+                  <i className="fa-solid fa-chevron-right pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#98a2b3]" />
+                </div>
+              </div>
 
-                <label>
-                  <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
-                    Main Genre
+              <div className="mt-4">
+                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                  Main Genre
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setGenreOpen(true)}
+                  className="flex h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 text-left active:bg-[#f2f4f7]"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-[#111827]">
+                    {mainGenre || 'Choose a genre'}
                   </span>
-                  <select
-                    value={mainGenre}
-                    onChange={(event) => onMainGenreChange(event.target.value)}
-                    className="h-11 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[13px] text-[#111827] outline-none"
+                  <i className="fa-solid fa-chevron-right mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
+                  Tags
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTagOpen(true)}
+                  className="flex min-h-11 w-full items-center rounded-[10px] bg-[#f7f7fa] px-3 py-2.5 text-left active:bg-[#f2f4f7]"
+                >
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[12px] ${
+                      storyTags.length ? 'text-[#111827]' : 'text-[#8d94a1]'
+                    }`}
                   >
-                    {genreOptions.map((genre) => (
-                      <option key={genre} value={genre}>
-                        {genre}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {tagSummary}
+                  </span>
+                  <span className="ml-3 shrink-0 text-[10.5px] text-[#8d94a1]">
+                    {storyTags.length}/6
+                  </span>
+                  <i className="fa-solid fa-chevron-right ml-2 mr-1 shrink-0 text-[10px] text-[#98a2b3]" />
+                </button>
               </div>
 
               <div className="mt-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[12px] font-semibold text-[#111827]">Tags</div>
-                    <div className="mt-0.5 text-[10.5px] text-[#8d94a1]">
-                      Choose up to 6 tags.
-                    </div>
-                  </div>
-                  <div className="text-[10.5px] text-[#8d94a1]">{storyTags.length}/6</div>
+                <div className="text-[12px] font-semibold text-[#111827]">
+                  Update Days
                 </div>
-
-                {storyTags.length ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {storyTags.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => onRemoveTag(tag)}
-                        className="rounded-full bg-[#111827] px-3 py-1.5 text-[11px] text-white"
-                      >
-                        {tag} ×
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="mt-3 flex items-center gap-2 rounded-[10px] bg-[#f7f7fa] p-1.5">
-                  <input
-                    value={tagDraft}
-                    onChange={(event) => onTagDraftChange(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        onAddTag()
-                      }
-                    }}
-                    placeholder="Add a custom tag"
-                    className="h-9 min-w-0 flex-1 bg-transparent px-2 text-[12px] text-[#111827] outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={onAddTag}
-                    disabled={!tagDraft.trim() || storyTags.length >= 6}
-                    className="h-9 rounded-full bg-[#111827] px-4 text-[11px] text-white disabled:bg-[#d0d5dd]"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {STORY_TAG_OPTIONS.filter((tag) => !storyTags.includes(tag)).map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => onAddTag(tag)}
-                      disabled={storyTags.length >= 6}
-                      className="rounded-full bg-[#f2f4f7] px-3 py-1.5 text-[11px] text-[#555b66] disabled:opacity-40"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <div className="text-[12px] font-semibold text-[#111827]">Update Days</div>
                 <div className="mt-3 grid grid-cols-7 gap-1.5">
                   {UPDATE_DAY_OPTIONS.map((day) => {
                     const active = updateDays.includes(day)
@@ -1028,7 +1287,9 @@ function PublishSettingsSheet({
               </div>
 
               <div className="mt-5">
-                <div className="text-[12px] font-semibold text-[#111827]">Story Status</div>
+                <div className="text-[12px] font-semibold text-[#111827]">
+                  Story Status
+                </div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {['New', 'Ongoing', 'Completed'].map((status) => (
                     <button
@@ -1049,7 +1310,9 @@ function PublishSettingsSheet({
 
               <div className="mt-5 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
                 <div>
-                  <div className="text-[12px] font-semibold text-[#111827]">18+ Story</div>
+                  <div className="text-[12px] font-semibold text-[#111827]">
+                    18+ Story
+                  </div>
                   <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
                     Show an adult-content warning for the whole story.
                   </div>
@@ -1063,12 +1326,22 @@ function PublishSettingsSheet({
             </section>
           ) : null}
 
-          <section className={showStorySettings ? 'mt-7 border-t border-[#f0f1f3] pt-6' : ''}>
-            <h3 className="text-[14px] font-bold text-[#111827]">Episode Release</h3>
+          <section
+            className={
+              showStorySettings
+                ? 'mt-7 border-t border-[#f0f1f3] pt-6'
+                : ''
+            }
+          >
+            <h3 className="text-[14px] font-bold text-[#111827]">
+              Episode Release
+            </h3>
 
             <div className="mt-4 flex items-center justify-between gap-4 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
               <div>
-                <div className="text-[12px] font-semibold text-[#111827]">18+ Episode</div>
+                <div className="text-[12px] font-semibold text-[#111827]">
+                  18+ Episode
+                </div>
                 <div className="mt-0.5 text-[10.5px] leading-4 text-[#8d94a1]">
                   Show a warning before readers open this episode.
                 </div>
@@ -1112,7 +1385,9 @@ function PublishSettingsSheet({
                     }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="text-[12px] font-semibold">{option.title}</div>
+                      <div className="text-[12px] font-semibold">
+                        {option.title}
+                      </div>
                       <div
                         className={`mt-0.5 text-[10.5px] leading-4 ${
                           active ? 'text-white/70' : 'text-[#8d94a1]'
@@ -1128,7 +1403,9 @@ function PublishSettingsSheet({
                           : 'border-[#d0d5dd] bg-white'
                       }`}
                     >
-                      {active ? <i className="fa-solid fa-check text-[9px]" /> : null}
+                      {active ? (
+                        <i className="fa-solid fa-check text-[9px]" />
+                      ) : null}
                     </div>
                   </button>
                 )
@@ -2378,10 +2655,7 @@ useEffect(() => {
         mainGenre={mainGenre}
         onMainGenreChange={setMainGenre}
         storyTags={storyTags}
-        tagDraft={tagDraft}
-        onTagDraftChange={setTagDraft}
-        onAddTag={addStoryTag}
-        onRemoveTag={removeStoryTag}
+        onStoryTagsChange={setStoryTags}
         updateDays={storyUpdateDays}
         onToggleUpdateDay={toggleStoryUpdateDay}
         storyStatus={storyStatus}
