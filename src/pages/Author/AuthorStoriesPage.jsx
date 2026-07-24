@@ -369,9 +369,9 @@ export default function AuthorStoriesPage() {
         </section>
 
         {!loading && latestStory ? (
-          <section className="mt-4 overflow-hidden rounded-[22px] border border-[#e8e3f1] bg-white p-3 shadow-[0_7px_22px_rgba(71,55,110,0.06)]">
+          <section className="mt-4 overflow-hidden rounded-[14px] border border-[#e8e3f1] bg-white p-3 shadow-[0_7px_22px_rgba(71,55,110,0.06)]">
             <div className="flex items-center gap-3">
-              <StoryCover story={latestStory} className="h-[82px] w-[64px] shrink-0 rounded-[15px]" />
+              <StoryCover story={latestStory} className="h-[82px] w-[64px] shrink-0 rounded-[10px]" />
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#7951f4]">Continue Writing</div>
                 <h2 className="mt-1 line-clamp-1 text-[15px] font-black text-[#1c1725]">{latestStory.title}</h2>
@@ -438,12 +438,12 @@ export default function AuthorStoriesPage() {
             visibleStories.map((story) => (
               <article
                 key={story.id}
-                className="group overflow-visible rounded-[20px] border border-[#e8e3f0] bg-white shadow-[0_7px_20px_rgba(71,55,110,0.06)]"
+                className="group overflow-visible rounded-[14px] border border-[#e8e3f0] bg-white shadow-[0_7px_20px_rgba(71,55,110,0.06)]"
               >
                 <button
                   type="button"
                   onClick={() => openStory(story)}
-                  className="relative block aspect-[3/4] w-full overflow-hidden rounded-t-[19px] text-left"
+                  className="relative block aspect-[3/4] w-full overflow-hidden rounded-t-[13px] text-left"
                 >
                   <StoryCover story={story} className="h-full w-full transition duration-300 group-hover:scale-[1.02]" />
                   <span className="absolute left-2.5 top-2.5">
