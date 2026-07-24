@@ -383,7 +383,7 @@ function StoryTextSheet({
               <span className="min-w-0 truncate text-[13px] text-[#667085]">
   Need help choosing a title?
 </span>
-<span className="ml-1 shrink-0 text-[13px] font-bold text-[#e5484d]">
+<span className="ml-1 shrink-0 text-[13px] font-normal text-[#e5484d]">
   Get title ideas
 </span>
 <i className="fa-solid fa-chevron-right ml-0.5 shrink-0 text-[10px] text-[#e5484d]" />
