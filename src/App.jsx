@@ -59,6 +59,8 @@ import PremiumPage from './pages/Me/PremiumPage'
 import AuthorInsightsPage from "./pages/Author/AuthorInsightsPage";
 import AuthorStoriesPage from './pages/Author/AuthorStoriesPage'
 import StoryNotificationsPage from './pages/Author/StoryNotificationsPage'
+import StoryDescriptionGuidePage from './pages/Author/StoryDescriptionGuidePage'
+
 
 
 
@@ -1116,7 +1118,7 @@ const shouldShowOpeningAds =
   path="/author/story/:storyId/chat/characters/:characterId/profile"
   element={<ChatStoryCharacterProfilePage />}
 />
-
+        <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
         <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
