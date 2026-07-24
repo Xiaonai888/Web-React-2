@@ -77,7 +77,7 @@ function InsightsChart({ series }) {
     .join(' ')
 
   return (
-    <div className="relative mt-4 h-[178px] overflow-hidden rounded-[18px] bg-white">
+    <div className="relative mt-4 h-[178px] overflow-hidden rounded-[12px] bg-white">
       <svg viewBox="0 0 320 150" className="h-[150px] w-full" aria-label="Story reads chart" role="img">
         {[34, 65, 96, 126].map((y) => (
           <line key={y} x1="12" y1={y} x2="308" y2={y} stroke="#eeeafd" strokeWidth="1" />
@@ -109,7 +109,7 @@ function InsightsChart({ series }) {
 
 function MetricCard({ icon, label, value }) {
   return (
-    <div className="rounded-[20px] border border-[#eeeaf7] bg-white p-4 shadow-[0_8px_24px_rgba(87,72,124,0.05)]">
+    <div className="rounded-[14px] border border-[#eeeaf7] bg-white p-4 shadow-[0_8px_24px_rgba(87,72,124,0.05)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[10px] font-semibold text-[#8e879b]">{label}</div>
@@ -174,7 +174,7 @@ function LoadingInsights() {
     <div className="min-h-screen bg-[#f8f7fc] pb-[92px]">
       <header className="h-14 border-b border-[#ece9f2] bg-white" />
       <main className="mx-auto max-w-[720px] px-4 py-5">
-        <div className="rounded-[24px] bg-white p-10 text-center shadow-sm ring-1 ring-[#eeeaf7]">
+        <div className="rounded-[14px] bg-white p-10 text-center shadow-sm ring-1 ring-[#eeeaf7]">
           <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[#eee9ff] border-t-[#8b5cf6]" />
           <div className="mt-4 text-[12px] font-semibold text-[#5f586b]">Loading insights...</div>
         </div>
@@ -276,11 +276,11 @@ export default function AuthorInsightsPage() {
                   key={item.value}
                   type="button"
                   onClick={() => setPeriod(item.value)}
-                  className={`h-10 flex-1 rounded-full text-[11px] font-semibold transition active:scale-[0.98] ${
-                    active
-                      ? 'bg-gradient-to-r from-[#eee8ff] to-[#ddd2ff] text-[#6845db] shadow-sm ring-1 ring-[#d8ccff]'
-                      : 'bg-[#f8f7fb] text-[#716b7d] ring-1 ring-[#e7e3ed]'
-                  }`}
+                  className={`h-10 flex-1 rounded-[12px] text-[11px] font-normal transition active:scale-[0.98] ${
+  active
+    ? 'bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] text-white shadow-[0_7px_16px_rgba(124,58,237,0.22)]'
+    : 'bg-[#f8f7fb] text-[#716b7d] ring-1 ring-[#e7e3ed]'
+}`}
                 >
                   {item.label}
                 </button>
@@ -289,7 +289,7 @@ export default function AuthorInsightsPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
+        <section className="rounded-[14px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-[11px] font-semibold text-[#8e879b]">Total Reads</div>
@@ -316,7 +316,7 @@ export default function AuthorInsightsPage() {
           <MetricCard icon="fa-regular fa-comment" label="Comments" value={totals.comments} />
         </section>
 
-        <section className="rounded-[24px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
+        <section className="rounded-[14px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[15px] font-bold text-[#17131f]">Top Stories</h2>
             <button
@@ -347,7 +347,7 @@ export default function AuthorInsightsPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
+        <section className="rounded-[14px] border border-[#ece8f5] bg-white p-4 shadow-[0_10px_30px_rgba(87,72,124,0.06)]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[15px] font-bold text-[#17131f]">Reader Engagement</h2>
             <span className="text-[9px] font-medium text-[#a09aa9]">All time</span>
