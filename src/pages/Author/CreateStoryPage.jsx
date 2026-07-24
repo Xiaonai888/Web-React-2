@@ -1955,7 +1955,7 @@ return (
                   className="flex min-h-[148px] w-full items-center gap-4 px-5 py-5 text-left active:bg-[#fafafa]"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-[15px] font-bold text-[#111827]">
+                    <div className="text-[14px] font-bold text-[#111827]">
                       Cover <span className="text-[#e5484d]">*</span>
                     </div>
                     <div className="mt-1 text-[11.5px] leading-5 text-[#8d94a1]">
@@ -2033,7 +2033,7 @@ return (
                 type="button"
                 onClick={handleSaveStory}
                 disabled={!canSave}
-                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-bold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
+                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-bold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
               >
                 {loading
                   ? isEditMode
