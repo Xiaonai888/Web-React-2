@@ -390,15 +390,16 @@ function ToolButton({ icon, label, onClick, active = false, disabled = false }) 
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ring-1 active:scale-95 disabled:opacity-45 ${
-        active
-          ? 'bg-[#111827] text-white ring-[#111827]'
-          : 'bg-white text-[#111827] ring-[#eceaf2]'
-      }`}
+      aria-pressed={active}
+      className="flex h-10 w-10 shrink-0 items-center justify-center active:scale-95 disabled:opacity-40"
       aria-label={label}
       title={label}
     >
-      <i className={`${icon} text-[14px]`} />
+      <i
+        className={`${icon} text-[17px] ${
+          active ? 'text-[#FE526E]' : 'text-[#111827]'
+        }`}
+      />
     </button>
   )
 }
@@ -1918,8 +1919,8 @@ export default function EpisodeEditorPage() {
                 ) : null}
 
                 {editorFocused ? (
-                  <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#eceef2] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(17,24,39,0.08)]">
-                    <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto bg-[#fafafe] px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="fixed inset-x-0 bottom-0 z-[90] bg-white pb-[env(safe-area-inset-bottom)]">
+                    <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto bg-white px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <ToolButton
                         icon="fa-solid fa-bold"
                         label="Bold"
