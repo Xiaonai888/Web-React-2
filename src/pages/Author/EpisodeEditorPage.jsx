@@ -878,6 +878,8 @@ export default function EpisodeEditorPage() {
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [autoSaveSeconds, setAutoSaveSeconds] = useState(60)
+  const [autoSaving, setAutoSaving] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
   const [editorFocused, setEditorFocused] = useState(false)
@@ -890,6 +892,7 @@ export default function EpisodeEditorPage() {
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
   const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
+  const [currentEpisodeId, setCurrentEpisodeId] = useState(editEpisodeId || '')
   const [episodeDetailsOpen, setEpisodeDetailsOpen] = useState(false)
   const [draftEpisodeTitle, setDraftEpisodeTitle] = useState('')
   const [draftEpisodeCover, setDraftEpisodeCover] = useState('')
@@ -904,10 +907,6 @@ export default function EpisodeEditorPage() {
   const pageTitle = isEditMode ? 'Edit Episode' : isFirstEpisode ? 'First Episode' : 'Episode'
   const stepTitle = isFirstEpisode ? 'First Episode' : 'Episode'
 
-  const estimatedReadTime = useMemo(() => {
-    const minutes = Math.max(1, Math.ceil(characterCount / 900))
-    return `${minutes} min read`
-  }, [characterCount])
 
   const warningText = useMemo(() => {
     if (isManga) {
@@ -946,9 +945,12 @@ export default function EpisodeEditorPage() {
   }
 
   const markUnsaved = () => {
-    setSaveStatus('Unsaved')
-    setHasUnsavedChanges(true)
-  }
+  setSaveStatus('Unsaved')
+  setHasUnsavedChanges((current) => {
+    if (!current) setAutoSaveSeconds(60)
+    return true
+  })
+}
 
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
@@ -1411,7 +1413,11 @@ export default function EpisodeEditorPage() {
     markUnsaved()
   }
 
-  const handleSaveEpisode = async ({ goToPublish = false, forceDraft = false } = {}) => {
+  const handleSaveEpisode = async ({
+  goToPublish = false,
+  forceDraft = false,
+  stayOnPage = false,
+} = {}) => {
     setMessage('')
 
     if (!episodeTitle.trim()) {
@@ -1476,12 +1482,14 @@ export default function EpisodeEditorPage() {
       mime_type: page.mimeType || 'image/webp',
     }))
 
+    const targetEpisodeId = currentEpisodeId || editEpisodeId || ''
+
     const response = await fetch(
-      isEditMode
-        ? `${API_BASE_URL}/api/stories/${storyId}/episodes/${editEpisodeId}`
+      targetEpisodeId
+        ? `${API_BASE_URL}/api/stories/${storyId}/episodes/${targetEpisodeId}`
         : `${API_BASE_URL}/api/stories/${storyId}/episodes/create`,
       {
-        method: isEditMode ? 'PUT' : 'POST',
+        method: targetEpisodeId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -1492,7 +1500,7 @@ export default function EpisodeEditorPage() {
           content: isManga ? '' : sanitizeEpisodeHtml(content),
           pages: isManga ? pagesPayload : undefined,
           is_adult: false,
-          status: forceDraft ? 'draft' : isEditMode ? oldEpisodeStatus : 'draft',
+          status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
         }),
       }
     )
@@ -1500,21 +1508,22 @@ export default function EpisodeEditorPage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok || data.ok === false) {
-      throw new Error(data.error || data.message || (isEditMode ? 'Failed to update episode' : 'Failed to create episode'))
+      throw new Error(data.error || data.message || (targetEpisodeId ? 'Failed to update episode' : 'Failed to create episode'))
     }
 
-    const episodeId = data.episode?.id || editEpisodeId
+    const episodeId = data.episode?.id || targetEpisodeId
 
     if (!episodeId) {
-      throw new Error(isEditMode ? 'Episode updated but episode id was missing' : 'Episode created but episode id was missing')
+      throw new Error(targetEpisodeId ? 'Episode updated but episode id was missing' : 'Episode created but episode id was missing')
     }
 
+    setCurrentEpisodeId(episodeId)
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
 
-    if (!goToPublish) {
-      navigate(`/author/story/${storyId}/manage`)
-    }
+    if (!goToPublish && !stayOnPage) {
+  navigate(`/author/story/${storyId}/manage`)
+}
 
     return {
       episodeId,
@@ -1522,6 +1531,74 @@ export default function EpisodeEditorPage() {
     }
   }
 
+  const handleAutoSave = async () => {
+  if (
+    !hasUnsavedChanges ||
+    autoSaving ||
+    loading ||
+    pageLoading ||
+    !episodeTitle.trim() ||
+    mangaUploadPending
+  ) {
+    setAutoSaveSeconds(60)
+    return
+  }
+
+  try {
+    setAutoSaving(true)
+    setSaveStatus('Saving...')
+
+    await handleSaveEpisode({
+      forceDraft: true,
+      stayOnPage: true,
+    })
+
+    setSaveStatus('Saved')
+  } catch {
+    setSaveStatus('Save failed')
+  } finally {
+    setAutoSaving(false)
+    setAutoSaveSeconds(60)
+  }
+}
+
+useEffect(() => {
+  if (
+    !hasUnsavedChanges ||
+    autoSaving ||
+    loading ||
+    pageLoading
+  ) {
+    return undefined
+  }
+
+  const timer = window.setInterval(() => {
+    setAutoSaveSeconds((current) => Math.max(0, current - 1))
+  }, 1000)
+
+  return () => window.clearInterval(timer)
+}, [hasUnsavedChanges, autoSaving, loading, pageLoading])
+
+useEffect(() => {
+  if (
+    autoSaveSeconds !== 0 ||
+    !hasUnsavedChanges ||
+    autoSaving ||
+    loading ||
+    pageLoading
+  ) {
+    return
+  }
+
+  handleAutoSave()
+}, [
+  autoSaveSeconds,
+  hasUnsavedChanges,
+  autoSaving,
+  loading,
+  pageLoading,
+])
+  
   const handleSaveDraft = async () => {
     try {
       setLoading(true)
@@ -1590,7 +1667,7 @@ export default function EpisodeEditorPage() {
 
   return (
   <div
-    className={`min-h-screen bg-white pb-[110px] sm:bg-[#fafafa] ${
+    className={`min-h-screen bg-white pb-0 sm:bg-[#fafafa] ${
       isManga ? 'manga-red-theme' : ''
     }`}
   >
@@ -1707,7 +1784,13 @@ export default function EpisodeEditorPage() {
                 ? `${completedMangaPages.length} pages`
                 : `${characterCount.toLocaleString()} / ${MIN_CHARACTERS.toLocaleString()} characters`}
             </div>
-            <div className="mt-0.5 text-[10px] text-[#8d94a1]">{saveStatus}</div>
+            <div className="mt-0.5 text-[10px] text-[#8d94a1]">
+              {autoSaving
+                ? 'Saving...'
+                : hasUnsavedChanges
+                  ? `Saved in ${autoSaveSeconds}s`
+                  : saveStatus}
+            </div>
           </div>
 
           {!isManga ? (
@@ -1904,7 +1987,7 @@ export default function EpisodeEditorPage() {
                   onKeyUp={saveEditorSelection}
                   onMouseUp={saveEditorSelection}
                   onTouchEnd={saveEditorSelection}
-                  className="rich-episode-editor min-h-[calc(100vh-150px)] w-full bg-white px-0 py-3 text-[15px] leading-8 text-[#111827] outline-none md:min-h-[520px] md:rounded-[10px] md:px-4"
+                  className="rich-episode-editor min-h-[calc(100dvh-120px)] w-full bg-white px-0 pb-24 pt-3 text-[15px] leading-8 text-[#111827] outline-none md:min-h-[calc(100dvh-170px)] md:rounded-[10px] md:px-4"
                 />
 
                 <input
@@ -1914,19 +1997,6 @@ export default function EpisodeEditorPage() {
                   className="hidden"
                   onChange={(event) => handleInlineImagePick(event.target.files?.[0] || null)}
                 />
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-[12px] font-bold text-[#555b66]">
-                    {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
-                  </div>
-                  <div className="text-[12px] font-bold text-[#8d94a1]">{estimatedReadTime}</div>
-                </div>
-
-                {warningText ? (
-                  <div className="mt-3 rounded-[12px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
-                    {warningText}
-                  </div>
-                ) : null}
 
                 {editorFocused ? (
                   <div className="fixed inset-x-0 bottom-0 z-[90] bg-white pb-[env(safe-area-inset-bottom)]">
@@ -1985,24 +2055,6 @@ export default function EpisodeEditorPage() {
             )}
             </div>
 
-            <section className="mx-4 mt-5 grid grid-cols-2 gap-3 pb-8 sm:mx-0">
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                disabled={loading || mangaUploadPending}
-                className="flex h-14 items-center justify-center rounded-full border border-[#e4e7ec] bg-white text-[14px] font-extrabold text-[#111827] shadow-sm active:scale-[0.99] disabled:opacity-60"
-              >
-                {isEditMode ? 'Save Changes' : 'Save Draft'}
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!isValidForNext}
-                className="flex h-14 items-center justify-center rounded-full bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af]"
-              >
-                {loading ? 'Saving...' : 'Next'}
-              </button>
-            </section>
           </>
         ) : null}
       </main>
