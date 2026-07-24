@@ -836,13 +836,14 @@ function SettingsToggle({ checked, onClick, label }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-        checked ? 'bg-[#111827]' : 'bg-[#d0d5dd]'
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-all duration-200 active:scale-95 ${
+        checked ? 'bg-[#FE526E]' : 'bg-[#d0d5dd]'
       }`}
       aria-label={label}
+      aria-pressed={checked}
     >
       <span
-        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
+        className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200 ${
           checked ? 'left-6' : 'left-1'
         }`}
       />
@@ -1232,9 +1233,9 @@ function LanguageWheelPicker({ open, value, onClose, onSave }) {
             Cancel
           </button>
 
-          <h3 className="text-[14px] font-bold text-[#111827]">
-            Story Language
-          </h3>
+         <h3 className="text-[12px] font-semibold text-[#111827]">
+  Episode Release
+</h3>
 
           <button
             type="button"
@@ -1297,6 +1298,29 @@ function LanguageWheelPicker({ open, value, onClose, onSave }) {
   )
 }
 
+function AdultHintPopup({ open, title, description, onClose }) {
+  if (!open) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      className="fixed inset-0 z-[240] flex items-center justify-center bg-black/35 px-6"
+      aria-label="Close information"
+    >
+      <div className="pointer-events-none w-full max-w-[320px] rounded-[16px] bg-white px-5 py-5 text-center shadow-2xl">
+        <div className="text-[15px] font-bold text-[#111827]">
+          {title}
+        </div>
+
+        <div className="mt-3 text-[12px] font-normal leading-6 text-[#667085]">
+          {description}
+        </div>
+      </div>
+    </button>
+  )
+}
+
 function PublishSettingsSheet({
   open,
   showStorySettings,
@@ -1356,6 +1380,7 @@ function PublishSettingsSheet({
     setGenreOpen(false)
     setTagOpen(false)
     setLanguagePickerOpen(false)
+    setActiveHint('')
   }, [open])
 
   const handleDragStart = (event) => {
@@ -1420,6 +1445,19 @@ function PublishSettingsSheet({
 
   return (
     <>
+      <AdultHintPopup
+  open={activeHint === 'story-adult'}
+  title="18+ Story"
+  description="Turn this on when the whole story contains mature or adult content. Readers will see a warning before opening the story."
+  onClose={() => setActiveHint('')}
+/>
+
+<AdultHintPopup
+  open={activeHint === 'episode-adult'}
+  title="18+ Episode"
+  description="Turn this on when this episode contains mature or adult content. Readers will see a warning before opening the episode."
+  onClose={() => setActiveHint('')}
+/>
       <LanguageWheelPicker
         open={languagePickerOpen}
         value={storyLanguage}
@@ -1552,111 +1590,79 @@ function PublishSettingsSheet({
                 </div>
 
                 <div className="mt-5">
-  <div className="text-[12px] font-semibold text-[#111827]">
-    Story Status
-  </div>
+                  <div className="text-[12px] font-semibold text-[#111827]">
+                    Story Status
+                  </div>
 
-  <div className="mt-3 flex items-center justify-between gap-4">
-    <span className="text-[14px] font-normal text-[#111827]">
-      Completed
-    </span>
+                  <div className="mt-3 flex items-center justify-between gap-4">
+                    <span className="text-[12px] font-normal text-[#111827]">
+                      Completed
+                    </span>
 
-    <SettingsToggle
-      checked={storyStatus === 'Completed'}
-      onClick={() =>
-        onStoryStatusChange(
-          storyStatus === 'Completed' ? 'Ongoing' : 'Completed'
-        )
-      }
-      label="Toggle completed story"
-    />
-  </div>
-</div>
+                    <SettingsToggle
+                      checked={storyStatus === 'Completed'}
+                      onClick={() =>
+                        onStoryStatusChange(
+                          storyStatus === 'Completed' ? 'Ongoing' : 'Completed'
+                        )
+                      }
+                      label="Toggle completed story"
+                    />
+                  </div>
+                </div>
 
-                <div className="relative mt-5">
-  <div className="flex items-center justify-between gap-4">
-    <div className="flex items-center gap-2">
-      <span className="text-[12px] font-semibold text-[#111827]">
-        18+ Story
-      </span>
+                <div className="mt-5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-normal text-[#111827]">
+                      18+ Story
+                    </span>
 
-      <button
-        type="button"
-        onClick={() =>
-          setActiveHint((current) =>
-            current === 'story-adult' ? '' : 'story-adult'
-          )
-        }
-        className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
-        aria-label="About 18+ story"
-      >
-        <i className="fa-regular fa-circle-question text-[13px]" />
-      </button>
-    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveHint('story-adult')}
+                      className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+                      aria-label="About 18+ story"
+                    >
+                      <i className="fa-regular fa-circle-question text-[13px]" />
+                    </button>
+                  </div>
 
-    <SettingsToggle
-      checked={storyAdult}
-      onClick={() => onStoryAdultChange(!storyAdult)}
-      label="Toggle 18+ story"
-    />
-  </div>
-
-  {activeHint === 'story-adult' ? (
-    <div className="mt-2 rounded-[10px] bg-[#fff7df] px-3 py-2 text-[11px] font-normal leading-5 text-[#7a5b00]">
-      Turn this on when the whole story contains mature or adult content.
-      Readers will see a warning before opening the story.
-    </div>
-  ) : null}
-</div>
+                  <SettingsToggle
+                    checked={storyAdult}
+                    onClick={() => onStoryAdultChange(!storyAdult)}
+                    label="Toggle 18+ story"
+                  />
+                </div>
               </section>
             ) : null}
 
-            <section
-              className={
-                showStorySettings
-                  ? 'mt-7 border-t border-[#f0f1f3] pt-6'
-                  : ''
-              }
-            >
-              <h3 className="text-[14px] font-bold text-[#111827]">
-                Episode Release
-              </h3>
-
-              <div className="relative mt-4">
-  <div className="flex items-center justify-between gap-4">
-    <div className="flex items-center gap-2">
-      <span className="text-[12px] font-semibold text-[#111827]">
-        18+ Episode
-      </span>
-
-      <button
-        type="button"
-        onClick={() =>
-          setActiveHint((current) =>
-            current === 'episode-adult' ? '' : 'episode-adult'
-          )
-        }
-        className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
-        aria-label="About 18+ episode"
-      >
-        <i className="fa-regular fa-circle-question text-[13px]" />
-      </button>
-    </div>
-
-    <SettingsToggle
-      checked={episodeAdult}
-      onClick={() => onEpisodeAdultChange(!episodeAdult)}
-      label="Toggle 18+ episode"
-    />
-  </div>
-
-  {activeHint === 'episode-adult' ? (
-    <div className="mt-2 rounded-[10px] bg-[#fff7df] px-3 py-2 text-[11px] font-normal leading-5 text-[#7a5b00]">
-      Turn this on only when this episode contains mature or adult content.
-      Readers will see a warning before opening the episode.
-    </div>
-  ) : null}
+            <section className={showStorySettings ? 'mt-7' : ''}>
+              <div className="text-[12px] font-semibold text-[#111827]">
+  Episode Release
 </div>
+
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-normal text-[#111827]">
+                    18+ Episode
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveHint('episode-adult')}
+                    className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+                    aria-label="About 18+ episode"
+                  >
+                    <i className="fa-regular fa-circle-question text-[13px]" />
+                  </button>
+                </div>
+
+                <SettingsToggle
+                  checked={episodeAdult}
+                  onClick={() => onEpisodeAdultChange(!episodeAdult)}
+                  label="Toggle 18+ episode"
+                />
+              </div>
 
               <div className="mt-4 space-y-2">
                 {[
