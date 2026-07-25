@@ -1761,6 +1761,8 @@ function PublishSettingsSheet({
   onStoryAdultChange,
   episodeAdult,
   onEpisodeAdultChange,
+  episodeFree,
+  onEpisodeFreeChange,
   releaseOption,
   onReleaseOptionChange,
   scheduleDate,
@@ -1894,6 +1896,13 @@ const canSave =
   open={activeHint === 'episode-adult'}
   title="18+ Episode"
   description="Turn this on when this episode contains mature or adult content. Readers will see a warning before opening the episode."
+  onClose={() => setActiveHint('')}
+/>
+
+      <AdultHintPopup
+  open={activeHint === 'episode-free'}
+  title="Free Episode"
+  description="Turn this on to make this episode completely free for readers. Readers will not need to use Coins, Diamonds, Vouchers, or any other unlock method for this episode."
   onClose={() => setActiveHint('')}
 />
 
@@ -2128,6 +2137,29 @@ const canSave =
                 />
               </div>
 
+              <div className="mt-5 flex items-center justify-between gap-4">
+  <div className="flex items-center gap-2">
+    <span className="text-[12px] font-normal text-[#111827]">
+      Free Episode
+    </span>
+
+    <button
+      type="button"
+      onClick={() => setActiveHint('episode-free')}
+      className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+      aria-label="About free episode"
+    >
+      <i className="fa-regular fa-circle-question text-[13px]" />
+    </button>
+  </div>
+
+  <SettingsToggle
+    checked={episodeFree}
+    onClick={() => onEpisodeFreeChange(!episodeFree)}
+    label="Toggle free episode"
+  />
+</div>
+
               <div className="mt-5 space-y-1">
   <button
     type="button"
@@ -2347,6 +2379,7 @@ export default function EpisodeEditorPage() {
   const [storyStatus, setStoryStatus] = useState('New')
   const [storyAdult, setStoryAdult] = useState(false)
   const [episodeAdult, setEpisodeAdult] = useState(false)
+  const [episodeFree, setEpisodeFree] = useState(false)
   const [releaseOption, setReleaseOption] = useState('publish')
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
@@ -2554,6 +2587,9 @@ export default function EpisodeEditorPage() {
         setContent(normalizeEpisodeHtml(episode.content || ''))
         setOldEpisodeStatus(episode.status || 'draft')
         setEpisodeAdult(Boolean(episode.is_adult))
+        setEpisodeFree(
+          Boolean(episode.is_author_free ?? episode.is_free_published)
+        )
         setCurrentEpisodeNumber(Number(episode.episode_number || 1))
         setCoverChanged(false)
         setMangaPages(
@@ -2998,6 +3034,7 @@ export default function EpisodeEditorPage() {
           content: isManga ? '' : sanitizeEpisodeHtml(content),
           pages: isManga ? pagesPayload : undefined,
           is_adult: false,
+          is_free_published: episodeFree,
           status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
         }),
       }
@@ -3255,10 +3292,11 @@ useEffect(() => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            status,
-            scheduled_at: scheduledAt,
-            is_adult: episodeAdult,
-          }),
+  status,
+  scheduled_at: scheduledAt,
+  is_adult: episodeAdult,
+  is_free_published: episodeFree,
+}),
         }
       )
 
@@ -3411,9 +3449,11 @@ setSuccessOpen(true)
         onStoryStatusChange={setStoryStatus}
         storyAdult={storyAdult}
         onStoryAdultChange={setStoryAdult}
-        episodeAdult={episodeAdult}
-        onEpisodeAdultChange={setEpisodeAdult}
-        releaseOption={releaseOption}
+       episodeAdult={episodeAdult}
+onEpisodeAdultChange={setEpisodeAdult}
+episodeFree={episodeFree}
+onEpisodeFreeChange={setEpisodeFree}
+releaseOption={releaseOption}
         onReleaseOptionChange={setReleaseOption}
         scheduleDate={scheduleDate}
         onScheduleDateChange={setScheduleDate}
