@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import ProfessionalEpisodeActionSheet from '../../components/author/ProfessionalEpisodeActionSheet'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -386,7 +387,10 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
 
       <button
         type="button"
-        onClick={() => onMore(episode)}
+        onClick={(event) => {
+  const rect = event.currentTarget.getBoundingClientRect()
+  onMore({ ...episode, __menuAnchor: { top: rect.top, right: rect.right, bottom: rect.bottom } })
+}}
         className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
         aria-label={`Actions for ${episode.title || 'episode'}`}
       >
@@ -685,7 +689,7 @@ export default function StoryManagerPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f9] pb-[92px] text-[#111827]">
-      <EpisodeActionSheet
+      <ProfessionalEpisodeActionSheet
         episode={selectedEpisode}
         open={Boolean(selectedEpisode)}
         onClose={() => setSelectedEpisode(null)}
