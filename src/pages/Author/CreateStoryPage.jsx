@@ -316,12 +316,17 @@ function StoryTextSheet({
   const canSave = Boolean(value.trim()) && value.length <= maxLength
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-end bg-black/35" onClick={onClose}>
+    return (
+  <div
+    className="fixed inset-0 z-[150] flex items-end justify-center bg-black/35"
+    onClick={onClose}
+  >
+    <div className="w-full sm:max-w-5xl sm:px-4">
       <div
-        className="w-full rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+        className="max-h-[88dvh] w-full overflow-y-auto rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:rounded-[12px] sm:px-5 sm:pb-5"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto max-w-3xl">
+        <div className="w-full">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -394,10 +399,11 @@ function StoryTextSheet({
               <i className="fa-solid fa-chevron-right shrink-0 text-[9px] text-[#e5484d]" />
             </button>
           ) : null}
-        </div>
+                </div>
       </div>
     </div>
-  )
+  </div>
+)
 }
 
 function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
@@ -1186,6 +1192,19 @@ const cropHelper =
     : cropMode === 'landscape'
       ? 'Drag the image to fit the horizontal 16:9 thumbnail.'
       : `Drag the image to fit the 16:9 ${isManga ? 'manga' : 'story'} slide.`
+
+const createdWorkLabel = isManga
+  ? 'manga'
+  : isChatStory
+    ? 'chat story'
+    : 'novel'
+
+const editPageLabel = isManga
+  ? 'Edit Manga'
+  : isChatStory
+    ? 'Edit Chat Story'
+    : 'Edit Novel'
+
 return (
   <div
     className={`create-story-page min-h-screen bg-[#fafafa] pb-[110px] ${
@@ -2055,6 +2074,17 @@ return (
                 </button>
               </section>
             )}
+
+            {!isEditMode ? (
+              <p className="mt-3 px-1 text-[11.5px] font-normal leading-5 text-[#8d94a1]">
+                This step only collects the basic information. After creating
+                your {` ${createdWorkLabel}`}, open{' '}
+                <span className="font-semibold text-[#555b66]">
+                  {editPageLabel}
+                </span>{' '}
+                to complete the remaining details.
+              </p>
+            ) : null}
 
             <section className="mt-5 pb-8">
               <button
