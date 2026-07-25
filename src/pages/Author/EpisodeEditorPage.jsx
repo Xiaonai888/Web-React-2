@@ -725,106 +725,130 @@ function EpisodeDetailsSheet({
   const canSave = Boolean(title.trim())
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-end bg-black/35" onClick={onClose}>
-      <div
-        className="max-h-[88vh] w-full overflow-y-auto rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mx-auto max-w-3xl">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-              aria-label="Close episode details"
-            >
-              <i className="fa-solid fa-xmark text-[14px]" />
-            </button>
-
-            <h2 className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-[#111827]">
-              Episode Details
-            </h2>
-
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={!canSave}
-              className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#d0d5dd]"
-            >
-              Save
-            </button>
-          </div>
-
-          <div className="mt-4">
-            <label className="mb-2 block text-[13px] font-semibold text-[#111827]">
-              Episode Title <span className="text-[#e5484d]">*</span>
-            </label>
-            <input
-              value={title}
-              onChange={(event) => onTitleChange(event.target.value)}
-              maxLength={200}
-              autoFocus
-              placeholder="Enter episode title"
-              className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] font-semibold text-[#111827] outline-none placeholder:font-semibold placeholder:text-[#a5aab4]"
-            />
-          </div>
-
-          <div className="mt-5">
+    <div
+      className="fixed inset-0 z-[150] flex items-end justify-center bg-black/35 sm:px-4"
+      onClick={onClose}
+    >
+      <div className="w-full sm:max-w-5xl">
+        <div
+          className="max-h-[88dvh] w-full overflow-y-auto rounded-t-[18px] bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl sm:max-h-[82dvh] sm:rounded-[12px] sm:px-5 sm:pb-5"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="w-full">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[13px] font-bold text-[#111827]">Episode Cover</div>
-              <div className="text-[11px] text-[#8d94a1]">Optional</div>
-            </div>
-            <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
-              If empty, the story cover will be used. Recommended 16:9.
-            </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+                aria-label="Close episode details"
+              >
+                <i className="fa-solid fa-xmark text-[14px]" />
+              </button>
 
-            {cover ? (
-              <div className="mt-3 overflow-hidden rounded-[12px] bg-[#f7f7fa]">
-                <div className="aspect-video w-full overflow-hidden">
-                  <img src={cover} alt="Episode Cover" className="h-full w-full object-cover" />
+              <h2 className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-[#111827]">
+                Episode Details
+              </h2>
+
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!canSave}
+                className="h-8 shrink-0 rounded-full bg-[#111827] px-4 text-[12px] font-bold text-white active:scale-95 disabled:bg-[#d0d5dd]"
+              >
+                Save
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-2 block text-[13px] font-semibold text-[#111827]">
+                Episode Title <span className="text-[#e5484d]">*</span>
+              </label>
+
+              <input
+                value={title}
+                onChange={(event) => onTitleChange(event.target.value)}
+                maxLength={200}
+                autoFocus
+                placeholder="Enter episode title"
+                className="h-12 w-full rounded-[10px] bg-[#f7f7fa] px-3 text-[14px] font-semibold text-[#111827] outline-none placeholder:font-semibold placeholder:text-[#a5aab4]"
+              />
+            </div>
+
+            <div className="mt-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[13px] font-bold text-[#111827]">
+                  Episode Cover
                 </div>
 
-                <div className="flex items-center gap-2 p-3">
-                  <label className="flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[12px] font-bold text-white active:scale-95">
-                    Replace
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        onCoverChange(event.target.files?.[0] || null)
-                        event.target.value = ''
-                      }}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={onRemoveCover}
-                    className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#f2f4f7] text-[12px] font-bold text-[#555b66] active:scale-95"
-                  >
-                    Remove
-                  </button>
+                <div className="text-[11px] text-[#8d94a1]">
+                  Optional
                 </div>
               </div>
-            ) : (
-              <label className="mt-3 flex aspect-video cursor-pointer flex-col items-center justify-center rounded-[12px] bg-[#f7f7fa] text-center active:scale-[0.99]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
-                  <i className="fa-regular fa-image text-[14px]" />
+
+              <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
+                If empty, the story cover will be used. Recommended 16:9.
+              </p>
+
+              {cover ? (
+                <div className="mt-3 overflow-hidden rounded-[12px] bg-[#f7f7fa]">
+                  <div className="aspect-video w-full overflow-hidden sm:h-[340px] sm:aspect-auto">
+                    <img
+                      src={cover}
+                      alt="Episode Cover"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 p-3">
+                    <label className="flex h-10 flex-1 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[12px] font-bold text-white active:scale-95">
+                      Replace
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          onCoverChange(event.target.files?.[0] || null)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={onRemoveCover}
+                      className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#f2f4f7] text-[12px] font-bold text-[#555b66] active:scale-95"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-3 text-[13px] font-bold text-[#111827]">Add Episode Cover</div>
-                <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => {
-                    onCoverChange(event.target.files?.[0] || null)
-                    event.target.value = ''
-                  }}
-                />
-              </label>
-            )}
+              ) : (
+                <label className="mt-3 flex aspect-video cursor-pointer flex-col items-center justify-center rounded-[12px] bg-[#f7f7fa] text-center active:scale-[0.99] sm:h-[340px] sm:aspect-auto">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm">
+                    <i className="fa-regular fa-image text-[14px]" />
+                  </div>
+
+                  <div className="mt-3 text-[13px] font-bold text-[#111827]">
+                    Add Episode Cover
+                  </div>
+
+                  <div className="mt-1 text-[11px] text-[#8d94a1]">
+                    16:9 crop
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      onCoverChange(event.target.files?.[0] || null)
+                      event.target.value = ''
+                    }}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </div>
       </div>
