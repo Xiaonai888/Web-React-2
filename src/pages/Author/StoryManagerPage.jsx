@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -19,10 +19,14 @@ function formatCompactNumber(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '0'
-  if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}M`
-  if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace('.0', '')}M`
+  }
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace('.0', '')}K`
+  }
 
-  return String(number)
+  return number.toLocaleString('en-US')
 }
 
 function formatDate(value) {
@@ -46,86 +50,50 @@ function getStatusText(status) {
 
 function getDateLabel(episode) {
   const status = String(episode?.status || 'draft').toLowerCase()
-  const publishedAt = episode?.published_at
-  const scheduledAt = episode?.scheduled_at
-  const updatedAt = episode?.updated_at
-  const createdAt = episode?.created_at
+  const value =
+    status === 'published'
+      ? episode?.published_at || episode?.updated_at || episode?.created_at
+      : status === 'scheduled'
+        ? episode?.scheduled_at || episode?.updated_at || episode?.created_at
+        : episode?.updated_at || episode?.created_at
+  const date = formatDate(value)
 
-  if (status === 'scheduled') {
-    return `Scheduled: ${formatDate(scheduledAt || updatedAt || createdAt) || 'Not set'}`
-  }
-
-  if (status === 'published') {
-    const publishedDate = publishedAt ? new Date(publishedAt) : null
-    const updatedDate = updatedAt ? new Date(updatedAt) : null
-
-    if (
-      publishedDate &&
-      updatedDate &&
-      !Number.isNaN(publishedDate.getTime()) &&
-      !Number.isNaN(updatedDate.getTime()) &&
-      updatedDate.getTime() > publishedDate.getTime() + 60 * 1000
-    ) {
-      return `Updated: ${formatDate(updatedAt)}`
-    }
-
-    return `Published: ${formatDate(publishedAt || updatedAt || createdAt) || 'Recently'}`
-  }
-
-  return `Last edited: ${formatDate(updatedAt || createdAt) || 'Recently'}`
+  if (status === 'published') return `Published ${date || 'recently'}`
+  if (status === 'scheduled') return `Scheduled ${date || 'not set'}`
+  return `Updated ${date || 'recently'}`
 }
 
 function getStoryUpdatedLabel(story, episodes) {
-  const latestEpisodeDate = episodes
-    .map((episode) => episode.updated_at || episode.published_at || episode.created_at)
+  const values = [
+    story?.updated_at,
+    story?.created_at,
+    ...episodes.flatMap((episode) => [
+      episode.updated_at,
+      episode.published_at,
+      episode.created_at,
+    ]),
+  ]
     .filter(Boolean)
     .map((value) => new Date(value))
     .filter((date) => !Number.isNaN(date.getTime()))
-    .sort((a, b) => b.getTime() - a.getTime())[0]
+    .sort((first, second) => second.getTime() - first.getTime())
 
-  const storyDate = story?.updated_at || story?.created_at
-  const finalDate = latestEpisodeDate || (storyDate ? new Date(storyDate) : null)
-
-  if (!finalDate || Number.isNaN(finalDate.getTime())) return 'Updated recently'
-
-  return `Updated ${finalDate.toLocaleDateString('en-GB')}`
-}
-
-function getTotalCharacters(episodes) {
-  return episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0)
+  return values.length ? `Updated ${values[0].toLocaleDateString('en-GB')}` : 'Updated recently'
 }
 
 function StatusBadge({ status }) {
   const normalized = String(status || 'draft').toLowerCase()
-
   const classes = {
     published: 'bg-[#ecfdf3] text-[#16803c]',
     scheduled: 'bg-[#eff6ff] text-[#0b5cff]',
-    draft: 'bg-[#f2f4f7] text-[#667085]',
     ready: 'bg-[#fff7df] text-[#a56a00]',
+    draft: 'bg-[#f2f4f7] text-[#667085]',
   }
 
   return (
-    <span className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${classes[normalized] || classes.draft}`}>
+    <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${classes[normalized] || classes.draft}`}>
       {getStatusText(normalized)}
     </span>
-  )
-}
-
-function StatCard({ icon, label, value }) {
-  return (
-    <div className="rounded-[20px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#f5f3fa] text-[#111827]">
-          <i className={`${icon} text-[15px]`} />
-        </div>
-
-        <div className="min-w-0">
-          <div className="text-[18px] font-extrabold text-[#111827]">{value}</div>
-          <div className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">{label}</div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -140,28 +108,81 @@ function EpisodeActionSheet({
   onDelete,
   busy,
 }) {
+  const [dragging, setDragging] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const dragStartRef = useRef(0)
+  const dragYRef = useRef(0)
+
+  useEffect(() => {
+    if (!open) return
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(false)
+  }, [open])
+
   if (!open || !episode) return null
 
-  const isPublished = episode.status === 'published'
+  const isPublished = String(episode.status || '').toLowerCase() === 'published'
+
+  const handleDragStart = (event) => {
+    dragStartRef.current = event.clientY
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(true)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleDragMove = (event) => {
+    if (!dragging) return
+    const nextY = Math.max(0, event.clientY - dragStartRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const handleDragEnd = () => {
+    if (!dragging) return
+    setDragging(false)
+
+    if (dragYRef.current >= 90) {
+      onClose()
+      return
+    }
+
+    dragYRef.current = 0
+    setDragY(0)
+  }
 
   return (
-    <div className="fixed inset-0 z-[150]">
+    <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Episode actions">
       <button
         type="button"
         aria-label="Close episode actions"
         onClick={onClose}
-        className="absolute inset-0 bg-black/35"
+        className="absolute inset-0 bg-black/40"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 rounded-t-[30px] bg-white px-4 pb-6 pt-4 shadow-2xl md:bottom-auto md:left-auto md:right-6 md:top-20 md:w-[360px] md:rounded-[26px] md:pb-4">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#e5e7eb] md:hidden" />
+      <section
+        className={`absolute bottom-0 left-1/2 w-full max-w-[520px] -translate-x-1/2 rounded-t-[28px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl ${
+          dragging ? '' : 'transition-transform duration-200 ease-out'
+        }`}
+        style={{ transform: `translate(-50%, ${dragY}px)` }}
+      >
+        <div
+          className="touch-none pb-3"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+        >
+          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#d9dce4]" />
+        </div>
 
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 px-1 pb-3">
           <div className="min-w-0">
-            <div className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
+            <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
               {episode.title || 'Untitled Episode'}
             </div>
-            <div className="mt-0.5 text-[12px] font-semibold text-[#8d94a1]">
+            <div className="mt-1 text-[11px] font-normal text-[#8d94a1]">
               EP {episode.episode_number || 1} • {getStatusText(episode.status)}
             </div>
           </div>
@@ -169,29 +190,32 @@ function EpisodeActionSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] active:scale-95"
+            aria-label="Close"
           >
             <i className="fa-solid fa-xmark text-[13px]" />
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[22px] border border-[#eceaf2] bg-white">
+        <div className="overflow-hidden rounded-[16px] border border-[#eceef2] bg-white">
           <button
             type="button"
+            disabled={busy}
             onClick={() => onEdit(episode)}
-            className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-[#f8fafc]"
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
           >
-            <i className="fa-solid fa-pen w-5 text-center text-[14px] text-[#111827]" />
-            <span className="text-[14px] font-extrabold text-[#111827]">Edit Episode</span>
+            <i className="fa-solid fa-pen w-5 text-center text-[13px] text-[#111827]" />
+            <span className="text-[13px] font-semibold text-[#111827]">Edit Episode</span>
           </button>
 
           <button
             type="button"
+            disabled={busy}
             onClick={() => onPreview(episode)}
-            className="flex w-full items-center gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#f8fafc]"
+            className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
           >
-            <i className="fa-regular fa-eye w-5 text-center text-[14px] text-[#111827]" />
-            <span className="text-[14px] font-extrabold text-[#111827]">Preview Episode</span>
+            <i className="fa-regular fa-eye w-5 text-center text-[13px] text-[#111827]" />
+            <span className="text-[13px] font-semibold text-[#111827]">Preview Episode</span>
           </button>
 
           {isPublished ? (
@@ -199,30 +223,31 @@ function EpisodeActionSheet({
               type="button"
               disabled={busy}
               onClick={() => onMoveToDraft(episode)}
-              className="flex w-full items-center gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#f8fafc] disabled:opacity-60"
+              className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
             >
-              <i className="fa-regular fa-file-lines w-5 text-center text-[14px] text-[#111827]" />
-              <span className="text-[14px] font-extrabold text-[#111827]">Move to Draft</span>
+              <i className="fa-regular fa-file-lines w-5 text-center text-[13px] text-[#111827]" />
+              <span className="text-[13px] font-semibold text-[#111827]">Move to Draft</span>
             </button>
           ) : (
             <button
               type="button"
               disabled={busy}
               onClick={() => onPublish(episode)}
-              className="flex w-full items-center gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#f8fafc] disabled:opacity-60"
+              className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
             >
-              <i className="fa-solid fa-upload w-5 text-center text-[14px] text-[#111827]" />
-              <span className="text-[14px] font-extrabold text-[#111827]">Publish Episode</span>
+              <i className="fa-solid fa-arrow-up-from-bracket w-5 text-center text-[13px] text-[#111827]" />
+              <span className="text-[13px] font-semibold text-[#111827]">Publish Episode</span>
             </button>
           )}
 
           <button
             type="button"
+            disabled={busy}
             onClick={() => onDelete(episode)}
-            className="flex w-full items-center gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:bg-[#fff1f1]"
+            className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#fff5f5] disabled:opacity-60"
           >
-            <i className="fa-regular fa-trash-can w-5 text-center text-[14px] text-[#e5484d]" />
-            <span className="text-[14px] font-extrabold text-[#e5484d]">Delete Episode</span>
+            <i className="fa-regular fa-trash-can w-5 text-center text-[13px] text-[#e5484d]" />
+            <span className="text-[13px] font-semibold text-[#e5484d]">Delete Episode</span>
           </button>
         </div>
       </section>
@@ -234,25 +259,17 @@ function ConfirmDeleteModal({ episode, busy, onClose, onConfirm }) {
   if (!episode) return null
 
   return (
-    <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
-      <button
-        type="button"
-        aria-label="Close delete modal"
-        onClick={onClose}
-        className="absolute inset-0"
-      />
+    <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:pb-0">
+      <button type="button" aria-label="Close delete modal" onClick={onClose} className="absolute inset-0" />
 
-      <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
-          <i className="fa-regular fa-trash-can text-[25px]" />
+      <section className="relative w-full max-w-[420px] rounded-[18px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-regular fa-trash-can text-[19px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-black text-[#111827]">
-          Delete this episode?
-        </h2>
-
-        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
-          This episode will be moved to Trash and hidden from readers.
+        <h2 className="mt-4 text-[18px] font-semibold text-[#111827]">Delete this episode?</h2>
+        <p className="mt-2 text-[12px] font-normal leading-5 text-[#667085]">
+          This episode will move to Trash and stay hidden from readers.
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -260,16 +277,15 @@ function ConfirmDeleteModal({ episode, busy, onClose, onConfirm }) {
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] disabled:opacity-60"
+            className="h-11 rounded-[12px] border border-[#e4e7ec] bg-white text-[13px] font-normal text-[#111827] disabled:opacity-60"
           >
             Cancel
           </button>
-
           <button
             type="button"
             disabled={busy}
             onClick={onConfirm}
-            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white disabled:opacity-60"
+            className="h-11 rounded-[12px] bg-[#e5484d] text-[13px] font-normal text-white disabled:opacity-60"
           >
             {busy ? 'Deleting...' : 'Delete Episode'}
           </button>
@@ -279,44 +295,37 @@ function ConfirmDeleteModal({ episode, busy, onClose, onConfirm }) {
   )
 }
 
-
 function ConfirmTrashStoryModal({ story, open, busy, onClose, onConfirm }) {
   if (!open || !story) return null
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
+    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:pb-0">
       <button type="button" aria-label="Close story trash modal" onClick={onClose} className="absolute inset-0" />
 
-      <section className="relative w-full max-w-[430px] rounded-[30px] bg-white p-5 text-center shadow-2xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
-          <i className="fa-regular fa-trash-can text-[25px]" />
+      <section className="relative w-full max-w-[420px] rounded-[18px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-regular fa-trash-can text-[19px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-black text-[#111827]">Move story to Trash?</h2>
-        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#667085]">
-          This will hide the story, episodes, likes, comments, and stats. You can restore it within 30 days.
+        <h2 className="mt-4 text-[18px] font-semibold text-[#111827]">Move story to Trash?</h2>
+        <p className="mt-2 text-[12px] font-normal leading-5 text-[#667085]">
+          The story and its episodes will be hidden. You can restore them from Trash within 30 days.
         </p>
-
-        <div className="mt-4 rounded-[18px] bg-[#f8fafc] px-4 py-3 text-left">
-          <div className="line-clamp-1 text-[13px] font-extrabold text-[#111827]">{story.title || 'Untitled Story'}</div>
-          <div className="mt-1 text-[11.5px] font-semibold text-[#8d94a1]">No permanent delete is allowed from author account.</div>
-        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] disabled:opacity-60"
+            className="h-11 rounded-[12px] border border-[#e4e7ec] bg-white text-[13px] font-normal text-[#111827] disabled:opacity-60"
           >
             Cancel
           </button>
-
           <button
             type="button"
             disabled={busy}
             onClick={onConfirm}
-            className="h-12 rounded-full bg-[#e5484d] text-[13px] font-extrabold text-white disabled:opacity-60"
+            className="h-11 rounded-[12px] bg-[#e5484d] text-[13px] font-normal text-white disabled:opacity-60"
           >
             {busy ? 'Moving...' : 'Move to Trash'}
           </button>
@@ -326,81 +335,65 @@ function ConfirmTrashStoryModal({ story, open, busy, onClose, onConfirm }) {
   )
 }
 
-function EpisodeRow({ episode, onOpen, onMore }) {
-  const views = formatCompactNumber(episode.total_views || episode.views || 0)
-  const likes = formatCompactNumber(episode.total_likes || episode.likes || 0)
-  const comments = formatCompactNumber(episode.total_comments || episode.comments || 0)
+function EpisodeMetric({ icon, value }) {
+  return (
+    <span className="inline-flex min-w-[58px] items-center justify-center gap-1.5 text-[11px] font-normal text-[#667085]">
+      <i className={`${icon} text-[11px] text-[#111827]`} />
+      {formatCompactNumber(value)}
+    </span>
+  )
+}
+
+function EpisodeRow({ episode, last, onOpen, onMore }) {
+  const views = episode.total_views || episode.views || 0
+  const likes = episode.total_likes || episode.likes || 0
+  const comments = episode.total_comments || episode.comments || 0
+  const contentCount = Number(episode.character_count || 0)
 
   return (
-    <div className="flex w-full items-center gap-3 rounded-[20px] bg-white p-3 text-left shadow-sm ring-1 ring-black/5">
+    <div className="relative flex min-h-[96px] items-center gap-3 bg-white px-4 py-4">
       <button
         type="button"
         onClick={() => onOpen(episode)}
-        className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#111827] text-white active:scale-[0.98]"
-        aria-label={`Edit ${episode.title || 'episode'}`}
-      >
-        {episode.cover_url ? (
-          <img src={episode.cover_url} alt={episode.title} className="h-full w-full object-cover" />
-        ) : (
-          <i className="fa-regular fa-image text-[18px] opacity-70" />
-        )}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onOpen(episode)}
-        className="min-w-0 flex-1 text-left active:scale-[0.995]"
+        className="min-w-0 flex-1 text-left active:opacity-70"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <div className="shrink-0 rounded-full bg-[#f5f3fa] px-2 py-1 text-[10px] font-extrabold text-[#667085]">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#8d94a1]">
             EP {episode.episode_number || 1}
-          </div>
-
+          </span>
           <StatusBadge status={episode.status} />
-
           {episode.is_adult ? (
-            <span className="rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
-              18+
-            </span>
+            <span className="rounded-full bg-[#fff1f1] px-2 py-1 text-[10px] font-semibold text-[#e5484d]">18+</span>
           ) : null}
         </div>
 
-        <div className="mt-2 line-clamp-1 text-[14px] font-extrabold text-[#111827]">
+        <div className="mt-2 line-clamp-1 text-[14px] font-semibold text-[#111827]">
           {episode.title || 'Untitled Episode'}
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-[#8d94a1]">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[#8d94a1]">
           <span>{getDateLabel(episode)}</span>
           <span>•</span>
-          <span>{Number(episode.character_count || 0).toLocaleString()} characters</span>
-        </div>
-
-        <div className="mt-2 flex items-center gap-4 text-[11px] font-bold text-[#555b66]">
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-regular fa-eye text-[11px] text-[#111827]" />
-            {views}
-          </span>
-
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-solid fa-heart text-[10px] text-[#e5484d]" />
-            {likes}
-          </span>
-
-          <span className="inline-flex items-center gap-1">
-            <i className="fa-regular fa-comment text-[11px] text-[#111827]" />
-            {comments}
-          </span>
+          <span>{contentCount.toLocaleString('en-US')} characters</span>
         </div>
       </button>
+
+      <div className="hidden shrink-0 items-center gap-2 md:flex">
+        <EpisodeMetric icon="fa-regular fa-eye" value={views} />
+        <EpisodeMetric icon="fa-regular fa-heart" value={likes} />
+        <EpisodeMetric icon="fa-regular fa-comment" value={comments} />
+      </div>
 
       <button
         type="button"
         onClick={() => onMore(episode)}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-        aria-label="Episode actions"
+        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+        aria-label={`Actions for ${episode.title || 'episode'}`}
       >
-        <i className="fa-solid fa-ellipsis text-[15px]" />
+        <i className="fa-solid fa-ellipsis text-[14px]" />
       </button>
+
+      {!last ? <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#eceef2]" /> : null}
     </div>
   )
 }
@@ -408,57 +401,86 @@ function EpisodeRow({ episode, onOpen, onMore }) {
 export default function StoryManagerPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
-
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState('published')
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(20)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedEpisode, setSelectedEpisode] = useState(null)
   const [deleteEpisode, setDeleteEpisode] = useState(null)
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const modalOpen = Boolean(selectedEpisode || deleteEpisode || trashStoryOpen)
+
   useEffect(() => {
-  if (!selectedEpisode && !deleteEpisode && !trashStoryOpen) return undefined
-  const previousOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden'
-  return () => {
-    document.body.style.overflow = previousOverflow
-  }
-}, [selectedEpisode, deleteEpisode, trashStoryOpen])
+    if (!modalOpen) return undefined
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+    const previousBodyOverflow = body.style.overflow
+    const previousBodyPosition = body.style.position
+    const previousBodyTop = body.style.top
+    const previousBodyWidth = body.style.width
+    const previousHtmlOverflow = html.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
+
+    return () => {
+      body.style.overflow = previousBodyOverflow
+      body.style.position = previousBodyPosition
+      body.style.top = previousBodyTop
+      body.style.width = previousBodyWidth
+      html.style.overflow = previousHtmlOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [modalOpen])
 
   const publishedEpisodes = useMemo(
-    () => episodes.filter((episode) => episode.status === 'published'),
+    () => episodes.filter((episode) => String(episode.status).toLowerCase() === 'published'),
     [episodes]
   )
 
   const draftEpisodes = useMemo(
-    () => episodes.filter((episode) => episode.status !== 'published'),
+    () => episodes.filter((episode) => String(episode.status).toLowerCase() !== 'published'),
     [episodes]
   )
 
   const visibleEpisodes = activeTab === 'published' ? publishedEpisodes : draftEpisodes
-const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
-const pageStart = (currentPage - 1) * pageSize
-const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
-
-const paginatedEpisodes = useMemo(
-  () => visibleEpisodes.slice(pageStart, pageEnd),
-  [visibleEpisodes, pageStart, pageEnd]
-)
-
-const totalCharacters = useMemo(() => getTotalCharacters(episodes), [episodes])
+  const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
+  const pageStart = (currentPage - 1) * pageSize
+  const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
+  const paginatedEpisodes = visibleEpisodes.slice(pageStart, pageEnd)
+  const totalCharacters = useMemo(
+    () => episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0),
+    [episodes]
+  )
+  const totalMangaPages = useMemo(
+    () => episodes.reduce((sum, episode) => sum + Number(episode.page_count || 0), 0),
+    [episodes]
+  )
   const storyUpdatedLabel = useMemo(() => getStoryUpdatedLabel(story, episodes), [story, episodes])
-  const libraryAdds = formatCompactNumber(story?.library_count || story?.total_library || story?.total_subscribers || 0)
-  useEffect(() => {
-  setCurrentPage(1)
-}, [activeTab, pageSize])
+  const storyProgressText = episodes.length
+    ? `${story?.story_status || 'Ongoing'} • ${episodes.length} Episode${episodes.length === 1 ? '' : 's'}`
+    : 'Awaiting first episode'
+  const storyContentText =
+    String(story?.story_type || '').toLowerCase() === 'manga'
+      ? `${totalMangaPages.toLocaleString('en-US')} pages`
+      : `${totalCharacters.toLocaleString('en-US')} characters`
 
-useEffect(() => {
-  if (currentPage > totalPages) setCurrentPage(totalPages)
-}, [currentPage, totalPages])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab, pageSize])
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages])
 
   useEffect(() => {
     let ignore = false
@@ -477,14 +499,10 @@ useEffect(() => {
       try {
         const [storyResponse, episodesResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          fetch(`${API_BASE_URL}/api/stories/${storyId}/manager-episodes`, {
+            headers: { Authorization: `Bearer ${token}` },
           }),
         ])
 
@@ -531,6 +549,7 @@ useEffect(() => {
   }
 
   const handleEditEpisode = (episode) => {
+    setSelectedEpisode(null)
     navigate(`/author/story/${storyId}/episode/create?editEpisodeId=${episode.id}&startStep=2&first=0`)
   }
 
@@ -554,7 +573,6 @@ useEffect(() => {
 
     try {
       setBusy(true)
-
       const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/${episode.id}/status`, {
         method: 'PATCH',
         headers: {
@@ -563,7 +581,6 @@ useEffect(() => {
         },
         body: JSON.stringify({ status: 'draft' }),
       })
-
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
@@ -572,7 +589,7 @@ useEffect(() => {
 
       setEpisodes((current) =>
         current.map((item) =>
-          item.id === episode.id
+          String(item.id) === String(episode.id)
             ? {
                 ...item,
                 status: 'draft',
@@ -583,12 +600,11 @@ useEffect(() => {
             : item
         )
       )
-
       setSelectedEpisode(null)
       setActiveTab('drafts')
     } catch (error) {
-      setMessage(error.message || 'Failed to move episode to draft')
       setSelectedEpisode(null)
+      setMessage(error.message || 'Failed to move episode to draft')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setBusy(false)
@@ -601,47 +617,40 @@ useEffect(() => {
   }
 
   const handleConfirmDeleteEpisode = async () => {
-  if (!deleteEpisode) return
+    if (!deleteEpisode) return
 
-  const token = getAuthToken()
+    const token = getAuthToken()
 
-  if (!token) {
-    navigate('/login')
-    return
-  }
-
-  try {
-    setBusy(true)
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/stories/${storyId}/episodes/${deleteEpisode.id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    )
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to delete episode')
+    if (!token) {
+      navigate('/login')
+      return
     }
 
-    setEpisodes((current) =>
-      current.filter((episode) => episode.id !== deleteEpisode.id)
-    )
-    setDeleteEpisode(null)
-  } catch (error) {
-    setDeleteEpisode(null)
-    setMessage(error.message || 'Failed to delete episode')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  } finally {
-    setBusy(false)
-  }
-}
+    try {
+      setBusy(true)
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/episodes/${deleteEpisode.id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      const data = await response.json().catch(() => ({}))
 
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to delete episode')
+      }
+
+      setEpisodes((current) => current.filter((episode) => String(episode.id) !== String(deleteEpisode.id)))
+      setDeleteEpisode(null)
+    } catch (error) {
+      setDeleteEpisode(null)
+      setMessage(error.message || 'Failed to delete episode')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const handleMoveStoryToTrash = async () => {
     const token = getAuthToken()
@@ -653,14 +662,10 @@ useEffect(() => {
 
     try {
       setBusy(true)
-
       const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
-
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
@@ -679,7 +684,7 @@ useEffect(() => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
+    <div className="min-h-screen bg-[#f7f7f9] pb-[92px] text-[#111827]">
       <EpisodeActionSheet
         episode={selectedEpisode}
         open={Boolean(selectedEpisode)}
@@ -693,11 +698,11 @@ useEffect(() => {
       />
 
       <ConfirmDeleteModal
-  episode={deleteEpisode}
-  busy={busy}
-  onClose={() => setDeleteEpisode(null)}
-  onConfirm={handleConfirmDeleteEpisode}
-/>
+        episode={deleteEpisode}
+        busy={busy}
+        onClose={() => setDeleteEpisode(null)}
+        onConfirm={handleConfirmDeleteEpisode}
+      />
 
       <ConfirmTrashStoryModal
         story={story}
@@ -707,24 +712,24 @@ useEffect(() => {
         onConfirm={handleMoveStoryToTrash}
       />
 
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-[#eceef2] bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto grid h-[58px] max-w-5xl grid-cols-[44px_1fr_auto] items-center px-2 sm:px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">Story Manager</h1>
+          <h1 className="truncate text-center text-[15px] font-semibold text-[#111827]">Story Manager</h1>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setTrashStoryOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] active:scale-95"
+              className="flex h-9 w-9 items-center justify-center text-[#e5484d] active:opacity-60"
               aria-label="Move story to Trash"
             >
               <i className="fa-regular fa-trash-can text-[13px]" />
@@ -733,7 +738,7 @@ useEffect(() => {
             <button
               type="button"
               onClick={handleEditStory}
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95"
+              className="h-9 rounded-full bg-[#111827] px-4 text-[12px] font-normal text-white active:scale-95"
             >
               Edit Story
             </button>
@@ -741,11 +746,11 @@ useEffect(() => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <main className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
         {loading ? (
-          <section className="rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <section className="rounded-[14px] bg-white p-8 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-            <div className="text-[13px] font-bold text-[#667085]">Loading story manager...</div>
+            <div className="text-[12px] font-normal text-[#667085]">Loading story manager...</div>
           </section>
         ) : null}
 
@@ -753,7 +758,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="mb-4 w-full rounded-[18px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+            className="mb-4 w-full rounded-[12px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-normal leading-5 text-[#e5484d]"
           >
             {message}
           </button>
@@ -761,191 +766,149 @@ useEffect(() => {
 
         {!loading && story ? (
           <>
-            <section className="overflow-hidden rounded-[26px] bg-white shadow-sm ring-1 ring-black/5">
-              <div className="relative min-h-[180px] bg-[#111827]">
-                {story.slides?.length ? (
-                  <img
-                    src={story.slides[0].image_url}
-                    alt={story.title}
-                    className="h-[180px] w-full object-cover opacity-80"
-                  />
-                ) : (
-                  <div className="flex h-[180px] items-center justify-center text-white/50">
-                    <i className="fa-regular fa-image text-[32px]" />
-                  </div>
-                )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-
-                <div className="absolute bottom-4 left-4 right-4 flex items-end gap-4">
-                  <div className="aspect-[2/3] w-[96px] overflow-hidden rounded-[18px] bg-white/10 shadow-xl ring-2 ring-white/30">
-                    {story.cover_url ? (
-                      <img src={story.cover_url} alt={story.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-white/50">
-                        <i className="fa-regular fa-image text-[20px]" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1 pb-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <StatusBadge status={story.status} />
-                      {story.is_adult ? (
-                        <span className="rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
-                          18+
-                        </span>
-                      ) : null}
+            <section className="bg-white px-3 py-4 sm:px-4">
+              <div className="flex items-start gap-4">
+                <div className="aspect-[2/3] w-[88px] shrink-0 overflow-hidden rounded-[10px] bg-[#eef0f3] sm:w-[104px]">
+                  {story.cover_url ? (
+                    <img src={story.cover_url} alt={story.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#8d94a1]">
+                      <i className="fa-regular fa-image text-[22px]" />
                     </div>
-
-                    <h2 className="line-clamp-2 text-[22px] font-extrabold leading-7 text-white">
-                      {story.title || 'Untitled Story'}
-                    </h2>
-
-                    <div className="mt-1 text-[12px] font-bold text-white/75">
-                      {story.story_language || 'Khmer'} • {story.main_genre || 'Novel'}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </div>
 
-              <div className="px-4 py-3">
-                <div className="text-[12.5px] font-bold text-[#667085]">
-                  {totalCharacters.toLocaleString()} characters • {storyUpdatedLabel}
+                <div className="min-w-0 flex-1 pt-1">
+                  <h2 className="line-clamp-2 text-[19px] font-semibold leading-6 text-[#111827] sm:text-[22px]">
+                    {story.title || 'Untitled Story'}
+                  </h2>
+
+                  <div className={`mt-2 text-[12px] font-normal ${episodes.length ? 'text-[#667085]' : 'text-[#a56a00]'}`}>
+                    {storyProgressText}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[#8d94a1]">
+                    <span>{storyContentText}</span>
+                    <span>•</span>
+                    <span>{storyUpdatedLabel}</span>
+                  </div>
                 </div>
               </div>
             </section>
 
-            <section className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatCard icon="fa-solid fa-book-open" label="Episodes" value={episodes.length} />
-              <StatCard icon="fa-solid fa-circle-check" label="Published" value={publishedEpisodes.length} />
-              <StatCard icon="fa-regular fa-file-lines" label="Drafts" value={draftEpisodes.length} />
-              <StatCard icon="fa-regular fa-bookmark" label="Library" value={libraryAdds} />
-            </section>
+            <section className="mt-3 bg-white">
+              <div className="flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-4">
+                <h2 className="text-[17px] font-semibold text-[#111827]">Episodes</h2>
+                <span className="text-[11px] font-normal text-[#8d94a1]">{visibleEpisodes.length} shown</span>
+              </div>
 
-            <section className="mt-5">
-              <div className="mb-3">
-                <div className="flex items-end justify-between gap-3">
-                  <div>
-                    <h2 className="text-[17px] font-extrabold text-[#111827]">Episodes</h2>
-                    <p className="mt-0.5 text-[12px] font-semibold text-[#8d94a1]">
-                      Manage all episodes for this story.
-                    </p>
-                  </div>
+              <div className="flex gap-1 border-b border-[#eceef2] px-3 pb-3 sm:px-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('published')}
+                  className={`rounded-full px-5 py-2.5 text-[12px] font-normal transition active:scale-[0.98] ${
+                    activeTab === 'published'
+                      ? 'bg-[#eef0f3] text-[#111827]'
+                      : 'bg-transparent text-[#8d94a1]'
+                  }`}
+                >
+                  Published {publishedEpisodes.length}
+                </button>
 
-                  <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
-                    {visibleEpisodes.length} shown
-                  </span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2 rounded-[18px] bg-white p-1.5 shadow-sm ring-1 ring-black/5">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('published')}
-                    className={`h-11 rounded-[14px] text-[13px] font-extrabold transition active:scale-[0.99] ${
-                      activeTab === 'published'
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-transparent text-[#667085]'
-                    }`}
-                  >
-                    Published {publishedEpisodes.length}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('drafts')}
-                    className={`h-11 rounded-[14px] text-[13px] font-extrabold transition active:scale-[0.99] ${
-                      activeTab === 'drafts'
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-transparent text-[#667085]'
-                    }`}
-                  >
-                    Drafts {draftEpisodes.length}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('drafts')}
+                  className={`rounded-full px-5 py-2.5 text-[12px] font-normal transition active:scale-[0.98] ${
+                    activeTab === 'drafts'
+                      ? 'bg-[#eef0f3] text-[#111827]'
+                      : 'bg-transparent text-[#8d94a1]'
+                  }`}
+                >
+                  Drafts {draftEpisodes.length}
+                </button>
               </div>
 
               {visibleEpisodes.length ? (
-  <>
-    <div className="space-y-3">
-      {paginatedEpisodes.map((episode) => (
-        <EpisodeRow
-          key={episode.id}
-          episode={episode}
-          onOpen={handleEditEpisode}
-          onMore={setSelectedEpisode}
-        />
-      ))}
-    </div>
-
-    {visibleEpisodes.length >= 10 ? (
-      <div className="mt-3 flex items-center justify-end gap-2 rounded-[12px] bg-[#eef0f3] px-3 py-2 text-[11px] font-semibold text-[#667085]">
-        <span>EP/Page:</span>
-
-        <select
-          value={pageSize}
-          onChange={(event) => setPageSize(Number(event.target.value))}
-          className="h-7 rounded-md border border-[#d8dde5] bg-white px-2 text-[11px] font-semibold text-[#111827] outline-none"
-        >
-          <option value={10}>10</option>
-          <option value={30}>30</option>
-          <option value={50}>50</option>
-        </select>
-
-        <span className="min-w-[78px] text-center">
-          {pageStart + 1}–{pageEnd} of {visibleEpisodes.length}
-        </span>
-
-        <button
-          type="button"
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-          className="flex h-7 w-7 items-center justify-center rounded-full active:bg-white disabled:opacity-25"
-        >
-          <i className="fa-solid fa-chevron-left text-[10px]" />
-        </button>
-
-        <button
-          type="button"
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-          className="flex h-7 w-7 items-center justify-center rounded-full active:bg-white disabled:opacity-25"
-        >
-          <i className="fa-solid fa-chevron-right text-[10px]" />
-        </button>
-      </div>
-    ) : null}
-  </>
-) : (
-                <div className="rounded-[24px] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-                    <i className="fa-regular fa-file-lines text-[22px]" />
+                <>
+                  <div>
+                    {paginatedEpisodes.map((episode, index) => (
+                      <EpisodeRow
+                        key={episode.id}
+                        episode={episode}
+                        last={index === paginatedEpisodes.length - 1}
+                        onOpen={handleEditEpisode}
+                        onMore={setSelectedEpisode}
+                      />
+                    ))}
                   </div>
 
-                  <h3 className="mt-4 text-[16px] font-extrabold text-[#111827]">
-                    No {activeTab === 'published' ? 'published' : 'draft'} episodes yet
-                  </h3>
+                  {visibleEpisodes.length > pageSize ? (
+                    <div className="flex items-center justify-between border-t border-[#eceef2] px-4 py-3 text-[11px] font-normal text-[#667085]">
+                      <select
+                        value={pageSize}
+                        onChange={(event) => setPageSize(Number(event.target.value))}
+                        className="h-8 rounded-[8px] border border-[#d8dde5] bg-white px-2 text-[11px] font-normal text-[#111827] outline-none"
+                      >
+                        <option value={20}>20 per page</option>
+                        <option value={30}>30 per page</option>
+                        <option value={50}>50 per page</option>
+                      </select>
 
-                  <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#8d94a1]">
-                    {activeTab === 'published'
-                      ? 'Published episodes will appear here after you publish them.'
-                      : 'Draft, ready, and scheduled episodes will appear here.'}
-                  </p>
+                      <div className="flex items-center gap-2">
+                        <span>{pageStart + 1}–{pageEnd} of {visibleEpisodes.length}</span>
+                        <button
+                          type="button"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                          className="flex h-8 w-8 items-center justify-center disabled:opacity-25"
+                        >
+                          <i className="fa-solid fa-chevron-left text-[10px]" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                          className="flex h-8 w-8 items-center justify-center disabled:opacity-25"
+                        >
+                          <i className="fa-solid fa-chevron-right text-[10px]" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="px-6 py-16 text-center">
+                  <div className="text-[14px] font-normal text-[#111827]">
+                    {episodes.length
+                      ? `No ${activeTab === 'published' ? 'published' : 'draft'} episodes yet.`
+                      : 'Create your first episode to start your story.'}
+                  </div>
+                  <div className="mx-auto mt-2 max-w-[300px] text-[11px] font-normal leading-5 text-[#8d94a1]">
+                    {episodes.length
+                      ? 'Episodes will appear here when their status changes.'
+                      : 'Use the Add Episode button below when you are ready to begin.'}
+                  </div>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={handleAddEpisode}
-                className="mt-5 flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[15px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.22)] active:scale-[0.99]"
-              >
-                <i className="fa-solid fa-plus mr-2 text-[13px]" />
-                Add Episode
-              </button>
             </section>
           </>
         ) : null}
       </main>
+
+      {!loading && story ? (
+        <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e8eaee] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+          <div className="mx-auto max-w-5xl px-4 py-3">
+            <button
+              type="button"
+              onClick={handleAddEpisode}
+              className="flex h-12 w-full items-center justify-center rounded-[12px] bg-[#111827] text-[14px] font-normal text-white active:scale-[0.99]"
+            >
+              <i className="fa-solid fa-plus mr-2 text-[12px]" />
+              Add Episode
+            </button>
+          </div>
+        </footer>
+      ) : null}
     </div>
   )
 }
