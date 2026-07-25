@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { SuccessModal } from './PublishEpisodePage'
 import Cropper from 'react-easy-crop'
 import {
   AlignCenter,
@@ -2340,6 +2341,7 @@ export default function EpisodeEditorPage() {
   const [storyRecord, setStoryRecord] = useState(null)
   const [genreOptions, setGenreOptions] = useState(FALLBACK_GENRES)
   const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
   const [storyLanguage, setStoryLanguage] = useState('Khmer')
   const [mainGenre, setMainGenre] = useState('Romance')
   const [storyTags, setStoryTags] = useState([])
@@ -3284,20 +3286,10 @@ useEffect(() => {
       }
 
       setPublishSettingsOpen(false)
-      setOldEpisodeStatus(status)
-      setHasUnsavedChanges(false)
-      setSaveStatus('Saved')
-      showToast(
-        releaseOption === 'schedule'
-          ? 'Episode scheduled.'
-          : releaseOption === 'draft'
-            ? 'Draft saved.'
-            : 'Episode published.'
-      )
-
-      window.setTimeout(() => {
-        navigate(`/author/story/${storyId}/manage`)
-      }, 500)
+setOldEpisodeStatus(status)
+setHasUnsavedChanges(false)
+setSaveStatus('Saved')
+setSuccessOpen(true)
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
@@ -3378,6 +3370,32 @@ useEffect(() => {
 `}</style>
 
     <Toast message={toast} onClose={() => setToast('')} />
+
+    <SuccessModal
+  open={successOpen}
+  isFirstEpisode={Number(currentEpisodeNumber || 1) === 1}
+  releaseOption={releaseOption}
+  onStoryManager={() => {
+    setSuccessOpen(false)
+    navigate('/author/dashboard', { replace: true })
+
+    window.setTimeout(() => {
+      navigate(`/author/story/${storyId}/manage`)
+    }, 0)
+  }}
+  onAddEpisode={() => {
+    const path =
+      `/author/story/${storyId}/episode/create` +
+      `?first=0&fromPublishSuccess=1&type=${isManga ? 'manga' : 'novel'}`
+
+    setSuccessOpen(false)
+    navigate('/author/dashboard', { replace: true })
+
+    window.setTimeout(() => {
+      navigate(path)
+    }, 0)
+  }}
+/>
 
       <PublishSettingsSheet
         open={publishSettingsOpen}
