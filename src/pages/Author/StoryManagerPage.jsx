@@ -801,7 +801,7 @@ export default function StoryManagerPage() {
             </section>
 
             <section className="mt-3 bg-white">
-              <div className="flex items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-4">
+              <div className="hidden items-center justify-between gap-3 px-3 pb-3 pt-4 sm:px-4">
                 <h2 className="text-[17px] font-semibold text-[#111827]">Episodes</h2>
                 <span className="text-[11px] font-normal text-[#8d94a1]">{visibleEpisodes.length} shown</span>
               </div>
@@ -905,7 +905,7 @@ export default function StoryManagerPage() {
             <button
               type="button"
               onClick={handleAddEpisode}
-              className="flex h-12 w-full items-center justify-center rounded-[12px] bg-[#111827] text-[14px] font-normal text-white active:scale-[0.99]"
+              className="flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-normal text-white active:scale-[0.99]"
             >
               <i className="fa-solid fa-plus mr-2 text-[12px]" />
               Add Episode
