@@ -384,7 +384,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         <button
           type="button"
           onClick={() => onAddEpisode(story)}
-          className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-extrabold text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-3 py-3 text-[11.5px] font-normal text-white shadow-[0_8px_18px_rgba(109,66,219,0.28)] active:scale-[0.98]"
         >
           <i className="fa-solid fa-plus text-[11px]" />
           Add Episode
