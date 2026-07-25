@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 
@@ -300,7 +300,12 @@ function StoryCoverButton({ story, active, onSelect }) {
         }`}
       >
         {story.cover ? (
-          <img src={story.cover} alt={story.title} className="h-full w-full object-cover" />
+          <img
+  src={story.cover}
+  alt={story.title}
+  draggable="false"
+  className="pointer-events-none h-full w-full select-none object-cover"
+/>
         ) : (
           <EmptyCover title={story.title} />
         )}
@@ -408,6 +413,43 @@ export default function AuthorDashboardPage() {
   const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [message, setMessage] = useState('')
   const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const storiesScrollRef = useRef(null)
+const storiesDragRef = useRef({
+  active: false,
+  startX: 0,
+  scrollLeft: 0,
+})
+
+  const startStoriesDrag = (event) => {
+  if (event.button !== 0 || !storiesScrollRef.current) return
+
+  storiesDragRef.current = {
+    active: true,
+    startX: event.clientX,
+    scrollLeft: storiesScrollRef.current.scrollLeft,
+  }
+
+  storiesScrollRef.current.style.cursor = 'grabbing'
+}
+
+const moveStoriesDrag = (event) => {
+  if (!storiesDragRef.current.active || !storiesScrollRef.current) return
+
+  event.preventDefault()
+
+  const distance = event.clientX - storiesDragRef.current.startX
+
+  storiesScrollRef.current.scrollLeft =
+    storiesDragRef.current.scrollLeft - distance
+}
+
+const stopStoriesDrag = () => {
+  storiesDragRef.current.active = false
+
+  if (storiesScrollRef.current) {
+    storiesScrollRef.current.style.cursor = 'grab'
+  }
+}
 
   const storedUser = JSON.parse(localStorage.getItem('shadow_reader_user') || 'null')
   const storedAuthorPage = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
@@ -848,7 +890,14 @@ return {
             <StoriesLoadingState />
           ) : stories.length > 0 && selectedStory ? (
             <>
-              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-4 pt-1">
+              <div
+  ref={storiesScrollRef}
+  onMouseDown={startStoriesDrag}
+  onMouseMove={moveStoriesDrag}
+  onMouseUp={stopStoriesDrag}
+  onMouseLeave={stopStoriesDrag}
+  className="-mx-4 mt-3 flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+>
                 {stories.map((story) => (
                   <StoryCoverButton
                     key={story.id}
