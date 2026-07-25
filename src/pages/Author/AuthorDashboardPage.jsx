@@ -293,7 +293,7 @@ function StoryCoverButton({ story, active, onSelect }) {
       aria-label={`Select ${story.title}`}
     >
       <div
-        className={`relative aspect-[3/4] overflow-hidden rounded-[18px] bg-[#2b174f] transition active:scale-[0.98] ${
+        className={`relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[#2b174f] transition active:scale-[0.98] ${
           active
             ? 'ring-2 ring-[#8050e8] ring-offset-2 ring-offset-[#f7f4ff] shadow-[0_10px_24px_rgba(109,66,219,0.35)]'
             : 'shadow-[0_8px_20px_rgba(50,27,91,0.14)]'
@@ -330,7 +330,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         : 'bg-[#f0eaff] text-[#7040d8]'
 
   return (
-    <div className="rounded-[22px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
+    <div className="rounded-[12px] border border-[#e7ddf8] bg-white p-4 shadow-[0_12px_30px_rgba(67,35,120,0.1)]">
       <h3 className="line-clamp-1 text-[19px] font-black tracking-[-0.02em] text-[#21143f]">{story.title}</h3>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -764,7 +764,7 @@ return {
             <button
               type="button"
               onClick={() => handleEditStory(latestStory)}
-              className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[24px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
+              className="group relative mt-3 h-[220px] w-full overflow-hidden rounded-[12px] bg-gradient-to-br from-[#4d278f] via-[#7544d1] to-[#aa7bf5] text-left shadow-[0_16px_34px_rgba(86,46,155,0.24)] active:scale-[0.995] sm:h-[260px] md:h-[310px]"
               aria-label={`Continue writing ${latestStory.title}`}
             >
               {latestStory.cover ? (
