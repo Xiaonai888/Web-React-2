@@ -1743,6 +1743,7 @@ function ScheduleWheelPicker({
 
 function PublishSettingsSheet({
   open,
+  episodeTitle,
   showStorySettings,
   genreOptions,
   genresLoading = false,
@@ -1950,32 +1951,28 @@ const canSave =
           onClick={(event) => event.stopPropagation()}
         >
           <div
-            className="flex touch-none items-center gap-3 bg-white px-4 py-3"
-            onTouchStart={handleDragStart}
-            onTouchMove={handleDragMove}
-            onTouchEnd={handleDragEnd}
-            onTouchCancel={handleDragEnd}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
-              aria-label="Close publish"
-            >
-              <i className="fa-solid fa-xmark text-[14px]" />
-            </button>
-
-            <h2 className="text-[15px] font-bold text-[#111827]">Publish</h2>
-          </div>
+  className="flex touch-none items-center justify-center bg-white px-4 py-3"
+  onTouchStart={handleDragStart}
+  onTouchMove={handleDragMove}
+  onTouchEnd={handleDragEnd}
+  onTouchCancel={handleDragEnd}
+>
+  <h2 className="text-center text-[15px] font-bold text-[#111827]">
+    Publish
+  </h2>
+</div>
 
           <div className="flex-1 overflow-y-auto bg-white px-4 py-4">
-            {showStorySettings ? (
-              <section>
-                <h3 className="text-[14px] font-bold text-[#111827]">
-                  Complete Story Info
-                </h3>
+  <div
+    className="mb-4 w-full min-w-0 truncate text-[14px] font-semibold text-[#111827]"
+    title={episodeTitle || ''}
+  >
+    {episodeTitle?.trim() || 'Untitled Episode'}
+  </div>
 
-                <div className="mt-4">
+  {showStorySettings ? (
+    <section>
+      <div>
                   <span className="mb-2 block text-[12px] font-semibold text-[#111827]">
                     <span className="mr-1 text-[#e5484d]">*</span>Story Language
                   </span>
@@ -3399,6 +3396,7 @@ setSuccessOpen(true)
 
       <PublishSettingsSheet
         open={publishSettingsOpen}
+        episodeTitle={episodeTitle}
         showStorySettings={isFirstEpisode || currentEpisodeNumber === 1}
         genreOptions={genreOptions}
         storyLanguage={storyLanguage}
