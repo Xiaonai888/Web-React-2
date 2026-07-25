@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import StorySortMenu from '../../components/author/StorySortMenu'
+import StoryActionsSheet from '../../components/author/StoryActionsSheet'
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -251,17 +252,11 @@ export default function AuthorStoriesPage() {
   }, [])
 
   useEffect(() => {
-    if (!menuStoryId) return undefined
-
-    const closeMenu = () => setMenuStoryId(null)
-    window.addEventListener('resize', closeMenu)
-    window.addEventListener('scroll', closeMenu, true)
-
-    return () => {
-      window.removeEventListener('resize', closeMenu)
-      window.removeEventListener('scroll', closeMenu, true)
-    }
-  }, [menuStoryId])
+  if (!menuStoryId) return undefined
+  const closeMenu = () => setMenuStoryId(null)
+  window.addEventListener('resize', closeMenu)
+  return () => window.removeEventListener('resize', closeMenu)
+}, [menuStoryId])
 
   const stats = useMemo(() => {
     return {
@@ -452,7 +447,7 @@ export default function AuthorStoriesPage() {
                   <button
                     type="button"
                     onClick={() => setMenuStoryId((current) => current === story.id ? null : story.id)}
-                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#f8f6fb] text-[#292331] active:scale-95"
+                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center text-[#292331] active:scale-95"
                     aria-label={`Actions for ${story.title}`}
                   >
                     <i className="fa-solid fa-ellipsis-vertical text-[13px]" />
@@ -466,65 +461,11 @@ export default function AuthorStoriesPage() {
         </section>
       </main>
 
-      {selectedStory ? (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/25 px-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-[2px] sm:items-center" onClick={() => setMenuStoryId(null)}>
-          <div
-            className="w-full max-w-md rounded-[24px] bg-white p-3 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 border-b border-[#eeeaf3] px-1 pb-3">
-              <StoryCover story={selectedStory} className="h-14 w-11 shrink-0 rounded-[10px]" />
-              <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[14px] font-black text-[#1a1620]">{selectedStory.title}</div>
-                <div className="mt-1 text-[11px] font-semibold capitalize text-[#81798f]">{selectedStory.status}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMenuStoryId(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f7f4fb] text-[#39323f]"
-                aria-label="Close story actions"
-              >
-                <i className="fa-solid fa-xmark" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-3">
-              <button
-                type="button"
-                onClick={() => runStoryAction(`/author/story/${selectedStory.id}/manage`)}
-                className="flex items-center gap-3 rounded-[16px] bg-[#f8f6fb] px-3 py-3 text-left text-[12px] font-extrabold text-[#2a2430]"
-              >
-                <i className="fa-solid fa-sliders text-[#744af2]" />
-                Manage Story
-              </button>
-              <button
-                type="button"
-                onClick={() => runStoryAction(`/author/story/${selectedStory.id}/episode/create?first=0`)}
-                className="flex items-center gap-3 rounded-[16px] bg-[#f8f6fb] px-3 py-3 text-left text-[12px] font-extrabold text-[#2a2430]"
-              >
-                <i className="fa-solid fa-plus text-[#744af2]" />
-                Add Episode
-              </button>
-              <button
-                type="button"
-                onClick={() => runStoryAction(`/author/create-story?editStoryId=${selectedStory.id}`)}
-                className="flex items-center gap-3 rounded-[16px] bg-[#f8f6fb] px-3 py-3 text-left text-[12px] font-extrabold text-[#2a2430]"
-              >
-                <i className="fa-regular fa-pen-to-square text-[#744af2]" />
-                Edit Details
-              </button>
-              <button
-                type="button"
-                onClick={() => runStoryAction(`/story/${selectedStory.id}`)}
-                className="flex items-center gap-3 rounded-[16px] bg-[#f8f6fb] px-3 py-3 text-left text-[12px] font-extrabold text-[#2a2430]"
-              >
-                <i className="fa-regular fa-eye text-[#744af2]" />
-                View Story
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <StoryActionsSheet
+  story={selectedStory}
+  onClose={() => setMenuStoryId(null)}
+  onDeleted={(storyId) => setStories((current) => current.filter((item) => String(item.id) !== String(storyId)))}
+/>
 
       <AuthorStudioBottomNav />
     </div>
