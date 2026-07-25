@@ -730,7 +730,7 @@ export default function StoryManagerPage() {
       />
 
       <header className="sticky top-0 z-50 border-b border-[#eceef2] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto grid h-[58px] max-w-5xl grid-cols-[44px_1fr_auto] items-center px-2 sm:px-4">
+        <div className="mx-auto grid h-[58px] max-w-5xl grid-cols-[44px_1fr_44px] items-center px-2 sm:px-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -742,7 +742,7 @@ export default function StoryManagerPage() {
 
           <h1 className="truncate text-center text-[15px] font-semibold text-[#111827]">Story Manager</h1>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={() => setTrashStoryOpen(true)}
@@ -755,7 +755,7 @@ export default function StoryManagerPage() {
             <button
               type="button"
               onClick={handleEditStory}
-              className="h-9 rounded-full bg-[#111827] px-4 text-[12px] font-normal text-white active:scale-95"
+              className="hidden h-9 rounded-full bg-[#111827] px-4 text-[12px] font-normal text-white active:scale-95"
             >
               Edit Story
             </button>
@@ -837,7 +837,7 @@ export default function StoryManagerPage() {
                 <span className="text-[11px] font-normal text-[#8d94a1]">{visibleEpisodes.length} shown</span>
               </div>
 
-              <div className="flex gap-1 border-b border-[#eceef2] px-3 pb-3 sm:px-4">
+              <div className="flex gap-1 border-b border-[#eceef2] px-3 pb-3 pt-3 sm:px-4">
                 <button
                   type="button"
                   onClick={() => setActiveTab('published')}
