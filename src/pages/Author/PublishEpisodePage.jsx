@@ -93,129 +93,154 @@ function ConfettiPiece({ className }) {
   return <span className={`absolute block h-2 w-2 rounded-full ${className}`} />
 }
 
-export function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onAddEpisode }) {
+export function SuccessModal({
+  open,
+  isFirstEpisode,
+  releaseOption,
+  episodeNumber,
+  episodeTitle,
+  onStoryManager,
+  onAddEpisode,
+}) {
   if (!open) return null
 
   const isScheduled = releaseOption === 'schedule'
   const isDraft = releaseOption === 'draft'
 
-  const title = isScheduled
-    ? 'Episode Scheduled'
-    : isDraft
-      ? 'Draft Saved'
+  const parsedEpisodeNumber = Number(episodeNumber)
+  const resolvedEpisodeNumber =
+    Number.isFinite(parsedEpisodeNumber) && parsedEpisodeNumber > 0
+      ? parsedEpisodeNumber
       : isFirstEpisode
-        ? 'Published Successfully'
-        : 'Episode Published'
+        ? 1
+        : null
+
+  const cleanEpisodeTitle = String(episodeTitle || '').trim()
+
+  const episodeLabel = resolvedEpisodeNumber
+    ? cleanEpisodeTitle
+      ? `Episode ${resolvedEpisodeNumber} · ${cleanEpisodeTitle}`
+      : `Episode ${resolvedEpisodeNumber}`
+    : cleanEpisodeTitle || 'Episode'
+
+  const heading = isScheduled
+    ? 'Episode Scheduled!'
+    : isDraft
+      ? 'Draft Saved!'
+      : isFirstEpisode
+        ? 'Your Story Is Live!'
+        : 'Episode Published!'
+
+  const description = isScheduled
+    ? resolvedEpisodeNumber
+      ? `Episode ${resolvedEpisodeNumber} has been scheduled and will publish automatically at the selected time.`
+      : 'Your episode has been scheduled and will publish automatically at the selected time.'
+    : isDraft
+      ? resolvedEpisodeNumber
+        ? `Episode ${resolvedEpisodeNumber} has been saved as a draft. Readers cannot see it yet.`
+        : 'Your episode has been saved as a draft. Readers cannot see it yet.'
+      : resolvedEpisodeNumber
+        ? `Great job! Episode ${resolvedEpisodeNumber} is now live and ready for readers to enjoy.`
+        : 'Great job! Your episode is now live and ready for readers to enjoy.'
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/35 px-4">
-      <div className="relative w-full max-w-[480px] overflow-hidden rounded-[28px] bg-white p-6 text-center shadow-2xl animate-[successPop_0.28s_ease-out]">
+    <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/45 px-4">
+      <div className="relative w-full max-w-[360px] overflow-hidden rounded-[26px] bg-white shadow-2xl animate-[successPop_0.28s_ease-out]">
         <style>
           {`
             @keyframes successPop {
-              0% { transform: scale(0.92); opacity: 0; }
-              100% { transform: scale(1); opacity: 1; }
+              0% {
+                transform: scale(0.92);
+                opacity: 0;
+              }
+
+              100% {
+                transform: scale(1);
+                opacity: 1;
+              }
             }
 
-            @keyframes checkBounce {
-              0% { transform: scale(0.4); opacity: 0; }
-              60% { transform: scale(1.14); opacity: 1; }
-              100% { transform: scale(1); opacity: 1; }
+            @keyframes rocketFloat {
+              0%, 100% {
+                transform: translateY(0);
+              }
+
+              50% {
+                transform: translateY(-7px);
+              }
             }
 
             @keyframes confettiDrop {
-              0% { transform: translateY(-28px) rotate(0deg); opacity: 0; }
-              25% { opacity: 1; }
-              100% { transform: translateY(120px) rotate(220deg); opacity: 0; }
-            }
+              0% {
+                transform: translateY(-20px) rotate(0deg);
+                opacity: 0;
+              }
 
-            @keyframes softPulse {
-              0%, 100% { transform: scale(1); box-shadow: 0 14px 30px rgba(11, 92, 255, 0.22); }
-              50% { transform: scale(1.025); box-shadow: 0 18px 38px rgba(11, 92, 255, 0.34); }
+              25% {
+                opacity: 1;
+              }
+
+              100% {
+                transform: translateY(105px) rotate(220deg);
+                opacity: 0;
+              }
             }
           `}
         </style>
 
-        {!isDraft ? (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <ConfettiPiece className="left-[12%] top-2 bg-[#0b5cff] animate-[confettiDrop_1.2s_ease-out_0.05s_both]" />
-            <ConfettiPiece className="left-[24%] top-1 bg-[#00c853] animate-[confettiDrop_1.35s_ease-out_0.15s_both]" />
-            <ConfettiPiece className="left-[38%] top-3 bg-[#ffb300] animate-[confettiDrop_1.15s_ease-out_0.08s_both]" />
-            <ConfettiPiece className="left-[51%] top-1 bg-[#e5484d] animate-[confettiDrop_1.3s_ease-out_0.18s_both]" />
-            <ConfettiPiece className="left-[67%] top-3 bg-[#8b5cf6] animate-[confettiDrop_1.18s_ease-out_0.02s_both]" />
-            <ConfettiPiece className="left-[80%] top-2 bg-[#00c2ff] animate-[confettiDrop_1.28s_ease-out_0.12s_both]" />
-          </div>
-        ) : null}
+        <div className="relative h-[175px] overflow-hidden bg-gradient-to-b from-[#EEE5FF] via-[#F8F4FF] to-white">
+          {!isDraft ? (
+            <div className="pointer-events-none absolute inset-0">
+              <ConfettiPiece className="left-[10%] top-4 bg-[#A855F7] animate-[confettiDrop_1.2s_ease-out_0.05s_both]" />
+              <ConfettiPiece className="left-[21%] top-1 bg-[#F97316] animate-[confettiDrop_1.35s_ease-out_0.14s_both]" />
+              <ConfettiPiece className="left-[34%] top-5 bg-[#EC4899] animate-[confettiDrop_1.15s_ease-out_0.08s_both]" />
+              <ConfettiPiece className="left-[65%] top-2 bg-[#7C3AED] animate-[confettiDrop_1.3s_ease-out_0.16s_both]" />
+              <ConfettiPiece className="left-[79%] top-6 bg-[#FB7185] animate-[confettiDrop_1.18s_ease-out_0.04s_both]" />
+              <ConfettiPiece className="left-[90%] top-3 bg-[#F59E0B] animate-[confettiDrop_1.28s_ease-out_0.12s_both]" />
+            </div>
+          ) : null}
 
-        <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-white animate-[checkBounce_0.42s_ease-out] ${
-          isDraft ? 'bg-[#667085]' : isScheduled ? 'bg-[#0b5cff]' : 'bg-[#00c853]'
-        }`}>
-          <i className={`${isScheduled ? 'fa-regular fa-calendar-check' : isDraft ? 'fa-regular fa-file-lines' : 'fa-solid fa-check'} text-[36px]`} />
+          <div className="absolute left-1/2 top-[18px] h-[145px] w-[250px] -translate-x-1/2 rounded-full bg-gradient-to-br from-[#D8B4FE]/70 via-[#A855F7]/35 to-[#7C3AED]/60 blur-[1px]" />
+
+          <img
+            src="/assets/Icons/Picture/Rocket.webp"
+            alt=""
+            className="relative z-10 mx-auto h-[165px] w-[250px] object-contain animate-[rocketFloat_2.8s_ease-in-out_infinite]"
+          />
         </div>
 
-        <h2 className="mt-5 text-[22px] font-extrabold text-[#111827]">{title}</h2>
+        <div className="px-5 pb-5 text-center">
+          <h2 className="text-[22px] font-bold text-[#24104F]">
+            {heading}
+          </h2>
 
-        {isScheduled ? (
-          <>
-            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
-              Your episode has been scheduled on Shadow.
-            </p>
-
-            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-              It will publish automatically at the selected date and time. You can manage or edit it anytime from Story Manager.
-            </p>
-          </>
-        ) : isDraft ? (
-          <>
-            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
-              Your episode has been saved as a draft.
-            </p>
-
-            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-              Readers cannot see it yet. You can continue editing or publish it later from Story Manager.
-            </p>
-          </>
-        ) : isFirstEpisode ? (
-          <>
-            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
-              Your first episode is now live on Shadow.
-            </p>
-
-            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-              Readers can now discover your story and start reading. You can add more episodes or manage this story anytime.
-            </p>
-
-            <div className="mt-5 rounded-[18px] bg-[#f5f8ff] px-4 py-3 text-[12.5px] font-bold leading-5 text-[#0b5cff]">
-              Note: The first episode is free for readers. Income usually starts from Episode 6.
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#555b66]">
-              Your new episode is now live on Shadow.
-            </p>
-
-            <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-              Readers can continue the story right away. Keep going — every new episode helps your story grow.
-            </p>
-          </>
-        )}
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={onStoryManager}
-            className="h-12 rounded-full bg-[#111827] px-4 text-[13px] font-extrabold text-white transition hover:scale-[1.02] active:scale-[0.97]"
+          <div
+            className="mx-auto mt-2 w-full max-w-[300px] truncate text-[14px] font-medium text-[#8B3DFF]"
+            title={episodeLabel}
           >
-            Story Manager
-          </button>
+            {episodeLabel}
+          </div>
+
+          <div className="mx-auto mt-3 h-px w-[150px] bg-gradient-to-r from-transparent via-[#C4B5FD] to-transparent" />
+
+          <p className="mx-auto mt-4 max-w-[290px] text-[13px] font-normal leading-6 text-[#667085]">
+            {description}
+          </p>
 
           <button
             type="button"
             onClick={onAddEpisode}
-            className="h-12 rounded-full bg-[#0b5cff] px-4 text-[13px] font-extrabold text-white transition hover:scale-[1.02] active:scale-[0.97] animate-[softPulse_1.8s_ease-in-out_infinite]"
+            className="mt-5 h-12 w-full rounded-[14px] bg-gradient-to-r from-[#6D28D9] via-[#8B3DFF] to-[#A855F7] px-4 text-[13px] font-semibold text-white transition active:scale-[0.98]"
           >
-            Add Episode
+            Add Next Episode
+          </button>
+
+          <button
+            type="button"
+            onClick={onStoryManager}
+            className="mt-3 h-12 w-full rounded-[14px] border border-[#D0D5DD] bg-white px-4 text-[13px] font-semibold text-[#111827] transition active:scale-[0.98]"
+          >
+            Story Manager
           </button>
         </div>
       </div>
