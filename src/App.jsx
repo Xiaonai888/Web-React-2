@@ -60,7 +60,7 @@ import AuthorInsightsPage from "./pages/Author/AuthorInsightsPage";
 import AuthorStoriesPage from './pages/Author/AuthorStoriesPage'
 import StoryNotificationsPage from './pages/Author/StoryNotificationsPage'
 import StoryDescriptionGuidePage from './pages/Author/StoryDescriptionGuidePage'
-
+import StoryPerformancePage from './pages/Author/StoryPerformancePage'
 
 
 
@@ -1144,6 +1144,7 @@ const shouldShowOpeningAds =
         <Route path="/author/story/:storyId/chat/characters" element={<ChatStoryCharactersPage />} />
         <Route path="/author/story/:storyId/chat/editor" element={<ChatStoryEditorPage />} />
         <Route path="/author/story/:storyId/manage" element={<StoryManagerPage />} />
+        <Route path="/author/story/:storyId/performance" element={<StoryPerformancePage />} />
         <Route path="/author/story/:storyId/episode/create" element={<EpisodeEditorPage />} />
         <Route path="/author/story/:storyId/episode/publish" element={<PublishEpisodePage />} />
         <Route path="/author/story/:storyId/episode/publish-warning" element={<PublishBlockedWarningPage />} />
