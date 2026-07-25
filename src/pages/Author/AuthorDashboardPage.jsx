@@ -393,7 +393,7 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
         <button
           type="button"
           onClick={() => onEdit(story)}
-          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-extrabold text-[#5c3cb2] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#d8c9f3] bg-white px-3 py-3 text-[11.5px] font-normal text-[#5c3cb2] active:scale-[0.98]"
         >
           <i className="fa-solid fa-gear text-[11px]" />
           Manage
