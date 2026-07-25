@@ -200,7 +200,6 @@ export function SuccessModal({
             </div>
           ) : null}
 
-          <div className="absolute left-1/2 top-[18px] h-[145px] w-[250px] -translate-x-1/2 rounded-full bg-gradient-to-br from-[#D8B4FE]/70 via-[#A855F7]/35 to-[#7C3AED]/60 blur-[1px]" />
 
           <img
             src="/assets/Icons/Picture/Rocket.webp"
