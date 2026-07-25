@@ -49,6 +49,14 @@ function getStatusText(status) {
   return 'Draft'
 }
 
+function getStoryStatusText(story, episodeCount) {
+  const normalized = String(story?.story_status || story?.status || '').toLowerCase()
+
+  if (['completed', 'complete', 'finished'].includes(normalized)) return 'Completed'
+  if (episodeCount > 0) return 'Ongoing'
+  return ''
+}
+
 function getDateLabel(episode) {
   const status = String(episode?.status || 'draft').toLowerCase()
   const value =
@@ -349,7 +357,7 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
   const views = episode.total_views || episode.views || 0
   const likes = episode.total_likes || episode.likes || 0
   const comments = episode.total_comments || episode.comments || 0
-  const contentCount = Number(episode.character_count || 0)
+  const wordCount = Number(episode.word_count || 0)
 
   return (
     <div className="relative flex min-h-[96px] items-center gap-3 bg-white px-4 py-4">
@@ -375,7 +383,7 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[#8d94a1]">
           <span>{getDateLabel(episode)}</span>
           <span>•</span>
-          <span>{contentCount.toLocaleString('en-US')} characters</span>
+          <span>{wordCount.toLocaleString('en-US')} words</span>
         </div>
       </button>
 
@@ -461,8 +469,8 @@ export default function StoryManagerPage() {
   const pageStart = (currentPage - 1) * pageSize
   const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
   const paginatedEpisodes = visibleEpisodes.slice(pageStart, pageEnd)
-  const totalCharacters = useMemo(
-    () => episodes.reduce((sum, episode) => sum + Number(episode.character_count || 0), 0),
+  const totalWords = useMemo(
+    () => episodes.reduce((sum, episode) => sum + Number(episode.word_count || 0), 0),
     [episodes]
   )
   const totalMangaPages = useMemo(
@@ -470,13 +478,14 @@ export default function StoryManagerPage() {
     [episodes]
   )
   const storyUpdatedLabel = useMemo(() => getStoryUpdatedLabel(story, episodes), [story, episodes])
+  const storyStatusText = getStoryStatusText(story, episodes.length)
   const storyProgressText = episodes.length
-    ? `${story?.story_status || 'Ongoing'} • ${episodes.length} Episode${episodes.length === 1 ? '' : 's'}`
+    ? `${storyStatusText} • ${episodes.length} Episode${episodes.length === 1 ? '' : 's'}`
     : 'Awaiting first episode'
   const storyContentText =
     String(story?.story_type || '').toLowerCase() === 'manga'
       ? `${totalMangaPages.toLocaleString('en-US')} pages`
-      : `${totalCharacters.toLocaleString('en-US')} characters`
+      : `${totalWords.toLocaleString('en-US')} words`
 
   useEffect(() => {
     setCurrentPage(1)
@@ -550,6 +559,10 @@ export default function StoryManagerPage() {
 
   const handleAddEpisode = () => {
     navigate(`/author/story/${storyId}/episode/create?first=0`)
+  }
+
+  const handlePerformance = () => {
+    navigate(`/author/story/${storyId}/performance`)
   }
 
   const handleEditEpisode = (episode) => {
@@ -797,6 +810,24 @@ export default function StoryManagerPage() {
                     <span>{storyUpdatedLabel}</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleEditStory}
+                  className="h-11 rounded-full border border-[#e5484d] bg-white text-[13px] font-normal text-[#e5484d] active:bg-[#fff5f5]"
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePerformance}
+                  className="h-11 rounded-full border border-[#e5484d] bg-white text-[13px] font-normal text-[#e5484d] active:bg-[#fff5f5]"
+                >
+                  Performance
+                </button>
               </div>
             </section>
 
