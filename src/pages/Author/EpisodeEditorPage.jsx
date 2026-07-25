@@ -3758,9 +3758,9 @@ releaseOption={releaseOption}
                 )}
 
                 {warningText ? (
-                  <div className="mt-4 rounded-[16px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
-                    {warningText}
-                  </div>
+                  <div className="mt-4 rounded-[16px] bg-[#f3f4f6] px-4 py-3 text-[12px] font-bold leading-5 text-[#667085]">
+  {warningText}
+</div>
                 ) : (
                   <div className="mt-4 rounded-[16px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#16803c]">
                     Manga pages are ready. Use the arrows to confirm their reading order.
