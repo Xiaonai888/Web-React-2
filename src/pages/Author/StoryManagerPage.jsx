@@ -358,7 +358,7 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         onClick={() => onOpen(episode)}
         className="min-w-0 flex-1 text-left active:opacity-70"
       >
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="hidden flex-wrap items-center gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#8d94a1]">
             EP {episode.episode_number || 1}
           </span>
