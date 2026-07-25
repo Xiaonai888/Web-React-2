@@ -278,7 +278,7 @@ export default function AuthorInsightsPage() {
                   onClick={() => setPeriod(item.value)}
                   className={`h-10 flex-1 rounded-[12px] text-[11px] font-normal transition active:scale-[0.98] ${
   active
-    ? 'bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] text-white shadow-[0_7px_16px_rgba(124,58,237,0.22)]'
+    ? 'bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] text-white'
     : 'bg-[#f8f7fb] text-[#716b7d] ring-1 ring-[#e7e3ed]'
 }`}
                 >
