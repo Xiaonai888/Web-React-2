@@ -315,7 +315,7 @@ function StoryTextSheet({
 
   const canSave = Boolean(value.trim()) && value.length <= maxLength
 
-  return (
+
     return (
   <div
     className="fixed inset-0 z-[150] flex items-end justify-center bg-black/35"
