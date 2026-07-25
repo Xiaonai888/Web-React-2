@@ -1207,9 +1207,9 @@ const editPageLabel = isManga
 
 return (
   <div
-    className={`create-story-page min-h-screen bg-[#fafafa] pb-[110px] ${
-      isManga ? 'manga-red-theme' : ''
-    }`}
+    className={`create-story-page min-h-screen ${
+      isEditMode ? 'bg-white pb-0' : 'bg-[#fafafa] pb-[110px]'
+    } ${isManga ? 'manga-red-theme' : ''}`}
     style={{
       backgroundColor: isEditMode ? '#FFFFFF' : '#FAFAFA',
 backgroundImage: isEditMode
@@ -1330,7 +1330,7 @@ backgroundImage: isEditMode
         }}
       />
 
-      {mediaOpen && !isEditMode ? (
+      {mediaOpen ? (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#fafafa]">
           <header className="sticky top-0 z-20 bg-white px-4 py-3 shadow-sm">
             <div className="mx-auto flex max-w-5xl items-center justify-between">
@@ -1631,369 +1631,208 @@ backgroundImage: isEditMode
           <>
             {isEditMode ? (
               <div className="bg-white">
-            <section className="bg-white px-4 py-4">
-              <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
-                  <div>
-                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
-                      Portrait Cover
-                    </div>
-
-                    <ImageDropZone
-                      onFiles={(files) => handleCoverChange(files[0] || null)}
-                      className="rounded-[18px]"
-                      label="Drop cover image here"
-                    >
-                      {coverPreview ? (
-                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                          <button
-                            type="button"
-                            onClick={handleEditCoverCrop}
-                            className="block aspect-[2/3] w-full overflow-hidden bg-[#fafafe]"
-                          >
-                            <img
-                              src={coverPreview}
-                              alt={isManga ? 'Portrait Manga Cover' : 'Portrait Book Cover'}
-                              className="h-full w-full object-cover"
-                              draggable="false"
-                              onDragStart={(event) => event.preventDefault()}
-                            />
-                          </button>
-
-                          <div className="border-t border-[#eceaf2] bg-white p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
-                              Replace
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(event) => {
-                                  handleCoverChange(event.target.files?.[0] || null)
-                                  event.target.value = ''
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ) : (
-                        <label className="flex aspect-[2/3] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                          <div className="px-3">
-                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                              <i className="fa-solid fa-upload text-[14px]" />
-                            </div>
-                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Tap Cover</div>
-                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">2:3 crop</div>
-                          </div>
-
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(event) => {
-                              handleCoverChange(event.target.files?.[0] || null)
-                              event.target.value = ''
-                            }}
-                          />
-                        </label>
-                      )}
-                    </ImageDropZone>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 text-[12px] font-bold text-[#111827]">
-                      Landscape Thumbnail
-                    </div>
-
-                    <ImageDropZone
-                      onFiles={(files) => handleLandscapeChange(files[0] || null)}
-                      className="rounded-[18px]"
-                      label="Drop thumbnail image here"
-                    >
-                      {landscapePreview ? (
-                        <div className="overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe]">
-                          <button
-                            type="button"
-                            onClick={handleEditLandscapeCrop}
-                            className="block aspect-video w-full overflow-hidden bg-[#fafafe]"
-                          >
-                            <img
-                              src={landscapePreview}
-                              alt="Landscape Thumbnail"
-                              className="h-full w-full object-cover"
-                              draggable="false"
-                              onDragStart={(event) => event.preventDefault()}
-                            />
-                          </button>
-
-                          <div className="border-t border-[#eceaf2] bg-white p-2">
-                            <label className="flex h-9 cursor-pointer items-center justify-center rounded-full bg-[#111827] text-[11px] font-bold text-white active:scale-95">
-                              Replace
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(event) => {
-                                  handleLandscapeChange(event.target.files?.[0] || null)
-                                  event.target.value = ''
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ) : (
-                        <label className="flex aspect-video cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                          <div className="px-3">
-                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                              <i className="fa-solid fa-image text-[14px]" />
-                            </div>
-                            <div className="mt-2 text-[12px] font-normal text-[#111827]">Drop or Add Thumbnail</div>
-                            <div className="mt-1 text-[10.5px] text-[#8d94a1]">16:9 crop</div>
-                          </div>
-
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(event) => {
-                              handleLandscapeChange(event.target.files?.[0] || null)
-                              event.target.value = ''
-                            }}
-                          />
-                        </label>
-                      )}
-                    </ImageDropZone>
-                  </div>
-                </div>
-
-                <div className="min-w-0">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[13px] font-bold text-[#111827]">{isManga ? 'Manga Slides' : 'Story Slides'} ({slides.length}/5)</div>
-                      <div className="mt-0.5 text-[11px] text-[#8d94a1]">Optional, 16:9 crop preview</div>
-                    </div>
-
-                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
-                      slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
-                    }`}>
-                      + Add
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={slides.length >= 5}
-                        onChange={(event) => {
-                          handleAddSlide(event.target.files?.[0] || null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-                  </div>
-
-                  <ImageDropZone
-                    onFiles={(files) => handleAddSlide(files[0] || null)}
-                    disabled={slides.length >= 5}
-                    className="rounded-[20px]"
-                    label="Drop slide image here"
+                <section className="bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setMediaOpen(true)}
+                    className="flex min-h-[132px] w-full items-center gap-4 px-4 py-5 text-left active:bg-[#fafafa]"
                   >
-                    {slides.length ? (
-                      <div className="space-y-2">
-                        {slides.map((slide, index) => (
-                          <SlideRow
-                            key={slide.id}
-                            slide={slide}
-                            index={index}
-                            onEdit={handleEditSlideCrop}
-                            onDelete={handleDeleteSlide}
-                            onToggle={handleToggleSlide}
-                          />
-                        ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-bold text-[#111827]">
+                        Cover <span className="text-[#e5484d]">*</span>
                       </div>
+                      <div className="mt-1 text-[11px] leading-5 text-[#98a2b3]">
+                        Add the portrait cover readers will see first.
+                      </div>
+                    </div>
+
+                    {coverPreview ? (
+                      <img
+                        src={coverPreview}
+                        alt={isManga ? 'Manga Cover' : 'Book Cover'}
+                        className="h-[96px] w-[64px] shrink-0 rounded-[8px] object-cover"
+                      />
                     ) : (
-                      <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#cfd4df] bg-[#fafafe] text-center">
-                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-                          <i className="fa-solid fa-images text-[15px]" />
-                        </div>
-                        <div className="mt-3 text-[13px] font-bold text-[#111827]">Drop or Add {isManga ? 'Manga' : 'Story'} Slide</div>
-                        <div className="mt-1 text-[11px] text-[#8d94a1]">16:9 crop</div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            handleAddSlide(event.target.files?.[0] || null)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                    )}
-                  </ImageDropZone>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-[16px] bg-[#fafafe] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[#8d94a1]">
-                Portrait cover uses 2:3 crop. Landscape thumbnail and {isManga ? 'manga' : 'story'} slides use 16:9 crop. Tap an image again to adjust crop.
-              </div>
-            </section>
-
-            <section className="border-t border-[#eceef2] bg-white px-4 py-4">
-              <FieldLabel required>{isManga ? 'Manga Title' : 'Story Title'}</FieldLabel>
-              <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isManga ? 'Enter manga title' : 'Enter story title'} />
-
-              <div className="mt-5">
-                <div className="mb-2 flex items-end justify-between gap-3">
-                  <FieldLabel>Description</FieldLabel>
-                  <div className={`text-[11px] font-bold ${descriptionCount > 5000 ? 'text-[#e5484d]' : 'text-[#8d94a1]'}`}>
-                    {descriptionCount}/5000
-                  </div>
-                </div>
-
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder={isManga ? 'Write a strong manga summary. Recommended 400–1200 characters.' : 'Write a strong story summary. Recommended 400–1200 characters.'}
-                  className="min-h-[180px] w-full resize-none rounded-[18px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-[14px] leading-6 text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)]"
-                />
-              </div>
-
-              <div className="mt-5">
-                <FieldLabel required>{isManga ? 'Manga Language' : 'Story Language'}</FieldLabel>
-                <SelectInput value={language} onChange={(event) => setLanguage(event.target.value)}>
-                  {languages.map((item) => (
-                    <option key={item} value={item}>{item}</option>
-                  ))}
-                </SelectInput>
-                <p className="mt-2 text-[11.5px] font-medium text-[#8d94a1]">
-                  Choose the language used inside your {isManga ? 'manga' : 'story'}.
-                </p>
-              </div>
-
-              <div className="mt-5">
-                <FieldLabel required>Main Genre</FieldLabel>
-                <button type="button" onClick={() => setGenreOpen(true)} className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-left text-[14px] font-normal text-[#111827]">
-                  {genre || 'Choose genre'}
-                  <i className="fa-solid fa-chevron-right text-[12px] text-[#98a2b3]" />
-                </button>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between gap-4 border-t border-[#eceef2] pt-5">
-                <div>
-                  <div className="text-[13px] font-bold text-[#111827]">Completed</div>
-                  <div className="mt-1 text-[11px] leading-4 text-[#8d94a1]">
-                    {storyStatus === 'Completed'
-                      ? 'This story will appear as End.'
-                      : 'New changes to Ongoing automatically after more episodes are published.'}
-                  </div>
-                </div>
-
-                <Toggle
-                  checked={storyStatus === 'Completed'}
-                  onClick={() => {
-                    if (storyStatus === 'Completed') {
-                      setStoryStatus(unfinishedStoryStatus)
-                      return
-                    }
-
-                    setUnfinishedStoryStatus(storyStatus)
-                    setStoryStatus('Completed')
-                  }}
-                  label="Toggle completed story"
-                />
-              </div>
-
-              <div className="mt-5">
-                <FieldLabel>Tags</FieldLabel>
-                <button type="button" onClick={() => setTagOpen(true)} className="min-h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 py-3 text-left text-[14px] text-[#111827]">
-                  {tags.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <span key={tag} className="rounded-full bg-[#111827] px-2.5 py-1 text-[11px] font-bold text-white">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="font-semibold text-[#98a2b3]">Select up to 6 tags</span>
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-5">
-                <FieldLabel>Update Hint</FieldLabel>
-                <div className="rounded-[18px] bg-[#fafafe] px-4 py-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[13px] font-bold text-[#111827]">Updates: {getUpdateHintLabel(updateDays)}</div>
-                      <div className="mt-0.5 text-[11px] leading-4 text-[#8d94a1]">
-                        Display only. This does not schedule posts.
+                      <div className="flex h-[96px] w-[64px] shrink-0 flex-col items-center justify-center rounded-[8px] bg-[#f7f7fa] text-[#a7acb6]">
+                        <i className="fa-solid fa-plus text-[22px]" />
+                        <span className="mt-2 text-[9.5px]">Add cover</span>
                       </div>
-                    </div>
+                    )}
 
-                    {updateDays.length ? (
-                      <button
-                        type="button"
-                        onClick={() => setUpdateDays([])}
-                        className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-[#667085] ring-1 ring-[#eceaf2]"
-                      >
-                        Clear
-                      </button>
-                    ) : null}
-                  </div>
+                    <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
+                  </button>
 
-                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                    {updateDayOptions.map((day) => {
-                      const active = updateDays.includes(day.value)
-                      return (
-                        <button
-                          key={day.value}
-                          type="button"
-                          onClick={() => setUpdateDays((current) => toggleUpdateDay(current, day.value))}
-                          className={`h-10 rounded-full text-[12px] font-normal transition active:scale-95 ${
-                            active
-                              ? 'bg-[#111827] text-white'
-                              : 'bg-white text-[#555b66] ring-1 ring-[#eceaf2]'
-                          }`}
-                        >
-                          {day.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
+                  <div className="mx-4 h-px bg-[#f0f1f3]" />
 
-              <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-[#fafafe] px-4 py-3">
-                <div>
-                  <div className="text-[13px] font-bold text-[#111827]">18+ {isManga ? 'Manga' : 'Story'}</div>
-                  <div className="mt-0.5 text-[11px] text-[#8d94a1]">Whole {isManga ? 'manga' : 'story'} is adult-only</div>
-                </div>
-                <Toggle checked={isAdult} onClick={() => setIsAdult((value) => !value)} label="Toggle 18+ story" />
-              </div>
-            </section>
-
-            <section className="border-t border-[#eceef2] bg-white md:mt-4 md:space-y-3 md:border-0 md:bg-transparent">
-              <label className="flex items-start gap-3 bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] md:rounded-[18px] md:shadow-sm md:ring-1 md:ring-black/5">
-                <input type="checkbox" checked={originalAccepted} onChange={(event) => setOriginalAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
-                <span>I confirm this {isManga ? 'manga' : 'story'} is my original work and I have the right to publish it.</span>
-              </label>
-
-              <label className="flex items-start gap-3 border-t border-[#eceef2] bg-white p-4 text-[12px] font-semibold leading-5 text-[#555b66] md:rounded-[18px] md:border-0 md:shadow-sm md:ring-1 md:ring-black/5">
-                <input type="checkbox" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#d1d5db] accent-[#111827]" />
-                <span>
-                  I agree to the{' '}
                   <button
                     type="button"
                     onClick={() => {
-                      window.open('/author/agreement', '_blank', 'noopener,noreferrer')
+                      setDraftTitle(title)
+                      setTitleOpen(true)
                     }}
-                    className="font-bold text-[#0b5cff]"
+                    className="flex min-h-[68px] w-full items-center gap-4 px-4 py-4 text-left active:bg-[#fafafa]"
                   >
-                    Shadow Author Agreement.
+                    <div className="w-[108px] shrink-0 text-[13px] font-bold text-[#111827]">
+                      {isManga ? 'Manga Title' : 'Story Title'}{' '}
+                      <span className="text-[#e5484d]">*</span>
+                    </div>
+
+                    <div
+                      className={`min-w-0 flex-1 truncate text-right text-[12.5px] ${
+                        title ? 'text-[#555b66]' : 'text-[#a5aab4]'
+                      }`}
+                    >
+                      {title || (isManga ? 'Add your manga title' : 'Add your story title')}
+                    </div>
+
+                    <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
                   </button>
-                </span>
-              </label>
-            </section>
+
+                  <div className="mx-4 h-px bg-[#f0f1f3]" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraftDescription(description)
+                      setSummaryOpen(true)
+                    }}
+                    className="flex min-h-[74px] w-full items-center gap-4 px-4 py-4 text-left active:bg-[#fafafa]"
+                  >
+                    <div className="w-[108px] shrink-0 text-[13px] font-bold text-[#111827]">
+                      Description <span className="text-[#e5484d]">*</span>
+                    </div>
+
+                    <div
+                      className={`min-w-0 flex-1 truncate text-right text-[12.5px] ${
+                        description ? 'text-[#555b66]' : 'text-[#a5aab4]'
+                      }`}
+                    >
+                      {description || 'Tell readers what makes your story worth opening.'}
+                    </div>
+
+                    <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
+                  </button>
+                </section>
+
+                <section className="bg-white px-4 pb-2 pt-4">
+                  <div>
+                    <FieldLabel required>
+                      {isManga ? 'Manga Language' : 'Story Language'}
+                    </FieldLabel>
+                    <SelectInput
+                      value={language}
+                      onChange={(event) => setLanguage(event.target.value)}
+                    >
+                      {languages.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </SelectInput>
+                  </div>
+
+                  <div className="mt-4">
+                    <FieldLabel required>Main Genre</FieldLabel>
+                    <button
+                      type="button"
+                      onClick={() => setGenreOpen(true)}
+                      className="flex h-12 w-full items-center justify-between rounded-[12px] bg-[#f7f7fa] px-4 text-left text-[13px] text-[#111827]"
+                    >
+                      <span className="truncate">{genre || 'Choose genre'}</span>
+                      <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    <FieldLabel required>Tags</FieldLabel>
+                    <button
+                      type="button"
+                      onClick={() => setTagOpen(true)}
+                      className="flex min-h-12 w-full items-center rounded-[12px] bg-[#f7f7fa] px-4 py-3 text-left"
+                    >
+                      <span
+                        className={`min-w-0 flex-1 truncate text-[12.5px] ${
+                          tags.length ? 'text-[#111827]' : 'text-[#98a2b3]'
+                        }`}
+                      >
+                        {tags.length ? tags.join(', ') : 'Choose up to 6 tags'}
+                      </span>
+
+                      <span className="ml-3 shrink-0 text-[10.5px] text-[#98a2b3]">
+                        {tags.length}/6
+                      </span>
+
+                      <i className="fa-solid fa-chevron-right ml-2 shrink-0 text-[10px] text-[#98a2b3]" />
+                    </button>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-[12px] font-bold text-[#111827]">
+                      Update Days
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-7 gap-2">
+                      {updateDayOptions.map((day) => {
+                        const active = updateDays.includes(day.value)
+
+                        return (
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() =>
+                              setUpdateDays((current) =>
+                                toggleUpdateDay(current, day.value)
+                              )
+                            }
+                            className={`h-9 rounded-[9px] text-[10.5px] transition active:scale-95 ${
+                              active
+                                ? 'bg-[#111827] text-white'
+                                : 'bg-[#f7f7fa] text-[#8d94a1]'
+                            }`}
+                          >
+                            {day.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-[12px] font-bold text-[#111827]">
+                      Story Status
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-4 py-2">
+                      <span className="text-[12px] text-[#555b66]">Completed</span>
+
+                      <Toggle
+                        checked={storyStatus === 'Completed'}
+                        onClick={() => {
+                          if (storyStatus === 'Completed') {
+                            setStoryStatus(unfinishedStoryStatus)
+                            return
+                          }
+
+                          setUnfinishedStoryStatus(storyStatus)
+                          setStoryStatus('Completed')
+                        }}
+                        label="Toggle completed story"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-4 py-2">
+                    <span className="text-[12px] text-[#111827]">
+                      18+ {isManga ? 'Manga' : 'Story'}
+                    </span>
+
+                    <Toggle
+                      checked={isAdult}
+                      onClick={() => setIsAdult((value) => !value)}
+                      label="Toggle 18+ story"
+                    />
+                  </div>
+                </section>
               </div>
             ) : (
               <section className="mt-6 overflow-hidden rounded-[12px] bg-white shadow-sm">
@@ -2087,7 +1926,13 @@ backgroundImage: isEditMode
               </p>
             ) : null}
 
-            <section className={`mt-5 pb-8 ${isEditMode ? 'px-4' : ''}`}>
+            <section
+              className={
+                isEditMode
+                  ? 'sticky bottom-0 z-20 bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3'
+                  : 'mt-5 pb-8'
+              }
+            >
               <button
                 type="button"
                 onClick={handleSaveStory}
