@@ -1200,10 +1200,10 @@ const createdWorkLabel = isManga
     : 'novel'
 
 const editPageLabel = isManga
-  ? 'Edit Manga'
+  ? 'Update Manga'
   : isChatStory
-    ? 'Edit Chat Story'
-    : 'Edit Novel'
+    ? 'Update Chat Story'
+    : 'Update Novel'
 
 return (
   <div
@@ -1211,9 +1211,10 @@ return (
       isManga ? 'manga-red-theme' : ''
     }`}
     style={{
-      backgroundColor: '#FAFAFA',
-      backgroundImage:
-        'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,0.18) 38%, rgba(250,250,250,0.72) 76%, #FAFAFA 100%), linear-gradient(90deg, #F2EEFF 0%, #FFF8E8 100%)',
+      backgroundColor: isEditMode ? '#FFFFFF' : '#FAFAFA',
+backgroundImage: isEditMode
+  ? 'none'
+  : 'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,0.18) 38%, rgba(250,250,250,0.72) 76%, #FAFAFA 100%), linear-gradient(90deg, #F2EEFF 0%, #FFF8E8 100%)',
       backgroundRepeat: 'no-repeat',
       backgroundSize: '100% 270px, 100% 270px',
     }}
@@ -1564,7 +1565,7 @@ return (
         </div>
       ) : null}
 
-      <header className="sticky top-0 z-50 bg-transparent px-4 py-3">
+      <header className={`sticky top-0 z-50 px-4 py-3 ${isEditMode ? 'bg-white' : 'bg-transparent'}`}>
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center text-black active:scale-95" aria-label="Go back">
             <i className="fa-solid fa-chevron-left text-[14px]" />
@@ -1573,10 +1574,10 @@ return (
           <h1 className="text-[17px] font-bold text-[#111827]">
   {isEditMode
     ? isManga
-      ? 'Edit Manga'
-      : isChatStory
-        ? 'Edit Chat Story'
-        : 'Edit Novel'
+      ? 'Update Manga'
+: isChatStory
+  ? 'Update Chat Story'
+  : 'Update Novel'
     : isManga
       ? 'Create Manga'
       : isChatStory
@@ -1588,7 +1589,7 @@ return (
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <main className={`mx-auto max-w-5xl ${isEditMode ? 'px-0 pt-0 sm:px-4' : 'px-4 pt-4'}`}>
         {!isEditMode ? (
   <section className="hidden rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
     <div className={`grid gap-2 ${isChatStory ? 'grid-cols-4' : 'grid-cols-3'}`}>
@@ -1629,8 +1630,8 @@ return (
         {!pageLoading ? (
           <>
             {isEditMode ? (
-              <div className="mt-4 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/5 md:contents">
-            <section className="bg-white p-4 md:mt-4 md:rounded-[24px] md:shadow-sm md:ring-1 md:ring-black/5">
+              <div className="bg-white">
+            <section className="bg-white px-4 py-4">
               <FieldLabel required>{isManga ? 'Manga Cover' : 'Book Cover'}</FieldLabel>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-[240px_1fr] sm:gap-4">
@@ -1836,7 +1837,7 @@ return (
               </div>
             </section>
 
-            <section className="border-t border-[#eceef2] bg-white p-4 md:mt-4 md:rounded-[24px] md:border-0 md:shadow-sm md:ring-1 md:ring-black/5">
+            <section className="border-t border-[#eceef2] bg-white px-4 py-4">
               <FieldLabel required>{isManga ? 'Manga Title' : 'Story Title'}</FieldLabel>
               <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isManga ? 'Enter manga title' : 'Enter story title'} />
 
@@ -2086,7 +2087,7 @@ return (
               </p>
             ) : null}
 
-            <section className="mt-5 pb-8">
+            <section className={`mt-5 pb-8 ${isEditMode ? 'px-4' : ''}`}>
               <button
                 type="button"
                 onClick={handleSaveStory}
