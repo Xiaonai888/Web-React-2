@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import StoryPublishAgreementModal from '../../components/author/StoryPublishAgreementModal'
 
@@ -103,6 +103,35 @@ export function SuccessModal({
   onStoryManager,
   onAddEpisode,
 }) {
+  useEffect(() => {
+    if (!open) return undefined
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+
+    const oldBodyOverflow = body.style.overflow
+    const oldBodyPosition = body.style.position
+    const oldBodyTop = body.style.top
+    const oldBodyWidth = body.style.width
+    const oldHtmlOverflow = html.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
+
+    return () => {
+      body.style.overflow = oldBodyOverflow
+      body.style.position = oldBodyPosition
+      body.style.top = oldBodyTop
+      body.style.width = oldBodyWidth
+      html.style.overflow = oldHtmlOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
   if (!open) return null
 
   const isScheduled = releaseOption === 'schedule'
@@ -118,11 +147,7 @@ export function SuccessModal({
 
   const cleanEpisodeTitle = String(episodeTitle || '').trim()
 
-  const episodeLabel = resolvedEpisodeNumber
-    ? cleanEpisodeTitle
-      ? `Episode ${resolvedEpisodeNumber} · ${cleanEpisodeTitle}`
-      : `Episode ${resolvedEpisodeNumber}`
-    : cleanEpisodeTitle || 'Episode'
+  const episodeLabel = cleanEpisodeTitle || 'Untitled Episode'
 
   const heading = isScheduled
     ? 'Episode Scheduled!'
