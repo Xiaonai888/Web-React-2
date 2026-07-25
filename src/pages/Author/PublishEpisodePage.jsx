@@ -93,7 +93,7 @@ function ConfettiPiece({ className }) {
   return <span className={`absolute block h-2 w-2 rounded-full ${className}`} />
 }
 
-function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onAddEpisode }) {
+export function SuccessModal({ open, isFirstEpisode, releaseOption, onStoryManager, onAddEpisode }) {
   if (!open) return null
 
   const isScheduled = releaseOption === 'schedule'
