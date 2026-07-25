@@ -763,7 +763,7 @@ export default function StoryManagerPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
+      <main className="mx-auto max-w-5xl px-0 py-0 sm:px-5 sm:py-4">
         {loading ? (
           <section className="rounded-[14px] bg-white p-8 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
