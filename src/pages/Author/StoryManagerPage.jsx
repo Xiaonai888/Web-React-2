@@ -358,32 +358,31 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
   const likes = episode.total_likes || episode.likes || 0
   const comments = episode.total_comments || episode.comments || 0
   const wordCount = Number(episode.word_count || 0)
+  const isFree = Boolean(episode.is_free_published)
 
   return (
     <div className="relative flex min-h-[96px] items-center gap-3 bg-white px-4 py-4">
       <button
         type="button"
         onClick={() => onOpen(episode)}
-        className="min-w-0 flex-1 text-left active:opacity-70"
+        className="flex min-w-0 flex-1 items-center text-left active:opacity-70"
       >
-        <div className="hidden flex-wrap items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#8d94a1]">
-            EP {episode.episode_number || 1}
-          </span>
-          <StatusBadge status={episode.status} />
-          {episode.is_adult ? (
-            <span className="rounded-full bg-[#fff1f1] px-2 py-1 text-[10px] font-semibold text-[#e5484d]">18+</span>
+        <div className="min-w-0">
+          {isFree ? (
+            <span className="mb-1 inline-flex h-[18px] items-center rounded-full bg-[#FE526E] px-2 text-[9px] font-normal leading-none text-white">
+              Free
+            </span>
           ) : null}
-        </div>
 
-        <div className="mt-2 line-clamp-1 text-[14px] font-semibold text-[#111827]">
-          {episode.title || 'Untitled Episode'}
-        </div>
+          <div className="line-clamp-1 text-[14px] font-semibold leading-5 text-[#111827]">
+            {episode.title || 'Untitled Episode'}
+          </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[#8d94a1]">
-          <span>{getDateLabel(episode)}</span>
-          <span>•</span>
-          <span>{wordCount.toLocaleString('en-US')} words</span>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] font-normal text-[#8d94a1]">
+            <span>{getDateLabel(episode)}</span>
+            <span>•</span>
+            <span>{wordCount.toLocaleString('en-US')} words</span>
+          </div>
         </div>
       </button>
 
@@ -396,16 +395,26 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
       <button
         type="button"
         onClick={(event) => {
-  const rect = event.currentTarget.getBoundingClientRect()
-  onMore({ ...episode, __menuAnchor: { top: rect.top, right: rect.right, bottom: rect.bottom } })
-}}
-        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+          const rect = event.currentTarget.getBoundingClientRect()
+
+          onMore({
+            ...episode,
+            __menuAnchor: {
+              top: rect.top,
+              right: rect.right,
+              bottom: rect.bottom,
+            },
+          })
+        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center self-center text-[#111827] active:bg-[#f3f4f6]"
         aria-label={`Actions for ${episode.title || 'episode'}`}
       >
         <i className="fa-solid fa-ellipsis text-[14px]" />
       </button>
 
-      {!last ? <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#eceef2]" /> : null}
+      {!last ? (
+        <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#eceef2]" />
+      ) : null}
     </div>
   )
 }
