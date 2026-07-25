@@ -3595,6 +3595,82 @@ function WebcomicReadingMissionCoin({
   )
 }
 
+function StoryReaderIntro({
+  story,
+  episode,
+  theme,
+  fontFamily,
+  showStoryInfo = true,
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const description = String(story?.description || '').trim()
+  const genre = String(story?.main_genre || '').trim()
+  const episodeTitle = String(episode?.title || '').trim()
+
+  return (
+    <div className="pb-6">
+      {episodeTitle ? (
+        <div
+          className={`mb-10 text-center text-[15px] font-medium leading-6 ${theme.muted}`}
+          style={{ fontFamily }}
+        >
+          {episodeTitle}
+        </div>
+      ) : null}
+
+      {showStoryInfo ? (
+        <>
+          <h1
+            className={`text-[30px] font-bold leading-[1.28] tracking-[-0.02em] ${theme.text} sm:text-[34px]`}
+            style={{ fontFamily }}
+          >
+            {story?.title || 'Untitled Story'}
+          </h1>
+
+          {genre ? (
+            <div className={`mt-2 text-[15px] font-medium ${theme.muted}`}>
+              {genre}
+            </div>
+          ) : null}
+
+          {description ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              className="mt-5 w-full text-left"
+            >
+              <p
+                className={`${expanded ? '' : 'line-clamp-3'} text-[15px] font-normal leading-7 ${theme.muted}`}
+                style={{ fontFamily }}
+              >
+                {description}
+              </p>
+
+              <span
+                className={`mt-2 flex items-center justify-end gap-2 text-[12px] font-semibold ${theme.muted}`}
+              >
+                {expanded ? 'Hide' : 'Show more'}
+                <i
+                  className={`fa-solid fa-chevron-${expanded ? 'up' : 'down'} text-[10px]`}
+                />
+              </span>
+            </button>
+          ) : null}
+        </>
+      ) : null}
+
+      <div className={`text-center ${showStoryInfo ? 'mt-8' : ''}`}>
+        <div
+          className={`text-[22px] font-bold ${theme.text}`}
+          style={{ fontFamily }}
+        >
+          Episode {episode?.episode_number || 1}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ContinuousEpisodeBlock({
   entry,
   index,
@@ -3610,6 +3686,7 @@ function ContinuousEpisodeBlock({
   onReachLocked,
   adultAccepted,
   showToBeContinued,
+  showStoryInfo,
 }) {
   const episode = entry?.episode || {}
   const isManga =
@@ -3697,14 +3774,13 @@ function ContinuousEpisodeBlock({
   className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
 >
   <div className="px-4 pb-5 pt-5 sm:px-8 sm:pt-8">
-    <div className={isManga ? 'mb-4' : 'mb-7'}>
-      <h1
-        className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
-        style={{ fontFamily }}
-      >
-        {episode.title || 'Untitled Episode'}
-      </h1>
-    </div>
+    <StoryReaderIntro
+      story={story}
+      episode={episode}
+      theme={theme}
+      fontFamily={fontFamily}
+      showStoryInfo={showStoryInfo}
+    />
   </div>
 
   {isManga ? (
@@ -5824,6 +5900,7 @@ effectiveReadingMode === 'scroll' ? (
                 active={String(entry.id) === String(episodeId)}
                 theme={theme}
                 story={story}
+                showStoryInfo={String(entry.id) === String(routeEpisodeId)}
                 showToBeContinued={shouldShowToBeContinued(story, episodes, entry.episode)}
                 fontSizePx={fontSizePx}
                 fontFamily={activeFont.family}
@@ -5927,14 +6004,14 @@ adultAccepted &&
                   </div>
                 ) : null}
 
-<div className="mb-7">
-  <h1
-       className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
-    style={{ fontFamily: activeFont.family }}
-  >
-    {episode.title || 'Untitled Episode'}
-  </h1>
-</div>
+{currentPageIndex === 0 ? (
+  <StoryReaderIntro
+    story={story}
+    episode={episode}
+    theme={theme}
+    fontFamily={activeFont.family}
+  />
+) : null}
 
                 <article>
                   {effectiveReadingMode === 'paging' ? (
@@ -5971,6 +6048,7 @@ adultAccepted &&
 
                 <ReaderEndPanel
                   story={story}
+                  showStoryInfo={String(entry.id) === String(routeEpisodeId)}
                   episode={episode}
                   onOpenComments={() => {
                     setCommentEpisode(episode)
