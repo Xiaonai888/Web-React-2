@@ -67,6 +67,18 @@ function getAuthToken() {
   )
 }
 
+function getStoredReaderUser() {
+  try {
+    return JSON.parse(
+      localStorage.getItem('shadow_reader_user') ||
+        sessionStorage.getItem('shadow_reader_user') ||
+        'null'
+    )
+  } catch {
+    return null
+  }
+}
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString('en-US', {
     maximumFractionDigits: 2,
@@ -152,6 +164,104 @@ function LoadingProfile() {
   )
 }
 
+function ProfileSwitcherSheet({
+  open,
+  onClose,
+  displayName,
+  avatarUrl,
+  avatarLetter,
+  authorPage,
+  authorNotificationCount,
+  onOwnAccount,
+  onAuthorPage,
+  onManageAccount,
+}) {
+  if (!open) return null
+
+  const pageName = authorPage?.page_name || authorPage?.name || 'Author Page'
+  const pageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
+  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
+
+  return (
+    <div className="fixed inset-0 z-[130]">
+      <button
+        type="button"
+        aria-label="Close profile switcher"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/35"
+      />
+
+      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-white px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e5e7eb] md:hidden" />
+
+        <div className="overflow-hidden rounded-[24px] border border-[#eceaf2] bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={onOwnAccount}
+            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{avatarLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{displayName}</div>
+              </div>
+            </div>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#c6c9d1]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onAuthorPage}
+            className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99]"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10">
+                {pageLogo ? (
+                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[16px] font-extrabold text-[#111827]">{pageName}</div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#8d94a1]">
+                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+                  <span>{`${authorNotificationCount} notification${Number(authorNotificationCount) === 1 ? '' : 's'}`}</span>
+                </div>
+              </div>
+            </div>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
+              <i className="fa-solid fa-check text-[10px]" />
+            </span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={onManageAccount}
+          className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[#d9dce4] bg-white text-[14px] font-normal text-[#111827] active:scale-[0.99]"
+        >
+          Manage Account
+        </button>
+
+        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
+          <img
+            src="/assets/Icons/Logo Shadow 2.svg"
+            alt=""
+            className="h-10 w-auto object-contain opacity-90"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AuthorProfilePage() {
   const navigate = useNavigate()
   const storedAuthorPage = useMemo(() => {
@@ -161,6 +271,7 @@ export default function AuthorProfilePage() {
       return null
     }
   }, [])
+  const storedReaderUser = useMemo(() => getStoredReaderUser(), [])
   const [authorPage, setAuthorPage] = useState(
     AUTHOR_PREVIEW_ENABLED ? PREVIEW_PROFILE : storedAuthorPage
   )
@@ -169,6 +280,15 @@ export default function AuthorProfilePage() {
   )
   const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [error, setError] = useState('')
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.classList.toggle('settings-popup-open', profileSwitcherOpen)
+
+    return () => {
+      document.body.classList.remove('settings-popup-open')
+    }
+  }, [profileSwitcherOpen])
 
   useEffect(() => {
     let ignore = false
@@ -239,9 +359,34 @@ export default function AuthorProfilePage() {
   const publicPagePath = pageUsername
     ? `/author/page/${encodeURIComponent(pageUsername)}`
     : '/author/page'
+  const readerName = storedReaderUser?.name || storedReaderUser?.username || 'Reader'
+  const readerAvatarUrl = storedReaderUser?.avatar_url || storedReaderUser?.avatarUrl || ''
+  const readerAvatarLetter = readerName.charAt(0).toUpperCase() || 'R'
+  const authorNotificationCount = Number(
+    authorPage?.notification_count || authorPage?.unread_count || 0
+  )
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-[100px]">
+      <ProfileSwitcherSheet
+        open={profileSwitcherOpen}
+        onClose={() => setProfileSwitcherOpen(false)}
+        displayName={readerName}
+        avatarUrl={readerAvatarUrl}
+        avatarLetter={readerAvatarLetter}
+        authorPage={authorPage}
+        authorNotificationCount={authorNotificationCount}
+        onOwnAccount={() => {
+          setProfileSwitcherOpen(false)
+          navigate('/profile')
+        }}
+        onAuthorPage={() => setProfileSwitcherOpen(false)}
+        onManageAccount={() => {
+          setProfileSwitcherOpen(false)
+          navigate('/settings')
+        }}
+      />
+
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="px-3 pb-4 pt-1">
           {loading ? <LoadingProfile /> : null}
@@ -286,13 +431,13 @@ export default function AuthorProfilePage() {
                   </button>
 
                   <button
-  type="button"
-  onClick={() => navigate('/me')}
-  className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] active:scale-[0.99]"
->
-  <span>Switch Profile</span>
-  <i className="fa-solid fa-chevron-down text-[9px]" />
-</button>
+                    type="button"
+                    onClick={() => setProfileSwitcherOpen(true)}
+                    className="mt-1 flex items-center gap-1.5 text-[12px] font-normal text-[#8d94a1] active:scale-[0.99]"
+                  >
+                    <span>Switch Profile</span>
+                    <i className="fa-solid fa-chevron-down text-[9px]" />
+                  </button>
                 </div>
               </div>
 
