@@ -2060,10 +2060,10 @@ const canSave =
                   </button>
                 </div>
 
-                <div className="mt-5">
-                  <div className="text-[12px] font-semibold text-[#111827]">
-                    Update Days
-                  </div>
+                <div className="hidden mt-5">
+  <div className="text-[12px] font-semibold text-[#111827]">
+    Update Days
+  </div>
                   <div className="mt-3 grid grid-cols-7 gap-1.5">
                     {UPDATE_DAY_OPTIONS.map((day) => {
                       const active = updateDays.includes(day)
@@ -2086,10 +2086,10 @@ const canSave =
                   </div>
                 </div>
 
-                <div className="mt-5">
-                  <div className="text-[12px] font-semibold text-[#111827]">
-                    Story Status
-                  </div>
+                <div className="hidden mt-5">
+  <div className="text-[12px] font-semibold text-[#111827]">
+    Story Status
+  </div>
 
                   <div className="mt-3 flex items-center justify-between gap-4">
                     <span className="text-[12px] font-normal text-[#111827]">
@@ -2108,7 +2108,7 @@ const canSave =
                   </div>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between gap-4">
+                <div className="hidden mt-5 items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] font-normal text-[#111827]">
                       18+ Story
