@@ -3410,6 +3410,8 @@ setSuccessOpen(true)
   open={successOpen}
   isFirstEpisode={Number(currentEpisodeNumber || 1) === 1}
   releaseOption={releaseOption}
+  episodeNumber={Number(currentEpisodeNumber || 1)}
+  episodeTitle={episodeTitle}
   onStoryManager={() => {
     setSuccessOpen(false)
     navigate('/author/dashboard', { replace: true })
