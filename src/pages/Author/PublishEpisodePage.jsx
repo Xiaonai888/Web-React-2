@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import StoryPublishAgreementModal from '../../components/author/StoryPublishAgreementModal'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -264,6 +265,8 @@ export default function PublishEpisodePage() {
   const [toast, setToast] = useState('')
   const [successOpen, setSuccessOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [agreementOpen, setAgreementOpen] = useState(false)
+  const [agreementSaving, setAgreementSaving] = useState(false)
 
   const actionText = useMemo(() => {
     if (loading) return 'Saving...'
@@ -358,25 +361,131 @@ export default function PublishEpisodePage() {
     return data
   }
 
-  const handleSubmit = async () => {
-    if (loading) return
+  const submitEpisodeStatus = async () => {
+  try {
+    setLoading(true)
 
-    try {
-      setLoading(true)
+    const result = await updateEpisodeStatus()
 
-      const result = await updateEpisodeStatus()
-if (!result) return
-setSuccessOpen(true)
-    } catch (error) {
-      showToast(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to backend. Please check deployment.'
-          : error.message || 'Failed to save episode status.'
-      )
-    } finally {
-      setLoading(false)
-    }
+    if (!result) return
+
+    setSuccessOpen(true)
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend. Please check deployment.'
+        : error.message || 'Failed to save episode status.'
+    )
+  } finally {
+    setLoading(false)
   }
+}
+
+const handleSubmit = async () => {
+  if (loading || agreementSaving) return
+
+  if (!isFirstEpisode || releaseOption === 'draft') {
+    await submitEpisodeStatus()
+    return
+  }
+
+  if (!episodeId) {
+    showToast('Missing episode id. Please go back and save the episode again.')
+    return
+  }
+
+  if (releaseOption === 'schedule' && !getScheduledAt()) {
+    showToast('Please choose schedule date and time.')
+    return
+  }
+
+  try {
+    setLoading(true)
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/publish-agreement`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to check publishing agreement')
+    }
+
+    if (data.accepted) {
+      const result = await updateEpisodeStatus()
+
+      if (!result) return
+
+      setSuccessOpen(true)
+      return
+    }
+
+    setAgreementOpen(true)
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend. Please check deployment.'
+        : error.message || 'Failed to check publishing agreement.'
+    )
+  } finally {
+    setLoading(false)
+  }
+}
+
+const handleAcceptAgreement = async (agreement) => {
+  try {
+    setAgreementSaving(true)
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/publish-agreement`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(agreement),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false || !data.accepted) {
+      throw new Error(data.message || 'Failed to save publishing agreement')
+    }
+
+    setAgreementOpen(false)
+    await submitEpisodeStatus()
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend. Please check deployment.'
+        : error.message || 'Failed to save publishing agreement.'
+    )
+  } finally {
+    setAgreementSaving(false)
+  }
+}
 
   const navigateAfterSuccess = (targetPath) => {
     navigate('/author/dashboard', { replace: true })
@@ -424,6 +533,13 @@ setSuccessOpen(true)
     animation: mangaSoftPulse 1.8s ease-in-out infinite !important;
   }
 `}</style>
+
+      <StoryPublishAgreementModal
+  open={agreementOpen}
+  saving={agreementSaving}
+  onClose={() => setAgreementOpen(false)}
+  onConfirm={handleAcceptAgreement}
+/>
 
       <Toast message={toast} onClose={() => setToast('')} />
 
