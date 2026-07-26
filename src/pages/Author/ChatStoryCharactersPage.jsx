@@ -358,8 +358,11 @@ function CharacterEditor({
   onClose,
   onSave,
 }) {
+  const [groupMenuOpen, setGroupMenuOpen] = useState(false)
+
   useEffect(() => {
     if (!open) return undefined
+    setGroupMenuOpen(false)
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -446,25 +449,48 @@ function CharacterEditor({
         />
 
         <label className="mt-4 block text-[12px] font-bold text-[#111827]">
-          Character group
-        </label>
+  Character group
+</label>
 
-        <div className="relative mt-2">
-          <select
-            value={roleGroup}
-            onChange={(event) => onRoleGroupChange(event.target.value)}
-            className="h-12 w-full appearance-none rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 pr-14 text-[13px] font-normal text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
-          >
-            {ROLE_GROUPS.map((item) => (
-              <option key={item.key} value={item.key}>
-                {item.title}
-              </option>
-            ))}
-          </select>
+<div className="mt-2">
+  <button
+    type="button"
+    onClick={() => setGroupMenuOpen((value) => !value)}
+    className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[13px] font-normal text-[#111827]"
+  >
+    <span>
+      {ROLE_GROUPS.find((item) => item.key === roleGroup)?.title || 'Main Characters'}
+    </span>
 
-          <i className="fa-solid fa-chevron-down pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[11px] text-[#667085]" />
-        </div>
+    <i
+      className={`fa-solid fa-chevron-down text-[11px] text-[#667085] transition-transform ${
+        groupMenuOpen ? 'rotate-180' : ''
+      }`}
+    />
+  </button>
 
+  {groupMenuOpen ? (
+    <div className="mt-2 max-h-[176px] overflow-y-auto rounded-[16px] border border-[#e4e7ec] bg-white p-1 shadow-sm">
+      {ROLE_GROUPS.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={() => {
+            onRoleGroupChange(item.key)
+            setGroupMenuOpen(false)
+          }}
+          className={`flex w-full items-center rounded-[12px] px-3 py-3 text-left text-[13px] font-normal ${
+            roleGroup === item.key
+              ? 'bg-[#f3e8ff] text-[#6d42db]'
+              : 'text-[#111827] active:bg-[#f7f7fa]'
+          }`}
+        >
+          {item.title}
+        </button>
+      ))}
+    </div>
+  ) : null}
+</div>
         
 
         <button
