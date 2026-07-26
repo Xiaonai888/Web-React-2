@@ -14,6 +14,17 @@ function getAuthToken() {
     ''
   )
 }
+function countWords(value) {
+  const text = String(value || '').trim()
+  if (!text) return 0
+
+  if (typeof Intl?.Segmenter === 'function') {
+    return [...new Intl.Segmenter(undefined, { granularity: 'word' }).segment(text)]
+      .filter((item) => item.isWordLike).length
+  }
+
+  return text.split(/\s+/u).filter(Boolean).length
+}
 
 function makeId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
@@ -349,6 +360,7 @@ export default function ChatStoryEditorPage() {
   const [searchParams] = useSearchParams()
   const messagesEndRef = useRef(null)
   const composerRef = useRef(null)
+  const titleInputRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
   const messagesRef = useRef([])
@@ -362,7 +374,7 @@ export default function ChatStoryEditorPage() {
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
-  const [episodeTitle, setEpisodeTitle] = useState('Episode 1')
+  const [episodeTitle, setEpisodeTitle] = useState('')
   const [episodeId, setEpisodeId] = useState('')
   const [saving, setSaving] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
@@ -386,9 +398,9 @@ export default function ChatStoryEditorPage() {
     ? characterMap[selectedCharacterId] || null
     : null
 
-  const characterCount = useMemo(() => {
+  const wordCount = useMemo(() => {
   return messages.reduce(
-    (total, message) => total + String(message.text || '').length,
+    (total, message) => total + countWords(message.text),
     0
   )
 }, [messages])
@@ -452,7 +464,7 @@ const handleRedo = () => {
     if (startNewEpisode) {
       localStorage.removeItem(storageKey)
       setMessages([])
-      setEpisodeTitle('New Episode')
+      setEpisodeTitle('')
       setEpisodeId('')
       return
     }
@@ -742,7 +754,7 @@ const deleteMessage = (messageId) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5fb] pb-[170px]">
+    <div className="min-h-screen bg-white pb-[170px]">
       <input
         ref={audioInputRef}
         type="file"
@@ -781,24 +793,41 @@ const deleteMessage = (messageId) => {
       ) : null}
 
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-3 py-2 backdrop-blur">
-  <div className="mx-auto flex max-w-5xl items-center gap-1">
+  <div className="mx-auto flex max-w-5xl items-center gap-2">
     <button
       type="button"
       onClick={() => navigate(`/author/story/${storyId}/chat/characters`)}
-      className="flex h-10 w-8 shrink-0 items-center justify-start text-[#111827] active:scale-95"
+      className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95"
       aria-label="Go back"
     >
       <i className="fa-solid fa-chevron-left text-[14px]" />
     </button>
 
-    <div className="min-w-0 flex-1 text-left">
-      <div className="truncate text-[10px] font-bold text-[#111827]">
-        {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
-        {characterCount.toLocaleString()} characters
+    <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 items-center gap-1">
+        <input
+          ref={titleInputRef}
+          value={episodeTitle}
+          onChange={(event) => setEpisodeTitle(event.target.value)}
+          maxLength={80}
+          placeholder="Enter episode title"
+          className="h-5 min-w-0 flex-1 truncate bg-transparent text-[11px] font-bold text-[#111827] outline-none placeholder:text-[#98a2b3]"
+          aria-label="Episode title"
+        />
+
+        <button
+          type="button"
+          onClick={() => titleInputRef.current?.focus()}
+          className="flex h-6 w-6 shrink-0 items-center justify-center text-[#98a2b3] active:text-[#6d42db]"
+          aria-label="Edit episode title"
+        >
+          <i className="fa-solid fa-pen text-[9px]" />
+        </button>
       </div>
 
-      <div className="mt-0.5 text-[8.5px] font-medium text-[#98a2b3]">
-        Saved{' '}
+      <div className="mt-0.5 truncate text-[8.5px] font-medium text-[#98a2b3]">
+        {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
+        {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'} | Saved in{' '}
         {savedSeconds < 60
           ? `${savedSeconds}s`
           : `${Math.floor(savedSeconds / 60)}m`}
@@ -807,33 +836,9 @@ const deleteMessage = (messageId) => {
 
     <button
       type="button"
-      onClick={handleUndo}
-      disabled={!canUndo}
-      className={`flex h-9 w-8 shrink-0 items-center justify-center ${
-        canUndo ? 'text-[#111827] active:scale-95' : 'text-[#c5cad3]'
-      }`}
-      aria-label="Undo"
-    >
-      <i className="fa-solid fa-rotate-left text-[14px]" />
-    </button>
-
-    <button
-      type="button"
-      onClick={handleRedo}
-      disabled={!canRedo}
-      className={`flex h-9 w-8 shrink-0 items-center justify-center ${
-        canRedo ? 'text-[#111827] active:scale-95' : 'text-[#c5cad3]'
-      }`}
-      aria-label="Redo"
-    >
-      <i className="fa-solid fa-rotate-right text-[14px]" />
-    </button>
-
-    <button
-      type="button"
       onClick={saveAndContinue}
       disabled={saving || loading || !messages.length}
-      className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+      className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-bold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {saving ? 'Saving...' : 'Next'}
     </button>
