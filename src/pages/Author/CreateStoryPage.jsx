@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ImageDropZone from '../../components/common/ImageDropZone'
-import { GenreSheet, TagSheet } from './EpisodeEditorPage'
+import {
+  GenreSheet,
+  LanguageWheelPicker,
+  TagSheet,
+} from './EpisodeEditorPage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -407,114 +411,7 @@ function StoryTextSheet({
 )
 }
 
-function LanguageWheelPicker({ open, value, onClose, onSave }) {
-  const listRef = useRef(null)
-  const itemHeight = 48
-  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  useEffect(() => {
-    if (!open) return undefined
-
-    const index = Math.max(0, languages.indexOf(value))
-    setSelectedIndex(index)
-
-    const frame = window.requestAnimationFrame(() => {
-      listRef.current?.scrollTo({
-        top: index * itemHeight,
-        behavior: 'auto',
-      })
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [open, value])
-
-  if (!open) return null
-
-  const selectedLanguage =
-    languages[selectedIndex] || languages[0]
-
-  return (
-    <div
-      className="fixed inset-0 z-[220] flex items-center justify-center bg-black/35 px-6"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-[320px] rounded-[18px] bg-white p-4 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 px-2 text-[13px] text-[#667085]"
-          >
-            Cancel
-          </button>
-
-          <h3 className="text-[12px] font-semibold text-[#111827]">
-            Story Language
-          </h3>
-
-          <button
-            type="button"
-            onClick={() => onSave(selectedLanguage)}
-            className="h-9 px-2 text-[13px] font-semibold text-[#111827]"
-          >
-            Done
-          </button>
-        </div>
-
-        <div className="relative mt-3 h-[192px] overflow-hidden">
-          <div className="pointer-events-none absolute inset-x-2 top-1/2 z-10 h-12 -translate-y-1/2 rounded-[10px] bg-[#f2f4f7]" />
-
-          <div
-            ref={listRef}
-            onScroll={(event) => {
-              const index = Math.round(
-                event.currentTarget.scrollTop / itemHeight
-              )
-
-              setSelectedIndex(
-                Math.max(
-                  0,
-                  Math.min(languages.length - 1, index)
-                )
-              )
-            }}
-            className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto py-[72px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {languages.map((language, index) => {
-              const active = selectedIndex === index
-
-              return (
-                <button
-                  key={language}
-                  type="button"
-                  onClick={() => {
-                    setSelectedIndex(index)
-                    listRef.current?.scrollTo({
-                      top: index * itemHeight,
-                      behavior: 'smooth',
-                    })
-                  }}
-                  className={`flex h-12 w-full snap-center items-center justify-center text-[15px] transition ${
-                    active
-                      ? 'font-semibold text-[#111827]'
-                      : 'font-normal text-[#98a2b3] opacity-40'
-                  }`}
-                >
-                  {language}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="pointer-events-none absolute inset-0 z-30 bg-[linear-gradient(to_bottom,#ffffff_0%,rgba(255,255,255,0.82)_20%,transparent_42%,transparent_58%,rgba(255,255,255,0.82)_80%,#ffffff_100%)]" />
-        </div>
-      </div>
-    </div>
-  )
-}
 
 
 
@@ -1164,6 +1061,14 @@ backgroundImage: isEditMode
 
     <LanguageWheelPicker
   open={languageOpen}
+  value={language}
+  title="Story Language"
+  onClose={() => setLanguageOpen(false)}
+  onSave={(value) => {
+    setLanguage(value)
+    setLanguageOpen(false)
+  }}
+/>
   value={language}
   onClose={() => setLanguageOpen(false)}
   onSave={(value) => {
