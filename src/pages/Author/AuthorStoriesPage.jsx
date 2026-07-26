@@ -50,8 +50,14 @@ const MOCK_STORIES = [
   },
 ]
 
-const FILTERS = [
+const STORY_TYPE_FILTERS = [
   { id: 'all', label: 'All' },
+  { id: 'novel', label: 'Novel' },
+  { id: 'manga', label: 'Manga' },
+  { id: 'chat_story', label: 'Chat Story' },
+]
+
+const STATUS_FILTERS = [
   { id: 'published', label: 'Published' },
   { id: 'draft', label: 'Draft' },
   { id: 'scheduled', label: 'Scheduled' },
@@ -99,6 +105,10 @@ function normalizeStory(story) {
     id: story.id,
     title: story.title || 'Untitled Story',
     status: normalizeStatus(story.status),
+    type:
+      story.story_type === 'manga' || story.story_type === 'chat_story'
+        ? story.story_type
+        : 'novel',
     views: Number(story.total_views || 0),
     episodes: Number(story.total_episodes || 0),
     cover: story.cover_url || '',
@@ -198,7 +208,9 @@ export default function AuthorStoriesPage() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [sort, setSort] = useState('updated')
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -274,20 +286,21 @@ export default function AuthorStoriesPage() {
   }, [stories])
 
   const visibleStories = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    const nextStories = stories.filter((story) => {
-      const matchesFilter = filter === 'all' || story.status === filter
-      const matchesSearch = !query || story.title.toLowerCase().includes(query)
-      return matchesFilter && matchesSearch
-    })
+  const query = search.trim().toLowerCase()
+  const nextStories = stories.filter((story) => {
+    const matchesType = typeFilter === 'all' || story.type === typeFilter
+    const matchesStatus = statusFilter === 'all' || story.status === statusFilter
+    const matchesSearch = !query || story.title.toLowerCase().includes(query)
+    return matchesType && matchesStatus && matchesSearch
+  })
 
-    return nextStories.sort((a, b) => {
-      if (sort === 'views') return b.views - a.views
-      if (sort === 'episodes') return b.episodes - a.episodes
-      if (sort === 'title') return a.title.localeCompare(b.title)
-      return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
-    })
-  }, [filter, search, sort, stories])
+  return nextStories.sort((a, b) => {
+    if (sort === 'views') return b.views - a.views
+    if (sort === 'episodes') return b.episodes - a.episodes
+    if (sort === 'title') return a.title.localeCompare(b.title)
+    return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+  })
+}, [search, sort, statusFilter, stories, typeFilter])
 
   const selectedStory = stories.find((story) => String(story.id) === String(menuStoryId)) || null
 
@@ -306,7 +319,7 @@ export default function AuthorStoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f6fc] pb-[100px] text-[#1c1725]">
+    <div className="min-h-screen bg-[#fafafa] pb-[100px] text-[#1c1725]">
       <header className="sticky top-0 z-40 border-b border-[#ece8f3] bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[62px] max-w-5xl items-center px-4">
           {searchOpen ? (
@@ -332,7 +345,7 @@ export default function AuthorStoriesPage() {
           ) : (
             <div className="grid w-full grid-cols-[42px_1fr_42px] items-center">
               <span />
-              <h1 className="text-center text-[19px] font-black tracking-[-0.02em] text-[#15121a]">My Stories</h1>
+              <h1 className="text-center text-[15px] font-semibold text-black">My Stories</h1>
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
@@ -388,21 +401,65 @@ export default function AuthorStoriesPage() {
         ) : null}
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {FILTERS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setFilter(item.id)}
-              className={`min-w-[76px] flex-1 whitespace-nowrap rounded-full border px-4 py-2.5 text-[12px] font-normal transition active:scale-95 sm:flex-none sm:px-6 ${
-  filter === item.id
-    ? 'border-[#e1d7ff] bg-[#eee8ff] text-[#7046ef]'
-    : 'border-[#e6e1ed] bg-white text-[#403949]'
-}`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+  {STORY_TYPE_FILTERS.map((item) => {
+    const active = typeFilter === item.id
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => {
+          setTypeFilter(item.id)
+          if (item.id === 'all') setStatusFilter('all')
+        }}
+        className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
+          active
+            ? 'border-[#7951f4] bg-[#7951f4] text-white'
+            : 'border-[#e4e4e7] bg-white text-[#403949]'
+        }`}
+      >
+        {item.label}
+      </button>
+    )
+  })}
+
+  <button
+    type="button"
+    onClick={() => setFilterOpen((current) => !current)}
+    className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
+      filterOpen || statusFilter !== 'all'
+        ? 'border-[#7951f4] bg-[#7951f4] text-white'
+        : 'border-[#e4e4e7] bg-white text-[#403949]'
+    }`}
+  >
+    Filters
+  </button>
+</div>
+
+{filterOpen ? (
+  <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {STATUS_FILTERS.map((item) => {
+      const active = statusFilter === item.id
+
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() =>
+            setStatusFilter((current) => (current === item.id ? 'all' : item.id))
+          }
+          className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
+            active
+              ? 'border-[#7951f4] bg-[#7951f4] text-white'
+              : 'border-[#e4e4e7] bg-white text-[#403949]'
+          }`}
+        >
+          {item.label}
+        </button>
+      )
+    })}
+  </div>
+) : null}
 
         <div className="mb-3 mt-5 flex items-center justify-between gap-3">
           <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#19151f]">Your Library</h2>
@@ -456,7 +513,14 @@ export default function AuthorStoriesPage() {
               </article>
             ))
           ) : (
-            <EmptyState searching={Boolean(search.trim()) || filter !== 'all'} onCreate={() => navigate('/author/create-story')} />
+            <EmptyState
+  searching={
+    Boolean(search.trim()) ||
+    typeFilter !== 'all' ||
+    statusFilter !== 'all'
+  }
+  onCreate={() => navigate('/author/create-story')}
+/>
           )}
         </section>
       </main>
