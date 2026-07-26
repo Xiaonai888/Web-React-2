@@ -885,14 +885,22 @@ function EpisodeDetailsSheet({
   )
 }
 
-function SettingsToggle({ checked, onClick, label }) {
+export function SettingsToggle({
+  checked,
+  onClick,
+  label,
+  activeColor = '#FE526E',
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-all duration-200 active:scale-95 ${
-        checked ? 'bg-[#FE526E]' : 'bg-[#d0d5dd]'
-      }`}
+      style={{
+        backgroundColor: checked
+          ? activeColor
+          : '#d0d5dd',
+      }}
+      className="relative h-7 w-12 shrink-0 rounded-full transition-all duration-200 active:scale-95"
       aria-label={label}
       aria-pressed={checked}
     >
@@ -906,7 +914,7 @@ function SettingsToggle({ checked, onClick, label }) {
 }
 
 
-function GenreSheet({
+export function GenreSheet({
   open,
   value,
   options = FALLBACK_GENRES,
@@ -1017,7 +1025,7 @@ function GenreSheet({
   )
 }
 
-function TagSheet({ open, value, onClose, onSave }) {
+export function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
   const [search, setSearch] = useState('')
   const [activeGroup, setActiveGroup] = useState('All')
