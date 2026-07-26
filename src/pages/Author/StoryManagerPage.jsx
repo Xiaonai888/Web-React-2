@@ -567,8 +567,13 @@ export default function StoryManagerPage() {
   }
 
   const handleAddEpisode = () => {
-    navigate(`/author/story/${storyId}/episode/create?first=0`)
-  }
+  const isChatStory = String(story?.story_type || '').toLowerCase() === 'chat_story'
+  navigate(
+    isChatStory
+      ? `/author/story/${storyId}/chat/characters?new=1`
+      : `/author/story/${storyId}/episode/create?first=0`
+  )
+}
 
   const handlePerformance = () => {
     navigate(`/author/story/${storyId}/performance`)
