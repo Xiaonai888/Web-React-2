@@ -5091,8 +5091,25 @@ useEffect(() => {
     }
   }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, effectiveReadingMode, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
 
+  const sortedReaderEpisodes = useMemo(() => {
+    return [...(Array.isArray(episodes) ? episodes : [])].sort(
+      (first, second) => {
+        const firstNumber = Number(first?.episode_number || 0)
+        const secondNumber = Number(second?.episode_number || 0)
+
+        if (firstNumber !== secondNumber) {
+          return firstNumber - secondNumber
+        }
+
+        return String(first?.id || '').localeCompare(
+          String(second?.id || '')
+        )
+      }
+    )
+  }, [episodes])
+
   const firstReaderEpisodeId =
-  sortedReaderEpisodes[0]?.id || null
+    sortedReaderEpisodes[0]?.id || null
 
   const currentReaderEpisodeIndex = sortedReaderEpisodes.findIndex(
     (item) => String(item.id) === String(episodeId)
