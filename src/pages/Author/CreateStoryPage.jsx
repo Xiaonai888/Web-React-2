@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ImageDropZone from '../../components/common/ImageDropZone'
@@ -406,6 +406,115 @@ function StoryTextSheet({
 )
 }
 
+function LanguageWheelPicker({ open, value, onClose, onSave }) {
+  const listRef = useRef(null)
+  const itemHeight = 48
+  const [selectedIndex, setSelectedIndex] = useState(0)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const index = Math.max(0, languages.indexOf(value))
+    setSelectedIndex(index)
+
+    const frame = window.requestAnimationFrame(() => {
+      listRef.current?.scrollTo({
+        top: index * itemHeight,
+        behavior: 'auto',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [open, value])
+
+  if (!open) return null
+
+  const selectedLanguage =
+    languages[selectedIndex] || languages[0]
+
+  return (
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center bg-black/35 px-6"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[320px] rounded-[18px] bg-white p-4 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-9 px-2 text-[13px] text-[#667085]"
+          >
+            Cancel
+          </button>
+
+          <h3 className="text-[12px] font-semibold text-[#111827]">
+            Story Language
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => onSave(selectedLanguage)}
+            className="h-9 px-2 text-[13px] font-semibold text-[#111827]"
+          >
+            Done
+          </button>
+        </div>
+
+        <div className="relative mt-3 h-[192px] overflow-hidden">
+          <div className="pointer-events-none absolute inset-x-2 top-1/2 z-10 h-12 -translate-y-1/2 rounded-[10px] bg-[#f2f4f7]" />
+
+          <div
+            ref={listRef}
+            onScroll={(event) => {
+              const index = Math.round(
+                event.currentTarget.scrollTop / itemHeight
+              )
+
+              setSelectedIndex(
+                Math.max(
+                  0,
+                  Math.min(languages.length - 1, index)
+                )
+              )
+            }}
+            className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto py-[72px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {languages.map((language, index) => {
+              const active = selectedIndex === index
+
+              return (
+                <button
+                  key={language}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIndex(index)
+                    listRef.current?.scrollTo({
+                      top: index * itemHeight,
+                      behavior: 'smooth',
+                    })
+                  }}
+                  className={`flex h-12 w-full snap-center items-center justify-center text-[15px] transition ${
+                    active
+                      ? 'font-semibold text-[#111827]'
+                      : 'font-normal text-[#98a2b3] opacity-40'
+                  }`}
+                >
+                  {language}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 z-30 bg-[linear-gradient(to_bottom,#ffffff_0%,rgba(255,255,255,0.82)_20%,transparent_42%,transparent_58%,rgba(255,255,255,0.82)_80%,#ffffff_100%)]" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
   const [selected, setSelected] = useState(value || 'Romance')
   const [search, setSearch] = useState('')
@@ -715,6 +824,7 @@ export default function CreateStoryPage() {
 
   const [genreOpen, setGenreOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1269,6 +1379,16 @@ backgroundImage: isEditMode
         onSave={handleSaveCrop}
       />
 
+    <LanguageWheelPicker
+  open={languageOpen}
+  value={language}
+  onClose={() => setLanguageOpen(false)}
+  onSave={(value) => {
+    setLanguage(value)
+    setLanguageOpen(false)
+  }}
+/>
+
       <GenreSheet
         open={genreOpen}
         value={genre}
@@ -1714,22 +1834,21 @@ backgroundImage: isEditMode
                   </button>
                 </section>
 
-                <section className="bg-white px-4 pb-2 pt-4">
-                  <div>
-                    <FieldLabel required>
-                      {isManga ? 'Manga Language' : 'Story Language'}
-                    </FieldLabel>
-                    <SelectInput
-                      value={language}
-                      onChange={(event) => setLanguage(event.target.value)}
-                    >
-                      {languages.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </SelectInput>
-                  </div>
+                <div className="mt-5">
+  <FieldLabel required>Story Language</FieldLabel>
+
+  <button
+    type="button"
+    onClick={() => setLanguageOpen(true)}
+    className="flex h-12 w-full items-center rounded-[12px] bg-[#f7f7fa] px-4 text-left"
+  >
+    <span className="min-w-0 flex-1 truncate text-[13px] text-[#111827]">
+      {language || 'Choose language'}
+    </span>
+
+    <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
+  </button>
+</div>
 
                   <div className="mt-4">
                     <FieldLabel required>Main Genre</FieldLabel>
