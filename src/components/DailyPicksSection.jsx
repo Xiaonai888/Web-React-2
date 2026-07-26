@@ -199,7 +199,7 @@ function DailyPickCard({ book }) {
         />
 
         {book.isAdult ? (
-          <div className="absolute left-2 top-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+          <div className="absolute left-2 top-2 rounded-full bg-[#e5484d] px-2.5 py-1 text-[10px] font-extrabold text-white">
             18+
           </div>
         ) : null}
