@@ -3595,6 +3595,81 @@ function WebcomicReadingMissionCoin({
   )
 }
 
+function MangaEpisodeHeader({
+  story,
+  episode,
+  theme,
+  fontFamily,
+  isFirstEpisode,
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const genre = String(story?.main_genre || '').trim()
+  const description = String(
+    story?.description || ''
+  ).trim()
+
+  return (
+    <div>
+      {isFirstEpisode ? (
+        <>
+          <h1
+            className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
+            style={{ fontFamily }}
+          >
+            {story?.title || 'Untitled Story'}
+          </h1>
+
+          {genre ? (
+            <div
+              className={`mt-2 text-[15px] font-medium ${theme.muted}`}
+            >
+              {genre}
+            </div>
+          ) : null}
+
+          {description ? (
+            <button
+              type="button"
+              onClick={() =>
+                setExpanded((value) => !value)
+              }
+              className="mt-5 flex w-full items-end gap-3 text-left"
+            >
+              <p
+                className={`min-w-0 flex-1 text-[15px] font-normal leading-7 ${theme.muted} ${
+                  expanded ? '' : 'line-clamp-3'
+                }`}
+              >
+                {description}
+              </p>
+
+              <i
+                className={`fa-solid fa-chevron-${
+                  expanded ? 'up' : 'down'
+                } mb-2 shrink-0 text-[12px] ${theme.muted}`}
+              />
+            </button>
+          ) : null}
+        </>
+      ) : null}
+
+      <div
+        className={`text-center ${
+          isFirstEpisode ? 'mt-10' : 'mt-1'
+        }`}
+      >
+        <h2
+          className={`text-[18px] font-bold leading-7 ${theme.text}`}
+          style={{ fontFamily }}
+        >
+          {episode?.title ||
+            `Episode ${episode?.episode_number || 1}`}
+        </h2>
+      </div>
+    </div>
+  )
+}
+
 function ContinuousEpisodeBlock({
   entry,
   index,
@@ -3610,6 +3685,7 @@ function ContinuousEpisodeBlock({
   onReachLocked,
   adultAccepted,
   showToBeContinued,
+  isFirstEpisode,
 }) {
   const episode = entry?.episode || {}
   const isManga =
@@ -3696,23 +3772,36 @@ function ContinuousEpisodeBlock({
           <section
   className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
 >
-  <div className="px-4 pb-5 pt-5 sm:px-8 sm:pt-8">
-    <div className={isManga ? 'mb-4' : 'mb-7'}>
-      <h1
-        className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
-        style={{ fontFamily }}
-      >
-        {episode.title || 'Untitled Episode'}
-      </h1>
-    </div>
-  </div>
-
   {isManga ? (
+  <>
+    <div className="px-4 pb-5 pt-5 sm:px-8 sm:pt-8">
+      <MangaEpisodeHeader
+  story={story}
+  episode={episode}
+  theme={theme}
+  fontFamily={fontFamily}
+  isFirstEpisode={isFirstEpisode}
+/>
+    </div>
+
     <MangaEpisodePages
       pages={episode.pages}
       title={episode.title}
     />
-  ) : (
+  </>
+) : (
+  <>
+    <div className="px-4 pb-5 pt-5 sm:px-8 sm:pt-8">
+      <div className="mb-7">
+        <h1
+          className={`text-[30px] font-bold leading-[1.35] tracking-[-0.01em] ${theme.text} sm:text-[34px]`}
+          style={{ fontFamily }}
+        >
+          {episode.title || 'Untitled Episode'}
+        </h1>
+      </div>
+    </div>
+
     <article className="px-4 pb-5 sm:px-8 sm:pb-8">
       <ReadingText
         content={episode.content}
@@ -3722,7 +3811,8 @@ function ContinuousEpisodeBlock({
         theme={theme}
       />
     </article>
-  )}
+  </>
+)}
 </section>
 
           {showToBeContinued ? <ToBeContinued theme={theme} /> : null}
@@ -5001,13 +5091,8 @@ useEffect(() => {
     }
   }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, effectiveReadingMode, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
 
-  const sortedReaderEpisodes = useMemo(() => {
-    return [...episodes].sort(
-      (a, b) =>
-        Number(a.episode_number || 0) -
-        Number(b.episode_number || 0)
-    )
-  }, [episodes])
+  const firstReaderEpisodeId =
+  sortedReaderEpisodes[0]?.id || null
 
   const currentReaderEpisodeIndex = sortedReaderEpisodes.findIndex(
     (item) => String(item.id) === String(episodeId)
@@ -5824,6 +5909,10 @@ effectiveReadingMode === 'scroll' ? (
                 active={String(entry.id) === String(episodeId)}
                 theme={theme}
                 story={story}
+                isFirstEpisode={
+  Boolean(firstReaderEpisodeId) &&
+  String(entry.id) === String(firstReaderEpisodeId)
+}
                 showToBeContinued={shouldShowToBeContinued(story, episodes, entry.episode)}
                 fontSizePx={fontSizePx}
                 fontFamily={activeFont.family}
