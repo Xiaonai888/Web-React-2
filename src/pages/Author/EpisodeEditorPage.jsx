@@ -906,7 +906,7 @@ function SettingsToggle({ checked, onClick, label }) {
 }
 
 
-function GenreSheet({
+export function GenreSheet({
   open,
   value,
   options = FALLBACK_GENRES,
