@@ -3,10 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import {
+  AdultHintPopup,
   GenreSheet,
   LanguageWheelPicker,
+  SettingsToggle,
   TagSheet,
 } from './EpisodeEditorPage'
+import CompletedStoryConfirmModal from '../../components/author/CompletedStoryConfirmModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -505,6 +508,8 @@ export default function CreateStoryPage() {
   const [genreOpen, setGenreOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
+  const [adultHintOpen, setAdultHintOpen] = useState(false)
+  const [completedConfirmOpen, setCompletedConfirmOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
@@ -994,6 +999,11 @@ const editPageLabel = isManga
   : isChatStory
     ? 'Update Chat Story'
     : 'Update Novel'
+  const storyAccentColor = isManga
+  ? '#FE526E'
+  : isChatStory
+    ? '#7C4DEA'
+    : '#111827'
 
 return (
   <div
@@ -1042,6 +1052,29 @@ backgroundImage: isEditMode
   }
 `}</style>
     <Toast message={toast} onClose={() => setToast('')} />
+    <AdultHintPopup
+  open={adultHintOpen}
+  title="18+ Story"
+  description="Stories marked 18+ are hidden from readers under 18. Readers aged 18 or older can view and read them normally."
+  onClose={() => setAdultHintOpen(false)}
+/>
+
+<CompletedStoryConfirmModal
+  open={completedConfirmOpen}
+  storyType={storyType}
+  onCancel={() =>
+    setCompletedConfirmOpen(false)
+  }
+  onConfirm={() => {
+    setUnfinishedStoryStatus(
+      storyStatus === 'Completed'
+        ? unfinishedStoryStatus
+        : storyStatus
+    )
+    setStoryStatus('Completed')
+    setCompletedConfirmOpen(false)
+  }}
+/>
 
       <CropImageModal
         open={cropOpen}
@@ -1761,3 +1794,59 @@ backgroundImage: isEditMode
     </div>
   )
 }
+
+<div className="mt-5">
+  <div className="text-[12px] font-bold text-[#111827]">
+    Story Status
+  </div>
+
+  <div className="mt-3 flex items-center justify-between gap-4 py-2">
+    <span className="text-[12px] text-[#555b66]">
+      Completed
+    </span>
+
+    <SettingsToggle
+      checked={storyStatus === 'Completed'}
+      activeColor={storyAccentColor}
+      onClick={() => {
+        if (storyStatus === 'Completed') {
+          setStoryStatus(
+            unfinishedStoryStatus || 'Ongoing'
+          )
+          return
+        }
+
+        setCompletedConfirmOpen(true)
+      }}
+      label="Toggle completed story"
+    />
+  </div>
+</div>
+
+<div className="mt-4 flex items-center justify-between gap-4 py-2">
+  <div className="flex items-center gap-2">
+    <span className="text-[12px] text-[#111827]">
+      18+ Story
+    </span>
+
+    <button
+      type="button"
+      onClick={() =>
+        setAdultHintOpen(true)
+      }
+      className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+      aria-label="About 18+ story"
+    >
+      <i className="fa-regular fa-circle-question text-[13px]" />
+    </button>
+  </div>
+
+  <SettingsToggle
+    checked={isAdult}
+    activeColor={storyAccentColor}
+    onClick={() =>
+      setIsAdult((value) => !value)
+    }
+    label="Toggle 18+ story"
+  />
+</div>
