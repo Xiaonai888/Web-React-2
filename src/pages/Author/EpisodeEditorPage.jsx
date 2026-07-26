@@ -1017,7 +1017,7 @@ export function GenreSheet({
   )
 }
 
-function TagSheet({ open, value, onClose, onSave }) {
+export function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
   const [search, setSearch] = useState('')
   const [activeGroup, setActiveGroup] = useState('All')
