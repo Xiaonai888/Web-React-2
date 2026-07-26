@@ -762,7 +762,7 @@ export default function ChatStoryEditorPage() {
           </div>
         </section>
 
-        <section className="mt-4 min-h-[calc(100vh-330px)] rounded-[26px] bg-gradient-to-b from-white to-[#f8f6fc] p-4 shadow-sm ring-1 ring-black/5">
+        <section className="mt-4 min-h-[calc(100vh-330px)] bg-white p-4">
           {loading ? (
             <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
               <i className="fa-solid fa-spinner fa-spin text-[24px] text-[#7c3aed]" />
