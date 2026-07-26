@@ -2197,7 +2197,7 @@ const canSave =
 
             <section className={showStorySettings ? 'mt-7' : ''}>
              <h3 className="text-[12px] font-semibold text-[#111827]">
-  {title}
+  Episode Settings
 </h3>
 
               <div className="mt-4 flex items-center justify-between gap-4">
