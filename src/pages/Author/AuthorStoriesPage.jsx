@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import StorySortMenu from '../../components/author/StorySortMenu'
@@ -211,6 +211,7 @@ export default function AuthorStoriesPage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [filterOpen, setFilterOpen] = useState(false)
+  const filterMenuRef = useRef(null)
   const [sort, setSort] = useState('updated')
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -269,6 +270,23 @@ export default function AuthorStoriesPage() {
   window.addEventListener('resize', closeMenu)
   return () => window.removeEventListener('resize', closeMenu)
 }, [menuStoryId])
+
+
+  useEffect(() => {
+  if (!filterOpen) return undefined
+
+  const closeFilter = (event) => {
+    if (!filterMenuRef.current?.contains(event.target)) {
+      setFilterOpen(false)
+    }
+  }
+
+  document.addEventListener('pointerdown', closeFilter)
+
+  return () => {
+    document.removeEventListener('pointerdown', closeFilter)
+  }
+}, [filterOpen])
 
   const stats = useMemo(() => {
     return {
@@ -400,54 +418,19 @@ export default function AuthorStoriesPage() {
           </section>
         ) : null}
 
-        <div className="mt-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-  {STORY_TYPE_FILTERS.map((item) => {
-    const active = typeFilter === item.id
-
-    return (
-      <button
-        key={item.id}
-        type="button"
-        onClick={() => {
-          setTypeFilter(item.id)
-          if (item.id === 'all') setStatusFilter('all')
-        }}
-        className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
-          active
-            ? 'border-[#7951f4] bg-[#7951f4] text-white'
-            : 'border-[#e4e4e7] bg-white text-[#403949]'
-        }`}
-      >
-        {item.label}
-      </button>
-    )
-  })}
-
-  <button
-    type="button"
-    onClick={() => setFilterOpen((current) => !current)}
-    className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
-      filterOpen || statusFilter !== 'all'
-        ? 'border-[#7951f4] bg-[#7951f4] text-white'
-        : 'border-[#e4e4e7] bg-white text-[#403949]'
-    }`}
-  >
-    Filters
-  </button>
-</div>
-
-{filterOpen ? (
-  <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    {STATUS_FILTERS.map((item) => {
-      const active = statusFilter === item.id
+        <div
+  ref={filterMenuRef}
+  className="relative mt-5 flex items-center gap-2"
+>
+  <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {STORY_TYPE_FILTERS.map((item) => {
+      const active = typeFilter === item.id
 
       return (
         <button
           key={item.id}
           type="button"
-          onClick={() =>
-            setStatusFilter((current) => (current === item.id ? 'all' : item.id))
-          }
+          onClick={() => setTypeFilter(item.id)}
           className={`shrink-0 whitespace-nowrap rounded-full border px-5 py-2.5 text-[12px] font-medium transition active:scale-95 ${
             active
               ? 'border-[#7951f4] bg-[#7951f4] text-white'
@@ -459,7 +442,73 @@ export default function AuthorStoriesPage() {
       )
     })}
   </div>
-) : null}
+
+  <button
+    type="button"
+    onClick={() => setFilterOpen((current) => !current)}
+    aria-haspopup="menu"
+    aria-expanded={filterOpen}
+    className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2.5 text-[12px] font-medium transition active:scale-95 ${
+      filterOpen || statusFilter !== 'all'
+        ? 'border-[#7951f4] bg-[#7951f4] text-white'
+        : 'border-[#e4e4e7] bg-white text-[#403949]'
+    }`}
+  >
+    <span>Filters</span>
+    <i
+      className={`fa-solid fa-chevron-down text-[8px] transition-transform ${
+        filterOpen ? 'rotate-180' : ''
+      }`}
+    />
+  </button>
+
+  {filterOpen ? (
+    <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-[170px] overflow-hidden rounded-[14px] bg-white p-1.5 shadow-[0_12px_32px_rgba(31,20,63,0.18)] ring-1 ring-black/5">
+      <button
+        type="button"
+        onClick={() => {
+          setStatusFilter('all')
+          setFilterOpen(false)
+        }}
+        className={`flex w-full items-center justify-between rounded-[9px] px-3 py-2.5 text-left text-[12px] font-normal ${
+          statusFilter === 'all'
+            ? 'bg-[#eee8ff] text-[#7046ef]'
+            : 'text-[#51485f] active:bg-[#f6f3fb]'
+        }`}
+      >
+        <span>All Status</span>
+        {statusFilter === 'all' ? (
+          <i className="fa-solid fa-check text-[10px]" />
+        ) : null}
+      </button>
+
+      {STATUS_FILTERS.map((item) => {
+        const active = statusFilter === item.id
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              setStatusFilter(item.id)
+              setFilterOpen(false)
+            }}
+            className={`flex w-full items-center justify-between rounded-[9px] px-3 py-2.5 text-left text-[12px] font-normal ${
+              active
+                ? 'bg-[#eee8ff] text-[#7046ef]'
+                : 'text-[#51485f] active:bg-[#f6f3fb]'
+            }`}
+          >
+            <span>{item.label}</span>
+            {active ? (
+              <i className="fa-solid fa-check text-[10px]" />
+            ) : null}
+          </button>
+        )
+      })}
+    </div>
+  ) : null}
+</div>
 
         <div className="mb-3 mt-5 flex items-center justify-between gap-3">
           <h2 className="text-[18px] font-black tracking-[-0.02em] text-[#19151f]">Your Library</h2>
