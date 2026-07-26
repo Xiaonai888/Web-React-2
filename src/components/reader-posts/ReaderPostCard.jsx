@@ -691,60 +691,54 @@ export default function ReaderPostCard({
         className="bg-white sm:rounded-[12px]"
       >
         <div className="flex items-start gap-2 px-4 pb-3 pt-4">
-          <button
-            type="button"
-            onClick={viewReaderProfile}
-            className="shrink-0 rounded-full active:opacity-70"
-          >
-            <ReaderAvatar user={user} />
-          </button>
+  <button
+    type="button"
+    onClick={viewReaderProfile}
+    className="shrink-0 rounded-full active:opacity-70"
+  >
+    <ReaderAvatar user={user} />
+  </button>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <button
-                  type="button"
-                  onClick={viewReaderProfile}
-                  className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70"
-                >
-                  {user.name || 'Reader'}
-                </button>
+  <div className="min-w-0 flex-1">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <button
+          type="button"
+          onClick={viewReaderProfile}
+          className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70"
+        >
+          {user.name || 'Reader'}
+        </button>
 
-                <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-                  <span>
-                    {formatPostTime(
-                      post.created_at
-                    )}
-                  </span>
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+          <span>{formatPostTime(post.created_at)}</span>
 
-                  {post.is_edited ? (
-                    <>
-                      <span>·</span>
-                      <span>Edited</span>
-                    </>
-                  ) : null}
+          {post.is_edited ? (
+            <>
+              <span>·</span>
+              <span>Edited</span>
+            </>
+          ) : null}
 
-                  <span>·</span>
+          <span>·</span>
 
-                  <i
-                    className={`${getVisibilityIcon(post.visibility)} text-[10px]`}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMenuOpen(true)
-                }
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
-                aria-label="Post options"
-              >
-                <i className="fa-solid fa-ellipsis text-[14px]" />
-              </button>
-            </div>
-          </div>
+          <i
+            className={`${getVisibilityIcon(post.visibility)} text-[10px]`}
+          />
         </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setMenuOpen(true)}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+        aria-label="Post options"
+      >
+        <i className="fa-solid fa-ellipsis text-[14px]" />
+      </button>
+    </div>
+  </div>
+</div>
 
         <div className="px-4 pb-4">
           <p
