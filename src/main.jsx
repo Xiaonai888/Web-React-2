@@ -2,7 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { installApiAuthFetch } from './utils/installApiAuthFetch'
 
+installApiAuthFetch()
 const APP_UPDATE_CHECK_INTERVAL_MS = 60000
 let appUpdateCheckRunning = false
 let lastAppUpdateCheckAt = 0
