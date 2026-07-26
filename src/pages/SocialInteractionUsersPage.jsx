@@ -192,9 +192,9 @@ export default function SocialInteractionUsersPage() {
   const [message, setMessage] = useState('')
 
   const title =
-    interactionType === 'echo'
-      ? 'People who echoed'
-      : 'People who liked'
+  interactionType === 'echo'
+    ? 'Readers who echoed this'
+    : 'People who liked'
 
   const sourceLabel = SOURCE_LABELS[sourceType] || 'Content'
   const sourceName =
@@ -338,14 +338,17 @@ export default function SocialInteractionUsersPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="truncate text-[17px] font-bold">
-              {title}
-            </h1>
-            <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
-              {sourceName || sourceLabel}
-              {total > 0 ? ` · ${total.toLocaleString()}` : ''}
-            </p>
-          </div>
+  <h1 className="truncate text-[17px] font-semibold text-[#111827]">
+    {title}
+  </h1>
+
+  {interactionType !== 'echo' ? (
+    <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
+      {sourceName || sourceLabel}
+      {total > 0 ? ` · ${total.toLocaleString()}` : ''}
+    </p>
+  ) : null}
+</div>
 
           <div className="h-10 w-10" />
         </div>
@@ -385,9 +388,17 @@ export default function SocialInteractionUsersPage() {
             </div>
           </div>
         ) : null}
-      </header>
+     </header>
 
-      <section className="mx-auto max-w-3xl px-4 py-3">
+{interactionType === 'echo' ? (
+  <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
+    <div className="text-[15px] font-bold text-[#111827]">
+      {total.toLocaleString()} Echoed
+    </div>
+  </section>
+) : null}
+
+<section className="mx-auto max-w-3xl px-4 py-3">
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, index) => (
