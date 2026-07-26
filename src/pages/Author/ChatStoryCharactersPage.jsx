@@ -491,7 +491,7 @@ function CharacterEditor({
 
 function CharacterCard({ character, index, group, onClick, onEditProfile }) {
   return (
-    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_5px_18px_rgba(15,23,42,0.07)]">
+    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
       <button
         type="button"
         onClick={onClick}
@@ -540,7 +540,7 @@ function AddCharacterCard({ group, onClick }) {
     <button
   type="button"
   onClick={onClick}
-  className="flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 text-center shadow-[0_5px_18px_rgba(15,23,42,0.05)] active:scale-[0.98]"
+  className="flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 text-center shadow-[0_3px_12px_rgba(15,23,42,0.035)] active:scale-[0.98]"
 >
       <span
         className="flex h-[66px] w-[66px] items-center justify-center rounded-full"
@@ -1008,7 +1008,7 @@ export default function ChatStoryCharactersPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
