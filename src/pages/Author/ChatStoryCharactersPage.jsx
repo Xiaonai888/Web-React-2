@@ -491,7 +491,7 @@ function CharacterEditor({
 
 function CharacterCard({ character, index, group, onClick, onEditProfile }) {
   return (
-    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_5px_18px_rgba(15,23,42,0.07)] ring-1 ring-black/5">
+    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_5px_18px_rgba(15,23,42,0.07)]">
       <button
         type="button"
         onClick={onClick}
@@ -538,18 +538,17 @@ function CharacterCard({ character, index, group, onClick, onEditProfile }) {
 function AddCharacterCard({ group, onClick }) {
   return (
     <button
-      type="button"
-      onClick={onClick}
-      className="flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] border border-dashed bg-white/75 px-3 text-center active:scale-[0.98]"
-      style={{ borderColor: group.border }}
-    >
+  type="button"
+  onClick={onClick}
+  className="flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 text-center shadow-[0_5px_18px_rgba(15,23,42,0.05)] active:scale-[0.98]"
+>
       <span
         className="flex h-[66px] w-[66px] items-center justify-center rounded-full"
         style={{ backgroundColor: group.soft, color: group.accent }}
       >
         <i className="fa-solid fa-plus text-[22px]" />
       </span>
-      <span className="mt-3 text-[11px] font-extrabold" style={{ color: group.accent }}>
+      <span className="mt-3 text-[11px] font-normal" style={{ color: group.accent }}>
         Add character
       </span>
     </button>
@@ -568,7 +567,7 @@ function RoleSection({ group, characters, onHelp, onAdd, onEdit, onEditProfile }
             <i className={`${group.icon} text-[11px]`} />
           </span>
 
-          <h2 className="line-clamp-1 text-[15px] font-extrabold text-[#111827]">{group.title}</h2>
+          <h2 className="line-clamp-1 text-[15px] font-bold text-[#111827]">{group.title}</h2>
 
           <button
             type="button"
@@ -940,7 +939,7 @@ export default function ChatStoryCharactersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5fb] pb-[120px]">
+    <div className="min-h-screen bg-[#fafafa] pb-[120px]">
       {toast ? (
         <button
           type="button"
@@ -1016,11 +1015,10 @@ export default function ChatStoryCharactersPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">Build Your Cast</h1>
-            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#7c3aed]">
-              Chat Story
-            </div>
-          </div>
+  <h1 className="line-clamp-1 text-[17px] font-extrabold text-[#111827]">
+    Build Your Cast
+  </h1>
+</div>
 
           <button
   type="button"
@@ -1040,7 +1038,7 @@ export default function ChatStoryCharactersPage() {
           </div>
         ) : null}
 
-        <section className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5">
+        <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title="Story Info" />
             <Step number="2" title="Characters" active />
