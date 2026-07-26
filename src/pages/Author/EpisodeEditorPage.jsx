@@ -1306,10 +1306,9 @@ export function LanguageWheelPicker({
             Cancel
           </button>
 
-          <h3 className="text-[12px] font-semibold text-[#111827]">
+<h3 className="text-[12px] font-semibold text-[#111827]">
   Episode Settings
 </h3>
-
           <button
             type="button"
             onClick={() =>
