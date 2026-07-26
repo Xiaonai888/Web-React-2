@@ -1775,7 +1775,13 @@ backgroundImage: isEditMode
                 type="button"
                 onClick={handleSaveStory}
                 disabled={!canSave}
-                className="flex h-14 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#9ca3af] disabled:opacity-100"
+                className={`flex h-14 w-full items-center justify-center rounded-full text-[14px] font-bold text-white active:scale-[0.99] ${
+  !canSave
+    ? 'cursor-not-allowed bg-[#9ca3af]'
+    : isChatStory
+      ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] shadow-sm'
+      : 'bg-[#111827]'
+}`}
               >
                 {loading
                   ? isEditMode
