@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
-import EchoShareSheet from '../components/reader/EchoShareSheet'
+import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
@@ -5656,10 +5656,35 @@ return (
   theme={theme}
 />
 
-      <EchoShareSheet
+      <SocialEchoShareSheet
   open={echoShareOpen}
-  story={story}
-  episode={episode}
+  sourceType="episode"
+  sourceId={episode?.id || episodeId}
+  sourceName={story?.title || 'Story'}
+  sourceAvatarUrl={
+    story?.author_page?.avatar_url ||
+    story?.author?.avatar_url ||
+    story?.cover_url ||
+    ''
+  }
+  sourceContent={episode?.title || 'Episode'}
+  sourceImageUrl={
+    episode?.cover_url ||
+    story?.landscape_thumbnail_url ||
+    story?.cover_url ||
+    ''
+  }
+  sourceLabel="episode"
+  endpoint={
+    episode?.id || episodeId
+      ? `${API_BASE_URL}/api/echoes/episode/${encodeURIComponent(
+          episode?.id || episodeId
+        )}`
+      : ''
+  }
+  shareUrl={`${window.location.origin}/story/${
+    story?.id || storyId
+  }/episode/${episode?.id || episodeId}`}
   onClose={() => setEchoShareOpen(false)}
 />
       <CommentsModal
