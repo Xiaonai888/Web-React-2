@@ -226,7 +226,7 @@ export default function ChatStoryCharacterProfilePage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7f6fa] text-[#111827]"
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
