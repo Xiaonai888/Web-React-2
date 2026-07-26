@@ -86,7 +86,7 @@ function BookCard({ book, onClick }) {
         ) : null}
 
         {book.isAdult ? (
-          <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
+          <div className="absolute bottom-2 left-2 rounded-full bg-[#e5484d] px-2.5 py-1 text-[10px] font-extrabold text-white">
             18+
           </div>
         ) : null}
