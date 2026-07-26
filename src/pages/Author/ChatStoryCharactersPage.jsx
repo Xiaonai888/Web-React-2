@@ -159,7 +159,7 @@ function HelpSheet({ group, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="mt-5 h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-[0.99]"
+            className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-extrabold text-white active:scale-[0.99]"
           >
             Got it
           </button>
