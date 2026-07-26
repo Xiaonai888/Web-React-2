@@ -462,7 +462,11 @@ export default function AuthorProfilePage() {
               key={item.path}
               item={item}
               divider={index < MENU_ITEMS.length - 1}
-              onClick={() => navigate(item.path)}
+              onClick={() =>
+                navigate(`${item.path}?from=profile`, {
+                  state: { returnTo: '/author/profile' },
+                })
+              }
             />
           ))}
         </section>
