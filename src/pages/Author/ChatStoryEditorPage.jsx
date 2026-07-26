@@ -360,7 +360,6 @@ export default function ChatStoryEditorPage() {
   const [searchParams] = useSearchParams()
   const messagesEndRef = useRef(null)
   const composerRef = useRef(null)
-  const titleInputRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
   const messagesRef = useRef([])
@@ -375,7 +374,8 @@ export default function ChatStoryEditorPage() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [episodeTitle, setEpisodeTitle] = useState('')
-  const [titleEditing, setTitleEditing] = useState(false)
+  const [titlePopupOpen, setTitlePopupOpen] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const [episodeId, setEpisodeId] = useState('')
   const [saving, setSaving] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
@@ -410,6 +410,30 @@ export default function ChatStoryEditorPage() {
     setToast(message)
     window.setTimeout(() => setToast(''), 2300)
   }
+
+  const openTitlePopup = () => {
+  setTitleDraft(episodeTitle)
+  setTitlePopupOpen(true)
+}
+
+const saveEpisodeTitle = () => {
+  const cleanTitle = titleDraft.trim()
+  if (!cleanTitle) return
+
+  setEpisodeTitle(cleanTitle)
+  setTitlePopupOpen(false)
+}
+
+useEffect(() => {
+  if (!titlePopupOpen) return undefined
+
+  const previousOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+
+  return () => {
+    document.body.style.overflow = previousOverflow
+  }
+}, [titlePopupOpen])
 
   useEffect(() => {
   messagesRef.current = messages
@@ -786,6 +810,57 @@ const deleteMessage = (messageId) => {
         onUploadAudio={() => audioInputRef.current?.click()}
         onAuthorsWords={handleAuthorsWords}
       />
+
+      {titlePopupOpen ? (
+  <div
+    className="fixed inset-0 z-[250] flex items-center justify-center bg-black/55 px-4"
+    onClick={() => setTitlePopupOpen(false)}
+  >
+    <section
+      className="w-full max-w-[390px] rounded-[24px] bg-white px-5 pb-5 pt-6 shadow-2xl"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <h2 className="text-center text-[19px] font-bold text-[#7c3aed]">
+        Enter episode title
+      </h2>
+
+      <input
+        autoFocus
+        value={titleDraft}
+        onChange={(event) => setTitleDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && titleDraft.trim()) {
+            event.preventDefault()
+            saveEpisodeTitle()
+          }
+        }}
+        maxLength={80}
+        placeholder="Enter episode title"
+        className="mt-6 h-14 w-full rounded-[6px] bg-[#f5f5f6] px-4 text-center text-[17px] font-medium text-[#111827] outline-none placeholder:text-[#a5a5aa] focus:ring-2 focus:ring-[#9362ef]/30"
+      />
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setTitlePopupOpen(false)}
+          className="h-12 text-[15px] font-bold text-[#111827]"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={saveEpisodeTitle}
+          disabled={!titleDraft.trim()}
+          className="h-12 rounded-[8px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[15px] font-bold text-white disabled:bg-none disabled:bg-[#f5f3f7] disabled:text-[#d8cce6]"
+        >
+          OK
+        </button>
+      </div>
+    </section>
+  </div>
+) : null}
+      
       {toast ? (
         <button
           type="button"
@@ -808,39 +883,17 @@ const deleteMessage = (messageId) => {
     </button>
 
     <div className="min-w-0 flex-1">
-      <div className="flex min-w-0 items-center">
-  {titleEditing ? (
-    <input
-      ref={titleInputRef}
-      autoFocus
-      value={episodeTitle}
-      onChange={(event) => setEpisodeTitle(event.target.value)}
-      onBlur={() => setTitleEditing(false)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault()
-          setTitleEditing(false)
-        }
-      }}
-      maxLength={80}
-      placeholder="Enter episode title"
-      className="h-6 w-[170px] bg-transparent text-[15px] font-bold text-[#111827] outline-none placeholder:text-[#111827]"
-      aria-label="Episode title"
-    />
-  ) : (
-    <button
-      type="button"
-      onClick={() => setTitleEditing(true)}
-      className="flex max-w-full items-center gap-1.5 text-left active:opacity-70"
-    >
-      <span className="max-w-[170px] truncate text-[15px] font-bold text-[#111827]">
-        {episodeTitle.trim() || 'Enter episode title'}
-      </span>
+      <button
+  type="button"
+  onClick={openTitlePopup}
+  className="flex max-w-full items-center gap-1.5 text-left active:opacity-70"
+>
+  <span className="max-w-[180px] truncate text-[15px] font-bold text-[#111827]">
+    {episodeTitle.trim() || 'Enter episode title'}
+  </span>
 
-      <i className="fa-solid fa-pen shrink-0 text-[10px] text-[#98a2b3]" />
-    </button>
-  )}
-</div>
+  <i className="fa-solid fa-pen shrink-0 text-[10px] text-[#98a2b3]" />
+</button>
 
       <div className="mt-0.5 truncate text-[8.5px] font-medium text-[#98a2b3]">
         {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
