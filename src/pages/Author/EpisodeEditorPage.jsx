@@ -1307,8 +1307,8 @@ export function LanguageWheelPicker({
           </button>
 
           <h3 className="text-[12px] font-semibold text-[#111827]">
-            {title}
-          </h3>
+  Episode Settings
+</h3>
 
           <button
             type="button"
