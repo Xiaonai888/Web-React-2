@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ImageDropZone from '../../components/common/ImageDropZone'
+import { GenreSheet } from './EpisodeEditorPage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -515,87 +516,7 @@ function LanguageWheelPicker({ open, value, onClose, onSave }) {
   )
 }
 
-function GenreSheet({ open, value, options = fallbackGenres, loading = false, onClose, onSave }) {
-  const [selected, setSelected] = useState(value || 'Romance')
-  const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    if (open) setSelected(value || 'Romance')
-  }, [open, value])
-
-  if (!open) return null
-
-  const visibleGenres = options.filter((genre) =>
-    genre.toLowerCase().includes(search.trim().toLowerCase())
-  )
-
-  return (
-    <div className="fixed inset-0 z-[130] bg-white">
-      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa]">
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
-          <h2 className="text-[17px] font-bold text-[#111827]">Add Genre</h2>
-          <button type="button" onClick={() => onSave(selected)} className="text-[14px] font-bold text-[#0b5cff]">
-            Save
-          </button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-5">
-        <div className="mb-5 flex h-12 items-center rounded-full bg-[#f2f4f7] px-4">
-          <i className="fa-solid fa-magnifying-glass mr-3 text-[#98a2b3]" />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search Genre"
-            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none"
-          />
-        </div>
-
-        <div className="mb-5">
-          <div className="text-[14px] font-bold text-[#111827]">Please select the genre that best represents your story.</div>
-          <div className="mt-2 text-[12px] text-[#667085]">Only one genre can be selected.</div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {loading ? (
-            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-              Loading genres...
-            </div>
-          ) : null}
-
-          {!loading && visibleGenres.length === 0 ? (
-            <div className="rounded-[16px] bg-[#fafafe] px-4 py-4 text-[13px] font-bold text-[#8d94a1] ring-1 ring-[#eceaf2]">
-              No genres found.
-            </div>
-          ) : null}
-
-          {!loading && visibleGenres.map((genre) => (
-            <button
-              key={genre}
-              type="button"
-              onClick={() => setSelected(genre)}
-              className={`flex items-center gap-3 rounded-[16px] px-4 py-3 text-left text-[14px] font-bold ${
-                selected === genre ? 'bg-[#111827] text-white' : 'bg-[#fafafe] text-[#111827] ring-1 ring-[#eceaf2]'
-              }`}
-            >
-              <span
-                className={`flex h-5 w-5 items-center justify-center rounded border ${
-                  selected === genre ? 'border-white bg-white text-[#111827]' : 'border-[#d0d5dd] bg-white'
-                }`}
-              >
-                {selected === genre ? <i className="fa-solid fa-check text-[10px]" /> : null}
-              </span>
-              {genre}
-            </button>
-          ))}
-        </div>
-      </main>
-    </div>
-  )
-}
 
 function TagSheet({ open, value, onClose, onSave }) {
   const [selected, setSelected] = useState(value || [])
