@@ -375,6 +375,7 @@ export default function ChatStoryEditorPage() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [episodeTitle, setEpisodeTitle] = useState('')
+  const [titleEditing, setTitleEditing] = useState(false)
   const [episodeId, setEpisodeId] = useState('')
   const [saving, setSaving] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
@@ -475,7 +476,10 @@ const handleRedo = () => {
       try {
         const parsed = JSON.parse(saved)
         setMessages(Array.isArray(parsed.messages) ? parsed.messages : [])
-        setEpisodeTitle(parsed.episodeTitle || 'Episode 1')
+        const savedTitle = String(parsed.episodeTitle || '').trim()
+setEpisodeTitle(
+  savedTitle === 'Episode 1' || savedTitle === 'New Episode' ? '' : savedTitle
+)
         setEpisodeId(parsed.episodeId || '')
       } catch {
         localStorage.removeItem(storageKey)
@@ -804,26 +808,39 @@ const deleteMessage = (messageId) => {
     </button>
 
     <div className="min-w-0 flex-1">
-      <div className="flex min-w-0 items-center gap-1">
-        <input
-          ref={titleInputRef}
-          value={episodeTitle}
-          onChange={(event) => setEpisodeTitle(event.target.value)}
-          maxLength={80}
-          placeholder="Enter episode title"
-          className="h-5 min-w-0 flex-1 truncate bg-transparent text-[11px] font-bold text-[#111827] outline-none placeholder:text-[#98a2b3]"
-          aria-label="Episode title"
-        />
+      <div className="flex min-w-0 items-center">
+  {titleEditing ? (
+    <input
+      ref={titleInputRef}
+      autoFocus
+      value={episodeTitle}
+      onChange={(event) => setEpisodeTitle(event.target.value)}
+      onBlur={() => setTitleEditing(false)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          setTitleEditing(false)
+        }
+      }}
+      maxLength={80}
+      placeholder="Enter episode title"
+      className="h-6 w-[170px] bg-transparent text-[15px] font-bold text-[#111827] outline-none placeholder:text-[#111827]"
+      aria-label="Episode title"
+    />
+  ) : (
+    <button
+      type="button"
+      onClick={() => setTitleEditing(true)}
+      className="flex max-w-full items-center gap-1.5 text-left active:opacity-70"
+    >
+      <span className="max-w-[170px] truncate text-[15px] font-bold text-[#111827]">
+        {episodeTitle.trim() || 'Enter episode title'}
+      </span>
 
-        <button
-          type="button"
-          onClick={() => titleInputRef.current?.focus()}
-          className="flex h-6 w-6 shrink-0 items-center justify-center text-[#98a2b3] active:text-[#6d42db]"
-          aria-label="Edit episode title"
-        >
-          <i className="fa-solid fa-pen text-[9px]" />
-        </button>
-      </div>
+      <i className="fa-solid fa-pen shrink-0 text-[10px] text-[#98a2b3]" />
+    </button>
+  )}
+</div>
 
       <div className="mt-0.5 truncate text-[8.5px] font-medium text-[#98a2b3]">
         {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
