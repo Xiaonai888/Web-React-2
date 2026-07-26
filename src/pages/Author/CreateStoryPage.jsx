@@ -173,19 +173,6 @@ function SelectInput(props) {
   )
 }
 
-function Toggle({ checked, onClick, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative h-8 w-14 rounded-full transition ${checked ? 'bg-[#e5484d]' : 'bg-[#d0d5dd]'}`}
-      aria-label={label}
-    >
-      <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${checked ? 'left-7' : 'left-1'}`} />
-    </button>
-  )
-}
-
 function Toast({ message, onClose }) {
   if (!message) return null
 
@@ -999,7 +986,8 @@ const editPageLabel = isManga
   : isChatStory
     ? 'Update Chat Story'
     : 'Update Novel'
-  const storyAccentColor = isManga
+
+const storyAccentColor = isManga
   ? '#FE526E'
   : isChatStory
     ? '#7C4DEA'
@@ -1093,22 +1081,15 @@ backgroundImage: isEditMode
       />
 
     <LanguageWheelPicker
-  open={languageOpen}
-  value={language}
-  title="Story Language"
-  onClose={() => setLanguageOpen(false)}
-  onSave={(value) => {
-    setLanguage(value)
-    setLanguageOpen(false)
-  }}
-/>
-  value={language}
-  onClose={() => setLanguageOpen(false)}
-  onSave={(value) => {
-    setLanguage(value)
-    setLanguageOpen(false)
-  }}
-/>
+        open={languageOpen}
+        value={language}
+        title="Story Language"
+        onClose={() => setLanguageOpen(false)}
+        onSave={(value) => {
+          setLanguage(value)
+          setLanguageOpen(false)
+        }}
+      />
 
       <GenreSheet
         open={genreOpen}
@@ -1553,10 +1534,9 @@ backgroundImage: isEditMode
 
                     <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
                   </button>
-                </section>
 
                 <div className="mt-5">
-  <FieldLabel required>Story Language</FieldLabel>
+                  <FieldLabel required>Story Language</FieldLabel>
 
   <button
     type="button"
@@ -1567,9 +1547,9 @@ backgroundImage: isEditMode
       {language || 'Choose language'}
     </span>
 
-    <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
-  </button>
-</div>
+                    <i className="fa-solid fa-chevron-right text-[10px] text-[#98a2b3]" />
+                  </button>
+                </div>
 
                   <div className="mt-4">
                     <FieldLabel required>Main Genre</FieldLabel>
@@ -1643,18 +1623,22 @@ backgroundImage: isEditMode
                     </div>
 
                     <div className="mt-3 flex items-center justify-between gap-4 py-2">
-                      <span className="text-[12px] text-[#555b66]">Completed</span>
+                      <span className="text-[12px] text-[#555b66]">
+                        Completed
+                      </span>
 
-                      <Toggle
+                      <SettingsToggle
                         checked={storyStatus === 'Completed'}
+                        activeColor={storyAccentColor}
                         onClick={() => {
                           if (storyStatus === 'Completed') {
-                            setStoryStatus(unfinishedStoryStatus)
+                            setStoryStatus(
+                              unfinishedStoryStatus || 'Ongoing'
+                            )
                             return
                           }
 
-                          setUnfinishedStoryStatus(storyStatus)
-                          setStoryStatus('Completed')
+                          setCompletedConfirmOpen(true)
                         }}
                         label="Toggle completed story"
                       />
@@ -1662,13 +1646,27 @@ backgroundImage: isEditMode
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-4 py-2">
-                    <span className="text-[12px] text-[#111827]">
-                      18+ {isManga ? 'Manga' : 'Story'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] text-[#111827]">
+                        18+ Story
+                      </span>
 
-                    <Toggle
+                      <button
+                        type="button"
+                        onClick={() => setAdultHintOpen(true)}
+                        className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+                        aria-label="About 18+ story"
+                      >
+                        <i className="fa-regular fa-circle-question text-[13px]" />
+                      </button>
+                    </div>
+
+                    <SettingsToggle
                       checked={isAdult}
-                      onClick={() => setIsAdult((value) => !value)}
+                      activeColor={storyAccentColor}
+                      onClick={() =>
+                        setIsAdult((value) => !value)
+                      }
                       label="Toggle 18+ story"
                     />
                   </div>
@@ -1794,59 +1792,3 @@ backgroundImage: isEditMode
     </div>
   )
 }
-
-<div className="mt-5">
-  <div className="text-[12px] font-bold text-[#111827]">
-    Story Status
-  </div>
-
-  <div className="mt-3 flex items-center justify-between gap-4 py-2">
-    <span className="text-[12px] text-[#555b66]">
-      Completed
-    </span>
-
-    <SettingsToggle
-      checked={storyStatus === 'Completed'}
-      activeColor={storyAccentColor}
-      onClick={() => {
-        if (storyStatus === 'Completed') {
-          setStoryStatus(
-            unfinishedStoryStatus || 'Ongoing'
-          )
-          return
-        }
-
-        setCompletedConfirmOpen(true)
-      }}
-      label="Toggle completed story"
-    />
-  </div>
-</div>
-
-<div className="mt-4 flex items-center justify-between gap-4 py-2">
-  <div className="flex items-center gap-2">
-    <span className="text-[12px] text-[#111827]">
-      18+ Story
-    </span>
-
-    <button
-      type="button"
-      onClick={() =>
-        setAdultHintOpen(true)
-      }
-      className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
-      aria-label="About 18+ story"
-    >
-      <i className="fa-regular fa-circle-question text-[13px]" />
-    </button>
-  </div>
-
-  <SettingsToggle
-    checked={isAdult}
-    activeColor={storyAccentColor}
-    onClick={() =>
-      setIsAdult((value) => !value)
-    }
-    label="Toggle 18+ story"
-  />
-</div>
