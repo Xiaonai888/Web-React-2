@@ -404,35 +404,33 @@ function CharacterEditor({
         </div>
 
         <div className="mt-5 flex justify-center">
-  <div className="relative">
-    <div
-      className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
-      style={{ backgroundColor: group.soft }}
-    >
-      {image ? (
-        <img src={image} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <i className="fa-solid fa-user text-[38px] text-white" />
-      )}
-    </div>
+          <div className="relative">
+            <div
+              className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
+              style={{ backgroundColor: group.soft }}
+            >
+              {image ? (
+                <img src={image} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <i className="fa-solid fa-user text-[38px] text-white" />
+              )}
+            </div>
 
-    <button
-      type="button"
-      onClick={onChangeImage}
-      className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md active:scale-95"
-      aria-label="Replace profile image"
-    >
-      <i className="fa-solid fa-camera text-[13px]" />
-    </button>
-  </div>
-</div>
+            <button
+              type="button"
+              onClick={onChangeImage}
+              className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md active:scale-95"
+              aria-label="Replace profile image"
+            >
+              <i className="fa-solid fa-camera text-[13px]" />
+            </button>
+          </div>
+        </div>
 
         <label className="mt-5 block text-[12px] font-bold text-[#111827]">
           Nickname
           {roleGroup === 'background' ? (
-            <span className="ml-1 font-normal text-[#98a2b3]">
-              (optional)
-            </span>
+            <span className="ml-1 font-normal text-[#98a2b3]">(optional)</span>
           ) : null}
         </label>
 
@@ -449,49 +447,19 @@ function CharacterEditor({
         />
 
         <label className="mt-4 block text-[12px] font-bold text-[#111827]">
-  Character group
-</label>
+          Character group
+        </label>
 
-<div className="mt-2">
-  <button
-    type="button"
-    onClick={() => setGroupMenuOpen((value) => !value)}
-    className="flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[13px] font-normal text-[#111827]"
-  >
-    <span>
-      {ROLE_GROUPS.find((item) => item.key === roleGroup)?.title || 'Main Characters'}
-    </span>
-
-    <i
-      className={`fa-solid fa-chevron-down text-[11px] text-[#667085] transition-transform ${
-        groupMenuOpen ? 'rotate-180' : ''
-      }`}
-    />
-  </button>
-
-  {groupMenuOpen ? (
-    <div className="mt-2 max-h-[176px] overflow-y-auto rounded-[16px] border border-[#e4e7ec] bg-white p-1 shadow-sm">
-      {ROLE_GROUPS.map((item) => (
         <button
-          key={item.key}
           type="button"
-          onClick={() => {
-            onRoleGroupChange(item.key)
-            setGroupMenuOpen(false)
-          }}
-          className={`flex w-full items-center rounded-[12px] px-3 py-3 text-left text-[13px] font-normal ${
-            roleGroup === item.key
-              ? 'bg-[#f3e8ff] text-[#6d42db]'
-              : 'text-[#111827] active:bg-[#f7f7fa]'
-          }`}
+          onClick={() => setGroupMenuOpen(true)}
+          className="mt-2 flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[13px] font-normal text-[#111827] active:bg-[#f7f5fb]"
         >
-          {item.title}
+          <span className="line-clamp-1">
+            {ROLE_GROUPS.find((item) => item.key === roleGroup)?.title || 'Main Characters'}
+          </span>
+          <i className="fa-solid fa-chevron-right text-[11px] text-[#98a2b3]" />
         </button>
-      ))}
-    </div>
-  ) : null}
-</div>
-        
 
         <button
           type="button"
@@ -511,6 +479,81 @@ function CharacterEditor({
           </button>
         ) : null}
       </div>
+
+      {groupMenuOpen ? (
+        <div
+          className="fixed inset-0 z-[210] flex items-end bg-black/45"
+          onClick={() => setGroupMenuOpen(false)}
+        >
+          <section
+            className="mx-auto w-full max-w-[520px] rounded-t-[28px] bg-white px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d9dce4]" />
+
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <h2 className="text-[17px] font-bold text-[#111827]">
+                Choose character group
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setGroupMenuOpen(false)}
+                className="flex h-9 w-9 items-center justify-center text-[#111827]"
+              >
+                <i className="fa-solid fa-xmark text-[14px]" />
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {ROLE_GROUPS.map((item) => {
+                const selected = roleGroup === item.key
+
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      onRoleGroupChange(item.key)
+                      setGroupMenuOpen(false)
+                    }}
+                    className={`flex w-full items-center justify-between rounded-[16px] px-3.5 py-3 text-left ${
+                      selected
+                        ? 'bg-[#f3e8ff]'
+                        : 'bg-[#fafafa] active:bg-[#f5f3f8]'
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: item.soft, color: item.accent }}
+                      >
+                        <i className={`${item.icon} text-[12px]`} />
+                      </span>
+
+                      <span
+                        className={`line-clamp-1 text-[13px] font-medium ${
+                          selected ? 'text-[#6d42db]' : 'text-[#111827]'
+                        }`}
+                      >
+                        {item.title}
+                      </span>
+                    </span>
+
+                    {selected ? (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-white">
+                        <i className="fa-solid fa-check text-[10px]" />
+                      </span>
+                    ) : (
+                      <span className="h-6 w-6 shrink-0 rounded-full border border-[#d0d5dd]" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
