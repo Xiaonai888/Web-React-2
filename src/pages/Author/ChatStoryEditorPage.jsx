@@ -351,8 +351,13 @@ export default function ChatStoryEditorPage() {
   const composerRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
+  const messagesRef = useRef([])
+  const undoStackRef = useRef([])
+  const redoStackRef = useRef([])
   const [characters, setCharacters] = useState([])
   const [messages, setMessages] = useState([])
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
   const [selectedCharacterId, setSelectedCharacterId] = useState(null)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
@@ -392,6 +397,56 @@ export default function ChatStoryEditorPage() {
     setToast(message)
     window.setTimeout(() => setToast(''), 2300)
   }
+
+  useEffect(() => {
+  messagesRef.current = messages
+}, [messages])
+
+useEffect(() => {
+  undoStackRef.current = []
+  redoStackRef.current = []
+  setCanUndo(false)
+  setCanRedo(false)
+}, [requestedEpisodeId, startNewEpisode, storyId])
+
+const commitMessages = (updater) => {
+  const current = messagesRef.current
+  const next = typeof updater === 'function' ? updater(current) : updater
+
+  undoStackRef.current = [...undoStackRef.current.slice(-49), current]
+  redoStackRef.current = []
+  messagesRef.current = next
+
+  setMessages(next)
+  setCanUndo(true)
+  setCanRedo(false)
+}
+
+const handleUndo = () => {
+  if (!undoStackRef.current.length) return
+
+  const previous = undoStackRef.current.at(-1)
+  undoStackRef.current = undoStackRef.current.slice(0, -1)
+  redoStackRef.current = [...redoStackRef.current.slice(-49), messagesRef.current]
+  messagesRef.current = previous
+
+  setMessages(previous)
+  setCanUndo(undoStackRef.current.length > 0)
+  setCanRedo(true)
+}
+
+const handleRedo = () => {
+  if (!redoStackRef.current.length) return
+
+  const next = redoStackRef.current.at(-1)
+  redoStackRef.current = redoStackRef.current.slice(0, -1)
+  undoStackRef.current = [...undoStackRef.current.slice(-49), messagesRef.current]
+  messagesRef.current = next
+
+  setMessages(next)
+  setCanUndo(true)
+  setCanRedo(redoStackRef.current.length > 0)
+}
 
   useEffect(() => {
     if (startNewEpisode) {
@@ -537,27 +592,27 @@ useEffect(() => {
   }
 
   const sendMessage = () => {
-    const text = draft.trim()
-    if (!text) return
+  const text = draft.trim()
+  if (!text) return
 
-    setMessages((current) => [
-      ...current,
-      {
-        id: makeId(),
-        type: selectedCharacter ? 'chat' : 'aside',
-        characterId: selectedCharacter?.id || null,
-        text,
-        createdAt: new Date().toISOString(),
-      },
-    ])
-    setDraft('')
-  }
+  commitMessages((current) => [
+    ...current,
+    {
+      id: makeId(),
+      type: selectedCharacter ? 'chat' : 'aside',
+      characterId: selectedCharacter?.id || null,
+      text,
+      createdAt: new Date().toISOString(),
+    },
+  ])
+  setDraft('')
+}
 
-  const deleteMessage = (messageId) => {
-    setMessages((current) =>
-      current.filter((message) => message.id !== messageId)
-    )
-  }
+const deleteMessage = (messageId) => {
+  commitMessages((current) =>
+    current.filter((message) => message.id !== messageId)
+  )
+}
 
   const handleComposerKeyDown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -725,30 +780,54 @@ useEffect(() => {
         </button>
       ) : null}
 
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-4 py-3 backdrop-blur">
-  <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-3 py-2 backdrop-blur">
+  <div className="mx-auto flex max-w-5xl items-center gap-1">
     <button
       type="button"
       onClick={() => navigate(`/author/story/${storyId}/chat/characters`)}
-      className="flex h-10 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+      className="flex h-10 w-8 shrink-0 items-center justify-start text-[#111827] active:scale-95"
       aria-label="Go back"
     >
       <i className="fa-solid fa-chevron-left text-[14px]" />
     </button>
 
-    <div className="min-w-0 flex-1 text-center">
-      <div className="truncate text-[11px] font-bold text-[#111827]">
+    <div className="min-w-0 flex-1 text-left">
+      <div className="truncate text-[10px] font-bold text-[#111827]">
         {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
         {characterCount.toLocaleString()} characters
       </div>
 
-      <div className="mt-0.5 text-[9px] font-medium text-[#98a2b3]">
+      <div className="mt-0.5 text-[8.5px] font-medium text-[#98a2b3]">
         Saved{' '}
         {savedSeconds < 60
           ? `${savedSeconds}s`
           : `${Math.floor(savedSeconds / 60)}m`}
       </div>
     </div>
+
+    <button
+      type="button"
+      onClick={handleUndo}
+      disabled={!canUndo}
+      className={`flex h-9 w-8 shrink-0 items-center justify-center ${
+        canUndo ? 'text-[#111827] active:scale-95' : 'text-[#c5cad3]'
+      }`}
+      aria-label="Undo"
+    >
+      <i className="fa-solid fa-rotate-left text-[14px]" />
+    </button>
+
+    <button
+      type="button"
+      onClick={handleRedo}
+      disabled={!canRedo}
+      className={`flex h-9 w-8 shrink-0 items-center justify-center ${
+        canRedo ? 'text-[#111827] active:scale-95' : 'text-[#c5cad3]'
+      }`}
+      aria-label="Redo"
+    >
+      <i className="fa-solid fa-rotate-right text-[14px]" />
+    </button>
 
     <button
       type="button"
