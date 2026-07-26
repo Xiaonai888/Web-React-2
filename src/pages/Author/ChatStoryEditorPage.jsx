@@ -364,6 +364,7 @@ export default function ChatStoryEditorPage() {
   const [addPopupOpen, setAddPopupOpen] = useState(false)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
+  const [savedSeconds, setSavedSeconds] = useState(0)
 
   const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
   const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
@@ -380,12 +381,12 @@ export default function ChatStoryEditorPage() {
     ? characterMap[selectedCharacterId] || null
     : null
 
-  const wordCount = useMemo(() => {
-    return messages.reduce((total, message) => {
-      const words = String(message.text || '').trim().split(/\s+/).filter(Boolean)
-      return total + words.length
-    }, 0)
-  }, [messages])
+  const characterCount = useMemo(() => {
+  return messages.reduce(
+    (total, message) => total + String(message.text || '').length,
+    0
+  )
+}, [messages])
 
   const showToast = (message) => {
     setToast(message)
@@ -416,14 +417,23 @@ export default function ChatStoryEditorPage() {
   }, [startNewEpisode, storageKey])
 
   useEffect(() => {
-    const payload = JSON.stringify({
-      episodeTitle,
-      episodeId,
-      messages,
-      updatedAt: new Date().toISOString(),
-    })
-    localStorage.setItem(storageKey, payload)
-  }, [episodeId, episodeTitle, messages, storageKey])
+  const payload = JSON.stringify({
+    episodeTitle,
+    episodeId,
+    messages,
+    updatedAt: new Date().toISOString(),
+  })
+  localStorage.setItem(storageKey, payload)
+  setSavedSeconds(0)
+}, [episodeId, episodeTitle, messages, storageKey])
+
+useEffect(() => {
+  const timer = window.setInterval(() => {
+    setSavedSeconds((current) => current + 1)
+  }, 1000)
+
+  return () => window.clearInterval(timer)
+}, [])
 
   useEffect(() => {
     async function loadCharacters() {
@@ -716,41 +726,40 @@ export default function ChatStoryEditorPage() {
       ) : null}
 
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              navigate(`/author/story/${storyId}/chat/characters`)
-            }
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Go back"
-          >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
-          </button>
+  <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+    <button
+      type="button"
+      onClick={() => navigate(`/author/story/${storyId}/chat/characters`)}
+      className="flex h-10 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+      aria-label="Go back"
+    >
+      <i className="fa-solid fa-chevron-left text-[14px]" />
+    </button>
 
-          <div className="min-w-0 flex-1">
-            <input
-              value={episodeTitle}
-              onChange={(event) => setEpisodeTitle(event.target.value)}
-              maxLength={80}
-              className="h-6 w-full bg-transparent text-center text-[16px] font-bold text-[#111827] outline-none"
-              aria-label="Episode title"
-            />
-            <div className="mt-0.5 text-center text-[9px] font-bold text-[#98a2b3]">
-              {wordCount} words · Draft saved locally
-            </div>
-          </div>
+    <div className="min-w-0 flex-1 text-center">
+      <div className="truncate text-[11px] font-bold text-[#111827]">
+        {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
+        {characterCount.toLocaleString()} characters
+      </div>
 
-          <button
-            type="button"
-            onClick={saveAndContinue}
-            disabled={saving || loading || !messages.length}
-            className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Next'}
-          </button>
-        </div>
-      </header>
+      <div className="mt-0.5 text-[9px] font-medium text-[#98a2b3]">
+        Saved{' '}
+        {savedSeconds < 60
+          ? `${savedSeconds}s`
+          : `${Math.floor(savedSeconds / 60)}m`}
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={saveAndContinue}
+      disabled={saving || loading || !messages.length}
+      className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-extrabold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {saving ? 'Saving...' : 'Next'}
+    </button>
+  </div>
+</header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
         <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
