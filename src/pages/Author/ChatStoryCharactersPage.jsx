@@ -417,6 +417,7 @@ function CharacterEditor({
   onChangeImage,
   onDelete,
   onClose,
+  saving,
   onSave,
 }) {
   const [groupMenuOpen, setGroupMenuOpen] = useState(false)
