@@ -408,23 +408,16 @@ function CharacterEditor({
   group,
   image,
   nickname,
-  roleGroup,
-  chatSide,
   editing,
   onNicknameChange,
-  onRoleGroupChange,
-  onChatSideChange,
   onChangeImage,
-  onDelete,
+  onEditProfile,
   onClose,
   saving,
   onSave,
 }) {
-  const [groupMenuOpen, setGroupMenuOpen] = useState(false)
-
   useEffect(() => {
     if (!open) return undefined
-    setGroupMenuOpen(false)
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -437,186 +430,85 @@ function CharacterEditor({
   if (!open || !group) return null
 
   return (
-    <div className="fixed inset-0 z-[190] flex items-center justify-center bg-black/45 px-4">
-      <div
-        className="max-h-[90vh] w-full max-w-[420px] overflow-y-auto rounded-[14px] bg-white p-5 shadow-2xl"
+    <div
+      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/55 px-5"
+      onClick={onClose}
+    >
+      <section
+        className="w-full max-w-[340px] rounded-[28px] bg-white px-6 pb-6 pt-7 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[17px] font-bold text-[#111827]">
-              {editing ? 'Edit character' : 'Character details'}
-            </h2>
-
-            <div
-              className="mt-1 text-[11px] font-medium"
-              style={{ color: group.accent }}
-            >
-              {group.title}
-            </div>
-          </div>
-
+        <div className="flex justify-center">
           <button
             type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f7f6fa] text-[#111827]"
+            onClick={onChangeImage}
+            className="relative active:scale-[0.98]"
+            aria-label="Replace profile image"
           >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
-
-        <div className="mt-5 flex justify-center">
-          <div className="relative">
-            <div
-              className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full"
+            <span
+              className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full ring-1 ring-black/5"
               style={{ backgroundColor: group.soft }}
             >
               {image ? (
-                <img src={image} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={image}
+                  alt={nickname || 'Character'}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <i className="fa-solid fa-user text-[38px] text-white" />
               )}
-            </div>
+            </span>
 
-            <button
-              type="button"
-              onClick={onChangeImage}
-              className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md active:scale-95"
-              aria-label="Replace profile image"
-            >
+            <span className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md">
               <i className="fa-solid fa-camera text-[13px]" />
-            </button>
-          </div>
+            </span>
+          </button>
         </div>
 
-        <label className="mt-5 block text-[12px] font-bold text-[#111827]">
-          Nickname
-          {roleGroup === 'background' ? (
-            <span className="ml-1 font-normal text-[#98a2b3]">(optional)</span>
-          ) : null}
-        </label>
+        <div className="relative mt-7">
+          <input
+            value={nickname}
+            onChange={(event) => onNicknameChange(event.target.value)}
+            maxLength={40}
+            placeholder="Enter character nickname"
+            className="h-14 w-full rounded-full bg-[#f7f7f8] px-12 text-center text-[16px] font-medium text-[#111827] outline-none focus:ring-2 focus:ring-[#9362ef]/25"
+          />
 
-        <input
-          value={nickname}
-          onChange={(event) => onNicknameChange(event.target.value)}
-          placeholder={
-            roleGroup === 'background'
-              ? 'Example: Guard, Maid 1, Doctor'
-              : 'Enter character nickname'
-          }
-          maxLength={40}
-          className="mt-2 h-12 w-full rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-[14px] font-normal text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
-        />
-
-        <label className="mt-4 block text-[12px] font-bold text-[#111827]">
-          Character group
-        </label>
-
-        <button
-          type="button"
-          onClick={() => setGroupMenuOpen(true)}
-          className="mt-2 flex h-12 w-full items-center justify-between rounded-[16px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[13px] font-normal text-[#111827] active:bg-[#f7f5fb]"
-        >
-          <span className="line-clamp-1">
-            {ROLE_GROUPS.find((item) => item.key === roleGroup)?.title || 'Main Characters'}
-          </span>
-          <i className="fa-solid fa-chevron-right text-[11px] text-[#98a2b3]" />
-        </button>
-
-        <button
-  type="button"
-  onClick={onSave}
-  disabled={saving}
-  className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9262ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99] disabled:opacity-60"
->
-  {saving ? 'Saving...' : 'Save character'}
-</button>
+          <i className="fa-regular fa-pen-to-square pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[17px] text-[#98a2b3]" />
+        </div>
 
         {editing ? (
           <button
             type="button"
-            onClick={onDelete}
-            className="mt-3 h-11 w-full rounded-full bg-[#fff7f8] text-[12px] font-medium text-[#e11d48]"
+            onClick={onEditProfile}
+            className="mx-auto mt-5 flex items-center justify-center gap-1.5 px-4 py-2 text-[14px] font-medium text-[#7c3aed] active:opacity-60"
           >
-            Delete character
+            Edit Profile
+            <i className="fa-solid fa-angles-right text-[10px]" />
           </button>
         ) : null}
-      </div>
 
-      {groupMenuOpen ? (
-        <div
-          className="fixed inset-0 z-[210] flex items-end bg-black/45"
-          onClick={() => setGroupMenuOpen(false)}
-        >
-          <section
-            className="mx-auto w-full max-w-[520px] rounded-t-[28px] bg-white px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
+        <div className={`${editing ? 'mt-5' : 'mt-7'} grid grid-cols-2 gap-3`}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="h-12 rounded-full bg-[#f2f4f7] text-[14px] font-medium text-[#344054] active:scale-[0.98] disabled:opacity-60"
           >
-            <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d9dce4]" />
+            Cancel
+          </button>
 
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <h2 className="text-[17px] font-bold text-[#111827]">
-                Choose character group
-              </h2>
-
-              <button
-                type="button"
-                onClick={() => setGroupMenuOpen(false)}
-                className="flex h-9 w-9 items-center justify-center text-[#111827]"
-              >
-                <i className="fa-solid fa-xmark text-[14px]" />
-              </button>
-            </div>
-
-            <div className="mt-3 space-y-2">
-              {ROLE_GROUPS.map((item) => {
-                const selected = roleGroup === item.key
-
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => {
-                      onRoleGroupChange(item.key)
-                      setGroupMenuOpen(false)
-                    }}
-                    className={`flex w-full items-center justify-between rounded-[16px] px-3.5 py-3 text-left ${
-                      selected
-                        ? 'bg-[#f3e8ff]'
-                        : 'bg-[#fafafa] active:bg-[#f5f3f8]'
-                    }`}
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: item.soft, color: item.accent }}
-                      >
-                        <i className={`${item.icon} text-[12px]`} />
-                      </span>
-
-                      <span
-                        className={`line-clamp-1 text-[13px] font-medium ${
-                          selected ? 'text-[#6d42db]' : 'text-[#111827]'
-                        }`}
-                      >
-                        {item.title}
-                      </span>
-                    </span>
-
-                    {selected ? (
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-white">
-                        <i className="fa-solid fa-check text-[10px]" />
-                      </span>
-                    ) : (
-                      <span className="h-6 w-6 shrink-0 rounded-full border border-[#d0d5dd]" />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[14px] font-medium text-white shadow-sm active:scale-[0.98] disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Confirm'}
+          </button>
         </div>
-      ) : null}
+      </section>
     </div>
   )
 }
@@ -1209,6 +1101,15 @@ export default function ChatStoryCharactersPage() {
         }}
         onChatSideChange={setChatSide}
         onChangeImage={openImageSourceFromEditor}
+        onEditProfile={() => {
+          if (!editingId) return
+
+          setEditorOpen(false)
+
+          navigate(
+            `/author/story/${storyId}/chat/characters/${editingId}/profile`
+          )
+        }}
         onDelete={deleteCharacter}
         onClose={() => setEditorOpen(false)}
         saving={saving}
