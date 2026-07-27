@@ -69,10 +69,10 @@ function CharacterAvatar({ character, selected, onClick }) {
     >
       <span
         className={`relative mx-auto flex h-[40px] w-[40px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
-  selected
-    ? 'ring-[3px] ring-inset ring-[#7c3aed]'
-    : 'ring-1 ring-inset ring-black/5'
-}`}
+          selected
+            ? 'ring-[3px] ring-[#7c3aed] ring-offset-1 ring-offset-[#f5f6f8]'
+            : 'ring-1 ring-inset ring-black/5'
+        }`}
       >
         {character.image ? (
           <img
@@ -986,10 +986,10 @@ const deleteMessage = (messageId) => {
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 pl-4 pr-2 pb-1 pt-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
   <div className="relative min-w-0">
   <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-2 py-0.5 pr-8">
+    <div className="flex w-max gap-1.5 py-0.5 pr-2">
       <AsideAvatar
         active={!selectedCharacterId}
         onClick={() => {
@@ -1012,7 +1012,7 @@ const deleteMessage = (messageId) => {
     </div>
   </div>
 
-  <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-r from-transparent via-white/70 to-white" />
+  <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-r from-transparent to-white" />
 </div>
 
   <button
@@ -1044,7 +1044,7 @@ const deleteMessage = (messageId) => {
 </div>
 
 <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 pl-4 pr-2">
-  <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f5f3fa] px-3">
+  <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3">
     <textarea
       ref={composerRef}
       value={draft}
@@ -1063,7 +1063,7 @@ const deleteMessage = (messageId) => {
       ? `${selectedCharacter.nickname || 'Character'}:`
       : 'ASIDE:'
 }
-      className="max-h-[86px] min-h-[20px] w-full resize-none bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:text-[#b0a7bf]"
+      className="max-h-[86px] min-h-[20px] w-full resize-none bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
     />
   </div>
 
@@ -1078,31 +1078,40 @@ const deleteMessage = (messageId) => {
 
   {composerFocused || draft.trim() ? (
     <button
-      type="button"
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={sendMessage}
-      disabled={!draft.trim()}
-      className={`flex h-11 w-10 items-center justify-center rounded-[10px] text-white ${
-        draft.trim()
-          ? 'bg-gradient-to-br from-[#9362ef] to-[#6d42db] active:scale-95'
-          : 'bg-[#d0d5dd]'
-      }`}
-      aria-label="Send message"
-    >
-      <i className="fa-solid fa-arrow-up text-[13px]" />
-    </button>
+  type="button"
+  onMouseDown={(event) => event.preventDefault()}
+  onClick={sendMessage}
+  disabled={!draft.trim()}
+  className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
+    draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
+  }`}
+  aria-label="Send message"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+  >
+    <path d="M22 2 11 13" />
+    <path d="m22 2-7 20-4-9-9-4Z" />
+  </svg>
+</button>
   ) : (
     <button
-  type="button"
-  onClick={() => {
-    setSymbolPanelOpen(false)
-    imageInputRef.current?.click()
-  }}
-  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
-  aria-label="Add image"
->
-  <i className="fa-regular fa-image text-[20px]" />
-</button>
+      type="button"
+      onClick={() => {
+        setSymbolPanelOpen(false)
+        imageInputRef.current?.click()
+      }}
+      className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
+      aria-label="Add image"
+    >
+      <i className="fa-regular fa-image text-[20px]" />
+    </button>
   )}
 </div>
 
