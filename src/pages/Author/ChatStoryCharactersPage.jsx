@@ -112,6 +112,11 @@ function Step({ number, title, active }) {
 }
 
 function BottomSheet({ open, onClose, children }) {
+  const [dragY, setDragY] = useState(0)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+
   useEffect(() => {
     if (!open) return undefined
 
@@ -123,15 +128,59 @@ function BottomSheet({ open, onClose, children }) {
     }
   }, [open])
 
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(0, event.clientY - startYRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+    const shouldClose = dragYRef.current >= 90
+    dragYRef.current = 0
+    setDragY(0)
+
+    if (shouldClose) onClose()
+  }
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-end bg-black/45">
+    <div
+      className="fixed inset-0 z-[180] flex items-end bg-black/45"
+      onClick={onClose}
+    >
       <div
-        className="w-full rounded-t-[28px] bg-white px-4 pb-[calc(22px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+        className="w-full rounded-t-[28px] bg-white px-4 pb-[calc(22px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 220ms ease',
+        }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e2e5ea]" />
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto mb-3 flex h-7 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+        </button>
+
         {children}
       </div>
     </div>
@@ -182,9 +231,13 @@ function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
           onClick={onDevice}
           className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#f6fcff] px-3 text-center active:scale-[0.98]"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eaf8ff] text-[#2692bc]">
-            <i className="fa-regular fa-image text-[22px]" />
-          </span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eaf8ff]">
+  <img
+    src="/assets/Icons/Local%20image.svg"
+    alt=""
+    className="h-6 w-6"
+  />
+</span>
 
           <span className="mt-3 text-[13px] font-medium text-[#111827]">
             Upload from device
@@ -194,11 +247,19 @@ function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
         <button
           type="button"
           onClick={onShadowGallery}
-          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#fff7f9] px-3 text-center active:scale-[0.98]"
+          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#faf8ff] px-3 text-center active:scale-[0.98]"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff0f4] text-[#ee6484]">
-            <i className="fa-regular fa-address-card text-[22px]" />
-          </span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f1ecff]">
+  <span
+    className="h-6 w-6 bg-[#7c3aed]"
+    style={{
+      WebkitMask:
+        "url('/assets/Icons/Shadow%20image.svg') center / contain no-repeat",
+      mask:
+        "url('/assets/Icons/Shadow%20image.svg') center / contain no-repeat",
+    }}
+  />
+</span>
 
           <span className="mt-3 text-[13px] font-medium text-[#111827]">
             Shadow gallery
