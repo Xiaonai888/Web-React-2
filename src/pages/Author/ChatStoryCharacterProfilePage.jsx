@@ -8,10 +8,34 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const ROLE_GROUPS = [
-  { value: 'main', label: 'Main Characters' },
-  { value: 'major', label: 'Major Supporting Characters' },
-  { value: 'minor', label: 'Minor Supporting Characters' },
-  { value: 'background', label: 'Background Characters' },
+  {
+    value: 'main',
+    label: 'Main Characters',
+    accent: '#7C3AED',
+    soft: '#F3E8FF',
+    icon: 'fa-solid fa-crown',
+  },
+  {
+    value: 'major',
+    label: 'Major Supporting Characters',
+    accent: '#F97316',
+    soft: '#FFF1E8',
+    icon: 'fa-solid fa-star',
+  },
+  {
+    value: 'minor',
+    label: 'Minor Supporting Characters',
+    accent: '#0F9F7A',
+    soft: '#E8FFF8',
+    icon: 'fa-solid fa-user-group',
+  },
+  {
+    value: 'background',
+    label: 'Background Characters',
+    accent: '#64748B',
+    soft: '#F1F5F9',
+    icon: 'fa-solid fa-users',
+  },
 ]
 
 const GENDERS = ['', 'Female', 'Male', 'Non-binary', 'Unknown']
@@ -62,6 +86,256 @@ async function uploadProfileImage(token, imageDataUrl, storyId, characterId) {
   return data.image_url || data.imageUrl || null
 }
 
+
+function CharacterGroupSheet({ open, value, onChange, onClose }) {
+  const [dragY, setDragY] = useState(0)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    setDragY(0)
+    dragYRef.current = 0
+    draggingRef.current = false
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(0, event.clientY - startYRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+    const shouldClose = dragYRef.current >= 90
+    dragYRef.current = 0
+    setDragY(0)
+
+    if (shouldClose) onClose()
+  }
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[210] flex items-end bg-black/45"
+      onClick={onClose}
+    >
+      <section
+        className="mx-auto w-full max-w-[520px] rounded-t-[28px] bg-white px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 220ms ease',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d9dce4]" />
+        </button>
+
+        <h2 className="mt-2 text-[17px] font-bold text-[#111827]">
+          Choose character group
+        </h2>
+
+        <div className="mt-4 space-y-2">
+          {ROLE_GROUPS.map((item) => {
+            const selected = value === item.value
+
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => {
+                  onChange(item.value)
+                  onClose()
+                }}
+                className={`flex w-full items-center justify-between rounded-[16px] px-3.5 py-3 text-left ${
+                  selected
+                    ? 'bg-[#f3e8ff]'
+                    : 'bg-[#fafafa] active:bg-[#f5f3f8]'
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: item.soft,
+                      color: item.accent,
+                    }}
+                  >
+                    <i className={`${item.icon} text-[12px]`} />
+                  </span>
+
+                  <span
+                    className={`line-clamp-1 text-[13px] font-medium ${
+                      selected ? 'text-[#6d42db]' : 'text-[#111827]'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </span>
+
+                {selected ? (
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-white">
+                    <i className="fa-solid fa-check text-[10px]" />
+                  </span>
+                ) : (
+                  <span className="h-6 w-6 shrink-0 rounded-full border border-[#d0d5dd]" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function GenderSheet({ open, value, onChange, onClose }) {
+  const [dragY, setDragY] = useState(0)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    setDragY(0)
+    dragYRef.current = 0
+    draggingRef.current = false
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(0, event.clientY - startYRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+    const shouldClose = dragYRef.current >= 90
+    dragYRef.current = 0
+    setDragY(0)
+
+    if (shouldClose) onClose()
+  }
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[220] flex items-end bg-black/45"
+      onClick={onClose}
+    >
+      <section
+        className="mx-auto w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current
+            ? 'none'
+            : 'transform 220ms ease',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d9dce4]" />
+        </button>
+
+        <h2 className="mt-2 text-[17px] font-bold text-[#111827]">
+          Choose gender
+        </h2>
+
+        <div className="mt-3">
+          {GENDERS.map((item) => {
+            const selected = value === item
+            const label = item || 'Not specified'
+
+            return (
+              <button
+                key={item || 'not-specified'}
+                type="button"
+                onClick={() => {
+                  onChange(item)
+                  onClose()
+                }}
+                className="flex w-full items-center justify-between border-b border-[#eef0f3] py-3.5 text-left last:border-b-0 active:opacity-60"
+              >
+                <span
+                  className={`text-[13px] ${
+                    selected
+                      ? 'font-medium text-[#111827]'
+                      : 'font-normal text-[#475467]'
+                  }`}
+                >
+                  {label}
+                </span>
+
+                {selected ? (
+                  <i className="fa-solid fa-check text-[12px] text-[#7c3aed]" />
+                ) : (
+                  <span className="h-3 w-3" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export default function ChatStoryCharacterProfilePage() {
   const navigate = useNavigate()
   const { storyId, characterId } = useParams()
@@ -69,9 +343,11 @@ export default function ChatStoryCharacterProfilePage() {
 
   const [nickname, setNickname] = useState('')
   const [roleGroup, setRoleGroup] = useState('main')
+  const [groupSheetOpen, setGroupSheetOpen] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarSource, setAvatarSource] = useState('device')
   const [gender, setGender] = useState('')
+  const [genderSheetOpen, setGenderSheetOpen] = useState(false)
   const [birthday, setBirthday] = useState('')
   const [heightCm, setHeightCm] = useState('')
   const [occupation, setOccupation] = useState('')
@@ -221,12 +497,26 @@ export default function ChatStoryCharacterProfilePage() {
         className="hidden"
       />
 
+      <CharacterGroupSheet
+        open={groupSheetOpen}
+        value={roleGroup}
+        onChange={setRoleGroup}
+        onClose={() => setGroupSheetOpen(false)}
+      />
+
+      <GenderSheet
+  open={genderSheetOpen}
+  value={gender}
+  onChange={setGender}
+  onClose={() => setGenderSheetOpen(false)}
+/>
+
       <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7f6fa] text-[#111827]"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
@@ -298,45 +588,40 @@ export default function ChatStoryCharacterProfilePage() {
                 />
               </label>
 
-              <label className="block py-4">
+              <div className="block py-4">
                 <span className="mb-2 block text-[13px] font-bold text-[#111827]">
                   Character Group
                 </span>
-                <div className="relative">
-                  <select
-                    value={roleGroup}
-                    onChange={(event) => setRoleGroup(event.target.value)}
-                    className="h-12 w-full appearance-none rounded-[14px] border border-[#e4e7ec] bg-[#fafafe] px-4 pr-12 text-[14px] font-normal text-[#111827] outline-none focus:border-[#7c3aed] focus:bg-white"
-                  >
-                    {ROLE_GROUPS.map((item) => (
-                      <option key={item.value} value={item.value}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                  <i className="fa-solid fa-chevron-down pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[11px] text-[#667085]" />
-                </div>
-              </label>
 
-              <label className="block py-4">
-                <span className="mb-2 block text-[13px] font-bold text-[#111827]">
-                  Gender
-                </span>
-                <div className="relative">
-                  <select
-                    value={gender}
-                    onChange={(event) => setGender(event.target.value)}
-                    className="h-12 w-full appearance-none rounded-[14px] border border-[#e4e7ec] bg-[#fafafe] px-4 pr-12 text-[14px] font-normal text-[#111827] outline-none"
-                  >
-                    {GENDERS.map((item) => (
-                      <option key={item || 'empty'} value={item}>
-                        {item || 'Not specified'}
-                      </option>
-                    ))}
-                  </select>
-                  <i className="fa-solid fa-chevron-down pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[11px] text-[#667085]" />
-                </div>
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setGroupSheetOpen(true)}
+                  className="flex h-12 w-full items-center justify-between rounded-[14px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f7f5fb]"
+                >
+                  <span className="line-clamp-1">
+                    {ROLE_GROUPS.find((item) => item.value === roleGroup)?.label ||
+                      'Main Characters'}
+                  </span>
+
+                  <i className="fa-solid fa-chevron-down text-[11px] text-[#667085]" />
+                </button>
+              </div>
+
+              <div className="block py-4">
+  <span className="mb-2 block text-[13px] font-bold text-[#111827]">
+    Gender
+  </span>
+
+  <button
+    type="button"
+    onClick={() => setGenderSheetOpen(true)}
+    className="flex h-12 w-full items-center justify-between rounded-[14px] border border-[#e4e7ec] bg-[#fafafe] px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f7f5fb]"
+  >
+    <span>{gender || 'Not specified'}</span>
+
+    <i className="fa-solid fa-chevron-down text-[11px] text-[#667085]" />
+  </button>
+</div>
 
               <label className="block py-4">
                 <span className="mb-2 block text-[13px] font-bold text-[#111827]">
