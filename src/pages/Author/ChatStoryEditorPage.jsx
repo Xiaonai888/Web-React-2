@@ -14,6 +14,79 @@ function getAuthToken() {
     ''
   )
 }
+
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, base64] = String(dataUrl).split(',')
+  const mime = header.match(/data:(.*?);base64/)?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  return new File([bytes], fileName, { type: mime })
+}
+
+async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
+  if (!String(imageDataUrl || '').startsWith('data:image/')) {
+    return imageDataUrl || null
+  }
+
+  const formData = new FormData()
+
+  formData.append(
+    'image',
+    dataUrlToFile(
+      imageDataUrl,
+      `chat-character-${storyId}-${index + 1}-${Date.now()}.jpg`
+    )
+  )
+
+  formData.append('folder', 'chat_story_character')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to upload character image')
+  }
+
+  return data.image_url || data.imageUrl || null
+}
+
+function mapCharacter(character) {
+  const group = character.role_group || 'background'
+
+  return {
+    id: character.id,
+    nickname: character.nickname || '',
+    image: character.avatar_url || '',
+    group,
+    avatarSource: character.avatar_source || 'device',
+    chatSide:
+      character.chat_side ||
+      (group === 'main' ? 'right' : 'left'),
+    gender: character.gender || '',
+    birthday: character.birthday || '',
+    heightCm: character.height_cm || '',
+    occupation: character.occupation || '',
+    personality: character.personality || '',
+    relationship: character.relationship || '',
+    bio: character.bio || '',
+  }
+}
+
 function countWords(value) {
   const text = String(value || '').trim()
   if (!text) return 0
@@ -368,64 +441,106 @@ function ChatMessage({ message, character, onDelete }) {
 }
 
 
-function AddCharacterPopup({ open, onClose, onConfirm }) {
-  const [choice, setChoice] = useState('existing')
-
+function AddCharacterPopup({
+  open,
+  name,
+  image,
+  saving,
+  randomLoading,
+  onNameChange,
+  onChooseImage,
+  onRandomMale,
+  onRandomFemale,
+  onClose,
+  onConfirm,
+}) {
   useEffect(() => {
-    if (open) setChoice('existing')
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
   }, [open])
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-[390px] rounded-[24px] bg-white p-5 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-bold text-[#111827]">Add character</h2>
+    <div
+      className="fixed inset-0 z-[240] flex items-center justify-center bg-black/55 px-5"
+      onClick={onClose}
+    >
+      <section
+        className="w-full max-w-[340px] rounded-[28px] bg-white px-6 pb-6 pt-7 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex justify-center">
           <button
             type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            onClick={onChooseImage}
+            disabled={saving}
+            className="relative active:scale-[0.98] disabled:opacity-60"
+            aria-label="Choose character image"
           >
-            <i className="fa-solid fa-xmark text-[14px]" />
+            <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
+              {image ? (
+                <img
+                  src={image}
+                  alt={name || 'New character'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <i className="fa-solid fa-user text-[38px] text-[#9b87c9]" />
+              )}
+            </span>
+
+            <span className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md">
+              <i className="fa-solid fa-camera text-[13px]" />
+            </span>
           </button>
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="relative mt-7">
+          <input
+            autoFocus
+            value={name}
+            onChange={(event) => onNameChange(event.target.value)}
+            maxLength={40}
+            placeholder="Enter character name"
+            disabled={saving}
+            className="h-14 w-full rounded-full bg-[#f7f7f8] px-12 text-center text-[15px] font-medium text-[#111827] outline-none placeholder:text-[#98a2b3] focus:ring-2 focus:ring-[#9362ef]/25 disabled:opacity-60"
+          />
+
+          <i className="fa-regular fa-pen-to-square pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[16px] text-[#98a2b3]" />
+        </div>
+
+        <div className="mt-5 space-y-1">
           <button
             type="button"
-            onClick={() => setChoice('existing')}
-            className={`flex w-full items-center gap-3 rounded-[16px] border px-4 py-4 text-left ${
-              choice === 'existing'
-                ? 'border-[#7c3aed] bg-[#faf8ff]'
-                : 'border-[#e4e7ec] bg-white'
-            }`}
+            onClick={onRandomMale}
+            disabled={saving || randomLoading}
+            className="flex h-11 w-full items-center justify-center text-[13px] font-medium text-[#7c3aed] active:opacity-60 disabled:opacity-45"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-solid fa-users text-[15px]" />
-            </span>
-            <span>
-              <span className="block text-[13px] font-bold text-[#111827]">Choose from characters</span>
-              <span className="mt-1 block text-[10.5px] text-[#98a2b3]">Select or manage characters already in this story.</span>
-            </span>
+            {randomLoading ? (
+              <i className="fa-solid fa-spinner fa-spin text-[14px]" />
+            ) : (
+              'Random Male Character'
+            )}
           </button>
 
           <button
             type="button"
-            onClick={() => setChoice('new')}
-            className={`flex w-full items-center gap-3 rounded-[16px] border px-4 py-4 text-left ${
-              choice === 'new'
-                ? 'border-[#7c3aed] bg-[#faf8ff]'
-                : 'border-[#e4e7ec] bg-white'
-            }`}
+            onClick={onRandomFemale}
+            disabled={saving || randomLoading}
+            className="flex h-11 w-full items-center justify-center text-[13px] font-medium text-[#7c3aed] active:opacity-60 disabled:opacity-45"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-solid fa-user-plus text-[15px]" />
-            </span>
-            <span>
-              <span className="block text-[13px] font-bold text-[#111827]">Create a new character</span>
-              <span className="mt-1 block text-[10.5px] text-[#98a2b3]">Open the character builder and add a new profile.</span>
-            </span>
+            {randomLoading ? (
+              <i className="fa-solid fa-spinner fa-spin text-[14px]" />
+            ) : (
+              'Random Female Character'
+            )}
           </button>
         </div>
 
@@ -433,19 +548,22 @@ function AddCharacterPopup({ open, onClose, onConfirm }) {
           <button
             type="button"
             onClick={onClose}
-            className="h-12 rounded-full bg-[#f2f4f7] text-[13px] font-medium text-[#475467]"
+            disabled={saving}
+            className="h-12 rounded-full bg-[#f2f4f7] text-[14px] font-medium text-[#344054] active:scale-[0.98] disabled:opacity-60"
           >
             Cancel
           </button>
+
           <button
             type="button"
-            onClick={() => onConfirm(choice)}
-            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white"
+            onClick={onConfirm}
+            disabled={saving || !name.trim()}
+            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[14px] font-medium text-white shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
           >
-            Confirm
+            {saving ? 'Saving...' : 'Confirm'}
           </button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
@@ -886,6 +1004,7 @@ export default function ChatStoryEditorPage() {
   const composerRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
+  const characterImageInputRef = useRef(null)
   const messagesRef = useRef([])
   const undoStackRef = useRef([])
   const redoStackRef = useRef([])
@@ -905,6 +1024,13 @@ export default function ChatStoryEditorPage() {
   const [saving, setSaving] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
+  const [newCharacterName, setNewCharacterName] = useState('')
+  const [newCharacterImage, setNewCharacterImage] = useState('')
+  const [newCharacterAvatarSource, setNewCharacterAvatarSource] =
+    useState('device')
+  const [newCharacterGender, setNewCharacterGender] = useState('')
+  const [randomAvatarLoading, setRandomAvatarLoading] = useState(false)
+  const [addCharacterSaving, setAddCharacterSaving] = useState(false)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
   const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
   const [authorNoteDraft, setAuthorNoteDraft] = useState('')
@@ -1093,8 +1219,7 @@ useEffect(() => {
           throw new Error(data.message || 'Failed to load characters')
         }
 
-        setCharacters(
-          (data.characters || []).map((character) => ({
+        setCharacters((data.characters || []).map(mapCharacter))
             id: character.id,
             nickname: character.nickname || '',
             image: character.avatar_url || '',
@@ -1230,10 +1355,250 @@ const deleteMessage = (messageId) => {
     }
   }
 
-  const handleAddConfirm = () => {
-    setAddPopupOpen(false)
-    navigate(`/author/story/${storyId}/chat/characters`)
+  const openAddCharacterPopup = () => {
+  setNewCharacterName('')
+  setNewCharacterImage('')
+  setNewCharacterAvatarSource('device')
+  setNewCharacterGender('')
+  setAddPopupOpen(true)
+}
+
+const closeAddCharacterPopup = () => {
+  if (addCharacterSaving) return
+  setAddPopupOpen(false)
+}
+
+const handleNewCharacterImageChange = (event) => {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please choose an image file.')
+    return
   }
+
+  if (file.size > 8 * 1024 * 1024) {
+    showToast('Image must be 8 MB or smaller.')
+    return
+  }
+
+  const reader = new FileReader()
+
+  reader.onload = () => {
+    setNewCharacterImage(String(reader.result || ''))
+    setNewCharacterAvatarSource('device')
+  }
+
+  reader.readAsDataURL(file)
+}
+
+const pickRandomCharacterAvatar = async (gender) => {
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  try {
+    setRandomAvatarLoading(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/chat/avatar-gallery?limit=200`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to load character images')
+    }
+
+    const candidates = (data.images || []).filter((item) => {
+      const text = [
+        item.category,
+        item.title,
+        item.alt_text,
+        item.gender,
+        item.folder,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      const isFemale =
+        text.includes('female') ||
+        text.includes('girl') ||
+        text.includes('woman')
+
+      const isMale =
+        !isFemale &&
+        (text.includes('male') ||
+          text.includes('boy') ||
+          text.includes('man'))
+
+      return gender === 'female' ? isFemale : isMale
+    })
+
+    if (!candidates.length) {
+      throw new Error(
+        gender === 'female'
+          ? 'No female character images were found.'
+          : 'No male character images were found.'
+      )
+    }
+
+    const randomItem =
+      candidates[Math.floor(Math.random() * candidates.length)]
+
+    setNewCharacterImage(randomItem.image_url || '')
+    setNewCharacterAvatarSource('shadow_gallery')
+    setNewCharacterGender(gender)
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message || 'Failed to choose random character'
+    )
+  } finally {
+    setRandomAvatarLoading(false)
+  }
+}
+
+const handleAddConfirm = async () => {
+  const cleanName = newCharacterName.trim()
+
+  if (!cleanName) {
+    showToast('Please enter a character name.')
+    return
+  }
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const newCharacterId = makeId()
+
+  const nextCharacters = [
+    ...characters,
+    {
+      id: newCharacterId,
+      nickname: cleanName,
+      image: newCharacterImage,
+      group: 'background',
+      avatarSource: newCharacterAvatarSource,
+      chatSide: 'left',
+      gender: newCharacterGender,
+      birthday: '',
+      heightCm: '',
+      occupation: '',
+      personality: '',
+      relationship: '',
+      bio: '',
+    },
+  ]
+
+  try {
+    setAddCharacterSaving(true)
+
+    const uploadedCharacters = []
+
+    for (let index = 0; index < nextCharacters.length; index += 1) {
+      const character = nextCharacters[index]
+
+      const avatarUrl = await uploadCharacterImage(
+        token,
+        character.image,
+        storyId,
+        index
+      )
+
+      uploadedCharacters.push({
+        id: character.id,
+        role_group: character.group,
+        nickname: character.nickname || null,
+        avatar_url: avatarUrl,
+        avatar_source: character.avatarSource || 'device',
+        chat_side:
+          character.chatSide ||
+          (character.group === 'main' ? 'right' : 'left'),
+        gender: character.gender || null,
+        birthday: character.birthday || null,
+        height_cm:
+          character.heightCm === '' ? null : character.heightCm,
+        occupation: character.occupation || null,
+        personality: character.personality || null,
+        relationship: character.relationship || null,
+        bio: character.bio || null,
+      })
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          characters: uploadedCharacters,
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to add character')
+    }
+
+    const savedCharacters = (data.characters || []).map(mapCharacter)
+
+    const savedCharacter =
+      savedCharacters.find(
+        (character) => character.id === newCharacterId
+      ) ||
+      savedCharacters[savedCharacters.length - 1] ||
+      null
+
+    setCharacters(savedCharacters)
+    setAddPopupOpen(false)
+
+    if (savedCharacter) {
+      setSelectedCharacterId(savedCharacter.id)
+      setComposerMode('message')
+    }
+
+    setNewCharacterName('')
+    setNewCharacterImage('')
+    setNewCharacterAvatarSource('device')
+    setNewCharacterGender('')
+
+    showToast('Character added.')
+
+    window.setTimeout(() => {
+      composerRef.current?.focus()
+    }, 50)
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message || 'Failed to add character'
+    )
+  } finally {
+    setAddCharacterSaving(false)
+  }
+}
 
   const handleAuthorNote = () => {
     const existingNote = messages.find(
@@ -1501,12 +1866,28 @@ const deleteMessage = (messageId) => {
         onChange={handleImageChange}
         className="hidden"
       />
+      
+      <input
+  ref={characterImageInputRef}
+  type="file"
+  accept="image/*"
+  onChange={handleNewCharacterImageChange}
+  className="hidden"
+/>
 
       <AddCharacterPopup
-        open={addPopupOpen}
-        onClose={() => setAddPopupOpen(false)}
-        onConfirm={handleAddConfirm}
-      />
+  open={addPopupOpen}
+  name={newCharacterName}
+  image={newCharacterImage}
+  saving={addCharacterSaving}
+  randomLoading={randomAvatarLoading}
+  onNameChange={setNewCharacterName}
+  onChooseImage={() => characterImageInputRef.current?.click()}
+  onRandomMale={() => pickRandomCharacterAvatar('male')}
+  onRandomFemale={() => pickRandomCharacterAvatar('female')}
+  onClose={closeAddCharacterPopup}
+  onConfirm={handleAddConfirm}
+/>
 
       <CharacterQuickPopup
   character={profilePopupCharacter}
@@ -1768,7 +2149,7 @@ const deleteMessage = (messageId) => {
 
   <button
     type="button"
-    onClick={() => setAddPopupOpen(true)}
+    onClick={openAddCharacterPopup}
     className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
   >
     <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
