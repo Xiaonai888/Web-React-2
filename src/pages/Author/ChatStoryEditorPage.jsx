@@ -27,6 +27,11 @@ function countWords(value) {
 }
 
 const MESSAGE_SYMBOLS = ['(...)', '—', '…', '?!', '♡', '✦', '☁', '「」', '♪']
+const MAX_AUDIO_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_AUDIO_DURATION_SECONDS = 60
+const MIN_AUDIO_DURATION_SECONDS = 1
+const AUDIO_ACCEPT =
+  'audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/webm,.mp3,.m4a,.aac,.wav,.webm'
 function makeId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -360,7 +365,7 @@ function AddCharacterPopup({ open, onClose, onConfirm }) {
   )
 }
 
-function MorePopup({ open, onClose, onUploadAudio, onAuthorNote }) {
+function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }) {
   if (!open) return null
 
   return (
@@ -392,7 +397,9 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorNote }) {
             <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
               <i className="fa-regular fa-comment-dots text-[22px]" />
             </span>
-            <span className="mt-3 text-[12px] font-medium text-[#111827]">Add Author&apos;s Note</span>
+            <span className="mt-3 text-[12px] font-medium text-[#111827]">
+              {hasAuthorNote ? 'Edit Author’s Note' : 'Add Author’s Note'}
+            </span>
           </button>
         </div>
 
@@ -404,6 +411,384 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorNote }) {
           Done
         </button>
       </div>
+    </div>
+  )
+}
+
+
+function AuthorNoteSheet({ open, value, onChange, onClose, onSave }) {
+  const [dragY, setDragY] = useState(0)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    setDragY(0)
+    dragYRef.current = 0
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(0, event.clientY - startYRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+    const shouldClose = dragYRef.current >= 90
+    dragYRef.current = 0
+    setDragY(0)
+
+    if (shouldClose) onClose()
+  }
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[250] flex items-end bg-black/45"
+      onClick={onClose}
+    >
+      <section
+        className="w-full rounded-t-[28px] bg-white px-5 pb-[calc(22px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 220ms ease',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+        </button>
+
+        <div className="mt-1 flex items-center justify-between">
+          <div>
+            <h2 className="text-[17px] font-bold text-[#111827]">
+              Author&apos;s Note
+            </h2>
+            <p className="mt-1 text-[11px] leading-5 text-[#667085]">
+              Write a short note for your readers.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            aria-label="Close author's note"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        <div className="mt-5 rounded-[16px] border border-[#e5d8ff] bg-[#fbf9ff] px-4 py-3 focus-within:border-[#9b6cf3] focus-within:ring-2 focus-within:ring-[#9b6cf3]/15">
+          <textarea
+            autoFocus
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            maxLength={600}
+            rows={7}
+            placeholder="Thank your readers, share a short update, or leave a message..."
+            className="min-h-[170px] max-h-[260px] w-full resize-none overflow-y-auto bg-transparent text-[13px] leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3]"
+          />
+
+          <div className="mt-2 text-right text-[10.5px] font-medium text-[#98a2b3]">
+            {value.length} / 600
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!value.trim()}
+          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          Save Author&apos;s Note
+        </button>
+      </section>
+    </div>
+  )
+}
+
+function AudioUploadSheet({
+  open,
+  file,
+  previewUrl,
+  duration,
+  onChoose,
+  onDropFile,
+  onClose,
+  onClear,
+}) {
+  const [dragY, setDragY] = useState(0)
+  const [dropActive, setDropActive] = useState(false)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+  const dragDepthRef = useRef(0)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    setDragY(0)
+    setDropActive(false)
+    dragYRef.current = 0
+    dragDepthRef.current = 0
+
+    const preventFileNavigation = (event) => {
+      const types = Array.from(event.dataTransfer?.types || [])
+      if (types.includes('Files')) event.preventDefault()
+    }
+
+    window.addEventListener('dragover', preventFileNavigation)
+    window.addEventListener('drop', preventFileNavigation)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('dragover', preventFileNavigation)
+      window.removeEventListener('drop', preventFileNavigation)
+    }
+  }, [open])
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(0, event.clientY - startYRef.current)
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+    const shouldClose = dragYRef.current >= 90
+    dragYRef.current = 0
+    setDragY(0)
+
+    if (shouldClose) onClose()
+  }
+
+  const getDroppedFile = (dataTransfer) => {
+    const directFile = dataTransfer?.files?.[0]
+    if (directFile) return directFile
+
+    const fileItem = Array.from(dataTransfer?.items || []).find(
+      (item) => item.kind === 'file'
+    )
+
+    return fileItem?.getAsFile?.() || null
+  }
+
+  const handleDragEnter = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!Array.from(event.dataTransfer?.types || []).includes('Files')) return
+
+    dragDepthRef.current += 1
+    setDropActive(true)
+  }
+
+  const handleDragOver = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'copy'
+    setDropActive(true)
+  }
+
+  const handleDragLeave = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+
+    if (dragDepthRef.current === 0) setDropActive(false)
+  }
+
+  const handleDrop = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragDepthRef.current = 0
+    setDropActive(false)
+
+    const droppedFile = getDroppedFile(event.dataTransfer)
+    if (droppedFile) onDropFile(droppedFile)
+  }
+
+  if (!open) return null
+
+  const sizeMb = file ? (file.size / (1024 * 1024)).toFixed(2) : '0.00'
+  const roundedDuration = Math.max(0, Math.round(duration || 0))
+  const durationText = `${Math.floor(roundedDuration / 60)}:${String(
+    roundedDuration % 60
+  ).padStart(2, '0')}`
+
+  return (
+    <div
+      className="fixed inset-0 z-[250] flex items-end bg-black/45"
+      onClick={onClose}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <section
+        className="w-full rounded-t-[28px] bg-white px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 220ms ease',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+        </button>
+
+        <div className="mt-1 flex items-center justify-between">
+          <div>
+            <h2 className="text-[16px] font-bold text-[#111827]">
+              Upload Audio
+            </h2>
+            <p className="mt-1 text-[10.5px] text-[#667085]">
+              Maximum 1 minute · 5 MB
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
+            aria-label="Close audio upload"
+          >
+            <i className="fa-solid fa-xmark text-[14px]" />
+          </button>
+        </div>
+
+        {file && previewUrl ? (
+          <div className="mt-5 rounded-[18px] border border-[#e5d8ff] bg-[#fbf9ff] p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#eee7ff] text-[#7c3aed]">
+                <i className="fa-solid fa-music text-[16px]" />
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[12.5px] font-semibold text-[#111827]">
+                  {file.name}
+                </div>
+                <div className="mt-1 text-[10.5px] text-[#667085]">
+                  {durationText} · {sizeMb} MB
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClear}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#98a2b3] ring-1 ring-black/5"
+                aria-label="Remove selected audio"
+              >
+                <i className="fa-solid fa-xmark text-[11px]" />
+              </button>
+            </div>
+
+            <audio
+              controls
+              preload="metadata"
+              src={previewUrl}
+              className="mt-4 h-10 w-full"
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onChoose}
+            className={`mt-5 flex min-h-[170px] w-full flex-col items-center justify-center rounded-[20px] border border-dashed px-5 text-center transition active:scale-[0.99] ${
+              dropActive
+                ? 'border-[#7c3aed] bg-[#f3edff] ring-2 ring-[#7c3aed]/15'
+                : 'border-[#cdbbff] bg-[#fbf9ff]'
+            }`}
+          >
+            <span
+              className={`flex h-14 w-14 items-center justify-center rounded-[18px] text-[#7c3aed] transition ${
+                dropActive ? 'scale-105 bg-white' : 'bg-[#eee7ff]'
+              }`}
+            >
+              <i className="fa-solid fa-upload text-[19px]" />
+            </span>
+
+            <span className="mt-3 text-[13px] font-semibold text-[#111827]">
+              {dropActive
+                ? 'Drop audio here'
+                : 'Drop audio here or choose from device'}
+            </span>
+
+            <span className="mt-1 text-[10.5px] leading-5 text-[#667085]">
+              MP3, M4A, AAC, WAV or WebM
+            </span>
+          </button>
+        )}
+
+        {file ? (
+          <button
+            type="button"
+            onClick={onChoose}
+            className="mt-4 h-11 w-full rounded-full bg-[#f3f4f6] text-[12px] font-medium text-[#475467]"
+          >
+            Choose another audio
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-3 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white"
+        >
+          Done
+        </button>
+      </section>
     </div>
   )
 }
@@ -435,6 +820,12 @@ export default function ChatStoryEditorPage() {
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
+  const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
+  const [authorNoteDraft, setAuthorNoteDraft] = useState('')
+  const [audioSheetOpen, setAudioSheetOpen] = useState(false)
+  const [audioFile, setAudioFile] = useState(null)
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
+  const [audioDuration, setAudioDuration] = useState(0)
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
   const [savedSeconds, setSavedSeconds] = useState(0)
@@ -713,16 +1104,8 @@ const insertMessageSymbol = (symbol) => {
 
   const nextMessage = {
     id: makeId(),
-    type:
-      composerMode === 'author_note'
-        ? 'author_note'
-        : selectedCharacter
-          ? 'chat'
-          : 'aside',
-    characterId:
-      composerMode === 'author_note'
-        ? null
-        : selectedCharacter?.id || null,
+    type: selectedCharacter ? 'chat' : 'aside',
+    characterId: selectedCharacter?.id || null,
     text,
     createdAt: new Date().toISOString(),
   }
@@ -750,10 +1133,6 @@ const insertMessageSymbol = (symbol) => {
 
   setDraft('')
   setSymbolPanelOpen(false)
-
-  if (composerMode === 'author_note') {
-    setComposerMode('message')
-  }
 }
 
 const deleteMessage = (messageId) => {
@@ -775,30 +1154,160 @@ const deleteMessage = (messageId) => {
   }
 
   const handleAuthorNote = () => {
-  const existingNote = messages.find(
-    (message) => message.type === 'author_note'
-  )
+    const existingNote = messages.find(
+      (message) => message.type === 'author_note'
+    )
 
-  setMorePopupOpen(false)
-  setSelectedCharacterId(null)
-  setComposerMode('author_note')
-  setDraft(existingNote?.text || '')
-  window.setTimeout(() => composerRef.current?.focus(), 80)
-}
+    setMorePopupOpen(false)
+    setAuthorNoteDraft(existingNote?.text || '')
+    setAuthorNoteOpen(true)
+  }
+
+  const closeAuthorNote = () => {
+    setAuthorNoteOpen(false)
+    setMorePopupOpen(true)
+  }
+
+  const saveAuthorNote = () => {
+    const text = authorNoteDraft.trim()
+    if (!text) return
+
+    const existingNote = messages.find(
+      (message) => message.type === 'author_note'
+    )
+
+    const nextNote = {
+      id: existingNote?.id || makeId(),
+      type: 'author_note',
+      characterId: null,
+      text,
+      createdAt: existingNote?.createdAt || new Date().toISOString(),
+    }
+
+    commitMessages((current) => [
+      ...current.filter((message) => message.type !== 'author_note'),
+      nextNote,
+    ])
+
+    setAuthorNoteOpen(false)
+    setMorePopupOpen(true)
+    showToast(existingNote ? 'Author’s Note updated.' : 'Author’s Note saved.')
+  }
+
+  const clearSelectedAudio = () => {
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl)
+    setAudioFile(null)
+    setAudioPreviewUrl('')
+    setAudioDuration(0)
+  }
+
+  const openAudioSheet = () => {
+    setMorePopupOpen(false)
+    setAudioSheetOpen(true)
+  }
+
+  const closeAudioSheet = () => {
+    setAudioSheetOpen(false)
+    setMorePopupOpen(true)
+  }
+
+  const selectAudioFile = (file) => {
+    if (!file) return
+
+    const allowedAudio =
+      file.type.startsWith('audio/') ||
+      /\.(mp3|m4a|aac|wav|webm)$/i.test(file.name)
+
+    if (!allowedAudio) {
+      showToast('Choose MP3, M4A, AAC, WAV or WebM audio.')
+      return
+    }
+
+    if (file.size > MAX_AUDIO_SIZE_BYTES) {
+      showToast('Audio must be 5 MB or smaller.')
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(file)
+    const audio = document.createElement('audio')
+    let finished = false
+    let timeoutId = 0
+
+    const cleanup = () => {
+      window.clearTimeout(timeoutId)
+      audio.removeEventListener('loadedmetadata', readDuration)
+      audio.removeEventListener('durationchange', readDuration)
+      audio.removeEventListener('canplay', readDuration)
+      audio.removeEventListener('error', handleReadError)
+      audio.removeAttribute('src')
+      audio.load()
+    }
+
+    const fail = (message) => {
+      if (finished) return
+      finished = true
+      cleanup()
+      URL.revokeObjectURL(objectUrl)
+      showToast(message)
+    }
+
+    const acceptFile = (durationValue) => {
+      if (finished) return
+      finished = true
+      cleanup()
+
+      if (
+        durationValue < MIN_AUDIO_DURATION_SECONDS ||
+        durationValue > MAX_AUDIO_DURATION_SECONDS
+      ) {
+        URL.revokeObjectURL(objectUrl)
+        showToast('Audio must be between 1 second and 1 minute.')
+        return
+      }
+
+      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl)
+      setAudioFile(file)
+      setAudioPreviewUrl(objectUrl)
+      setAudioDuration(durationValue)
+    }
+
+    function readDuration() {
+      const durationValue = Number(audio.duration)
+
+      if (Number.isFinite(durationValue) && durationValue > 0) {
+        acceptFile(durationValue)
+        return
+      }
+
+      if (durationValue === Infinity && audio.seekable?.length) {
+        const seekEnd = audio.seekable.end(audio.seekable.length - 1)
+        if (Number.isFinite(seekEnd) && seekEnd > 0) {
+          acceptFile(seekEnd)
+        }
+      }
+    }
+
+    function handleReadError() {
+      fail('This audio file cannot be read.')
+    }
+
+    audio.preload = 'metadata'
+    audio.addEventListener('loadedmetadata', readDuration)
+    audio.addEventListener('durationchange', readDuration)
+    audio.addEventListener('canplay', readDuration)
+    audio.addEventListener('error', handleReadError)
+    audio.src = objectUrl
+    audio.load()
+
+    timeoutId = window.setTimeout(() => {
+      fail('Audio information could not be read. Try another file.')
+    }, 10000)
+  }
 
   const handleAudioChange = (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
-    setMorePopupOpen(false)
-
-    if (!file) return
-
-    if (!file.type.startsWith('audio/')) {
-      showToast('Please choose an audio file.')
-      return
-    }
-
-    showToast(`Audio selected: ${file.name}`)
+    selectAudioFile(file)
   }
 
   const handleImageChange = (event) => {
@@ -899,7 +1408,7 @@ const deleteMessage = (messageId) => {
       <input
         ref={audioInputRef}
         type="file"
-        accept="audio/*"
+        accept={AUDIO_ACCEPT}
         onChange={handleAudioChange}
         className="hidden"
       />
@@ -920,8 +1429,30 @@ const deleteMessage = (messageId) => {
       <MorePopup
         open={morePopupOpen}
         onClose={() => setMorePopupOpen(false)}
-        onUploadAudio={() => audioInputRef.current?.click()}
+        onUploadAudio={openAudioSheet}
         onAuthorNote={handleAuthorNote}
+        hasAuthorNote={messages.some(
+          (message) => message.type === 'author_note'
+        )}
+      />
+
+      <AuthorNoteSheet
+        open={authorNoteOpen}
+        value={authorNoteDraft}
+        onChange={setAuthorNoteDraft}
+        onClose={closeAuthorNote}
+        onSave={saveAuthorNote}
+      />
+
+      <AudioUploadSheet
+        open={audioSheetOpen}
+        file={audioFile}
+        previewUrl={audioPreviewUrl}
+        duration={audioDuration}
+        onChoose={() => audioInputRef.current?.click()}
+        onDropFile={selectAudioFile}
+        onClose={closeAudioSheet}
+        onClear={clearSelectedAudio}
       />
 
       {titlePopupOpen ? (
@@ -978,7 +1509,7 @@ const deleteMessage = (messageId) => {
         <button
           type="button"
           onClick={() => setToast('')}
-          className="fixed inset-x-4 top-[78px] z-[230] mx-auto max-w-[420px] rounded-[16px] bg-[#111827] px-4 py-3 text-center text-[12px] font-bold text-white shadow-xl"
+          className="fixed inset-x-4 top-[78px] z-[300] mx-auto max-w-[320px] rounded-[14px] bg-white px-4 py-3 text-center text-[12px] font-medium text-[#475467] shadow-[0_8px_28px_rgba(15,23,42,0.18)] ring-1 ring-black/5"
         >
           {toast}
         </button>
@@ -1168,11 +1699,9 @@ const deleteMessage = (messageId) => {
       rows={1}
       maxLength={2000}
       placeholder={
-  composerMode === 'author_note'
-  ? "Write author's note..."
-    : selectedCharacter
-      ? `${selectedCharacter.nickname || 'Character'}:`
-      : 'ASIDE:'
+  selectedCharacter
+    ? `${selectedCharacter.nickname || 'Character'}:`
+    : 'ASIDE:'
 }
       className="max-h-[96px] min-h-[20px] w-full resize-none overflow-y-hidden bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
     />
