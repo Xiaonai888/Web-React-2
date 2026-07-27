@@ -403,11 +403,6 @@ function GallerySheet({
   )
 }
 
-  onDelete,
-  onClose,
-  saving,
-  onSave,
-
 function CharacterEditor({
   open,
   group,
