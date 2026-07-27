@@ -986,65 +986,8 @@ const deleteMessage = (messageId) => {
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
-  <div className="relative min-w-0">
-  <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-1.5 py-0.5">
-      <AsideAvatar
-        active={!selectedCharacterId}
-        onClick={() => {
-          setSelectedCharacterId(null)
-          setComposerMode('message')
-        }}
-      />
-
-      {characters.map((character) => (
-        <CharacterAvatar
-          key={character.id}
-          character={character}
-          selected={selectedCharacterId === character.id}
-          onClick={() => {
-            toggleCharacter(character.id)
-            setComposerMode('message')
-          }}
-        />
-      ))}
-    </div>
-  </div>
-
-  <div className="pointer-events-none absolute inset-y-0 -right-1.5 z-10 w-6 bg-gradient-to-r from-transparent via-white/75 to-white" />
-</div>
-
-  <button
-    type="button"
-    onClick={() => setAddPopupOpen(true)}
-    className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
-  >
-    <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
-  <i className="fa-regular fa-user text-[16px]" />
-  <i className="fa-solid fa-plus absolute right-[3px] top-[3px] text-[7px]" />
-</span>
-    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
-      Add
-    </span>
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setMorePopupOpen(true)}
-    className="w-10 text-center active:scale-[0.97]"
-  >
-    <span className="mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
-  <i className="fa-solid fa-chevron-down text-[16px]" />
-</span>
-    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
-      More
-    </span>
-  </button>
-</div>
-
-<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 pl-4 pr-2">
-  <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-x-1 pl-4 pr-2">
+  <div className="relative flex min-h-11 min-w-0 items-center rounded-[10px] bg-[#f3f4f6] px-3 pr-12">
     <textarea
       ref={composerRef}
       value={draft}
@@ -1057,49 +1000,53 @@ const deleteMessage = (messageId) => {
       rows={1}
       maxLength={2000}
       placeholder={
-  composerMode === 'author_words'
-    ? "Author's words:"
-    : selectedCharacter
-      ? `${selectedCharacter.nickname || 'Character'}:`
-      : 'ASIDE:'
-}
+        composerMode === 'author_words'
+          ? "Author's words:"
+          : selectedCharacter
+            ? `${selectedCharacter.nickname || 'Character'}:`
+            : 'ASIDE:'
+      }
       className="max-h-[86px] min-h-[20px] w-full resize-none bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
     />
-  </div>
 
-  <button
-  type="button"
-  onClick={() => setSymbolPanelOpen((current) => !current)}
-  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
-  aria-label="Message symbols"
->
-  <i className="fa-solid fa-icons text-[18px] text-[#111827]" />
-</button>
+    <button
+      type="button"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => setSymbolPanelOpen((current) => !current)}
+      className={`absolute right-1.5 flex h-8 min-w-9 items-center justify-center rounded-[7px] px-1.5 text-[12px] font-medium text-[#111827] active:scale-95 ${
+        symbolPanelOpen ? 'bg-[#dfe2e7]' : 'bg-[#e9eaee]'
+      }`}
+      aria-label="Message symbols"
+      aria-pressed={symbolPanelOpen}
+    >
+      ( )
+    </button>
+  </div>
 
   {composerFocused || draft.trim() ? (
     <button
-  type="button"
-  onMouseDown={(event) => event.preventDefault()}
-  onClick={sendMessage}
-  disabled={!draft.trim()}
-  className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
-    draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
-  }`}
-  aria-label="Send message"
->
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-  >
-    <path d="M22 2 11 13" />
-    <path d="m22 2-7 20-4-9-9-4Z" />
-  </svg>
-</button>
+      type="button"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={sendMessage}
+      disabled={!draft.trim()}
+      className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
+        draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
+      }`}
+      aria-label="Send message"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <path d="M22 2 11 13" />
+        <path d="m22 2-7 20-4-9-9-4Z" />
+      </svg>
+    </button>
   ) : (
     <button
       type="button"
