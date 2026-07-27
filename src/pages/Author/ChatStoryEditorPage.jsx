@@ -62,13 +62,15 @@ function CharacterAvatar({ character, selected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[56px] shrink-0 py-1 text-center active:scale-[0.97]"
+      className={`w-[52px] shrink-0 rounded-[10px] py-1 text-center transition active:scale-[0.97] ${
+  selected ? 'bg-[#f5f6f8]' : 'bg-transparent'
+}`}
       aria-pressed={selected}
     >
       <span
-        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
+        className={`relative mx-auto flex h-[40px] w-[40px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
   selected
-    ? 'ring-2 ring-inset ring-[#7c3aed]'
+    ? 'ring-[3px] ring-inset ring-[#7c3aed]'
     : 'ring-1 ring-inset ring-black/5'
 }`}
       >
@@ -101,13 +103,15 @@ function AsideAvatar({ active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[56px] shrink-0 py-1 text-center active:scale-[0.97]"
+      className={`w-[52px] shrink-0 rounded-[10px] py-1 text-center transition active:scale-[0.97] ${
+  active ? 'bg-[#f5f6f8]' : 'bg-transparent'
+}`}
       aria-pressed={active}
     >
       <span
-        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center rounded-full transition ${
+        className={`relative mx-auto flex h-[40px] w-[40px] items-center justify-center rounded-full transition ${
   active
-    ? 'bg-[#ede9fe] text-[#7c3aed] ring-2 ring-inset ring-[#7c3aed]'
+    ? 'bg-[#ede9fe] text-[#7c3aed] ring-[3px] ring-inset ring-[#7c3aed]'
     : 'bg-[#f2f4f7] text-[#667085] ring-1 ring-inset ring-black/5'
 }`}
       >
@@ -979,7 +983,8 @@ const deleteMessage = (messageId) => {
         </section>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
+      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
+  <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 pl-4 pr-2 pb-1 pt-2">
   <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -1009,12 +1014,12 @@ const deleteMessage = (messageId) => {
   <button
     type="button"
     onClick={() => setAddPopupOpen(true)}
-    className="w-10 rounded-[10px] bg-[#f5f6f8] py-0.5 text-center active:scale-[0.97]"
+    className="w-10 py-0.5 text-center active:scale-[0.97]"
   >
-    <span className="relative mx-auto flex h-9 w-9 items-center justify-center text-[#667085]">
-      <i className="fa-regular fa-user text-[18px]" />
-      <i className="fa-solid fa-plus absolute right-[4px] top-[4px] text-[8px]" />
-    </span>
+    <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
+  <i className="fa-regular fa-user text-[16px]" />
+  <i className="fa-solid fa-plus absolute right-[3px] top-[3px] text-[7px]" />
+</span>
     <span className="mt-1 block text-[8px] font-bold text-[#667085]">
       Add
     </span>
@@ -1025,9 +1030,9 @@ const deleteMessage = (messageId) => {
     onClick={() => setMorePopupOpen(true)}
     className="w-10 text-center active:scale-[0.97]"
   >
-    <span className="mx-auto flex h-9 w-9 items-center justify-center text-[#667085]">
-      <i className="fa-solid fa-chevron-down text-[18px]" />
-    </span>
+    <span className="mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
+  <i className="fa-solid fa-chevron-down text-[16px]" />
+</span>
     <span className="mt-1 block text-[8px] font-bold text-[#667085]">
       More
     </span>
