@@ -1067,7 +1067,7 @@ const deleteMessage = (messageId) => {
   className="flex h-11 w-8 shrink-0 items-center justify-center text-[#111827] active:scale-95"
   aria-label="Message symbols"
 >
-  <i className="fa-regular fa-face-smile text-[19px]" />
+  <i className="fa-solid fa-icons text-[18px] text-[#111827]" />
 </button>
 
   {composerFocused || draft.trim() ? (
@@ -1101,13 +1101,13 @@ const deleteMessage = (messageId) => {
 </div>
 
           {symbolPanelOpen ? (
-  <div className="grid grid-cols-9 gap-1 px-2 pb-1 pt-2">
+  <div className="flex w-full gap-1 px-2 pb-1 pt-2">
     {MESSAGE_SYMBOLS.map((symbol) => (
       <button
         key={symbol}
         type="button"
         onClick={() => insertMessageSymbol(symbol)}
-        className="flex h-9 min-w-0 items-center justify-center rounded-[8px] bg-[#f3f4f6] px-1 text-[12px] font-normal text-[#667085] active:bg-[#e9eaee]"
+        className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-[8px] bg-[#f3f4f6] text-[12px] font-normal text-[#667085] active:bg-[#e5e7eb]"
       >
         {symbol}
       </button>
