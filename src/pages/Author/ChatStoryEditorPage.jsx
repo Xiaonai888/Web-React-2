@@ -103,6 +103,91 @@ function CharacterAvatar({ character, selected, onClick }) {
   )
 }
 
+function CharacterQuickPopup({
+  character,
+  onClose,
+  onConfirm,
+  onEditProfile,
+}) {
+  if (!character) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[260] flex items-center justify-center bg-black/55 px-5"
+      onClick={onClose}
+    >
+      <section
+        className="w-full max-w-[360px] rounded-[28px] bg-white px-6 pb-6 pt-7 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={onEditProfile}
+            className="relative active:scale-[0.98]"
+            aria-label="Edit character profile image"
+          >
+            <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
+              {character.image ? (
+                <img
+                  src={character.image}
+                  alt={character.nickname || 'Character'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <i className="fa-solid fa-user text-[38px] text-[#9b87c9]" />
+              )}
+            </span>
+
+            <span className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-[#111827] text-white shadow-md">
+              <i className="fa-solid fa-camera text-[13px]" />
+            </span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={onEditProfile}
+          className="mt-7 flex h-14 w-full items-center justify-between rounded-full bg-[#f7f7f8] px-5 text-[#111827] active:bg-[#f1f2f4]"
+        >
+          <span className="min-w-0 flex-1 truncate text-center text-[16px] font-medium">
+            {character.nickname || 'Unnamed character'}
+          </span>
+
+          <i className="fa-regular fa-pen-to-square ml-3 shrink-0 text-[17px] text-[#98a2b3]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onEditProfile}
+          className="mx-auto mt-5 flex items-center justify-center gap-2 px-4 py-2 text-[14px] font-medium text-[#7c3aed] active:opacity-60"
+        >
+          Edit Profile
+          <i className="fa-solid fa-angles-right text-[10px]" />
+        </button>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full bg-[#f2f4f7] text-[14px] font-medium text-[#344054] active:scale-[0.98]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[14px] font-medium text-white shadow-sm active:scale-[0.98]"
+          >
+            Confirm
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function AsideAvatar({ active, onClick }) {
   return (
     <button
@@ -808,7 +893,7 @@ export default function ChatStoryEditorPage() {
   const [messages, setMessages] = useState([])
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
-  const [selectedCharacterId, setSelectedCharacterId] = useState(null)
+  const [profilePopupCharacter, setProfilePopupCharacter] = useState(null)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
@@ -1083,11 +1168,7 @@ useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const toggleCharacter = (characterId) => {
-    setSelectedCharacterId((current) =>
-      current === characterId ? null : characterId
-    )
-  }
+  
   
 const insertMessageSymbol = (symbol) => {
   setDraft((current) =>
@@ -1426,6 +1507,33 @@ const deleteMessage = (messageId) => {
         onConfirm={handleAddConfirm}
       />
 
+      <CharacterQuickPopup
+  character={profilePopupCharacter}
+  onClose={() => setProfilePopupCharacter(null)}
+  onConfirm={() => {
+    if (!profilePopupCharacter) return
+
+    setSelectedCharacterId(profilePopupCharacter.id)
+    setComposerMode('message')
+    setProfilePopupCharacter(null)
+    setSymbolPanelOpen(false)
+
+    window.setTimeout(() => {
+      composerRef.current?.focus()
+    }, 50)
+  }}
+  onEditProfile={() => {
+    if (!profilePopupCharacter) return
+
+    const characterId = profilePopupCharacter.id
+    setProfilePopupCharacter(null)
+
+    navigate(
+      `/author/story/${storyId}/chat/characters/${characterId}/profile`
+    )
+  }}
+/>
+
       <MorePopup
         open={morePopupOpen}
         onClose={() => setMorePopupOpen(false)}
@@ -1646,9 +1754,9 @@ const deleteMessage = (messageId) => {
           character={character}
           selected={selectedCharacterId === character.id}
           onClick={() => {
-            toggleCharacter(character.id)
-            setComposerMode('message')
-          }}
+  setProfilePopupCharacter(character)
+  setSymbolPanelOpen(false)
+}}
         />
       ))}
     </div>
