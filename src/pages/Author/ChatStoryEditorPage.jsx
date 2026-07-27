@@ -893,6 +893,7 @@ export default function ChatStoryEditorPage() {
   const [messages, setMessages] = useState([])
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  const [selectedCharacterId, setSelectedCharacterId] = useState(null)
   const [profilePopupCharacter, setProfilePopupCharacter] = useState(null)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
