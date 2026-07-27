@@ -62,13 +62,13 @@ function CharacterAvatar({ character, selected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[40px] shrink-0 py-1 text-center active:scale-[0.97]"
+      className="w-[56px] shrink-0 py-1 text-center active:scale-[0.97]"
       aria-pressed={selected}
     >
       <span
-        className={`relative mx-auto flex h-[38px] w-[38px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
+        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
   selected
-    ? 'ring-1 ring-inset ring-[#7c3aed]'
+    ? 'ring-2 ring-inset ring-[#7c3aed]'
     : 'ring-1 ring-inset ring-black/5'
 }`}
       >
@@ -82,11 +82,7 @@ function CharacterAvatar({ character, selected, onClick }) {
           <i className="fa-solid fa-user text-[18px] text-[#9b87c9]" />
         )}
 
-        {selected ? (
-          <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#7c3aed] text-white ring-2 ring-white">
-            <i className="fa-solid fa-check text-[7px]" />
-          </span>
-        ) : null}
+        
       </span>
 
       <span
@@ -105,13 +101,13 @@ function AsideAvatar({ active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[40px] shrink-0 py-1 text-center active:scale-[0.97]"
+      className="w-[56px] shrink-0 py-1 text-center active:scale-[0.97]"
       aria-pressed={active}
     >
       <span
-        className={`relative mx-auto flex h-[38px] w-[38px] items-center justify-center rounded-full transition ${
+        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center rounded-full transition ${
   active
-    ? 'bg-[#ede9fe] text-[#7c3aed] ring-1 ring-inset ring-[#7c3aed]'
+    ? 'bg-[#ede9fe] text-[#7c3aed] ring-2 ring-inset ring-[#7c3aed]'
     : 'bg-[#f2f4f7] text-[#667085] ring-1 ring-inset ring-black/5'
 }`}
       >
@@ -985,9 +981,9 @@ const deleteMessage = (messageId) => {
 
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 px-2 pb-2 pt-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 pl-4 pr-2 pb-1 pt-2">
   <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-1 py-1 pr-3">
+    <div className="flex w-max gap-2 py-0.5 pr-3">
       <AsideAvatar
         active={!selectedCharacterId}
         onClick={() => {
@@ -1013,7 +1009,7 @@ const deleteMessage = (messageId) => {
   <button
     type="button"
     onClick={() => setAddPopupOpen(true)}
-    className="w-10 text-center active:scale-[0.97]"
+    className="w-10 rounded-[10px] bg-[#f5f6f8] py-0.5 text-center active:scale-[0.97]"
   >
     <span className="relative mx-auto flex h-9 w-9 items-center justify-center text-[#667085]">
       <i className="fa-regular fa-user text-[18px]" />
@@ -1038,7 +1034,7 @@ const deleteMessage = (messageId) => {
   </button>
 </div>
 
-<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 px-2">
+<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 pl-4 pr-2">
   <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f5f3fa] px-3">
     <textarea
       ref={composerRef}
