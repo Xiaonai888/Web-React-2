@@ -403,6 +403,11 @@ function GallerySheet({
   )
 }
 
+  onDelete,
+  onClose,
+  saving,
+  onSave,
+
 function CharacterEditor({
   open,
   group,
@@ -523,12 +528,13 @@ function CharacterEditor({
         </button>
 
         <button
-          type="button"
-          onClick={onSave}
-          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9262ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99]"
-        >
-          Save character
-        </button>
+  type="button"
+  onClick={onSave}
+  disabled={saving}
+  className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9262ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99] disabled:opacity-60"
+>
+  {saving ? 'Saving...' : 'Save character'}
+</button>
 
         {editing ? (
           <button
@@ -942,47 +948,126 @@ export default function ChatStoryCharactersPage() {
     showToast('Character deleted. Press Save to update the database.')
   }
 
-  const saveCharacter = () => {
-    const selectedGroup = ROLE_GROUPS.find((group) => group.key === characterGroup)
-    if (!selectedGroup) return
+  const saveCharacter = async () => {
+  const selectedGroup = ROLE_GROUPS.find((group) => group.key === characterGroup)
+  if (!selectedGroup) return
 
-    const cleanNickname = nickname.trim()
+  const cleanNickname = nickname.trim()
 
-    if (characterGroup !== 'background' && !cleanNickname) {
-      showToast('Please enter a nickname.')
-      return
-    }
+  if (characterGroup !== 'background' && !cleanNickname) {
+    showToast('Please enter a nickname.')
+    return
+  }
 
-    const nextCharacter = {
-      group: characterGroup,
-      image: selectedImage,
-      nickname: cleanNickname,
-      avatarSource,
-      chatSide,
-    }
+  const token = getAuthToken()
 
-    if (editingId) {
-      setCharacters((current) =>
-        current.map((character) =>
-          character.id === editingId
-            ? { ...character, ...nextCharacter }
-            : character
-        )
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const wasEditing = Boolean(editingId)
+  const nextCharacter = {
+    group: characterGroup,
+    image: selectedImage,
+    nickname: cleanNickname,
+    avatarSource,
+    chatSide,
+  }
+
+  const nextCharacters = editingId
+    ? characters.map((character) =>
+        character.id === editingId
+          ? { ...character, ...nextCharacter }
+          : character
       )
-    } else {
-      setCharacters((current) => [
-        ...current,
-        {
-          id: makeId(),
-          ...nextCharacter,
-        },
-      ])
+    : [...characters, { id: makeId(), ...nextCharacter }]
+
+  try {
+    setSaving(true)
+
+    const uploadedCharacters = []
+
+    for (let index = 0; index < nextCharacters.length; index += 1) {
+      const character = nextCharacters[index]
+      const avatarUrl = await uploadCharacterImage(
+        token,
+        character.image,
+        storyId,
+        index
+      )
+
+      uploadedCharacters.push({
+        id: character.id,
+        role_group: character.group,
+        nickname: character.nickname || null,
+        avatar_url: avatarUrl,
+        avatar_source: character.avatarSource || 'device',
+        chat_side:
+          character.chatSide ||
+          (character.group === 'main' ? 'right' : 'left'),
+        gender: character.gender || null,
+        birthday: character.birthday || null,
+        height_cm: character.heightCm === '' ? null : character.heightCm,
+        occupation: character.occupation || null,
+        personality: character.personality || null,
+        relationship: character.relationship || null,
+        bio: character.bio || null,
+      })
     }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ characters: uploadedCharacters }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to save character')
+    }
+
+    setCharacters(
+      (data.characters || []).map((character) => ({
+        id: character.id,
+        group: character.role_group,
+        image: character.avatar_url || '',
+        nickname: character.nickname || '',
+        avatarSource: character.avatar_source || 'device',
+        chatSide:
+          character.chat_side ||
+          (character.role_group === 'main' ? 'right' : 'left'),
+        gender: character.gender || '',
+        birthday: character.birthday || '',
+        heightCm: character.height_cm || '',
+        occupation: character.occupation || '',
+        personality: character.personality || '',
+        relationship: character.relationship || '',
+        bio: character.bio || '',
+      }))
+    )
 
     setActiveGroupKey(characterGroup)
     setEditorOpen(false)
-    showToast(editingId ? 'Character updated. Press Save to keep changes.' : 'Character added.')
+    setEditingId('')
+    showToast(wasEditing ? 'Character updated.' : 'Character added.')
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message || 'Couldn’t save changes.'
+    )
+  } finally {
+    setSaving(false)
   }
+}
 
   const handleSavePage = async () => {
   if (totalCharacters < 2) {
@@ -1074,7 +1159,7 @@ export default function ChatStoryCharactersPage() {
         <button
           type="button"
           onClick={() => setToast('')}
-          className="fixed inset-x-4 top-[76px] z-[220] mx-auto max-w-[420px] rounded-[16px] bg-[#111827] px-4 py-3 text-center text-[12px] font-bold text-white shadow-xl"
+          className="fixed inset-x-4 top-[76px] z-[220] mx-auto max-w-[320px] rounded-[14px] bg-white px-4 py-3 text-center text-[12px] font-normal text-[#667085] shadow-[0_6px_24px_rgba(15,23,42,0.12)] ring-1 ring-black/5"
         >
           {toast}
         </button>
@@ -1130,6 +1215,7 @@ export default function ChatStoryCharactersPage() {
         onChangeImage={openImageSourceFromEditor}
         onDelete={deleteCharacter}
         onClose={() => setEditorOpen(false)}
+        saving={saving}
         onSave={saveCharacter}
       />
 
