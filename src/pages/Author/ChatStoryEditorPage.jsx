@@ -26,6 +26,7 @@ function countWords(value) {
   return text.split(/\s+/u).filter(Boolean).length
 }
 
+const MESSAGE_SYMBOLS = ['(...)', '—', '…', '?!', '♡', '✦', '☁', '「」']
 function makeId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -61,13 +62,13 @@ function CharacterAvatar({ character, selected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[64px] shrink-0 text-center active:scale-[0.97]"
+      className="w-[56px] shrink-0 text-center active:scale-[0.97]"
       aria-pressed={selected}
     >
       <span
-        className={`relative mx-auto flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
+        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
           selected
-            ? 'ring-[3px] ring-[#7c3aed] ring-offset-2 ring-offset-white'
+            ? 'ring-2 ring-[#7c3aed] ring-offset-2 ring-offset-white'
             : 'ring-1 ring-black/5'
         }`}
       >
@@ -89,7 +90,7 @@ function CharacterAvatar({ character, selected, onClick }) {
       </span>
 
       <span
-        className={`mt-1.5 block truncate text-[9.5px] font-extrabold ${
+        className={`mt-1 block truncate text-[9px] font-extrabold ${
           selected ? 'text-[#6d42db]' : 'text-[#667085]'
         }`}
       >
@@ -104,13 +105,13 @@ function AsideAvatar({ active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[58px] shrink-0 text-center active:scale-[0.97]"
+      className="w-[52px] shrink-0 text-center active:scale-[0.97]"
       aria-pressed={active}
     >
       <span
-        className={`relative mx-auto flex h-[46px] w-[46px] items-center justify-center rounded-full transition ${
+        className={`relative mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full transition ${
           active
-            ? 'bg-[#ede9fe] text-[#6d42db] ring-[3px] ring-[#7c3aed] ring-offset-2 ring-offset-white'
+            ? 'bg-[#ede9fe] text-[#6d42db] ring-2 ring-[#7c3aed] ring-offset-2 ring-offset-white'
             : 'bg-[#f2f4f7] text-[#7c3aed] ring-1 ring-black/5'
         }`}
       >
@@ -381,6 +382,7 @@ export default function ChatStoryEditorPage() {
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
   const [morePopupOpen, setMorePopupOpen] = useState(false)
+  const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
   const [savedSeconds, setSavedSeconds] = useState(0)
 
@@ -630,7 +632,16 @@ useEffect(() => {
       current === characterId ? null : characterId
     )
   }
-
+  
+const insertMessageSymbol = (symbol) => {
+  setDraft((current) =>
+    `${current}${current && !/\s$/.test(current) ? ' ' : ''}${symbol}`
+  )
+  setSymbolPanelOpen(false)
+  setComposerFocused(true)
+  window.setTimeout(() => composerRef.current?.focus(), 50)
+}
+  
   const sendMessage = () => {
   const text = draft.trim()
   if (!text) return
@@ -646,6 +657,7 @@ useEffect(() => {
     },
   ])
   setDraft('')
+  setSymbolPanelOpen(false)
 }
 
 const deleteMessage = (messageId) => {
@@ -995,82 +1007,113 @@ const deleteMessage = (messageId) => {
             ))}
 
             <button
-              type="button"
-              onClick={() => setAddPopupOpen(true)}
-              className="w-[58px] shrink-0 text-center active:scale-[0.97]"
-            >
-              <span className="mx-auto flex h-[46px] w-[46px] items-center justify-center rounded-full border border-dashed border-[#b9a7dd] bg-[#faf8ff] text-[#7c3aed]">
-                <i className="fa-solid fa-user-plus text-[14px]" />
-              </span>
-              <span className="mt-1 block text-[9px] font-bold text-[#7c3aed]">
-                Add
-              </span>
-            </button>
+  type="button"
+  onClick={() => setAddPopupOpen(true)}
+  className="w-[52px] shrink-0 text-center active:scale-[0.97]"
+>
+  <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center text-[#7c3aed]">
+    <i className="fa-solid fa-user-plus text-[20px]" />
+  </span>
+  <span className="mt-1 block text-[9px] font-bold text-[#7c3aed]">
+    Add
+  </span>
+</button>
 
-            <button
-              type="button"
-              onClick={() => setMorePopupOpen(true)}
-              className="w-[58px] shrink-0 text-center active:scale-[0.97]"
-            >
-              <span className="mx-auto flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[#f2f4f7] text-[#667085] ring-1 ring-black/5">
-                <i className="fa-regular fa-image text-[15px]" />
-              </span>
-              <span className="mt-1 block text-[9px] font-bold text-[#667085]">
-                More
-              </span>
-            </button>
+<button
+  type="button"
+  onClick={() => setMorePopupOpen(true)}
+  className="w-[52px] shrink-0 text-center active:scale-[0.97]"
+>
+  <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center text-[#667085]">
+    <i className="fa-solid fa-chevron-down text-[20px]" />
+  </span>
+  <span className="mt-1 block text-[9px] font-bold text-[#667085]">
+    More
+  </span>
+</button>
           </div>
 
-          <div className="flex items-end gap-2 px-3">
-            <div className="min-w-0 flex-1 rounded-[18px] bg-[#f5f3fa] px-4 py-2">
-              <textarea
-                ref={composerRef}
-                value={draft}
-                onFocus={() => setComposerFocused(true)}
-                onBlur={() => {
-                  if (!draft.trim()) setComposerFocused(false)
-                }}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={handleComposerKeyDown}
-                rows={1}
-                maxLength={2000}
-                placeholder={
-                  composerMode === 'author_words'
-                    ? "Write author's words..."
-                    : selectedCharacter
-                      ? 'Write a chat message...'
-                      : 'Write narration without a character...'
-                }
-                className="max-h-[86px] min-h-[24px] w-full resize-none bg-transparent text-[12.5px] leading-5 text-[#111827] outline-none placeholder:text-[#b0a7bf]"
-              />
-            </div>
+          {symbolPanelOpen ? (
+  <div className="border-t border-black/5 px-3 pb-2 pt-2">
+    <div className="flex gap-2 overflow-x-auto">
+      {MESSAGE_SYMBOLS.map((symbol) => (
+        <button
+          key={symbol}
+          type="button"
+          onClick={() => insertMessageSymbol(symbol)}
+          className="h-9 shrink-0 rounded-[9px] bg-[#f6f3fb] px-3 text-[13px] font-medium text-[#5f4a83] active:scale-95"
+        >
+          {symbol}
+        </button>
+      ))}
+    </div>
+  </div>
+) : null}
 
-            {composerFocused || draft.trim() ? (
-              <button
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={sendMessage}
-                disabled={!draft.trim()}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white ${
-                  draft.trim()
-                    ? 'bg-gradient-to-br from-[#9362ef] to-[#6d42db] shadow-[0_6px_14px_rgba(109,66,219,0.28)] active:scale-95'
-                    : 'bg-[#d0d5dd]'
-                }`}
-                aria-label="Send message"
-              >
-                <i className="fa-solid fa-arrow-up text-[12px]" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f2f4f7] text-[#667085] ring-1 ring-black/5 active:scale-95"
-                aria-label="Add image"
-              >
-                <i className="fa-regular fa-image text-[15px]" />
-              </button>
-            )}
-          </div>
+<div className="flex items-center gap-1 px-3">
+  <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f5f3fa] px-3">
+    <textarea
+      ref={composerRef}
+      value={draft}
+      onFocus={() => setComposerFocused(true)}
+      onBlur={() => {
+        if (!draft.trim()) setComposerFocused(false)
+      }}
+      onChange={(event) => setDraft(event.target.value)}
+      onKeyDown={handleComposerKeyDown}
+      rows={1}
+      maxLength={2000}
+      placeholder={
+        composerMode === 'author_words'
+          ? "Write author's words..."
+          : selectedCharacter
+            ? 'Write a chat message...'
+            : 'Write narration without a character...'
+      }
+      className="max-h-[86px] min-h-[20px] w-full resize-none bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:text-[#b0a7bf]"
+    />
+  </div>
+
+  <button
+    type="button"
+    onClick={() => setSymbolPanelOpen((current) => !current)}
+    className={`flex h-11 w-10 shrink-0 items-center justify-center active:scale-95 ${
+      symbolPanelOpen ? 'text-[#7c3aed]' : 'text-[#667085]'
+    }`}
+    aria-label="Message symbols"
+  >
+    <i className="fa-solid fa-icons text-[19px]" />
+  </button>
+
+  {composerFocused || draft.trim() ? (
+    <button
+      type="button"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={sendMessage}
+      disabled={!draft.trim()}
+      className={`flex h-11 w-10 shrink-0 items-center justify-center rounded-[10px] text-white ${
+        draft.trim()
+          ? 'bg-gradient-to-br from-[#9362ef] to-[#6d42db] active:scale-95'
+          : 'bg-[#d0d5dd]'
+      }`}
+      aria-label="Send message"
+    >
+      <i className="fa-solid fa-arrow-up text-[13px]" />
+    </button>
+  ) : (
+    <button
+      type="button"
+      onClick={() => {
+        setSymbolPanelOpen(false)
+        imageInputRef.current?.click()
+      }}
+      className="flex h-11 w-10 shrink-0 items-center justify-center text-[#667085] active:scale-95"
+      aria-label="Add image"
+    >
+      <i className="fa-regular fa-image text-[20px]" />
+    </button>
+  )}
+</div>
         </div>
       </div>
     </div>
