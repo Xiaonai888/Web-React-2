@@ -989,7 +989,7 @@ const deleteMessage = (messageId) => {
           <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
   <div className="relative min-w-0">
   <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-1.5 py-0.5 pr-2">
+    <div className="flex w-max gap-1.5 py-0.5">
       <AsideAvatar
         active={!selectedCharacterId}
         onClick={() => {
@@ -1012,13 +1012,13 @@ const deleteMessage = (messageId) => {
     </div>
   </div>
 
-  <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-r from-transparent to-white" />
+  <div className="pointer-events-none absolute inset-y-0 -right-1.5 z-10 w-6 bg-gradient-to-r from-transparent via-white/75 to-white" />
 </div>
 
   <button
     type="button"
     onClick={() => setAddPopupOpen(true)}
-    className="w-10 py-0.5 text-center active:scale-[0.97]"
+    className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
   >
     <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
   <i className="fa-regular fa-user text-[16px]" />
