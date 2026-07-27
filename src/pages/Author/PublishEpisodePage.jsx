@@ -100,6 +100,7 @@ export function SuccessModal({
   releaseOption,
   episodeNumber,
   episodeTitle,
+  isManga,
   onStoryManager,
   onAddEpisode,
 }) {
@@ -235,7 +236,7 @@ export function SuccessModal({
         </div>
 
         <div className="px-5 pb-5 text-center">
-          <h2 className="text-[22px] font-bold text-[#24104F]">
+          <h2 className={`text-[22px] font-bold ${isManga ? 'text-[#FE526E]' : 'text-[#24104F]'}`}>
             {heading}
           </h2>
 
@@ -255,7 +256,9 @@ export function SuccessModal({
           <button
             type="button"
             onClick={onAddEpisode}
-            className="mt-5 h-12 w-full rounded-[14px] bg-gradient-to-r from-[#6D28D9] via-[#8B3DFF] to-[#A855F7] px-4 text-[13px] font-semibold text-white transition active:scale-[0.98]"
+            className={`mt-5 h-12 w-full rounded-[14px] px-4 text-[13px] font-semibold text-white transition active:scale-[0.98] ${
+  isManga ? 'bg-[#FE526E]' : 'bg-gradient-to-r from-[#6D28D9] via-[#8B3DFF] to-[#A855F7]'
+}`}
           >
             Add Next Episode
           </button>
@@ -570,6 +573,7 @@ const handleAcceptAgreement = async (agreement) => {
 
       <SuccessModal
   open={successOpen}
+  isManga={isManga}
   isFirstEpisode={isFirstEpisode}
   releaseOption={releaseOption}
   onStoryManager={() => {
