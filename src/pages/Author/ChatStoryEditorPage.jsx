@@ -148,6 +148,59 @@ function AsideMessage({ message, onDelete }) {
   )
 }
 
+function AuthorNoteMessage({ message, onDelete }) {
+  return (
+    <section className="mx-auto mt-8 max-w-[560px] pb-3">
+      <div className="mb-4 text-center">
+        <div className="text-[11px] tracking-[0.18em] text-[#8a7d96]">
+          to be continued
+        </div>
+
+        <div className="mt-2 flex items-center justify-center gap-2 px-6">
+          <span className="h-px flex-1 bg-[#ece7ef]" />
+          <span className="text-[12px] text-[#ef4444]">♥</span>
+          <span className="h-px flex-1 bg-[#ece7ef]" />
+        </div>
+      </div>
+
+      <div className="relative overflow-hidden rounded-[16px] border border-[#e5d8ff] bg-gradient-to-br from-[#fbf9ff] to-[#f5efff] px-4 py-4 shadow-[0_6px_18px_rgba(124,58,237,0.06)]">
+        <span className="absolute right-4 top-3 text-[17px] text-[#c4a7ff]">
+          ✦
+        </span>
+
+        <span className="absolute right-8 top-7 text-[10px] text-[#d9c8ff]">
+          ✦
+        </span>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eadfff] text-[#7c3aed]">
+              <i className="fa-solid fa-pen text-[11px]" />
+            </span>
+
+            <h3 className="text-[13px] font-bold text-[#6d42db]">
+              Author&apos;s Note
+            </h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onDelete(message.id)}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[#a89ab8] active:bg-white/80 active:text-[#dc2626]"
+            aria-label="Delete author's note"
+          >
+            <i className="fa-regular fa-trash-can text-[10px]" />
+          </button>
+        </div>
+
+        <p className="mt-3 whitespace-pre-wrap text-[12.5px] leading-6 text-[#475467]">
+          {message.text}
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function ChatMessage({ message, character, onDelete }) {
   const right = character?.chatSide === 'right'
 
@@ -307,7 +360,7 @@ function AddCharacterPopup({ open, onClose, onConfirm }) {
   )
 }
 
-function MorePopup({ open, onClose, onUploadAudio, onAuthorsWords }) {
+function MorePopup({ open, onClose, onUploadAudio, onAuthorNote }) {
   if (!open) return null
 
   return (
@@ -333,13 +386,13 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorsWords }) {
 
           <button
             type="button"
-            onClick={onAuthorsWords}
+            onClick={onAuthorNote}
             className="flex min-h-[126px] flex-col items-center justify-center rounded-[20px] bg-[#faf9fc] px-3 text-center active:scale-[0.98]"
           >
             <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
               <i className="fa-regular fa-comment-dots text-[22px]" />
             </span>
-            <span className="mt-3 text-[12px] font-medium text-[#111827]">Author&apos;s words</span>
+            <span className="mt-3 text-[12px] font-medium text-[#111827]">Add Author&apos;s Note</span>
           </button>
         </div>
 
@@ -386,6 +439,14 @@ export default function ChatStoryEditorPage() {
   const [composerMode, setComposerMode] = useState('message')
   const [savedSeconds, setSavedSeconds] = useState(0)
 
+  useEffect(() => {
+    const textarea = composerRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 96)}px`
+    textarea.style.overflowY = textarea.scrollHeight > 96 ? 'auto' : 'hidden'
+  }, [draft])
+
   const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
   const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
   const startNewEpisode = searchParams.get('new') === '1'
@@ -402,10 +463,9 @@ export default function ChatStoryEditorPage() {
     : null
 
   const wordCount = useMemo(() => {
-  return messages.reduce(
-    (total, message) => total + countWords(message.text),
-    0
-  )
+  return messages
+    .filter((message) => message.type !== 'author_note')
+    .reduce((total, message) => total + countWords(message.text), 0)
 }, [messages])
 
   const showToast = (message) => {
@@ -609,7 +669,12 @@ useEffect(() => {
         setMessages(
           (parsed.messages || []).map((message) => ({
             id: message.id || makeId(),
-            type: message.type === 'chat' ? 'chat' : 'aside',
+            type:
+  message.type === 'chat'
+    ? 'chat'
+    : message.type === 'author_note'
+      ? 'author_note'
+      : 'aside',
             characterId: message.character_id || null,
             text: message.text || '',
             createdAt: message.created_at || new Date().toISOString(),
@@ -646,18 +711,49 @@ const insertMessageSymbol = (symbol) => {
   const text = draft.trim()
   if (!text) return
 
-  commitMessages((current) => [
-    ...current,
-    {
-      id: makeId(),
-      type: selectedCharacter ? 'chat' : 'aside',
-      characterId: selectedCharacter?.id || null,
-      text,
-      createdAt: new Date().toISOString(),
-    },
-  ])
+  const nextMessage = {
+    id: makeId(),
+    type:
+      composerMode === 'author_note'
+        ? 'author_note'
+        : selectedCharacter
+          ? 'chat'
+          : 'aside',
+    characterId:
+      composerMode === 'author_note'
+        ? null
+        : selectedCharacter?.id || null,
+    text,
+    createdAt: new Date().toISOString(),
+  }
+
+  commitMessages((current) => {
+    if (nextMessage.type === 'author_note') {
+      return [
+        ...current.filter((message) => message.type !== 'author_note'),
+        nextMessage,
+      ]
+    }
+
+    const authorNote = current.find(
+      (message) => message.type === 'author_note'
+    )
+
+    const storyMessages = current.filter(
+      (message) => message.type !== 'author_note'
+    )
+
+    return authorNote
+      ? [...storyMessages, nextMessage, authorNote]
+      : [...storyMessages, nextMessage]
+  })
+
   setDraft('')
   setSymbolPanelOpen(false)
+
+  if (composerMode === 'author_note') {
+    setComposerMode('message')
+  }
 }
 
 const deleteMessage = (messageId) => {
@@ -678,12 +774,17 @@ const deleteMessage = (messageId) => {
     navigate(`/author/story/${storyId}/chat/characters`)
   }
 
-  const handleAuthorsWords = () => {
-    setMorePopupOpen(false)
-    setSelectedCharacterId(null)
-    setComposerMode('author_words')
-    window.setTimeout(() => composerRef.current?.focus(), 80)
-  }
+  const handleAuthorNote = () => {
+  const existingNote = messages.find(
+    (message) => message.type === 'author_note'
+  )
+
+  setMorePopupOpen(false)
+  setSelectedCharacterId(null)
+  setComposerMode('author_note')
+  setDraft(existingNote?.text || '')
+  window.setTimeout(() => composerRef.current?.focus(), 80)
+}
 
   const handleAudioChange = (event) => {
     const file = event.target.files?.[0]
@@ -722,10 +823,10 @@ const deleteMessage = (messageId) => {
       return
     }
 
-    if (!messages.length) {
-      showToast('Add at least one Chat or ASIDE message.')
-      return
-    }
+    if (!messages.some((message) => message.type !== 'author_note')) {
+  showToast('Add at least one Chat or ASIDE message.')
+  return
+}
 
     const token = getAuthToken()
 
@@ -820,7 +921,7 @@ const deleteMessage = (messageId) => {
         open={morePopupOpen}
         onClose={() => setMorePopupOpen(false)}
         onUploadAudio={() => audioInputRef.current?.click()}
-        onAuthorsWords={handleAuthorsWords}
+        onAuthorNote={handleAuthorNote}
       />
 
       {titlePopupOpen ? (
@@ -919,7 +1020,11 @@ const deleteMessage = (messageId) => {
     <button
       type="button"
       onClick={saveAndContinue}
-      disabled={saving || loading || !messages.length}
+      disabled={
+  saving ||
+  loading ||
+  !messages.some((message) => message.type !== 'author_note')
+}
       className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-bold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {saving ? 'Saving...' : 'Next'}
@@ -962,21 +1067,27 @@ const deleteMessage = (messageId) => {
           ) : (
             <div>
               {messages.map((message) =>
-                message.type === 'aside' ? (
-                  <AsideMessage
-                    key={message.id}
-                    message={message}
-                    onDelete={deleteMessage}
-                  />
-                ) : (
-                  <ChatMessage
-                    key={message.id}
-                    message={message}
-                    character={characterMap[message.characterId]}
-                    onDelete={deleteMessage}
-                  />
-                )
-              )}
+  message.type === 'author_note' ? (
+    <AuthorNoteMessage
+      key={message.id}
+      message={message}
+      onDelete={deleteMessage}
+    />
+  ) : message.type === 'aside' ? (
+    <AsideMessage
+      key={message.id}
+      message={message}
+      onDelete={deleteMessage}
+    />
+  ) : (
+    <ChatMessage
+      key={message.id}
+      message={message}
+      character={characterMap[message.characterId]}
+      onDelete={deleteMessage}
+    />
+  )
+)}
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -986,8 +1097,65 @@ const deleteMessage = (messageId) => {
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-x-1 pl-4 pr-2">
-  <div className="relative flex min-h-11 min-w-0 items-center rounded-[10px] bg-[#f3f4f6] px-3 pr-12">
+          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
+  <div className="relative min-w-0">
+  <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex w-max gap-1.5 py-0.5">
+      <AsideAvatar
+        active={!selectedCharacterId}
+        onClick={() => {
+          setSelectedCharacterId(null)
+          setComposerMode('message')
+        }}
+      />
+
+      {characters.map((character) => (
+        <CharacterAvatar
+          key={character.id}
+          character={character}
+          selected={selectedCharacterId === character.id}
+          onClick={() => {
+            toggleCharacter(character.id)
+            setComposerMode('message')
+          }}
+        />
+      ))}
+    </div>
+  </div>
+
+  <div className="pointer-events-none absolute inset-y-0 -right-1.5 z-10 w-6 bg-gradient-to-r from-transparent via-white/75 to-white" />
+</div>
+
+  <button
+    type="button"
+    onClick={() => setAddPopupOpen(true)}
+    className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
+  >
+    <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
+  <i className="fa-regular fa-user text-[16px]" />
+  <i className="fa-solid fa-plus absolute right-[3px] top-[3px] text-[7px]" />
+</span>
+    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
+      Add
+    </span>
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setMorePopupOpen(true)}
+    className="w-10 text-center active:scale-[0.97]"
+  >
+    <span className="mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
+  <i className="fa-solid fa-chevron-down text-[16px]" />
+</span>
+    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
+      More
+    </span>
+  </button>
+</div>
+
+<div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-x-1 pl-4 pr-2">
+  <div className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12">
     <textarea
       ref={composerRef}
       value={draft}
@@ -1000,53 +1168,62 @@ const deleteMessage = (messageId) => {
       rows={1}
       maxLength={2000}
       placeholder={
-        composerMode === 'author_words'
-          ? "Author's words:"
-          : selectedCharacter
-            ? `${selectedCharacter.nickname || 'Character'}:`
-            : 'ASIDE:'
-      }
-      className="max-h-[86px] min-h-[20px] w-full resize-none bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
+  composerMode === 'author_note'
+  ? "Write author's note..."
+    : selectedCharacter
+      ? `${selectedCharacter.nickname || 'Character'}:`
+      : 'ASIDE:'
+}
+      className="max-h-[96px] min-h-[20px] w-full resize-none overflow-y-hidden bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
     />
 
     <button
       type="button"
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => setSymbolPanelOpen((current) => !current)}
-      className={`absolute right-1.5 flex h-8 min-w-9 items-center justify-center rounded-[7px] px-1.5 text-[12px] font-medium text-[#111827] active:scale-95 ${
+      className={`absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-[7px] text-[12px] font-medium text-[#111827] active:scale-95 ${
         symbolPanelOpen ? 'bg-[#dfe2e7]' : 'bg-[#e9eaee]'
       }`}
       aria-label="Message symbols"
       aria-pressed={symbolPanelOpen}
     >
-      ( )
+      「」
     </button>
   </div>
 
+  <button
+  type="button"
+  onClick={() => setSymbolPanelOpen((current) => !current)}
+  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
+  aria-label="Message symbols"
+>
+  <i className="fa-solid fa-icons text-[18px] text-[#111827]" />
+</button>
+
   {composerFocused || draft.trim() ? (
     <button
-      type="button"
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={sendMessage}
-      disabled={!draft.trim()}
-      className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
-        draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
-      }`}
-      aria-label="Send message"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-5 w-5"
-      >
-        <path d="M22 2 11 13" />
-        <path d="m22 2-7 20-4-9-9-4Z" />
-      </svg>
-    </button>
+  type="button"
+  onMouseDown={(event) => event.preventDefault()}
+  onClick={sendMessage}
+  disabled={!draft.trim()}
+  className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
+    draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
+  }`}
+  aria-label="Send message"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+  >
+    <path d="M22 2 11 13" />
+    <path d="m22 2-7 20-4-9-9-4Z" />
+  </svg>
+</button>
   ) : (
     <button
       type="button"
