@@ -62,11 +62,11 @@ function CharacterAvatar({ character, selected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[56px] shrink-0 text-center active:scale-[0.97]"
+      className="w-[40px] shrink-0 text-center active:scale-[0.97]"
       aria-pressed={selected}
     >
       <span
-        className={`relative mx-auto flex h-[44px] w-[44px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
+        className={`relative mx-auto flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
           selected
             ? 'ring-2 ring-[#7c3aed] ring-offset-2 ring-offset-white'
             : 'ring-1 ring-black/5'
@@ -90,7 +90,7 @@ function CharacterAvatar({ character, selected, onClick }) {
       </span>
 
       <span
-        className={`mt-1 block truncate text-[9px] font-extrabold ${
+        className={`mt-1 block truncate text-[8px] font-bold ${
           selected ? 'text-[#6d42db]' : 'text-[#667085]'
         }`}
       >
@@ -105,11 +105,11 @@ function AsideAvatar({ active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-[52px] shrink-0 text-center active:scale-[0.97]"
+      className="w-[40px] shrink-0 text-center active:scale-[0.97]"
       aria-pressed={active}
     >
       <span
-        className={`relative mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full transition ${
+        className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-full transition ${
           active
             ? 'bg-[#ede9fe] text-[#6d42db] ring-2 ring-[#7c3aed] ring-offset-2 ring-offset-white'
             : 'bg-[#f2f4f7] text-[#7c3aed] ring-1 ring-black/5'
@@ -119,7 +119,7 @@ function AsideAvatar({ active, onClick }) {
       </span>
 
       <span
-        className={`mt-1 block truncate text-[9px] font-bold ${
+        className={`mt-1 block truncate text-[8px] font-bold ${
           active ? 'text-[#6d42db]' : 'text-[#667085]'
         }`}
       >
@@ -985,38 +985,41 @@ const deleteMessage = (messageId) => {
 
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgba(15,23,42,0.08)]">
         <div className="mx-auto max-w-5xl">
-          <div className="flex gap-1.5 overflow-x-auto px-3 pb-1.5 pt-2.5">
-            <AsideAvatar
-              active={!selectedCharacterId}
-              onClick={() => {
-                setSelectedCharacterId(null)
-                setComposerMode('message')
-              }}
-            />
+          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 px-2 pb-1.5 pt-2.5">
+  <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex w-max gap-1 pr-3">
+      <AsideAvatar
+        active={!selectedCharacterId}
+        onClick={() => {
+          setSelectedCharacterId(null)
+          setComposerMode('message')
+        }}
+      />
 
-            {characters.map((character) => (
-              <CharacterAvatar
-                key={character.id}
-                character={character}
-                selected={selectedCharacterId === character.id}
-                onClick={() => {
-                  toggleCharacter(character.id)
-                  setComposerMode('message')
-                }}
-              />
-            ))}
+      {characters.map((character) => (
+        <CharacterAvatar
+          key={character.id}
+          character={character}
+          selected={selectedCharacterId === character.id}
+          onClick={() => {
+            toggleCharacter(character.id)
+            setComposerMode('message')
+          }}
+        />
+      ))}
+    </div>
+  </div>
 
-           <div className="ml-auto flex shrink-0 gap-1">
   <button
     type="button"
     onClick={() => setAddPopupOpen(true)}
-    className="w-[52px] shrink-0 text-center active:scale-[0.97]"
+    className="w-10 text-center active:scale-[0.97]"
   >
-    <span className="relative mx-auto flex h-[42px] w-[42px] items-center justify-center text-[#667085]">
-      <i className="fa-regular fa-user text-[20px]" />
-      <i className="fa-solid fa-plus absolute right-[7px] top-[8px] text-[9px]" />
+    <span className="relative mx-auto flex h-9 w-9 items-center justify-center text-[#667085]">
+      <i className="fa-regular fa-user text-[18px]" />
+      <i className="fa-solid fa-plus absolute right-[4px] top-[4px] text-[8px]" />
     </span>
-    <span className="mt-1 block text-[9px] font-bold text-[#667085]">
+    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
       Add
     </span>
   </button>
@@ -1024,20 +1027,18 @@ const deleteMessage = (messageId) => {
   <button
     type="button"
     onClick={() => setMorePopupOpen(true)}
-    className="w-[52px] shrink-0 text-center active:scale-[0.97]"
+    className="w-10 text-center active:scale-[0.97]"
   >
-    <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center text-[#667085]">
-      <i className="fa-solid fa-chevron-down text-[20px]" />
+    <span className="mx-auto flex h-9 w-9 items-center justify-center text-[#667085]">
+      <i className="fa-solid fa-chevron-down text-[18px]" />
     </span>
-    <span className="mt-1 block text-[9px] font-bold text-[#667085]">
+    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
       More
     </span>
   </button>
 </div>
-          </div>
 
-
-<div className="flex items-center gap-1 px-2">
+<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 px-2">
   <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f5f3fa] px-3">
     <textarea
       ref={composerRef}
@@ -1064,7 +1065,7 @@ const deleteMessage = (messageId) => {
   <button
   type="button"
   onClick={() => setSymbolPanelOpen((current) => !current)}
-  className="flex h-11 w-8 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
   aria-label="Message symbols"
 >
   <i className="fa-solid fa-icons text-[18px] text-[#111827]" />
@@ -1076,7 +1077,7 @@ const deleteMessage = (messageId) => {
       onMouseDown={(event) => event.preventDefault()}
       onClick={sendMessage}
       disabled={!draft.trim()}
-      className={`flex h-11 w-8 shrink-0 items-center justify-center rounded-[10px] text-white ${
+      className={`flex h-11 w-10 items-center justify-center rounded-[10px] text-white ${
         draft.trim()
           ? 'bg-gradient-to-br from-[#9362ef] to-[#6d42db] active:scale-95'
           : 'bg-[#d0d5dd]'
@@ -1092,7 +1093,7 @@ const deleteMessage = (messageId) => {
     setSymbolPanelOpen(false)
     imageInputRef.current?.click()
   }}
-  className="flex h-11 w-8 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
   aria-label="Add image"
 >
   <i className="fa-regular fa-image text-[20px]" />
