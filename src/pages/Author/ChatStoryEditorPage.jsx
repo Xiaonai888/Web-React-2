@@ -1191,15 +1191,6 @@ const deleteMessage = (messageId) => {
     </button>
   </div>
 
-  <button
-  type="button"
-  onClick={() => setSymbolPanelOpen((current) => !current)}
-  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
-  aria-label="Message symbols"
->
-  <i className="fa-solid fa-icons text-[18px] text-[#111827]" />
-</button>
-
   {composerFocused || draft.trim() ? (
     <button
   type="button"
