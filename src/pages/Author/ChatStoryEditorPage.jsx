@@ -987,8 +987,9 @@ const deleteMessage = (messageId) => {
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-1 pl-4 pr-2 pb-1 pt-2">
-  <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-2 py-0.5 pr-3">
+  <div className="relative min-w-0">
+  <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex w-max gap-2 py-0.5 pr-8">
       <AsideAvatar
         active={!selectedCharacterId}
         onClick={() => {
@@ -1010,6 +1011,9 @@ const deleteMessage = (messageId) => {
       ))}
     </div>
   </div>
+
+  <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-r from-transparent via-white/70 to-white" />
+</div>
 
   <button
     type="button"
