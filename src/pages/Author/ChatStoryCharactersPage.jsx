@@ -98,6 +98,48 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+function mapCharacter(character) {
+  return {
+    id: character.id,
+    group: character.role_group,
+    image: character.avatar_url || '',
+    nickname: character.nickname || '',
+    avatarSource: character.avatar_source || 'device',
+    isLead: character.is_lead === true,
+    chatSide: character.is_lead === true ? 'right' : 'left',
+    gender: character.gender || '',
+    birthday: character.birthday || '',
+    heightCm: character.height_cm || '',
+    occupation: character.occupation || '',
+    personality: character.personality || '',
+    relationship: character.relationship || '',
+    bio: character.bio || '',
+  }
+}
+
+function normalizeLeadCharacters(value) {
+  const mainCharacters = value.filter(
+    (character) => character.group === 'main'
+  )
+
+  const currentLead =
+    mainCharacters.find((character) => character.isLead) ||
+    mainCharacters[0] ||
+    null
+
+  return value.map((character) => {
+    const isLead =
+      character.group === 'main' &&
+      character.id === currentLead?.id
+
+    return {
+      ...character,
+      isLead,
+      chatSide: isLead ? 'right' : 'left',
+    }
+  })
+}
+
 function Step({ number, title, active }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
@@ -227,6 +269,144 @@ function HelpSheet({ group, onClose }) {
         </>
       ) : null}
     </BottomSheet>
+  )
+}
+
+function LeadCharacterSheet({
+  open,
+  characters,
+  selectedId,
+  onSelect,
+  onClose,
+  onConfirm,
+}) {
+  return (
+    <BottomSheet open={open} onClose={onClose}>
+      <div className="pb-1">
+        <h2 className="text-center text-[18px] font-bold text-[#111827]">
+          Choose Lead Character
+        </h2>
+
+        <p className="mx-auto mt-2 max-w-[310px] text-center text-[11px] leading-5 text-[#667085]">
+          The Lead Character uses the main chat style and appears on the right side.
+        </p>
+
+        <div className="mt-5 grid max-h-[48vh] grid-cols-2 gap-3 overflow-y-auto pb-2">
+          {characters.map((character) => {
+            const selected = selectedId === character.id
+
+            return (
+              <button
+                key={character.id}
+                type="button"
+                onClick={() => onSelect(character.id)}
+                className={`relative flex min-h-[130px] flex-col items-center justify-center rounded-[20px] px-3 py-4 text-center active:scale-[0.98] ${
+                  selected
+                    ? 'bg-[#f5f0ff] ring-2 ring-[#7c3aed]'
+                    : 'bg-[#f7f7f8] ring-1 ring-black/5'
+                }`}
+              >
+                {selected ? (
+                  <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#7c3aed] text-white">
+                    <i className="fa-solid fa-check text-[9px]" />
+                  </span>
+                ) : null}
+
+                <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#eee7ff]">
+                  {character.image ? (
+                    <img
+                      src={character.image}
+                      alt={character.nickname || 'Character'}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <i className="fa-solid fa-user text-[24px] text-[#9b87c9]" />
+                  )}
+                </span>
+
+                <span className="mt-3 line-clamp-1 w-full text-[12px] font-bold text-[#111827]">
+                  {character.nickname || 'Unnamed character'}
+                </span>
+
+                {selected ? (
+                  <span className="mt-1 text-[9px] font-bold text-[#7c3aed]">
+                    Lead Character
+                  </span>
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full bg-[#f2f4f7] text-[14px] font-medium text-[#344054] active:scale-[0.98]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!selectedId}
+            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[14px] font-medium text-white active:scale-[0.98] disabled:opacity-45"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function LeadCharacterPanel({ character, onChange }) {
+  if (!character) return null
+
+  return (
+    <section className="mt-4 rounded-[20px] bg-white px-4 py-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+      <div className="flex items-center gap-3">
+        <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eee7ff]">
+          {character.image ? (
+            <img
+              src={character.image}
+              alt={character.nickname || 'Lead Character'}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <i className="fa-solid fa-user text-[21px] text-[#9b87c9]" />
+          )}
+
+          <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#7c3aed] text-white">
+            <i className="fa-solid fa-crown text-[7px]" />
+          </span>
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-bold text-[#7c3aed]">
+            Lead Character
+          </div>
+
+          <div className="mt-1 truncate text-[14px] font-bold text-[#111827]">
+            {character.nickname || 'Unnamed character'}
+          </div>
+
+          <div className="mt-1 text-[10px] text-[#98a2b3]">
+            Main chat style · Right side
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onChange}
+          className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-[#f5f0ff] px-4 text-[11px] font-bold text-[#7c3aed] active:scale-[0.97]"
+        >
+          Change
+          <i className="fa-solid fa-chevron-right text-[8px]" />
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -666,7 +846,8 @@ export default function ChatStoryCharactersPage() {
   const [galleryError, setGalleryError] = useState('')
   const [galleryImages, setGalleryImages] = useState([])
   const [galleryCategories, setGalleryCategories] = useState([])
-  const [galleryCategory, setGalleryCategory] = useState('All')
+  const [leadSheetOpen, setLeadSheetOpen] = useState(false)
+const [leadDraftId, setLeadDraftId] = useState('')
 
   useEffect(() => {
     async function loadCharacters() {
@@ -693,21 +874,9 @@ export default function ChatStoryCharactersPage() {
         }
 
         setCharacters(
-          (data.characters || []).map((character) => ({
-            id: character.id,
-            group: character.role_group,
-            image: character.avatar_url || '',
-            nickname: character.nickname || '',
-            avatarSource: character.avatar_source || 'device',
-            chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
-            gender: character.gender || '',
-            birthday: character.birthday || '',
-            heightCm: character.height_cm || '',
-            occupation: character.occupation || '',
-            personality: character.personality || '',
-            relationship: character.relationship || '',
-            bio: character.bio || '',
-          }))
+          normalizeLeadCharacters(
+            (data.characters || []).map(mapCharacter)
+          )
         )
       } catch (error) {
         showToast(error.message || 'Failed to load characters')
@@ -808,13 +977,57 @@ sessionStorage.removeItem(draftKey)
     }, {})
   }, [characters])
 
-  const totalCharacters = characters.length
-  const canContinue = totalCharacters >= 2 && groupedCharacters.main.length >= 1
+  const leadCharacter =
+  characters.find(
+    (character) =>
+      character.group === 'main' &&
+      character.isLead
+  ) ||
+  groupedCharacters.main[0] ||
+  null
+
+const totalCharacters = characters.length
+const canContinue =
+  totalCharacters >= 2 &&
+  groupedCharacters.main.length >= 1
 
   const showToast = (message) => {
     setToast(message)
     window.setTimeout(() => setToast(''), 2200)
   }
+
+  const openLeadCharacterSheet = () => {
+  if (!groupedCharacters.main.length) {
+    showToast('Add a Main Character first.')
+    return
+  }
+
+  setLeadDraftId(
+    leadCharacter?.id ||
+      groupedCharacters.main[0]?.id ||
+      ''
+  )
+
+  setLeadSheetOpen(true)
+}
+
+const confirmLeadCharacter = () => {
+  if (!leadDraftId) return
+
+  setCharacters((current) =>
+    normalizeLeadCharacters(
+      current.map((character) => ({
+        ...character,
+        isLead:
+          character.group === 'main' &&
+          character.id === leadDraftId,
+      }))
+    )
+  )
+
+  setLeadSheetOpen(false)
+  showToast('Lead Character changed. Press Save to apply.')
+}
 
   const openAddCharacter = (groupKey) => {
     setActiveGroupKey(groupKey)
@@ -953,7 +1166,11 @@ sessionStorage.removeItem(draftKey)
     const confirmed = window.confirm('Delete this character?')
     if (!confirmed) return
 
-    setCharacters((current) => current.filter((character) => character.id !== editingId))
+    setCharacters((current) =>
+      normalizeLeadCharacters(
+        current.filter((character) => character.id !== editingId)
+      )
+    )
     setEditorOpen(false)
     setEditingId('')
     showToast('Character deleted. Press Save to update the database.')
@@ -986,13 +1203,22 @@ sessionStorage.removeItem(draftKey)
     chatSide,
   }
 
-  const nextCharacters = editingId
+  const nextCharacters = normalizeLeadCharacters(
+  editingId
     ? characters.map((character) =>
         character.id === editingId
           ? { ...character, ...nextCharacter }
           : character
       )
-    : [...characters, { id: makeId(), ...nextCharacter }]
+    : [
+        ...characters,
+        {
+          id: makeId(),
+          isLead: false,
+          ...nextCharacter,
+        },
+      ]
+)
 
   try {
     setSaving(true)
@@ -1014,9 +1240,8 @@ sessionStorage.removeItem(draftKey)
         nickname: character.nickname || null,
         avatar_url: avatarUrl,
         avatar_source: character.avatarSource || 'device',
-        chat_side:
-          character.chatSide ||
-          (character.group === 'main' ? 'right' : 'left'),
+        is_lead: character.isLead === true,
+        chat_side: character.isLead === true ? 'right' : 'left',
         gender: character.gender || null,
         birthday: character.birthday || null,
         height_cm: character.heightCm === '' ? null : character.heightCm,
@@ -1046,25 +1271,10 @@ sessionStorage.removeItem(draftKey)
     }
 
     setCharacters(
-      (data.characters || []).map((character) => ({
-        id: character.id,
-        group: character.role_group,
-        image: character.avatar_url || '',
-        nickname: character.nickname || '',
-        avatarSource: character.avatar_source || 'device',
-        chatSide:
-          character.chat_side ||
-          (character.role_group === 'main' ? 'right' : 'left'),
-        gender: character.gender || '',
-        birthday: character.birthday || '',
-        heightCm: character.height_cm || '',
-        occupation: character.occupation || '',
-        personality: character.personality || '',
-        relationship: character.relationship || '',
-        bio: character.bio || '',
-      }))
-    )
-
+  normalizeLeadCharacters(
+    (data.characters || []).map(mapCharacter)
+  )
+)
     setActiveGroupKey(characterGroup)
     setEditorOpen(false)
     setEditingId('')
@@ -1113,7 +1323,8 @@ sessionStorage.removeItem(draftKey)
           nickname: character.nickname || null,
           avatar_url: avatarUrl,
           avatar_source: character.avatarSource || 'device',
-          chat_side: character.chatSide || (character.group === 'main' ? 'right' : 'left'),
+          is_lead: character.isLead === true,
+          chat_side: character.isLead === true ? 'right' : 'left',
           gender: character.gender || null,
           birthday: character.birthday || null,
           height_cm: character.heightCm === '' ? null : character.heightCm,
@@ -1139,21 +1350,9 @@ sessionStorage.removeItem(draftKey)
       }
 
       setCharacters(
-        (data.characters || []).map((character) => ({
-          id: character.id,
-          group: character.role_group,
-          image: character.avatar_url || '',
-          nickname: character.nickname || '',
-          avatarSource: character.avatar_source || 'device',
-          chatSide: character.chat_side || (character.role_group === 'main' ? 'right' : 'left'),
-          gender: character.gender || '',
-          birthday: character.birthday || '',
-          heightCm: character.height_cm || '',
-          occupation: character.occupation || '',
-          personality: character.personality || '',
-          relationship: character.relationship || '',
-          bio: character.bio || '',
-        }))
+        normalizeLeadCharacters(
+          (data.characters || []).map(mapCharacter)
+        )
       )
 
       navigate(`/author/story/${storyId}/chat/editor`)
@@ -1185,6 +1384,15 @@ sessionStorage.removeItem(draftKey)
       />
 
       <HelpSheet group={helpGroup} onClose={() => setHelpGroup(null)} />
+
+      <LeadCharacterSheet
+  open={leadSheetOpen}
+  characters={groupedCharacters.main}
+  selectedId={leadDraftId}
+  onSelect={setLeadDraftId}
+  onClose={() => setLeadSheetOpen(false)}
+  onConfirm={confirmLeadCharacter}
+/>
 
       <ImageSourceSheet
         open={sourceOpen}
@@ -1268,6 +1476,11 @@ sessionStorage.removeItem(draftKey)
             <Step number="4" title="Publish" />
           </div>
         </section>
+
+        <LeadCharacterPanel
+  character={leadCharacter}
+  onChange={openLeadCharacterSheet}
+/>
 
         {ROLE_GROUPS.map((group) => (
           <RoleSection
