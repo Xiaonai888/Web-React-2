@@ -1168,12 +1168,18 @@ backgroundImage: isEditMode
               <h2 className="text-[17px] font-bold text-[#111827]">Cover & Media</h2>
 
               <button
-                type="button"
-                onClick={() => setMediaOpen(false)}
-                className="min-w-[52px] text-right text-[14px] font-bold text-[#0b5cff]"
-              >
-                Save
-              </button>
+  type="button"
+  onClick={() => setMediaOpen(false)}
+  className={`min-w-[52px] text-right text-[14px] font-bold ${
+    isChatStory
+      ? 'text-[#7c3aed]'
+      : isManga
+        ? 'text-[#e5484d]'
+        : 'text-[#0b5cff]'
+  }`}
+>
+  Save
+</button>
             </div>
           </header>
 
