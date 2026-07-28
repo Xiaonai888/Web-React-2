@@ -1330,6 +1330,7 @@ export default function ChatStoryEditorPage() {
   const [messageEditMode, setMessageEditMode] = useState(null)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
+  const [draftHydrated, setDraftHydrated] = useState(false)
 
   useEffect(() => {
     const textarea = composerRef.current
@@ -1340,6 +1341,8 @@ export default function ChatStoryEditorPage() {
   }, [draft])
 
   const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
+  const gallerySnapshotKey =
+  `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}`
   const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
   const startNewEpisode = searchParams.get('new') === '1'
 
@@ -1645,49 +1648,112 @@ const handleRedo = () => {
 }
 
   useEffect(() => {
-    if (startNewEpisode) {
-  localStorage.removeItem(storageKey)
-  setMessages([])
-  setEpisodeTitle('')
-  setEpisodeId('')
-  setEpisodeLeadCharacterId('')
-  setActiveMessageId('')
-  setMessageEditMode(null)
-  return
-}
+  setDraftHydrated(false)
 
-    const saved = localStorage.getItem(storageKey)
+  const restoreDraft = (parsed) => {
+    const restoredMessages =
+      Array.isArray(parsed.messages)
+        ? parsed.messages
+        : []
 
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setMessages(Array.isArray(parsed.messages) ? parsed.messages : [])
-        const savedTitle = String(parsed.episodeTitle || '').trim()
-setEpisodeTitle(
-  savedTitle === 'Episode 1' || savedTitle === 'New Episode' ? '' : savedTitle
-)
-        setEpisodeId(parsed.episodeId || '')
-        setEpisodeLeadCharacterId(
-  parsed.leadCharacterId || ''
-)
-      } catch {
-        localStorage.removeItem(storageKey)
-      }
+    const savedTitle = String(
+      parsed.episodeTitle || ''
+    ).trim()
+
+    messagesRef.current = restoredMessages
+    setMessages(restoredMessages)
+
+    setEpisodeTitle(
+      savedTitle === 'Episode 1' ||
+        savedTitle === 'New Episode'
+        ? ''
+        : savedTitle
+    )
+
+    setEpisodeId(parsed.episodeId || '')
+
+    setEpisodeLeadCharacterId(
+      parsed.leadCharacterId || ''
+    )
+  }
+
+  const snapshotRaw =
+    sessionStorage.getItem(
+      gallerySnapshotKey
+    )
+
+  if (snapshotRaw) {
+    try {
+      restoreDraft(
+        JSON.parse(snapshotRaw)
+      )
+
+      sessionStorage.removeItem(
+        gallerySnapshotKey
+      )
+
+      setDraftHydrated(true)
+      return
+    } catch {
+      sessionStorage.removeItem(
+        gallerySnapshotKey
+      )
     }
-  }, [startNewEpisode, storageKey])
+  }
+
+  if (startNewEpisode) {
+    localStorage.removeItem(storageKey)
+
+    messagesRef.current = []
+    setMessages([])
+    setEpisodeTitle('')
+    setEpisodeId('')
+    setEpisodeLeadCharacterId('')
+    setActiveMessageId('')
+    setMessageEditMode(null)
+    setDraftHydrated(true)
+    return
+  }
+
+  const saved =
+    localStorage.getItem(storageKey)
+
+  if (saved) {
+    try {
+      restoreDraft(JSON.parse(saved))
+    } catch {
+      localStorage.removeItem(storageKey)
+    }
+  }
+
+  setDraftHydrated(true)
+}, [
+  gallerySnapshotKey,
+  startNewEpisode,
+  storageKey,
+])
 
   useEffect(() => {
+  if (!draftHydrated) return
+
   const payload = JSON.stringify({
-  episodeTitle,
-  episodeId,
-  leadCharacterId:
-    effectiveLeadCharacterId,
-  messages,
-  updatedAt: new Date().toISOString(),
-})
-  localStorage.setItem(storageKey, payload)
+    episodeTitle,
+    episodeId,
+    leadCharacterId:
+      effectiveLeadCharacterId,
+    messages,
+    updatedAt:
+      new Date().toISOString(),
+  })
+
+  localStorage.setItem(
+    storageKey,
+    payload
+  )
+
   setSavedSeconds(0)
 }, [
+  draftHydrated,
   effectiveLeadCharacterId,
   episodeId,
   episodeTitle,
@@ -2296,24 +2362,34 @@ const openNewCharacterShadowGallery = () => {
   if (!storyId) return
 
   const origin = 'chat-editor'
-  const returnUrl = new URL(window.location.href)
+  const returnUrl =
+    new URL(window.location.href)
 
   returnUrl.searchParams.delete('new')
 
   const returnPath =
-    returnUrl.pathname + returnUrl.search
+    returnUrl.pathname +
+    returnUrl.search +
+    returnUrl.hash
+
+  const editorSnapshot = {
+    episodeTitle,
+    episodeId,
+    leadCharacterId:
+      effectiveLeadCharacterId,
+    messages: messagesRef.current,
+    updatedAt:
+      new Date().toISOString(),
+  }
 
   localStorage.setItem(
     storageKey,
-    JSON.stringify({
-      episodeTitle,
-      episodeId,
-      leadCharacterId:
-        effectiveLeadCharacterId,
-      messages,
-      updatedAt:
-        new Date().toISOString(),
-    })
+    JSON.stringify(editorSnapshot)
+  )
+
+  sessionStorage.setItem(
+    gallerySnapshotKey,
+    JSON.stringify(editorSnapshot)
   )
 
   sessionStorage.removeItem(
@@ -2334,7 +2410,7 @@ const openNewCharacterShadowGallery = () => {
     })
   )
 
-  setImageSourceOpen(false)
+    setImageSourceOpen(false)
 
   navigate(
     `/author/story/${storyId}/chat/shadow-gallery` +
@@ -2342,7 +2418,7 @@ const openNewCharacterShadowGallery = () => {
       `&return=${encodeURIComponent(returnPath)}`
   )
 }
-  
+
 const handleNewCharacterImageChange = (event) => {
   const file = event.target.files?.[0]
   event.target.value = ''
