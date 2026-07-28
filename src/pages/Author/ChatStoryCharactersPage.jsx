@@ -207,65 +207,6 @@ function Step({ number, title, active }) {
   )
 }
 
-function SaveDebugPanel({ debug, onClose }) {
-  if (!debug) return null
-
-  const failed = debug.type === 'error'
-
-  return (
-    <section
-      className={`fixed inset-x-3 top-[70px] z-[400] mx-auto max-w-[520px] rounded-[18px] border px-4 py-3 shadow-2xl ${
-        failed
-          ? 'border-[#fecaca] bg-[#fff1f2]'
-          : 'border-[#ddd6fe] bg-[#faf8ff]'
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-            failed
-              ? 'bg-[#fee2e2] text-[#dc2626]'
-              : 'bg-[#ede9fe] text-[#7c3aed]'
-          }`}
-        >
-          <i
-            className={
-              failed
-                ? 'fa-solid fa-triangle-exclamation text-[12px]'
-                : 'fa-solid fa-circle-info text-[12px]'
-            }
-          />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div
-            className={`text-[12px] font-bold ${
-              failed ? 'text-[#b91c1c]' : 'text-[#5b21b6]'
-            }`}
-          >
-            {debug.stage}
-          </div>
-
-          {debug.details ? (
-            <pre className="mt-1 max-h-[220px] overflow-auto whitespace-pre-wrap break-words font-sans text-[10px] leading-5 text-[#475467]">
-              {debug.details}
-            </pre>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 text-[#667085] ring-1 ring-black/5"
-          aria-label="Close save information"
-        >
-          <i className="fa-solid fa-xmark text-[11px]" />
-        </button>
-      </div>
-    </section>
-  )
-}
-
 function BottomSheet({ open, onClose, children, hideHandle = false }) {
   const [dragY, setDragY] = useState(0)
   const startYRef = useRef(0)
@@ -961,7 +902,6 @@ export default function ChatStoryCharactersPage() {
   const [galleryCategories, setGalleryCategories] = useState([])
   const [leadSheetOpen, setLeadSheetOpen] = useState(false)
   const [leadDraftId, setLeadDraftId] = useState('')
-  const [saveDebug, setSaveDebug] = useState(null)
 
   useEffect(() => {
     async function loadCharacters() {
@@ -1109,53 +1049,6 @@ const canContinue =
     setToast(message)
     window.setTimeout(() => setToast(''), 2200)
   }
-
-  const reportSaveStage = (stage, details = '', type = 'info') => {
-    const debug = {
-      stage,
-      details,
-      type,
-      createdAt: new Date().toISOString(),
-    }
-
-    setSaveDebug(debug)
-    sessionStorage.setItem(
-      'chat_story_last_save_debug',
-      JSON.stringify(debug)
-    )
-  }
-
-  useEffect(() => {
-    const handleWindowError = (event) => {
-      reportSaveStage(
-        'Runtime error',
-        `${event.message || 'Unknown browser error'}\n${event.filename || ''}:${event.lineno || ''}:${event.colno || ''}`,
-        'error'
-      )
-    }
-
-    const handleUnhandledRejection = (event) => {
-      const reason = event.reason
-      const message =
-        reason instanceof Error
-          ? `${reason.name}: ${reason.message}\n${reason.stack || ''}`
-          : String(reason || 'Unknown promise rejection')
-
-      reportSaveStage(
-        'Unhandled promise rejection',
-        message,
-        'error'
-      )
-    }
-
-    window.addEventListener('error', handleWindowError)
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-
-    return () => {
-      window.removeEventListener('error', handleWindowError)
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-    }
-  }, [])
 
   const openLeadCharacterSheet = () => {
   if (!groupedCharacters.main.length) {
@@ -1452,64 +1345,22 @@ const confirmLeadCharacter = () => {
 }
 
   const handleSavePage = async () => {
-    reportSaveStage(
-      'Save button clicked',
-      `Story ID: ${storyId || 'missing'}\nCharacters: ${totalCharacters}\nMain characters: ${groupedCharacters.main.length}\nPage loading: ${pageLoading}\nSaving: ${saving}\nAPI: ${API_BASE_URL}`
-    )
-
-    if (saving) {
-      reportSaveStage(
-        'Save blocked',
-        'A previous save request is still running.',
-        'error'
-      )
-      return
-    }
-
-    if (pageLoading) {
-      reportSaveStage(
-        'Save blocked',
-        'Characters are still loading. Wait until loading finishes.',
-        'error'
-      )
-      return
-    }
-
-    if (!storyId) {
-      reportSaveStage(
-        'Save blocked',
-        'The story ID is missing from the page URL.',
-        'error'
-      )
-      return
-    }
+    if (saving || pageLoading) return
 
     if (totalCharacters < 2) {
-      reportSaveStage(
-        'Save blocked',
-        `Only ${totalCharacters} character(s) found. At least 2 are required.`,
-        'error'
-      )
+      showToast('Add at least 2 characters before creating the chat.')
       return
     }
 
     if (groupedCharacters.main.length < 1) {
-      reportSaveStage(
-        'Save blocked',
-        'No Main Character was found.',
-        'error'
-      )
+      showToast('Add at least 1 character to Main Characters.')
       return
     }
 
     const token = getAuthToken()
 
     if (!token) {
-      reportSaveStage(
-        'Save blocked',
-        'Authentication token is missing.',
-        'error'
-      )
+      navigate('/login')
       return
     }
 
@@ -1519,15 +1370,6 @@ const confirmLeadCharacter = () => {
       const normalizedCharacters =
         normalizeLeadCharacters(characters)
 
-      const lead = normalizedCharacters.find(
-        (character) => character.isLead
-      )
-
-      reportSaveStage(
-        'Preparing characters',
-        `Lead: ${lead?.nickname || lead?.id || 'missing'}\nTotal: ${normalizedCharacters.length}`
-      )
-
       const uploadedCharacters = []
 
       for (
@@ -1536,17 +1378,6 @@ const confirmLeadCharacter = () => {
         index += 1
       ) {
         const character = normalizedCharacters[index]
-
-        reportSaveStage(
-          `Preparing character ${index + 1}/${normalizedCharacters.length}`,
-          `${character.nickname || 'Unnamed character'}\nGroup: ${character.group}\nLead: ${character.isLead === true}\nImage: ${
-            String(character.image || '').startsWith('data:image/')
-              ? 'Local image upload required'
-              : character.image
-                ? 'Existing image URL'
-                : 'No image'
-          }`
-        )
 
         const avatarUrl = await uploadCharacterImage(
           token,
@@ -1579,11 +1410,6 @@ const confirmLeadCharacter = () => {
       const endpoint =
         `${API_BASE_URL}/api/stories/${storyId}/chat/characters`
 
-      reportSaveStage(
-        'Sending characters to server',
-        `PUT ${endpoint}\nPayload characters: ${uploadedCharacters.length}`
-      )
-
       const response = await fetchWithTimeout(
         endpoint,
         {
@@ -1602,14 +1428,6 @@ const confirmLeadCharacter = () => {
       const { data, rawText } =
         await readResponsePayload(response)
 
-      reportSaveStage(
-        'Server responded',
-        `Status: ${response.status} ${response.statusText}\nBody: ${
-          rawText.slice(0, 1200) || '[empty response]'
-        }`,
-        response.ok && data.ok !== false ? 'info' : 'error'
-      )
-
       if (!response.ok || data.ok === false) {
         const serverMessage =
           data.message ||
@@ -1617,50 +1435,32 @@ const confirmLeadCharacter = () => {
           rawText.slice(0, 700) ||
           'Failed to save characters'
 
-        throw new Error(
-          `Save request failed (${response.status}): ${serverMessage}`
-        )
+        throw new Error(serverMessage)
       }
 
-      const savedCharacters =
+      setCharacters(
         normalizeLeadCharacters(
           (data.characters || []).map(mapCharacter)
         )
-
-      setCharacters(savedCharacters)
-
-      const chatUrl =
-        `/author/story/${storyId}/chat/editor?new=1`
-
-      reportSaveStage(
-        'Save successful — opening Chat',
-        `Saved characters: ${savedCharacters.length}\nDestination: ${chatUrl}`
       )
 
-      sessionStorage.setItem(
-        'chat_story_last_save_success',
-        JSON.stringify({
-          storyId,
-          chatUrl,
-          savedAt: new Date().toISOString(),
-        })
-      )
+      showToast('Saved')
 
       window.setTimeout(() => {
-        window.location.assign(chatUrl)
-      }, 700)
+        navigate(
+          `/author/story/${storyId}/chat/editor?new=1`
+        )
+      }, 500)
     } catch (error) {
-      const message =
+      console.error(
+        'SAVE CHAT STORY CHARACTERS ERROR:',
+        error
+      )
+
+      showToast(
         error instanceof Error
-          ? `${error.name}: ${error.message}\n${error.stack || ''}`
-          : String(error || 'Unknown save error')
-
-      console.error('CHAT STORY CHARACTER SAVE ERROR:', error)
-
-      reportSaveStage(
-        'Save failed',
-        message,
-        'error'
+          ? error.message
+          : 'Failed to save characters'
       )
     } finally {
       setSaving(false)
@@ -1669,10 +1469,7 @@ const confirmLeadCharacter = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-[120px]">
-      <SaveDebugPanel
-        debug={saveDebug}
-        onClose={() => setSaveDebug(null)}
-      />
+      
 
       {toast ? (
         <button
