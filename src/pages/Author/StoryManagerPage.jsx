@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import ProfessionalEpisodeActionSheet from '../../components/author/ProfessionalEpisodeActionSheet'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -14,1391 +15,869 @@ function getAuthToken() {
     ''
   )
 }
-function countWords(value) {
-  const text = String(value || '').trim()
-  if (!text) return 0
 
-  if (typeof Intl?.Segmenter === 'function') {
-    return [...new Intl.Segmenter(undefined, { granularity: 'word' }).segment(text)]
-      .filter((item) => item.isWordLike).length
+function normalizeStoryType(value) {
+  const type = String(value || '').toLowerCase()
+  if (type === 'manga' || type === 'chat_story') return type
+  return 'novel'
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '0'
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace('.0', '')}M`
   }
-
-  return text.split(/\s+/u).filter(Boolean).length
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace('.0', '')}K`
+  }
+  return number.toLocaleString('en-US')
 }
 
-const MESSAGE_SYMBOLS = ['(...)', '—', '…', '?!', '♡', '✦', '☁', '「」', '♪']
-function makeId() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+function formatDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-GB')
 }
 
-function Step({ number, title, active, done }) {
+function getStatusText(value) {
+  const status = String(value || 'draft').toLowerCase()
+  if (status === 'published') return 'Published'
+  if (status === 'scheduled') return 'Scheduled'
+  if (status === 'ready') return 'Ready'
+  return 'Draft'
+}
+
+function getDateLabel(episode) {
+  const status = String(episode?.status || 'draft').toLowerCase()
+  const value =
+    status === 'published'
+      ? episode?.published_at || episode?.updated_at || episode?.created_at
+      : status === 'scheduled'
+        ? episode?.scheduled_at || episode?.updated_at || episode?.created_at
+        : episode?.updated_at || episode?.created_at
+  const date = formatDate(value)
+  if (status === 'published') return `Published ${date || 'recently'}`
+  if (status === 'scheduled') return `Scheduled ${date || 'not set'}`
+  return `Updated ${date || 'recently'}`
+}
+
+function getStoryUpdatedLabel(story, episodes) {
+  const values = [
+    story?.updated_at,
+    story?.created_at,
+    ...episodes.flatMap((episode) => [
+      episode.updated_at,
+      episode.published_at,
+      episode.created_at,
+    ]),
+  ]
+    .filter(Boolean)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((first, second) => second.getTime() - first.getTime())
+
+  return values.length
+    ? `Updated ${values[0].toLocaleDateString('en-GB')}`
+    : 'Updated recently'
+}
+
+function ConfirmDeleteModal({ episode, busy, onClose, onConfirm }) {
+  if (!episode) return null
+
   return (
-    <div className="flex min-w-0 items-center gap-1.5">
-      <div
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
-          active
-            ? 'bg-[#111827] text-white'
-            : done
-              ? 'bg-[#eafaf2] text-[#16803c]'
-              : 'bg-[#f2f4f7] text-[#98a2b3]'
-        }`}
-      >
-        {done ? <i className="fa-solid fa-check text-[10px]" /> : number}
-      </div>
-      <div
-        className={`line-clamp-1 text-[10px] font-extrabold ${
-          active ? 'text-[#111827]' : done ? 'text-[#16803c]' : 'text-[#98a2b3]'
-        }`}
-      >
-        {title}
-      </div>
-    </div>
-  )
-}
-
-function CharacterAvatar({ character, selected, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-[52px] shrink-0 rounded-[10px] py-1 text-center transition active:scale-[0.97] ${
-  selected ? 'bg-[#f5f6f8]' : 'bg-transparent'
-}`}
-      aria-pressed={selected}
-    >
-      <span
-        className={`relative mx-auto flex h-[40px] w-[40px] items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] transition ${
-          selected
-            ? 'ring-[3px] ring-[#7c3aed] ring-offset-1 ring-offset-[#f5f6f8]'
-            : 'ring-1 ring-inset ring-black/5'
-        }`}
-      >
-        {character.image ? (
-          <img
-            src={character.image}
-            alt={character.nickname || 'Character'}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <i className="fa-solid fa-user text-[18px] text-[#9b87c9]" />
-        )}
-
-        
-      </span>
-
-      <span
-        className={`mt-1 block truncate text-[8.5px] font-semibold ${
-  selected ? 'text-[#7c3aed]' : 'text-[#667085]'
-}`}
-      >
-        {character.nickname || 'Unnamed'}
-      </span>
-    </button>
-  )
-}
-
-function AsideAvatar({ active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-[52px] shrink-0 rounded-[10px] py-1 text-center transition active:scale-[0.97] ${
-  active ? 'bg-[#f5f6f8]' : 'bg-transparent'
-}`}
-      aria-pressed={active}
-    >
-      <span
-        className={`relative mx-auto flex h-[40px] w-[40px] items-center justify-center rounded-full transition ${
-  active
-    ? 'bg-[#ede9fe] text-[#7c3aed] ring-[3px] ring-inset ring-[#7c3aed]'
-    : 'bg-[#f2f4f7] text-[#667085] ring-1 ring-inset ring-black/5'
-}`}
-      >
-        <i className="fa-solid fa-align-left text-[14px]" />
-      </span>
-
-      <span
-        className={`mt-1 block truncate text-[8.5px] font-semibold ${
-  active ? 'text-[#7c3aed]' : 'text-[#667085]'
-}`}
-      >
-        ASIDE
-      </span>
-    </button>
-  )
-}
-
-function AsideMessage({ message, onDelete }) {
-  return (
-    <div className="group mx-auto flex max-w-[88%] items-start justify-center gap-2 py-2">
-      <div className="rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467]">
-        {message.text}
-      </div>
-
+    <div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:pb-0">
       <button
         type="button"
-        onClick={() => onDelete(message.id)}
-        className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-        aria-label="Delete aside"
-      >
-        <i className="fa-regular fa-trash-can text-[10px]" />
-      </button>
-    </div>
-  )
-}
+        aria-label="Close delete modal"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
 
-function AuthorNoteMessage({ message, onDelete }) {
-  return (
-    <section className="mx-auto mt-8 max-w-[560px] pb-3">
-      <div className="mb-4 text-center">
-        <div className="text-[11px] tracking-[0.18em] text-[#8a7d96]">
-          to be continued
-        </div>
-
-        <div className="mt-2 flex items-center justify-center gap-2 px-6">
-          <span className="h-px flex-1 bg-[#ece7ef]" />
-          <span className="text-[12px] text-[#ef4444]">♥</span>
-          <span className="h-px flex-1 bg-[#ece7ef]" />
-        </div>
-      </div>
-
-      <div className="relative overflow-hidden rounded-[16px] border border-[#e5d8ff] bg-gradient-to-br from-[#fbf9ff] to-[#f5efff] px-4 py-4 shadow-[0_6px_18px_rgba(124,58,237,0.06)]">
-        <span className="absolute right-4 top-3 text-[17px] text-[#c4a7ff]">
-          ✦
+      <section className="relative w-full max-w-[420px] rounded-[20px] bg-white p-5 text-center shadow-2xl">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-regular fa-trash-can text-[18px]" />
         </span>
 
-        <span className="absolute right-8 top-7 text-[10px] text-[#d9c8ff]">
-          ✦
-        </span>
+        <h2 className="mt-4 text-[18px] font-semibold text-[#111827]">
+          Delete this episode?
+        </h2>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eadfff] text-[#7c3aed]">
-              <i className="fa-solid fa-pen text-[11px]" />
-            </span>
-
-            <h3 className="text-[13px] font-bold text-[#6d42db]">
-              Author&apos;s Note
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onDelete(message.id)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-[#a89ab8] active:bg-white/80 active:text-[#dc2626]"
-            aria-label="Delete author's note"
-          >
-            <i className="fa-regular fa-trash-can text-[10px]" />
-          </button>
-        </div>
-
-        <p className="mt-3 whitespace-pre-wrap text-[12.5px] leading-6 text-[#475467]">
-          {message.text}
+        <p className="mt-2 text-[12px] leading-5 text-[#667085]">
+          This episode will move to Trash and stay hidden from readers.
         </p>
-      </div>
-    </section>
-  )
-}
-
-function ChatMessage({ message, character, onDelete }) {
-  const right = character?.chatSide === 'right'
-
-  return (
-    <div className={`flex items-end gap-2 py-2 ${right ? 'justify-end' : 'justify-start'}`}>
-      {!right ? (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
-          {character?.image ? (
-            <img
-              src={character.image}
-              alt={character.nickname || 'Character'}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <i className="fa-solid fa-user text-[13px] text-[#9b87c9]" />
-          )}
-        </span>
-      ) : null}
-
-      <div className={`max-w-[72%] ${right ? 'items-end text-right' : 'items-start text-left'}`}>
-        <div className="mb-1 px-1 text-[9.5px] font-extrabold text-[#98a2b3]">
-          {character?.nickname || 'Character'}
-        </div>
-
-        <div className="flex items-start gap-1.5">
-          {right ? (
-            <button
-              type="button"
-              onClick={() => onDelete(message.id)}
-              className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-              aria-label="Delete message"
-            >
-              <i className="fa-regular fa-trash-can text-[10px]" />
-            </button>
-          ) : null}
-
-          <div
-            className={`rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
-              right
-                ? 'rounded-br-[7px] bg-gradient-to-br from-[#8b5cf6] to-[#6d42db] text-white'
-                : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm ring-1 ring-black/5'
-            }`}
-          >
-            {message.text}
-          </div>
-
-          {!right ? (
-            <button
-              type="button"
-              onClick={() => onDelete(message.id)}
-              className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-              aria-label="Delete message"
-            >
-              <i className="fa-regular fa-trash-can text-[10px]" />
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {right ? (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
-          {character?.image ? (
-            <img
-              src={character.image}
-              alt={character.nickname || 'Character'}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <i className="fa-solid fa-user text-[13px] text-[#9b87c9]" />
-          )}
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
-
-function AddCharacterPopup({ open, onClose, onConfirm }) {
-  const [choice, setChoice] = useState('existing')
-
-  useEffect(() => {
-    if (open) setChoice('existing')
-  }, [open])
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-[390px] rounded-[24px] bg-white p-5 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-bold text-[#111827]">Add character</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-          >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <button
-            type="button"
-            onClick={() => setChoice('existing')}
-            className={`flex w-full items-center gap-3 rounded-[16px] border px-4 py-4 text-left ${
-              choice === 'existing'
-                ? 'border-[#7c3aed] bg-[#faf8ff]'
-                : 'border-[#e4e7ec] bg-white'
-            }`}
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-solid fa-users text-[15px]" />
-            </span>
-            <span>
-              <span className="block text-[13px] font-bold text-[#111827]">Choose from characters</span>
-              <span className="mt-1 block text-[10.5px] text-[#98a2b3]">Select or manage characters already in this story.</span>
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setChoice('new')}
-            className={`flex w-full items-center gap-3 rounded-[16px] border px-4 py-4 text-left ${
-              choice === 'new'
-                ? 'border-[#7c3aed] bg-[#faf8ff]'
-                : 'border-[#e4e7ec] bg-white'
-            }`}
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-solid fa-user-plus text-[15px]" />
-            </span>
-            <span>
-              <span className="block text-[13px] font-bold text-[#111827]">Create a new character</span>
-              <span className="mt-1 block text-[10.5px] text-[#98a2b3]">Open the character builder and add a new profile.</span>
-            </span>
-          </button>
-        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
+            disabled={busy}
             onClick={onClose}
-            className="h-12 rounded-full bg-[#f2f4f7] text-[13px] font-medium text-[#475467]"
+            className="h-11 rounded-[12px] border border-[#e4e7ec] bg-white text-[13px] text-[#111827] disabled:opacity-60"
           >
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(choice)}
-            className="h-12 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }) {
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[240] flex items-end bg-black/45" onClick={onClose}>
-      <div
-        className="w-full rounded-t-[28px] bg-white px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-        <h2 className="text-center text-[16px] font-bold text-[#111827]">More</h2>
-
-        <div className="mt-5 grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={onUploadAudio}
-            className="flex min-h-[126px] flex-col items-center justify-center rounded-[20px] bg-[#faf9fc] px-3 text-center active:scale-[0.98]"
-          >
-            <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-solid fa-microphone text-[22px]" />
-            </span>
-            <span className="mt-3 text-[12px] font-medium text-[#111827]">Upload Audio</span>
-          </button>
 
           <button
             type="button"
-            onClick={onAuthorNote}
-            className="flex min-h-[126px] flex-col items-center justify-center rounded-[20px] bg-[#faf9fc] px-3 text-center active:scale-[0.98]"
+            disabled={busy}
+            onClick={onConfirm}
+            className="h-11 rounded-[12px] bg-[#e5484d] text-[13px] text-white disabled:opacity-60"
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
-              <i className="fa-regular fa-comment-dots text-[22px]" />
-            </span>
-            <span className="mt-3 text-[12px] font-medium text-[#111827]">
-              {hasAuthorNote ? 'Edit Author’s Note' : 'Add Author’s Note'}
-            </span>
+            {busy ? 'Deleting...' : 'Delete Episode'}
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white"
-        >
-          Done
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function AuthorNoteSheet({ open, value, onChange, onClose, onSave }) {
-  const [dragY, setDragY] = useState(0)
-  const startYRef = useRef(0)
-  const dragYRef = useRef(0)
-  const draggingRef = useRef(false)
-
-  useEffect(() => {
-    if (!open) return undefined
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    setDragY(0)
-    dragYRef.current = 0
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open])
-
-  const startDrag = (event) => {
-    draggingRef.current = true
-    startYRef.current = event.clientY
-    dragYRef.current = 0
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-  }
-
-  const moveDrag = (event) => {
-    if (!draggingRef.current) return
-
-    const nextY = Math.max(0, event.clientY - startYRef.current)
-    dragYRef.current = nextY
-    setDragY(nextY)
-  }
-
-  const endDrag = () => {
-    if (!draggingRef.current) return
-
-    draggingRef.current = false
-    const shouldClose = dragYRef.current >= 90
-    dragYRef.current = 0
-    setDragY(0)
-
-    if (shouldClose) onClose()
-  }
-
-  if (!open) return null
-
-  const cleanValue = value.trim()
-
-  return (
-    <div
-      className="fixed inset-0 z-[250] flex items-end bg-black/45"
-      onClick={onClose}
-    >
-      <section
-        className="w-full rounded-t-[28px] bg-white px-5 pb-[calc(22px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
-        style={{
-          transform: `translateY(${dragY}px)`,
-          transition: draggingRef.current ? 'none' : 'transform 220ms ease',
-        }}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          onPointerDown={startDrag}
-          onPointerMove={moveDrag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
-          aria-label="Drag down to close"
-        >
-          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-        </button>
-
-        <div className="mt-1 flex items-center justify-between">
-          <div>
-            <h2 className="text-[17px] font-bold text-[#111827]">
-              Author&apos;s Note
-            </h2>
-            <p className="mt-1 text-[11px] leading-5 text-[#667085]">
-              Write a short note for your readers.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]"
-            aria-label="Close author's note"
-          >
-            <i className="fa-solid fa-xmark text-[14px]" />
-          </button>
-        </div>
-
-        <div className="mt-5 rounded-[16px] border border-[#e5d8ff] bg-[#fbf9ff] px-4 py-3 focus-within:border-[#9b6cf3] focus-within:ring-2 focus-within:ring-[#9b6cf3]/15">
-          <textarea
-            autoFocus
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            maxLength={600}
-            rows={7}
-            placeholder="Thank your readers, share a short update, or leave a message..."
-            className="min-h-[170px] max-h-[260px] w-full resize-none overflow-y-auto bg-transparent text-[13px] leading-6 text-[#111827] outline-none placeholder:text-[#98a2b3]"
-          />
-
-          <div className="mt-2 text-right text-[10.5px] font-medium text-[#98a2b3]">
-            {value.length} / 600
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!cleanValue}
-          className="mt-5 h-12 w-full rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[13px] font-medium text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          Save Author&apos;s Note
-        </button>
       </section>
     </div>
   )
 }
 
-export default function ChatStoryEditorPage() {
+function ConfirmTrashStoryModal({ story, open, busy, onClose, onConfirm }) {
+  if (!open || !story) return null
+
+  return (
+    <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:pb-0">
+      <button
+        type="button"
+        aria-label="Close story trash modal"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
+
+      <section className="relative w-full max-w-[420px] rounded-[20px] bg-white p-5 text-center shadow-2xl">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+          <i className="fa-regular fa-trash-can text-[18px]" />
+        </span>
+
+        <h2 className="mt-4 text-[18px] font-semibold text-[#111827]">
+          Move story to Trash?
+        </h2>
+
+        <p className="mt-2 text-[12px] leading-5 text-[#667085]">
+          The story and its episodes will be hidden. You can restore them from Trash within 30 days.
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="h-11 rounded-[12px] border border-[#e4e7ec] bg-white text-[13px] text-[#111827] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onConfirm}
+            className="h-11 rounded-[12px] bg-[#e5484d] text-[13px] text-white disabled:opacity-60"
+          >
+            {busy ? 'Moving...' : 'Move to Trash'}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function StatusBadge({ status }) {
+  const normalized = String(status || 'draft').toLowerCase()
+  const styles = {
+    published: 'bg-[#ecfdf3] text-[#16803c]',
+    scheduled: 'bg-[#eff6ff] text-[#0b5cff]',
+    ready: 'bg-[#fff7df] text-[#a56a00]',
+    draft: 'bg-[#f2f4f7] text-[#667085]',
+  }
+
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+        styles[normalized] || styles.draft
+      }`}
+    >
+      {getStatusText(normalized)}
+    </span>
+  )
+}
+
+function EpisodeMetric({ icon, value }) {
+  return (
+    <span className="inline-flex min-w-[58px] items-center justify-center gap-1.5 text-[11px] text-[#667085]">
+      <i className={`${icon} text-[11px] text-[#111827]`} />
+      {formatCompactNumber(value)}
+    </span>
+  )
+}
+
+function EpisodeRow({ episode, storyType, last, onOpen, onMore }) {
+  const views = episode.total_views || 0
+  const likes = episode.total_likes || 0
+  const comments = episode.total_comments || 0
+  const contentCount =
+    storyType === 'manga'
+      ? Number(episode.page_count || 0)
+      : storyType === 'novel'
+        ? Number(episode.word_count || episode.character_count || 0)
+        : Number(episode.character_count || 0)
+  const contentLabel =
+    storyType === 'manga'
+      ? `${contentCount.toLocaleString('en-US')} pages`
+      : storyType === 'novel'
+        ? `${contentCount.toLocaleString('en-US')} words`
+        : `${contentCount.toLocaleString('en-US')} characters`
+
+  return (
+    <div className="relative flex min-h-[96px] items-center gap-3 bg-white px-4 py-4">
+      <button
+        type="button"
+        onClick={() => onOpen(episode)}
+        className="min-w-0 flex-1 text-left active:opacity-70"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#8d94a1]">
+            EP {episode.episode_number || 1}
+          </span>
+
+          <StatusBadge status={episode.status} />
+
+          {episode.is_adult ? (
+            <span className="rounded-full bg-[#fff1f1] px-2 py-1 text-[10px] font-semibold text-[#e5484d]">
+              18+
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-2 line-clamp-1 text-[14px] font-semibold text-[#111827]">
+          {episode.title || 'Untitled Episode'}
+        </div>
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[#8d94a1]">
+          <span>{getDateLabel(episode)}</span>
+          <span>•</span>
+          <span>{contentLabel}</span>
+        </div>
+      </button>
+
+      <div className="hidden shrink-0 items-center gap-2 md:flex">
+        <EpisodeMetric icon="fa-regular fa-eye" value={views} />
+        <EpisodeMetric icon="fa-regular fa-heart" value={likes} />
+        <EpisodeMetric icon="fa-regular fa-comment" value={comments} />
+      </div>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect()
+          onMore({
+            ...episode,
+            __menuAnchor: {
+              top: rect.top,
+              right: rect.right,
+              bottom: rect.bottom,
+            },
+          })
+        }}
+        className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+        aria-label={`Actions for ${episode.title || 'episode'}`}
+      >
+        <i className="fa-solid fa-ellipsis text-[14px]" />
+      </button>
+
+      {!last ? (
+        <span className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-[#eceef2]" />
+      ) : null}
+    </div>
+  )
+}
+
+export default function StoryManagerPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
-  const [searchParams] = useSearchParams()
-  const messagesEndRef = useRef(null)
-  const composerRef = useRef(null)
-  const audioInputRef = useRef(null)
-  const imageInputRef = useRef(null)
-  const messagesRef = useRef([])
-  const undoStackRef = useRef([])
-  const redoStackRef = useRef([])
-  const [characters, setCharacters] = useState([])
-  const [messages, setMessages] = useState([])
-  const [canUndo, setCanUndo] = useState(false)
-  const [canRedo, setCanRedo] = useState(false)
-  const [selectedCharacterId, setSelectedCharacterId] = useState(null)
-  const [draft, setDraft] = useState('')
+  const [story, setStory] = useState(null)
+  const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [toast, setToast] = useState('')
-  const [episodeTitle, setEpisodeTitle] = useState('')
-  const [titlePopupOpen, setTitlePopupOpen] = useState(false)
-  const [titleDraft, setTitleDraft] = useState('')
-  const [episodeId, setEpisodeId] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [composerFocused, setComposerFocused] = useState(false)
-  const [addPopupOpen, setAddPopupOpen] = useState(false)
-  const [morePopupOpen, setMorePopupOpen] = useState(false)
-  const [authorNoteOpen, setAuthorNoteOpen] = useState(false)
-  const [authorNoteDraft, setAuthorNoteDraft] = useState('')
-  const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
-  const [composerMode, setComposerMode] = useState('message')
-  const [savedSeconds, setSavedSeconds] = useState(0)
+  const [message, setMessage] = useState('')
+  const [activeTab, setActiveTab] = useState('published')
+  const [pageSize, setPageSize] = useState(20)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedEpisode, setSelectedEpisode] = useState(null)
+  const [deleteEpisode, setDeleteEpisode] = useState(null)
+  const [trashStoryOpen, setTrashStoryOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  const storyType = normalizeStoryType(story?.story_type)
+  const isChatStory = storyType === 'chat_story'
+  const isManga = storyType === 'manga'
+  const accentButton = isChatStory
+    ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db]'
+    : isManga
+      ? 'bg-[#FE526E]'
+      : 'bg-[#111827]'
 
   useEffect(() => {
-    const textarea = composerRef.current
-    if (!textarea) return
-    textarea.style.height = 'auto'
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 96)}px`
-    textarea.style.overflowY = textarea.scrollHeight > 96 ? 'auto' : 'hidden'
-  }, [draft])
+    let ignore = false
 
-  const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
-  const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
-  const startNewEpisode = searchParams.get('new') === '1'
+    async function loadStoryManager() {
+      setLoading(true)
+      setMessage('')
 
-  const characterMap = useMemo(() => {
-    return characters.reduce((result, character) => {
-      result[character.id] = character
-      return result
-    }, {})
-  }, [characters])
-
-  const selectedCharacter = selectedCharacterId
-    ? characterMap[selectedCharacterId] || null
-    : null
-
-  const wordCount = useMemo(() => {
-  return messages
-    .filter((message) => message.type !== 'author_note')
-    .reduce((total, message) => total + countWords(message.text), 0)
-}, [messages])
-
-  const showToast = (message) => {
-    setToast(message)
-    window.setTimeout(() => setToast(''), 2300)
-  }
-
-  const openTitlePopup = () => {
-  setTitleDraft(episodeTitle)
-  setTitlePopupOpen(true)
-}
-
-const saveEpisodeTitle = () => {
-  const cleanTitle = titleDraft.trim()
-  if (!cleanTitle) return
-
-  setEpisodeTitle(cleanTitle)
-  setTitlePopupOpen(false)
-}
-
-useEffect(() => {
-  if (!titlePopupOpen) return undefined
-
-  const previousOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden'
-
-  return () => {
-    document.body.style.overflow = previousOverflow
-  }
-}, [titlePopupOpen])
-
-  useEffect(() => {
-  messagesRef.current = messages
-}, [messages])
-
-useEffect(() => {
-  undoStackRef.current = []
-  redoStackRef.current = []
-  setCanUndo(false)
-  setCanRedo(false)
-}, [requestedEpisodeId, startNewEpisode, storyId])
-
-const commitMessages = (updater) => {
-  const current = messagesRef.current
-  const next = typeof updater === 'function' ? updater(current) : updater
-
-  undoStackRef.current = [...undoStackRef.current.slice(-49), current]
-  redoStackRef.current = []
-  messagesRef.current = next
-
-  setMessages(next)
-  setCanUndo(true)
-  setCanRedo(false)
-}
-
-const handleUndo = () => {
-  if (!undoStackRef.current.length) return
-
-  const previous = undoStackRef.current.at(-1)
-  undoStackRef.current = undoStackRef.current.slice(0, -1)
-  redoStackRef.current = [...redoStackRef.current.slice(-49), messagesRef.current]
-  messagesRef.current = previous
-
-  setMessages(previous)
-  setCanUndo(undoStackRef.current.length > 0)
-  setCanRedo(true)
-}
-
-const handleRedo = () => {
-  if (!redoStackRef.current.length) return
-
-  const next = redoStackRef.current.at(-1)
-  redoStackRef.current = redoStackRef.current.slice(0, -1)
-  undoStackRef.current = [...undoStackRef.current.slice(-49), messagesRef.current]
-  messagesRef.current = next
-
-  setMessages(next)
-  setCanUndo(true)
-  setCanRedo(redoStackRef.current.length > 0)
-}
-
-  useEffect(() => {
-    if (startNewEpisode) {
-      localStorage.removeItem(storageKey)
-      setMessages([])
-      setEpisodeTitle('')
-      setEpisodeId('')
-      return
-    }
-
-    const saved = localStorage.getItem(storageKey)
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setMessages(Array.isArray(parsed.messages) ? parsed.messages : [])
-        const savedTitle = String(parsed.episodeTitle || '').trim()
-setEpisodeTitle(
-  savedTitle === 'Episode 1' || savedTitle === 'New Episode' ? '' : savedTitle
-)
-        setEpisodeId(parsed.episodeId || '')
-      } catch {
-        localStorage.removeItem(storageKey)
-      }
-    }
-  }, [startNewEpisode, storageKey])
-
-  useEffect(() => {
-  const payload = JSON.stringify({
-    episodeTitle,
-    episodeId,
-    messages,
-    updatedAt: new Date().toISOString(),
-  })
-  localStorage.setItem(storageKey, payload)
-  setSavedSeconds(0)
-}, [episodeId, episodeTitle, messages, storageKey])
-
-useEffect(() => {
-  const timer = window.setInterval(() => {
-    setSavedSeconds((current) => current + 1)
-  }, 1000)
-
-  return () => window.clearInterval(timer)
-}, [])
-
-  useEffect(() => {
-    async function loadCharacters() {
       const token = getAuthToken()
 
       if (!token) {
-        navigate('/login')
+        navigate('/login', { replace: true })
         return
       }
 
       try {
-        setLoading(true)
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
-          {
+        const [storyResponse, episodesResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
             headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-        const data = await response.json().catch(() => ({}))
+          }),
+          fetch(`${API_BASE_URL}/api/stories/${storyId}/manager-episodes`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ])
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load characters')
+        const storyData = await storyResponse.json().catch(() => ({}))
+        const episodesData = await episodesResponse.json().catch(() => ({}))
+
+        if (!storyResponse.ok || storyData.ok === false) {
+          throw new Error(storyData.message || 'Failed to load story')
         }
 
-        setCharacters(
-          (data.characters || []).map((character) => ({
-            id: character.id,
-            nickname: character.nickname || '',
-            image: character.avatar_url || '',
-            group: character.role_group,
-            chatSide:
-              character.chat_side ||
-              (character.role_group === 'main' ? 'right' : 'left'),
-          }))
+        if (!episodesResponse.ok || episodesData.ok === false) {
+          throw new Error(episodesData.message || 'Failed to load episodes')
+        }
+
+        if (ignore) return
+
+        const nextStory = storyData.story || null
+        const resolvedType = normalizeStoryType(
+          nextStory?.story_type || episodesData.story_type
         )
+
+        setStory(nextStory ? { ...nextStory, story_type: resolvedType } : null)
+        setEpisodes(episodesData.episodes || [])
       } catch (error) {
-        showToast(
+        if (ignore) return
+        setMessage(
           error.message === 'Failed to fetch'
-            ? 'Cannot connect to backend.'
-            : error.message || 'Failed to load characters'
+            ? 'Cannot connect to backend. Please check deployment.'
+            : error.message || 'Failed to load story manager'
         )
       } finally {
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
 
-    if (storyId) loadCharacters()
+    loadStoryManager()
+
+    return () => {
+      ignore = true
+    }
   }, [navigate, storyId])
 
   useEffect(() => {
-    async function loadRequestedEpisode() {
-      if (!requestedEpisodeId || startNewEpisode) return
+    setCurrentPage(1)
+  }, [activeTab, pageSize])
 
-      const token = getAuthToken()
-      if (!token) return
+  const publishedEpisodes = useMemo(
+    () =>
+      episodes.filter(
+        (episode) => String(episode.status || '').toLowerCase() === 'published'
+      ),
+    [episodes]
+  )
 
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/stories/${storyId}/episodes/${requestedEpisodeId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        const data = await response.json().catch(() => ({}))
+  const draftEpisodes = useMemo(
+    () =>
+      episodes.filter(
+        (episode) => String(episode.status || '').toLowerCase() !== 'published'
+      ),
+    [episodes]
+  )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load Chat Story episode')
-        }
+  const visibleEpisodes =
+    activeTab === 'published' ? publishedEpisodes : draftEpisodes
+  const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const pageStart = (safePage - 1) * pageSize
+  const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
+  const paginatedEpisodes = visibleEpisodes.slice(pageStart, pageEnd)
 
-        const parsed = JSON.parse(String(data.episode?.content || ''))
-        if (parsed?.format !== 'shadow_chat_story_v1') {
-          throw new Error('This episode is not a Chat Story episode')
-        }
-
-        setEpisodeId(data.episode.id)
-        setEpisodeTitle(data.episode.title || parsed.episode_title || 'Episode')
-        setMessages(
-          (parsed.messages || []).map((message) => ({
-            id: message.id || makeId(),
-            type:
-  message.type === 'chat'
-    ? 'chat'
-    : message.type === 'author_note'
-      ? 'author_note'
-      : 'aside',
-            characterId: message.character_id || null,
-            text: message.text || '',
-            createdAt: message.created_at || new Date().toISOString(),
-          }))
-        )
-      } catch (error) {
-        showToast(error.message || 'Failed to load Chat Story episode')
+  const totalContent = useMemo(() => {
+    return episodes.reduce((sum, episode) => {
+      if (storyType === 'manga') return sum + Number(episode.page_count || 0)
+      if (storyType === 'novel') {
+        return sum + Number(episode.word_count || episode.character_count || 0)
       }
-    }
+      return sum + Number(episode.character_count || 0)
+    }, 0)
+  }, [episodes, storyType])
 
-    loadRequestedEpisode()
-  }, [requestedEpisodeId, startNewEpisode, storyId])
+  const storyContentText =
+    storyType === 'manga'
+      ? `${totalContent.toLocaleString('en-US')} pages`
+      : storyType === 'novel'
+        ? `${totalContent.toLocaleString('en-US')} words`
+        : `${totalContent.toLocaleString('en-US')} characters`
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  const storyProgressText = episodes.length
+    ? `${String(story?.status || 'ongoing').toLowerCase() === 'completed' ? 'Completed' : 'Ongoing'} • ${episodes.length} Episode${episodes.length === 1 ? '' : 's'}`
+    : 'Awaiting first episode'
 
-  const toggleCharacter = (characterId) => {
-    setSelectedCharacterId((current) =>
-      current === characterId ? null : characterId
-    )
-  }
-  
-const insertMessageSymbol = (symbol) => {
-  setDraft((current) =>
-    `${current}${current && !/\s$/.test(current) ? ' ' : ''}${symbol}`
+  const storyUpdatedLabel = useMemo(
+    () => getStoryUpdatedLabel(story, episodes),
+    [story, episodes]
   )
-  setSymbolPanelOpen(false)
-  setComposerFocused(true)
-  window.setTimeout(() => composerRef.current?.focus(), 50)
-}
-  
-  const sendMessage = () => {
-  const text = draft.trim()
-  if (!text) return
 
-  const nextMessage = {
-    id: makeId(),
-    type: selectedCharacter ? 'chat' : 'aside',
-    characterId: selectedCharacter?.id || null,
-    text,
-    createdAt: new Date().toISOString(),
+  function closeEpisodeMenu() {
+    setSelectedEpisode(null)
   }
 
-  commitMessages((current) => {
-    if (nextMessage.type === 'author_note') {
-      return [
-        ...current.filter((message) => message.type !== 'author_note'),
-        nextMessage,
-      ]
-    }
+  function handleBack() {
+    navigate('/author/stories', { replace: true })
+  }
 
-    const authorNote = current.find(
-      (message) => message.type === 'author_note'
+  function handleEditStory() {
+    navigate(
+      `/author/create-story?editStoryId=${encodeURIComponent(storyId)}&type=${encodeURIComponent(storyType)}`
     )
-
-    const storyMessages = current.filter(
-      (message) => message.type !== 'author_note'
-    )
-
-    return authorNote
-      ? [...storyMessages, nextMessage, authorNote]
-      : [...storyMessages, nextMessage]
-  })
-
-  setDraft('')
-  setSymbolPanelOpen(false)
-}
-
-const deleteMessage = (messageId) => {
-  commitMessages((current) =>
-    current.filter((message) => message.id !== messageId)
-  )
-}
-
-  const handleComposerKeyDown = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      sendMessage()
-    }
   }
 
-  const handleAddConfirm = () => {
-    setAddPopupOpen(false)
-    navigate(`/author/story/${storyId}/chat/characters`)
-  }
-
-  const handleAuthorNote = () => {
-    const existingNote = messages.find(
-      (message) => message.type === 'author_note'
-    )
-
-    setMorePopupOpen(false)
-    setAuthorNoteDraft(existingNote?.text || '')
-    setAuthorNoteOpen(true)
-  }
-
-  const closeAuthorNote = () => {
-    setAuthorNoteOpen(false)
-    setMorePopupOpen(true)
-  }
-
-  const saveAuthorNote = () => {
-    const text = authorNoteDraft.trim()
-    if (!text) return
-
-    const existingNote = messages.find(
-      (message) => message.type === 'author_note'
-    )
-
-    const nextNote = {
-      id: existingNote?.id || makeId(),
-      type: 'author_note',
-      characterId: null,
-      text,
-      createdAt: existingNote?.createdAt || new Date().toISOString(),
-    }
-
-    commitMessages((current) => [
-      ...current.filter((message) => message.type !== 'author_note'),
-      nextNote,
-    ])
-
-    setAuthorNoteOpen(false)
-    setMorePopupOpen(true)
-    showToast(existingNote ? 'Author’s Note updated.' : 'Author’s Note saved.')
-  }
-
-  const handleAudioChange = (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    setMorePopupOpen(false)
-
-    if (!file) return
-
-    if (!file.type.startsWith('audio/')) {
-      showToast('Please choose an audio file.')
+  function handleAddEpisode() {
+    if (isChatStory) {
+      navigate(`/author/story/${storyId}/chat/editor?new=1&first=0`)
       return
     }
 
-    showToast(`Audio selected: ${file.name}`)
+    navigate(
+      `/author/story/${storyId}/episode/create?first=0&type=${encodeURIComponent(storyType)}`
+    )
   }
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+  function handleEditEpisode(episode) {
+    closeEpisodeMenu()
 
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Please choose an image file.')
+    if (isChatStory) {
+      navigate(
+        `/author/story/${storyId}/chat/editor?episodeId=${encodeURIComponent(episode.id)}&first=0`
+      )
       return
     }
 
-    showToast(`Image selected: ${file.name}`)
+    navigate(
+      `/author/story/${storyId}/episode/create?editEpisodeId=${encodeURIComponent(episode.id)}&startStep=2&first=0&type=${encodeURIComponent(storyType)}`
+    )
   }
 
-  const saveAndContinue = async () => {
-    const cleanTitle = episodeTitle.trim()
+  function handlePreviewEpisode(episode) {
+    closeEpisodeMenu()
 
-    if (!cleanTitle) {
-      showToast('Please enter an episode title.')
+    if (isChatStory) {
+      navigate(
+        `/author/story/${storyId}/chat/editor?episodeId=${encodeURIComponent(episode.id)}&first=0`
+      )
       return
     }
 
-    if (!messages.some((message) => message.type !== 'author_note')) {
-  showToast('Add at least one Chat or ASIDE message.')
-  return
-}
+    navigate(
+      `/author/story/${storyId}/episode/preview?episodeId=${encodeURIComponent(episode.id)}&type=${encodeURIComponent(storyType)}`
+    )
+  }
 
+  function handlePublishEpisode(episode) {
+    closeEpisodeMenu()
+
+    navigate(
+      `/author/story/${storyId}/episode/publish?episodeId=${encodeURIComponent(episode.id)}&first=${Number(episode.episode_number || 0) === 1 ? '1' : '0'}&type=${encodeURIComponent(storyType)}`
+    )
+  }
+
+  async function handleMoveToDraft(episode) {
     const token = getAuthToken()
 
     if (!token) {
-      navigate('/login')
+      navigate('/login', { replace: true })
       return
     }
 
     try {
-      setSaving(true)
+      setBusy(true)
 
       const response = await fetch(
-        `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/save`,
+        `${API_BASE_URL}/api/stories/${storyId}/episodes/${episode.id}/status`,
         {
-          method: 'POST',
+          method: 'PATCH',
           headers: {
-            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            episode_id: episodeId || requestedEpisodeId || null,
-            title: cleanTitle,
-            messages: messages.map((message) => ({
-              id: message.id,
-              type: message.type,
-              character_id: message.characterId || null,
-              text: message.text,
-              created_at: message.createdAt || null,
-            })),
-            is_locked: true,
-          }),
+          body: JSON.stringify({ status: 'draft' }),
         }
       )
+
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to save Chat Story episode')
+        throw new Error(data.message || 'Failed to move episode to draft')
       }
 
-      const savedEpisodeId = data.episode?.id
-      const firstValue = data.is_first_episode ? '1' : '0'
-
-      setEpisodeId(savedEpisodeId)
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          episodeTitle: cleanTitle,
-          episodeId: savedEpisodeId,
-          messages,
-          updatedAt: new Date().toISOString(),
-        })
+      setEpisodes((current) =>
+        current.map((item) =>
+          String(item.id) === String(episode.id)
+            ? {
+                ...item,
+                status: 'draft',
+                published_at: null,
+                scheduled_at: null,
+                updated_at: new Date().toISOString(),
+              }
+            : item
+        )
       )
 
-      navigate(
-        `/author/story/${storyId}/episode/publish?episodeId=${savedEpisodeId}&first=${firstValue}&type=chat_story`
-      )
+      closeEpisodeMenu()
+      setActiveTab('drafts')
     } catch (error) {
-      showToast(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to backend.'
-          : error.message || 'Failed to save Chat Story episode'
-      )
+      closeEpisodeMenu()
+      setMessage(error.message || 'Failed to move episode to draft')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
-      setSaving(false)
+      setBusy(false)
+    }
+  }
+
+  function handleDeleteEpisode(episode) {
+    closeEpisodeMenu()
+    setDeleteEpisode(episode)
+  }
+
+  async function handleConfirmDeleteEpisode() {
+    if (!deleteEpisode) return
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    try {
+      setBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/episodes/${deleteEpisode.id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to delete episode')
+      }
+
+      setEpisodes((current) =>
+        current.filter(
+          (episode) => String(episode.id) !== String(deleteEpisode.id)
+        )
+      )
+      setDeleteEpisode(null)
+    } catch (error) {
+      setDeleteEpisode(null)
+      setMessage(error.message || 'Failed to delete episode')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleMoveStoryToTrash() {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    try {
+      setBusy(true)
+
+      const response = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to move story to Trash')
+      }
+
+      setTrashStoryOpen(false)
+      navigate('/author/stories', { replace: true })
+    } catch (error) {
+      setTrashStoryOpen(false)
+      setMessage(error.message || 'Failed to move story to Trash')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setBusy(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[170px]">
-      <input
-        ref={audioInputRef}
-        type="file"
-        accept="audio/*"
-        onChange={handleAudioChange}
-        className="hidden"
-      />
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-        className="hidden"
+    <div className="min-h-screen bg-[#f7f7f9] pb-[92px] text-[#111827]">
+      <ProfessionalEpisodeActionSheet
+        episode={selectedEpisode}
+        open={Boolean(selectedEpisode)}
+        onClose={closeEpisodeMenu}
+        onEdit={handleEditEpisode}
+        onPreview={handlePreviewEpisode}
+        onPublish={handlePublishEpisode}
+        onMoveToDraft={handleMoveToDraft}
+        onDelete={handleDeleteEpisode}
+        busy={busy}
       />
 
-      <AddCharacterPopup
-        open={addPopupOpen}
-        onClose={() => setAddPopupOpen(false)}
-        onConfirm={handleAddConfirm}
+      <ConfirmDeleteModal
+        episode={deleteEpisode}
+        busy={busy}
+        onClose={() => setDeleteEpisode(null)}
+        onConfirm={handleConfirmDeleteEpisode}
       />
 
-      <MorePopup
-        open={morePopupOpen}
-        onClose={() => setMorePopupOpen(false)}
-        onUploadAudio={() => audioInputRef.current?.click()}
-        onAuthorNote={handleAuthorNote}
-        hasAuthorNote={messages.some(
-          (message) => message.type === 'author_note'
-        )}
+      <ConfirmTrashStoryModal
+        story={story}
+        open={trashStoryOpen}
+        busy={busy}
+        onClose={() => setTrashStoryOpen(false)}
+        onConfirm={handleMoveStoryToTrash}
       />
 
-      <AuthorNoteSheet
-        open={authorNoteOpen}
-        value={authorNoteDraft}
-        onChange={setAuthorNoteDraft}
-        onClose={closeAuthorNote}
-        onSave={saveAuthorNote}
-      />
+      <header className="sticky top-0 z-50 border-b border-[#eceef2] bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto grid h-[58px] max-w-5xl grid-cols-[44px_1fr_auto] items-center px-2 sm:px-4">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
+            aria-label="Go back"
+          >
+            <i className="fa-solid fa-chevron-left text-[14px]" />
+          </button>
 
-      {titlePopupOpen ? (
-  <div
-    className="fixed inset-0 z-[250] flex items-center justify-center bg-black/55 px-4"
-    onClick={() => setTitlePopupOpen(false)}
-  >
-    <section
-      className="w-full max-w-[390px] rounded-[24px] bg-white px-5 pb-5 pt-6 shadow-2xl"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <h2 className="text-center text-[19px] font-bold text-[#7c3aed]">
-        Enter episode title
-      </h2>
+          <h1 className="truncate text-center text-[15px] font-semibold">
+            Story Manager
+          </h1>
 
-      <input
-        autoFocus
-        value={titleDraft}
-        onChange={(event) => setTitleDraft(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && titleDraft.trim()) {
-            event.preventDefault()
-            saveEpisodeTitle()
-          }
-        }}
-        maxLength={80}
-        placeholder="Enter episode title"
-        className="mt-6 h-14 w-full rounded-[6px] bg-[#f5f5f6] px-4 text-center text-[17px] font-medium text-[#111827] outline-none placeholder:text-[#a5a5aa] focus:ring-2 focus:ring-[#9362ef]/30"
-      />
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setTrashStoryOpen(true)}
+              className="flex h-9 w-9 items-center justify-center text-[#e5484d] active:opacity-60"
+              aria-label="Move story to Trash"
+            >
+              <i className="fa-regular fa-trash-can text-[13px]" />
+            </button>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setTitlePopupOpen(false)}
-          className="h-12 text-[15px] font-bold text-[#111827]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={saveEpisodeTitle}
-          disabled={!titleDraft.trim()}
-          className="h-12 rounded-[8px] bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-[15px] font-bold text-white disabled:bg-none disabled:bg-[#f5f3f7] disabled:text-[#d8cce6]"
-        >
-          OK
-        </button>
-      </div>
-    </section>
-  </div>
-) : null}
-      
-      {toast ? (
-        <button
-          type="button"
-          onClick={() => setToast('')}
-          className="fixed inset-x-4 top-[78px] z-[300] mx-auto max-w-[320px] rounded-[14px] bg-white px-4 py-3 text-center text-[12px] font-medium text-[#475467] shadow-[0_8px_28px_rgba(15,23,42,0.18)] ring-1 ring-black/5"
-        >
-          {toast}
-        </button>
-      ) : null}
-
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 px-3 py-2 backdrop-blur">
-  <div className="mx-auto flex max-w-5xl items-center gap-2">
-    <button
-      type="button"
-      onClick={() => navigate(`/author/story/${storyId}/chat/characters`)}
-      className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95"
-      aria-label="Go back"
-    >
-      <i className="fa-solid fa-chevron-left text-[14px]" />
-    </button>
-
-    <div className="min-w-0 flex-1">
-      <button
-  type="button"
-  onClick={openTitlePopup}
-  className="flex max-w-full items-center gap-1.5 text-left active:opacity-70"
->
-  <span className="max-w-[180px] truncate text-[15px] font-bold text-[#111827]">
-    {episodeTitle.trim() || 'Enter episode title'}
-  </span>
-
-  <i className="fa-solid fa-pen shrink-0 text-[10px] text-[#98a2b3]" />
-</button>
-
-      <div className="mt-0.5 truncate text-[8.5px] font-medium text-[#98a2b3]">
-        {messages.length} {messages.length === 1 ? 'message' : 'messages'} ·{' '}
-        {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'} | Saved in{' '}
-        {savedSeconds < 60
-          ? `${savedSeconds}s`
-          : `${Math.floor(savedSeconds / 60)}m`}
-      </div>
-    </div>
-
-    <button
-      type="button"
-      onClick={saveAndContinue}
-      disabled={
-  saving ||
-  loading ||
-  !messages.some((message) => message.type !== 'author_note')
-}
-      className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-bold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {saving ? 'Saving...' : 'Next'}
-    </button>
-  </div>
-</header>
-
-      <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="hidden rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5 sm:block">
-          <div className="grid grid-cols-4 gap-2">
-            <Step number="1" title="Story Info" done />
-            <Step number="2" title="Characters" done />
-            <Step number="3" title="Chat" active />
-            <Step number="4" title="Publish" />
+            <button
+              type="button"
+              onClick={handleEditStory}
+              className={`h-9 rounded-full px-4 text-[12px] text-white active:scale-95 ${accentButton}`}
+            >
+              Edit Story
+            </button>
           </div>
-        </section>
+        </div>
+      </header>
 
-        <section className="mt-4 min-h-[calc(100vh-330px)] bg-white p-4">
-          {loading ? (
-            <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
-              <i className="fa-solid fa-spinner fa-spin text-[24px] text-[#7c3aed]" />
-              <div className="mt-3 text-[12px] font-bold text-[#667085]">
-                Loading characters...
+      <main className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
+        {loading ? (
+          <section className="rounded-[14px] bg-white p-8 text-center">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+            <div className="text-[12px] text-[#667085]">
+              Loading story manager...
+            </div>
+          </section>
+        ) : null}
+
+        {message ? (
+          <button
+            type="button"
+            onClick={() => setMessage('')}
+            className="mb-4 w-full rounded-[12px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] leading-5 text-[#e5484d]"
+          >
+            {message}
+          </button>
+        ) : null}
+
+        {!loading && story ? (
+          <>
+            <section className="bg-white px-3 py-4 sm:px-4">
+              <div className="flex items-start gap-4">
+                <div className="aspect-[2/3] w-[88px] shrink-0 overflow-hidden rounded-[10px] bg-[#eef0f3] sm:w-[104px]">
+                  {story.cover_url ? (
+                    <img
+                      src={story.cover_url}
+                      alt={story.title || ''}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#8d94a1]">
+                      <i className="fa-regular fa-image text-[22px]" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1 pt-1">
+                  <h2 className="line-clamp-2 text-[19px] font-semibold leading-6 sm:text-[22px]">
+                    {story.title || 'Untitled Story'}
+                  </h2>
+
+                  <div
+                    className={`mt-2 text-[12px] ${
+                      episodes.length ? 'text-[#667085]' : 'text-[#a56a00]'
+                    }`}
+                  >
+                    {storyProgressText}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[#8d94a1]">
+                    <span>{storyContentText}</span>
+                    <span>•</span>
+                    <span>{storyUpdatedLabel}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#f1ecff] text-[#7c3aed]">
-                <i className="fa-regular fa-comments text-[25px]" />
-              </span>
-              <h2 className="mt-4 text-[17px] font-extrabold text-[#111827]">
-                Start your conversation
-              </h2>
-              <p className="mt-2 max-w-[310px] text-[11.5px] leading-5 text-[#667085]">
-                Choose one character below to write their message. Tap the same
-                character again to deselect it and write narration without an
-                avatar.
-              </p>
-            </div>
-          ) : (
-            <div>
-              {messages.map((message) =>
-  message.type === 'author_note' ? (
-    <AuthorNoteMessage
-      key={message.id}
-      message={message}
-      onDelete={deleteMessage}
-    />
-  ) : message.type === 'aside' ? (
-    <AsideMessage
-      key={message.id}
-      message={message}
-      onDelete={deleteMessage}
-    />
-  ) : (
-    <ChatMessage
-      key={message.id}
-      message={message}
-      character={characterMap[message.characterId]}
-      onDelete={deleteMessage}
-    />
-  )
-)}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </section>
+            </section>
+
+            <section className="mt-3 bg-white">
+              <div className="flex gap-1 border-b border-[#eceef2] px-3 pb-3 pt-3 sm:px-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('published')}
+                  className={`rounded-full px-5 py-2.5 text-[12px] transition active:scale-[0.98] ${
+                    activeTab === 'published'
+                      ? 'bg-[#eef0f3] text-[#111827]'
+                      : 'bg-transparent text-[#8d94a1]'
+                  }`}
+                >
+                  Published {publishedEpisodes.length}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('drafts')}
+                  className={`rounded-full px-5 py-2.5 text-[12px] transition active:scale-[0.98] ${
+                    activeTab === 'drafts'
+                      ? 'bg-[#eef0f3] text-[#111827]'
+                      : 'bg-transparent text-[#8d94a1]'
+                  }`}
+                >
+                  Drafts {draftEpisodes.length}
+                </button>
+              </div>
+
+              {visibleEpisodes.length ? (
+                <>
+                  <div>
+                    {paginatedEpisodes.map((episode, index) => (
+                      <EpisodeRow
+                        key={episode.id}
+                        episode={episode}
+                        storyType={storyType}
+                        last={index === paginatedEpisodes.length - 1}
+                        onOpen={handleEditEpisode}
+                        onMore={setSelectedEpisode}
+                      />
+                    ))}
+                  </div>
+
+                  {visibleEpisodes.length > pageSize ? (
+                    <div className="flex items-center justify-between border-t border-[#eceef2] px-4 py-3 text-[11px] text-[#667085]">
+                      <select
+                        value={pageSize}
+                        onChange={(event) =>
+                          setPageSize(Number(event.target.value))
+                        }
+                        className="h-8 rounded-[8px] border border-[#d8dde5] bg-white px-2 text-[11px] text-[#111827] outline-none"
+                      >
+                        <option value={20}>20 per page</option>
+                        <option value={30}>30 per page</option>
+                        <option value={50}>50 per page</option>
+                      </select>
+
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {pageStart + 1}–{pageEnd} of {visibleEpisodes.length}
+                        </span>
+
+                        <button
+                          type="button"
+                          disabled={safePage === 1}
+                          onClick={() =>
+                            setCurrentPage((page) => Math.max(1, page - 1))
+                          }
+                          className="flex h-8 w-8 items-center justify-center disabled:opacity-25"
+                        >
+                          <i className="fa-solid fa-chevron-left text-[10px]" />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={safePage === totalPages}
+                          onClick={() =>
+                            setCurrentPage((page) =>
+                              Math.min(totalPages, page + 1)
+                            )
+                          }
+                          className="flex h-8 w-8 items-center justify-center disabled:opacity-25"
+                        >
+                          <i className="fa-solid fa-chevron-right text-[10px]" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="px-6 py-16 text-center">
+                  <div className="text-[14px] text-[#111827]">
+                    {episodes.length
+                      ? `No ${
+                          activeTab === 'published' ? 'published' : 'draft'
+                        } episodes yet.`
+                      : 'Create your first episode to start your story.'}
+                  </div>
+
+                  <div className="mx-auto mt-2 max-w-[300px] text-[11px] leading-5 text-[#8d94a1]">
+                    {episodes.length
+                      ? 'Episodes will appear here when their status changes.'
+                      : 'Use the Add Episode button below when you are ready to begin.'}
+                  </div>
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
-  <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
-        <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
-  <div className="relative min-w-0">
-  <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex w-max gap-1.5 py-0.5">
-      <AsideAvatar
-        active={!selectedCharacterId}
-        onClick={() => {
-          setSelectedCharacterId(null)
-          setComposerMode('message')
-        }}
-      />
-
-      {characters.map((character) => (
-        <CharacterAvatar
-          key={character.id}
-          character={character}
-          selected={selectedCharacterId === character.id}
-          onClick={() => {
-            toggleCharacter(character.id)
-            setComposerMode('message')
-          }}
-        />
-      ))}
-    </div>
-  </div>
-
-  <div className="pointer-events-none absolute inset-y-0 -right-1.5 z-10 w-6 bg-gradient-to-r from-transparent via-white/75 to-white" />
-</div>
-
-  <button
-    type="button"
-    onClick={() => setAddPopupOpen(true)}
-    className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
-  >
-    <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
-  <i className="fa-regular fa-user text-[16px]" />
-  <i className="fa-solid fa-plus absolute right-[3px] top-[3px] text-[7px]" />
-</span>
-    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
-      Add
-    </span>
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setMorePopupOpen(true)}
-    className="w-10 text-center active:scale-[0.97]"
-  >
-    <span className="mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
-  <i className="fa-solid fa-chevron-down text-[16px]" />
-</span>
-    <span className="mt-1 block text-[8px] font-bold text-[#667085]">
-      More
-    </span>
-  </button>
-</div>
-
-<div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-x-1 pl-4 pr-2">
-  <div className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12">
-    <textarea
-      ref={composerRef}
-      value={draft}
-      onFocus={() => setComposerFocused(true)}
-      onBlur={() => {
-        if (!draft.trim()) setComposerFocused(false)
-      }}
-      onChange={(event) => setDraft(event.target.value)}
-      onKeyDown={handleComposerKeyDown}
-      rows={1}
-      maxLength={2000}
-      placeholder={
-  selectedCharacter
-    ? `${selectedCharacter.nickname || 'Character'}:`
-    : 'ASIDE:'
-}
-      className="max-h-[96px] min-h-[20px] w-full resize-none overflow-y-hidden bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
-    />
-
-    <button
-      type="button"
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={() => setSymbolPanelOpen((current) => !current)}
-      className={`absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-[7px] text-[12px] font-medium text-[#111827] active:scale-95 ${
-        symbolPanelOpen ? 'bg-[#dfe2e7]' : 'bg-[#e9eaee]'
-      }`}
-      aria-label="Message symbols"
-      aria-pressed={symbolPanelOpen}
-    >
-      「」
-    </button>
-  </div>
-
-  {composerFocused || draft.trim() ? (
-    <button
-  type="button"
-  onMouseDown={(event) => event.preventDefault()}
-  onClick={sendMessage}
-  disabled={!draft.trim()}
-  className={`flex h-11 w-10 items-center justify-center transition active:scale-95 ${
-    draft.trim() ? 'text-[#7c3aed]' : 'text-[#cbd5e1]'
-  }`}
-  aria-label="Send message"
->
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-  >
-    <path d="M22 2 11 13" />
-    <path d="m22 2-7 20-4-9-9-4Z" />
-  </svg>
-</button>
-  ) : (
-    <button
-      type="button"
-      onClick={() => {
-        setSymbolPanelOpen(false)
-        imageInputRef.current?.click()
-      }}
-      className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
-      aria-label="Add image"
-    >
-      <i className="fa-regular fa-image text-[20px]" />
-    </button>
-  )}
-</div>
-
-          {symbolPanelOpen ? (
-  <div className="flex w-full gap-1 px-2 pb-1 pt-2">
-    {MESSAGE_SYMBOLS.map((symbol) => (
-      <button
-        key={symbol}
-        type="button"
-        onClick={() => insertMessageSymbol(symbol)}
-        className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-[8px] bg-[#f3f4f6] text-[12px] font-normal text-[#667085] active:bg-[#e5e7eb]"
-      >
-        {symbol}
-      </button>
-    ))}
-  </div>
-) : null}
-        </div>
-      </div>
+      {!loading && story ? (
+        <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e8eaee] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+          <div className="mx-auto max-w-5xl px-4 py-3">
+            <button
+              type="button"
+              onClick={handleAddEpisode}
+              className={`flex h-12 w-full items-center justify-center rounded-full text-[14px] text-white active:scale-[0.99] ${accentButton}`}
+            >
+              <i className="fa-solid fa-plus mr-2 text-[12px]" />
+              Add Episode
+            </button>
+          </div>
+        </footer>
+      ) : null}
     </div>
   )
 }
