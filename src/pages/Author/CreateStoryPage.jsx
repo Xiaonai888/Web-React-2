@@ -463,6 +463,9 @@ export default function CreateStoryPage() {
   const [searchParams] = useSearchParams()
   const editStoryId = searchParams.get('editStoryId')
   const isEditMode = Boolean(editStoryId)
+  const returnToChatCharacters =
+  searchParams.get('returnTo') ===
+  'chat_characters'
   const typeFromUrl = String(searchParams.get('type') || 'novel').toLowerCase()
   const requestedStoryType = ['novel', 'manga', 'chat_story'].includes(typeFromUrl) ? typeFromUrl : 'novel'
   const [storyType, setStoryType] = useState(requestedStoryType)
@@ -940,14 +943,27 @@ if (cropMode === 'slide') {
 
       if (!isEditMode) {
   localStorage.removeItem('create_story_draft')
+
   const nextPath = isChatStory
     ? `/author/story/${storyId}/chat/characters`
     : `/author/story/${storyId}/episode/create?type=${storyType}`
+
   navigate(nextPath)
   return
 }
 
-      navigate('/author/dashboard')
+if (
+  isChatStory &&
+  returnToChatCharacters
+) {
+  navigate(
+    `/author/story/${storyId}/chat/characters`,
+    { replace: true }
+  )
+  return
+}
+
+navigate('/author/dashboard')
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
