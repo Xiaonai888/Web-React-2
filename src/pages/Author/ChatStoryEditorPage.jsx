@@ -461,25 +461,160 @@ function ChatMessage({
   )
 }
 
+function ToolbarIcon({ name }) {
+  const iconClass = 'h-[19px] w-[19px]'
+
+  if (name === 'above') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <path d="M4 6h11" />
+        <path d="M4 12h8" />
+        <path d="M4 18h6" />
+        <path d="M19 18V7" />
+        <path d="m15.5 10.5 3.5-3.5 3.5 3.5" />
+      </svg>
+    )
+  }
+
+  if (name === 'below') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <path d="M4 6h6" />
+        <path d="M4 12h8" />
+        <path d="M4 18h11" />
+        <path d="M19 6v11" />
+        <path d="m15.5 13.5 3.5 3.5 3.5-3.5" />
+      </svg>
+    )
+  }
+
+  if (name === 'modify') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+      </svg>
+    )
+  }
+
+  if (name === 'right') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <circle cx="9" cy="7" r="3" />
+        <path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20" />
+        <path d="M18 8v6" />
+        <path d="M15 11h6" />
+      </svg>
+    )
+  }
+
+  if (name === 'up') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <path d="m5 12 7-7 7 7" />
+        <path d="m5 19 7-7 7 7" />
+      </svg>
+    )
+  }
+
+  if (name === 'down') {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={iconClass}
+      >
+        <path d="m5 5 7 7 7-7" />
+        <path d="m5 12 7 7 7-7" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={iconClass}
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="m19 6-1 14H6L5 6" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
+    </svg>
+  )
+}
+
 function MessageToolbarAction({
   icon,
   label,
   onClick,
-  danger = false,
+  visible = true,
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[6px] px-0.5 py-1.5 active:bg-white/10 ${
-        danger
-          ? 'text-[#ffb4b4]'
-          : 'text-white'
+      disabled={!visible}
+      tabIndex={visible ? 0 : -1}
+      aria-hidden={!visible}
+      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[6px] px-0.5 py-1.5 text-white active:bg-white/10 ${
+        visible
+          ? ''
+          : 'invisible pointer-events-none'
       }`}
     >
-      <i className={`${icon} text-[17px]`} />
+      <ToolbarIcon name={icon} />
 
-      <span className="whitespace-nowrap text-[8px] font-medium">
+      <span className="whitespace-nowrap text-[8px] font-normal">
         {label}
       </span>
     </button>
@@ -511,55 +646,51 @@ function MessageEditToolbar({
     !isLead
 
   return (
-    <div className="fixed inset-x-2 bottom-[158px] z-[205] mx-auto max-w-[560px]">
-      <div className="flex min-h-[64px] items-stretch rounded-[8px] bg-[#303033] px-1 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+    <div className="fixed left-1/2 bottom-[158px] z-[205] w-[calc(100%-24px)] max-w-[430px] -translate-x-1/2">
+      <div className="grid min-h-[64px] grid-cols-7 rounded-[8px] bg-[#303033] px-1 py-1.5">
         <MessageToolbarAction
-          icon="fa-solid fa-arrow-up-wide-short"
+          icon="above"
           label="Above"
           onClick={onAbove}
         />
 
         <MessageToolbarAction
-          icon="fa-solid fa-arrow-down-wide-short"
+          icon="below"
           label="Below"
           onClick={onBelow}
         />
 
         <MessageToolbarAction
-          icon="fa-solid fa-pen"
+          icon="modify"
           label="Modify"
           onClick={onModify}
         />
 
-        {canMakeLead ? (
-          <MessageToolbarAction
-            icon="fa-solid fa-user-plus"
-            label="On Right"
-            onClick={onMakeLead}
-          />
-        ) : null}
-
-        {canMoveUp ? (
-          <MessageToolbarAction
-            icon="fa-solid fa-angles-up"
-            label="Up"
-            onClick={onMoveUp}
-          />
-        ) : null}
-
-        {canMoveDown ? (
-          <MessageToolbarAction
-            icon="fa-solid fa-angles-down"
-            label="Down"
-            onClick={onMoveDown}
-          />
-        ) : null}
+        <MessageToolbarAction
+          icon="right"
+          label="On Right"
+          onClick={onMakeLead}
+          visible={canMakeLead}
+        />
 
         <MessageToolbarAction
-          icon="fa-regular fa-trash-can"
+          icon="up"
+          label="Up"
+          onClick={onMoveUp}
+          visible={canMoveUp}
+        />
+
+        <MessageToolbarAction
+          icon="down"
+          label="Down"
+          onClick={onMoveDown}
+          visible={canMoveDown}
+        />
+
+        <MessageToolbarAction
+          icon="delete"
           label="Delete"
           onClick={onDelete}
-          danger
         />
       </div>
     </div>
