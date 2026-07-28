@@ -298,10 +298,21 @@ function AsideMessage({
   message,
   active,
   onEdit,
+  onElementRef,
 }) {
   return (
-    <div className="group mx-auto flex max-w-[88%] items-start justify-center gap-2 py-2">
-      <div className="rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467]">
+    <div
+      ref={(node) => onElementRef(message.id, node)}
+      data-message-id={message.id}
+      className="group mx-auto flex max-w-[88%] items-start justify-center gap-2 py-2"
+    >
+      <div
+        className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467] ${
+  active
+    ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-white'
+    : ''
+}`}
+      >
         {message.text}
       </div>
 
@@ -380,6 +391,7 @@ function ChatMessage({
   right,
   active,
   onEdit,
+  onElementRef,
 }) {
   const editButton = (
     <button
@@ -398,6 +410,8 @@ function ChatMessage({
 
   return (
     <div
+      ref={(node) => onElementRef(message.id, node)}
+      data-message-id={message.id}
       className={`flex items-end gap-2 py-2 ${
         right ? 'justify-end' : 'justify-start'
       }`}
@@ -417,7 +431,7 @@ function ChatMessage({
       ) : null}
 
       <div
-        className={`max-w-[72%] ${
+        className={`min-w-0 max-w-[72%] ${
           right
             ? 'items-end text-right'
             : 'items-start text-left'
@@ -431,10 +445,16 @@ function ChatMessage({
           {right ? editButton : null}
 
           <div
-            className={`rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
+            className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
               right
                 ? 'rounded-br-[7px] bg-gradient-to-br from-[#8b5cf6] to-[#6d42db] text-white'
-                : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm ring-1 ring-black/5'
+                : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm'
+            } ${
+              active
+                ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-white'
+                : !right
+                  ? 'ring-1 ring-black/5'
+                  : ''
             }`}
           >
             {message.text}
@@ -597,20 +617,12 @@ function MessageToolbarAction({
   icon,
   label,
   onClick,
-  visible = true,
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={!visible}
-      tabIndex={visible ? 0 : -1}
-      aria-hidden={!visible}
-      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[6px] px-0.5 py-1.5 text-white active:bg-white/10 ${
-        visible
-          ? ''
-          : 'invisible pointer-events-none'
-      }`}
+      className="flex w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-[6px] px-0 py-1.5 text-white active:bg-white/10"
     >
       <ToolbarIcon name={icon} />
 
@@ -623,6 +635,7 @@ function MessageToolbarAction({
 
 function MessageEditToolbar({
   message,
+  position,
   isLead,
   canMoveUp,
   canMoveDown,
@@ -636,6 +649,7 @@ function MessageEditToolbar({
 }) {
   if (
     !message ||
+    !position ||
     message.type === 'author_note'
   ) {
     return null
@@ -646,8 +660,13 @@ function MessageEditToolbar({
     !isLead
 
   return (
-    <div className="fixed left-1/2 bottom-[158px] z-[205] w-[calc(100%-24px)] max-w-[430px] -translate-x-1/2">
-      <div className="grid min-h-[64px] grid-cols-7 rounded-[8px] bg-[#303033] px-1 py-1.5">
+    <div
+      className="fixed left-1/2 z-[205] max-w-[calc(100vw-16px)] -translate-x-1/2"
+      style={{
+        top: `${position.top}px`,
+      }}
+    >
+      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch rounded-[8px] bg-[#303033] px-1 py-1.5">
         <MessageToolbarAction
           icon="above"
           label="Above"
@@ -666,26 +685,29 @@ function MessageEditToolbar({
           onClick={onModify}
         />
 
-        <MessageToolbarAction
-          icon="right"
-          label="On Right"
-          onClick={onMakeLead}
-          visible={canMakeLead}
-        />
+        {canMakeLead ? (
+          <MessageToolbarAction
+            icon="right"
+            label="On Right"
+            onClick={onMakeLead}
+          />
+        ) : null}
 
-        <MessageToolbarAction
-          icon="up"
-          label="Up"
-          onClick={onMoveUp}
-          visible={canMoveUp}
-        />
+        {canMoveUp ? (
+          <MessageToolbarAction
+            icon="up"
+            label="Up"
+            onClick={onMoveUp}
+          />
+        ) : null}
 
-        <MessageToolbarAction
-          icon="down"
-          label="Down"
-          onClick={onMoveDown}
-          visible={canMoveDown}
-        />
+        {canMoveDown ? (
+          <MessageToolbarAction
+            icon="down"
+            label="Down"
+            onClick={onMoveDown}
+          />
+        ) : null}
 
         <MessageToolbarAction
           icon="delete"
@@ -1259,6 +1281,8 @@ export default function ChatStoryEditorPage() {
   const [searchParams] = useSearchParams()
   const messagesEndRef = useRef(null)
   const shouldScrollToEndRef = useRef(false)
+  const messageElementsRef = useRef(new Map())
+  const messageToolbarAutoScrollRef = useRef('')
   const composerRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
@@ -1300,6 +1324,8 @@ export default function ChatStoryEditorPage() {
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
   const [activeMessageId, setActiveMessageId] = useState('')
+  const [messageToolbarPosition, setMessageToolbarPosition] =
+    useState(null)
   const [messageEditMode, setMessageEditMode] = useState(null)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
@@ -1382,6 +1408,141 @@ const canMoveActiveMessageDown =
   activeStoryIndex >= 0 &&
   activeStoryIndex <
     storyMessages.length - 1
+
+
+const registerMessageElement = (
+  messageId,
+  node
+) => {
+  if (node) {
+    messageElementsRef.current.set(
+      messageId,
+      node
+    )
+    return
+  }
+
+  messageElementsRef.current.delete(
+    messageId
+  )
+}
+
+useEffect(() => {
+  if (!activeMessageId) {
+    setMessageToolbarPosition(null)
+    return undefined
+  }
+
+  messageToolbarAutoScrollRef.current = ''
+  let timeoutId = 0
+
+  const updateToolbarPosition = () => {
+    const element =
+      messageElementsRef.current.get(
+        activeMessageId
+      )
+
+    if (!element) {
+      setMessageToolbarPosition(null)
+      return
+    }
+
+    const rect =
+      element.getBoundingClientRect()
+
+    const toolbarHeight = 64
+    const gap = 8
+    const topSafeArea = 62
+    const bottomSafeArea = 170
+    const bottomLimit =
+      window.innerHeight -
+      bottomSafeArea
+    const belowTop = rect.bottom + gap
+    const aboveTop =
+      rect.top - gap - toolbarHeight
+    const canPlaceBelow =
+      belowTop + toolbarHeight <=
+      bottomLimit
+    const canPlaceAbove =
+      aboveTop >= topSafeArea
+
+    if (
+      !canPlaceBelow &&
+      !canPlaceAbove &&
+      messageToolbarAutoScrollRef.current !==
+        activeMessageId
+    ) {
+      messageToolbarAutoScrollRef.current =
+        activeMessageId
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+
+      timeoutId = window.setTimeout(
+        updateToolbarPosition,
+        320
+      )
+      return
+    }
+
+    const top = canPlaceBelow
+      ? belowTop
+      : canPlaceAbove
+        ? aboveTop
+        : Math.max(
+            topSafeArea,
+            Math.min(
+              belowTop,
+              bottomLimit -
+                toolbarHeight
+            )
+          )
+
+    setMessageToolbarPosition({
+      top,
+      placement: canPlaceBelow
+        ? 'below'
+        : 'above',
+    })
+  }
+
+  const frameId =
+    window.requestAnimationFrame(
+      updateToolbarPosition
+    )
+
+  window.addEventListener(
+    'resize',
+    updateToolbarPosition
+  )
+  window.addEventListener(
+    'scroll',
+    updateToolbarPosition,
+    true
+  )
+
+  return () => {
+    window.cancelAnimationFrame(frameId)
+    window.clearTimeout(timeoutId)
+    window.removeEventListener(
+      'resize',
+      updateToolbarPosition
+    )
+    window.removeEventListener(
+      'scroll',
+      updateToolbarPosition,
+      true
+    )
+  }
+}, [
+  activeMessageId,
+  activeMessageIsLead,
+  canMoveActiveMessageDown,
+  canMoveActiveMessageUp,
+  messages,
+])
 
   useEffect(() => {
   if (
@@ -2858,6 +3019,7 @@ const handleAddConfirm = async () => {
     activeMessageId === message.id
   }
   onEdit={openMessageToolbar}
+  onElementRef={registerMessageElement}
 />
   ) : (
     <ChatMessage
@@ -2876,6 +3038,7 @@ const handleAddConfirm = async () => {
     activeMessageId === message.id
   }
   onEdit={openMessageToolbar}
+  onElementRef={registerMessageElement}
 />
   )
 )}
@@ -2887,6 +3050,7 @@ const handleAddConfirm = async () => {
 
 <MessageEditToolbar
   message={activeMessage}
+  position={messageToolbarPosition}
   isLead={activeMessageIsLead}
   canMoveUp={canMoveActiveMessageUp}
   canMoveDown={canMoveActiveMessageDown}
