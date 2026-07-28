@@ -3357,9 +3357,9 @@ useEffect(() => {
       setSettingsSaving(true)
       setMessage('')
 
-      if (isFirstEpisode || currentEpisodeNumber === 1) {
-        await saveStorySettings(token)
-      }
+      if (isFirstEpisode) {
+  await saveStorySettings(token)
+}
 
       const status =
         releaseOption === 'schedule'
@@ -3527,7 +3527,7 @@ setSuccessOpen(true)
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
-        showStorySettings={isFirstEpisode || currentEpisodeNumber === 1}
+        showStorySettings={isFirstEpisode}
         genreOptions={genreOptions}
         storyLanguage={storyLanguage}
         onStoryLanguageChange={setStoryLanguage}
