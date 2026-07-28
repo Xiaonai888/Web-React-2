@@ -27,6 +27,7 @@ import AuthorProfilePage from './pages/Author/AuthorProfilePage'
 import CreateStoryPage from './pages/Author/CreateStoryPage'
 import StoryTitleGuidePage from './pages/Author/StoryTitleGuidePage'
 import ChatStoryCharactersPage from './pages/Author/ChatStoryCharactersPage'
+import ShadowGalleryPage from './pages/Author/ShadowGalleryPage'
 import ChatStoryCharacterProfilePage from './pages/Author/ChatStoryCharacterProfilePage'
 import ChatStoryEditorPage from './pages/Author/ChatStoryEditorPage'
 import StoryManagerPage from './pages/Author/StoryManagerPage'
@@ -1117,6 +1118,11 @@ const shouldShowOpeningAds =
         <Route
   path="/author/story/:storyId/chat/characters/:characterId/profile"
   element={<ChatStoryCharacterProfilePage />}
+/>
+
+        <Route
+  path="/author/story/:storyId/chat/shadow-gallery"
+  element={<ShadowGalleryPage />}
 />
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
         <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
