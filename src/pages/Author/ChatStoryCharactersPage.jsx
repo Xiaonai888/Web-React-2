@@ -758,10 +758,18 @@ export default function ChatStoryCharactersPage() {
       draft.chatSide ||
       (restoredGroup === 'main' ? 'right' : 'left')
     )
-    setSourceOpen(false)
-    setEditorOpen(true)
+    if (selected?.imageUrl) {
+  setSourceOpen(false)
+  setEditorOpen(true)
+} else if (draft.origin === 'cast-photo') {
+  setEditorOpen(false)
+  setSourceOpen(true)
+} else {
+  setSourceOpen(false)
+  setEditorOpen(false)
+}
 
-    sessionStorage.removeItem(draftKey)
+sessionStorage.removeItem(draftKey)
 
     if (selected) {
       sessionStorage.removeItem(
