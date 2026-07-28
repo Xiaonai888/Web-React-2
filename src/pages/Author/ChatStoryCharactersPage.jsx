@@ -281,8 +281,8 @@ function LeadCharacterSheet({
   onConfirm,
 }) {
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <div className="pb-1">
+    <BottomSheet open={open} onClose={onClose} hideHandle>
+  <div className="pt-3 pb-1">
         <h2 className="text-center text-[18px] font-bold text-[#111827]">
           Choose Lead Character
         </h2>
@@ -300,11 +300,11 @@ function LeadCharacterSheet({
                 key={character.id}
                 type="button"
                 onClick={() => onSelect(character.id)}
-                className={`relative flex min-h-[130px] flex-col items-center justify-center rounded-[20px] px-3 py-4 text-center active:scale-[0.98] ${
-                  selected
-                    ? 'bg-[#f5f0ff] ring-2 ring-[#7c3aed]'
-                    : 'bg-[#f7f7f8] ring-1 ring-black/5'
-                }`}
+                className={`relative flex min-h-[130px] flex-col items-center justify-center overflow-hidden rounded-[20px] px-3 py-4 text-center active:scale-[0.98] ${
+  selected
+    ? 'border-2 border-[#7c3aed] bg-[#f5f0ff]'
+    : 'border border-black/5 bg-[#f7f7f8]'
+}`}
               >
                 {selected ? (
                   <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-[#7c3aed] text-white">
