@@ -523,13 +523,13 @@ export default function CreateStoryPage() {
 
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
 
-if (!saved || saved.storyType !== requestedStoryType) {
-  localStorage.removeItem('create_story_draft')
-  setStoryType(requestedStoryType)
-  return
-}
+    if (!saved || saved.storyType !== requestedStoryType) {
+      localStorage.removeItem('create_story_draft')
+      setStoryType(requestedStoryType)
+      return
+    }
 
-setStoryType(requestedStoryType)
+    setStoryType(requestedStoryType)
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
@@ -1351,9 +1351,9 @@ backgroundImage: isEditMode
                     <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
                       slides.length >= 5
   ? 'bg-[#e5e7eb] text-[#98a2b3]'
-  : isChatStory
-  ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-white'
-  : 'bg-[#111827] text-white'
+  : isManga
+    ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-white'
+    : 'bg-[#111827] text-white'
                     }`}>
                       + Add
                       <input
@@ -1420,7 +1420,19 @@ backgroundImage: isEditMode
 
       <header className={`sticky top-0 z-50 px-4 py-3 ${isEditMode ? 'bg-white' : 'bg-transparent'}`}>
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center text-black active:scale-95" aria-label="Go back">
+          <button
+            type="button"
+            onClick={() => {
+              if (isChatStory && returnToChatCharacters) {
+                navigate('/author/stories', { replace: true })
+                return
+              }
+
+              navigate(-1)
+            }}
+            className="flex h-9 w-9 items-center justify-center text-black active:scale-95"
+            aria-label="Go back"
+          >
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
