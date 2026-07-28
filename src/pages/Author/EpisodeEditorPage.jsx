@@ -1858,6 +1858,8 @@ export function PublishSettingsSheet({
   saving,
   onClose,
   onSave,
+  isChatStory = false,
+
 }) {
   const [dragY, setDragY] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -2293,7 +2295,9 @@ const canSave =
               type="button"
               onClick={onSave}
               disabled={!canSave}
-              className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-[#9ca3af]"
+              className={`h-12 w-full rounded-full text-[13px] font-semibold text-white active:scale-[0.99] disabled:bg-none disabled:bg-[#9ca3af] ${
+  isChatStory ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db]' : 'bg-[#111827]'
+}`}
             >
               {saving ? 'Saving...' : 'Publish'}
             </button>
