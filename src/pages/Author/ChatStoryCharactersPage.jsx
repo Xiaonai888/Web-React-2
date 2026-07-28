@@ -111,7 +111,7 @@ function Step({ number, title, active }) {
   )
 }
 
-function BottomSheet({ open, onClose, children }) {
+function BottomSheet({ open, onClose, children, hideHandle = false }) {
   const [dragY, setDragY] = useState(0)
   const startYRef = useRef(0)
   const dragYRef = useRef(0)
@@ -169,17 +169,19 @@ function BottomSheet({ open, onClose, children }) {
         }}
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          onPointerDown={startDrag}
-          onPointerMove={moveDrag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          className="mx-auto mb-3 flex h-7 w-20 touch-none items-center justify-center"
-          aria-label="Drag down to close"
-        >
-          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-        </button>
+        {!hideHandle ? (
+  <button
+    type="button"
+    onPointerDown={startDrag}
+    onPointerMove={moveDrag}
+    onPointerUp={endDrag}
+    onPointerCancel={endDrag}
+    className="mx-auto mb-3 flex h-7 w-20 touch-none items-center justify-center"
+    aria-label="Drag down to close"
+  >
+    <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+  </button>
+) : null}
 
         {children}
       </div>
@@ -220,60 +222,60 @@ function HelpSheet({ group, onClose }) {
 
 function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
   return (
-    <BottomSheet open={open} onClose={onClose}>
-      <h2 className="text-center text-[16px] font-bold text-[#111827]">
-        Choose profile image
-      </h2>
+    <BottomSheet open={open} onClose={onClose} hideHandle>
+      <div className="pt-5">
+        <h2 className="text-center text-[20px] font-bold text-[#111827]">
+          Add Photo
+        </h2>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-8 grid min-h-[175px] grid-cols-2 items-start gap-8 px-4">
+          <button
+            type="button"
+            onClick={onDevice}
+            className="flex flex-col items-center justify-center text-center active:scale-[0.97]"
+          >
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eaf8ff]">
+              <img
+                src="/assets/Icons/Local%20image.svg"
+                alt=""
+                className="h-9 w-9 object-contain"
+              />
+            </span>
+
+            <span className="mt-4 text-[14px] font-medium text-[#111827]">
+              Upload from device
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onShadowGallery}
+            className="flex flex-col items-center justify-center text-center active:scale-[0.97]"
+          >
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f1eaff]">
+              <img
+                src="/assets/Icons/Shadow%20image.svg"
+                alt=""
+                className="h-9 w-9 object-contain"
+              />
+            </span>
+
+            <span className="mt-4 text-[14px] font-medium text-[#111827]">
+              Shadow gallery
+            </span>
+          </button>
+        </div>
+
+        <div className="-mx-4 h-3 bg-[#f5f6f8]" />
+
         <button
           type="button"
-          onClick={onDevice}
-          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#f6fcff] px-3 text-center active:scale-[0.98]"
+          onClick={onClose}
+          className="-mx-4 flex h-16 w-[calc(100%+2rem)] items-center justify-center bg-white text-[15px] font-medium text-[#111827] active:bg-[#fafafa]"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eaf8ff]">
-  <img
-    src="/assets/Icons/Local%20image.svg"
-    alt=""
-    className="h-6 w-6"
-  />
-</span>
-
-          <span className="mt-3 text-[13px] font-medium text-[#111827]">
-            Upload from device
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onShadowGallery}
-          className="flex min-h-[138px] flex-col items-center justify-center rounded-[22px] bg-[#faf8ff] px-3 text-center active:scale-[0.98]"
-        >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f1ecff]">
-  <span
-    className="h-6 w-6 bg-[#7c3aed]"
-    style={{
-      WebkitMask:
-        "url('/assets/Icons/Shadow%20image.svg') center / contain no-repeat",
-      mask:
-        "url('/assets/Icons/Shadow%20image.svg') center / contain no-repeat",
-    }}
-  />
-</span>
-
-          <span className="mt-3 text-[13px] font-medium text-[#111827]">
-            Shadow gallery
-          </span>
+          Cancel
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={onClose}
-        className="mt-4 h-12 w-full rounded-full bg-[#faf9fc] text-[13px] font-medium text-[#111827]"
-      >
-        Cancel
-      </button>
     </BottomSheet>
   )
 }
