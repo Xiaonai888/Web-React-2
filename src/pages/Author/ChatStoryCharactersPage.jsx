@@ -1165,21 +1165,7 @@ export default function ChatStoryCharactersPage() {
         onShadowGallery={openShadowGallery}
       />
 
-      <GallerySheet
-        open={galleryOpen}
-        loading={galleryLoading}
-        error={galleryError}
-        images={galleryImages}
-        categories={galleryCategories}
-        selectedCategory={galleryCategory}
-        onCategoryChange={setGalleryCategory}
-        onSelect={selectGalleryImage}
-        onRetry={loadShadowGallery}
-        onClose={() => {
-          setGalleryOpen(false)
-          if (editingId || nickname) setEditorOpen(true)
-        }}
-      />
+      
 
       <CharacterEditor
         open={editorOpen}
