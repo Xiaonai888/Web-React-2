@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImageSourceSheet } from './ChatStoryCharactersPage'
+import { PublishSettingsSheet } from './EpisodeEditorPage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1331,6 +1332,13 @@ export default function ChatStoryEditorPage() {
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
   const [draftHydrated, setDraftHydrated] = useState(false)
+  const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [releaseOption, setReleaseOption] = useState('publish')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
+  const [episodeAdult, setEpisodeAdult] = useState(false)
+  const [episodeFree, setEpisodeFree] = useState(true)
 
   useEffect(() => {
     const textarea = composerRef.current
@@ -2829,7 +2837,80 @@ const handleAddConfirm = async () => {
     showToast(`Image selected: ${file.name}`)
   }
 
-  const saveAndContinue = async () => {
+  const handleSavePublishSettings = async () => {
+  if (!episodeId || settingsSaving) return
+
+  if (
+    releaseOption === 'schedule' &&
+    (!scheduleDate || !scheduleTime)
+  ) {
+    showToast('Please choose schedule date and time.')
+    return
+  }
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const status =
+    releaseOption === 'schedule'
+      ? 'scheduled'
+      : releaseOption === 'draft'
+        ? 'draft'
+        : 'published'
+
+  const scheduledAt =
+    releaseOption === 'schedule'
+      ? new Date(
+          `${scheduleDate}T${scheduleTime}:00`
+        ).toISOString()
+      : null
+
+  try {
+    setSettingsSaving(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status,
+          scheduled_at: scheduledAt,
+          is_adult: episodeAdult,
+          is_free_published: episodeFree,
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || 'Failed to publish episode'
+      )
+    }
+
+    setPublishSettingsOpen(false)
+    navigate(`/author/story/${storyId}/manage`)
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message || 'Failed to publish episode'
+    )
+  } finally {
+    setSettingsSaving(false)
+  }
+}
+
+const saveAndContinue = async () => {
     const cleanTitle = episodeTitle.trim()
 
     if (!cleanTitle) {
@@ -2887,9 +2968,9 @@ const handleAddConfirm = async () => {
       }
 
       const savedEpisodeId = data.episode?.id
-      const firstValue = data.is_first_episode ? '1' : '0'
 
-      setEpisodeId(savedEpisodeId)
+setEpisodeId(savedEpisodeId)
+setPublishSettingsOpen(true)
       localStorage.setItem(
         storageKey,
         JSON.stringify({
@@ -2902,9 +2983,7 @@ const handleAddConfirm = async () => {
 })
       )
 
-      navigate(
-        `/author/story/${storyId}/episode/publish?episodeId=${savedEpisodeId}&first=${firstValue}&type=chat_story`
-      )
+      
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
@@ -2917,7 +2996,38 @@ const handleAddConfirm = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[170px]">
+  <div className="min-h-screen bg-white pb-[170px]">
+    <PublishSettingsSheet
+      open={publishSettingsOpen}
+      episodeTitle={episodeTitle}
+      showStorySettings={false}
+      genreOptions={[]}
+      storyLanguage=""
+      onStoryLanguageChange={() => {}}
+      mainGenre=""
+      onMainGenreChange={() => {}}
+      storyTags={[]}
+      onStoryTagsChange={() => {}}
+      updateDays={[]}
+      onToggleUpdateDay={() => {}}
+      storyStatus="ongoing"
+      onStoryStatusChange={() => {}}
+      storyAdult={false}
+      onStoryAdultChange={() => {}}
+      episodeAdult={episodeAdult}
+      onEpisodeAdultChange={setEpisodeAdult}
+      episodeFree={episodeFree}
+      onEpisodeFreeChange={setEpisodeFree}
+      releaseOption={releaseOption}
+      onReleaseOptionChange={setReleaseOption}
+      scheduleDate={scheduleDate}
+      onScheduleDateChange={setScheduleDate}
+      scheduleTime={scheduleTime}
+      onScheduleTimeChange={setScheduleTime}
+      saving={settingsSaving}
+      onClose={() => setPublishSettingsOpen(false)}
+      onSave={handleSavePublishSettings}
+    />
       <input
         ref={audioInputRef}
         type="file"
