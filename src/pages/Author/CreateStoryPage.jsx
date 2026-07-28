@@ -1578,8 +1578,9 @@ backgroundImage: isEditMode
                     <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[#c4c8d1]" />
                   </button>
 
-                <div className="mt-5">
-                  <FieldLabel required>Story Language</FieldLabel>
+                  <div className="px-4 pb-5">
+                    <div className="mt-5">
+                      <FieldLabel required>Story Language</FieldLabel>
 
   <button
     type="button"
@@ -1688,30 +1689,31 @@ backgroundImage: isEditMode
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] text-[#111827]">
-                        18+ Story
-                      </span>
+                    <div className="mt-4 flex items-center justify-between gap-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[12px] text-[#111827]">
+                          18+ Story
+                        </span>
 
-                      <button
-                        type="button"
-                        onClick={() => setAdultHintOpen(true)}
-                        className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
-                        aria-label="About 18+ story"
-                      >
-                        <i className="fa-regular fa-circle-question text-[13px]" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdultHintOpen(true)}
+                          className="flex h-5 w-5 items-center justify-center text-[#98a2b3]"
+                          aria-label="About 18+ story"
+                        >
+                          <i className="fa-regular fa-circle-question text-[13px]" />
+                        </button>
+                      </div>
+
+                      <SettingsToggle
+                        checked={isAdult}
+                        activeColor={storyAccentColor}
+                        onClick={() =>
+                          setIsAdult((value) => !value)
+                        }
+                        label="Toggle 18+ story"
+                      />
                     </div>
-
-                    <SettingsToggle
-                      checked={isAdult}
-                      activeColor={storyAccentColor}
-                      onClick={() =>
-                        setIsAdult((value) => !value)
-                      }
-                      label="Toggle 18+ story"
-                    />
                   </div>
                 </section>
               </div>
