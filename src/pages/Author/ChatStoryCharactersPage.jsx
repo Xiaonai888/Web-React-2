@@ -1355,7 +1355,7 @@ const confirmLeadCharacter = () => {
         )
       )
 
-      navigate(`/author/story/${storyId}/chat/editor`)
+      navigate(`/author/story/${storyId}/chat/editor?new=1`)
     } catch (error) {
       showToast(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to save characters')
     } finally {
