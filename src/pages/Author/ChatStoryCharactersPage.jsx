@@ -162,14 +162,24 @@ function BottomSheet({ open, onClose, children, hideHandle = false }) {
       onClick={onClose}
     >
       <div
-        className="w-full rounded-t-[28px] bg-white px-4 pb-[calc(22px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        className="relative w-full rounded-t-[28px] bg-white px-4 pb-[calc(22px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
         style={{
           transform: `translateY(${dragY}px)`,
           transition: draggingRef.current ? 'none' : 'transform 220ms ease',
         }}
         onClick={(event) => event.stopPropagation()}
       >
-        {!hideHandle ? (
+        {hideHandle ? (
+  <button
+    type="button"
+    onPointerDown={startDrag}
+    onPointerMove={moveDrag}
+    onPointerUp={endDrag}
+    onPointerCancel={endDrag}
+    className="absolute inset-x-0 top-0 z-10 h-14 touch-none cursor-grab bg-transparent outline-none active:cursor-grabbing"
+    aria-label="Drag down to close"
+  />
+) : (
   <button
     type="button"
     onPointerDown={startDrag}
@@ -181,7 +191,7 @@ function BottomSheet({ open, onClose, children, hideHandle = false }) {
   >
     <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
   </button>
-) : null}
+)}
 
         {children}
       </div>
@@ -220,7 +230,12 @@ function HelpSheet({ group, onClose }) {
   )
 }
 
-function ImageSourceSheet({ open, onClose, onDevice, onShadowGallery }) {
+export function ImageSourceSheet({
+  open,
+  onClose,
+  onDevice,
+  onShadowGallery,
+}) {
   return (
     <BottomSheet open={open} onClose={onClose} hideHandle>
       <div className="pt-5">
