@@ -87,9 +87,6 @@ const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
-const RomanceLatestPage = lazy(() => import('./pages/Genre/RomanceLatestPage'))
-const RomanceUpdatesPage = lazy(() => import('./pages/Genre/RomanceUpdatesPage'))
-const RomanceCompletedPage = lazy(() => import('./pages/Genre/RomanceCompletedPage'))
 const GenreStoriesPage = lazy(() => import('./pages/Genre/GenreStoriesPage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./pages/Genre/ActionGenrePage'))
@@ -1189,9 +1186,7 @@ const shouldShowOpeningAds =
         <Route path="/genre/:genreSlug/latest" element={<LazyPage><GenreStoriesPage tab="latest" /></LazyPage>} />
         <Route path="/genre/:genreSlug/updates" element={<LazyPage><GenreStoriesPage tab="updates" /></LazyPage>} />
         <Route path="/genre/:genreSlug/completed" element={<LazyPage><GenreStoriesPage tab="completed" /></LazyPage>} />
-        <Route path="/genre/romance/latest" element={<LazyPage><RomanceLatestPage /></LazyPage>} />
-        <Route path="/genre/romance/updates" element={<LazyPage><RomanceUpdatesPage /></LazyPage>} />
-        <Route path="/genre/romance/completed" element={<LazyPage><RomanceCompletedPage /></LazyPage>} />
+        
   
  
       </Routes>
