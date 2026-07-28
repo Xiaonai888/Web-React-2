@@ -75,10 +75,11 @@ function mapCharacter(character) {
     image: character.avatar_url || '',
     group,
     avatarSource: character.avatar_source || 'device',
-    chatSide:
-      character.chat_side ||
-      (group === 'main' ? 'right' : 'left'),
-    gender: character.gender || '',
+isLead: character.is_lead === true,
+chatSide:
+  character.chat_side ||
+  (group === 'main' ? 'right' : 'left'),
+gender: character.gender || '',
     birthday: character.birthday || '',
     heightCm: character.height_cm || '',
     occupation: character.occupation || '',
@@ -293,7 +294,11 @@ function AsideAvatar({ active, onClick }) {
   )
 }
 
-function AsideMessage({ message, onDelete }) {
+function AsideMessage({
+  message,
+  active,
+  onEdit,
+}) {
   return (
     <div className="group mx-auto flex max-w-[88%] items-start justify-center gap-2 py-2">
       <div className="rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467]">
@@ -302,11 +307,15 @@ function AsideMessage({ message, onDelete }) {
 
       <button
         type="button"
-        onClick={() => onDelete(message.id)}
-        className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-        aria-label="Delete aside"
+        onClick={() => onEdit(message.id)}
+        className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+          active
+            ? 'bg-[#ede9fe] text-[#7c3aed]'
+            : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
+        }`}
+        aria-label="Edit aside"
       >
-        <i className="fa-regular fa-trash-can text-[10px]" />
+        <i className="fa-solid fa-pen text-[10px]" />
       </button>
     </div>
   )
@@ -365,11 +374,34 @@ function AuthorNoteMessage({ message, onDelete }) {
   )
 }
 
-function ChatMessage({ message, character, onDelete }) {
-  const right = character?.chatSide === 'right'
+function ChatMessage({
+  message,
+  character,
+  right,
+  active,
+  onEdit,
+}) {
+  const editButton = (
+    <button
+      type="button"
+      onClick={() => onEdit(message.id)}
+      className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+        active
+          ? 'bg-[#ede9fe] text-[#7c3aed]'
+          : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
+      }`}
+      aria-label="Edit message"
+    >
+      <i className="fa-solid fa-pen text-[10px]" />
+    </button>
+  )
 
   return (
-    <div className={`flex items-end gap-2 py-2 ${right ? 'justify-end' : 'justify-start'}`}>
+    <div
+      className={`flex items-end gap-2 py-2 ${
+        right ? 'justify-end' : 'justify-start'
+      }`}
+    >
       {!right ? (
         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
           {character?.image ? (
@@ -384,22 +416,19 @@ function ChatMessage({ message, character, onDelete }) {
         </span>
       ) : null}
 
-      <div className={`max-w-[72%] ${right ? 'items-end text-right' : 'items-start text-left'}`}>
+      <div
+        className={`max-w-[72%] ${
+          right
+            ? 'items-end text-right'
+            : 'items-start text-left'
+        }`}
+      >
         <div className="mb-1 px-1 text-[9.5px] font-extrabold text-[#98a2b3]">
           {character?.nickname || 'Character'}
         </div>
 
         <div className="flex items-start gap-1.5">
-          {right ? (
-            <button
-              type="button"
-              onClick={() => onDelete(message.id)}
-              className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-              aria-label="Delete message"
-            >
-              <i className="fa-regular fa-trash-can text-[10px]" />
-            </button>
-          ) : null}
+          {right ? editButton : null}
 
           <div
             className={`rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
@@ -411,16 +440,7 @@ function ChatMessage({ message, character, onDelete }) {
             {message.text}
           </div>
 
-          {!right ? (
-            <button
-              type="button"
-              onClick={() => onDelete(message.id)}
-              className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#c0c5cf] active:bg-[#fee2e2] active:text-[#dc2626]"
-              aria-label="Delete message"
-            >
-              <i className="fa-regular fa-trash-can text-[10px]" />
-            </button>
-          ) : null}
+          {!right ? editButton : null}
         </div>
       </div>
 
@@ -437,6 +457,111 @@ function ChatMessage({ message, character, onDelete }) {
           )}
         </span>
       ) : null}
+    </div>
+  )
+}
+
+function MessageToolbarAction({
+  icon,
+  label,
+  onClick,
+  danger = false,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[6px] px-0.5 py-1.5 active:bg-white/10 ${
+        danger
+          ? 'text-[#ffb4b4]'
+          : 'text-white'
+      }`}
+    >
+      <i className={`${icon} text-[17px]`} />
+
+      <span className="whitespace-nowrap text-[8px] font-medium">
+        {label}
+      </span>
+    </button>
+  )
+}
+
+function MessageEditToolbar({
+  message,
+  isLead,
+  canMoveUp,
+  canMoveDown,
+  onAbove,
+  onBelow,
+  onModify,
+  onMakeLead,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+}) {
+  if (
+    !message ||
+    message.type === 'author_note'
+  ) {
+    return null
+  }
+
+  const canMakeLead =
+    message.type === 'chat' &&
+    !isLead
+
+  return (
+    <div className="fixed inset-x-2 bottom-[158px] z-[205] mx-auto max-w-[560px]">
+      <div className="flex min-h-[64px] items-stretch rounded-[8px] bg-[#303033] px-1 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        <MessageToolbarAction
+          icon="fa-solid fa-arrow-up-wide-short"
+          label="Above"
+          onClick={onAbove}
+        />
+
+        <MessageToolbarAction
+          icon="fa-solid fa-arrow-down-wide-short"
+          label="Below"
+          onClick={onBelow}
+        />
+
+        <MessageToolbarAction
+          icon="fa-solid fa-pen"
+          label="Modify"
+          onClick={onModify}
+        />
+
+        {canMakeLead ? (
+          <MessageToolbarAction
+            icon="fa-solid fa-user-plus"
+            label="On Right"
+            onClick={onMakeLead}
+          />
+        ) : null}
+
+        {canMoveUp ? (
+          <MessageToolbarAction
+            icon="fa-solid fa-angles-up"
+            label="Up"
+            onClick={onMoveUp}
+          />
+        ) : null}
+
+        {canMoveDown ? (
+          <MessageToolbarAction
+            icon="fa-solid fa-angles-down"
+            label="Down"
+            onClick={onMoveDown}
+          />
+        ) : null}
+
+        <MessageToolbarAction
+          icon="fa-regular fa-trash-can"
+          label="Delete"
+          onClick={onDelete}
+          danger
+        />
+      </div>
     </div>
   )
 }
@@ -1002,6 +1127,7 @@ export default function ChatStoryEditorPage() {
   const { storyId } = useParams()
   const [searchParams] = useSearchParams()
   const messagesEndRef = useRef(null)
+  const shouldScrollToEndRef = useRef(false)
   const composerRef = useRef(null)
   const audioInputRef = useRef(null)
   const imageInputRef = useRef(null)
@@ -1042,6 +1168,9 @@ export default function ChatStoryEditorPage() {
   const [audioDuration, setAudioDuration] = useState(0)
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
   const [composerMode, setComposerMode] = useState('message')
+  const [activeMessageId, setActiveMessageId] = useState('')
+  const [messageEditMode, setMessageEditMode] = useState(null)
+  const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
 
   useEffect(() => {
@@ -1066,6 +1195,76 @@ export default function ChatStoryEditorPage() {
   const selectedCharacter = selectedCharacterId
     ? characterMap[selectedCharacterId] || null
     : null
+
+  const defaultLeadCharacterId =
+  characters.find(
+    (character) => character.isLead
+  )?.id ||
+  characters.find(
+    (character) =>
+      character.chatSide === 'right'
+  )?.id ||
+  characters.find(
+    (character) =>
+      character.group === 'main'
+  )?.id ||
+  characters[0]?.id ||
+  ''
+
+const effectiveLeadCharacterId =
+  episodeLeadCharacterId ||
+  defaultLeadCharacterId
+
+const activeMessage =
+  messages.find(
+    (message) =>
+      message.id === activeMessageId
+  ) || null
+
+const storyMessages = messages.filter(
+  (message) =>
+    message.type !== 'author_note'
+)
+
+const activeStoryIndex =
+  storyMessages.findIndex(
+    (message) =>
+      message.id === activeMessageId
+  )
+
+const activeMessageCharacter =
+  activeMessage?.characterId
+    ? characterMap[
+        activeMessage.characterId
+      ] || null
+    : null
+
+const activeMessageIsLead =
+  activeMessage?.type === 'chat' &&
+  activeMessage.characterId ===
+    effectiveLeadCharacterId
+
+const canMoveActiveMessageUp =
+  activeStoryIndex > 0
+
+const canMoveActiveMessageDown =
+  activeStoryIndex >= 0 &&
+  activeStoryIndex <
+    storyMessages.length - 1
+
+  useEffect(() => {
+  if (
+    !episodeLeadCharacterId &&
+    defaultLeadCharacterId
+  ) {
+    setEpisodeLeadCharacterId(
+      defaultLeadCharacterId
+    )
+  }
+}, [
+  defaultLeadCharacterId,
+  episodeLeadCharacterId,
+])
 
   const wordCount = useMemo(() => {
   return messages
@@ -1154,12 +1353,15 @@ const handleRedo = () => {
 
   useEffect(() => {
     if (startNewEpisode) {
-      localStorage.removeItem(storageKey)
-      setMessages([])
-      setEpisodeTitle('')
-      setEpisodeId('')
-      return
-    }
+  localStorage.removeItem(storageKey)
+  setMessages([])
+  setEpisodeTitle('')
+  setEpisodeId('')
+  setEpisodeLeadCharacterId('')
+  setActiveMessageId('')
+  setMessageEditMode(null)
+  return
+}
 
     const saved = localStorage.getItem(storageKey)
 
@@ -1172,6 +1374,9 @@ setEpisodeTitle(
   savedTitle === 'Episode 1' || savedTitle === 'New Episode' ? '' : savedTitle
 )
         setEpisodeId(parsed.episodeId || '')
+        setEpisodeLeadCharacterId(
+  parsed.leadCharacterId || ''
+)
       } catch {
         localStorage.removeItem(storageKey)
       }
@@ -1180,14 +1385,22 @@ setEpisodeTitle(
 
   useEffect(() => {
   const payload = JSON.stringify({
-    episodeTitle,
-    episodeId,
-    messages,
-    updatedAt: new Date().toISOString(),
-  })
+  episodeTitle,
+  episodeId,
+  leadCharacterId:
+    effectiveLeadCharacterId,
+  messages,
+  updatedAt: new Date().toISOString(),
+})
   localStorage.setItem(storageKey, payload)
   setSavedSeconds(0)
-}, [episodeId, episodeTitle, messages, storageKey])
+}, [
+  effectiveLeadCharacterId,
+  episodeId,
+  episodeTitle,
+  messages,
+  storageKey,
+])
 
 useEffect(() => {
   const timer = window.setInterval(() => {
@@ -1344,9 +1557,36 @@ useEffect(() => {
           throw new Error('This episode is not a Chat Story episode')
         }
 
-        setEpisodeId(data.episode.id)
-        setEpisodeTitle(data.episode.title || parsed.episode_title || 'Episode')
-        setMessages(
+        const parsedCharacters =
+  Array.isArray(parsed.characters)
+    ? parsed.characters
+    : []
+
+const savedLeadCharacterId =
+  parsed.lead_character_id ||
+  parsedCharacters.find(
+    (character) =>
+      character.is_lead === true
+  )?.id ||
+  parsedCharacters.find(
+    (character) =>
+      character.chat_side === 'right'
+  )?.id ||
+  ''
+
+setEpisodeId(data.episode.id)
+
+setEpisodeTitle(
+  data.episode.title ||
+    parsed.episode_title ||
+    'Episode'
+)
+
+setEpisodeLeadCharacterId(
+  savedLeadCharacterId
+)
+
+setMessages(
           (parsed.messages || []).map((message) => ({
             id: message.id || makeId(),
             type:
@@ -1369,9 +1609,16 @@ useEffect(() => {
   }, [requestedEpisodeId, startNewEpisode, storyId])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  if (!shouldScrollToEndRef.current) {
+    return
+  }
 
+  shouldScrollToEndRef.current = false
+
+  messagesEndRef.current?.scrollIntoView({
+    behavior: 'smooth',
+  })
+}, [messages])
   const toggleCharacter = (characterId) => {
   setSelectedCharacterId((current) =>
     current === characterId ? null : characterId
@@ -1388,47 +1635,275 @@ const insertMessageSymbol = (symbol) => {
   window.setTimeout(() => composerRef.current?.focus(), 50)
 }
   
-  const sendMessage = () => {
+  const openMessageToolbar = (messageId) => {
+  if (messageEditMode) {
+    showToast(
+      'Finish or cancel the current edit first.'
+    )
+    return
+  }
+
+  setSymbolPanelOpen(false)
+
+  setActiveMessageId((current) =>
+    current === messageId
+      ? ''
+      : messageId
+  )
+}
+
+const cancelMessageEditMode = () => {
+  setMessageEditMode(null)
+  setActiveMessageId('')
+  setDraft('')
+  setSymbolPanelOpen(false)
+  setComposerFocused(false)
+}
+
+const beginInsertMessage = (position) => {
+  if (!activeMessage) return
+
+  setMessageEditMode({
+    type:
+      position === 'above'
+        ? 'insert_above'
+        : 'insert_below',
+    targetId: activeMessage.id,
+  })
+
+  setSelectedCharacterId(
+    activeMessage.type === 'chat'
+      ? activeMessage.characterId
+      : null
+  )
+
+  setActiveMessageId('')
+  setDraft('')
+  setSymbolPanelOpen(false)
+  setComposerFocused(true)
+
+  window.setTimeout(() => {
+    composerRef.current?.focus()
+  }, 50)
+}
+
+const beginModifyMessage = () => {
+  if (!activeMessage) return
+
+  setMessageEditMode({
+    type: 'modify',
+    targetId: activeMessage.id,
+  })
+
+  setSelectedCharacterId(
+    activeMessage.type === 'chat'
+      ? activeMessage.characterId
+      : null
+  )
+
+  setDraft(activeMessage.text || '')
+  setActiveMessageId('')
+  setSymbolPanelOpen(false)
+  setComposerFocused(true)
+
+  window.setTimeout(() => {
+    composerRef.current?.focus()
+  }, 50)
+}
+
+const makeActiveMessageLead = () => {
+  if (
+    activeMessage?.type !== 'chat' ||
+    !activeMessage.characterId
+  ) {
+    return
+  }
+
+  setEpisodeLeadCharacterId(
+    activeMessage.characterId
+  )
+
+  setActiveMessageId('')
+
+  showToast(
+    `${
+      activeMessageCharacter?.nickname ||
+      'Character'
+    } is now Lead Chat.`
+  )
+}
+
+const moveActiveMessage = (direction) => {
+  if (!activeMessage) return
+
+  commitMessages((current) => {
+    const authorNote = current.find(
+      (message) =>
+        message.type === 'author_note'
+    )
+
+    const nextStoryMessages =
+      current.filter(
+        (message) =>
+          message.type !== 'author_note'
+      )
+
+    const currentIndex =
+      nextStoryMessages.findIndex(
+        (message) =>
+          message.id ===
+          activeMessage.id
+      )
+
+    const targetIndex =
+      direction === 'up'
+        ? currentIndex - 1
+        : currentIndex + 1
+
+    if (
+      currentIndex < 0 ||
+      targetIndex < 0 ||
+      targetIndex >=
+        nextStoryMessages.length
+    ) {
+      return current
+    }
+
+    const nextMessages = [
+      ...nextStoryMessages,
+    ]
+
+    ;[
+      nextMessages[currentIndex],
+      nextMessages[targetIndex],
+    ] = [
+      nextMessages[targetIndex],
+      nextMessages[currentIndex],
+    ]
+
+    return authorNote
+      ? [...nextMessages, authorNote]
+      : nextMessages
+  })
+}
+
+const sendMessage = () => {
   const text = draft.trim()
   if (!text) return
 
+  if (
+    messageEditMode?.type === 'modify'
+  ) {
+    commitMessages((current) =>
+      current.map((message) =>
+        message.id ===
+        messageEditMode.targetId
+          ? {
+              ...message,
+              text,
+            }
+          : message
+      )
+    )
+
+    setDraft('')
+    setMessageEditMode(null)
+    setActiveMessageId('')
+    setSymbolPanelOpen(false)
+
+    showToast('Message updated.')
+    return
+  }
+
   const nextMessage = {
     id: makeId(),
-    type: selectedCharacter ? 'chat' : 'aside',
-    characterId: selectedCharacter?.id || null,
+    type: selectedCharacter
+      ? 'chat'
+      : 'aside',
+    characterId:
+      selectedCharacter?.id || null,
     text,
-    createdAt: new Date().toISOString(),
+    createdAt:
+      new Date().toISOString(),
+  }
+
+  const inserting =
+    messageEditMode?.type ===
+      'insert_above' ||
+    messageEditMode?.type ===
+      'insert_below'
+
+  if (!inserting) {
+    shouldScrollToEndRef.current = true
   }
 
   commitMessages((current) => {
-    if (nextMessage.type === 'author_note') {
-      return [
-        ...current.filter((message) => message.type !== 'author_note'),
-        nextMessage,
-      ]
+    const authorNote = current.find(
+      (message) =>
+        message.type === 'author_note'
+    )
+
+    const nextStoryMessages =
+      current.filter(
+        (message) =>
+          message.type !== 'author_note'
+      )
+
+    if (inserting) {
+      const targetIndex =
+        nextStoryMessages.findIndex(
+          (message) =>
+            message.id ===
+            messageEditMode.targetId
+        )
+
+      const insertIndex =
+        targetIndex < 0
+          ? nextStoryMessages.length
+          : messageEditMode.type ===
+              'insert_above'
+            ? targetIndex
+            : targetIndex + 1
+
+      nextStoryMessages.splice(
+        insertIndex,
+        0,
+        nextMessage
+      )
+    } else {
+      nextStoryMessages.push(nextMessage)
     }
 
-    const authorNote = current.find(
-      (message) => message.type === 'author_note'
-    )
-
-    const storyMessages = current.filter(
-      (message) => message.type !== 'author_note'
-    )
-
     return authorNote
-      ? [...storyMessages, nextMessage, authorNote]
-      : [...storyMessages, nextMessage]
+      ? [...nextStoryMessages, authorNote]
+      : nextStoryMessages
   })
 
   setDraft('')
+  setMessageEditMode(null)
+  setActiveMessageId('')
   setSymbolPanelOpen(false)
 }
 
 const deleteMessage = (messageId) => {
   commitMessages((current) =>
-    current.filter((message) => message.id !== messageId)
+    current.filter(
+      (message) =>
+        message.id !== messageId
+    )
   )
+
+  if (activeMessageId === messageId) {
+    setActiveMessageId('')
+  }
+
+  if (
+    messageEditMode?.targetId ===
+    messageId
+  ) {
+    setMessageEditMode(null)
+    setDraft('')
+  }
 }
 
   const handleComposerKeyDown = (event) => {
@@ -1622,6 +2097,7 @@ const handleAddConfirm = async () => {
       image: newCharacterImage,
       group: 'background',
       avatarSource: newCharacterAvatarSource,
+      isLead: false,
       chatSide: 'left',
       gender: newCharacterGender,
       birthday: '',
@@ -1654,6 +2130,7 @@ const handleAddConfirm = async () => {
         nickname: character.nickname || null,
         avatar_url: avatarUrl,
         avatar_source: character.avatarSource || 'device',
+        is_lead: character.isLead === true,
         chat_side:
           character.chatSide ||
           (character.group === 'main' ? 'right' : 'left'),
@@ -1929,8 +2406,14 @@ const handleAddConfirm = async () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            episode_id: episodeId || requestedEpisodeId || null,
+            episode_id:
+              episodeId ||
+              requestedEpisodeId ||
+              null,
             title: cleanTitle,
+            lead_character_id:
+              effectiveLeadCharacterId ||
+              null,
             messages: messages.map((message) => ({
               id: message.id,
               type: message.type,
@@ -1955,11 +2438,13 @@ const handleAddConfirm = async () => {
       localStorage.setItem(
         storageKey,
         JSON.stringify({
-          episodeTitle: cleanTitle,
-          episodeId: savedEpisodeId,
-          messages,
-          updatedAt: new Date().toISOString(),
-        })
+  episodeTitle: cleanTitle,
+  episodeId: savedEpisodeId,
+  leadCharacterId:
+    effectiveLeadCharacterId,
+  messages,
+  updatedAt: new Date().toISOString(),
+})
       )
 
       navigate(
@@ -2236,17 +2721,31 @@ const handleAddConfirm = async () => {
     />
   ) : message.type === 'aside' ? (
     <AsideMessage
-      key={message.id}
-      message={message}
-      onDelete={deleteMessage}
-    />
+  key={message.id}
+  message={message}
+  active={
+    activeMessageId === message.id
+  }
+  onEdit={openMessageToolbar}
+/>
   ) : (
     <ChatMessage
-      key={message.id}
-      message={message}
-      character={characterMap[message.characterId]}
-      onDelete={deleteMessage}
-    />
+  key={message.id}
+  message={message}
+  character={
+    characterMap[
+      message.characterId
+    ]
+  }
+  right={
+    message.characterId ===
+    effectiveLeadCharacterId
+  }
+  active={
+    activeMessageId === message.id
+  }
+  onEdit={openMessageToolbar}
+/>
   )
 )}
               <div ref={messagesEndRef} />
@@ -2255,9 +2754,57 @@ const handleAddConfirm = async () => {
         </section>
       </main>
 
+<MessageEditToolbar
+  message={activeMessage}
+  isLead={activeMessageIsLead}
+  canMoveUp={canMoveActiveMessageUp}
+  canMoveDown={canMoveActiveMessageDown}
+  onAbove={() =>
+    beginInsertMessage('above')
+  }
+  onBelow={() =>
+    beginInsertMessage('below')
+  }
+  onModify={beginModifyMessage}
+  onMakeLead={makeActiveMessageLead}
+  onMoveUp={() =>
+    moveActiveMessage('up')
+  }
+  onMoveDown={() =>
+    moveActiveMessage('down')
+  }
+  onDelete={() => {
+    if (activeMessage?.id) {
+      deleteMessage(activeMessage.id)
+    }
+  }}
+/>
+
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-black/5 bg-white pb-[calc(8px+env(safe-area-inset-bottom))]">
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-white to-transparent" />
         <div className="mx-auto max-w-5xl">
+  {messageEditMode ? (
+    <div className="flex items-center justify-between border-b border-black/5 bg-[#fafafa] px-4 py-2">
+      <span className="text-[10.5px] font-medium text-[#667085]">
+        {messageEditMode.type ===
+        'modify'
+          ? 'Modify message'
+          : messageEditMode.type ===
+              'insert_above'
+            ? 'Insert above selected message'
+            : 'Insert below selected message'}
+      </span>
+
+      <button
+        type="button"
+        onClick={cancelMessageEditMode}
+        className="text-[10.5px] font-bold text-[#7c3aed]"
+      >
+        Cancel
+      </button>
+    </div>
+  ) : null}
+
           <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
   <div className="relative min-w-0">
   <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -2276,14 +2823,26 @@ const handleAddConfirm = async () => {
   character={character}
   selected={selectedCharacterId === character.id}
   onClick={() => {
+  if (
+    messageEditMode?.type ===
+      'insert_above' ||
+    messageEditMode?.type ===
+      'insert_below'
+  ) {
+    setSelectedCharacterId(
+      character.id
+    )
+  } else {
     toggleCharacter(character.id)
-    setComposerMode('message')
-    setSymbolPanelOpen(false)
+  }
 
-    window.setTimeout(() => {
-      composerRef.current?.focus()
-    }, 50)
-  }}
+  setComposerMode('message')
+  setSymbolPanelOpen(false)
+
+  window.setTimeout(() => {
+    composerRef.current?.focus()
+  }, 50)
+}}
 />
       ))}
     </div>
@@ -2334,9 +2893,11 @@ const handleAddConfirm = async () => {
       rows={1}
       maxLength={2000}
       placeholder={
-  selectedCharacter
-    ? `${selectedCharacter.nickname || 'Character'}:`
-    : 'ASIDE:'
+  messageEditMode?.type === 'modify'
+    ? 'Modify message:'
+    : selectedCharacter
+      ? `${selectedCharacter.nickname || 'Character'}:`
+      : 'ASIDE:'
 }
       className="max-h-[96px] min-h-[20px] w-full resize-none overflow-y-hidden bg-transparent py-0 text-[12.5px] leading-5 text-[#111827] outline-none placeholder:font-medium placeholder:text-[#667085]"
     />
