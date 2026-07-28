@@ -2144,7 +2144,12 @@ const handleAddConfirm = async () => {
   <div className="mx-auto flex max-w-5xl items-center gap-2">
     <button
       type="button"
-      onClick={() => navigate(`/author/story/${storyId}/chat/characters`)}
+      onClick={() =>
+  navigate(
+    `/author/story/${storyId}/chat/characters`,
+    { replace: true }
+  )
+}
       className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95"
       aria-label="Go back"
     >
