@@ -90,6 +90,7 @@ const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
 const RomanceLatestPage = lazy(() => import('./pages/Genre/RomanceLatestPage'))
 const RomanceUpdatesPage = lazy(() => import('./pages/Genre/RomanceUpdatesPage'))
 const RomanceCompletedPage = lazy(() => import('./pages/Genre/RomanceCompletedPage'))
+const GenreStoriesPage = lazy(() => import('./pages/Genre/GenreStoriesPage'))
 const FantasyGenrePage = lazy(() => import('./pages/Genre/FantasyGenrePage'))
 const ActionGenrePage = lazy(() => import('./pages/Genre/ActionGenrePage'))
 const ComedyGenrePage = lazy(() => import('./pages/Genre/ComedyGenrePage'))
@@ -264,7 +265,8 @@ function AppShell() {
   const shouldHideFooter =
   hideFooterPaths.includes(location.pathname) ||
   location.pathname.startsWith('/story/') ||
-  location.pathname.startsWith('/report/') ||
+/^\/genre\/[^/]+\/(latest|updates|completed)$/.test(location.pathname) ||
+location.pathname.startsWith('/report/') ||
   location.pathname.startsWith('/author/post/') ||
   location.pathname.startsWith('/author/story/') ||
   location.pathname === '/author/page' ||
@@ -1184,6 +1186,9 @@ const shouldShowOpeningAds =
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
+        <Route path="/genre/:genreSlug/latest" element={<LazyPage><GenreStoriesPage tab="latest" /></LazyPage>} />
+        <Route path="/genre/:genreSlug/updates" element={<LazyPage><GenreStoriesPage tab="updates" /></LazyPage>} />
+        <Route path="/genre/:genreSlug/completed" element={<LazyPage><GenreStoriesPage tab="completed" /></LazyPage>} />
         <Route path="/genre/romance/latest" element={<LazyPage><RomanceLatestPage /></LazyPage>} />
         <Route path="/genre/romance/updates" element={<LazyPage><RomanceUpdatesPage /></LazyPage>} />
         <Route path="/genre/romance/completed" element={<LazyPage><RomanceCompletedPage /></LazyPage>} />
