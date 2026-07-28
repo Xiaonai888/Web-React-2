@@ -1446,11 +1446,12 @@ const confirmLeadCharacter = () => {
 
       showToast('Saved')
 
-      window.setTimeout(() => {
-        navigate(
-          `/author/story/${storyId}/chat/editor?new=1`
-        )
-      }, 500)
+window.setTimeout(() => {
+  navigate(
+    `/author/story/${storyId}/chat/editor`,
+    { replace: true }
+  )
+}, 500)
     } catch (error) {
       console.error(
         'SAVE CHAT STORY CHARACTERS ERROR:',
@@ -1543,7 +1544,12 @@ const confirmLeadCharacter = () => {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+  navigate(
+    `/author/create-story?editStoryId=${storyId}&type=chat_story&returnTo=chat_characters`,
+    { replace: true }
+  )
+}
             className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
             aria-label="Go back"
           >
