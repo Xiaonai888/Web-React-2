@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImageSourceSheet } from './ChatStoryCharactersPage'
 import { PublishSettingsSheet } from './EpisodeEditorPage'
+import { SuccessModal } from './PublishEpisodePage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1339,6 +1340,9 @@ export default function ChatStoryEditorPage() {
   const [scheduleTime, setScheduleTime] = useState('')
   const [episodeAdult, setEpisodeAdult] = useState(false)
   const [episodeFree, setEpisodeFree] = useState(true)
+  const [successOpen, setSuccessOpen] = useState(false)
+  const [publishedIsFirstEpisode, setPublishedIsFirstEpisode] = useState(false)
+  const [publishedEpisodeNumber, setPublishedEpisodeNumber] = useState(null)
 
   useEffect(() => {
     const textarea = composerRef.current
@@ -2873,7 +2877,7 @@ const handleAddConfirm = async () => {
     setSettingsSaving(true)
 
     const response = await fetch(
-      `${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeId}/status`,
+      `${API_BASE_URL}/api/stories/${storyId}/chat/episodes/${episodeId}/status`,
       {
         method: 'PATCH',
         headers: {
@@ -2898,7 +2902,12 @@ const handleAddConfirm = async () => {
     }
 
     setPublishSettingsOpen(false)
-    navigate(`/author/story/${storyId}/manage`)
+
+    if (releaseOption === 'publish') {
+      localStorage.removeItem(storageKey)
+    }
+
+    setSuccessOpen(true)
   } catch (error) {
     showToast(
       error.message === 'Failed to fetch'
@@ -2967,9 +2976,18 @@ const handleAddConfirm = async () => {
         throw new Error(data.message || 'Failed to save Chat Story episode')
       }
 
-      const savedEpisodeId = data.episode?.id
+      const savedEpisode = data.episode || {}
+      const savedEpisodeId = savedEpisode.id
+
+      if (!savedEpisodeId) {
+        throw new Error('Episode saved but episode id was missing')
+      }
 
       setEpisodeId(savedEpisodeId)
+      setPublishedIsFirstEpisode(Boolean(data.is_first_episode))
+      setPublishedEpisodeNumber(
+        Number(savedEpisode.episode_number || 0) || null
+      )
       setPublishSettingsOpen(true)
 
       localStorage.setItem(
@@ -3027,6 +3045,32 @@ const handleAddConfirm = async () => {
         saving={settingsSaving}
         onClose={() => setPublishSettingsOpen(false)}
         onSave={handleSavePublishSettings}
+      />
+
+      <SuccessModal
+        open={successOpen}
+        isManga={false}
+        isFirstEpisode={publishedIsFirstEpisode}
+        releaseOption={releaseOption}
+        episodeNumber={publishedEpisodeNumber}
+        episodeTitle={episodeTitle}
+        onStoryManager={() => {
+          setSuccessOpen(false)
+          navigate('/author/stories', { replace: true })
+
+          window.setTimeout(() => {
+            navigate(`/author/story/${storyId}/manage`)
+          }, 0)
+        }}
+        onAddEpisode={() => {
+          setSuccessOpen(false)
+          localStorage.removeItem(storageKey)
+          navigate('/author/stories', { replace: true })
+
+          window.setTimeout(() => {
+            navigate(`/author/story/${storyId}/chat/editor?new=1&first=0`)
+          }, 0)
+        }}
       />
 
       <input
