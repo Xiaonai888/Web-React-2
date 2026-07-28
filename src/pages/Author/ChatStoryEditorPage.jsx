@@ -328,7 +328,7 @@ function AsideMessage({
         }`}
         aria-label="Edit aside"
       >
-        <i className="fa-solid fa-pen text-[10px]" />
+        <ToolbarIcon name="modify" className="h-[12px] w-[12px]" />
       </button>
     </div>
   )
@@ -406,7 +406,7 @@ function ChatMessage({
       }`}
       aria-label="Edit message"
     >
-      <i className="fa-solid fa-pen text-[10px]" />
+      <ToolbarIcon name="modify" className="h-[12px] w-[12px]" />
     </button>
   )
 
@@ -483,8 +483,8 @@ function ChatMessage({
   )
 }
 
-function ToolbarIcon({ name }) {
-  const iconClass = 'h-[19px] w-[19px]'
+function ToolbarIcon({ name, className = 'h-[19px] w-[19px]' }) {
+  const iconClass = className
 
   if (name === 'above') {
     return (
@@ -3261,7 +3261,9 @@ const handleAddConfirm = async () => {
     {episodeTitle.trim() || 'Enter episode title'}
   </span>
 
-  <i className="fa-solid fa-pen shrink-0 text-[10px] text-[#98a2b3]" />
+  <span className="shrink-0 text-[#98a2b3]">
+  <ToolbarIcon name="modify" className="h-[13px] w-[13px]" />
+</span>
 </button>
 
       <div className="mt-0.5 truncate text-[8.5px] font-medium text-[#98a2b3]">
