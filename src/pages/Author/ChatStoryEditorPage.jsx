@@ -304,13 +304,13 @@ function AsideMessage({
     <div
       ref={(node) => onElementRef(message.id, node)}
       data-message-id={message.id}
-      className="group mx-auto flex max-w-[88%] items-start justify-center gap-2 py-2"
+      className="group mx-auto flex max-w-[88%] items-center justify-center gap-2 py-2"
     >
       <div
         className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467] ${
   active
-    ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-white'
-    : ''
+  ? 'ring-1 ring-[#f59e0b]'
+  : ''
 }`}
       >
         {message.text}
@@ -319,7 +319,7 @@ function AsideMessage({
       <button
         type="button"
         onClick={() => onEdit(message.id)}
-        className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
           active
             ? 'bg-[#ede9fe] text-[#7c3aed]'
             : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
@@ -397,7 +397,7 @@ function ChatMessage({
     <button
       type="button"
       onClick={() => onEdit(message.id)}
-      className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
         active
           ? 'bg-[#ede9fe] text-[#7c3aed]'
           : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
@@ -441,7 +441,7 @@ function ChatMessage({
           {character?.nickname || 'Character'}
         </div>
 
-        <div className="flex items-start gap-1.5">
+        <div className="flex items-center gap-1.5">
           {right ? editButton : null}
 
           <div
@@ -451,10 +451,10 @@ function ChatMessage({
                 : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm'
             } ${
               active
-                ? 'ring-2 ring-[#a855f7] ring-offset-2 ring-offset-white'
-                : !right
-                  ? 'ring-1 ring-black/5'
-                  : ''
+  ? 'ring-1 ring-[#f59e0b]'
+  : !right
+    ? 'ring-1 ring-black/5'
+    : ''
             }`}
           >
             {message.text}
@@ -666,7 +666,7 @@ function MessageEditToolbar({
         top: `${position.top}px`,
       }}
     >
-      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch rounded-[8px] bg-[#303033] px-1 py-1.5">
+      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch gap-[2px] rounded-[8px] bg-[#303033] px-1 py-1.5">
         <MessageToolbarAction
           icon="above"
           label="Above"
