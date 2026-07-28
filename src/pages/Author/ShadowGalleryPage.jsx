@@ -84,30 +84,37 @@ export default function ShadowGalleryPage() {
   }, [navigate])
 
   const handleBack = () => {
-    if (activeFolderId) {
-      setActiveFolderId('')
-      return
-    }
-
-    navigate(-1)
+  if (activeFolderId) {
+    setActiveFolderId('')
+    return
   }
+
+  const returnTo = searchParams.get('return')
+
+  if (returnTo) {
+    navigate(returnTo, { replace: true })
+    return
+  }
+
+  navigate(-1)
+}
 
   const selectImage = (image) => {
     sessionStorage.setItem(
       'shadow_gallery_selected_image',
       JSON.stringify({
-        imageUrl: image.image_url || '',
-        folderId: image.folder_id || '',
-        title: image.title || '',
-        storyId,
-        selectedAt: Date.now(),
-      })
-    )
+  origin: searchParams.get('origin') || '',
+  imageUrl: image.image_url || '',
+  folderId: image.folder_id || '',
+  title: image.title || '',
+  storyId,
+  selectedAt: Date.now(),
+})
 
     const returnTo = searchParams.get('return')
 
     if (returnTo) {
-      navigate(returnTo)
+      navigate(returnTo, { replace: true })
       return
     }
 
@@ -127,9 +134,13 @@ export default function ShadowGalleryPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <h1 className="flex-1 pr-10 text-center text-[17px] font-extrabold text-[#111827]">
-            {activeFolder?.name || 'Shadow Gallery'}
-          </h1>
+          <h1
+  className={`flex-1 pr-10 text-center text-[17px] text-[#111827] ${
+    activeFolder ? 'font-bold' : 'font-extrabold'
+  }`}
+>
+  {activeFolder?.name || 'Shadow Gallery'}
+</h1>
         </div>
       </header>
 
@@ -200,7 +211,7 @@ export default function ShadowGalleryPage() {
                         )}
                       </span>
 
-                      <span className="mt-3 block truncate text-[14px] font-medium text-[#111827]">
+                      <span className="mt-3 block truncate text-[14px] font-bold text-[#111827]">
                         {folder.name}
                       </span>
                     </button>
