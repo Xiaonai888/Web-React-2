@@ -100,16 +100,19 @@ export default function ShadowGalleryPage() {
 }
 
   const selectImage = (image) => {
-    sessionStorage.setItem(
-      'shadow_gallery_selected_image',
-      JSON.stringify({
-  origin: searchParams.get('origin') || '',
-  imageUrl: image.image_url || '',
-  folderId: image.folder_id || '',
-  title: image.title || '',
-  storyId,
-  selectedAt: Date.now(),
-})
+  sessionStorage.setItem(
+    'shadow_gallery_selected_image',
+    JSON.stringify({
+      origin: searchParams.get('origin') || '',
+      imageUrl: image.image_url || '',
+      folderId: image.folder_id || '',
+      title: image.title || '',
+      storyId,
+      selectedAt: Date.now(),
+    })
+  )
+
+  const returnTo = searchParams.get('return')
 
     const returnTo = searchParams.get('return')
 
