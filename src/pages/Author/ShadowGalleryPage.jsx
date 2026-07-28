@@ -114,8 +114,6 @@ export default function ShadowGalleryPage() {
 
   const returnTo = searchParams.get('return')
 
-    const returnTo = searchParams.get('return')
-
     if (returnTo) {
       navigate(returnTo, { replace: true })
       return
