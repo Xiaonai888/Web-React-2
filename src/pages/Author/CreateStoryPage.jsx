@@ -1344,7 +1344,11 @@ backgroundImage: isEditMode
                     </div>
 
                     <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
-                      slides.length >= 5 ? 'bg-[#e5e7eb] text-[#98a2b3]' : 'bg-[#111827] text-white'
+                      slides.length >= 5
+  ? 'bg-[#e5e7eb] text-[#98a2b3]'
+  : isManga
+    ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-white'
+    : 'bg-[#111827] text-white'
                     }`}>
                       + Add
                       <input
