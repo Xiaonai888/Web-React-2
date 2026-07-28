@@ -622,7 +622,7 @@ function MessageToolbarAction({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-[6px] px-0 py-1.5 text-white active:bg-white/10"
+      className="flex w-[clamp(42px,11vw,48px)] shrink-0 flex-col items-center justify-center gap-1 rounded-[6px] px-0 py-1.5 text-white active:bg-white/10"
     >
       <ToolbarIcon name={icon} />
 
@@ -661,12 +661,13 @@ function MessageEditToolbar({
 
   return (
     <div
-      className="fixed left-1/2 z-[205] max-w-[calc(100vw-16px)] -translate-x-1/2"
-      style={{
-        top: `${position.top}px`,
-      }}
-    >
-      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch gap-[2px] rounded-[8px] bg-[#303033] px-1 py-1.5">
+  data-message-toolbar="true"
+  className="fixed left-1/2 z-[205] max-w-[calc(100vw-16px)] -translate-x-1/2"
+  style={{
+    top: `${position.top}px`,
+  }}
+>
+      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch gap-[3px] rounded-[8px] bg-[#303033] px-2 py-1.5">
         <MessageToolbarAction
           icon="above"
           label="Above"
@@ -1926,8 +1927,8 @@ const insertMessageSymbol = (symbol) => {
   setComposerFocused(true)
   window.setTimeout(() => composerRef.current?.focus(), 50)
 }
-  
-  const openMessageToolbar = (messageId) => {
+
+const openMessageToolbar = (messageId) => {
   if (messageEditMode) {
     showToast(
       'Finish or cancel the current edit first.'
@@ -1943,6 +1944,72 @@ const insertMessageSymbol = (symbol) => {
       : messageId
   )
 }
+
+useEffect(() => {
+  if (!activeMessageId) {
+    return undefined
+  }
+
+  const closeMessageToolbar = () => {
+    setActiveMessageId('')
+  }
+
+  const handleOutsidePointerDown = (event) => {
+    const target = event.target
+
+    if (!(target instanceof Element)) {
+      return
+    }
+
+    if (
+      target.closest(
+        '[data-message-toolbar="true"]'
+      )
+    ) {
+      return
+    }
+
+    const messageElement =
+      target.closest('[data-message-id]')
+
+    if (
+      messageElement?.dataset.messageId ===
+      activeMessageId
+    ) {
+      return
+    }
+
+    closeMessageToolbar()
+  }
+
+  const handleEscapeKey = (event) => {
+    if (event.key === 'Escape') {
+      closeMessageToolbar()
+    }
+  }
+
+  document.addEventListener(
+    'pointerdown',
+    handleOutsidePointerDown
+  )
+
+  window.addEventListener(
+    'keydown',
+    handleEscapeKey
+  )
+
+  return () => {
+    document.removeEventListener(
+      'pointerdown',
+      handleOutsidePointerDown
+    )
+
+    window.removeEventListener(
+      'keydown',
+      handleEscapeKey
+    )
+  }
+}, [activeMessageId])
 
 const cancelMessageEditMode = () => {
   setMessageEditMode(null)
