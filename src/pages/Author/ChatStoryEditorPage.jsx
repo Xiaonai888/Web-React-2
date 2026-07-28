@@ -1198,9 +1198,6 @@ useEffect(() => {
 }, [])
 
   useEffect(() => {
-    async function loadCharacters() {
-      const token = getAuthToken()
-useEffect(() => {
   if (!storyId) return
 
   const draftKey =
@@ -1255,9 +1252,6 @@ useEffect(() => {
         draft.avatarSource || 'device'
       )
       setAddPopupOpen(false)
-     (
-        draft.avatarSource || 'device'
-      )
       setImageSourceOpen(true)
     }
 
@@ -1275,42 +1269,57 @@ useEffect(() => {
     )
   }
 }, [storyId])
-      
 
-      if (!token) {
-        navigate('/login')
-        return
-      }
+useEffect(() => {
+  async function loadCharacters() {
+    const token = getAuthToken()
 
-      try {
-        setLoading(true)
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load characters')
-        }
-
-        setCharacters((data.characters || []).map(mapCharacter))
-      } catch (error) {
-        showToast(
-          error.message === 'Failed to fetch'
-            ? 'Cannot connect to backend.'
-            : error.message || 'Failed to load characters'
-        )
-      } finally {
-        setLoading(false)
-      }
+    if (!token) {
+      setLoading(false)
+      navigate('/login')
+      return
     }
 
-    if (storyId) loadCharacters()
-  }, [navigate, storyId])
+    try {
+      setLoading(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load characters'
+        )
+      }
+
+      setCharacters(
+        (data.characters || []).map(mapCharacter)
+      )
+    } catch (error) {
+      showToast(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend.'
+          : error.message || 'Failed to load characters'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (storyId) {
+    loadCharacters()
+  } else {
+    setLoading(false)
+  }
+}, [navigate, storyId])
 
   useEffect(() => {
     async function loadRequestedEpisode() {
