@@ -1372,6 +1372,11 @@ useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const toggleCharacter = (characterId) => {
+  setSelectedCharacterId((current) =>
+    current === characterId ? null : characterId
+  )
+}
   
   
 const insertMessageSymbol = (symbol) => {
@@ -2262,14 +2267,19 @@ const handleAddConfirm = async () => {
 
       {characters.map((character) => (
         <CharacterAvatar
-          key={character.id}
-          character={character}
-          selected={selectedCharacterId === character.id}
-          onClick={() => {
-  setProfilePopupCharacter(character)
-  setSymbolPanelOpen(false)
-}}
-        />
+  key={character.id}
+  character={character}
+  selected={selectedCharacterId === character.id}
+  onClick={() => {
+    toggleCharacter(character.id)
+    setComposerMode('message')
+    setSymbolPanelOpen(false)
+
+    window.setTimeout(() => {
+      composerRef.current?.focus()
+    }, 50)
+  }}
+/>
       ))}
     </div>
   </div>
