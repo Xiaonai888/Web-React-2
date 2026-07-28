@@ -888,12 +888,16 @@ export default function ChatStoryCharactersPage() {
   const openShadowGallery = () => {
   if (!storyId) return
 
-  const returnPath =
-    `/author/story/${storyId}/chat/characters`
+  const origin = 'cast-photo'
+  const returnPath = `/author/story/${storyId}/chat/characters`
+
+  sessionStorage.removeItem('shadow_gallery_selected_image')
 
   sessionStorage.setItem(
     `shadow_gallery_character_draft_${storyId}`,
     JSON.stringify({
+      origin,
+      returnPath,
       activeGroupKey,
       characterGroup,
       editingId,
@@ -909,7 +913,8 @@ export default function ChatStoryCharactersPage() {
 
   navigate(
     `/author/story/${storyId}/chat/shadow-gallery` +
-      `?return=${encodeURIComponent(returnPath)}`
+      `?origin=${encodeURIComponent(origin)}` +
+      `&return=${encodeURIComponent(returnPath)}`
   )
 }
 
