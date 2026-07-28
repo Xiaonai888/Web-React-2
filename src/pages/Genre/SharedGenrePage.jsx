@@ -1,0 +1,759 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
+
+const FALLBACK_GENRE_NAMES = {
+  bl: 'BL',
+  ceo: 'CEO',
+  gl: 'GL',
+  lgbtq: 'LGBTQ+',
+  'lgbtq-plus': 'LGBTQ+',
+  'sci-fi': 'Sci-Fi',
+  scifi: 'Sci-Fi',
+}
+
+function toSlug(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\+/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function formatGenreName(value) {
+  const slug = toSlug(value)
+
+  if (FALLBACK_GENRE_NAMES[slug]) {
+    return FALLBACK_GENRE_NAMES[slug]
+  }
+
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function normalizeStory(item) {
+  const status = item.story_status || item.status || ''
+  const totalEpisodes = Number(
+    item.total_episodes || item.episodes_count || item.episode_count || 0
+  )
+
+  return {
+    id: item.id || item.story_id,
+    title: item.title || 'Untitled Story',
+    description: item.description || item.summary || item.synopsis || '',
+    cover: item.cover_url || item.coverUrl || item.image_url || '',
+    landscape:
+      item.landscape_thumbnail_url ||
+      item.banner_url ||
+      item.thumbnail_url ||
+      item.cover_url ||
+      '',
+    status,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    views: Number(item.views || item.total_views || item.view_count || 0),
+    likes: Number(item.likes || item.total_likes || item.like_count || 0),
+    rating: Number(item.rating || item.average_rating || item.avg_rating || 0),
+    totalEpisodes,
+    isCompleted:
+      Boolean(item.is_completed) ||
+      String(status).trim().toLowerCase().includes('complete'),
+    createdAt: item.created_at || '',
+    updatedAt: item.updated_at || item.published_at || item.created_at || '',
+  }
+}
+
+function isGenreStory(item, genreSlug) {
+  const values = [
+    item.genre,
+    item.category,
+    item.main_genre,
+    item.genre_slug,
+    item.category_slug,
+    ...(Array.isArray(item.genres) ? item.genres : []),
+  ]
+
+  return values.some((value) => toSlug(value) === genreSlug)
+}
+
+function getTime(value) {
+  const time = new Date(value || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+function getStoryScore(story) {
+  return story.views + story.likes * 4 + story.rating * 25 + story.totalEpisodes
+}
+
+function getTrendingScore(story) {
+  const ageDays = Math.max(
+    1,
+    (Date.now() - getTime(story.updatedAt)) / 86400000
+  )
+  const recencyBoost = Math.max(0, 30 - ageDays) * 12
+
+  return story.views + story.likes * 5 + recencyBoost
+}
+
+function sortByLatest(list) {
+  return [...list].sort(
+    (first, second) => getTime(second.updatedAt) - getTime(first.updatedAt)
+  )
+}
+
+function sortByTop(list) {
+  return [...list].sort(
+    (first, second) => getStoryScore(second) - getStoryScore(first)
+  )
+}
+
+function sortByTrending(list) {
+  return [...list].sort(
+    (first, second) => getTrendingScore(second) - getTrendingScore(first)
+  )
+}
+
+function formatNumber(value) {
+  const number = Number(value || 0)
+
+  if (number >= 1000000) {
+    return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1)}m`
+  }
+
+  if (number >= 1000) {
+    return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1)}k`
+  }
+
+  return String(number)
+}
+
+function FireSolidIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 22c4.4 0 8-3.1 8-8 0-2.1-.8-4.1-2-5.5 0 2.5-1.5 4-3 4.5.5-4-2-8-6-11 0 3.5-2 5.5-3.5 7C4 10.5 4 12.5 4 14c0 4.9 3.6 8 8 8Z" />
+      <path d="M9.5 17.5c0 1.5 1.1 2.5 2.5 2.5s2.5-1 2.5-2.5c0-1-.5-1.9-1.3-2.6 0 1-.6 1.6-1.2 1.8.1-1.5-.8-2.8-2.1-3.8.1 1.5-.4 2.4-.4 4.6Z" />
+    </svg>
+  )
+}
+
+function getEpisodeLabel(story) {
+  const count = Number(story.totalEpisodes || 0)
+
+  if (!count) return story.isCompleted ? 'Completed' : 'Updating'
+  if (story.isCompleted) return `${count} Episodes`
+
+  return `Up to Ep ${count}`
+}
+
+function getTagLine(story, genreName) {
+  const genreSlug = toSlug(genreName)
+
+  return story.tags
+    .map((tag) => String(tag || '').trim())
+    .filter((tag) => tag && toSlug(tag) !== genreSlug)
+    .slice(0, 2)
+    .join(' / ')
+}
+
+function SectionTitle({ icon, title }) {
+  return (
+    <div className="mb-3 grid grid-cols-[1fr_auto] items-center gap-3 px-4">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="shrink-0 text-[18px] leading-none">{icon}</span>
+        <h2 className="min-w-0 truncate text-[18px] font-bold leading-6 text-[#111827]">
+          {title}
+        </h2>
+      </div>
+
+      <button
+        type="button"
+        className="flex h-7 w-7 shrink-0 items-center justify-end text-[#111827] active:scale-95"
+      >
+        <i className="fa-solid fa-chevron-right text-[13px]" />
+      </button>
+    </div>
+  )
+}
+
+function ImageFrame({
+  src,
+  title,
+  className,
+  fallbackClassName = 'text-[#d6336c]',
+}) {
+  return (
+    <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
+      {src ? (
+        <img
+          src={src}
+          alt={title}
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+          className="h-full w-full select-none object-cover transition-transform duration-300 hover:scale-[1.03]"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div
+          className={`flex h-full w-full items-center justify-center ${fallbackClassName}`}
+        >
+          <i className="fa-solid fa-heart text-[24px]" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TopGenreCard({ story, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(story)}
+      className="min-w-0 text-left active:scale-[0.99]"
+    >
+      <ImageFrame
+        src={story.landscape || story.cover}
+        title={story.title}
+        className="aspect-[1.42/1] rounded-[9px]"
+      />
+
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">
+        {story.title}
+      </h3>
+
+      <p className="mt-1 text-[11.5px] font-normal leading-[17px] text-gray-400">
+        {getEpisodeLabel(story)}
+      </p>
+    </button>
+  )
+}
+
+function TrendingGenreCard({ story, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(story)}
+      className="flex h-full min-w-0 flex-col text-left active:scale-[0.99]"
+    >
+      <ImageFrame
+        src={story.cover}
+        title={story.title}
+        className="aspect-[2/3] rounded-[8px]"
+      />
+
+      <h3 className="mt-2 h-[34px] line-clamp-2 text-[12.5px] font-[640] leading-[17px] text-neutral-900 sm:text-[13px]">
+        {story.title}
+      </h3>
+
+      <p className="mt-1 flex h-[18px] items-center gap-1 text-[11.5px] font-medium leading-none text-[#4B5563]">
+        <span className="text-[#EF4444]">
+          <FireSolidIcon />
+        </span>
+
+        <span>{formatNumber(story.likes)}</span>
+      </p>
+    </button>
+  )
+}
+
+function LatestGenreCard({ story, onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(story)}
+      className="w-[42vw] max-w-[170px] shrink-0 select-none text-left active:scale-[0.99] sm:w-[170px]"
+    >
+      <ImageFrame
+        src={story.cover}
+        title={story.title}
+        className="aspect-[2/3] rounded-[8px]"
+      />
+
+      <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">
+        {story.title}
+      </h3>
+    </button>
+  )
+}
+
+function AllGenreCard({ story, onOpen, genreName }) {
+  const tagLine = getTagLine(story, genreName)
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(story)}
+      className="min-w-0 text-left active:scale-[0.99]"
+    >
+      <ImageFrame
+        src={story.cover}
+        title={story.title}
+        className="aspect-[2/3] rounded-[8px]"
+      />
+
+      <h3 className="mt-2 line-clamp-1 text-[14px] font-[640] leading-[20px] text-neutral-900">
+        {story.title}
+      </h3>
+
+      <p className="mt-1 min-h-[17px] truncate text-[11.5px] font-normal text-gray-400">
+        {tagLine}
+      </p>
+    </button>
+  )
+}
+
+function LoadingGrid() {
+  return (
+    <div className="space-y-7 px-4 pt-5">
+      {Array.from({ length: 3 }).map((_, sectionIndex) => (
+        <section key={sectionIndex}>
+          <div className="mb-3 h-6 w-44 animate-pulse rounded-full bg-gray-100" />
+
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5">
+            {Array.from({ length: 4 }).map((__, index) => (
+              <div key={index}>
+                <div className="aspect-[2/3] animate-pulse rounded-[8px] bg-gray-100" />
+                <div className="mt-2 h-4 animate-pulse rounded-full bg-gray-100" />
+                <div className="mt-2 h-3 w-2/3 animate-pulse rounded-full bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+export default function SharedGenrePage({
+  genreSlug,
+  embedded = false,
+}) {
+  const navigate = useNavigate()
+  const normalizedGenreSlug = toSlug(genreSlug)
+  const fallbackGenreName = formatGenreName(normalizedGenreSlug)
+  const [genreName, setGenreName] = useState(fallbackGenreName)
+  const [stories, setStories] = useState([])
+  const [genreInfo, setGenreInfo] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
+  const latestScrollRef = useRef(null)
+  const latestDragRef = useRef({
+    active: false,
+    startX: 0,
+    scrollLeft: 0,
+    moved: false,
+    blockClick: false,
+  })
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadGenrePage() {
+      setLoading(true)
+      setMessage('')
+
+      try {
+        let resolvedGenreName = fallbackGenreName
+        let resolvedGenreInfo = null
+
+        try {
+          const genresResponse = await fetch(
+            `${API_URL}/api/genres?include_inactive=true`
+          )
+          const genresData = await genresResponse.json().catch(() => ({}))
+
+          resolvedGenreInfo =
+            (genresData.genres || []).find(
+              (genre) =>
+                toSlug(genre.slug || genre.name) === normalizedGenreSlug
+            ) || null
+
+          if (resolvedGenreInfo?.name) {
+            resolvedGenreName = resolvedGenreInfo.name
+          }
+        } catch {
+          resolvedGenreInfo = null
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/public/stories?genre=${encodeURIComponent(
+            resolvedGenreName
+          )}&limit=48`
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || `Failed to load ${resolvedGenreName} stories`
+          )
+        }
+
+        const rawStories =
+          data.stories || data.items || data.results || []
+        const filteredStories = rawStories
+          .filter((story) => isGenreStory(story, normalizedGenreSlug))
+          .map(normalizeStory)
+
+        if (!ignore) {
+          setGenreName(resolvedGenreName)
+          setGenreInfo(resolvedGenreInfo)
+          setStories(filteredStories)
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStories([])
+          setMessage(
+            error.message === 'Failed to fetch'
+              ? 'Cannot connect to server.'
+              : error.message || 'Failed to load stories'
+          )
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadGenrePage()
+
+    return () => {
+      ignore = true
+    }
+  }, [fallbackGenreName, normalizedGenreSlug])
+
+  const quickButtons = useMemo(
+    () => [
+      {
+        label: 'Latest',
+        icon: 'fa-regular fa-calendar-plus',
+        path: `/genre/${normalizedGenreSlug}/latest`,
+      },
+      {
+        label: 'Updates',
+        icon: 'fa-regular fa-star',
+        path: `/genre/${normalizedGenreSlug}/updates`,
+      },
+      {
+        label: 'Completed',
+        icon: 'fa-regular fa-circle-check',
+        path: `/genre/${normalizedGenreSlug}/completed`,
+      },
+    ],
+    [normalizedGenreSlug]
+  )
+
+  const topStories = useMemo(
+    () => sortByTop(stories).slice(0, 6),
+    [stories]
+  )
+  const trendingStories = useMemo(
+    () => sortByTrending(stories).slice(0, 6),
+    [stories]
+  )
+  const latestStories = useMemo(
+    () => sortByLatest(stories).slice(0, 6),
+    [stories]
+  )
+  const allStories = useMemo(() => stories.slice(0, 20), [stories])
+
+  const heroImage = useMemo(() => {
+    const found = topStories.find(
+      (story) => story.landscape || story.cover
+    )
+
+    return found?.landscape || found?.cover || ''
+  }, [topStories])
+
+  const genreDesktopImage =
+    genreInfo?.banner_image_url ||
+    genreInfo?.mobile_banner_image_url ||
+    heroImage
+  const genreMobileImage =
+    genreInfo?.mobile_banner_image_url ||
+    genreInfo?.banner_image_url ||
+    heroImage
+  const returnToPath = embedded
+    ? `/?genre=${encodeURIComponent(normalizedGenreSlug)}`
+    : `/genre/${normalizedGenreSlug}`
+
+  const openStory = (story) => {
+    if (latestDragRef.current.blockClick) {
+      latestDragRef.current.blockClick = false
+      return
+    }
+
+    if (story?.id) {
+      navigate(`/story/${story.id}`, {
+        state: { returnTo: returnToPath },
+      })
+    }
+  }
+
+  const openTab = (path) => {
+    navigate(path, {
+      state: { returnTo: returnToPath },
+    })
+  }
+
+  const handleLatestMouseDown = (event) => {
+    if (event.button !== 0) return
+
+    const element = latestScrollRef.current
+    if (!element) return
+
+    latestDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: element.scrollLeft,
+      moved: false,
+      blockClick: false,
+    }
+  }
+
+  const handleLatestMouseMove = (event) => {
+    const element = latestScrollRef.current
+    const drag = latestDragRef.current
+
+    if (!element || !drag.active) return
+
+    if (event.buttons !== 1) {
+      latestDragRef.current.active = false
+      return
+    }
+
+    const walk = event.clientX - drag.startX
+
+    if (Math.abs(walk) > 5) {
+      latestDragRef.current.moved = true
+      event.preventDefault()
+    }
+
+    element.scrollLeft = drag.scrollLeft - walk
+  }
+
+  const stopLatestDrag = () => {
+    const drag = latestDragRef.current
+
+    if (drag.active && drag.moved) {
+      latestDragRef.current.blockClick = true
+
+      window.setTimeout(() => {
+        latestDragRef.current.blockClick = false
+      }, 180)
+    }
+
+    latestDragRef.current.active = false
+  }
+
+  return (
+    <div
+      className={
+        embedded
+          ? 'bg-white pb-6'
+          : 'min-h-screen bg-white pb-[110px]'
+      }
+    >
+      {!embedded ? (
+        <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+              aria-label="Back"
+            >
+              <i className="fa-solid fa-chevron-left text-[13px]" />
+            </button>
+
+            <div className="min-w-0 text-center">
+              <h1 className="text-[17px] font-black text-[#111827]">
+                {genreName}
+              </h1>
+
+              <p className="text-[11px] font-semibold text-gray-400">
+                {genreName} stories and new updates
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate('/search')}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-[#111827] active:scale-95"
+              aria-label="Search"
+            >
+              <i className="fa-solid fa-magnifying-glass text-[13px]" />
+            </button>
+          </div>
+        </header>
+      ) : null}
+
+      <main
+        className={`mx-auto max-w-5xl ${
+          embedded ? 'pt-0' : 'pt-4'
+        }`}
+      >
+        <section className="px-0 sm:px-4">
+          <div className="relative aspect-[4.25/1] overflow-hidden rounded-none bg-gradient-to-r from-[#ff5eb8] to-[#ffb1d5] sm:rounded-[14px]">
+            {genreDesktopImage || genreMobileImage ? (
+              <picture>
+                {genreMobileImage ? (
+                  <source
+                    media="(max-width: 639px)"
+                    srcSet={genreMobileImage}
+                  />
+                ) : null}
+
+                <img
+                  src={genreDesktopImage || genreMobileImage}
+                  alt={genreName}
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                  className="h-full w-full select-none object-cover"
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
+            ) : (
+              <div className="flex h-full w-full items-center justify-end px-5">
+                <i className="fa-solid fa-heart text-[42px] text-white/85" />
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-r from-[#ec4899]/45 via-transparent to-transparent" />
+          </div>
+        </section>
+
+        <section className="mt-4 px-4">
+          <div className="grid grid-cols-3 gap-2">
+            {quickButtons.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => openTab(item.path)}
+                className="flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white text-[13px] font-[640] text-[#111827] shadow-sm ring-1 ring-gray-100 active:scale-[0.98]"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#facc15] text-[12px] text-[#111827]">
+                  <i className={item.icon} />
+                </span>
+
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {loading ? <LoadingGrid /> : null}
+
+        {!loading && message ? (
+          <section className="mx-4 mt-5 rounded-[18px] bg-gray-50 p-6 text-center">
+            <div className="text-[13px] font-[640] text-[#e5484d]">
+              {message}
+            </div>
+          </section>
+        ) : null}
+
+        {!loading && !message ? (
+          <div className="pt-7">
+            <section>
+              <SectionTitle
+                icon="🏆"
+                title={`Top ${genreName}`}
+              />
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
+                {topStories.map((story) => (
+                  <TopGenreCard
+                    key={`top-${story.id}`}
+                    story={story}
+                    onOpen={openStory}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <SectionTitle
+                icon="🔥"
+                title={`Trending ${genreName}`}
+              />
+
+              <div className="grid grid-cols-3 items-start gap-x-2.5 gap-y-5 px-4 md:grid-cols-6 md:gap-x-3">
+                {trendingStories.map((story) => (
+                  <TrendingGenreCard
+                    key={`trending-${story.id}`}
+                    story={story}
+                    onOpen={openStory}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <SectionTitle
+                icon="🆕"
+                title={`Latest ${genreName}`}
+              />
+
+              <div
+                ref={latestScrollRef}
+                onMouseDown={handleLatestMouseDown}
+                onMouseMove={handleLatestMouseMove}
+                onMouseUp={stopLatestDrag}
+                onMouseLeave={stopLatestDrag}
+                className="flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-1 active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {latestStories.map((story) => (
+                  <LatestGenreCard
+                    key={`latest-${story.id}`}
+                    story={story}
+                    onOpen={openStory}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <SectionTitle
+                icon="📖"
+                title={`All ${genreName}`}
+              />
+
+              {allStories.length ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 px-4 md:grid-cols-6 md:gap-x-3">
+                  {allStories.map((story) => (
+                    <AllGenreCard
+                      key={`all-${story.id}`}
+                      story={story}
+                      onOpen={openStory}
+                      genreName={genreName}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mx-4 rounded-[18px] bg-gray-50 p-8 text-center">
+                  <h3 className="text-[16px] font-black text-[#111827]">
+                    No stories found
+                  </h3>
+
+                  <p className="mt-2 text-[13px] font-normal text-gray-400">
+                    {genreName} stories will appear here after publishing.
+                  </p>
+                </div>
+              )}
+            </section>
+          </div>
+        ) : null}
+      </main>
+    </div>
+  )
+}
