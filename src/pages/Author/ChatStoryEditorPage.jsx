@@ -1350,7 +1350,7 @@ export default function ChatStoryEditorPage() {
 
   const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
   const gallerySnapshotKey =
-  `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}`
+    `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}`
   const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
   const startNewEpisode = searchParams.get('new') === '1'
 
@@ -2418,7 +2418,7 @@ const openNewCharacterShadowGallery = () => {
     })
   )
 
-    setImageSourceOpen(false)
+  setImageSourceOpen(false)
 
   navigate(
     `/author/story/${storyId}/chat/shadow-gallery` +
@@ -2910,7 +2910,7 @@ const handleAddConfirm = async () => {
   }
 }
 
-const saveAndContinue = async () => {
+  const saveAndContinue = async () => {
     const cleanTitle = episodeTitle.trim()
 
     if (!cleanTitle) {
@@ -2969,21 +2969,21 @@ const saveAndContinue = async () => {
 
       const savedEpisodeId = data.episode?.id
 
-setEpisodeId(savedEpisodeId)
-setPublishSettingsOpen(true)
+      setEpisodeId(savedEpisodeId)
+      setPublishSettingsOpen(true)
+
       localStorage.setItem(
         storageKey,
         JSON.stringify({
-  episodeTitle: cleanTitle,
-  episodeId: savedEpisodeId,
-  leadCharacterId:
-    effectiveLeadCharacterId,
-  messages,
-  updatedAt: new Date().toISOString(),
-})
+          episodeTitle: cleanTitle,
+          episodeId: savedEpisodeId,
+          leadCharacterId:
+            effectiveLeadCharacterId,
+          messages,
+          updatedAt:
+            new Date().toISOString(),
+        })
       )
-
-      
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
@@ -2996,38 +2996,39 @@ setPublishSettingsOpen(true)
   }
 
   return (
-  <div className="min-h-screen bg-white pb-[170px]">
-    <PublishSettingsSheet
-      open={publishSettingsOpen}
-      episodeTitle={episodeTitle}
-      showStorySettings={false}
-      genreOptions={[]}
-      storyLanguage=""
-      onStoryLanguageChange={() => {}}
-      mainGenre=""
-      onMainGenreChange={() => {}}
-      storyTags={[]}
-      onStoryTagsChange={() => {}}
-      updateDays={[]}
-      onToggleUpdateDay={() => {}}
-      storyStatus="ongoing"
-      onStoryStatusChange={() => {}}
-      storyAdult={false}
-      onStoryAdultChange={() => {}}
-      episodeAdult={episodeAdult}
-      onEpisodeAdultChange={setEpisodeAdult}
-      episodeFree={episodeFree}
-      onEpisodeFreeChange={setEpisodeFree}
-      releaseOption={releaseOption}
-      onReleaseOptionChange={setReleaseOption}
-      scheduleDate={scheduleDate}
-      onScheduleDateChange={setScheduleDate}
-      scheduleTime={scheduleTime}
-      onScheduleTimeChange={setScheduleTime}
-      saving={settingsSaving}
-      onClose={() => setPublishSettingsOpen(false)}
-      onSave={handleSavePublishSettings}
-    />
+    <div className="min-h-screen bg-white pb-[170px]">
+      <PublishSettingsSheet
+        open={publishSettingsOpen}
+        episodeTitle={episodeTitle}
+        showStorySettings={false}
+        genreOptions={[]}
+        storyLanguage=""
+        onStoryLanguageChange={() => {}}
+        mainGenre=""
+        onMainGenreChange={() => {}}
+        storyTags={[]}
+        onStoryTagsChange={() => {}}
+        updateDays={[]}
+        onToggleUpdateDay={() => {}}
+        storyStatus="ongoing"
+        onStoryStatusChange={() => {}}
+        storyAdult={false}
+        onStoryAdultChange={() => {}}
+        episodeAdult={episodeAdult}
+        onEpisodeAdultChange={setEpisodeAdult}
+        episodeFree={episodeFree}
+        onEpisodeFreeChange={setEpisodeFree}
+        releaseOption={releaseOption}
+        onReleaseOptionChange={setReleaseOption}
+        scheduleDate={scheduleDate}
+        onScheduleDateChange={setScheduleDate}
+        scheduleTime={scheduleTime}
+        onScheduleTimeChange={setScheduleTime}
+        saving={settingsSaving}
+        onClose={() => setPublishSettingsOpen(false)}
+        onSave={handleSavePublishSettings}
+      />
+
       <input
         ref={audioInputRef}
         type="file"
