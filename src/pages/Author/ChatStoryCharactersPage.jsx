@@ -365,7 +365,7 @@ function LeadCharacterPanel({ character, onChange }) {
   if (!character) return null
 
   return (
-    <section className="mt-4 rounded-[20px] bg-white px-4 py-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+    <section className="-mx-[2px] mt-4 w-[calc(100%+4px)] rounded-[20px] bg-white px-4 py-4 shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
       <div className="flex items-center gap-3">
         <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eee7ff]">
           {character.image ? (
