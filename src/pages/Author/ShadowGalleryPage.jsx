@@ -127,7 +127,7 @@ export default function ShadowGalleryPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <h1 className="flex-1 pr-10 text-center text-[17px] font-bold text-[#111827]">
+          <h1 className="flex-1 pr-10 text-center text-[17px] font-extrabold text-[#111827]">
             {activeFolder?.name || 'Shadow Gallery'}
           </h1>
         </div>
