@@ -2296,10 +2296,29 @@ const openNewCharacterShadowGallery = () => {
   if (!storyId) return
 
   const origin = 'chat-editor'
-  const returnPath =
-    window.location.pathname + window.location.search
+  const returnUrl = new URL(window.location.href)
 
-  sessionStorage.removeItem('shadow_gallery_selected_image')
+  returnUrl.searchParams.delete('new')
+
+  const returnPath =
+    returnUrl.pathname + returnUrl.search
+
+  localStorage.setItem(
+    storageKey,
+    JSON.stringify({
+      episodeTitle,
+      episodeId,
+      leadCharacterId:
+        effectiveLeadCharacterId,
+      messages,
+      updatedAt:
+        new Date().toISOString(),
+    })
+  )
+
+  sessionStorage.removeItem(
+    'shadow_gallery_selected_image'
+  )
 
   sessionStorage.setItem(
     `shadow_gallery_chat_editor_draft_${storyId}`,
@@ -2308,7 +2327,8 @@ const openNewCharacterShadowGallery = () => {
       returnPath,
       name: newCharacterName,
       image: newCharacterImage,
-      avatarSource: newCharacterAvatarSource,
+      avatarSource:
+        newCharacterAvatarSource,
       gender: newCharacterGender,
       createdAt: Date.now(),
     })
