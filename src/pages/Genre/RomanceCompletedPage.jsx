@@ -100,7 +100,7 @@ export default function RomanceUpdatesPage() {
         <div className="mx-auto flex h-[58px] max-w-5xl items-center px-4">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/?genre=romance')}
             className="flex h-10 w-10 shrink-0 items-center justify-start text-[#111827] active:scale-95"
             aria-label="Back"
           >
