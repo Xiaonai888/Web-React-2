@@ -1220,15 +1220,6 @@ useEffect(() => {
         }
 
         setCharacters((data.characters || []).map(mapCharacter))
-            id: character.id,
-            nickname: character.nickname || '',
-            image: character.avatar_url || '',
-            group: character.role_group,
-            chatSide:
-              character.chat_side ||
-              (character.role_group === 'main' ? 'right' : 'left'),
-          }))
-        )
       } catch (error) {
         showToast(
           error.message === 'Failed to fetch'
