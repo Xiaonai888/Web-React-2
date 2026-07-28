@@ -522,9 +522,14 @@ export default function CreateStoryPage() {
     if (isEditMode) return
 
     const saved = JSON.parse(localStorage.getItem('create_story_draft') || 'null')
-    if (!saved) return
 
-    setStoryType(['novel', 'manga', 'chat_story'].includes(saved.storyType) ? saved.storyType : requestedStoryType)
+if (!saved || saved.storyType !== requestedStoryType) {
+  localStorage.removeItem('create_story_draft')
+  setStoryType(requestedStoryType)
+  return
+}
+
+setStoryType(requestedStoryType)
     setTitle(saved.title || '')
     setLanguage(saved.language || 'Khmer')
     setGenre(saved.genre || 'Romance')
