@@ -407,7 +407,6 @@ export default function RomanceGenrePage({ embedded = false }) {
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-[#ec4899]/45 via-transparent to-transparent" />
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[26px] font-black uppercase italic tracking-wide text-white drop-shadow">Romance</div>
           </div>
         </section>
 
