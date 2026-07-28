@@ -3045,6 +3045,7 @@ const handleAddConfirm = async () => {
         saving={settingsSaving}
         onClose={() => setPublishSettingsOpen(false)}
         onSave={handleSavePublishSettings}
+        isChatStory
       />
 
       <SuccessModal
