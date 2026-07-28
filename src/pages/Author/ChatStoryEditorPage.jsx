@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ImageSourceSheet } from './ChatStoryCharactersPage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1024,6 +1025,7 @@ export default function ChatStoryEditorPage() {
   const [saving, setSaving] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
+  const [imageSourceOpen, setImageSourceOpen] = useState(false)
   const [newCharacterName, setNewCharacterName] = useState('')
   const [newCharacterImage, setNewCharacterImage] = useState('')
   const [newCharacterAvatarSource, setNewCharacterAvatarSource] =
@@ -1198,6 +1200,82 @@ useEffect(() => {
   useEffect(() => {
     async function loadCharacters() {
       const token = getAuthToken()
+useEffect(() => {
+  if (!storyId) return
+
+  const draftKey =
+    `shadow_gallery_chat_editor_draft_${storyId}`
+
+  const draftRaw = sessionStorage.getItem(draftKey)
+
+  if (!draftRaw) return
+
+  try {
+    const draft = JSON.parse(draftRaw)
+
+    const expired =
+      !draft.createdAt ||
+      Date.now() - Number(draft.createdAt) >
+        30 * 60 * 1000
+
+    if (expired) {
+      sessionStorage.removeItem(draftKey)
+      return
+    }
+
+    const selectedRaw = sessionStorage.getItem(
+      'shadow_gallery_selected_image'
+    )
+
+    let selected = null
+
+    if (selectedRaw) {
+      const parsedSelected = JSON.parse(selectedRaw)
+
+      if (
+        String(parsedSelected.storyId || '') ===
+          String(storyId) &&
+        parsedSelected.origin === 'chat-editor'
+      ) {
+        selected = parsedSelected
+      }
+    }
+
+    setNewCharacterName(draft.name || '')
+    setNewCharacterGender(draft.gender || '')
+
+    if (selected?.imageUrl) {
+      setNewCharacterImage(selected.imageUrl)
+      setNewCharacterAvatarSource('shadow_gallery')
+      setImageSourceOpen(false)
+      setAddPopupOpen(true)
+    } else {
+      setNewCharacterImage(draft.image || '')
+      setNewCharacterAvatarSource(
+        draft.avatarSource || 'device'
+      )
+      setAddPopupOpen(false)
+     (
+        draft.avatarSource || 'device'
+      )
+      setImageSourceOpen(true)
+    }
+
+    sessionStorage.removeItem(draftKey)
+
+    if (selected) {
+      sessionStorage.removeItem(
+        'shadow_gallery_selected_image'
+      )
+    }
+  } catch {
+    sessionStorage.removeItem(draftKey)
+    sessionStorage.removeItem(
+      'shadow_gallery_selected_image'
+    )
+  }
+}, [storyId])
+      
 
       if (!token) {
         navigate('/login')
@@ -1351,7 +1429,9 @@ const deleteMessage = (messageId) => {
   setNewCharacterImage('')
   setNewCharacterAvatarSource('device')
   setNewCharacterGender('')
-  setAddPopupOpen(true)
+  sessionStorage.removeItem('shadow_gallery_selected_image')
+  setAddPopupOpen(false)
+  setImageSourceOpen(true)
 }
 
 const closeAddCharacterPopup = () => {
@@ -1359,11 +1439,50 @@ const closeAddCharacterPopup = () => {
   setAddPopupOpen(false)
 }
 
+const chooseNewCharacterDeviceImage = () => {
+  setImageSourceOpen(false)
+  characterImageInputRef.current?.click()
+}
+
+const openNewCharacterShadowGallery = () => {
+  if (!storyId) return
+
+  const origin = 'chat-editor'
+  const returnPath =
+    window.location.pathname + window.location.search
+
+  sessionStorage.removeItem('shadow_gallery_selected_image')
+
+  sessionStorage.setItem(
+    `shadow_gallery_chat_editor_draft_${storyId}`,
+    JSON.stringify({
+      origin,
+      returnPath,
+      name: newCharacterName,
+      image: newCharacterImage,
+      avatarSource: newCharacterAvatarSource,
+      gender: newCharacterGender,
+      createdAt: Date.now(),
+    })
+  )
+
+  setImageSourceOpen(false)
+
+  navigate(
+    `/author/story/${storyId}/chat/shadow-gallery` +
+      `?origin=${encodeURIComponent(origin)}` +
+      `&return=${encodeURIComponent(returnPath)}`
+  )
+}
+  
 const handleNewCharacterImageChange = (event) => {
   const file = event.target.files?.[0]
   event.target.value = ''
 
-  if (!file) return
+  if (!file) {
+  setImageSourceOpen(true)
+  return
+}
 
   if (!file.type.startsWith('image/')) {
     showToast('Please choose an image file.')
@@ -1378,9 +1497,11 @@ const handleNewCharacterImageChange = (event) => {
   const reader = new FileReader()
 
   reader.onload = () => {
-    setNewCharacterImage(String(reader.result || ''))
-    setNewCharacterAvatarSource('device')
-  }
+  setNewCharacterImage(String(reader.result || ''))
+  setNewCharacterAvatarSource('device')
+  setImageSourceOpen(false)
+  setAddPopupOpen(true)
+}
 
   reader.readAsDataURL(file)
 }
@@ -1865,6 +1986,12 @@ const handleAddConfirm = async () => {
   onChange={handleNewCharacterImageChange}
   className="hidden"
 />
+      <ImageSourceSheet
+  open={imageSourceOpen}
+  onClose={() => setImageSourceOpen(false)}
+  onDevice={chooseNewCharacterDeviceImage}
+  onShadowGallery={openNewCharacterShadowGallery}
+/>
 
       <AddCharacterPopup
   open={addPopupOpen}
@@ -1873,7 +2000,10 @@ const handleAddConfirm = async () => {
   saving={addCharacterSaving}
   randomLoading={randomAvatarLoading}
   onNameChange={setNewCharacterName}
-  onChooseImage={() => characterImageInputRef.current?.click()}
+  onChooseImage={() => {
+  setAddPopupOpen(false)
+  setImageSourceOpen(true)
+}}
   onRandomMale={() => pickRandomCharacterAvatar('male')}
   onRandomFemale={() => pickRandomCharacterAvatar('female')}
   onClose={closeAddCharacterPopup}
