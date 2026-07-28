@@ -704,6 +704,78 @@ export default function ChatStoryCharactersPage() {
     loadCharacters()
   }, [navigate, storyId])
 
+  useEffect(() => {
+  if (!storyId) return
+
+  const draftKey = `shadow_gallery_character_draft_${storyId}`
+  const draftRaw = sessionStorage.getItem(draftKey)
+
+  if (!draftRaw) return
+
+  try {
+    const draft = JSON.parse(draftRaw)
+    const expired =
+      !draft.createdAt ||
+      Date.now() - Number(draft.createdAt) > 30 * 60 * 1000
+
+    if (expired) {
+      sessionStorage.removeItem(draftKey)
+      return
+    }
+
+    const selectedRaw = sessionStorage.getItem(
+      'shadow_gallery_selected_image'
+    )
+
+    let selected = null
+
+    if (selectedRaw) {
+      const parsedSelected = JSON.parse(selectedRaw)
+
+      if (String(parsedSelected.storyId || '') === String(storyId)) {
+        selected = parsedSelected
+      }
+    }
+
+    const restoredGroup =
+      draft.characterGroup ||
+      draft.activeGroupKey ||
+      'main'
+
+    setActiveGroupKey(restoredGroup)
+    setCharacterGroup(restoredGroup)
+    setEditingId(draft.editingId || '')
+    setNickname(draft.nickname || '')
+    setSelectedImage(
+      selected?.imageUrl || draft.selectedImage || ''
+    )
+    setAvatarSource(
+      selected?.imageUrl
+        ? 'shadow_gallery'
+        : draft.avatarSource || 'device'
+    )
+    setChatSide(
+      draft.chatSide ||
+      (restoredGroup === 'main' ? 'right' : 'left')
+    )
+    setSourceOpen(false)
+    setEditorOpen(true)
+
+    sessionStorage.removeItem(draftKey)
+
+    if (selected) {
+      sessionStorage.removeItem(
+        'shadow_gallery_selected_image'
+      )
+    }
+  } catch {
+    sessionStorage.removeItem(draftKey)
+    sessionStorage.removeItem(
+      'shadow_gallery_selected_image'
+    )
+  }
+}, [storyId])
+
   const activeGroup = ROLE_GROUPS.find((group) => group.key === characterGroup || group.key === activeGroupKey) || null
 
   const groupedCharacters = useMemo(() => {
@@ -814,11 +886,32 @@ export default function ChatStoryCharactersPage() {
   }
 
   const openShadowGallery = () => {
-    setSourceOpen(false)
-    setGalleryCategory('All')
-    setGalleryOpen(true)
-    loadShadowGallery()
-  }
+  if (!storyId) return
+
+  const returnPath =
+    `/author/story/${storyId}/chat/characters`
+
+  sessionStorage.setItem(
+    `shadow_gallery_character_draft_${storyId}`,
+    JSON.stringify({
+      activeGroupKey,
+      characterGroup,
+      editingId,
+      selectedImage,
+      nickname,
+      avatarSource,
+      chatSide,
+      createdAt: Date.now(),
+    })
+  )
+
+  setSourceOpen(false)
+
+  navigate(
+    `/author/story/${storyId}/chat/shadow-gallery` +
+      `?return=${encodeURIComponent(returnPath)}`
+  )
+}
 
   const selectGalleryImage = (item) => {
     setSelectedImage(item.image_url || '')
