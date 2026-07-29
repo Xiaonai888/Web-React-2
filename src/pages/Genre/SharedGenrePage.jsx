@@ -68,17 +68,46 @@ function normalizeStory(item) {
   }
 }
 
-function isGenreStory(item, genreSlug) {
-  const values = [
+function getStoryGenreValues(item) {
+  return [
     item.genre,
     item.category,
     item.main_genre,
     item.genre_slug,
     item.category_slug,
     ...(Array.isArray(item.genres) ? item.genres : []),
+    ...(Array.isArray(item.tags) ? item.tags : []),
   ]
+}
 
-  return values.some((value) => toSlug(value) === genreSlug)
+function matchesGenre(item, aliases) {
+  return getStoryGenreValues(item).some((value) =>
+    aliases.has(toSlug(value))
+  )
+}
+
+function deduplicateStories(items) {
+  const seen = new Set()
+
+  return items.filter((item) => {
+    const key = String(item?.id || item?.story_id || '')
+
+    if (!key || seen.has(key)) return false
+
+    seen.add(key)
+    return true
+  })
+}
+
+async function requestStories(url) {
+  const response = await fetch(url)
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load stories')
+  }
+
+  return data.stories || data.items || data.results || []
 }
 
 function getTime(value) {
@@ -376,7 +405,8 @@ export default function SharedGenrePage({
           resolvedGenreInfo =
             (genresData.genres || []).find(
               (genre) =>
-                toSlug(genre.slug || genre.name) === normalizedGenreSlug
+                toSlug(genre.slug) === normalizedGenreSlug ||
+                toSlug(genre.name) === normalizedGenreSlug
             ) || null
 
           if (resolvedGenreInfo?.name) {
@@ -386,29 +416,47 @@ export default function SharedGenrePage({
           resolvedGenreInfo = null
         }
 
-        const response = await fetch(
-          `${API_URL}/api/public/stories?genre=${encodeURIComponent(
-            resolvedGenreName
-          )}&limit=48`
+        const aliases = new Set(
+          [
+            normalizedGenreSlug,
+            toSlug(resolvedGenreName),
+            toSlug(resolvedGenreInfo?.name),
+            toSlug(resolvedGenreInfo?.slug),
+          ].filter(Boolean)
         )
-        const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message || `Failed to load ${resolvedGenreName} stories`
+        let rawStories = []
+
+        try {
+          rawStories = await requestStories(
+            `${API_URL}/api/public/stories?genre=${encodeURIComponent(
+              resolvedGenreName
+            )}&limit=100`
           )
+        } catch {
+          rawStories = []
         }
 
-        const rawStories =
-          data.stories || data.items || data.results || []
-        const filteredStories = rawStories
-          .filter((story) => isGenreStory(story, normalizedGenreSlug))
-          .map(normalizeStory)
+        let filteredStories = rawStories.filter((story) =>
+          matchesGenre(story, aliases)
+        )
+
+        if (!filteredStories.length) {
+          const allStories = await requestStories(
+            `${API_URL}/api/public/stories?limit=100&sort=latest`
+          )
+
+          filteredStories = allStories.filter((story) =>
+            matchesGenre(story, aliases)
+          )
+        }
 
         if (!ignore) {
           setGenreName(resolvedGenreName)
           setGenreInfo(resolvedGenreInfo)
-          setStories(filteredStories)
+          setStories(
+            deduplicateStories(filteredStories).map(normalizeStory)
+          )
         }
       } catch (error) {
         if (!ignore) {
