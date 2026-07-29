@@ -484,7 +484,7 @@ export default function AuthorQuestPage() {
           <HeaderButton
   icon="fa-solid fa-chevron-left"
   label="Back"
-  onClick={() => navigate(fromPage === 'income' ? '/author/income' : '/author/dashboard', { replace: true })}
+  onClick={() => navigate(fromPage === 'income' ? '/author/income' : '/author/profile', { replace: true })}
 />
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">Quest</h1>
