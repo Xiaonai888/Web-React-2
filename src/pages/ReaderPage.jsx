@@ -5915,7 +5915,6 @@ return (
   onClick={isChatStory ? undefined : handleReaderDoubleTap}
   className="mx-auto max-w-3xl bg-[#FFFFFF] px-0 pb-[92px] pt-[50px] sm:px-4"
 >
-      >
         {loading ? <LoadingCard /> : null}
 
         {message ? (
