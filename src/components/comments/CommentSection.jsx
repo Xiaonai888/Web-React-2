@@ -1942,7 +1942,11 @@ export default function CommentSection({
       data.matched_words
     )
       ? data.matched_words
-          .map((item) => item.word)
+          .map((item) =>
+            typeof item === 'string'
+              ? item
+              : item?.word
+          )
           .filter(Boolean)
       : []
 
@@ -1961,6 +1965,14 @@ export default function CommentSection({
           ?.expires_at || '',
     })
   }
+
+  const isCommentWarning = (data) =>
+    data?.code ===
+      'AUTHOR_COMMENT_AUTO_HIDDEN' ||
+    data?.code ===
+      'COMMENT_AUTO_HIDDEN' ||
+    data?.code ===
+      'READER_COMMENT_BLOCKED'
 
   const handleSend = async () => {
     if (
@@ -2002,6 +2014,19 @@ export default function CommentSection({
       const data = await response
         .json()
         .catch(() => ({}))
+
+      if (isCommentWarning(data)) {
+        openCommentWarning(data)
+
+        if (
+          data.code !==
+          'READER_COMMENT_BLOCKED'
+        ) {
+          setText('')
+        }
+
+        return
+      }
 
       if (
         !response.ok ||
@@ -2185,6 +2210,15 @@ export default function CommentSection({
         .json()
         .catch(() => ({}))
 
+      if (isCommentWarning(data)) {
+        openCommentWarning(data)
+
+        return (
+          data.code !==
+          'READER_COMMENT_BLOCKED'
+        )
+      }
+
       if (
         !response.ok ||
         data.ok === false
@@ -2275,6 +2309,30 @@ export default function CommentSection({
       const data = await response
         .json()
         .catch(() => ({}))
+
+      if (isCommentWarning(data)) {
+        openCommentWarning(data)
+
+        if (
+          data.code !==
+          'READER_COMMENT_BLOCKED'
+        ) {
+          updateComments(
+            removeCommentTree(
+              comments,
+              editComment.id
+            )
+          )
+          updateTotal(
+            data.comment_count ??
+              totalComments - 1
+          )
+          setEditComment(null)
+          setEditText('')
+        }
+
+        return
+      }
 
       if (
         !response.ok ||
@@ -2469,6 +2527,8 @@ export default function CommentSection({
         data.ok === false
       ) {
         if (
+          data.code ===
+            'AUTHOR_COMMENT_AUTO_HIDDEN' ||
           data.code ===
             'COMMENT_AUTO_HIDDEN' ||
           data.code ===
