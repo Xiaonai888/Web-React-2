@@ -32,7 +32,7 @@ export default function AuthorCommentProtectionPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/author/dashboard', { replace: true })}
+            onClick={() => navigate('/author/profile', { replace: true })}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
             aria-label="Back to Author Dashboard"
           >
