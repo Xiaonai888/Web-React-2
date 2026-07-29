@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImageSourceSheet } from './ChatStoryCharactersPage'
 import { PublishSettingsSheet } from './EpisodeEditorPage'
 import { SuccessModal } from './PublishEpisodePage'
+import ChatStoryEditorGuide from '../../components/chat-story/ChatStoryEditorGuide'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1359,6 +1360,7 @@ export default function ChatStoryEditorPage() {
   const [successOpen, setSuccessOpen] = useState(false)
   const [publishedIsFirstEpisode, setPublishedIsFirstEpisode] = useState(false)
   const [publishedEpisodeNumber, setPublishedEpisodeNumber] = useState(null)
+  const [guideOpen, setGuideOpen] = useState(false)
 
   useEffect(() => {
     const textarea = composerRef.current
@@ -1373,6 +1375,13 @@ export default function ChatStoryEditorPage() {
     `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}`
   const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
   const startNewEpisode = searchParams.get('new') === '1'
+  useEffect(() => {
+  if (loading || titlePopupOpen) return
+
+  if (localStorage.getItem('shadow_chat_editor_guide_v1') !== 'completed') {
+    setGuideOpen(true)
+  }
+}, [loading, titlePopupOpen])
 
   const characterMap = useMemo(() => {
     return characters.reduce((result, character) => {
@@ -3030,7 +3039,49 @@ const handleAddConfirm = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[170px]">
+  <div className="min-h-screen bg-white pb-[170px]">
+    <ChatStoryEditorGuide
+      open={guideOpen}
+      onClose={() => setGuideOpen(false)}
+      steps={[
+        {
+          id: 'title',
+          selector: '[data-guide="episode-title"]',
+          title: 'Episode Title',
+          description: 'Tap here to add or edit the episode title.',
+        },
+        {
+          id: 'speaker',
+          selector: '[data-guide="character-picker"]',
+          title: 'Choose Speaker',
+          description: 'Choose a character for Chat. Choose ASIDE for narration.',
+        },
+        {
+          id: 'add-character',
+          selector: '[data-guide="add-character"]',
+          title: 'Add Character',
+          description: 'Create another character when your story needs one.',
+        },
+        {
+          id: 'message',
+          selector: '[data-guide="message-composer"]',
+          title: 'Write a Message',
+          description: 'Type and send a message. Tap a sent message to modify, move, or delete it.',
+        },
+        {
+          id: 'more',
+          selector: '[data-guide="more-menu"]',
+          title: 'More Tools',
+          description: 'Open Audio and Author’s Note tools here.',
+        },
+        {
+          id: 'publish',
+          selector: '[data-guide="next-publish"]',
+          title: 'Save and Publish',
+          description: 'Tap Next to save the episode and open Publish settings.',
+        },
+      ]}
+    />
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
@@ -3272,6 +3323,7 @@ const handleAddConfirm = async () => {
     <div className="min-w-0 flex-1">
       <button
   type="button"
+  data-guide="episode-title"
   onClick={openTitlePopup}
   className="flex max-w-full items-center gap-1.5 text-left active:opacity-70"
 >
@@ -3295,7 +3347,7 @@ const handleAddConfirm = async () => {
 
     <button
       type="button"
-      onClick={saveAndContinue}
+      data-guide="next-publish"
       disabled={
   saving ||
   loading ||
@@ -3439,7 +3491,7 @@ const handleAddConfirm = async () => {
   ) : null}
 
           <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-start gap-x-0 pl-4 pr-2 pb-1 pt-2">
-  <div className="relative min-w-0">
+  <div data-guide="character-picker" className="relative min-w-0">
   <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
     <div className="flex w-max gap-1.5 py-0.5">
       <AsideAvatar
@@ -3487,6 +3539,7 @@ const handleAddConfirm = async () => {
   <button
     type="button"
     onClick={openAddCharacterPopup}
+    data-guide="add-character"
     className="relative z-20 w-10 py-0.5 text-center active:scale-[0.97]"
   >
     <span className="relative mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
@@ -3501,6 +3554,7 @@ const handleAddConfirm = async () => {
   <button
     type="button"
     onClick={() => setMorePopupOpen(true)}
+    data-guide="more-menu"
     className="w-10 text-center active:scale-[0.97]"
   >
     <span className="mx-auto flex h-8 w-8 items-center justify-center text-[#667085]">
@@ -3513,7 +3567,10 @@ const handleAddConfirm = async () => {
 </div>
 
 <div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-0 pl-4 pr-2">
-  <div className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12">
+  <div
+  data-guide="message-composer"
+  className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12"
+>
     <textarea
       ref={composerRef}
       value={draft}
