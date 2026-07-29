@@ -553,9 +553,18 @@ export default function AuthorCommentProtectionPage() {
               }
             />
 
-            <SettingCard
+                        <SettingCard
               icon="fa-regular fa-eye-slash"
               title="Hidden Comments"
+              subtitle="Review comments hidden by your blocked words and rules."
+              status={null}
+              onClick={() =>
+                navigate(
+                  '/author/comment-protection/hidden-comments'
+                )
+              }
+            />
+
               subtitle="Comments hidden by author rules will wait here for review."
             />
 
