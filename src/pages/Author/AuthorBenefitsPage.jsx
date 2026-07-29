@@ -154,7 +154,7 @@ export default function AuthorBenefitsPage() {
           <HeaderButton
   icon="fa-solid fa-chevron-left"
   label="Back"
-  onClick={() => navigate(fromPage === 'quest' ? '/author/quest' : '/author/dashboard', { replace: true })}
+  onClick={() => navigate(fromPage === 'quest' ? '/author/quest' : '/author/profile', { replace: true })}
 />
 
           <div className="text-center">
