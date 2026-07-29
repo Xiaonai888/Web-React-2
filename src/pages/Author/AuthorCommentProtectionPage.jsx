@@ -71,15 +71,17 @@ function SettingCard({
             {title}
           </h3>
 
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.04em] ${
-              available
-                ? 'bg-[#ecfdf3] text-[#16803c]'
-                : 'bg-[#fff7ed] text-[#f97316]'
-            }`}
-          >
-            {status}
-          </span>
+          {status ? (
+  <span
+    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.04em] ${
+      available
+        ? 'bg-[#ecfdf3] text-[#16803c]'
+        : 'bg-[#fff7ed] text-[#f97316]'
+    }`}
+  >
+    {status}
+  </span>
+) : null}
         </div>
 
         <p className="mt-1.5 text-[12.5px] font-medium leading-5 text-[#8d94a1]">
@@ -543,8 +545,7 @@ export default function AuthorCommentProtectionPage() {
               icon="fa-solid fa-ban"
               title="Author Blocked Words"
               subtitle="Add words that readers cannot use in comments on your stories."
-              status="Available"
-              available
+              status={null}
               onClick={() =>
                 setView(
                   'blocked-words'
