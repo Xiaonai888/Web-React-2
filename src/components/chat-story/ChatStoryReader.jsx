@@ -58,12 +58,20 @@ function parseChatStoryContent(content) {
   }
 }
 
-function isEmojiOnly(value) {
+function getEmojiOnlyCount(value) {
   const text = String(value || '').trim()
 
-  if (!text || text.length > 30) return false
+  if (!text || text.length > 60) return 0
 
-  return /^(?:\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+$/u.test(text)
+  const emojiPattern =
+    /(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu
+
+  const emojis = text.match(emojiPattern) || []
+  const remainingText = text
+    .replace(emojiPattern, '')
+    .replace(/\s/g, '')
+
+  return remainingText ? 0 : emojis.length
 }
 
 function CharacterAvatar({ character }) {
@@ -130,7 +138,8 @@ function ChatMessage({ message, character, leadCharacterId }) {
     character?.is_lead === true ||
     character?.chat_side === 'right'
 
-  const emojiOnly = isEmojiOnly(message.text)
+  const emojiCount = getEmojiOnlyCount(message.text)
+const emojiOnly = emojiCount > 0
 
   const messageBody = (
     <div
@@ -147,10 +156,16 @@ function ChatMessage({ message, character, leadCharacterId }) {
       </div>
 
       {emojiOnly ? (
-        <div className="px-2 py-1 text-[44px] leading-none">
-          {message.text}
-        </div>
-      ) : (
+  <div
+    className={`px-2 py-2 ${
+      emojiCount === 1
+        ? 'text-[88px]'
+        : 'text-[44px]'
+    } leading-none`}
+  >
+    {message.text}
+  </div>
+) : (
         <div
           className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
