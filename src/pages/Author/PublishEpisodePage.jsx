@@ -102,6 +102,7 @@ export function SuccessModal({
   episodeTitle,
   isManga,
   onStoryManager,
+  isChatStory = false,
   onAddEpisode,
 }) {
   useEffect(() => {
@@ -257,7 +258,11 @@ export function SuccessModal({
             type="button"
             onClick={onAddEpisode}
             className={`mt-5 h-12 w-full rounded-[14px] px-4 text-[13px] font-semibold text-white transition active:scale-[0.98] ${
-  isManga ? 'bg-[#FE526E]' : 'bg-gradient-to-r from-[#6D28D9] via-[#8B3DFF] to-[#A855F7]'
+  isManga
+  ? 'bg-[#FE526E]'
+  : isChatStory
+    ? 'bg-gradient-to-r from-[#6D28D9] via-[#8B3DFF] to-[#A855F7]'
+    : 'bg-[#111827]'
 }`}
           >
             Add Next Episode
@@ -574,6 +579,7 @@ const handleAcceptAgreement = async (agreement) => {
       <SuccessModal
   open={successOpen}
   isManga={isManga}
+  isChatStory={isChatStory}
   isFirstEpisode={isFirstEpisode}
   releaseOption={releaseOption}
   onStoryManager={() => {
