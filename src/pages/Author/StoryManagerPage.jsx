@@ -588,9 +588,16 @@ const addEpisodeTheme =
   }
 
   const handleEditEpisode = (episode) => {
-    setSelectedEpisode(null)
-    navigate(`/author/story/${storyId}/episode/create?editEpisodeId=${episode.id}&startStep=2&first=0`)
-  }
+  setSelectedEpisode(null)
+  const isChatStory =
+    String(story?.story_type || '').trim().toLowerCase() === 'chat_story'
+
+  navigate(
+    isChatStory
+      ? `/author/story/${storyId}/chat/editor?episodeId=${episode.id}`
+      : `/author/story/${storyId}/episode/create?editEpisodeId=${episode.id}&startStep=2&first=0`
+  )
+}
 
   const handlePreviewEpisode = (episode) => {
     setSelectedEpisode(null)
