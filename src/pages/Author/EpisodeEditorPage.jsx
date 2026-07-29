@@ -3498,6 +3498,7 @@ setSuccessOpen(true)
 
     <SuccessModal
   open={successOpen}
+  isManga={isManga}
   isFirstEpisode={Number(currentEpisodeNumber || 1) === 1}
   releaseOption={releaseOption}
   episodeNumber={Number(currentEpisodeNumber || 1)}
