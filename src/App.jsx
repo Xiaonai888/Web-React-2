@@ -62,7 +62,7 @@ import AuthorStoriesPage from './pages/Author/AuthorStoriesPage'
 import StoryNotificationsPage from './pages/Author/StoryNotificationsPage'
 import StoryDescriptionGuidePage from './pages/Author/StoryDescriptionGuidePage'
 import StoryPerformancePage from './pages/Author/StoryPerformancePage'
-
+import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
 
 
 
@@ -257,6 +257,7 @@ function AppShell() {
     '/genre/romance/latest',
     '/genre/romance/updates',
     '/genre/romance/completed',
+    '/author/comment-protection',
   ]
 
   const shouldHideFooter =
@@ -1123,6 +1124,8 @@ const shouldShowOpeningAds =
   path="/author/story/:storyId/chat/shadow-gallery"
   element={<ShadowGalleryPage />}
 />
+
+        <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
         <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
