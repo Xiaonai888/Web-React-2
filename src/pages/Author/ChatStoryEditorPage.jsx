@@ -69,6 +69,45 @@ async function uploadCharacterImage(token, imageDataUrl, storyId, index) {
   return data.image_url || data.imageUrl || null
 }
 
+async function uploadEpisodeImage(token, file) {
+  const formData = new FormData()
+
+  formData.append('image', file)
+  formData.append('folder', 'chat_story_episode')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message || 'Failed to upload Chat Story image'
+    )
+  }
+
+  const imageUrl =
+    data.image_url ||
+    data.imageUrl ||
+    ''
+
+  if (!imageUrl) {
+    throw new Error(
+      'Image uploaded but image URL was missing'
+    )
+  }
+
+  return imageUrl
+}
+
 function mapCharacter(character) {
   const group = character.role_group || 'background'
 
@@ -330,6 +369,119 @@ function AsideMessage({
         aria-label="Edit aside"
       >
         <ToolbarIcon name="modify" className="h-[12px] w-[12px]" />
+      </button>
+    </div>
+  )
+}
+
+function EditorImageMessage({
+  message,
+  character,
+  right,
+  active,
+  onEdit,
+  onElementRef,
+}) {
+  const imageUrl =
+    message.imageUrl ||
+    message.image_url ||
+    ''
+
+  const imageContent = (
+    <div
+      className={`max-w-[76%] overflow-hidden rounded-[18px] bg-[#f3f4f6] ${
+        active
+          ? 'ring-2 ring-[#f59e0b]'
+          : 'ring-1 ring-black/5'
+      }`}
+    >
+      <img
+        src={imageUrl}
+        alt="Chat Story"
+        className="block max-h-[360px] w-full object-contain"
+      />
+    </div>
+  )
+
+  if (!message.characterId) {
+    return (
+      <div
+        ref={(node) =>
+          onElementRef(message.id, node)
+        }
+        data-message-id={message.id}
+        className="mx-auto flex max-w-[88%] items-center justify-center gap-2 py-2"
+      >
+        {imageContent}
+
+        <button
+          type="button"
+          onClick={() => onEdit(message.id)}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+            active
+              ? 'bg-[#ede9fe] text-[#7c3aed]'
+              : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
+          }`}
+          aria-label="Edit image"
+        >
+          <ToolbarIcon
+            name="modify"
+            className="h-[12px] w-[12px]"
+          />
+        </button>
+      </div>
+    )
+  }
+
+  const avatar = (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
+      {character?.image ? (
+        <img
+          src={character.image}
+          alt={
+            character.nickname ||
+            'Character'
+          }
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <i className="fa-solid fa-user text-[16px] text-[#9b87c9]" />
+      )}
+    </span>
+  )
+
+  return (
+    <div
+      ref={(node) =>
+        onElementRef(message.id, node)
+      }
+      data-message-id={message.id}
+      className={`flex items-end gap-2 py-2 ${
+        right
+          ? 'justify-end'
+          : 'justify-start'
+      }`}
+    >
+      {!right ? avatar : null}
+
+      {imageContent}
+
+      {right ? avatar : null}
+
+      <button
+        type="button"
+        onClick={() => onEdit(message.id)}
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full active:scale-95 ${
+          active
+            ? 'bg-[#ede9fe] text-[#7c3aed]'
+            : 'text-[#c0c5cf] active:bg-[#f3f4f6]'
+        }`}
+        aria-label="Edit image"
+      >
+        <ToolbarIcon
+          name="modify"
+          className="h-[12px] w-[12px]"
+        />
       </button>
     </div>
   )
@@ -699,12 +851,13 @@ function MessageEditToolbar({
           onClick={onBelow}
         />
 
-        <MessageToolbarAction
-          icon="modify"
-          label="Modify"
-          onClick={onModify}
-        />
-
+        {message.type !== 'image' ? (
+  <MessageToolbarAction
+    icon="modify"
+    label="Modify"
+    onClick={onModify}
+  />
+) : null}
         {canMakeLead ? (
           <MessageToolbarAction
             icon="right"
@@ -1324,6 +1477,7 @@ export default function ChatStoryEditorPage() {
   const [titleDraft, setTitleDraft] = useState('')
   const [episodeId, setEpisodeId] = useState('')
   const [saving, setSaving] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
   const [composerFocused, setComposerFocused] = useState(false)
   const [addPopupOpen, setAddPopupOpen] = useState(false)
   const [imageSourceOpen, setImageSourceOpen] = useState(false)
@@ -1985,15 +2139,25 @@ setEpisodeLeadCharacterId(
 setMessages(
           (parsed.messages || []).map((message) => ({
             id: message.id || makeId(),
-            type:
+           type:
   message.type === 'chat'
     ? 'chat'
     : message.type === 'author_note'
       ? 'author_note'
-      : 'aside',
-            characterId: message.character_id || null,
-            text: message.text || '',
-            createdAt: message.created_at || new Date().toISOString(),
+      : message.type === 'image'
+        ? 'image'
+        : 'aside',
+characterId:
+  message.character_id || null,
+text:
+  message.text || '',
+imageUrl:
+  message.image_url ||
+  message.imageUrl ||
+  '',
+createdAt:
+  message.created_at ||
+  new Date().toISOString(),
           }))
         )
       } catch (error) {
@@ -2134,7 +2298,8 @@ const beginInsertMessage = (position) => {
   })
 
   setSelectedCharacterId(
-    activeMessage.type === 'chat'
+    activeMessage.type === 'chat' ||
+    activeMessage.type === 'image'
       ? activeMessage.characterId
       : null
   )
@@ -2852,19 +3017,130 @@ const handleAddConfirm = async () => {
     selectAudioFile(file)
   }
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+  const handleImageChange = async (event) => {
+  const file =
+    event.target.files?.[0]
 
-    if (!file) return
+  event.target.value = ''
 
-    if (!file.type.startsWith('image/')) {
-      showToast('Please choose an image file.')
-      return
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    showToast(
+      'Please choose an image file.'
+    )
+    return
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    showToast(
+      'Image must be 8 MB or smaller.'
+    )
+    return
+  }
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  try {
+    setImageUploading(true)
+
+    const imageUrl =
+      await uploadEpisodeImage(
+        token,
+        file
+      )
+
+    const nextMessage = {
+      id: makeId(),
+      type: 'image',
+      characterId:
+        selectedCharacter?.id || null,
+      text: '',
+      imageUrl,
+      createdAt:
+        new Date().toISOString(),
     }
 
-    showToast(`Image selected: ${file.name}`)
+    const inserting =
+      messageEditMode?.type ===
+        'insert_above' ||
+      messageEditMode?.type ===
+        'insert_below'
+
+    if (!inserting) {
+      shouldScrollToEndRef.current = true
+    }
+
+    commitMessages((current) => {
+      const authorNote = current.find(
+        (message) =>
+          message.type ===
+          'author_note'
+      )
+
+      const nextStoryMessages =
+        current.filter(
+          (message) =>
+            message.type !==
+            'author_note'
+        )
+
+      if (inserting) {
+        const targetIndex =
+          nextStoryMessages.findIndex(
+            (message) =>
+              message.id ===
+              messageEditMode.targetId
+          )
+
+        const insertIndex =
+          targetIndex < 0
+            ? nextStoryMessages.length
+            : messageEditMode.type ===
+                'insert_above'
+              ? targetIndex
+              : targetIndex + 1
+
+        nextStoryMessages.splice(
+          insertIndex,
+          0,
+          nextMessage
+        )
+      } else {
+        nextStoryMessages.push(
+          nextMessage
+        )
+      }
+
+      return authorNote
+        ? [
+            ...nextStoryMessages,
+            authorNote,
+          ]
+        : nextStoryMessages
+    })
+
+    setMessageEditMode(null)
+    setActiveMessageId('')
+    setSymbolPanelOpen(false)
+
+    showToast('Image added.')
+  } catch (error) {
+    showToast(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message ||
+            'Failed to upload image'
+    )
+  } finally {
+    setImageUploading(false)
   }
+}
 
   const handleSavePublishSettings = async () => {
   if (!episodeId || settingsSaving) return
@@ -2987,9 +3263,18 @@ const handleAddConfirm = async () => {
             messages: messages.map((message) => ({
               id: message.id,
               type: message.type,
-              character_id: message.characterId || null,
-              text: message.text,
-              created_at: message.createdAt || null,
+              character_id:
+                message.characterId || null,
+              text:
+                message.text || '',
+              image_url:
+                message.type === 'image'
+                  ? message.imageUrl ||
+                    message.image_url ||
+                    null
+                  : null,
+              created_at:
+                message.createdAt || null,
             })),
             is_locked: true,
           }),
@@ -3352,7 +3637,11 @@ const handleAddConfirm = async () => {
       disabled={
   saving ||
   loading ||
-  !messages.some((message) => message.type !== 'author_note')
+  imageUploading ||
+  !messages.some(
+    (message) =>
+      message.type !== 'author_note'
+  )
 }
       className="h-10 shrink-0 rounded-full bg-gradient-to-r from-[#9362ef] to-[#6d42db] px-4 text-[12px] font-bold text-white shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
     >
@@ -3401,6 +3690,35 @@ const handleAddConfirm = async () => {
       key={message.id}
       message={message}
       onDelete={deleteMessage}
+    />
+  ) : message.type === 'image' ? (
+    <EditorImageMessage
+      key={message.id}
+      message={message}
+      character={
+        message.characterId
+          ? characterMap[
+              message.characterId
+            ]
+          : null
+      }
+      right={
+        Boolean(
+          message.characterId
+        ) &&
+        message.characterId ===
+          effectiveLeadCharacterId
+      }
+      active={
+        activeMessageId ===
+        message.id
+      }
+      onEdit={
+        openMessageToolbar
+      }
+      onElementRef={
+        registerMessageElement
+      }
     />
   ) : message.type === 'aside' ? (
     <AsideMessage
@@ -3642,16 +3960,23 @@ const handleAddConfirm = async () => {
 </button>
   ) : (
     <button
-      type="button"
-      onClick={() => {
-        setSymbolPanelOpen(false)
-        imageInputRef.current?.click()
-      }}
-      className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95"
-      aria-label="Add image"
-    >
-      <i className="fa-regular fa-image text-[20px]" />
-    </button>
+  type="button"
+  onClick={() => {
+    setSymbolPanelOpen(false)
+    imageInputRef.current?.click()
+  }}
+  disabled={imageUploading}
+  className="flex h-11 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-50"
+  aria-label="Add image"
+>
+  <i
+    className={`fa-solid ${
+      imageUploading
+        ? 'fa-spinner fa-spin'
+        : 'fa-image'
+    } text-[20px]`}
+  />
+</button>
   )}
 </div>
 
