@@ -387,6 +387,15 @@ function AuthorNoteMessage({ message, onDelete }) {
   )
 }
 
+function isSingleEmoji(value) {
+  const text = String(value || '').trim()
+  if (!text || !/[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(text)) return false
+  const parts = typeof Intl?.Segmenter === 'function'
+    ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)]
+    : Array.from(text)
+  return parts.length === 1
+}
+
 function ChatMessage({
   message,
   character,
@@ -395,6 +404,13 @@ function ChatMessage({
   onEdit,
   onElementRef,
 }) {
+
+  const singleEmoji = isSingleEmoji(message.text)
+const bubbleClass = singleEmoji
+  ? 'bg-transparent px-1 py-1 text-[64px] leading-none'
+  : right
+    ? 'rounded-[20px] rounded-br-[7px] bg-[#DCCBFF] px-4 py-3 text-[13px] leading-6 text-[#111827]'
+    : 'rounded-[20px] rounded-bl-[7px] bg-white px-4 py-3 text-[13px] leading-6 text-[#273142] shadow-sm'
   const editButton = (
     <button
       type="button"
@@ -445,20 +461,22 @@ function ChatMessage({
           {right ? editButton : null}
 
           <div
-            className={`min-w-0 max-w-[calc(100%-34px)] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
-              right
-                ? 'rounded-br-[7px] bg-[#DCCBFF] text-[#111827]'
-                : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm'
-            } ${
-              active
-  ? 'ring-1 ring-[#f59e0b]'
-  : !right
-    ? 'ring-1 ring-black/5'
-    : ''
-            }`}
-          >
-            {message.text}
-          </div>
+  className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${
+    singleEmoji
+      ? 'bg-transparent px-1 py-1 text-[64px] leading-none'
+      : right
+        ? 'rounded-[20px] rounded-br-[7px] bg-[#DCCBFF] px-4 py-3 text-[13px] leading-6 text-[#111827]'
+        : 'rounded-[20px] rounded-bl-[7px] bg-white px-4 py-3 text-[13px] leading-6 text-[#273142] shadow-sm'
+  } ${
+    active
+      ? 'ring-1 ring-[#f59e0b]'
+      : !right && !singleEmoji
+        ? 'ring-1 ring-black/5'
+        : ''
+  }`}
+>
+  {message.text}
+</div>
 
           {!right ? editButton : null}
         </div>
