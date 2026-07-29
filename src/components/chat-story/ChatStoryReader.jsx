@@ -403,13 +403,17 @@ export default function ChatStoryReader({
         ))}
 
         {!completed ? (
-          <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#a78bda]">
-            <span className="text-[13px] font-medium">
-              Tap to continue
-            </span>
-            <i className="fa-regular fa-hand-pointer mt-4 animate-bounce text-[34px]" />
-          </div>
-        ) : null}
+  <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#b79cf7]">
+    <span className="text-[14px] font-medium">
+      Tap to continue
+    </span>
+    <img
+      src="/assets/Icons/Hand.svg"
+      alt="Tap to continue"
+      className="mt-3 h-[54px] w-[54px] animate-bounce object-contain opacity-95"
+    />
+  </div>
+) : null}
       </div>
     </section>
   )
