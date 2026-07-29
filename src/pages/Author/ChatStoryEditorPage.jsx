@@ -3494,7 +3494,7 @@ const handleAddConfirm = async () => {
   </button>
 </div>
 
-<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 pl-4 pr-2">
+<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-0 pl-4 pr-2">
   <div className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12">
     <textarea
       ref={composerRef}
