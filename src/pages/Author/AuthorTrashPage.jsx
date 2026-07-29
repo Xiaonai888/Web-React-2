@@ -630,7 +630,7 @@ export default function AuthorTrashPage() {
             type="button"
             onClick={() =>
               navigate(
-                '/author/dashboard'
+                '/author/profile'
               )
             }
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
