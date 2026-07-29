@@ -433,11 +433,9 @@ function ChatMessage({
       ) : null}
 
       <div
-        className={`min-w-0 max-w-[72%] ${
-          right
-            ? 'items-end text-right'
-            : 'items-start text-left'
-        }`}
+        className={`min-w-0 max-w-[72%] text-left ${
+  right ? 'items-end' : 'items-start'
+}`}
       >
         <div className="mb-1 px-1 text-[9.5px] font-extrabold text-[#98a2b3]">
           {character?.nickname || 'Character'}
