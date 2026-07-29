@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const SHOW_DEMO_STORIES = false
+
 const hotPicks = [
   { id: '1', title: 'Not Just a Marriage of Convenience', cover: '/assets/chat-story/hot-1.jpg', views: '2.34M', genre: 'Fantasy Romance', badge: 'HOT' },
   { id: '2', title: 'From Chaos to Love: My Husband', cover: '/assets/chat-story/hot-2.jpg', views: '206.4K', genre: 'Modern Romance', badge: 'NEW' },
@@ -160,7 +162,7 @@ export default function ChatStoryHomePage() {
     <div className="min-h-screen bg-white pb-[110px]">
       <header className="sticky top-0 z-40 bg-white/95 px-4 pb-3 pt-[calc(12px+env(safe-area-inset-top))] backdrop-blur">
   <div className="mx-auto flex max-w-6xl items-center justify-between">
-    <h1 className="text-[21px] font-black tracking-[-0.02em] text-[#1f2329]">
+    <h1 className="text-[17px] font-bold tracking-[-0.01em] text-[#1f2329]">
       Chat
     </h1>
 
@@ -202,7 +204,7 @@ export default function ChatStoryHomePage() {
         <section className="pt-2">
           <SectionHeader icon="💎" title="Hot Picks" onMore={() => openCollection('hot-picks')} />
           <div className="flex gap-3 overflow-x-auto px-4 pb-2">
-            {hotPicks.map((story) => (
+            {(SHOW_DEMO_STORIES ? hotPicks : []).map((story) => (
               <StoryCover key={story.id} story={story} onOpen={openStory} />
             ))}
             <div className="w-1 shrink-0" />
@@ -239,7 +241,7 @@ export default function ChatStoryHomePage() {
               onMore={() => openCollection(section.key)}
             />
             <div className="flex gap-3 overflow-x-auto px-4 pb-2">
-              {section.stories.map((story) => (
+              {(SHOW_DEMO_STORIES ? section.stories : []).map((story) => (
                 <StoryCover key={story.id} story={story} onOpen={openStory} />
               ))}
               <div className="w-1 shrink-0" />
