@@ -449,7 +449,7 @@ function ChatMessage({
           <div
             className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
               right
-                ? 'rounded-br-[7px] bg-gradient-to-br from-[#8b5cf6] to-[#6d42db] text-white'
+                ? 'rounded-br-[7px] bg-[#DCCBFF] text-[#111827]'
                 : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm'
             } ${
               active
