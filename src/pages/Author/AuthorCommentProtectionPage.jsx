@@ -565,8 +565,7 @@ export default function AuthorCommentProtectionPage() {
               }
             />
 
-              subtitle="Comments hidden by author rules will wait here for review."
-            />
+            
 
             <SettingCard
               icon="fa-solid fa-user-slash"
