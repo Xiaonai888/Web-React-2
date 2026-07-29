@@ -3346,8 +3346,9 @@ const handleAddConfirm = async () => {
     </div>
 
     <button
-      type="button"
-      data-guide="next-publish"
+  type="button"
+  onClick={saveAndContinue}
+  data-guide="next-publish"
       disabled={
   saving ||
   loading ||
