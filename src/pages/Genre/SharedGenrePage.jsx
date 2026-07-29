@@ -301,7 +301,7 @@ function LatestGenreCard({ story, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(story)}
-      className="w-[42vw] max-w-[170px] shrink-0 select-none text-left active:scale-[0.99] sm:w-[170px]"
+      className="flex h-full w-[42vw] max-w-[170px] shrink-0 select-none flex-col text-left active:scale-[0.99] sm:w-[170px]"
     >
       <ImageFrame
         src={story.cover}
@@ -309,7 +309,7 @@ function LatestGenreCard({ story, onOpen }) {
         className="aspect-[2/3] rounded-[8px]"
       />
 
-      <h3 className="mt-2 line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">
+      <h3 className="mt-2 h-[38px] line-clamp-2 text-[14px] font-[640] leading-[19px] text-neutral-900">
         {story.title}
       </h3>
     </button>
