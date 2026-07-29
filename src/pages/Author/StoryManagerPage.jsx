@@ -496,6 +496,14 @@ export default function StoryManagerPage() {
       ? `${totalMangaPages.toLocaleString('en-US')} pages`
       : `${totalWords.toLocaleString('en-US')} words`
 
+  const storyType = String(story?.story_type || 'novel').toLowerCase()
+const addEpisodeTheme =
+  storyType === 'manga'
+    ? 'bg-[#FE526E]'
+    : storyType === 'chat_story'
+      ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db]'
+      : 'bg-[#111827]'
+
   useEffect(() => {
     setCurrentPage(1)
   }, [activeTab, pageSize])
@@ -950,7 +958,7 @@ export default function StoryManagerPage() {
             <button
               type="button"
               onClick={handleAddEpisode}
-              className="flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-normal text-white active:scale-[0.99]"
+              className={`flex h-12 w-full items-center justify-center rounded-full text-[14px] font-normal text-white active:scale-[0.99] ${addEpisodeTheme}`}
             >
               <i className="fa-solid fa-plus mr-2 text-[12px]" />
               Add Episode
