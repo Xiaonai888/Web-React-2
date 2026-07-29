@@ -4,6 +4,7 @@ import CommentsModal from '../components/story-detail/CommentsModal'
 import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
+import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
 import RichEpisodeContent, {
