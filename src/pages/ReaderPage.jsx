@@ -3906,6 +3906,7 @@ const [brightness, setBrightness] = useState(() => {
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentEpisode, setCommentEpisode] = useState(null)
   const [giftPopupOpen, setGiftPopupOpen] = useState(false)
+  const [chatStoryComplete, setChatStoryComplete] = useState(false)
 
 useEffect(() => {
   const reopenKey = sessionStorage.getItem(
@@ -3924,6 +3925,11 @@ useEffect(() => {
   sessionStorage.removeItem('shadow_reopen_gift_popup')
   setGiftPopupOpen(true)
 }, [])
+
+  useEffect(() => {
+  setChatStoryComplete(false)
+}, [episodeId])
+  
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
   const [bottomActionsVisible, setBottomActionsVisible] = useState(false)
   const [readerHeaderVisible, setReaderHeaderVisible] = useState(false)
@@ -3965,20 +3971,36 @@ const brightnessOpacity = Math.max(
   Math.min(0.35, (100 - brightness) / 125)
 )
 
-const isMangaStory =
-  String(
-    story?.story_type ||
-    episode?.story_type ||
-    ''
-  )
-    .trim()
-    .toLowerCase() === 'manga'
+const storyType = String(
+  story?.story_type ||
+  episode?.story_type ||
+  ''
+)
+  .trim()
+  .toLowerCase()
+
+const isMangaStory = storyType === 'manga'
+
+const isChatStory = useMemo(() => {
+  if (storyType === 'chat_story') return true
+
+  try {
+    return (
+      JSON.parse(String(episode?.content || ''))?.format ===
+      'shadow_chat_story_v1'
+    )
+  } catch {
+    return false
+  }
+}, [episode?.content, storyType])
 
 const effectiveReadingMode =
-  isMangaStory ? 'scroll' : readingMode
+  isMangaStory || isChatStory
+    ? 'scroll'
+    : readingMode
 
 const pagingPages = useMemo(() => {
-  if (isMangaStory) return []
+  if (isMangaStory || isChatStory) return []
 
   return createPagingPages(
     episode?.content || '',
@@ -3988,6 +4010,7 @@ const pagingPages = useMemo(() => {
 }, [
   episode?.content,
   fontSizePx,
+  isChatStory,
   isMangaStory,
   lineSpacing,
 ])
@@ -4300,7 +4323,7 @@ async function loadContinuousEpisode(targetEpisode) {
 }
 
 const continuousReader = useContinuousEpisodeReader({
-  enabled: effectiveReadingMode === 'scroll',
+  enabled: !isChatStory && effectiveReadingMode === 'scroll',
   storyId,
   activeEpisodeId: episodeId,
   episodes,
@@ -5870,8 +5893,9 @@ return (
 </header>
 
       <main
-  onClick={handleReaderDoubleTap}
-        className="mx-auto max-w-3xl bg-[#FFFFFF] px-0 pb-[92px] pt-[50px] sm:px-4"
+  onClick={isChatStory ? undefined : handleReaderDoubleTap}
+  className="mx-auto max-w-3xl bg-[#FFFFFF] px-0 pb-[92px] pt-[50px] sm:px-4"
+>
       >
         {loading ? <LoadingCard /> : null}
 
@@ -5940,8 +5964,50 @@ onUnlock={handleLockedDiamondUnlock}
         ) : null}
 
         {!loading &&
-        !showFullLockedEpisode &&
-        !showContinuousLockedEpisode &&
+isChatStory &&
+episode &&
+adultAccepted &&
+!lockedEpisode &&
+!shouldBlockReaderContent ? (
+  <>
+    <section
+      className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
+    >
+      <ChatStoryReader
+        content={episode.content}
+        onProgress={(percent) => {
+          setReadingProgress(percent)
+          readingProgressRef.current = percent
+          lastReadingActivityRef.current = Date.now()
+        }}
+        onComplete={() => setChatStoryComplete(true)}
+      />
+    </section>
+
+    {chatStoryComplete ? (
+      <>
+        {shouldShowToBeContinued(story, episodes, episode) ? (
+          <ToBeContinued theme={theme} />
+        ) : null}
+
+        <ReaderEndPanel
+          story={story}
+          episode={episode}
+          onOpenComments={() => {
+            setCommentEpisode(episode)
+            setCommentsOpen(true)
+          }}
+          onOpenGift={() => setGiftPopupOpen(true)}
+        />
+      </>
+    ) : null}
+  </>
+) : null}
+
+{!loading &&
+!isChatStory &&
+!showFullLockedEpisode &&
+!showContinuousLockedEpisode &&
 effectiveReadingMode === 'scroll' ? (
           <div>
             {continuousReader.entries.map((entry, index) => (
@@ -5974,6 +6040,7 @@ effectiveReadingMode === 'scroll' ? (
         ) : null}
 
         {!loading &&
+!isChatStory &&
 effectiveReadingMode === 'paging' &&
 episode &&
 adultAccepted &&
