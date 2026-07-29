@@ -403,14 +403,18 @@ export default function ChatStoryReader({
         ))}
 
         {!completed ? (
-  <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#b79cf7]">
+  <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
     <span className="text-[14px] font-medium">
       Tap to continue
     </span>
     <img
       src="/assets/Icons/Hand.svg"
       alt="Tap to continue"
-      className="mt-3 h-[54px] w-[54px] animate-bounce object-contain opacity-95"
+      className="mt-3 h-[108px] w-[108px] animate-bounce object-contain opacity-95"
+      style={{
+        filter:
+          'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
+      }}
     />
   </div>
 ) : null}
