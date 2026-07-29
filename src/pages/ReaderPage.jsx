@@ -5604,7 +5604,7 @@ return (
         </button>
       ) : null}
 
-      {!lockedHeaderActive ? (
+      {!lockedHeaderActive && !isChatStory ? (
   <div className="fixed left-0 right-0 top-0 z-[70] h-1 bg-black/5">
     <div
       className="h-full bg-[#0b5cff] transition-all duration-150"
@@ -5807,7 +5807,7 @@ return (
 />
 
       <header
-  className={`${readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
+  className={`${isChatStory || readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
     lockedHeaderActive
       ? 'border-[#111111] bg-[#111111]'
       : 'border-[#F2F2F2] bg-[#FFFFFF]'
@@ -5839,13 +5839,19 @@ return (
     </h1>
   ) : (
     <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
-      {story?.title || 'Reader'}
+      {isChatStory
+  ? episode?.title || 'Untitled Episode'
+  : story?.title || 'Reader'}
     </h1>
   )}
 </div>
 
     <div className="relative">
-  {!lockedHeaderActive ? (
+  {isChatStory ? (
+    <span className="flex h-10 w-10 items-center justify-center text-[#111827]">
+      <i className="fa-solid fa-list-ul text-[20px]" />
+    </span>
+  ) : !lockedHeaderActive ? (
     <>
       <ReaderIconButton
         icon="fa-solid fa-ellipsis-vertical"
