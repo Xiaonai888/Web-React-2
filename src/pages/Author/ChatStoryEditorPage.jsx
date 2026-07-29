@@ -309,7 +309,7 @@ function AsideMessage({
       className="group mx-auto flex max-w-[88%] items-center justify-center gap-2 py-2"
     >
       <div
-        className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467] ${
+        className={`min-w-0 max-w-[calc(100%-34px)] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[18px] bg-[#f3f4f6] px-4 py-3 text-center text-[13px] leading-6 text-[#475467] ${
   active
   ? 'ring-1 ring-[#f59e0b]'
   : ''
@@ -433,7 +433,7 @@ function ChatMessage({
       ) : null}
 
       <div
-        className={`min-w-0 max-w-[72%] text-left ${
+        className={`min-w-0 max-w-[82%] text-left ${
   right ? 'items-end' : 'items-start'
 }`}
       >
@@ -445,7 +445,7 @@ function ChatMessage({
           {right ? editButton : null}
 
           <div
-            className={`min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
+            className={`min-w-0 max-w-[calc(100%-34px)] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-[20px] px-4 py-3 text-[13px] leading-6 ${
               right
                 ? 'rounded-br-[7px] bg-[#DCCBFF] text-[#111827]'
                 : 'rounded-bl-[7px] bg-white text-[#273142] shadow-sm'
