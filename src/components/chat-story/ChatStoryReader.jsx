@@ -18,6 +18,7 @@ function parseChatStoryContent(content) {
         error: 'This episode is not a valid Chat Story.',
         characters: [],
         messages: [],
+        leadCharacterId: '',
       }
     }
 
@@ -32,11 +33,17 @@ function parseChatStoryContent(content) {
     const messages = [...parsed.messages]
       .filter((message) => {
         if (!message) return false
+
         if (message.type === 'image') {
-          return Boolean(message.image_url || message.imageUrl)
+          return Boolean(
+            message.image_url ||
+              message.imageUrl
+          )
         }
 
-        return Boolean(String(message.text || '').trim())
+        return Boolean(
+          String(message.text || '').trim()
+        )
       })
       .sort(
         (first, second) =>
@@ -48,12 +55,17 @@ function parseChatStoryContent(content) {
       error: '',
       characters,
       messages,
+      leadCharacterId:
+        parsed.lead_character_id ||
+        parsed.leadCharacterId ||
+        '',
     }
   } catch {
     return {
       error: 'Chat Story data could not be opened.',
       characters: [],
       messages: [],
+      leadCharacterId: '',
     }
   }
 }
@@ -74,13 +86,62 @@ function getEmojiOnlyCount(value) {
   return remainingText ? 0 : emojis.length
 }
 
+function getCharacterId(message) {
+  return String(
+    message?.character_id ||
+      message?.characterId ||
+      ''
+  )
+}
+
+function isCharacterMessage(message) {
+  if (
+    message?.type !== 'chat' &&
+    message?.type !== 'image'
+  ) {
+    return false
+  }
+
+  return Boolean(getCharacterId(message))
+}
+
+function isSameCharacterGroup(first, second) {
+  if (
+    !isCharacterMessage(first) ||
+    !isCharacterMessage(second)
+  ) {
+    return false
+  }
+
+  return (
+    getCharacterId(first) ===
+    getCharacterId(second)
+  )
+}
+
+function isRightMessage(
+  message,
+  character,
+  leadCharacterId
+) {
+  return (
+    getCharacterId(message) ===
+      String(leadCharacterId || '') ||
+    character?.is_lead === true ||
+    character?.chat_side === 'right'
+  )
+}
+
 function CharacterAvatar({ character }) {
   return (
     <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f1ecff] ring-1 ring-black/5">
       {character?.avatar_url ? (
         <img
           src={character.avatar_url}
-          alt={character.nickname || 'Character'}
+          alt={
+            character.nickname ||
+            'Character'
+          }
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover"
@@ -88,6 +149,44 @@ function CharacterAvatar({ character }) {
       ) : (
         <i className="fa-solid fa-user text-[17px] text-[#9b87c9]" />
       )}
+    </div>
+  )
+}
+
+function AvatarSlot({
+  character,
+  visible,
+}) {
+  if (visible) {
+    return (
+      <CharacterAvatar character={character} />
+    )
+  }
+
+  return (
+    <div
+      className="h-11 w-11 shrink-0"
+      aria-hidden="true"
+    />
+  )
+}
+
+function CharacterName({
+  character,
+  isRight,
+  visible,
+}) {
+  if (!visible) return null
+
+  return (
+    <div
+      className={`mb-1 px-1 text-[11px] font-medium ${
+        isRight
+          ? 'text-[#8c78b5]'
+          : 'text-[#7b8492]'
+      }`}
+    >
+      {character?.nickname || 'Unknown'}
     </div>
   )
 }
@@ -116,30 +215,60 @@ function AuthorNoteMessage({ message }) {
   )
 }
 
-function ImageMessage({ message }) {
-  const imageUrl = message.image_url || message.imageUrl
+function CenterImageMessage({ message }) {
+  const [failed, setFailed] = useState(false)
+  const imageUrl =
+    message.image_url ||
+    message.imageUrl ||
+    ''
+
+  useEffect(() => {
+    setFailed(false)
+  }, [imageUrl])
 
   return (
-    <div className="mx-auto my-4 max-w-[560px] overflow-hidden rounded-[18px] bg-[#f3f4f6]">
-      <img
-        src={imageUrl}
-        alt="Chat Story"
-        loading="lazy"
-        decoding="async"
-        className="block h-auto max-h-[72vh] w-full object-contain"
-      />
+    <div className="mx-auto my-4 max-w-[560px] overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
+      {failed ? (
+        <div className="flex min-h-[150px] items-center justify-center px-5 text-center text-[13px] font-medium text-[#98a2b3]">
+          Image could not be loaded.
+        </div>
+      ) : (
+        <img
+          src={imageUrl}
+          alt="Chat Story"
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+          className="block h-auto max-h-[72vh] w-full object-contain"
+        />
+      )}
     </div>
   )
 }
 
-function ChatMessage({ message, character, leadCharacterId }) {
-  const isRight =
-    String(message.character_id || '') === String(leadCharacterId || '') ||
-    character?.is_lead === true ||
-    character?.chat_side === 'right'
+function CharacterImageMessage({
+  message,
+  character,
+  leadCharacterId,
+  showName,
+  showAvatar,
+  groupedBefore,
+  groupedAfter,
+}) {
+  const [failed, setFailed] = useState(false)
+  const imageUrl =
+    message.image_url ||
+    message.imageUrl ||
+    ''
+  const isRight = isRightMessage(
+    message,
+    character,
+    leadCharacterId
+  )
 
-  const emojiCount = getEmojiOnlyCount(message.text)
-const emojiOnly = emojiCount > 0
+  useEffect(() => {
+    setFailed(false)
+  }, [imageUrl])
 
   const messageBody = (
     <div
@@ -147,25 +276,108 @@ const emojiOnly = emojiCount > 0
         isRight ? 'text-right' : 'text-left'
       }`}
     >
-      <div
-        className={`mb-1 px-1 text-[11px] font-medium ${
-          isRight ? 'text-[#8c78b5]' : 'text-[#7b8492]'
-        }`}
-      >
-        {character?.nickname || 'Unknown'}
+      <CharacterName
+        character={character}
+        isRight={isRight}
+        visible={showName}
+      />
+
+      <div className="overflow-hidden rounded-[18px] bg-[#f3f4f6] ring-1 ring-black/5">
+        {failed ? (
+          <div className="flex min-h-[130px] min-w-[180px] items-center justify-center px-4 text-center text-[12px] font-medium text-[#98a2b3]">
+            Image could not be loaded.
+          </div>
+        ) : (
+          <img
+            src={imageUrl}
+            alt={
+              character?.nickname ||
+              'Chat Story'
+            }
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="block h-auto max-h-[72vh] w-full object-contain"
+          />
+        )}
       </div>
+    </div>
+  )
+
+  return (
+    <div
+      className={`flex items-end gap-2 ${
+        groupedBefore ? 'pt-0.5' : 'pt-2'
+      } ${
+        groupedAfter ? 'pb-0.5' : 'pb-2'
+      } ${
+        isRight
+          ? 'justify-end'
+          : 'justify-start'
+      }`}
+    >
+      {isRight ? (
+        <>
+          {messageBody}
+          <AvatarSlot
+            character={character}
+            visible={showAvatar}
+          />
+        </>
+      ) : (
+        <>
+          <AvatarSlot
+            character={character}
+            visible={showAvatar}
+          />
+          {messageBody}
+        </>
+      )}
+    </div>
+  )
+}
+
+function ChatMessage({
+  message,
+  character,
+  leadCharacterId,
+  showName,
+  showAvatar,
+  groupedBefore,
+  groupedAfter,
+}) {
+  const isRight = isRightMessage(
+    message,
+    character,
+    leadCharacterId
+  )
+  const emojiCount =
+    getEmojiOnlyCount(message.text)
+  const emojiOnly = emojiCount > 0
+
+  const messageBody = (
+    <div
+      className={`min-w-0 max-w-[76%] ${
+        isRight ? 'text-right' : 'text-left'
+      }`}
+    >
+      <CharacterName
+        character={character}
+        isRight={isRight}
+        visible={showName}
+      />
 
       {emojiOnly ? (
-  <div
-    className={`px-2 py-2 ${
-      emojiCount === 1
-        ? 'text-[88px]'
-        : 'text-[44px]'
-    } leading-none`}
-  >
-    {message.text}
-  </div>
-) : (
+        <div
+          className={`px-2 py-2 ${
+            emojiCount === 1
+              ? 'text-[88px]'
+              : 'text-[44px]'
+          } leading-none`}
+        >
+          {message.text}
+        </div>
+      ) : (
         <div
           className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-[20px] px-4 py-3 text-left text-[15px] leading-7 ${
             isRight
@@ -181,18 +393,30 @@ const emojiOnly = emojiCount > 0
 
   return (
     <div
-      className={`flex items-end gap-2 py-2 ${
-        isRight ? 'justify-end' : 'justify-start'
+      className={`flex items-end gap-2 ${
+        groupedBefore ? 'pt-0.5' : 'pt-2'
+      } ${
+        groupedAfter ? 'pb-0.5' : 'pb-2'
+      } ${
+        isRight
+          ? 'justify-end'
+          : 'justify-start'
       }`}
     >
       {isRight ? (
         <>
           {messageBody}
-          <CharacterAvatar character={character} />
+          <AvatarSlot
+            character={character}
+            visible={showAvatar}
+          />
         </>
       ) : (
         <>
-          <CharacterAvatar character={character} />
+          <AvatarSlot
+            character={character}
+            visible={showAvatar}
+          />
           {messageBody}
         </>
       )}
@@ -204,17 +428,39 @@ function ChatStoryMessage({
   message,
   character,
   leadCharacterId,
+  showName,
+  showAvatar,
+  groupedBefore,
+  groupedAfter,
 }) {
   if (message.type === 'aside') {
     return <AsideMessage message={message} />
   }
 
   if (message.type === 'author_note') {
-    return <AuthorNoteMessage message={message} />
+    return (
+      <AuthorNoteMessage message={message} />
+    )
   }
 
   if (message.type === 'image') {
-    return <ImageMessage message={message} />
+    if (!getCharacterId(message)) {
+      return (
+        <CenterImageMessage message={message} />
+      )
+    }
+
+    return (
+      <CharacterImageMessage
+        message={message}
+        character={character}
+        leadCharacterId={leadCharacterId}
+        showName={showName}
+        showAvatar={showAvatar}
+        groupedBefore={groupedBefore}
+        groupedAfter={groupedAfter}
+      />
+    )
   }
 
   return (
@@ -222,6 +468,10 @@ function ChatStoryMessage({
       message={message}
       character={character}
       leadCharacterId={leadCharacterId}
+      showName={showName}
+      showAvatar={showAvatar}
+      groupedBefore={groupedBefore}
+      groupedAfter={groupedAfter}
     />
   )
 }
@@ -236,9 +486,10 @@ export default function ChatStoryReader({
     [content]
   )
 
-  const [visibleCount, setVisibleCount] = useState(
-    parsedContent.messages.length ? 1 : 0
-  )
+  const [visibleCount, setVisibleCount] =
+    useState(
+      parsedContent.messages.length ? 1 : 0
+    )
 
   const lastMessageRef = useRef(null)
   const completionSentRef = useRef(false)
@@ -246,44 +497,61 @@ export default function ChatStoryReader({
   const characterMap = useMemo(
     () =>
       new Map(
-        parsedContent.characters.map((character) => [
-          String(character.id),
-          character,
-        ])
+        parsedContent.characters.map(
+          (character) => [
+            String(character.id),
+            character,
+          ]
+        )
       ),
     [parsedContent.characters]
   )
 
   const leadCharacterId = useMemo(() => {
+    if (parsedContent.leadCharacterId) {
+      return parsedContent.leadCharacterId
+    }
+
     const leadCharacter =
       parsedContent.characters.find(
-        (character) => character.is_lead === true
+        (character) =>
+          character.is_lead === true
       ) ||
       parsedContent.characters.find(
-        (character) => character.chat_side === 'right'
+        (character) =>
+          character.chat_side === 'right'
       )
 
     return leadCharacter?.id || ''
-  }, [parsedContent.characters])
+  }, [
+    parsedContent.characters,
+    parsedContent.leadCharacterId,
+  ])
 
-  const visibleMessages = parsedContent.messages.slice(
-    0,
-    visibleCount
-  )
+  const visibleMessages =
+    parsedContent.messages.slice(
+      0,
+      visibleCount
+    )
 
   const completed =
     parsedContent.messages.length > 0 &&
-    visibleCount >= parsedContent.messages.length
+    visibleCount >=
+      parsedContent.messages.length
 
   useEffect(() => {
     setVisibleCount(
       parsedContent.messages.length ? 1 : 0
     )
     completionSentRef.current = false
-  }, [content, parsedContent.messages.length])
+  }, [
+    content,
+    parsedContent.messages.length,
+  ])
 
   useEffect(() => {
-    const total = parsedContent.messages.length
+    const total =
+      parsedContent.messages.length
 
     if (!total) {
       onProgress?.(0)
@@ -291,7 +559,9 @@ export default function ChatStoryReader({
     }
 
     onProgress?.(
-      Math.round((visibleCount / total) * 100)
+      Math.round(
+        (visibleCount / total) * 100
+      )
     )
 
     if (
@@ -309,16 +579,20 @@ export default function ChatStoryReader({
   ])
 
   useEffect(() => {
-    if (visibleCount <= 1) return undefined
+    if (visibleCount <= 1) {
+      return undefined
+    }
 
-    const frame = window.requestAnimationFrame(() => {
-      lastMessageRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
+    const frame =
+      window.requestAnimationFrame(() => {
+        lastMessageRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+        })
       })
-    })
 
-    return () => window.cancelAnimationFrame(frame)
+    return () =>
+      window.cancelAnimationFrame(frame)
   }, [visibleCount])
 
   const revealNextMessage = () => {
@@ -345,7 +619,10 @@ export default function ChatStoryReader({
   }
 
   const handleReaderKeyDown = (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') {
+    if (
+      event.key !== 'Enter' &&
+      event.key !== ' '
+    ) {
       return
     }
 
@@ -379,45 +656,90 @@ export default function ChatStoryReader({
       className="min-h-[70vh] cursor-pointer bg-white px-4 pb-12 pt-5 outline-none sm:px-8"
     >
       <div className="mx-auto max-w-[680px]">
-        {visibleMessages.map((message, index) => (
-          <div
-            key={
-              message.id ||
-              `${message.type || 'message'}-${index}`
-            }
-            ref={
-              index === visibleMessages.length - 1
-                ? lastMessageRef
-                : null
-            }
-            className="animate-[fadeIn_180ms_ease-out]"
-          >
-            <ChatStoryMessage
-              message={message}
-              character={characterMap.get(
-                String(message.character_id || '')
-              )}
-              leadCharacterId={leadCharacterId}
-            />
-          </div>
-        ))}
+        {visibleMessages.map(
+          (message, index) => {
+            const previousMessage =
+              visibleMessages[index - 1]
+            const nextMessage =
+              visibleMessages[index + 1]
+            const groupedBefore =
+              isSameCharacterGroup(
+                previousMessage,
+                message
+              )
+            const groupedAfter =
+              isSameCharacterGroup(
+                message,
+                nextMessage
+              )
+            const character =
+              characterMap.get(
+                getCharacterId(message)
+              )
+
+            return (
+              <div
+                key={
+                  message.id ||
+                  `${
+                    message.type ||
+                    'message'
+                  }-${index}`
+                }
+                ref={
+                  index ===
+                  visibleMessages.length - 1
+                    ? lastMessageRef
+                    : null
+                }
+                className="animate-[fadeIn_180ms_ease-out]"
+              >
+                <ChatStoryMessage
+                  message={message}
+                  character={character}
+                  leadCharacterId={
+                    leadCharacterId
+                  }
+                  showName={
+                    isCharacterMessage(
+                      message
+                    ) &&
+                    !groupedBefore
+                  }
+                  showAvatar={
+                    isCharacterMessage(
+                      message
+                    ) &&
+                    !groupedAfter
+                  }
+                  groupedBefore={
+                    groupedBefore
+                  }
+                  groupedAfter={
+                    groupedAfter
+                  }
+                />
+              </div>
+            )
+          }
+        )}
 
         {!completed ? (
-  <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
-    <span className="text-[14px] font-medium">
-      Tap to continue
-    </span>
-    <img
-      src="/assets/Icons/Hand.svg"
-      alt="Tap to continue"
-      className="mt-3 h-[108px] w-[108px] animate-bounce object-contain opacity-95"
-      style={{
-        filter:
-          'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
-      }}
-    />
-  </div>
-) : null}
+          <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
+            <span className="text-[14px] font-medium">
+              Tap to continue
+            </span>
+            <img
+              src="/assets/Icons/Hand.svg"
+              alt="Tap to continue"
+              className="mt-3 h-[108px] w-[108px] animate-bounce object-contain opacity-95"
+              style={{
+                filter:
+                  'brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(1047%) hue-rotate(214deg) brightness(102%) contrast(101%)',
+              }}
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   )
