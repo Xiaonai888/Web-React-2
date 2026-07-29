@@ -5,6 +5,7 @@ import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
+import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
 import RichEpisodeContent, {
@@ -5664,21 +5665,38 @@ return (
         onOpenReset={() => setResetOpen(true)}
       />
 
-      <EpisodeListDrawer
-  open={episodeListOpen}
-  onClose={() => setEpisodeListOpen(false)}
-  story={story}
-  episodes={episodes}
-  currentEpisodeId={episodeId}
-  storyId={storyId}
-  navigate={(to, options = {}) =>
-    navigate(to, {
-      ...options,
-      replace: true,
-    })
-  }
-  theme={theme}
-/>
+      {isChatStory ? (
+  <ChatStoryEpisodeListDrawer
+    open={episodeListOpen}
+    onClose={() => setEpisodeListOpen(false)}
+    story={story}
+    episodes={episodes}
+    currentEpisodeId={episodeId}
+    storyId={storyId}
+    navigate={(to, options = {}) =>
+      navigate(to, {
+        ...options,
+        replace: true,
+      })
+    }
+  />
+) : (
+  <EpisodeListDrawer
+    open={episodeListOpen}
+    onClose={() => setEpisodeListOpen(false)}
+    story={story}
+    episodes={episodes}
+    currentEpisodeId={episodeId}
+    storyId={storyId}
+    navigate={(to, options = {}) =>
+      navigate(to, {
+        ...options,
+        replace: true,
+      })
+    }
+    theme={theme}
+  />
+)}
 
       <SocialEchoShareSheet
   open={echoShareOpen}
@@ -5858,9 +5876,12 @@ return (
             className={theme.text}
           />
 
-          <span className="flex h-10 w-10 items-center justify-center text-[#111827]">
-            <i className="fa-solid fa-list-ul text-[19px]" />
-          </span>
+          <ReaderIconButton
+  icon="fa-solid fa-list-ul"
+  label="Episode list"
+  onClick={() => setEpisodeListOpen(true)}
+  className={theme.text}
+/>
         </>
       ) : null}
 
