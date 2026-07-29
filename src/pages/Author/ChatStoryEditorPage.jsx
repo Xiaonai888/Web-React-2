@@ -3051,6 +3051,7 @@ const handleAddConfirm = async () => {
       <SuccessModal
         open={successOpen}
         isManga={false}
+        isChatStory
         isFirstEpisode={publishedIsFirstEpisode}
         releaseOption={releaseOption}
         episodeNumber={publishedEpisodeNumber}
