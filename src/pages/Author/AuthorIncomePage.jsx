@@ -293,7 +293,7 @@ export default function AuthorIncomePage() {
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
       <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
         <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/dashboard', { replace: true })} />
+          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/profile', { replace: true })} />
 
           <div className="text-center">
             <h1 className="text-[16px] font-black text-[#111827]">My Income</h1>
