@@ -3494,7 +3494,7 @@ const handleAddConfirm = async () => {
   </button>
 </div>
 
-<div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-x-1 pl-4 pr-2">
+<div className="grid grid-cols-[minmax(0,1fr)_40px_40px] items-center gap-x-1 pl-4 pr-2">
   <div className="relative flex min-h-11 min-w-0 flex-1 items-center rounded-[10px] bg-[#f3f4f6] px-3 py-2 pr-12">
     <textarea
       ref={composerRef}
@@ -3530,6 +3530,15 @@ const handleAddConfirm = async () => {
       「」
     </button>
   </div>
+
+  <button
+  type="button"
+  onClick={() => window.alert('Coming soon')}
+  className="flex h-11 w-10 items-center justify-center text-[#667085] active:scale-95"
+  aria-label="Emoji coming soon"
+>
+  <i className="fa-regular fa-face-smile text-[20px]" />
+</button>
 
   {composerFocused || draft.trim() ? (
     <button
