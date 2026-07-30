@@ -501,6 +501,10 @@ export default function AuthorHiddenCommentsPage() {
   ] = useState('')
   const [toast, setToast] =
     useState(null)
+  const [
+    settingsOpen,
+    setSettingsOpen,
+  ] = useState(false)
 
   const openAutoHideWords =
     () => {
@@ -813,13 +817,13 @@ export default function AuthorHiddenCommentsPage() {
             </p>
           </div>
 
-          <button
+                    <button
             type="button"
-            onClick={
-              openAutoHideWords
+            onClick={() =>
+              setSettingsOpen(true)
             }
             className="flex h-10 w-10 items-center justify-end text-[#111827] transition active:scale-95 active:opacity-60"
-            aria-label="Manage auto-hide words"
+            aria-label="Hidden comments settings"
           >
             <i className="fa-solid fa-sliders text-[14px]" />
           </button>
@@ -1058,6 +1062,124 @@ export default function AuthorHiddenCommentsPage() {
         ) : null}
       </main>
 
+      {settingsOpen ? (
+        <div
+          className="fixed inset-0 z-[110] flex items-end justify-center bg-black/35 px-3 pb-[calc(12px+env(safe-area-inset-bottom))]"
+          role="presentation"
+          onClick={() =>
+            setSettingsOpen(false)
+          }
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hidden-comments-settings-title"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+            className="w-full max-w-lg overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(17,24,39,0.24)]"
+          >
+            <div className="flex items-center justify-between border-b border-[#eeeaf5] px-5 py-4">
+              <div>
+                <h2
+                  id="hidden-comments-settings-title"
+                  className="text-[16px] font-black text-[#11152d]"
+                >
+                  Hidden Comments Settings
+                </h2>
+
+                <p className="mt-1 text-[11px] font-medium text-[#858a9d]">
+                  Manage rules and cleanup for hidden comments.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSettingsOpen(false)
+                }
+                className="flex h-9 w-9 items-center justify-center text-[#111827] transition active:scale-95 active:opacity-60"
+                aria-label="Close settings"
+              >
+                <i className="fa-solid fa-xmark text-[16px]" />
+              </button>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setSettingsOpen(false)
+                  openAutoHideWords()
+                }}
+                className="flex w-full items-center gap-3 rounded-[20px] border border-[#e8e3f2] bg-white p-4 text-left shadow-[0_8px_24px_rgba(61,45,115,0.05)] transition active:scale-[0.99]"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#f1ebff] text-[#7047f5]">
+                  <i className="fa-solid fa-filter text-[15px]" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[13.5px] font-black text-[#11152d]">
+                    Manage Auto-hide Words
+                  </h3>
+
+                  <p className="mt-1 text-[11.5px] font-medium leading-5 text-[#7b8194]">
+                    Choose words that send matching comments to Pending Review.
+                  </p>
+                </div>
+
+                <i className="fa-solid fa-chevron-right text-[11px] text-[#b8bdca]" />
+              </button>
+
+              <div className="rounded-[20px] border border-[#e8e3f2] bg-[#fbfaff] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#f1ebff] text-[#7047f5]">
+                    <i className="fa-solid fa-broom text-[15px]" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-[13.5px] font-black text-[#11152d]">
+                        Auto Cleanup
+                      </h3>
+
+                      <span className="rounded-full bg-[#fff3e8] px-2 py-1 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#f97316]">
+                        Coming soon
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-[11.5px] font-medium leading-5 text-[#7b8194]">
+                      Move comments marked Keep Hidden to Trash after a safe review period.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {[
+                    '7 days',
+                    '14 days',
+                    '30 days',
+                  ].map((period) => (
+                    <div
+                      key={period}
+                      className="rounded-[13px] border border-[#e6e1ed] bg-white px-2 py-2.5 text-center text-[10.5px] font-bold text-[#a0a5b4]"
+                    >
+                      {period}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-[10.5px] font-medium leading-4.5 text-[#9499aa]">
+                  Only comments marked Keep Hidden will be included.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {toast ? (
+      
       {toast ? (
         <div className="fixed bottom-[calc(18px+env(safe-area-inset-bottom))] left-1/2 z-[120] w-[calc(100%-28px)] max-w-md -translate-x-1/2">
           <div
