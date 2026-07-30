@@ -567,7 +567,7 @@ function BlockReaderSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-3 pb-[calc(10px+env(safe-area-inset-bottom))]"
+  className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 px-0 pb-0 sm:px-3 sm:pb-[calc(10px+env(safe-area-inset-bottom))]"
       role="presentation"
       onClick={onClose}
     >
@@ -578,7 +578,7 @@ function BlockReaderSheet({
         onClick={(event) =>
           event.stopPropagation()
         }
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] bg-white shadow-[0_24px_80px_rgba(17,24,39,0.24)]"
+        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-[28px] rounded-b-none bg-white shadow-[0_24px_80px_rgba(17,24,39,0.24)] sm:rounded-[28px]"
       >
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eeeaf5] bg-white px-5 py-4">
           <div>
@@ -728,41 +728,50 @@ function BlockReaderSheet({
               })}
             </div>
 
-            {scopeType === 'story' ? (
-              <div className="relative mt-2">
-                <select
-                  value={storyId}
-                  onChange={(event) =>
-                    setStoryId(
-                      event.target.value
-                    )
-                  }
-                  disabled={
-                    storiesLoading
-                  }
-                  className="h-12 w-full appearance-none rounded-[17px] border border-[#e5e1ee] bg-white pl-4 pr-10 text-[12px] font-bold text-[#30354b] outline-none transition focus:border-[#7555f6] focus:ring-4 focus:ring-[#7555f6]/10 disabled:opacity-55"
-                >
-                  <option value="">
-                    {storiesLoading
-                      ? 'Loading stories...'
-                      : 'Choose a story'}
-                  </option>
+            <div className="mt-2 h-12">
+  {scopeType === 'story' ? (
+    <div className="relative h-12">
+      <select
+        value={storyId}
+        onChange={(event) =>
+          setStoryId(
+            event.target.value
+          )
+        }
+        disabled={
+          storiesLoading
+        }
+        className="h-12 w-full appearance-none rounded-[17px] border border-[#e5e1ee] bg-white pl-4 pr-10 text-[12px] font-bold text-[#30354b] outline-none transition focus:border-[#7555f6] focus:ring-4 focus:ring-[#7555f6]/10 disabled:opacity-55"
+      >
+        <option value="">
+          {storiesLoading
+            ? 'Loading stories...'
+            : stories.length
+              ? 'Choose a story'
+              : 'No stories available'}
+        </option>
 
-                  {stories.map(
-                    (story) => (
-                      <option
-                        key={story.id}
-                        value={story.id}
-                      >
-                        {story.title}
-                      </option>
-                    )
-                  )}
-                </select>
+        {stories.map(
+          (story) => (
+            <option
+              key={story.id}
+              value={story.id}
+            >
+              {story.title}
+            </option>
+          )
+        )}
+      </select>
 
-                <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#858a9d]" />
-              </div>
-            ) : null}
+      <i className="fa-solid fa-chevron-down pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#858a9d]" />
+    </div>
+  ) : (
+    <div
+      className="h-12"
+      aria-hidden="true"
+    />
+  )}
+</div>
           </section>
 
           <section>
