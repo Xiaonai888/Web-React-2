@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorAutoCleanupSettings from '../../components/author/AuthorAutoCleanupSettings'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -817,7 +818,7 @@ export default function AuthorHiddenCommentsPage() {
             </p>
           </div>
 
-                    <button
+          <button
             type="button"
             onClick={() =>
               setSettingsOpen(true)
@@ -1131,54 +1132,15 @@ export default function AuthorHiddenCommentsPage() {
                 <i className="fa-solid fa-chevron-right text-[11px] text-[#b8bdca]" />
               </button>
 
-              <div className="rounded-[20px] border border-[#e8e3f2] bg-[#fbfaff] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-[#f1ebff] text-[#7047f5]">
-                    <i className="fa-solid fa-broom text-[15px]" />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[13.5px] font-black text-[#11152d]">
-                        Auto Cleanup
-                      </h3>
-
-                      <span className="rounded-full bg-[#fff3e8] px-2 py-1 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#f97316]">
-                        Coming soon
-                      </span>
-                    </div>
-
-                    <p className="mt-1 text-[11.5px] font-medium leading-5 text-[#7b8194]">
-                      Move comments marked Keep Hidden to Trash after a safe review period.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {[
-                    '7 days',
-                    '14 days',
-                    '30 days',
-                  ].map((period) => (
-                    <div
-                      key={period}
-                      className="rounded-[13px] border border-[#e6e1ed] bg-white px-2 py-2.5 text-center text-[10.5px] font-bold text-[#a0a5b4]"
-                    >
-                      {period}
-                    </div>
-                  ))}
-                </div>
-
-                <p className="mt-3 text-[10.5px] font-medium leading-4.5 text-[#9499aa]">
-                  Only comments marked Keep Hidden will be included.
-                </p>
-              </div>
+              <AuthorAutoCleanupSettings
+                showToast={showToast}
+              />
             </div>
           </section>
         </div>
       ) : null}
 
-            {toast ? (
+      {toast ? (
         <div className="fixed bottom-[calc(18px+env(safe-area-inset-bottom))] left-1/2 z-[120] w-[calc(100%-28px)] max-w-md -translate-x-1/2">
           <div
             className={`flex items-center gap-3 rounded-[20px] border px-4 py-3 shadow-[0_18px_50px_rgba(32,28,51,0.18)] ${
