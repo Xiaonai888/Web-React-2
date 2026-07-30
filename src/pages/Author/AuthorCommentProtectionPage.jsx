@@ -804,11 +804,17 @@ export default function AuthorCommentProtectionPage() {
               }
             />
 
-                        <SettingCard
-              icon="fa-solid fa-user-slash"
-              title="Blocked Readers"
-              subtitle="Block readers from commenting on your own story or author page."
-            />
+                       <SettingCard
+  icon="fa-solid fa-user-slash"
+  title="Blocked Readers"
+  subtitle="Block readers from commenting on all your stories or one specific story."
+  status={null}
+  onClick={() =>
+    navigate(
+      '/author/comment-protection/blocked-readers'
+    )
+  }
+/>
 
             <SettingCard
               icon="fa-solid fa-clock-rotate-left"
