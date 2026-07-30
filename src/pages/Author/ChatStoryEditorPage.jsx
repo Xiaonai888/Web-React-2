@@ -2761,10 +2761,10 @@ const handleNewCharacterImageChange = (event) => {
     return
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    showToast('Image must be 8 MB or smaller.')
-    return
-  }
+  if (file.size > 2 * 1024 * 1024) {
+  showToast('Profile image must be 2 MB or smaller.')
+  return
+}
 
   const reader = new FileReader()
 
