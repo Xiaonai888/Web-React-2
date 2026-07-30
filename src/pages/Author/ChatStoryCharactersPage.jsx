@@ -768,29 +768,52 @@ function CharacterEditor({
   )
 }
 
-function CharacterCard({ character, index, group, onClick, onEditProfile }) {
+function CharacterCard({
+  character,
+  index,
+  group,
+  selected,
+  locked,
+  onToggle,
+  onEdit,
+  onEditProfile,
+}) {
   return (
-    <div className="relative flex h-[168px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_3px_12px_rgba(15,23,42,0.035)]">
+    <div
+      className={`relative flex h-[194px] w-[126px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-3 shadow-[0_3px_12px_rgba(15,23,42,0.035)] ${
+        selected
+          ? 'ring-2 ring-[#7c3aed]/35'
+          : 'opacity-70 ring-1 ring-black/5'
+      }`}
+    >
       <button
         type="button"
-        onClick={onClick}
+        onClick={onEdit}
         className="flex w-full flex-col items-center justify-center active:scale-[0.98]"
       >
         <span
           className="absolute left-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-[8px] px-1.5 text-[10px] font-extrabold"
-          style={{ backgroundColor: group.soft, color: group.accent }}
+          style={{
+            backgroundColor: group.soft,
+            color: group.accent,
+          }}
         >
           {index + 1}
         </span>
 
         <span
           className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full"
-          style={{ backgroundColor: group.soft }}
+          style={{
+            backgroundColor: group.soft,
+          }}
         >
           {character.image ? (
             <img
               src={character.image}
-              alt={character.nickname || group.shortTitle}
+              alt={
+                character.nickname ||
+                group.shortTitle
+              }
               className="h-full w-full object-cover"
             />
           ) : (
@@ -799,16 +822,49 @@ function CharacterCard({ character, index, group, onClick, onEditProfile }) {
         </span>
 
         <span className="mt-3 line-clamp-1 w-full text-[12px] font-extrabold text-[#111827]">
-          {character.nickname || 'Unnamed role'}
+          {character.nickname ||
+            'Unnamed role'}
         </span>
       </button>
 
       <button
         type="button"
-        onClick={onEditProfile}
-        className="mt-1 text-[10px] font-medium text-[#98a2b3] active:text-[#667085]"
+        onClick={onToggle}
+        disabled={locked}
+        aria-pressed={selected}
+        className={`absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full ${
+          selected
+            ? 'bg-[#7c3aed] text-white'
+            : 'border border-[#d0d5dd] bg-white text-transparent'
+        } disabled:cursor-default`}
       >
-        Edit Profile <span aria-hidden="true">›</span>
+        <i className="fa-solid fa-check text-[10px]" />
+      </button>
+
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={locked}
+        className={`mt-2 rounded-full px-3 py-1 text-[9px] font-bold ${
+          selected
+            ? 'bg-[#f1eaff] text-[#7c3aed]'
+            : 'bg-[#f2f4f7] text-[#98a2b3]'
+        } disabled:cursor-default`}
+      >
+        {locked
+          ? 'Lead · Used'
+          : selected
+            ? 'Used in episode'
+            : 'Not used'}
+      </button>
+
+      <button
+        type="button"
+        onClick={onEditProfile}
+        className="mt-1 text-[9px] font-medium text-[#98a2b3] active:text-[#667085]"
+      >
+        Edit Profile{' '}
+        <span aria-hidden="true">›</span>
       </button>
     </div>
   )
@@ -834,19 +890,42 @@ function AddCharacterCard({ group, onClick }) {
   )
 }
 
-function RoleSection({ group, characters, onHelp, onAdd, onEdit, onEditProfile }) {
+function RoleSection({
+  group,
+  characters,
+  selectedCharacterIdSet,
+  onHelp,
+  onAdd,
+  onEdit,
+  onEditProfile,
+  onToggle,
+}) {
+  const usedCount = characters.filter(
+    (character) =>
+      selectedCharacterIdSet.has(
+        String(character.id)
+      )
+  ).length
+
   return (
     <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: group.soft, color: group.accent }}
+            style={{
+              backgroundColor: group.soft,
+              color: group.accent,
+            }}
           >
-            <i className={`${group.icon} text-[11px]`} />
+            <i
+              className={`${group.icon} text-[11px]`}
+            />
           </span>
 
-          <h2 className="line-clamp-1 text-[15px] font-bold text-[#111827]">{group.title}</h2>
+          <h2 className="line-clamp-1 text-[15px] font-bold text-[#111827]">
+            {group.title}
+          </h2>
 
           <button
             type="button"
@@ -859,23 +938,46 @@ function RoleSection({ group, characters, onHelp, onAdd, onEdit, onEditProfile }
         </div>
 
         <span className="shrink-0 text-[10px] font-bold text-[#98a2b3]">
-          {characters.length} {characters.length === 1 ? 'role' : 'roles'}
+          {usedCount}/{characters.length} used
         </span>
       </div>
 
       <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-3">
-        {characters.map((character, index) => (
-          <CharacterCard
-            key={character.id}
-            character={character}
-            index={index}
-            group={group}
-            onClick={() => onEdit(character)}
-            onEditProfile={() => onEditProfile(character)}
-          />
-        ))}
+        {characters.map(
+          (character, index) => {
+            const selected =
+              selectedCharacterIdSet.has(
+                String(character.id)
+              )
 
-        <AddCharacterCard group={group} onClick={onAdd} />
+            return (
+              <CharacterCard
+                key={character.id}
+                character={character}
+                index={index}
+                group={group}
+                selected={selected}
+                locked={
+                  character.isLead === true
+                }
+                onToggle={() =>
+                  onToggle(character)
+                }
+                onEdit={() =>
+                  onEdit(character)
+                }
+                onEditProfile={() =>
+                  onEditProfile(character)
+                }
+              />
+            )
+          }
+        )}
+
+        <AddCharacterCard
+          group={group}
+          onClick={onAdd}
+        />
       </div>
     </section>
   )
@@ -886,9 +988,15 @@ export default function ChatStoryCharactersPage() {
   const { storyId } = useParams()
   const [searchParams] = useSearchParams()
   const startNewEpisode =
-    searchParams.get('new') === '1'
-  const fileInputRef = useRef(null)
-  const [characters, setCharacters] = useState([])
+  searchParams.get('new') === '1'
+const castStorageKey =
+  `chat_story_episode_cast_${storyId || 'unknown'}_new`
+const fileInputRef = useRef(null)
+const [characters, setCharacters] = useState([])
+const [
+  selectedCharacterIds,
+  setSelectedCharacterIds,
+] = useState([])
   const [helpGroup, setHelpGroup] = useState(null)
   const [sourceOpen, setSourceOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -934,11 +1042,87 @@ export default function ChatStoryCharactersPage() {
           throw new Error(data.message || 'Failed to load characters')
         }
 
-        setCharacters(
-          normalizeLeadCharacters(
-            (data.characters || []).map(mapCharacter)
+        const normalizedCharacters =
+  normalizeLeadCharacters(
+    (data.characters || []).map(
+      mapCharacter
+    )
+  )
+
+setCharacters(normalizedCharacters)
+
+let restoredCharacterIds = []
+
+try {
+  const savedCast =
+    sessionStorage.getItem(
+      castStorageKey
+    )
+
+  const parsedCast = savedCast
+    ? JSON.parse(savedCast)
+    : null
+
+  const candidateIds =
+    Array.isArray(parsedCast)
+      ? parsedCast
+      : Array.isArray(
+            parsedCast?.characterIds
           )
+        ? parsedCast.characterIds
+        : []
+
+  const validCharacterIds =
+    new Set(
+      normalizedCharacters.map(
+        (character) =>
+          String(character.id)
+      )
+    )
+
+  restoredCharacterIds = [
+    ...new Set(
+      candidateIds
+        .map((id) => String(id))
+        .filter((id) =>
+          validCharacterIds.has(id)
         )
+    ),
+  ]
+} catch {
+  sessionStorage.removeItem(
+    castStorageKey
+  )
+}
+
+if (!restoredCharacterIds.length) {
+  restoredCharacterIds =
+    normalizedCharacters.map(
+      (character) =>
+        String(character.id)
+    )
+}
+
+const savedLeadCharacter =
+  normalizedCharacters.find(
+    (character) =>
+      character.isLead === true
+  )
+
+if (
+  savedLeadCharacter &&
+  !restoredCharacterIds.includes(
+    String(savedLeadCharacter.id)
+  )
+) {
+  restoredCharacterIds.push(
+    String(savedLeadCharacter.id)
+  )
+}
+
+setSelectedCharacterIds(
+  restoredCharacterIds
+)
       } catch (error) {
         showToast(error.message || 'Failed to load characters')
       } finally {
@@ -947,7 +1131,7 @@ export default function ChatStoryCharactersPage() {
     }
 
     loadCharacters()
-  }, [navigate, storyId])
+  }, [castStorageKey, navigate, storyId])
 
   useEffect(() => {
   if (!storyId) return
@@ -1047,15 +1231,75 @@ sessionStorage.removeItem(draftKey)
   groupedCharacters.main[0] ||
   null
 
-const totalCharacters = characters.length
+const selectedCharacterIdSet =
+  useMemo(
+    () =>
+      new Set(
+        selectedCharacterIds.map(
+          (id) => String(id)
+        )
+      ),
+    [selectedCharacterIds]
+  )
+
+const selectedCharacters =
+  characters.filter(
+    (character) =>
+      selectedCharacterIdSet.has(
+        String(character.id)
+      )
+  )
+
+const selectedMainCharacters =
+  selectedCharacters.filter(
+    (character) =>
+      character.group === 'main'
+  )
+
+const totalCharacters =
+  selectedCharacters.length
+
 const canContinue =
   totalCharacters >= 2 &&
-  groupedCharacters.main.length >= 1
+  selectedMainCharacters.length >= 1
 
-  const showToast = (message) => {
-    setToast(message)
-    window.setTimeout(() => setToast(''), 2200)
+  const toggleEpisodeCharacter = (
+  character
+) => {
+  const characterId =
+    String(character.id)
+
+  if (
+    character.isLead === true &&
+    selectedCharacterIdSet.has(
+      characterId
+    )
+  ) {
+    showToast(
+      'Lead Character must be used in this episode.'
+    )
+    return
   }
+
+  setSelectedCharacterIds(
+    (current) => {
+      const nextIds =
+        new Set(
+          current.map(
+            (id) => String(id)
+          )
+        )
+
+      if (nextIds.has(characterId)) {
+        nextIds.delete(characterId)
+      } else {
+        nextIds.add(characterId)
+      }
+
+      return [...nextIds]
+    }
+  )
+}
 
   const openLeadCharacterSheet = () => {
   if (!groupedCharacters.main.length) {
@@ -1072,7 +1316,25 @@ const canContinue =
   setLeadSheetOpen(true)
 }
 
-const confirmLeadCharacter = () => {
+setSelectedCharacterIds(
+  (current) => {
+    const nextIds =
+      new Set(
+        current.map(
+          (id) => String(id)
+        )
+      )
+
+    nextIds.add(
+      String(leadDraftId)
+    )
+
+    return [...nextIds]
+  }
+)
+  
+setLeadSheetOpen(false)
+showToast('Lead Character changed. Press Save to apply.')
   if (!leadDraftId) return
 
   setCharacters((current) =>
@@ -1337,15 +1599,82 @@ const returnPath =
       throw new Error(data.message || 'Failed to save character')
     }
 
-    setCharacters(
+    const savedCharacters =
   normalizeLeadCharacters(
-    (data.characters || []).map(mapCharacter)
+    (data.characters || []).map(
+      mapCharacter
+    )
   )
+
+const previousCharacterIds =
+  new Set(
+    characters.map(
+      (character) =>
+        String(character.id)
+    )
+  )
+
+const addedCharacter =
+  wasEditing
+    ? null
+    : savedCharacters.find(
+        (character) =>
+          !previousCharacterIds.has(
+            String(character.id)
+          )
+      ) || null
+
+setCharacters(savedCharacters)
+
+setSelectedCharacterIds(
+  (current) => {
+    const validCharacterIds =
+      new Set(
+        savedCharacters.map(
+          (character) =>
+            String(character.id)
+        )
+      )
+
+    const nextIds =
+      new Set(
+        current
+          .map((id) => String(id))
+          .filter((id) =>
+            validCharacterIds.has(id)
+          )
+      )
+
+    if (addedCharacter) {
+      nextIds.add(
+        String(addedCharacter.id)
+      )
+    }
+
+    const currentLead =
+      savedCharacters.find(
+        (character) =>
+          character.isLead === true
+      )
+
+    if (currentLead) {
+      nextIds.add(
+        String(currentLead.id)
+      )
+    }
+
+    return [...nextIds]
+  }
 )
-    setActiveGroupKey(characterGroup)
-    setEditorOpen(false)
-    setEditingId('')
-    showToast(wasEditing ? 'Character updated.' : 'Character added.')
+
+setActiveGroupKey(characterGroup)
+setEditorOpen(false)
+setEditingId('')
+showToast(
+  wasEditing
+    ? 'Character updated.'
+    : 'Character added.'
+)
   } catch (error) {
     showToast(
       error.message === 'Failed to fetch'
@@ -1360,15 +1689,21 @@ const returnPath =
   const handleSavePage = async () => {
     if (saving || pageLoading) return
 
-    if (totalCharacters < 2) {
-      showToast('Add at least 2 characters before creating the chat.')
-      return
-    }
+    if (selectedCharacters.length < 2) {
+  showToast(
+    'Choose at least 2 characters for this episode.'
+  )
+  return
+}
 
-    if (groupedCharacters.main.length < 1) {
-      showToast('Add at least 1 character to Main Characters.')
-      return
-    }
+if (
+  selectedMainCharacters.length < 1
+) {
+  showToast(
+    'Choose at least 1 Main Character for this episode.'
+  )
+  return
+}
 
     const token = getAuthToken()
 
@@ -1451,13 +1786,64 @@ const returnPath =
         throw new Error(serverMessage)
       }
 
-      setCharacters(
-        normalizeLeadCharacters(
-          (data.characters || []).map(mapCharacter)
-        )
-      )
+      const savedCharacters =
+  normalizeLeadCharacters(
+    (data.characters || []).map(
+      mapCharacter
+    )
+  )
 
-      showToast('Saved')
+const validCharacterIds =
+  new Set(
+    savedCharacters.map(
+      (character) =>
+        String(character.id)
+    )
+  )
+
+const nextSelectedIds = [
+  ...new Set(
+    selectedCharacterIds
+      .map((id) => String(id))
+      .filter((id) =>
+        validCharacterIds.has(id)
+      )
+  ),
+]
+
+const savedLeadCharacter =
+  savedCharacters.find(
+    (character) =>
+      character.isLead === true
+  )
+
+if (
+  savedLeadCharacter &&
+  !nextSelectedIds.includes(
+    String(savedLeadCharacter.id)
+  )
+) {
+  nextSelectedIds.push(
+    String(savedLeadCharacter.id)
+  )
+}
+
+setCharacters(savedCharacters)
+setSelectedCharacterIds(
+  nextSelectedIds
+)
+
+sessionStorage.setItem(
+  castStorageKey,
+  JSON.stringify({
+    characterIds:
+      nextSelectedIds,
+    updatedAt:
+      new Date().toISOString(),
+  })
+)
+
+showToast('Saved')
 
 window.setTimeout(() => {
   const editorPath =
@@ -1620,18 +2006,37 @@ navigate(
 />
 
         {ROLE_GROUPS.map((group) => (
-          <RoleSection
-            key={group.key}
-            group={group}
-            characters={groupedCharacters[group.key]}
-            onHelp={() => setHelpGroup(group)}
-            onAdd={() => openAddCharacter(group.key)}
-            onEdit={openEditCharacter}
-            onEditProfile={(character) =>
-              navigate(`/author/story/${storyId}/chat/characters/${character.id}/profile`)
-            }
-          />
-        ))}
+  <RoleSection
+    key={group.key}
+    group={group}
+    characters={
+      groupedCharacters[group.key]
+    }
+    selectedCharacterIdSet={
+      selectedCharacterIdSet
+    }
+    onHelp={() =>
+      setHelpGroup(group)
+    }
+    onAdd={() =>
+      openAddCharacter(group.key)
+    }
+    onEdit={openEditCharacter}
+    onToggle={
+      toggleEpisodeCharacter
+    }
+    onEditProfile={(character) => {
+      const profilePath =
+        `/author/story/${storyId}/chat/characters/${character.id}/profile`
+
+      navigate(
+        startNewEpisode
+          ? `${profilePath}?new=1`
+          : profilePath
+      )
+    }}
+  />
+))}
       </main>
     </div>
   )
