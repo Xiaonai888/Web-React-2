@@ -3918,15 +3918,25 @@ setPublishSettingsOpen(true)
     }, 50)
   }}
   onEditProfile={() => {
-    if (!profilePopupCharacter) return
+  if (!profilePopupCharacter) return
 
-    const characterId = profilePopupCharacter.id
-    setProfilePopupCharacter(null)
+  const characterId =
+    profilePopupCharacter.id
 
-    navigate(
-      `/author/story/${storyId}/chat/characters/${characterId}/profile`
-    )
-  }}
+  const returnPath =
+    window.location.pathname +
+    window.location.search +
+    window.location.hash
+
+  const profilePath =
+    `/author/story/${storyId}/chat/characters/${characterId}/profile`
+
+  setProfilePopupCharacter(null)
+
+  navigate(
+    `${profilePath}?returnTo=${encodeURIComponent(returnPath)}`
+  )
+}}
 />
 
       <MorePopup
