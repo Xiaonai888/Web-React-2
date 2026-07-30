@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -880,6 +884,9 @@ function RoleSection({ group, characters, onHelp, onAdd, onEdit, onEditProfile }
 export default function ChatStoryCharactersPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
+  const [searchParams] = useSearchParams()
+  const startNewEpisode =
+    searchParams.get('new') === '1'
   const fileInputRef = useRef(null)
   const [characters, setCharacters] = useState([])
   const [helpGroup, setHelpGroup] = useState(null)
@@ -1179,7 +1186,13 @@ const confirmLeadCharacter = () => {
   if (!storyId) return
 
   const origin = 'cast-photo'
-  const returnPath = `/author/story/${storyId}/chat/characters`
+const returnUrl = new URL(
+  window.location.href
+)
+const returnPath =
+  returnUrl.pathname +
+  returnUrl.search +
+  returnUrl.hash
 
   sessionStorage.removeItem('shadow_gallery_selected_image')
 
@@ -1447,8 +1460,13 @@ const confirmLeadCharacter = () => {
       showToast('Saved')
 
 window.setTimeout(() => {
+  const editorPath =
+    `/author/story/${storyId}/chat/editor`
+
   navigate(
-    `/author/story/${storyId}/chat/editor`,
+    startNewEpisode
+      ? `${editorPath}?new=1&first=0`
+      : editorPath,
     { replace: true }
   )
 }, 500)
@@ -1530,9 +1548,14 @@ window.setTimeout(() => {
 
           setEditorOpen(false)
 
-          navigate(
-            `/author/story/${storyId}/chat/characters/${editingId}/profile`
-          )
+          const profilePath =
+  `/author/story/${storyId}/chat/characters/${editingId}/profile`
+
+navigate(
+  startNewEpisode
+    ? `${profilePath}?new=1`
+    : profilePath
+)
         }}
         onDelete={deleteCharacter}
         onClose={() => setEditorOpen(false)}
