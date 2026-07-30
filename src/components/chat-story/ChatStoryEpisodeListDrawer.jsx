@@ -48,20 +48,7 @@ function isEpisodeLocked(episode) {
   )
 }
 
-function getStoryStatus(story) {
-  const status = String(
-    story?.story_status ||
-      story?.status ||
-      story?.publication_status ||
-      ''
-  )
-    .trim()
-    .toLowerCase()
 
-  return ['completed', 'complete', 'finished'].includes(status)
-    ? 'Completed'
-    : 'Ongoing'
-}
 
 export default function ChatStoryEpisodeListDrawer({
   open,
@@ -73,7 +60,12 @@ export default function ChatStoryEpisodeListDrawer({
   navigate,
 }) {
   const [newestFirst, setNewestFirst] = useState(false)
-  const activeEpisodeRef = useRef(null)
+const [dragY, setDragY] = useState(0)
+
+const activeEpisodeRef = useRef(null)
+const dragStartYRef = useRef(0)
+const dragYRef = useRef(0)
+const draggingRef = useRef(false)
 
   const sortedEpisodes = useMemo(() => {
     return [...episodes].sort((first, second) => {
@@ -87,33 +79,109 @@ export default function ChatStoryEpisodeListDrawer({
   }, [episodes, newestFirst])
 
   useEffect(() => {
-    if (!open) return undefined
+  if (!open) return undefined
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+  const scrollY = window.scrollY
+  const body = document.body
+  const html = document.documentElement
 
-    const frame = window.requestAnimationFrame(() => {
+  const previousBodyOverflow =
+    body.style.overflow
+  const previousBodyPosition =
+    body.style.position
+  const previousBodyTop =
+    body.style.top
+  const previousBodyWidth =
+    body.style.width
+  const previousHtmlOverflow =
+    html.style.overflow
+
+  body.style.overflow = 'hidden'
+  body.style.position = 'fixed'
+  body.style.top = `-${scrollY}px`
+  body.style.width = '100%'
+  html.style.overflow = 'hidden'
+
+  setDragY(0)
+  dragYRef.current = 0
+  draggingRef.current = false
+
+  return () => {
+    body.style.overflow =
+      previousBodyOverflow
+    body.style.position =
+      previousBodyPosition
+    body.style.top =
+      previousBodyTop
+    body.style.width =
+      previousBodyWidth
+    html.style.overflow =
+      previousHtmlOverflow
+
+    window.scrollTo(0, scrollY)
+  }
+}, [open])
+
+useEffect(() => {
+  if (!open) return undefined
+
+  const frame =
+    window.requestAnimationFrame(() => {
       activeEpisodeRef.current?.scrollIntoView({
         block: 'center',
       })
     })
 
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.cancelAnimationFrame(frame)
-    }
-  }, [open, newestFirst])
+  return () => {
+    window.cancelAnimationFrame(frame)
+  }
+}, [open, newestFirst])
+
+const startDrag = (event) => {
+  draggingRef.current = true
+  dragStartYRef.current = event.clientY
+  dragYRef.current = 0
+  setDragY(0)
+
+  event.currentTarget.setPointerCapture?.(
+    event.pointerId
+  )
+}
+
+const moveDrag = (event) => {
+  if (!draggingRef.current) return
+
+  const nextY = Math.max(
+    0,
+    event.clientY -
+      dragStartYRef.current
+  )
+
+  dragYRef.current = nextY
+  setDragY(nextY)
+}
+
+const endDrag = () => {
+  if (!draggingRef.current) return
+
+  draggingRef.current = false
+
+  const shouldClose =
+    dragYRef.current >= 90
+
+  dragYRef.current = 0
+
+  if (shouldClose) {
+    onClose()
+    return
+  }
+
+  setDragY(0)
+}
 
   if (!open) return null
 
-  const cover =
-    story?.cover_url ||
-    story?.thumbnail_url ||
-    story?.image_url ||
-    ''
-
-  const title = story?.title || story?.name || 'Untitled Story'
-  const statusText = getStoryStatus(story)
+  
 
   const openEpisode = (episode) => {
     onClose()
@@ -139,71 +207,65 @@ export default function ChatStoryEpisodeListDrawer({
         className="absolute inset-0 bg-black/45"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 flex max-h-[82dvh] min-h-[58dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl">
-        <div className="shrink-0 bg-white px-4 pb-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close episode list"
-            className="mx-auto flex h-7 w-20 items-center justify-center"
-          >
-            <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-          </button>
+      <section
+  className="absolute bottom-0 left-0 right-0 flex max-h-[82dvh] min-h-[58dvh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl"
+  style={{
+    transform: `translateY(${dragY}px)`,
+    transition: draggingRef.current
+      ? 'none'
+      : 'transform 220ms ease',
+  }}
+>
+  <div className="shrink-0 bg-white px-4 pb-3 pt-1">
+    <div
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      className="h-5 w-full touch-none"
+      aria-label="Drag down to close episode list"
+      role="button"
+      tabIndex={0}
+    />
 
-          <div className="flex items-center gap-3 pb-3">
-            {cover ? (
-              <img
-                src={cover}
-                alt={title}
-                loading="lazy"
-                decoding="async"
-                className="h-[60px] w-[45px] shrink-0 rounded-[7px] object-cover ring-1 ring-black/5"
-              />
-            ) : (
-              <div className="h-[60px] w-[45px] shrink-0 rounded-[7px] bg-[#f1f2f4]" />
-            )}
+    <div className="flex items-center justify-between pt-1">
+      <span className="text-[11px] font-medium text-[#98a2b3]">
+        Up to {episodes.length} Episodes
+      </span>
 
-            <div className="min-w-0 flex-1">
-              <h2 className="line-clamp-2 text-[15px] font-bold leading-6 text-[#111827]">
-                {title}
-              </h2>
+      <div className="flex items-center gap-5">
+        <button
+          type="button"
+          onClick={() =>
+            setNewestFirst(false)
+          }
+          className={`text-[12px] font-bold ${
+            !newestFirst
+              ? 'text-[#8b5cf6]'
+              : 'text-[#344054]'
+          }`}
+        >
+          Positive
+        </button>
 
-              <p className="mt-1 text-[11px] font-medium text-[#98a2b3]">
-                {episodes.length} Episodes · {statusText}
-              </p>
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={() =>
+            setNewestFirst(true)
+          }
+          className={`text-[12px] font-bold ${
+            newestFirst
+              ? 'text-[#8b5cf6]'
+              : 'text-[#344054]'
+          }`}
+        >
+          Reverse
+        </button>
+      </div>
+    </div>
+  </div>
 
-          <div className="flex items-center justify-between border-t border-[#f0f1f3] pt-3">
-            <span className="text-[11px] font-medium text-[#98a2b3]">
-              Up to {episodes.length} Episodes
-            </span>
-
-            <div className="flex items-center gap-5">
-              <button
-                type="button"
-                onClick={() => setNewestFirst(false)}
-                className={`text-[12px] font-bold ${
-                  !newestFirst ? 'text-[#8b5cf6]' : 'text-[#344054]'
-                }`}
-              >
-                Positive
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setNewestFirst(true)}
-                className={`text-[12px] font-bold ${
-                  newestFirst ? 'text-[#8b5cf6]' : 'text-[#344054]'
-                }`}
-              >
-                Reverse
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(18px,env(safe-area-inset-bottom))]">
+  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(18px,env(safe-area-inset-bottom))]">
           {sortedEpisodes.map((episode) => {
             const active =
               String(episode.id) === String(currentEpisodeId)
