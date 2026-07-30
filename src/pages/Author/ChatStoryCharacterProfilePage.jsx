@@ -345,8 +345,26 @@ export default function ChatStoryCharacterProfilePage() {
   const { storyId, characterId } = useParams()
   const [searchParams] = useSearchParams()
   const startNewEpisode =
-    searchParams.get('new') === '1'
-  const fileInputRef = useRef(null)
+  searchParams.get('new') === '1'
+
+const requestedReturnPath =
+  searchParams.get('returnTo') || ''
+
+const editorPath =
+  `/author/story/${storyId}/chat/editor`
+
+const safeReturnPath =
+  requestedReturnPath === editorPath ||
+  requestedReturnPath.startsWith(
+    `${editorPath}?`
+  ) ||
+  requestedReturnPath.startsWith(
+    `${editorPath}#`
+  )
+    ? requestedReturnPath
+    : ''
+
+const fileInputRef = useRef(null)
 
   const [nickname, setNickname] = useState('')
   const [roleGroup, setRoleGroup] = useState('main')
@@ -488,13 +506,22 @@ export default function ChatStoryCharacterProfilePage() {
         throw new Error(data.message || 'Failed to save character profile')
       }
 
-      const charactersPath =
+      if (safeReturnPath) {
+  navigate(
+    safeReturnPath,
+    { replace: true }
+  )
+  return
+}
+
+const charactersPath =
   `/author/story/${storyId}/chat/characters`
 
 navigate(
   startNewEpisode
     ? `${charactersPath}?new=1`
-    : charactersPath
+    : charactersPath,
+  { replace: true }
 )
     } catch (error) {
       setMessage(error.message || 'Failed to save character profile')
@@ -531,7 +558,17 @@ navigate(
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+  if (safeReturnPath) {
+    navigate(
+      safeReturnPath,
+      { replace: true }
+    )
+    return
+  }
+
+  navigate(-1)
+}}
             className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
