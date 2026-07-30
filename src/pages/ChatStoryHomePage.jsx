@@ -485,11 +485,6 @@ export default function ChatStoryHomePage() {
     null
 
   const featureBanners = useMemo(
-
-export default function ChatStoryHomePage() {
-  const navigate = useNavigate()
-
-  const featureBanners = useMemo(
     () => [
       {
         id: 'feature-1',
