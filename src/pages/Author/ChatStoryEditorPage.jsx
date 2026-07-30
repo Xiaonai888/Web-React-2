@@ -1589,6 +1589,8 @@ export default function ChatStoryEditorPage() {
   const messagesRef = useRef([])
   const undoStackRef = useRef([])
   const redoStackRef = useRef([])
+  const restoredEditorDraftRef = useRef(false)
+  const restoredDraftCharactersRef = useRef(false)
   const [characters, setCharacters] = useState([])
   const [messages, setMessages] = useState([])
   const [canUndo, setCanUndo] = useState(false)
@@ -1979,32 +1981,72 @@ const handleRedo = () => {
   useEffect(() => {
   setDraftHydrated(false)
 
+    restoredEditorDraftRef.current = false
+restoredDraftCharactersRef.current = false
+
   const restoreDraft = (parsed) => {
-    const restoredMessages =
-      Array.isArray(parsed.messages)
-        ? parsed.messages
-        : []
+  const restoredMessages =
+    Array.isArray(parsed.messages)
+      ? parsed.messages
+      : []
 
-    const savedTitle = String(
-      parsed.episodeTitle || ''
-    ).trim()
+  const restoredCharacters =
+    Array.isArray(parsed.characters)
+      ? parsed.characters
+          .map((character) =>
+            character?.role_group
+              ? mapCharacter(character)
+              : character
+          )
+          .filter(
+            (character) =>
+              character?.id
+          )
+      : []
 
-    messagesRef.current = restoredMessages
-    setMessages(restoredMessages)
+  const savedTitle = String(
+    parsed.episodeTitle || ''
+  ).trim()
 
-    setEpisodeTitle(
-      savedTitle === 'Episode 1' ||
-        savedTitle === 'New Episode'
-        ? ''
-        : savedTitle
+  restoredEditorDraftRef.current =
+    Boolean(
+      restoredMessages.length ||
+        restoredCharacters.length ||
+        savedTitle ||
+        parsed.episodeId
     )
 
-    setEpisodeId(parsed.episodeId || '')
+  restoredDraftCharactersRef.current =
+    restoredCharacters.length > 0
 
-    setEpisodeLeadCharacterId(
-      parsed.leadCharacterId || ''
+  messagesRef.current =
+    restoredMessages
+
+  setMessages(
+    restoredMessages
+  )
+
+  if (restoredCharacters.length) {
+    setCharacters(
+      restoredCharacters
     )
   }
+
+  setEpisodeTitle(
+    savedTitle === 'Episode 1' ||
+      savedTitle === 'New Episode'
+      ? ''
+      : savedTitle
+  )
+
+  setEpisodeId(
+    parsed.episodeId || ''
+  )
+
+  setEpisodeLeadCharacterId(
+    parsed.leadCharacterId || ''
+  )
+}
 
   const snapshotRaw =
     sessionStorage.getItem(
@@ -2066,14 +2108,15 @@ const handleRedo = () => {
   if (!draftHydrated) return
 
   const payload = JSON.stringify({
-    episodeTitle,
-    episodeId,
-    leadCharacterId:
-      effectiveLeadCharacterId,
-    messages,
-    updatedAt:
-      new Date().toISOString(),
-  })
+  episodeTitle,
+  episodeId,
+  leadCharacterId:
+    effectiveLeadCharacterId,
+  characters,
+  messages,
+  updatedAt:
+    new Date().toISOString(),
+})
 
   localStorage.setItem(
     storageKey,
@@ -2082,6 +2125,7 @@ const handleRedo = () => {
 
   setSavedSeconds(0)
 }, [
+  characters, 
   draftHydrated,
   effectiveLeadCharacterId,
   episodeId,
@@ -2178,6 +2222,13 @@ useEffect(() => {
     if (!token) {
       setLoading(false)
       navigate('/login')
+      return
+    }
+
+    if (
+      requestedEpisodeId &&
+      !startNewEpisode
+    ) {
       return
     }
 
@@ -2304,60 +2355,99 @@ setCharacters(nextCharacters)
         }
 
         const parsedCharacters =
-  Array.isArray(parsed.characters)
-    ? parsed.characters
-    : []
+          Array.isArray(parsed.characters)
+            ? parsed.characters
+            : []
 
-const savedLeadCharacterId =
-  parsed.lead_character_id ||
-  parsedCharacters.find(
-    (character) =>
-      character.is_lead === true
-  )?.id ||
-  parsedCharacters.find(
-    (character) =>
-      character.chat_side === 'right'
-  )?.id ||
-  ''
+        const snapshotCharacters =
+          parsedCharacters
+            .map(mapCharacter)
+            .filter(
+              (character) =>
+                character?.id
+            )
 
-setEpisodeId(data.episode.id)
+        const savedLeadCharacterId =
+          parsed.lead_character_id ||
+          parsedCharacters.find(
+            (character) =>
+              character.is_lead === true
+          )?.id ||
+          parsedCharacters.find(
+            (character) =>
+              character.chat_side === 'right'
+          )?.id ||
+          ''
 
-setEpisodeTitle(
-  data.episode.title ||
-    parsed.episode_title ||
-    'Episode'
-)
+        const restoredMessages =
+          (parsed.messages || []).map(
+            (message) => ({
+              id:
+                message.id || makeId(),
+              type:
+                message.type === 'chat'
+                  ? 'chat'
+                  : message.type ===
+                      'author_note'
+                    ? 'author_note'
+                    : message.type ===
+                        'image'
+                      ? 'image'
+                      : 'aside',
+              characterId:
+                message.character_id ||
+                null,
+              text:
+                message.text || '',
+              imageUrl:
+                message.image_url ||
+                message.imageUrl ||
+                '',
+              createdAt:
+                message.created_at ||
+                new Date().toISOString(),
+            })
+          )
 
-setEpisodeLeadCharacterId(
-  savedLeadCharacterId
-)
-
-setMessages(
-          (parsed.messages || []).map((message) => ({
-            id: message.id || makeId(),
-           type:
-  message.type === 'chat'
-    ? 'chat'
-    : message.type === 'author_note'
-      ? 'author_note'
-      : message.type === 'image'
-        ? 'image'
-        : 'aside',
-characterId:
-  message.character_id || null,
-text:
-  message.text || '',
-imageUrl:
-  message.image_url ||
-  message.imageUrl ||
-  '',
-createdAt:
-  message.created_at ||
-  new Date().toISOString(),
-          }))
+        setEpisodeId(
+          data.episode.id
         )
+
+        if (
+          !restoredDraftCharactersRef.current
+        ) {
+          setCharacters(
+            snapshotCharacters
+          )
+        }
+
+        if (
+          !restoredEditorDraftRef.current
+        ) {
+          setEpisodeTitle(
+            data.episode.title ||
+              parsed.episode_title ||
+              'Episode'
+          )
+
+          setEpisodeLeadCharacterId(
+            savedLeadCharacterId
+          )
+
+          messagesRef.current =
+            restoredMessages
+
+          setMessages(
+            restoredMessages
+          )
+        }
       } catch (error) {
-        showToast(error.message || 'Failed to load Chat Story episode')
+        showToast(
+          error.message ||
+            'Failed to load Chat Story episode'
+        )
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -2769,14 +2859,15 @@ const openNewCharacterShadowGallery = () => {
     returnUrl.hash
 
   const editorSnapshot = {
-    episodeTitle,
-    episodeId,
-    leadCharacterId:
-      effectiveLeadCharacterId,
-    messages: messagesRef.current,
-    updatedAt:
-      new Date().toISOString(),
-  }
+  episodeTitle,
+  episodeId,
+  leadCharacterId:
+    effectiveLeadCharacterId,
+  characters,
+  messages: messagesRef.current,
+  updatedAt:
+    new Date().toISOString(),
+}
 
   localStorage.setItem(
     storageKey,
@@ -2924,10 +3015,13 @@ const pickRandomCharacterAvatar = async (gender) => {
 }
 
 const handleAddConfirm = async () => {
-  const cleanName = newCharacterName.trim()
+  const cleanName =
+    newCharacterName.trim()
 
   if (!cleanName) {
-    showToast('Please enter a character name.')
+    showToast(
+      'Please enter a character name.'
+    )
     return
   }
 
@@ -2938,140 +3032,223 @@ const handleAddConfirm = async () => {
     return
   }
 
-  const newCharacterId = makeId()
+  const newCharacterId =
+    makeId()
 
-  const nextCharacters = [
-    ...characters,
-    {
-      id: newCharacterId,
-      nickname: cleanName,
-      image: newCharacterImage,
-      group: 'background',
-      avatarSource: newCharacterAvatarSource,
-      isLead: false,
-      chatSide: 'left',
-      gender: newCharacterGender,
-      birthday: '',
-      heightCm: '',
-      occupation: '',
-      personality: '',
-      relationship: '',
-      bio: '',
-    },
-  ]
+  const newCharacter = {
+    id: newCharacterId,
+    nickname: cleanName,
+    image: newCharacterImage,
+    group: 'background',
+    avatarSource:
+      newCharacterAvatarSource,
+    isLead: false,
+    chatSide: 'left',
+    gender: newCharacterGender,
+    birthday: '',
+    heightCm: '',
+    occupation: '',
+    personality: '',
+    relationship: '',
+    bio: '',
+  }
 
   try {
     setAddCharacterSaving(true)
 
-    const uploadedCharacters = []
-
-    for (let index = 0; index < nextCharacters.length; index += 1) {
-      const character = nextCharacters[index]
-
-      const avatarUrl = await uploadCharacterImage(
+    const avatarUrl =
+      await uploadCharacterImage(
         token,
-        character.image,
+        newCharacter.image,
         storyId,
-        index
+        0
       )
-
-      uploadedCharacters.push({
-        id: character.id,
-        role_group: character.group,
-        nickname: character.nickname || null,
-        avatar_url: avatarUrl,
-        avatar_source: character.avatarSource || 'device',
-        is_lead: character.isLead === true,
-        chat_side:
-          character.chatSide ||
-          (character.group === 'main' ? 'right' : 'left'),
-        gender: character.gender || null,
-        birthday: character.birthday || null,
-        height_cm:
-          character.heightCm === '' ? null : character.heightCm,
-        occupation: character.occupation || null,
-        personality: character.personality || null,
-        relationship: character.relationship || null,
-        bio: character.bio || null,
-      })
-    }
 
     const response = await fetch(
       `${API_BASE_URL}/api/stories/${storyId}/chat/characters`,
       {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'Content-Type':
+            'application/json',
+          Authorization:
+            `Bearer ${token}`,
         },
         body: JSON.stringify({
-          characters: uploadedCharacters,
+          characters: [
+            {
+              id:
+                newCharacter.id,
+              role_group:
+                newCharacter.group,
+              nickname:
+                newCharacter.nickname ||
+                null,
+              avatar_url:
+                avatarUrl,
+              avatar_source:
+                newCharacter.avatarSource ||
+                'device',
+              is_lead: false,
+              chat_side: 'left',
+              gender:
+                newCharacter.gender === 'female'
+                  ? 'Female'
+                  : newCharacter.gender === 'male'
+                    ? 'Male'
+                    : newCharacter.gender ||
+                      null,
+              birthday: null,
+              height_cm: null,
+              occupation: null,
+              personality: null,
+              relationship: null,
+              bio: null,
+            },
+          ],
         }),
       }
     )
 
-    const data = await response.json().catch(() => ({}))
+    const data =
+      await response
+        .json()
+        .catch(() => ({}))
 
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to add character')
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.message ||
+          'Failed to add character'
+      )
     }
 
-    const savedCharacters = (data.characters || []).map(mapCharacter)
+    const savedCharacterRows =
+      (data.characters || [])
+        .filter(
+          (character) =>
+            character.role_group ===
+              'background' &&
+            String(
+              character.nickname || ''
+            ) === cleanName &&
+            String(
+              character.avatar_url || ''
+            ) === String(
+              avatarUrl || ''
+            )
+        )
+        .sort(
+          (first, second) =>
+            new Date(
+              second.created_at || 0
+            ).getTime() -
+            new Date(
+              first.created_at || 0
+            ).getTime()
+        )
 
-    const episodeCharacterIds = new Set([
-      ...characters.map((character) => String(character.id)),
-      String(newCharacterId),
-    ])
-
-    const episodeCharacters = savedCharacters.filter(
-      (character) =>
-        episodeCharacterIds.has(String(character.id))
-    )
-
-    const savedCharacter =
-      episodeCharacters.find(
-        (character) =>
-          String(character.id) === String(newCharacterId)
-      ) ||
-      episodeCharacters[episodeCharacters.length - 1] ||
+    const savedCharacterRow =
+      savedCharacterRows[0] ||
       null
 
-    setCharacters(episodeCharacters)
+    const savedCharacter =
+      savedCharacterRow
+        ? mapCharacter(
+            savedCharacterRow
+          )
+        : null
 
-    if (startNewEpisode || !requestedEpisodeId) {
+    if (!savedCharacter) {
+      throw new Error(
+        'Character was saved but could not be loaded'
+      )
+    }
+
+    setCharacters((current) => {
+      const alreadyExists =
+        current.some(
+          (character) =>
+            String(character.id) ===
+            String(savedCharacter.id)
+        )
+
+      if (alreadyExists) {
+        return current.map(
+          (character) =>
+            String(character.id) ===
+            String(savedCharacter.id)
+              ? savedCharacter
+              : character
+        )
+      }
+
+      return [
+        ...current,
+        savedCharacter,
+      ]
+    })
+
+    if (
+      startNewEpisode ||
+      !requestedEpisodeId
+    ) {
+      const nextCharacterIds = [
+        ...new Set([
+          ...characters.map(
+            (character) =>
+              String(character.id)
+          ),
+          String(
+            savedCharacter.id
+          ),
+        ]),
+      ]
+
       sessionStorage.setItem(
         castStorageKey,
         JSON.stringify({
-          characterIds: episodeCharacters.map(
-            (character) => String(character.id)
-          ),
-          updatedAt: new Date().toISOString(),
+          characterIds:
+            nextCharacterIds,
+          updatedAt:
+            new Date().toISOString(),
         })
       )
     }
 
     setAddPopupOpen(false)
 
-    if (savedCharacter) {
-      setSelectedCharacterId(savedCharacter.id)
-      setComposerMode('message')
-    }
+    setSelectedCharacterId(
+      savedCharacter.id
+    )
+
+    setComposerMode('message')
 
     setNewCharacterName('')
     setNewCharacterImage('')
-    setNewCharacterAvatarSource('device')
+
+    setNewCharacterAvatarSource(
+      'device'
+    )
+
     setNewCharacterGender('')
 
-    showToast('Character added.')
+    showToast(
+      'Character added.'
+    )
 
     window.setTimeout(() => {
       composerRef.current?.focus()
     }, 50)
   } catch (error) {
     showToast(
-      error.message === 'Failed to fetch'
+      error.message ===
+        'Failed to fetch'
         ? 'Cannot connect to backend.'
-        : error.message || 'Failed to add character'
+        : error.message ||
+            'Failed to add character'
     )
   } finally {
     setAddCharacterSaving(false)
@@ -3548,6 +3725,7 @@ localStorage.setItem(
     episodeId: savedEpisodeId,
     leadCharacterId:
       effectiveLeadCharacterId,
+    characters,
     messages,
     updatedAt:
       new Date().toISOString(),
