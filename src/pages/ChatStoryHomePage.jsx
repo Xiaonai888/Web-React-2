@@ -369,10 +369,16 @@ export default function ChatStoryHomePage() {
               : []
           )
             .filter(
-              (story) =>
-                story?.id
-            )
-            .map(mapApiStory)
+  (story) =>
+    story?.id &&
+    String(
+      story.story_type || ''
+    )
+      .trim()
+      .toLowerCase() ===
+      'chat_story'
+)
+.map(mapApiStory)
 
         setChatStories(
           nextStories
