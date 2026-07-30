@@ -65,8 +65,6 @@ import StoryPerformancePage from './pages/Author/StoryPerformancePage'
 import AuthorHiddenCommentsPage from './pages/Author/AuthorHiddenCommentsPage'
 
 
-
-
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -258,8 +256,8 @@ function AppShell() {
     '/genre/romance/latest',
     '/genre/romance/updates',
     '/genre/romance/completed',
-    
-  
+
+
   ]
 
   const shouldHideFooter =
@@ -299,11 +297,9 @@ const shouldShowOpeningAds =
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
         <Route path="/fast" element={<Fast />} />
-        <Route path="/chat-story" element={<ComingSoon title="Chat Story" />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
 
-      
 
         <Route path="/shop" element={<ShopPage />} />
         <Route
@@ -451,7 +447,7 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-      
+
         <Route
   path="/genre/romance"
   element={
@@ -736,7 +732,7 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-        
+
 <Route
   path="/comments"
   element={
@@ -789,7 +785,7 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-        
+
         <Route
   path="/author/page/:pageUsername/store/product/:productId"
   element={
@@ -844,14 +840,6 @@ const shouldShowOpeningAds =
   }
 />
 
-        <Route
-  path="/author/cart"
-  element={
-    <LazyPage>
-      <AuthorCartPage />
-    </LazyPage>
-  }
-/>
 
 <Route
   path="/author/orders"
@@ -919,14 +907,6 @@ const shouldShowOpeningAds =
   element={<LazyPage><ReaderPostReviewPage /></LazyPage>}
 />
 
-        <Route
-  path="/discover"
-  element={
-    <LazyPage>
-      <DiscoverPage />
-    </LazyPage>
-  }
-/>
 
         <Route
   path="/author/page-options"
@@ -1042,12 +1022,12 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
-        
+
 <Route
   path="/interactions/:sourceType/:sourceId/:interactionType"
   element={<LazyPage><SocialInteractionUsersPage /></LazyPage>}
 />
-        
+
 <Route
   path="/reader/story/create"
   element={
@@ -1127,15 +1107,9 @@ const shouldShowOpeningAds =
   element={<ShadowGalleryPage />}
 />
 
-        <Route
-  path="/author/comment-protection/hidden-comments"
-  element={<AuthorHiddenCommentsPage />}
-/>
 
-        
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
         <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
@@ -1167,7 +1141,6 @@ const shouldShowOpeningAds =
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/comments" element={<ComingSoon title="My Comments" />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
         <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
@@ -1188,18 +1161,15 @@ const shouldShowOpeningAds =
         <Route path="/author/trash" element={<AuthorTrashPage />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
         <Route path="/author/comment-protection/hidden-comments" element={<AuthorHiddenCommentsPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
-        <Route path="/fast/studio" element={<LazyPage><FastStudioPage /></LazyPage>} />
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
         <Route path="/genre/:genreSlug/latest" element={<LazyPage><GenreStoriesPage tab="latest" /></LazyPage>} />
         <Route path="/genre/:genreSlug/updates" element={<LazyPage><GenreStoriesPage tab="updates" /></LazyPage>} />
         <Route path="/genre/:genreSlug/completed" element={<LazyPage><GenreStoriesPage tab="completed" /></LazyPage>} />
-        
-  
- 
+
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       {shouldShowOpeningAds && adStep === 'splash' ? (
