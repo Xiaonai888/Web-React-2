@@ -1132,7 +1132,7 @@ const shouldShowOpeningAds =
   element={<AuthorHiddenCommentsPage />}
 />
 
-        <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
+        
         <Route path="/author/story/description-guide" element={<StoryDescriptionGuidePage />} />
         <Route path="/author/story/title-guide" element={<StoryTitleGuidePage />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
