@@ -1020,17 +1020,137 @@ function AddCharacterPopup({
   )
 }
 
-function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }) {
+function MorePopup({
+  open,
+  onClose,
+  onUploadAudio,
+  onAuthorNote,
+  hasAuthorNote,
+}) {
+  const [dragY, setDragY] = useState(0)
+  const startYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+
+    const previousBodyOverflow =
+      body.style.overflow
+    const previousBodyPosition =
+      body.style.position
+    const previousBodyTop =
+      body.style.top
+    const previousBodyWidth =
+      body.style.width
+    const previousHtmlOverflow =
+      html.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
+
+    setDragY(0)
+    dragYRef.current = 0
+    draggingRef.current = false
+
+    return () => {
+      body.style.overflow =
+        previousBodyOverflow
+      body.style.position =
+        previousBodyPosition
+      body.style.top =
+        previousBodyTop
+      body.style.width =
+        previousBodyWidth
+      html.style.overflow =
+        previousHtmlOverflow
+
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
+  const startDrag = (event) => {
+    draggingRef.current = true
+    startYRef.current = event.clientY
+    dragYRef.current = 0
+    setDragY(0)
+
+    event.currentTarget.setPointerCapture?.(
+      event.pointerId
+    )
+  }
+
+  const moveDrag = (event) => {
+    if (!draggingRef.current) return
+
+    const nextY = Math.max(
+      0,
+      event.clientY - startYRef.current
+    )
+
+    dragYRef.current = nextY
+    setDragY(nextY)
+  }
+
+  const endDrag = () => {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+
+    const shouldClose =
+      dragYRef.current >= 90
+
+    dragYRef.current = 0
+
+    if (shouldClose) {
+      onClose()
+      return
+    }
+
+    setDragY(0)
+  }
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[240] flex items-end bg-black/45" onClick={onClose}>
-      <div
-        className="w-full rounded-t-[28px] bg-white px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-3 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
+    <div
+      className="fixed inset-0 z-[240] flex items-end bg-black/45"
+      onClick={onClose}
+    >
+      <section
+        className="w-full rounded-t-[28px] bg-white px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: draggingRef.current
+            ? 'none'
+            : 'transform 220ms ease',
+        }}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
       >
-        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
-        <h2 className="text-center text-[16px] font-bold text-[#111827]">More</h2>
+        <button
+          type="button"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="mx-auto flex h-8 w-20 touch-none items-center justify-center"
+          aria-label="Drag down to close"
+        >
+          <span className="h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+        </button>
+
+        <h2 className="mt-1 text-center text-[16px] font-bold text-[#111827]">
+          More
+        </h2>
 
         <div className="mt-5 grid grid-cols-2 gap-4">
           <button
@@ -1041,7 +1161,10 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }
             <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
               <i className="fa-solid fa-microphone text-[22px]" />
             </span>
-            <span className="mt-3 text-[12px] font-medium text-[#111827]">Upload Audio</span>
+
+            <span className="mt-3 text-[12px] font-medium text-[#111827]">
+              Upload Audio
+            </span>
           </button>
 
           <button
@@ -1052,8 +1175,11 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }
             <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#f1ecff] text-[#7c3aed]">
               <i className="fa-regular fa-comment-dots text-[22px]" />
             </span>
+
             <span className="mt-3 text-[12px] font-medium text-[#111827]">
-              {hasAuthorNote ? 'Edit Author’s Note' : 'Add Author’s Note'}
+              {hasAuthorNote
+                ? 'Edit Author’s Note'
+                : 'Add Author’s Note'}
             </span>
           </button>
         </div>
@@ -1065,7 +1191,7 @@ function MorePopup({ open, onClose, onUploadAudio, onAuthorNote, hasAuthorNote }
         >
           Done
         </button>
-      </div>
+      </section>
     </div>
   )
 }
