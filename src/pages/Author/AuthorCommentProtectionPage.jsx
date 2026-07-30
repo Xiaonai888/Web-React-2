@@ -804,22 +804,16 @@ export default function AuthorCommentProtectionPage() {
               }
             />
 
-            <SettingCard
+                        <SettingCard
               icon="fa-solid fa-user-slash"
               title="Blocked Readers"
               subtitle="Block readers from commenting on your own story or author page."
             />
 
             <SettingCard
-              icon="fa-solid fa-broom"
-              title="Auto Cleanup"
-              subtitle="Hidden comments can be cleaned automatically after a safe review period."
-            />
-
-            <SettingCard
               icon="fa-solid fa-clock-rotate-left"
-              title="Comment Records"
-              subtitle="Author comment moderation actions will be recorded for safety."
+              title="Moderation History"
+              subtitle="Review author comment moderation actions and system cleanup records."
             />
           </section>
         </main>
