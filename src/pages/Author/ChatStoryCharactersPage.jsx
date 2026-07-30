@@ -1130,11 +1130,11 @@ const confirmLeadCharacter = () => {
       return
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      showToast('Image must be 8 MB or smaller.')
-      if (editingId || nickname) setEditorOpen(true)
-      return
-    }
+    if (file.size > 2 * 1024 * 1024) {
+  showToast('Profile image must be 2 MB or smaller.')
+  if (editingId || nickname) setEditorOpen(true)
+  return
+}
 
     const reader = new FileReader()
     reader.onload = () => {
