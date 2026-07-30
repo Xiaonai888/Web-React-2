@@ -676,8 +676,8 @@ useEffect(() => {
 ])
   
   const handleReaderClick = (event) => {
-    const handleReaderClick = (event) => {
-  if (readMode !== 'manual') return
+    if (readMode !== 'manual') return
+
     if (
       event.target.closest(
         'button, a, input, textarea, select, audio, video'
@@ -690,8 +690,7 @@ useEffect(() => {
   }
 
   const handleReaderKeyDown = (event) => {
-    const handleReaderKeyDown = (event) => {
-  if (readMode !== 'manual') return
+    if (readMode !== 'manual') return
 
     if (
       event.key !== 'Enter' &&
