@@ -1665,6 +1665,8 @@ const storageKey =
   `chat_story_editor_draft_${storyId || 'unknown'}_${draftScope}`
 const gallerySnapshotKey =
   `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}_${draftScope}`
+  const castStorageKey =
+  `chat_story_episode_cast_${storyId || 'unknown'}_new`
   useEffect(() => {
   if (loading || titlePopupOpen) return
 
@@ -2199,9 +2201,61 @@ useEffect(() => {
         )
       }
 
-      setCharacters(
-        (data.characters || []).map(mapCharacter)
+      const libraryCharacters =
+  (data.characters || []).map(
+    mapCharacter
+  )
+
+let nextCharacters =
+  libraryCharacters
+
+if (
+  startNewEpisode ||
+  !requestedEpisodeId
+) {
+  try {
+    const savedCast =
+      sessionStorage.getItem(
+        castStorageKey
       )
+
+    const parsedCast = savedCast
+      ? JSON.parse(savedCast)
+      : null
+
+    const candidateIds =
+      Array.isArray(parsedCast)
+        ? parsedCast
+        : Array.isArray(
+              parsedCast?.characterIds
+            )
+          ? parsedCast.characterIds
+          : []
+
+    const selectedIdSet =
+      new Set(
+        candidateIds.map(
+          (id) => String(id)
+        )
+      )
+
+    if (selectedIdSet.size) {
+      nextCharacters =
+        libraryCharacters.filter(
+          (character) =>
+            selectedIdSet.has(
+              String(character.id)
+            )
+        )
+    }
+  } catch {
+    sessionStorage.removeItem(
+      castStorageKey
+    )
+  }
+}
+
+setCharacters(nextCharacters)
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
@@ -2218,7 +2272,13 @@ useEffect(() => {
   } else {
     setLoading(false)
   }
-}, [navigate, storyId])
+}, [
+  castStorageKey,
+  navigate,
+  requestedEpisodeId,
+  startNewEpisode,
+  storyId,
+])
 
   useEffect(() => {
     async function loadRequestedEpisode() {
@@ -3396,6 +3456,17 @@ const handleAddConfirm = async () => {
               effectiveLeadCharacterId ||
               null,
             messages: messages.map((message) => ({
+
+              lead_character_id:
+  effectiveLeadCharacterId ||
+  null,
+character_ids:
+  characters.map(
+    (character) =>
+      character.id
+  ),
+messages: messages.map((message) => ({
+  
               id: message.id,
               type: message.type,
               character_id:
@@ -3432,6 +3503,19 @@ const handleAddConfirm = async () => {
 setPublishedIsFirstEpisode(
   Boolean(data.is_first_episode)
 )
+
+      if (
+  startNewEpisode ||
+  (
+    !episodeId &&
+    !requestedEpisodeId
+  )
+) {
+  sessionStorage.removeItem(
+    castStorageKey
+  )
+}
+      
 setPublishedEpisodeNumber(
   Number(
     savedEpisode.episode_number || 0
