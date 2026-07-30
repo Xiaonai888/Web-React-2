@@ -817,10 +817,16 @@ export default function AuthorCommentProtectionPage() {
 />
 
             <SettingCard
-              icon="fa-solid fa-clock-rotate-left"
-              title="Moderation History"
-              subtitle="Review author comment moderation actions and system cleanup records."
-            />
+  icon="fa-solid fa-clock-rotate-left"
+  title="Moderation History"
+  subtitle="Review author comment moderation actions and system cleanup records."
+  status={null}
+  onClick={() =>
+    navigate(
+      '/author/comment-protection/moderation-history'
+    )
+  }
+/>
           </section>
         </main>
       ) : (
