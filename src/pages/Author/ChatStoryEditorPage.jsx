@@ -3569,14 +3569,13 @@ setPublishSettingsOpen(true)
           }, 0)
         }}
         onAddEpisode={() => {
-          setSuccessOpen(false)
-          localStorage.removeItem(storageKey)
-          navigate('/author/stories', { replace: true })
-
-          window.setTimeout(() => {
-            navigate(`/author/story/${storyId}/chat/editor?new=1&first=0`)
-          }, 0)
-        }}
+  setSuccessOpen(false)
+  localStorage.removeItem(storageKey)
+  navigate(
+    `/author/story/${storyId}/chat/characters?new=1`,
+    { replace: true }
+  )
+}}
       />
 
       <input
