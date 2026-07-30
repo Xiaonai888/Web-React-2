@@ -478,6 +478,9 @@ function ChatStoryMessage({
 
 export default function ChatStoryReader({
   content,
+  readMode = 'manual',
+  autoTapDelay = 2000,
+  autoTapPaused = false,
   onProgress,
   onComplete,
 }) {
@@ -487,12 +490,40 @@ export default function ChatStoryReader({
   )
 
   const [visibleCount, setVisibleCount] =
-    useState(
-      parsedContent.messages.length ? 1 : 0
-    )
+  useState(
+    parsedContent.messages.length ? 1 : 0
+  )
 
-  const lastMessageRef = useRef(null)
+const [pageVisible, setPageVisible] =
+  useState(
+    () =>
+      typeof document === 'undefined' ||
+      document.visibilityState ===
+        'visible'
+  )
+
+const lastMessageRef = useRef(null)
   const completionSentRef = useRef(false)
+  useEffect(() => {
+  const handleVisibilityChange = () => {
+    setPageVisible(
+      document.visibilityState ===
+        'visible'
+    )
+  }
+
+  document.addEventListener(
+    'visibilitychange',
+    handleVisibilityChange
+  )
+
+  return () => {
+    document.removeEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
+  }
+}, [])
 
   const characterMap = useMemo(
     () =>
@@ -606,7 +637,47 @@ export default function ChatStoryReader({
     )
   }
 
+useEffect(() => {
+  if (
+    readMode !== 'auto' ||
+    autoTapPaused ||
+    !pageVisible ||
+    completed ||
+    !parsedContent.messages.length
+  ) {
+    return undefined
+  }
+
+  const timer = window.setTimeout(
+    () => {
+      setVisibleCount((current) =>
+        Math.min(
+          current + 1,
+          parsedContent.messages.length
+        )
+      )
+    },
+    Math.max(
+      700,
+      Number(autoTapDelay) || 2000
+    )
+  )
+
+  return () =>
+    window.clearTimeout(timer)
+}, [
+  autoTapDelay,
+  autoTapPaused,
+  completed,
+  pageVisible,
+  parsedContent.messages.length,
+  readMode,
+  visibleCount,
+])
+  
   const handleReaderClick = (event) => {
+    const handleReaderClick = (event) => {
+  if (readMode !== 'manual') return
     if (
       event.target.closest(
         'button, a, input, textarea, select, audio, video'
@@ -619,6 +690,9 @@ export default function ChatStoryReader({
   }
 
   const handleReaderKeyDown = (event) => {
+    const handleReaderKeyDown = (event) => {
+  if (readMode !== 'manual') return
+
     if (
       event.key !== 'Enter' &&
       event.key !== ' '
@@ -648,13 +722,27 @@ export default function ChatStoryReader({
 
   return (
     <section
-      role="button"
-      tabIndex={0}
-      aria-label="Tap to show the next Chat Story message"
-      onClick={handleReaderClick}
-      onKeyDown={handleReaderKeyDown}
-      className="min-h-[70vh] cursor-pointer bg-white px-4 pb-12 pt-5 outline-none sm:px-8"
-    >
+  role={
+    readMode === 'manual'
+      ? 'button'
+      : undefined
+  }
+  tabIndex={
+    readMode === 'manual' ? 0 : -1
+  }
+  aria-label={
+    readMode === 'manual'
+      ? 'Tap to show the next Chat Story message'
+      : 'Chat Story Auto Tap reader'
+  }
+  onClick={handleReaderClick}
+  onKeyDown={handleReaderKeyDown}
+  className={`min-h-[70vh] bg-white px-4 pb-12 pt-5 outline-none sm:px-8 ${
+    readMode === 'manual'
+      ? 'cursor-pointer'
+      : 'cursor-default'
+  }`}
+>
       <div className="mx-auto max-w-[680px]">
         {visibleMessages.map(
           (message, index) => {
@@ -724,7 +812,8 @@ export default function ChatStoryReader({
           }
         )}
 
-        {!completed ? (
+        {!completed &&
+readMode === 'manual' ? (
           <div className="pointer-events-none flex flex-col items-center justify-center pb-6 pt-12 text-[#c4a8ff]">
             <span className="text-[14px] font-medium">
               Tap to continue
