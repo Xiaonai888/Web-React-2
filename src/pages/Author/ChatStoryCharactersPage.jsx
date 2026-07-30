@@ -1052,6 +1052,7 @@ const [
 setCharacters(normalizedCharacters)
 
 let restoredCharacterIds = []
+let hasSavedCast = false
 
 try {
   const savedCast =
@@ -1070,7 +1071,10 @@ try {
             parsedCast?.characterIds
           )
         ? parsedCast.characterIds
-        : []
+        : null
+
+  hasSavedCast =
+    Array.isArray(candidateIds)
 
   const validCharacterIds =
     new Set(
@@ -1080,22 +1084,25 @@ try {
       )
     )
 
-  restoredCharacterIds = [
-    ...new Set(
-      candidateIds
-        .map((id) => String(id))
-        .filter((id) =>
-          validCharacterIds.has(id)
-        )
-    ),
-  ]
+  restoredCharacterIds =
+    Array.isArray(candidateIds)
+      ? [
+          ...new Set(
+            candidateIds
+              .map((id) => String(id))
+              .filter((id) =>
+                validCharacterIds.has(id)
+              )
+          ),
+        ]
+      : []
 } catch {
   sessionStorage.removeItem(
     castStorageKey
   )
 }
 
-if (!restoredCharacterIds.length) {
+if (!hasSavedCast) {
   restoredCharacterIds =
     normalizedCharacters.map(
       (character) =>
@@ -1256,101 +1263,127 @@ const selectedMainCharacters =
       character.group === 'main'
   )
 
-const totalCharacters =
-  selectedCharacters.length
+  const showToast = (message) => {
+    setToast(message)
+    window.setTimeout(
+      () => setToast(''),
+      2200
+    )
+  }
 
-const canContinue =
-  totalCharacters >= 2 &&
-  selectedMainCharacters.length >= 1
+  useEffect(() => {
+    if (!storyId || pageLoading) {
+      return
+    }
+
+    sessionStorage.setItem(
+      castStorageKey,
+      JSON.stringify({
+        characterIds:
+          selectedCharacterIds,
+        updatedAt:
+          new Date().toISOString(),
+      })
+    )
+  }, [
+    castStorageKey,
+    pageLoading,
+    selectedCharacterIds,
+    storyId,
+  ])
 
   const toggleEpisodeCharacter = (
-  character
-) => {
-  const characterId =
-    String(character.id)
+    character
+  ) => {
+    const characterId =
+      String(character.id)
 
-  if (
-    character.isLead === true &&
-    selectedCharacterIdSet.has(
-      characterId
-    )
-  ) {
-    showToast(
-      'Lead Character must be used in this episode.'
-    )
-    return
-  }
-
-  setSelectedCharacterIds(
-    (current) => {
-      const nextIds =
-        new Set(
-          current.map(
-            (id) => String(id)
-          )
-        )
-
-      if (nextIds.has(characterId)) {
-        nextIds.delete(characterId)
-      } else {
-        nextIds.add(characterId)
-      }
-
-      return [...nextIds]
+    if (
+      character.isLead === true &&
+      selectedCharacterIdSet.has(
+        characterId
+      )
+    ) {
+      showToast(
+        'Lead Character must be used in this episode.'
+      )
+      return
     }
-  )
-}
+
+    setSelectedCharacterIds(
+      (current) => {
+        const nextIds =
+          new Set(
+            current.map(
+              (id) => String(id)
+            )
+          )
+
+        if (nextIds.has(characterId)) {
+          nextIds.delete(characterId)
+        } else {
+          nextIds.add(characterId)
+        }
+
+        return [...nextIds]
+      }
+    )
+  }
 
   const openLeadCharacterSheet = () => {
-  if (!groupedCharacters.main.length) {
-    showToast('Add a Main Character first.')
-    return
-  }
-
-  setLeadDraftId(
-    leadCharacter?.id ||
-      groupedCharacters.main[0]?.id ||
-      ''
-  )
-
-  setLeadSheetOpen(true)
-}
-
-setSelectedCharacterIds(
-  (current) => {
-    const nextIds =
-      new Set(
-        current.map(
-          (id) => String(id)
-        )
+    if (!groupedCharacters.main.length) {
+      showToast(
+        'Add a Main Character first.'
       )
+      return
+    }
 
-    nextIds.add(
-      String(leadDraftId)
+    setLeadDraftId(
+      leadCharacter?.id ||
+        groupedCharacters.main[0]?.id ||
+        ''
     )
 
-    return [...nextIds]
+    setLeadSheetOpen(true)
   }
-)
-  
-setLeadSheetOpen(false)
-showToast('Lead Character changed. Press Save to apply.')
-  if (!leadDraftId) return
 
-  setCharacters((current) =>
-    normalizeLeadCharacters(
-      current.map((character) => ({
-        ...character,
-        isLead:
-          character.group === 'main' &&
-          character.id === leadDraftId,
-      }))
+  const confirmLeadCharacter = () => {
+    if (!leadDraftId) return
+
+    setCharacters((current) =>
+      normalizeLeadCharacters(
+        current.map((character) => ({
+          ...character,
+          isLead:
+            character.group === 'main' &&
+            String(character.id) ===
+              String(leadDraftId),
+        }))
+      )
     )
-  )
 
-  setLeadSheetOpen(false)
-  showToast('Lead Character changed. Press Save to apply.')
-}
+    setSelectedCharacterIds(
+      (current) => {
+        const nextIds =
+          new Set(
+            current.map(
+              (id) => String(id)
+            )
+          )
+
+        nextIds.add(
+          String(leadDraftId)
+        )
+
+        return [...nextIds]
+      }
+    )
+
+    setLeadSheetOpen(false)
+    showToast(
+      'Lead Character changed. Press Save to apply.'
+    )
+  }
 
   const openAddCharacter = (groupKey) => {
     setActiveGroupKey(groupKey)
