@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -339,6 +343,9 @@ function GenderSheet({ open, value, onChange, onClose }) {
 export default function ChatStoryCharacterProfilePage() {
   const navigate = useNavigate()
   const { storyId, characterId } = useParams()
+  const [searchParams] = useSearchParams()
+  const startNewEpisode =
+    searchParams.get('new') === '1'
   const fileInputRef = useRef(null)
 
   const [nickname, setNickname] = useState('')
@@ -412,10 +419,12 @@ export default function ChatStoryCharacterProfilePage() {
       return
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      setMessage('Image must be 8 MB or smaller.')
-      return
-    }
+    if (file.size > 2 * 1024 * 1024) {
+  setMessage(
+    'Profile image must be 2 MB or smaller.'
+  )
+  return
+}
 
     const reader = new FileReader()
     reader.onload = () => {
@@ -479,7 +488,14 @@ export default function ChatStoryCharacterProfilePage() {
         throw new Error(data.message || 'Failed to save character profile')
       }
 
-      navigate(`/author/story/${storyId}/chat/characters`)
+      const charactersPath =
+  `/author/story/${storyId}/chat/characters`
+
+navigate(
+  startNewEpisode
+    ? `${charactersPath}?new=1`
+    : charactersPath
+)
     } catch (error) {
       setMessage(error.message || 'Failed to save character profile')
     } finally {
