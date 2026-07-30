@@ -175,6 +175,7 @@ function LoadingCards() {
         >
           <div className="flex gap-3">
             <div className="h-12 w-12 animate-pulse rounded-full bg-[#f1edf8]" />
+
             <div className="min-w-0 flex-1">
               <div className="h-4 w-28 animate-pulse rounded-full bg-[#f1edf8]" />
               <div className="mt-2 h-3 w-48 animate-pulse rounded-full bg-[#f6f3fa]" />
@@ -201,7 +202,7 @@ function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className={`min-w-[118px] flex-1 rounded-[21px] border bg-white px-3 py-3.5 text-center shadow-[0_8px_22px_rgba(61,45,115,0.05)] transition active:scale-[0.98] ${
+      className={`rounded-[21px] border bg-white px-2.5 py-3.5 text-center shadow-[0_8px_22px_rgba(61,45,115,0.05)] transition active:scale-[0.98] ${
         active
           ? 'border-[#7a55f6] ring-2 ring-[#7a55f6]/10'
           : 'border-[#ebe7f2]'
@@ -263,6 +264,7 @@ function ActionButton({
       <i
         className={`${icon} text-[12px]`}
       />
+
       <span className="truncate">
         {label}
       </span>
@@ -308,7 +310,8 @@ function HiddenCommentCard({
             <div className="flex min-w-0 items-center gap-2">
               <div className="truncate text-[14px] font-black text-[#11152d]">
                 {item.reader?.name ||
-                  item.reader?.username ||
+                  item.reader
+                    ?.username ||
                   'Reader'}
               </div>
 
@@ -354,7 +357,10 @@ function HiddenCommentCard({
         {visibleWords.length ? (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {visibleWords.map(
-              (word, index) => (
+              (
+                word,
+                index
+              ) => (
                 <span
                   key={`${word.word}-${index}`}
                   className="rounded-[10px] bg-[#fff0f2] px-2.5 py-1.5 text-[10.5px] font-bold text-[#e23d52]"
@@ -456,12 +462,16 @@ function HiddenCommentCard({
 
 export default function AuthorHiddenCommentsPage() {
   const navigate = useNavigate()
-  const toastTimerRef = useRef(null)
-  const searchTimerRef = useRef(null)
+  const toastTimerRef =
+    useRef(null)
+  const searchTimerRef =
+    useRef(null)
   const [status, setStatus] =
     useState('hidden')
-  const [searchInput, setSearchInput] =
-    useState('')
+  const [
+    searchInput,
+    setSearchInput,
+  ] = useState('')
   const [search, setSearch] =
     useState('')
   const [sort, setSort] =
@@ -485,10 +495,19 @@ export default function AuthorHiddenCommentsPage() {
     totalPages,
     setTotalPages,
   ] = useState(1)
-  const [actionKey, setActionKey] =
-    useState('')
+  const [
+    actionKey,
+    setActionKey,
+  ] = useState('')
   const [toast, setToast] =
     useState(null)
+
+  const openAutoHideWords =
+    () => {
+      navigate(
+        '/author/comment-protection?view=word-filters&type=auto_hide'
+      )
+    }
 
   const request = useCallback(
     async (
@@ -661,11 +680,14 @@ export default function AuthorHiddenCommentsPage() {
         )
 
         if (
-          Number(data.page || 1) !==
-          page
+          Number(
+            data.page || 1
+          ) !== page
         ) {
           setPage(
-            Number(data.page || 1)
+            Number(
+              data.page || 1
+            )
           )
         }
       } catch (error) {
@@ -692,7 +714,6 @@ export default function AuthorHiddenCommentsPage() {
 
   const activeConfig =
     STATUS_CONFIG[status]
-
   const statusCards =
     useMemo(
       () =>
@@ -742,9 +763,10 @@ export default function AuthorHiddenCommentsPage() {
           )}`,
           {
             method: 'PATCH',
-            body: JSON.stringify({
-              action,
-            }),
+            body:
+              JSON.stringify({
+                action,
+              }),
           }
         )
 
@@ -775,7 +797,7 @@ export default function AuthorHiddenCommentsPage() {
                 '/author/comment-protection'
               )
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] transition active:scale-95"
+            className="flex h-10 w-10 items-center justify-start text-[#111827] transition active:scale-95 active:opacity-60"
             aria-label="Go back"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
@@ -785,39 +807,47 @@ export default function AuthorHiddenCommentsPage() {
             <h1 className="text-[17px] font-black text-[#11152d]">
               Hidden Comments
             </h1>
+
             <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#747a90]">
               Comments hidden by your words and rules
             </p>
           </div>
 
-          <div className="h-10 w-10" />
+          <button
+            type="button"
+            onClick={
+              openAutoHideWords
+            }
+            className="flex h-10 w-10 items-center justify-end text-[#111827] transition active:scale-95 active:opacity-60"
+            aria-label="Manage auto-hide words"
+          >
+            <i className="fa-solid fa-sliders text-[14px]" />
+          </button>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-3.5 pt-4 sm:px-4">
-        <section className="-mx-0.5 overflow-x-auto pb-1">
-          <div className="flex min-w-max gap-2.5 px-0.5 sm:min-w-0">
-            {statusCards.map(
-              (card) => (
-                <StatCard
-                  key={card.value}
-                  status={
+        <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {statusCards.map(
+            (card) => (
+              <StatCard
+                key={card.value}
+                status={
+                  card.value
+                }
+                count={card.count}
+                active={
+                  status ===
+                  card.value
+                }
+                onClick={() =>
+                  handleStatusChange(
                     card.value
-                  }
-                  count={card.count}
-                  active={
-                    status ===
-                    card.value
-                  }
-                  onClick={() =>
-                    handleStatusChange(
-                      card.value
-                    )
-                  }
-                />
-              )
-            )}
-          </div>
+                  )
+                }
+              />
+            )
+          )}
         </section>
 
         <section className="mt-3.5 flex gap-2.5">
@@ -885,6 +915,7 @@ export default function AuthorHiddenCommentsPage() {
             <h2 className="text-[15px] font-black text-[#11152d]">
               {activeConfig.label}
             </h2>
+
             <p className="mt-0.5 text-[10.5px] font-medium text-[#858a9d]">
               {total}{' '}
               {total === 1
@@ -908,6 +939,7 @@ export default function AuthorHiddenCommentsPage() {
               <option value="newest">
                 Newest first
               </option>
+
               <option value="oldest">
                 Oldest first
               </option>
@@ -954,10 +986,25 @@ export default function AuthorHiddenCommentsPage() {
               <p className="mx-auto mt-1.5 max-w-[290px] text-[11.5px] font-medium leading-5 text-[#858a9d]">
                 {search
                   ? 'Try another search term or clear your search.'
-                  : status === 'hidden'
-                    ? 'Comments matching your blocked words will appear here for review.'
+                  : status ===
+                      'hidden'
+                    ? 'Comments matching your auto-hide words will appear here for review.'
                     : 'Comments with this review status will appear here.'}
               </p>
+
+              {!search &&
+              status === 'hidden' ? (
+                <button
+                  type="button"
+                  onClick={
+                    openAutoHideWords
+                  }
+                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[16px] bg-gradient-to-r from-[#7047f5] to-[#8459ff] px-4 text-[12px] font-extrabold text-white shadow-[0_10px_24px_rgba(112,71,245,0.22)] transition active:scale-95"
+                >
+                  <i className="fa-solid fa-filter text-[11px]" />
+                  Manage Auto-hide Words
+                </button>
+              ) : null}
             </div>
           )}
         </section>
@@ -968,11 +1015,12 @@ export default function AuthorHiddenCommentsPage() {
             <button
               type="button"
               onClick={() =>
-                setPage((current) =>
-                  Math.max(
-                    1,
-                    current - 1
-                  )
+                setPage(
+                  (current) =>
+                    Math.max(
+                      1,
+                      current - 1
+                    )
                 )
               }
               disabled={page <= 1}
@@ -983,17 +1031,19 @@ export default function AuthorHiddenCommentsPage() {
             </button>
 
             <div className="rounded-[14px] bg-gradient-to-r from-[#7047f5] to-[#855dff] px-4 py-2.5 text-[11.5px] font-black text-white shadow-[0_8px_20px_rgba(112,71,245,0.22)]">
-              {page} / {totalPages}
+              {page} /{' '}
+              {totalPages}
             </div>
 
             <button
               type="button"
               onClick={() =>
-                setPage((current) =>
-                  Math.min(
-                    totalPages,
-                    current + 1
-                  )
+                setPage(
+                  (current) =>
+                    Math.min(
+                      totalPages,
+                      current + 1
+                    )
                 )
               }
               disabled={
