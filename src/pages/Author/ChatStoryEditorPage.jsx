@@ -1650,11 +1650,21 @@ export default function ChatStoryEditorPage() {
     textarea.style.overflowY = textarea.scrollHeight > 96 ? 'auto' : 'hidden'
   }, [draft])
 
-  const storageKey = `chat_story_editor_draft_${storyId || 'unknown'}`
-  const gallerySnapshotKey =
-    `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}`
-  const requestedEpisodeId = searchParams.get('episodeId') || searchParams.get('episode_id') || ''
-  const startNewEpisode = searchParams.get('new') === '1'
+  const requestedEpisodeId =
+  searchParams.get('episodeId') ||
+  searchParams.get('episode_id') ||
+  ''
+const startNewEpisode =
+  searchParams.get('new') === '1'
+const draftScope = startNewEpisode
+  ? 'new'
+  : requestedEpisodeId
+    ? `episode_${requestedEpisodeId}`
+    : 'new'
+const storageKey =
+  `chat_story_editor_draft_${storyId || 'unknown'}_${draftScope}`
+const gallerySnapshotKey =
+  `chat_story_editor_gallery_snapshot_${storyId || 'unknown'}_${draftScope}`
   useEffect(() => {
   if (loading || titlePopupOpen) return
 
@@ -2693,8 +2703,6 @@ const openNewCharacterShadowGallery = () => {
   const returnUrl =
     new URL(window.location.href)
 
-  returnUrl.searchParams.delete('new')
-
   const returnPath =
     returnUrl.pathname +
     returnUrl.search +
@@ -3378,10 +3386,11 @@ const handleAddConfirm = async () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            episode_id:
-              episodeId ||
-              requestedEpisodeId ||
-              null,
+            episode_id: startNewEpisode
+  ? null
+  : episodeId ||
+    requestedEpisodeId ||
+    null,
             title: cleanTitle,
             lead_character_id:
               effectiveLeadCharacterId ||
@@ -3420,24 +3429,41 @@ const handleAddConfirm = async () => {
       }
 
       setEpisodeId(savedEpisodeId)
-      setPublishedIsFirstEpisode(Boolean(data.is_first_episode))
-      setPublishedEpisodeNumber(
-        Number(savedEpisode.episode_number || 0) || null
-      )
-      setPublishSettingsOpen(true)
+setPublishedIsFirstEpisode(
+  Boolean(data.is_first_episode)
+)
+setPublishedEpisodeNumber(
+  Number(
+    savedEpisode.episode_number || 0
+  ) || null
+)
 
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          episodeTitle: cleanTitle,
-          episodeId: savedEpisodeId,
-          leadCharacterId:
-            effectiveLeadCharacterId,
-          messages,
-          updatedAt:
-            new Date().toISOString(),
-        })
-      )
+const savedDraftKey =
+  `chat_story_editor_draft_${storyId || 'unknown'}_episode_${savedEpisodeId}`
+
+localStorage.setItem(
+  savedDraftKey,
+  JSON.stringify({
+    episodeTitle: cleanTitle,
+    episodeId: savedEpisodeId,
+    leadCharacterId:
+      effectiveLeadCharacterId,
+    messages,
+    updatedAt:
+      new Date().toISOString(),
+  })
+)
+
+if (startNewEpisode) {
+  localStorage.removeItem(storageKey)
+
+  navigate(
+    `/author/story/${storyId}/chat/editor?episodeId=${encodeURIComponent(savedEpisodeId)}`,
+    { replace: true }
+  )
+}
+
+setPublishSettingsOpen(true)
     } catch (error) {
       showToast(
         error.message === 'Failed to fetch'
