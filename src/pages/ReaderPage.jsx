@@ -3022,8 +3022,6 @@ function ReaderSettingsDrawer({
   onOpenFontList,
   onOpenReset,
 }) {
-  if (!open) return null
-
   const fontSizePx = FONT_SIZE_LEVELS[fontSizeIndex] || FONT_SIZE_LEVELS[DEFAULT_FONT_SIZE_INDEX]
   const lineSpacingOrder = ['compact', 'normal', 'comfort']
   const lineSpacingValues = {
@@ -3080,6 +3078,7 @@ const handleDragEnd = () => {
     })
   }
 
+  if (!open) return null
 
   if (moreSettingsOpen) {
     return (
@@ -3106,103 +3105,114 @@ const handleDragEnd = () => {
 </button>
         </div>
 
-        {isChatStory ? (
-  <ChatStoryReadingPreferences
-    readMode={chatStoryReadMode}
-    setReadMode={
-      setChatStoryReadMode
-    }
-    autoTapSpeed={
-      chatStoryAutoTapSpeed
-    }
-    setAutoTapSpeed={
-      setChatStoryAutoTapSpeed
-    }
-  />
-) : (
-
         <div className="mx-auto max-w-[520px] px-4 py-5">
-          <SettingSection title="Reading Preferences">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setReadingMode('paging')
-                  setAutoScrollEnabled(false)
-                }}
-                className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
-  readingMode === 'paging' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-}`}
-              >
-                Paging
-              </button>
+          {isChatStory ? (
+            <ChatStoryReadingPreferences
+              readMode={chatStoryReadMode}
+              setReadMode={setChatStoryReadMode}
+              autoTapSpeed={chatStoryAutoTapSpeed}
+              setAutoTapSpeed={setChatStoryAutoTapSpeed}
+            />
+          ) : (
+            <SettingSection title="Reading Preferences">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReadingMode('paging')
+                    setAutoScrollEnabled(false)
+                  }}
+                  className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+                    readingMode === 'paging'
+                      ? 'bg-[#111827] text-white'
+                      : 'bg-[#f5f3fa] text-[#111827]'
+                  }`}
+                >
+                  Paging
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setReadingMode('scroll')}
-                className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
-  readingMode === 'scroll' ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-}`}
-              >
-                Scrolling
-              </button>
-            </div>
-
-            {readingMode === 'scroll' ? (
-              <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-[13px] font-bold text-[#111827]">Auto Scroll</h4>
-                    <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-                      Available only in Scrolling mode
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAutoScrollToggle}
-                    className={`h-9 rounded-full px-4 text-[11px] font-normal active:scale-[0.995] ${
-  autoScrollEnabled ? 'bg-[#e5484d] text-white' : 'bg-[#111827] text-white'
-}`}
-                  >
-                    {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
-                  </button>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
-                    {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <img src="/assets/Icons/Turtle.svg" alt="Slow" className="h-6 w-6 shrink-0" />
-
-                    <input
-                      type="range"
-                      min="0"
-                      max={AUTO_SCROLL_SPEEDS.length - 1}
-                      step="1"
-                      value={autoScrollSpeed}
-                      onChange={(event) => setAutoScrollSpeed(Number(event.target.value))}
-                      className="w-full accent-[#111827]"
-                    />
-
-                    <img src="/assets/Icons/Rabbit.svg" alt="Fast" className="h-6 w-6 shrink-0" />
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setReadingMode('scroll')}
+                  className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+                    readingMode === 'scroll'
+                      ? 'bg-[#111827] text-white'
+                      : 'bg-[#f5f3fa] text-[#111827]'
+                  }`}
+                >
+                  Scrolling
+                </button>
               </div>
-            ) : null}
-          </SettingSection>
+
+              {readingMode === 'scroll' ? (
+                <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-[13px] font-bold text-[#111827]">
+                        Auto Scroll
+                      </h4>
+                      <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
+                        Available only in Scrolling mode
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAutoScrollToggle}
+                      className={`h-9 rounded-full px-4 text-[11px] font-normal active:scale-[0.995] ${
+                        autoScrollEnabled
+                          ? 'bg-[#e5484d] text-white'
+                          : 'bg-[#111827] text-white'
+                      }`}
+                    >
+                      {autoScrollEnabled ? 'Turn Off' : 'Turn On'}
+                    </button>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-center text-[12px] font-black text-[#667085]">
+                      {AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.label || 'Slow'}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <img
+                        src="/assets/Icons/Turtle.svg"
+                        alt="Slow"
+                        className="h-6 w-6 shrink-0"
+                      />
+
+                      <input
+                        type="range"
+                        min="0"
+                        max={AUTO_SCROLL_SPEEDS.length - 1}
+                        step="1"
+                        value={autoScrollSpeed}
+                        onChange={(event) =>
+                          setAutoScrollSpeed(Number(event.target.value))
+                        }
+                        className="w-full accent-[#111827]"
+                      />
+
+                      <img
+                        src="/assets/Icons/Rabbit.svg"
+                        alt="Fast"
+                        className="h-6 w-6 shrink-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </SettingSection>
           )}
 
           <section className="px-2 pt-1">
             <button
-  type="button"
-  onClick={onOpenReset}
-  className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-normal text-[#e5484d] active:scale-[0.99]"
->
-  Reset Settings
-</button>
+              type="button"
+              onClick={onOpenReset}
+              className="h-12 w-full rounded-full border border-[#f0b8b8] bg-[#fff1f1] text-[13px] font-normal text-[#e5484d] active:scale-[0.99]"
+            >
+              Reset Settings
+            </button>
           </section>
         </div>
       </div>
