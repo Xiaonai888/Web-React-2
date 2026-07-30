@@ -3018,14 +3018,38 @@ const handleAddConfirm = async () => {
 
     const savedCharacters = (data.characters || []).map(mapCharacter)
 
+    const episodeCharacterIds = new Set([
+      ...characters.map((character) => String(character.id)),
+      String(newCharacterId),
+    ])
+
+    const episodeCharacters = savedCharacters.filter(
+      (character) =>
+        episodeCharacterIds.has(String(character.id))
+    )
+
     const savedCharacter =
-      savedCharacters.find(
-        (character) => character.id === newCharacterId
+      episodeCharacters.find(
+        (character) =>
+          String(character.id) === String(newCharacterId)
       ) ||
-      savedCharacters[savedCharacters.length - 1] ||
+      episodeCharacters[episodeCharacters.length - 1] ||
       null
 
-    setCharacters(savedCharacters)
+    setCharacters(episodeCharacters)
+
+    if (startNewEpisode || !requestedEpisodeId) {
+      sessionStorage.setItem(
+        castStorageKey,
+        JSON.stringify({
+          characterIds: episodeCharacters.map(
+            (character) => String(character.id)
+          ),
+          updatedAt: new Date().toISOString(),
+        })
+      )
+    }
+
     setAddPopupOpen(false)
 
     if (savedCharacter) {
@@ -3455,18 +3479,10 @@ const handleAddConfirm = async () => {
             lead_character_id:
               effectiveLeadCharacterId ||
               null,
+            character_ids: characters.map(
+              (character) => character.id
+            ),
             messages: messages.map((message) => ({
-
-              lead_character_id:
-  effectiveLeadCharacterId ||
-  null,
-character_ids:
-  characters.map(
-    (character) =>
-      character.id
-  ),
-messages: messages.map((message) => ({
-  
               id: message.id,
               type: message.type,
               character_id:
