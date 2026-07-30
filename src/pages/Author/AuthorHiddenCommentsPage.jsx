@@ -1178,9 +1178,7 @@ export default function AuthorHiddenCommentsPage() {
         </div>
       ) : null}
 
-      {toast ? (
-      
-      {toast ? (
+            {toast ? (
         <div className="fixed bottom-[calc(18px+env(safe-area-inset-bottom))] left-1/2 z-[120] w-[calc(100%-28px)] max-w-md -translate-x-1/2">
           <div
             className={`flex items-center gap-3 rounded-[20px] border px-4 py-3 shadow-[0_18px_50px_rgba(32,28,51,0.18)] ${
