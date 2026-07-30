@@ -419,6 +419,16 @@ const AUTO_SCROLL_SPEEDS = [
   },
 ]
 
+const CHAT_STORY_AUTO_TAP_SPEEDS = [
+  { label: 'Very slow', delay: 5000 },
+  { label: 'Slow', delay: 3000 },
+  { label: 'Normal', delay: 2000 },
+  { label: 'Fast', delay: 1500 },
+  { label: 'Very fast', delay: 1000 },
+]
+
+const DEFAULT_CHAT_STORY_AUTO_TAP_SPEED = 2
+
 function formatDate(value) {
 
 
@@ -2883,11 +2893,117 @@ function ResetSettingsModal({ open, onCancel, onConfirm }) {
   )
 }
 
+function ChatStoryReadingPreferences({
+  readMode,
+  setReadMode,
+  autoTapSpeed,
+  setAutoTapSpeed,
+}) {
+  const selectedSpeed =
+    CHAT_STORY_AUTO_TAP_SPEEDS[
+      autoTapSpeed
+    ] ||
+    CHAT_STORY_AUTO_TAP_SPEEDS[
+      DEFAULT_CHAT_STORY_AUTO_TAP_SPEED
+    ]
+
+  return (
+    <SettingSection title="Reading Preferences">
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            setReadMode('manual')
+          }
+          className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+            readMode === 'manual'
+              ? 'bg-[#111827] text-white'
+              : 'bg-[#f5f3fa] text-[#111827]'
+          }`}
+        >
+          Manual Tap
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setReadMode('auto')
+          }
+          className={`h-12 rounded-[16px] text-[13px] font-normal active:scale-[0.98] ${
+            readMode === 'auto'
+              ? 'bg-[#111827] text-white'
+              : 'bg-[#f5f3fa] text-[#111827]'
+          }`}
+        >
+          Auto Tap
+        </button>
+      </div>
+
+      {readMode === 'auto' ? (
+        <div className="mt-5 rounded-[22px] bg-[#fafafe] p-3">
+          <div className="mb-3">
+            <h4 className="text-[13px] font-bold text-[#111827]">
+              Auto Tap Speed
+            </h4>
+
+            <p className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
+              Shows one message at a time automatically
+            </p>
+          </div>
+
+          <div className="mb-2 text-center text-[12px] font-black text-[#667085]">
+            {selectedSpeed.label}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/Icons/Turtle.svg"
+              alt="Slow"
+              className="h-6 w-6 shrink-0"
+            />
+
+            <input
+              type="range"
+              min="0"
+              max={
+                CHAT_STORY_AUTO_TAP_SPEEDS.length -
+                1
+              }
+              step="1"
+              value={autoTapSpeed}
+              onChange={(event) =>
+                setAutoTapSpeed(
+                  Number(event.target.value)
+                )
+              }
+              className="w-full accent-[#111827]"
+            />
+
+            <img
+              src="/assets/Icons/Rabbit.svg"
+              alt="Fast"
+              className="h-6 w-6 shrink-0"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-[18px] bg-[#fafafe] px-4 py-4 text-[11px] font-medium leading-5 text-[#8d94a1]">
+          Tap the reading area to show one message at a time.
+        </div>
+      )}
+    </SettingSection>
+  )
+}
+
 function ReaderSettingsDrawer({
   open,
   onClose,
+  isChatStory,
+  chatStoryReadMode,
+  setChatStoryReadMode,
+  chatStoryAutoTapSpeed,
+  setChatStoryAutoTapSpeed,
   themeName,
-  setThemeName,
   fontSizeIndex,
   setFontSizeIndex,
   fontKey,
@@ -2990,6 +3106,21 @@ const handleDragEnd = () => {
 </button>
         </div>
 
+        {isChatStory ? (
+  <ChatStoryReadingPreferences
+    readMode={chatStoryReadMode}
+    setReadMode={
+      setChatStoryReadMode
+    }
+    autoTapSpeed={
+      chatStoryAutoTapSpeed
+    }
+    setAutoTapSpeed={
+      setChatStoryAutoTapSpeed
+    }
+  />
+) : (
+
         <div className="mx-auto max-w-[520px] px-4 py-5">
           <SettingSection title="Reading Preferences">
             <div className="grid grid-cols-2 gap-2">
@@ -3062,6 +3193,7 @@ const handleDragEnd = () => {
               </div>
             ) : null}
           </SettingSection>
+          )}
 
           <section className="px-2 pt-1">
             <button
@@ -3887,9 +4019,49 @@ const [brightness, setBrightness] = useState(() => {
 })
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
   const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(false)
-  const [autoScrollSpeed, setAutoScrollSpeed] = useState(() => Number(localStorage.getItem('reader_auto_scroll_speed') || 1))
-  const [adultWarningOpen, setAdultWarningOpen] = useState(false)
+  const [autoScrollEnabled, setAutoScrollEnabled] =
+  useState(false)
+
+const [autoScrollSpeed, setAutoScrollSpeed] =
+  useState(() =>
+    Number(
+      localStorage.getItem(
+        'reader_auto_scroll_speed'
+      ) || 1
+    )
+  )
+
+const [
+  chatStoryReadMode,
+  setChatStoryReadMode,
+] = useState(() =>
+  localStorage.getItem(
+    'chat_story_read_mode'
+  ) === 'auto'
+    ? 'auto'
+    : 'manual'
+)
+
+const [
+  chatStoryAutoTapSpeed,
+  setChatStoryAutoTapSpeed,
+] = useState(() => {
+  const savedSpeed = Number(
+    localStorage.getItem(
+      'chat_story_auto_tap_speed'
+    )
+  )
+
+  return Number.isInteger(savedSpeed) &&
+    savedSpeed >= 0 &&
+    savedSpeed <
+      CHAT_STORY_AUTO_TAP_SPEEDS.length
+    ? savedSpeed
+    : DEFAULT_CHAT_STORY_AUTO_TAP_SPEED
+})
+
+const [adultWarningOpen, setAdultWarningOpen] =
+  useState(false)
   const [adultAccepted, setAdultAccepted] = useState(false)
   const [adultConsentGranted, setAdultConsentGranted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -3994,7 +4166,11 @@ const isChatStory = useMemo(() => {
     return false
   }
 }, [episode?.content, storyType])
-
+useEffect(() => {
+  if (isChatStory) {
+    setAutoScrollEnabled(false)
+  }
+}, [isChatStory])
 const effectiveReadingMode =
   isMangaStory || isChatStory
     ? 'scroll'
@@ -4123,6 +4299,20 @@ useEffect(() => {
   useEffect(() => {
     localStorage.setItem('reader_auto_scroll_speed', String(autoScrollSpeed))
   }, [autoScrollSpeed])
+
+      useEffect(() => {
+  localStorage.setItem(
+    'chat_story_read_mode',
+    chatStoryReadMode
+  )
+}, [chatStoryReadMode])
+
+useEffect(() => {
+  localStorage.setItem(
+    'chat_story_auto_tap_speed',
+    String(chatStoryAutoTapSpeed)
+  )
+}, [chatStoryAutoTapSpeed])
 
   const handleReaderDoubleTap = (event) => {
     const target = event.target
@@ -5086,9 +5276,19 @@ useEffect(() => {
       autoScrollFrameRef.current = null
     }
 
-    if (effectiveReadingMode !== 'scroll' || !autoScrollEnabled || loading || settingsOpen || fontSelectOpen || resetOpen || episodeListOpen || !adultAccepted) {
-      return undefined
-    }
+    if (
+  isChatStory ||
+  effectiveReadingMode !== 'scroll' ||
+  !autoScrollEnabled ||
+  loading ||
+  settingsOpen ||
+  fontSelectOpen ||
+  resetOpen ||
+  episodeListOpen ||
+  !adultAccepted
+) {
+  return undefined
+}
 
     const scrollStep = () => {
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
@@ -5114,7 +5314,18 @@ useEffect(() => {
         autoScrollFrameRef.current = null
       }
     }
-  }, [adultAccepted, autoScrollEnabled, autoScrollSpeed, effectiveReadingMode, episodeListOpen, fontSelectOpen, loading, resetOpen, settingsOpen])
+  }, [
+  adultAccepted,
+  autoScrollEnabled,
+  autoScrollSpeed,
+  effectiveReadingMode,
+  episodeListOpen,
+  fontSelectOpen,
+  isChatStory,
+  loading,
+  resetOpen,
+  settingsOpen,
+])
 
   const sortedReaderEpisodes = useMemo(() => {
     return [...(Array.isArray(episodes) ? episodes : [])].sort(
@@ -5460,7 +5671,11 @@ async function handleLockedDiamondUnlock(
     setReadingMode('scroll')
     setAutoScrollEnabled(false)
     setAutoScrollSpeed(1)
-    setResetOpen(false)
+    setChatStoryReadMode('manual')
+    setChatStoryAutoTapSpeed(
+    DEFAULT_CHAT_STORY_AUTO_TAP_SPEED
+)
+setResetOpen(false)
   }
 
 
@@ -5594,7 +5809,9 @@ return (
     <div className="min-h-screen bg-[#FFFFFF] pb-[110px]">
       
 
-      {effectiveReadingMode === 'scroll' && autoScrollEnabled ? (
+      {!isChatStory &&
+effectiveReadingMode === 'scroll' &&
+autoScrollEnabled ? (
         <button
           type="button"
           onClick={() => setAutoScrollEnabled(false)}
@@ -5638,9 +5855,22 @@ return (
       />
 
       <ReaderSettingsDrawer
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        themeName={themeName}
+  open={settingsOpen}
+  onClose={() => setSettingsOpen(false)}
+  isChatStory={isChatStory}
+  chatStoryReadMode={
+    chatStoryReadMode
+  }
+  setChatStoryReadMode={
+    setChatStoryReadMode
+  }
+  chatStoryAutoTapSpeed={
+    chatStoryAutoTapSpeed
+  }
+  setChatStoryAutoTapSpeed={
+    setChatStoryAutoTapSpeed
+  }
+  themeName={themeName}
         setThemeName={setThemeName}
         fontSizeIndex={fontSizeIndex}
         setFontSizeIndex={setFontSizeIndex}
@@ -5653,10 +5883,13 @@ return (
         setLineSpacing={setLineSpacing}
         readingMode={effectiveReadingMode}
         setReadingMode={(nextMode) => {
-          if (!isMangaStory) {
-            setReadingMode(nextMode)
-          }
-        }}
+  if (
+    !isMangaStory &&
+    !isChatStory
+  ) {
+    setReadingMode(nextMode)
+  }
+}}
         autoScrollEnabled={autoScrollEnabled}
         setAutoScrollEnabled={setAutoScrollEnabled}
         autoScrollSpeed={autoScrollSpeed}
@@ -6013,8 +6246,26 @@ adultAccepted &&
       className={`overflow-hidden rounded-none ${theme.card} shadow-none ring-0 sm:rounded-[28px] sm:shadow-sm sm:ring-1 sm:ring-black/5`}
     >
       <ChatStoryReader
-        content={episode.content}
-        onProgress={(percent) => {
+  content={episode.content}
+  readMode={chatStoryReadMode}
+  autoTapDelay={
+    CHAT_STORY_AUTO_TAP_SPEEDS[
+      chatStoryAutoTapSpeed
+    ]?.delay ||
+    CHAT_STORY_AUTO_TAP_SPEEDS[
+      DEFAULT_CHAT_STORY_AUTO_TAP_SPEED
+    ].delay
+  }
+  autoTapPaused={
+    settingsOpen ||
+    fontSelectOpen ||
+    resetOpen ||
+    episodeListOpen ||
+    readerMoreOpen ||
+    commentsOpen ||
+    giftPopupOpen
+  }
+  onProgress={(percent) => {
           setReadingProgress(percent)
           readingProgressRef.current = percent
           lastReadingActivityRef.current = Date.now()
