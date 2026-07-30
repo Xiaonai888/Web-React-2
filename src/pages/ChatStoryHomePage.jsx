@@ -1,5 +1,16 @@
-import { useMemo } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
+const API_BASE_URL =
+  window.location.hostname ===
+    'localhost' ||
+  window.location.hostname ===
+    '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
 const SHOW_DEMO_STORIES = false
 
@@ -54,6 +65,176 @@ const categories = [
   { title: 'Fanfic Anime / Game / Film', icon: '🎮', className: 'from-[#f6aa8d] to-[#a9eff6]' },
   { title: 'Action / Adventure / Horror', icon: '⚔️', className: 'from-[#ffc06f] to-[#8db8ef]' },
 ]
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (
+    !Number.isFinite(number) ||
+    number <= 0
+  ) {
+    return '0'
+  }
+
+  if (number >= 1000000) {
+    return `${(
+      number / 1000000
+    )
+      .toFixed(
+        number >= 10000000 ? 0 : 1
+      )
+      .replace(/\.0$/, '')}M`
+  }
+
+  if (number >= 1000) {
+    return `${(
+      number / 1000
+    )
+      .toFixed(
+        number >= 10000 ? 0 : 1
+      )
+      .replace(/\.0$/, '')}K`
+  }
+
+  return String(number)
+}
+
+function formatUpdatedTime(value) {
+  const updatedTime =
+    value
+      ? new Date(value).getTime()
+      : 0
+
+  if (
+    !updatedTime ||
+    Number.isNaN(updatedTime)
+  ) {
+    return 'recently'
+  }
+
+  const difference =
+    Date.now() - updatedTime
+
+  const minutes = Math.max(
+    0,
+    Math.floor(
+      difference / 60000
+    )
+  )
+
+  if (minutes < 1) {
+    return 'just now'
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min ago`
+  }
+
+  const hours = Math.floor(
+    minutes / 60
+  )
+
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+
+  const days = Math.floor(
+    hours / 24
+  )
+
+  if (days === 1) {
+    return 'yesterday'
+  }
+
+  if (days < 30) {
+    return `${days}d ago`
+  }
+
+  return new Date(
+    updatedTime
+  ).toLocaleDateString('en-GB')
+}
+
+function mapApiStory(story) {
+  return {
+    id: story.id,
+    title:
+      story.title ||
+      'Untitled Story',
+    cover:
+      story.cover_url || '',
+    views: formatCompactNumber(
+      story.total_views
+    ),
+    totalViews: Number(
+      story.total_views || 0
+    ),
+    comments:
+      formatCompactNumber(
+        story.total_comments
+      ),
+    genre:
+      story.main_genre ||
+      'Chat Story',
+    tags: Array.isArray(story.tags)
+      ? story.tags
+      : [],
+    description:
+      story.description || '',
+    totalEpisodes: Number(
+      story.total_episodes || 0
+    ),
+    updatedAt:
+      story.updated_at ||
+      story.created_at ||
+      '',
+    badge:
+      String(
+        story.story_status || ''
+      ).toLowerCase() ===
+      'completed'
+        ? 'END'
+        : '',
+  }
+}
+
+function storyMatchesSection(
+  story,
+  sectionKey
+) {
+  const searchText = [
+    story.genre,
+    ...(story.tags || []),
+  ]
+    .join(' ')
+    .toLowerCase()
+
+  if (sectionKey === 'romance') {
+    return searchText.includes(
+      'romance'
+    )
+  }
+
+  if (sectionKey === 'lgbt') {
+    return (
+      searchText.includes('lgbt') ||
+      searchText.includes('boy love') ||
+      searchText.includes('boys love') ||
+      searchText.includes('girl love') ||
+      searchText.includes('girls love') ||
+      searchText.includes(' bl ') ||
+      searchText.includes(' gl ')
+    )
+  }
+
+  if (sectionKey === 'cp-idol') {
+    return (
+      searchText.includes('cp idol') ||
+      searchText.includes('idol')
+    )
+  }
+
+  return false
+}
 
 function CoverFallback({ title }) {
   return (
@@ -132,6 +313,182 @@ function SectionHeader({ icon, title, onMore }) {
 export default function ChatStoryHomePage() {
   const navigate = useNavigate()
 
+  const [
+    chatStories,
+    setChatStories,
+  ] = useState([])
+
+  const [
+    loadingStories,
+    setLoadingStories,
+  ] = useState(true)
+
+  const [
+    storiesError,
+    setStoriesError,
+  ] = useState('')
+
+  useEffect(() => {
+    const controller =
+      new AbortController()
+
+    async function loadChatStories() {
+      try {
+        setLoadingStories(true)
+        setStoriesError('')
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/public/stories?story_type=chat_story&sort=updated&limit=40`,
+          {
+            signal:
+              controller.signal,
+          }
+        )
+
+        const data =
+          await response
+            .json()
+            .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.message ||
+              'Failed to load Chat Stories'
+          )
+        }
+
+        const nextStories =
+          (
+            Array.isArray(
+              data.stories
+            )
+              ? data.stories
+              : []
+          )
+            .filter(
+              (story) =>
+                story?.id
+            )
+            .map(mapApiStory)
+
+        setChatStories(
+          nextStories
+        )
+      } catch (error) {
+        if (
+          error.name ===
+          'AbortError'
+        ) {
+          return
+        }
+
+        setStoriesError(
+          error.message ||
+            'Failed to load Chat Stories'
+        )
+      } finally {
+        if (
+          !controller.signal
+            .aborted
+        ) {
+          setLoadingStories(
+            false
+          )
+        }
+      }
+    }
+
+    loadChatStories()
+
+    return () => {
+      controller.abort()
+    }
+  }, [])
+
+  const hotPickStories =
+    useMemo(
+      () =>
+        [...chatStories]
+          .sort(
+            (
+              first,
+              second
+            ) =>
+              second.totalViews -
+                first.totalViews ||
+              new Date(
+                second.updatedAt ||
+                  0
+              ).getTime() -
+                new Date(
+                  first.updatedAt ||
+                    0
+                ).getTime()
+          )
+          .slice(0, 10),
+      [chatStories]
+    )
+
+  const realSections =
+    useMemo(
+      () =>
+        sections
+          .map((section) => ({
+            ...section,
+            stories:
+              chatStories
+                .filter(
+                  (story) =>
+                    storyMatchesSection(
+                      story,
+                      section.key
+                    )
+                )
+                .slice(0, 10),
+          }))
+          .filter(
+            (section) =>
+              section.stories
+                .length > 0
+          ),
+      [chatStories]
+    )
+
+  const newUpdatedStories =
+    useMemo(
+      () =>
+        [...chatStories]
+          .sort(
+            (
+              first,
+              second
+            ) =>
+              new Date(
+                second.updatedAt ||
+                  0
+              ).getTime() -
+              new Date(
+                first.updatedAt ||
+                  0
+              ).getTime()
+          )
+          .slice(0, 10),
+      [chatStories]
+    )
+
+  const recommendedStory =
+    hotPickStories[0] ||
+    newUpdatedStories[0] ||
+    null
+
+  const featureBanners = useMemo(
+
+export default function ChatStoryHomePage() {
+  const navigate = useNavigate()
+
   const featureBanners = useMemo(
     () => [
       {
@@ -204,11 +561,32 @@ export default function ChatStoryHomePage() {
         <section className="pt-2">
           <SectionHeader icon="💎" title="Hot Picks" onMore={() => openCollection('hot-picks')} />
           <div className="flex gap-3 overflow-x-auto px-4 pb-2">
-            {(SHOW_DEMO_STORIES ? hotPicks : []).map((story) => (
-              <StoryCover key={story.id} story={story} onOpen={openStory} />
-            ))}
-            <div className="w-1 shrink-0" />
-          </div>
+  {loadingStories ? (
+    <div className="flex h-[188px] w-full items-center justify-center text-[12px] font-semibold text-[#98a2b3]">
+      Loading Chat Stories...
+    </div>
+  ) : storiesError ? (
+    <div className="flex h-[100px] w-full items-center justify-center px-5 text-center text-[12px] font-semibold text-[#d92d20]">
+      {storiesError}
+    </div>
+  ) : hotPickStories.length ? (
+    hotPickStories.map(
+      (story) => (
+        <StoryCover
+          key={story.id}
+          story={story}
+          onOpen={openStory}
+        />
+      )
+    )
+  ) : (
+    <div className="flex h-[100px] w-full items-center justify-center text-[12px] font-semibold text-[#98a2b3]">
+      No published Chat Stories yet.
+    </div>
+  )}
+
+  <div className="w-1 shrink-0" />
+</div>
         </section>
 
         <section className="mt-7">
@@ -233,7 +611,7 @@ export default function ChatStoryHomePage() {
           </div>
         </section>
 
-        {sections.map((section) => (
+        {realSections.map((section) => (
           <section key={section.key} className="mt-7">
             <SectionHeader
               icon={section.icon}
@@ -241,7 +619,7 @@ export default function ChatStoryHomePage() {
               onMore={() => openCollection(section.key)}
             />
             <div className="flex gap-3 overflow-x-auto px-4 pb-2">
-              {(SHOW_DEMO_STORIES ? section.stories : []).map((story) => (
+              {section.stories.map((story) => (
                 <StoryCover key={story.id} story={story} onOpen={openStory} />
               ))}
               <div className="w-1 shrink-0" />
@@ -277,7 +655,9 @@ export default function ChatStoryHomePage() {
           <SectionHeader icon="✨" title="New & Updated" onMore={() => openCollection('new-updated')} />
 
           <div className="divide-y divide-[#eef0f3]">
-            {sections[0].stories.slice(0, 3).map((story, index) => (
+            {newUpdatedStories
+  .slice(0, 6)
+  .map((story) => (
               <button
                 key={`updated-${story.id}`}
                 type="button"
@@ -295,10 +675,11 @@ export default function ChatStoryHomePage() {
                 <div className="min-w-0 flex-1">
                   <div className="line-clamp-1 text-[14px] font-extrabold text-[#22252b]">{story.title}</div>
                   <div className="mt-1 text-[11px] font-semibold text-[#969ba5]">
-                    EP {12 - index * 3} · Updated {index === 0 ? '5 min ago' : index === 1 ? 'today' : 'yesterday'}
+                    EP {story.totalEpisodes} · Updated {formatUpdatedTime(story.updatedAt)}
                   </div>
                   <div className="mt-1 line-clamp-1 text-[11px] text-[#777e89]">
-                    A new conversation is waiting for you.
+                    {story.description ||
+  'A new conversation is waiting for you.'}
                   </div>
                 </div>
 
@@ -308,34 +689,74 @@ export default function ChatStoryHomePage() {
           </div>
         </section>
 
-        <section className="mt-8 px-4">
-          <SectionHeader icon="⭐" title="Recommended for You" onMore={() => openCollection('recommended')} />
+        {recommendedStory ? (
+  <section className="mt-8 px-4">
+    <SectionHeader
+      icon="⭐"
+      title="Recommended for You"
+      onMore={() =>
+        openCollection(
+          'recommended'
+        )
+      }
+    />
 
-          <button
-            type="button"
-            onClick={() => openStory(sections[2].stories[0])}
-            className="flex w-full gap-3 rounded-[18px] border border-[#ececf1] bg-white p-3 text-left shadow-[0_8px_24px_rgba(17,24,39,0.05)] active:scale-[0.99]"
-          >
-            <div className="aspect-[3/4] w-[94px] shrink-0 overflow-hidden rounded-[12px] bg-[#f3f4f6]">
-              <CoverFallback title="Falling for the Professor" />
-            </div>
+    <button
+      type="button"
+      onClick={() =>
+        openStory(
+          recommendedStory
+        )
+      }
+      className="flex w-full gap-3 rounded-[18px] border border-[#ececf1] bg-white p-3 text-left shadow-[0_8px_24px_rgba(17,24,39,0.05)] active:scale-[0.99]"
+    >
+      <div className="aspect-[3/4] w-[94px] shrink-0 overflow-hidden rounded-[12px] bg-[#f3f4f6]">
+        {recommendedStory.cover ? (
+          <img
+            src={
+              recommendedStory.cover
+            }
+            alt={
+              recommendedStory.title
+            }
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <CoverFallback
+            title={
+              recommendedStory.title
+            }
+          />
+        )}
+      </div>
 
-            <div className="min-w-0 flex-1 py-1">
-              <div className="line-clamp-2 text-[16px] font-black leading-5 text-[#22252b]">
-                Falling for the Professor
-              </div>
-              <div className="mt-2 line-clamp-2 text-[12px] leading-5 text-[#737985]">
-                He never expected her replies would change everything.
-              </div>
-              <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#969ba5]">
-                <span><i className="fa-regular fa-eye mr-1" />319K</span>
-                <span>Romance</span>
-              </div>
-            </div>
+      <div className="min-w-0 flex-1 py-1">
+        <div className="line-clamp-2 text-[16px] font-black leading-5 text-[#22252b]">
+          {recommendedStory.title}
+        </div>
 
-            <i className="fa-regular fa-bookmark mt-1 text-[16px] text-[#7c3aed]" />
-          </button>
-        </section>
+        <div className="mt-2 line-clamp-2 text-[12px] leading-5 text-[#737985]">
+          {recommendedStory.description ||
+            'A new conversation is waiting for you.'}
+        </div>
+
+        <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#969ba5]">
+          <span>
+            <i className="fa-regular fa-eye mr-1" />
+            {recommendedStory.views}
+          </span>
+
+          <span>
+            {recommendedStory.genre}
+          </span>
+        </div>
+      </div>
+
+      <i className="fa-regular fa-bookmark mt-1 text-[16px] text-[#7c3aed]" />
+    </button>
+  </section>
+) : null}
       </main>
     </div>
   )
