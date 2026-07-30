@@ -64,6 +64,7 @@ import StoryDescriptionGuidePage from './pages/Author/StoryDescriptionGuidePage'
 import StoryPerformancePage from './pages/Author/StoryPerformancePage'
 import AuthorHiddenCommentsPage from './pages/Author/AuthorHiddenCommentsPage'
 import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
+import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
 
 
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -240,6 +241,7 @@ function AppShell() {
     '/author/comment-protection',
     '/author/comment-protection/hidden-comments',
     '/author/comment-protection/blocked-readers',
+    '/author/comment-protection/moderation-history',
     '/author/page-settings',
     '/author/page/edit',
     '/author/edit-page',
@@ -1164,6 +1166,7 @@ const shouldShowOpeningAds =
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
         <Route path="/author/comment-protection/hidden-comments" element={<AuthorHiddenCommentsPage />} />
         <Route path="/author/comment-protection/blocked-readers" element={<AuthorBlockedReadersPage />} />
+        <Route path="/author/comment-protection/moderation-history" element={<AuthorModerationHistoryPage />} />
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
         <Route path="/author/stories" element={<AuthorStoriesPage />} />
         <Route path="/author/notifications" element={<StoryNotificationsPage />} />
