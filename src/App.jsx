@@ -258,8 +258,8 @@ function AppShell() {
     '/genre/romance/latest',
     '/genre/romance/updates',
     '/genre/romance/completed',
-    '/author/comment-protection',
-    '/author/comment-protection/hidden-comments',
+    
+  
   ]
 
   const shouldHideFooter =
