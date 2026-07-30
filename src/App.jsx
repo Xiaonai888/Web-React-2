@@ -239,6 +239,7 @@ function AppShell() {
     '/reader/post/create',
     '/reader/post/review',
     '/author/comment-protection',
+    '/author/comment-protection/hidden-comments',
     '/author/page-settings',
     '/author/page/edit',
     '/author/edit-page',
@@ -1185,8 +1186,9 @@ const shouldShowOpeningAds =
         <Route path="/tasks" element={<TaskCenterPage />} />
         <Route path="/tasks/history" element={<TaskHistoryPage />} />
         <Route path="/author/trash" element={<AuthorTrashPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/author/comment-protection" element={<AuthorCommentProtectionPage />} />
+        <Route path="/author/comment-protection/hidden-comments" element={<AuthorHiddenCommentsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/story/:storyId/episode/:episodeId" element={<ReaderPage />} />
         <Route path="/fast/studio" element={<LazyPage><FastStudioPage /></LazyPage>} />
         <Route path="/fast/studio/create" element={<LazyPage><FastCreateVideoPage /></LazyPage>} />
