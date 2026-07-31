@@ -142,7 +142,11 @@ function ComingSoonPanel({ title }) {
 
 const SHOW_STORY_TYPE_TABS = false
 
-export default function ForYou({ slideSectionKey = 'home_top_slider', titleOnlySections = false }) {
+export default function ForYou({
+  slideSectionKey = 'home_top_slider',
+  titleOnlySections = false,
+  onReady = null,
+}) {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('novel')
   const [activeGenre, setActiveGenre] = useState('today')
@@ -398,12 +402,82 @@ useEffect(() => {
       }
     }
 
-    fetchSlides()
+        fetchSlides()
   }, [slideSectionKey])
 
   useEffect(() => {
-  if (
-    (!titleOnlySections && contentGenre !== 'today') ||
+    if (slidesLoading || typeof onReady !== 'function') return undefined
+
+    let finished = false
+    let quietTimer = 0
+    let retryTimer = 0
+    let fallbackTimer = 0
+    let observer = null
+
+    const finish = () => {
+      if (finished) return
+
+      finished = true
+      observer?.disconnect()
+      window.clearTimeout(quietTimer)
+      window.clearTimeout(retryTimer)
+      window.clearTimeout(fallbackTimer)
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(onReady)
+      })
+    }
+
+    const getRequiredImages = () =>
+      Array.from(document.images).filter((image) => {
+        if (image.closest('.shadow-splash')) return false
+        if (image.loading !== 'lazy') return true
+
+        const rect = image.getBoundingClientRect()
+        return rect.top < window.innerHeight * 1.5 && rect.bottom > -200
+      })
+
+    const checkPage = () => {
+      window.clearTimeout(quietTimer)
+
+      quietTimer = window.setTimeout(() => {
+        const documentLoaded = document.readyState === 'complete'
+        const imagesLoaded = getRequiredImages().every((image) => image.complete)
+
+        if (documentLoaded && imagesLoaded) {
+          finish()
+          return
+        }
+
+        retryTimer = window.setTimeout(checkPage, 150)
+      }, 800)
+    }
+
+    observer = new MutationObserver(checkPage)
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['src'],
+    })
+
+    window.addEventListener('load', checkPage, { once: true })
+    checkPage()
+    fallbackTimer = window.setTimeout(finish, 15000)
+
+    return () => {
+      finished = true
+      observer?.disconnect()
+      window.removeEventListener('load', checkPage)
+      window.clearTimeout(quietTimer)
+      window.clearTimeout(retryTimer)
+      window.clearTimeout(fallbackTimer)
+    }
+  }, [slidesLoading, onReady])
+
+  useEffect(() => {
+    if (
+      (!titleOnlySections && contentGenre !== 'today') ||
     !window.Swiper ||
     slides.length === 0
   ) {
