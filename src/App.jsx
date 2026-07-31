@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useCallback, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import Fast from './pages/Fast'
@@ -50,6 +50,7 @@ import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
+import ShadowSplashScreen from './components/ShadowSplashScreen'
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
 import AuthorCommentProtectionPage from './pages/Author/AuthorCommentProtectionPage'
@@ -208,6 +209,8 @@ function LazyPage({ children }) {
 function AppShell() {
   const location = useLocation()
   const [adStep, setAdStep] = useState('splash')
+  const [showShadowSplash, setShowShadowSplash] = useState(location.pathname === '/')
+  const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   const hideFooterPaths = [
     '/login',
     '/register',
@@ -297,7 +300,7 @@ const shouldShowOpeningAds =
     <>
       <VisitorTracker />
       <Routes>
-        <Route path="/" element={<ForYou />} />
+        <Route path="/" element={<ForYou onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
         <Route path="/fast" element={<Fast />} />
@@ -1178,13 +1181,25 @@ const shouldShowOpeningAds =
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {shouldShowOpeningAds && adStep === 'splash' ? (
-  <AdvertisementPopup placement="splash" blocking onFinish={() => setAdStep('opening')} />
-) : null}
+      {showShadowSplash ? (
+        <ShadowSplashScreen onFinish={finishShadowSplash} duration={15000} />
+      ) : null}
 
-{shouldShowOpeningAds && adStep === 'opening' ? (
-  <AdvertisementPopup placement="opening" blocking onFinish={() => setAdStep('done')} />
-) : null}
+      {!showShadowSplash && shouldShowOpeningAds && adStep === 'splash' ? (
+        <AdvertisementPopup
+          placement="splash"
+          blocking
+          onFinish={() => setAdStep('opening')}
+        />
+      ) : null}
+
+      {!showShadowSplash && shouldShowOpeningAds && adStep === 'opening' ? (
+        <AdvertisementPopup
+          placement="opening"
+          blocking
+          onFinish={() => setAdStep('done')}
+        />
+      ) : null}
 
       {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
 
