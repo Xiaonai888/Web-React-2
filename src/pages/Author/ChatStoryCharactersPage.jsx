@@ -1885,15 +1885,12 @@ sessionStorage.setItem(
 showToast('Saved')
 
 window.setTimeout(() => {
-  const editorPath =
-    `/author/story/${storyId}/chat/editor`
-
-  navigate(
-    startNewEpisode
-      ? `${editorPath}?new=1&first=0`
-      : editorPath,
-    { replace: true }
-  )
+  const params = new URLSearchParams({ returnTo })
+  if (startNewEpisode) {
+    params.set('new', '1')
+    params.set('first', '0')
+  }
+  navigate(`/author/story/${storyId}/chat/editor?${params.toString()}`, { replace: true })
 }, 500)
     } catch (error) {
       console.error(
