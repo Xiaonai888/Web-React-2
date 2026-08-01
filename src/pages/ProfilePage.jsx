@@ -1166,8 +1166,14 @@ async function handleOtherProfileOption(action) {
   </div>
 ) : (
   <div className="mt-4 grid grid-cols-2 gap-2">
-    <button className="h-10 rounded-[14px] bg-[#0b5cff] text-[13px] font-extrabold text-white">
-      Follow
+    <button
+      type="button"
+      onClick={handleProfileFollow}
+      disabled={followLoading}
+      aria-pressed={Boolean(user?.is_following)}
+      className="h-10 rounded-[14px] bg-[#111827] text-[13px] font-extrabold text-white transition active:scale-[0.98] disabled:opacity-60"
+    >
+      {followLoading ? 'Please wait...' : user?.is_following ? 'Following' : 'Follow'}
     </button>
     <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
       Message
