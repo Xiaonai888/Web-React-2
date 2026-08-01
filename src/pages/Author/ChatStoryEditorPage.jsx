@@ -1658,6 +1658,12 @@ export default function ChatStoryEditorPage() {
   ''
 const startNewEpisode =
   searchParams.get('new') === '1'
+  const requestedReturnTo = searchParams.get('returnTo')
+const returnTo =
+  requestedReturnTo === '/author/stories' ||
+  requestedReturnTo === '/author/dashboard'
+    ? requestedReturnTo
+    : '/author/dashboard'
 const draftScope = startNewEpisode
   ? 'new'
   : requestedEpisodeId
@@ -4032,12 +4038,13 @@ setPublishSettingsOpen(true)
   <div className="mx-auto flex max-w-5xl items-center gap-2">
     <button
       type="button"
-      onClick={() =>
-  navigate(
-    `/author/story/${storyId}/chat/characters`,
-    { replace: true }
-  )
-}
+      onClick={() => {
+  const params = new URLSearchParams({ returnTo })
+  if (startNewEpisode) params.set('new', '1')
+  navigate(`/author/story/${storyId}/chat/characters?${params.toString()}`, {
+    replace: true,
+  })
+}}
       className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95"
       aria-label="Go back"
     >
