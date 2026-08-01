@@ -155,6 +155,7 @@ const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorRead
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
 const AuthorTopFansPage = lazy(() => import('./pages/Author/AuthorTopFansPage'))
 const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'))
+const ShadowExclusivePage = lazy(() => import('./pages/ShadowExclusivePage'))
 const CompletedPage = lazy(() => import('./pages/CompletedPage'))
 const MostReadThisWeekPage = lazy(() => import('./pages/MostReadThisWeekPage'))
 const GiftGuidePage = lazy(() => import('./pages/GiftGuidePage'))
@@ -254,6 +255,7 @@ function AppShell() {
     '/most-read-this-week',
     '/gift-guide',
     '/premium',
+    '/shadow-exclusive',
     '/about',
     '/help',
     '/feedback',
@@ -317,6 +319,16 @@ const shouldShowOpeningAds =
             </LazyPage>
           }
         />
+
+        <Route
+  path="/shadow-exclusive"
+  element={
+    <LazyPage>
+      <ShadowExclusivePage />
+    </LazyPage>
+  }
+/>
+        
         <Route
           path="/shop/mall/cart"
           element={
