@@ -5,6 +5,7 @@ const API_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+const SHOW_BLOCKING_LOADING_SCREEN = false
 
 function getSearchFlag(name) {
   return new URLSearchParams(window.location.search).get(name) === '1'
@@ -243,7 +244,7 @@ markShown(nextAdvertisement)
   }, [visible])
 
   if (!visible || !advertisement?.image_url) {
-  if (loadingAd && blocking) {
+  if (SHOW_BLOCKING_LOADING_SCREEN && loadingAd && blocking) {
     return (
       <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black">
         <div className="text-center">
