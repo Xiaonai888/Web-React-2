@@ -578,7 +578,7 @@ const addEpisodeTheme =
   const isChatStory = String(story?.story_type || '').toLowerCase() === 'chat_story'
   navigate(
     isChatStory
-      ? `/author/story/${storyId}/chat/characters?new=1`
+      ? `/author/story/${storyId}/chat/characters?new=1&returnTo=${encodeURIComponent('/author/stories')}`
       : `/author/story/${storyId}/episode/create?first=0`
   )
 }
