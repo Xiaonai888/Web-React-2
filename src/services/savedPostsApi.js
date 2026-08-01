@@ -94,6 +94,35 @@ export function replaceSavedPostCollections(savedPostId, collectionIds) {
   })
 }
 
+export function fetchSavedPostStatus(sourceType, sourceId, signal) {
+  return request(
+    `/api/saved-posts/status${buildQuery({
+      source_type: sourceType,
+      source_id: sourceId,
+    })}`,
+    { signal }
+  )
+}
+
+export function saveSavedPost(payload) {
+  return request('/api/saved-posts', {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export function deleteSavedPostBySource(sourceType, sourceId) {
+  return request(
+    `/api/saved-posts/source${buildQuery({
+      source_type: sourceType,
+      source_id: sourceId,
+    })}`,
+    {
+      method: 'DELETE',
+    }
+  )
+}
+
 export function deleteSavedPost(savedPostId) {
   return request(`/api/saved-posts/${encodeURIComponent(savedPostId)}`, {
     method: 'DELETE',
