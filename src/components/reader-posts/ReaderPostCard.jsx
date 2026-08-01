@@ -10,6 +10,11 @@ import ReaderPostOptionsSheet, {
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
 import ReaderPostEchoShareSheet from './ReaderPostEchoShareSheet'
+import {
+  deleteSavedPostBySource,
+  fetchSavedPostStatus,
+  saveSavedPost,
+} from '../../services/savedPostsApi'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -264,6 +269,10 @@ export default function ReaderPostCard({
     useState(Number(post?.comment_count || 0))
   const [echoCount, setEchoCount] =
     useState(Number(post?.echo_count || 0))
+  const [isSaved, setIsSaved] =
+    useState(false)
+  const [saveBusy, setSaveBusy] =
+    useState(false)
 
   const user = post?.user || {}
   const isOwner =
@@ -302,11 +311,46 @@ export default function ReaderPostCard({
     )
   }, [post?.comment_count])
 
-  useEffect(() => {
+    useEffect(() => {
     setEchoCount(
       Number(post?.echo_count || 0)
     )
   }, [post?.echo_count])
+
+  useEffect(() => {
+    const token = getAuthToken()
+    const controller = new AbortController()
+    let ignore = false
+
+    if (!post?.id || !token) {
+      setIsSaved(false)
+      return undefined
+    }
+
+    fetchSavedPostStatus(
+      'reader_post',
+      post.id,
+      controller.signal
+    )
+      .then((data) => {
+        if (!ignore) {
+          setIsSaved(Boolean(data.saved))
+        }
+      })
+      .catch((error) => {
+        if (
+          !ignore &&
+          error?.name !== 'AbortError'
+        ) {
+          setIsSaved(false)
+        }
+      })
+
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [post?.id])
 
   useEffect(() => {
     if (!reactionPickerOpen) {
@@ -684,6 +728,63 @@ export default function ReaderPostCard({
     }
   }
 
+  async function toggleSavedPost() {
+    if (!post?.id || saveBusy) return
+
+    if (!getAuthToken()) {
+      setMenuOpen(false)
+      navigate('/login')
+      return
+    }
+
+    try {
+      setSaveBusy(true)
+
+      if (isSaved) {
+        await deleteSavedPostBySource(
+          'reader_post',
+          post.id
+        )
+
+        setIsSaved(false)
+        showReactionMessage(
+          'Removed from saved.'
+        )
+      } else {
+        await saveSavedPost({
+          source_type: 'reader_post',
+          source_id: String(post.id),
+          source_url:
+            `${window.location.pathname}${window.location.search}` +
+            `#reader-post-${post.id}`,
+          snapshot_data: {
+            content: post.content || '',
+            author_name:
+              user?.name || 'Reader',
+            username:
+              user?.username || '',
+            avatar_url:
+              user?.avatar_url || '',
+          },
+          original_created_at:
+            post.created_at || null,
+        })
+
+        setIsSaved(true)
+        showReactionMessage('Post saved.')
+      }
+
+      setMenuOpen(false)
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to update saved post.'
+      )
+    } finally {
+      setSaveBusy(false)
+    }
+  }
+
   return (
     <>
       <article
@@ -1001,6 +1102,8 @@ export default function ReaderPostCard({
         onViewProfile={
           viewReaderProfile
         }
+        isSaved={isSaved}
+        onSave={toggleSavedPost}
         onMessage={(text) =>
           window.alert(text)
         }
