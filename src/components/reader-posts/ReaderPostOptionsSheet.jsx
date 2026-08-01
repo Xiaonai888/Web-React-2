@@ -50,6 +50,8 @@ export default function ReaderPostOptionsSheet({
   onHide,
   onViewProfile,
   onMessage,
+  isSaved,
+  onSave,
 }) {
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
@@ -134,15 +136,25 @@ export default function ReaderPostOptionsSheet({
                 onClick={onDelete}
               />
             </>
-          ) : (
+                    ) : (
             <>
+              <SheetItem
+                icon={isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'}
+                title={isSaved ? 'Remove from saved' : 'Save post'}
+                description={
+                  isSaved
+                    ? 'Remove this post from your saved items.'
+                    : 'Add this post to your saved items.'
+                }
+                onClick={onSave}
+              />
+
               <SheetItem
                 icon="fa-regular fa-eye-slash"
                 title="Hide post"
                 description="Do not show this post again on this device."
                 onClick={onHide}
               />
-
               <SheetItem
                 icon="fa-regular fa-user"
                 title="View reader profile"
