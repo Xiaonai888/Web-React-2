@@ -3741,8 +3741,13 @@ localStorage.setItem(
 if (startNewEpisode) {
   localStorage.removeItem(storageKey)
 
+  const params = new URLSearchParams({
+    episodeId: savedEpisodeId,
+    returnTo,
+  })
+
   navigate(
-    `/author/story/${storyId}/chat/editor?episodeId=${encodeURIComponent(savedEpisodeId)}`,
+    `/author/story/${storyId}/chat/editor?${params.toString()}`,
     { replace: true }
   )
 }
