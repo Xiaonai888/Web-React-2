@@ -293,9 +293,9 @@ const shouldShowOpeningAds =
   location.pathname !== '/reset-password'
 
   const shouldShowMeAd =
-    location.pathname === '/me' &&
-    (!shouldShowOpeningAds || adStep === 'done')
-
+  location.pathname === '/me' &&
+  shouldShowOpeningAds &&
+  adStep === 'done'
   return (
     <>
       <VisitorTracker />
