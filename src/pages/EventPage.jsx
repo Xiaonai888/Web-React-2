@@ -1137,13 +1137,8 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
               <MostReadThisWeekSection />
             </section>
           </>
-        ) : (
+                ) : (
           <BlackSundayEventTab />
-            <h2 className="text-[24px] font-extrabold text-[#111827]">Events Coming Soon</h2>
-            <p className="mt-3 text-[14px] text-[#8d94a1]">
-              More reader and author events will appear here later.
-            </p>
-          </section>
         )}
       </main>
     </div>
