@@ -144,7 +144,13 @@ export default function StoryActionsSheet({ story, onClose, onDeleted }) {
 
           <button
             type="button"
-            onClick={() => openPage(`/author/story/${story.id}/episode/create?first=0`)}
+            onClick={() =>
+  openPage(
+    story.type === 'chat_story'
+      ? `/author/story/${story.id}/chat/characters?new=1&returnTo=${encodeURIComponent('/author/stories')}`
+      : `/author/story/${story.id}/episode/create?first=0`
+  )
+}
             className="flex items-center gap-3 rounded-[12px] bg-[#f8f6fb] px-3 py-3 text-left text-[12px] font-extrabold text-[#2a2430]"
           >
             <i className="fa-solid fa-plus text-[#744af2]" />
