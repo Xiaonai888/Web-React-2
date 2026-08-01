@@ -604,6 +604,7 @@ export default function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
+  const [followLoading, setFollowLoading] = useState(false)
   const [editForm, setEditForm] = useState({
   name: user?.name || '',
   username: user?.username || '',
@@ -671,6 +672,70 @@ following: String(user?.following_count || 0),
     }
   }, [avatarPreview, readerPostCount, user])
 
+async function handleProfileFollow() {
+  if (!profile.username || followLoading) return
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const wasFollowing = Boolean(user?.is_following)
+
+  try {
+    setFollowLoading(true)
+    setProfileTabMessage('')
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/users/${encodeURIComponent(profile.username)}/follow`,
+      {
+        method: wasFollowing ? 'DELETE' : 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to update follow')
+    }
+
+    setUser((current) => {
+      if (!current) return current
+
+      return {
+        ...current,
+        is_following: Boolean(data.is_following),
+        followers_count: Number(data.followers_count || 0),
+      }
+    })
+
+    const currentUser = getStoredUser()
+
+    if (currentUser) {
+      const changed = Boolean(data.is_following) !== wasFollowing
+      const difference = changed ? (data.is_following ? 1 : -1) : 0
+
+      saveStoredUser({
+        ...currentUser,
+        following_count: Math.max(
+          0,
+          Number(currentUser.following_count || 0) + difference
+        ),
+      })
+    }
+  } catch (error) {
+    setProfileTabMessage(error.message || 'Failed to update follow')
+    window.setTimeout(() => setProfileTabMessage(''), 2200)
+  } finally {
+    setFollowLoading(false)
+  }
+}
+  
   
 async function handleOtherProfileOption(action) {
   const profileUrl = `${window.location.origin}/profile?username=${encodeURIComponent(profile.username)}`
