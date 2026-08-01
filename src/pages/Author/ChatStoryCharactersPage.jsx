@@ -989,6 +989,12 @@ export default function ChatStoryCharactersPage() {
   const [searchParams] = useSearchParams()
   const startNewEpisode =
   searchParams.get('new') === '1'
+  const requestedReturnTo = searchParams.get('returnTo')
+const returnTo =
+  requestedReturnTo === '/author/stories' ||
+  requestedReturnTo === '/author/dashboard'
+    ? requestedReturnTo
+    : '/author/dashboard'
 const castStorageKey =
   `chat_story_episode_cast_${storyId || 'unknown'}_new`
 const fileInputRef = useRef(null)
@@ -1986,12 +1992,7 @@ navigate(
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() =>
-  navigate(
-    `/author/create-story?editStoryId=${storyId}&type=chat_story&returnTo=chat_characters`,
-    { replace: true }
-  )
-}
+            onClick={() => navigate(returnTo, { replace: true })}
             className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
             aria-label="Go back"
           >
