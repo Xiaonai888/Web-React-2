@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
+import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
@@ -1137,7 +1138,7 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
             </section>
           </>
         ) : (
-          <section className="mt-10 rounded-[22px] border border-[#eceaf2] bg-[#fafafa] px-5 py-10 text-center">
+          <BlackSundayEventTab />
             <h2 className="text-[24px] font-extrabold text-[#111827]">Events Coming Soon</h2>
             <p className="mt-3 text-[14px] text-[#8d94a1]">
               More reader and author events will appear here later.
