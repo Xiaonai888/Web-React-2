@@ -644,8 +644,8 @@ return {
 
   const handleAddEpisode = (story) => {
   const path = story.type === 'Chat Story'
-    ? `/author/story/${story.id}/chat/editor?new=1&first=0`
-    : `/author/story/${story.id}/episode/create?first=0`
+  ? `/author/story/${story.id}/chat/characters?new=1&returnTo=${encodeURIComponent('/author/dashboard')}`
+  : `/author/story/${story.id}/episode/create?first=0`
   navigate(path)
 }
 
