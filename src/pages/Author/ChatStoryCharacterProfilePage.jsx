@@ -367,26 +367,26 @@ const safeReturnPath =
 const fileInputRef = useRef(null)
 
   const handleBack = () => {
-  if (safeReturnPath) {
-    navigate(safeReturnPath, { replace: true })
-    return
+    if (safeReturnPath) {
+      navigate(safeReturnPath, { replace: true })
+      return
+    }
+
+    if (window.history.state?.idx > 0) {
+      navigate(-1)
+      return
+    }
+
+    const charactersPath =
+      `/author/story/${storyId}/chat/characters`
+
+    navigate(
+      startNewEpisode
+        ? `${charactersPath}?new=1`
+        : charactersPath,
+      { replace: true }
+    )
   }
-
-  if (window.history.state?.idx > 0) {
-    navigate(-1)
-    return
-  }
-
-  const charactersPath =
-    `/author/story/${storyId}/chat/characters`
-
-  navigate(
-    startNewEpisode
-      ? `${charactersPath}?new=1`
-      : charactersPath,
-    { replace: true }
-  )
-}
 
   const [nickname, setNickname] = useState('')
   const [roleGroup, setRoleGroup] = useState('main')
@@ -528,23 +528,7 @@ const fileInputRef = useRef(null)
         throw new Error(data.message || 'Failed to save character profile')
       }
 
-      if (safeReturnPath) {
-  navigate(
-    safeReturnPath,
-    { replace: true }
-  )
-  return
-}
-
-const charactersPath =
-  `/author/story/${storyId}/chat/characters`
-
-navigate(
-  startNewEpisode
-    ? `${charactersPath}?new=1`
-    : charactersPath,
-  { replace: true }
-)
+      handleBack()
     } catch (error) {
       setMessage(error.message || 'Failed to save character profile')
     } finally {
@@ -580,17 +564,8 @@ navigate(
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => {
-  if (safeReturnPath) {
-    navigate(
-      safeReturnPath,
-      { replace: true }
-    )
-    return
-  }
-
-  navigate(-1)
-}}
+            onClick={handleBack}
+            aria-label="Go back"
             className="flex h-10 w-10 items-center justify-center bg-transparent text-[#111827] active:scale-95"
           >
             <i className="fa-solid fa-chevron-left text-[14px]" />
