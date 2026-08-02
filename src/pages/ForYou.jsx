@@ -429,13 +429,12 @@ useEffect(() => {
     }
 
     const getRequiredImages = () =>
-      Array.from(document.images).filter((image) => {
-        if (image.closest('.shadow-splash')) return false
-        if (image.loading !== 'lazy') return true
+  Array.from(document.images).filter((image) => {
+    if (image.closest('.shadow-splash')) return false
 
-        const rect = image.getBoundingClientRect()
-        return rect.top < window.innerHeight * 1.5 && rect.bottom > -200
-      })
+    const rect = image.getBoundingClientRect()
+    return rect.top < window.innerHeight * 1.25 && rect.bottom > -100
+  })
 
     const checkPage = () => {
       window.clearTimeout(quietTimer)
@@ -450,7 +449,7 @@ useEffect(() => {
         }
 
         retryTimer = window.setTimeout(checkPage, 150)
-      }, 800)
+      }, 250)
     }
 
     observer = new MutationObserver(checkPage)
@@ -463,7 +462,7 @@ useEffect(() => {
 
     window.addEventListener('load', checkPage, { once: true })
     checkPage()
-    fallbackTimer = window.setTimeout(finish, 15000)
+    fallbackTimer = window.setTimeout(finish, 8000)
 
     return () => {
       finished = true
