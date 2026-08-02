@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ProfessionalEpisodeActionSheet from '../../components/author/ProfessionalEpisodeActionSheet'
+import { PublishSettingsSheet } from './EpisodeEditorPage'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -103,164 +104,6 @@ function StatusBadge({ status }) {
     <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${classes[normalized] || classes.draft}`}>
       {getStatusText(normalized)}
     </span>
-  )
-}
-
-function EpisodeActionSheet({
-  episode,
-  open,
-  onClose,
-  onEdit,
-  onPreview,
-  onPublish,
-  onMoveToDraft,
-  onDelete,
-  busy,
-}) {
-  const [dragging, setDragging] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const dragStartRef = useRef(0)
-  const dragYRef = useRef(0)
-
-  useEffect(() => {
-    if (!open) return
-    dragYRef.current = 0
-    setDragY(0)
-    setDragging(false)
-  }, [open])
-
-  if (!open || !episode) return null
-
-  const isPublished = String(episode.status || '').toLowerCase() === 'published'
-
-  const handleDragStart = (event) => {
-    dragStartRef.current = event.clientY
-    dragYRef.current = 0
-    setDragY(0)
-    setDragging(true)
-    event.currentTarget.setPointerCapture?.(event.pointerId)
-  }
-
-  const handleDragMove = (event) => {
-    if (!dragging) return
-    const nextY = Math.max(0, event.clientY - dragStartRef.current)
-    dragYRef.current = nextY
-    setDragY(nextY)
-  }
-
-  const handleDragEnd = () => {
-    if (!dragging) return
-    setDragging(false)
-
-    if (dragYRef.current >= 90) {
-      onClose()
-      return
-    }
-
-    dragYRef.current = 0
-    setDragY(0)
-  }
-
-  return (
-    <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Episode actions">
-      <button
-        type="button"
-        aria-label="Close episode actions"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40"
-      />
-
-      <section
-        className={`absolute bottom-0 left-1/2 w-full max-w-[520px] -translate-x-1/2 rounded-t-[28px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl ${
-          dragging ? '' : 'transition-transform duration-200 ease-out'
-        }`}
-        style={{ transform: `translate(-50%, ${dragY}px)` }}
-      >
-        <div
-          className="touch-none pb-3"
-          onPointerDown={handleDragStart}
-          onPointerMove={handleDragMove}
-          onPointerUp={handleDragEnd}
-          onPointerCancel={handleDragEnd}
-        >
-          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#d9dce4]" />
-        </div>
-
-        <div className="flex items-center justify-between gap-3 px-1 pb-3">
-          <div className="min-w-0">
-            <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
-              {episode.title || 'Untitled Episode'}
-            </div>
-            <div className="mt-1 text-[11px] font-normal text-[#8d94a1]">
-              EP {episode.episode_number || 1} • {getStatusText(episode.status)}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7] text-[#111827] active:scale-95"
-            aria-label="Close"
-          >
-            <i className="fa-solid fa-xmark text-[13px]" />
-          </button>
-        </div>
-
-        <div className="overflow-hidden rounded-[16px] border border-[#eceef2] bg-white">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onEdit(episode)}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
-          >
-            <i className="fa-solid fa-pen w-5 text-center text-[13px] text-[#111827]" />
-            <span className="text-[13px] font-semibold text-[#111827]">Edit Episode</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onPreview(episode)}
-            className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
-          >
-            <i className="fa-regular fa-eye w-5 text-center text-[13px] text-[#111827]" />
-            <span className="text-[13px] font-semibold text-[#111827]">Preview Episode</span>
-          </button>
-
-          {isPublished ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onMoveToDraft(episode)}
-              className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
-            >
-              <i className="fa-regular fa-file-lines w-5 text-center text-[13px] text-[#111827]" />
-              <span className="text-[13px] font-semibold text-[#111827]">Move to Draft</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onPublish(episode)}
-              className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#f8fafc] disabled:opacity-60"
-            >
-              <i className="fa-solid fa-arrow-up-from-bracket w-5 text-center text-[13px] text-[#111827]" />
-              <span className="text-[13px] font-semibold text-[#111827]">Publish Episode</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onDelete(episode)}
-            className="flex w-full items-center gap-3 border-t border-[#eef0f3] px-4 py-3.5 text-left active:bg-[#fff5f5] disabled:opacity-60"
-          >
-            <i className="fa-regular fa-trash-can w-5 text-center text-[13px] text-[#e5484d]" />
-            <span className="text-[13px] font-semibold text-[#e5484d]">Delete Episode</span>
-          </button>
-        </div>
-      </section>
-    </div>
   )
 }
 
@@ -433,7 +276,20 @@ export default function StoryManagerPage() {
   const [deleteEpisode, setDeleteEpisode] = useState(null)
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const modalOpen = Boolean(selectedEpisode || deleteEpisode || trashStoryOpen)
+  const [publishEpisode, setPublishEpisode] = useState(null)
+  const [publishSettingsOpen, setPublishSettingsOpen] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [episodeAdult, setEpisodeAdult] = useState(false)
+  const [episodeFree, setEpisodeFree] = useState(false)
+  const [releaseOption, setReleaseOption] = useState('publish')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
+  
+  const modalOpen = Boolean(
+    selectedEpisode ||
+    deleteEpisode ||
+    trashStoryOpen
+  )
 
   useEffect(() => {
     if (!modalOpen) return undefined
@@ -605,9 +461,173 @@ const addEpisodeTheme =
   }
 
   const handlePublishEpisode = (episode) => {
-    setSelectedEpisode(null)
-    navigate(`/author/story/${storyId}/episode/publish?episodeId=${episode.id}&first=${episode.episode_number === 1 ? '1' : '0'}`)
+  const scheduled = episode.scheduled_at
+    ? new Date(episode.scheduled_at)
+    : null
+
+  const localSchedule =
+    scheduled && !Number.isNaN(scheduled.getTime())
+      ? new Date(
+          scheduled.getTime() -
+          scheduled.getTimezoneOffset() * 60000
+        ).toISOString()
+      : ''
+
+  setSelectedEpisode(null)
+  setPublishEpisode(episode)
+  setEpisodeAdult(Boolean(episode.is_adult))
+  setEpisodeFree(Boolean(episode.is_free_published))
+  setReleaseOption(
+    String(episode.status).toLowerCase() === 'scheduled'
+      ? 'schedule'
+      : 'publish'
+  )
+  setScheduleDate(localSchedule.slice(0, 10))
+  setScheduleTime(localSchedule.slice(11, 16))
+
+  window.setTimeout(() => {
+    setPublishSettingsOpen(true)
+  }, 0)
+}
+
+const handleSavePublishSettings = async () => {
+  if (!publishEpisode || settingsSaving) return
+
+  if (
+    releaseOption === 'schedule' &&
+    (!scheduleDate || !scheduleTime)
+  ) {
+    setMessage('Please choose schedule date and time.')
+    return
   }
+
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  try {
+    setSettingsSaving(true)
+    setMessage('')
+
+    const status =
+      releaseOption === 'schedule'
+        ? 'scheduled'
+        : releaseOption === 'draft'
+          ? 'draft'
+          : 'published'
+
+    const scheduledAt =
+      releaseOption === 'schedule'
+        ? new Date(
+            `${scheduleDate}T${scheduleTime}:00`
+          ).toISOString()
+        : null
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/stories/${storyId}/episodes/${publishEpisode.id}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status,
+          scheduled_at: scheduledAt,
+          is_adult: episodeAdult,
+          is_free_published: episodeFree,
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      const blockedWords =
+        data.blocked_words_found ||
+        data.blockedWordsFound ||
+        []
+
+      if (
+        data.code === 'BLOCKED_WORDS_FOUND' ||
+        blockedWords.length
+      ) {
+        setPublishSettingsOpen(false)
+        setPublishEpisode(null)
+
+        navigate(
+          `/author/story/${storyId}/episode/publish-warning`,
+          {
+            state: {
+              episodeId: publishEpisode.id,
+              blockedWords,
+            },
+          }
+        )
+        return
+      }
+
+      throw new Error(
+        data.message || 'Failed to save publish settings.'
+      )
+    }
+
+    const savedEpisode = data.episode || {}
+    const updatedAt =
+      savedEpisode.updated_at ||
+      new Date().toISOString()
+
+    setEpisodes((current) =>
+      current.map((item) =>
+        String(item.id) === String(publishEpisode.id)
+          ? {
+              ...item,
+              ...savedEpisode,
+              status,
+              scheduled_at:
+                status === 'scheduled'
+                  ? scheduledAt
+                  : null,
+              published_at:
+                status === 'published'
+                  ? savedEpisode.published_at ||
+                    new Date().toISOString()
+                  : null,
+              is_adult: episodeAdult,
+              is_free_published: episodeFree,
+              updated_at: updatedAt,
+            }
+          : item
+      )
+    )
+
+    setActiveTab(
+      status === 'published'
+        ? 'published'
+        : 'drafts'
+    )
+
+    setPublishSettingsOpen(false)
+    setPublishEpisode(null)
+  } catch (error) {
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to backend.'
+        : error.message ||
+          'Failed to save publish settings.'
+    )
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  } finally {
+    setSettingsSaving(false)
+  }
+}
 
   const handleMoveToDraft = async (episode) => {
     const token = getAuthToken()
@@ -730,7 +750,26 @@ const addEpisodeTheme =
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f9] pb-[92px] text-[#111827]">
+    <div
+      className={`min-h-screen bg-[#f7f7f9] pb-[92px] text-[#111827] ${
+        storyType === 'manga' ? 'manga-red-theme' : ''
+      }`}
+    >
+      <style>{`
+        .manga-red-theme button:not(:disabled)[class*="bg-[#111827]"],
+        .manga-red-theme button:not(:disabled)[class*="bg-[#e5484d]"],
+        .manga-red-theme label[class*="bg-[#111827]"] {
+          background-color: #FE526E !important;
+        }
+
+        .manga-red-theme button[class*="text-[#0b5cff]"] {
+          color: #FE526E !important;
+        }
+
+        .manga-red-theme input[type="range"] {
+          accent-color: #FE526E;
+        }
+      `}</style>
       <ProfessionalEpisodeActionSheet
         episode={selectedEpisode}
         open={Boolean(selectedEpisode)}
@@ -742,6 +781,45 @@ const addEpisodeTheme =
         onDelete={handleDeleteEpisode}
         busy={busy}
       />
+
+      <PublishSettingsSheet
+  open={publishSettingsOpen}
+  episodeTitle={
+    publishEpisode?.title ||
+    'Untitled Episode'
+  }
+  showStorySettings={false}
+  genreOptions={[]}
+  storyLanguage=""
+  onStoryLanguageChange={() => {}}
+  mainGenre=""
+  onMainGenreChange={() => {}}
+  storyTags={[]}
+  onStoryTagsChange={() => {}}
+  updateDays={[]}
+  onToggleUpdateDay={() => {}}
+  storyStatus=""
+  onStoryStatusChange={() => {}}
+  storyAdult={false}
+  onStoryAdultChange={() => {}}
+  episodeAdult={episodeAdult}
+  onEpisodeAdultChange={setEpisodeAdult}
+  episodeFree={episodeFree}
+  onEpisodeFreeChange={setEpisodeFree}
+  releaseOption={releaseOption}
+  onReleaseOptionChange={setReleaseOption}
+  scheduleDate={scheduleDate}
+  onScheduleDateChange={setScheduleDate}
+  scheduleTime={scheduleTime}
+  onScheduleTimeChange={setScheduleTime}
+  saving={settingsSaving}
+  onClose={() => {
+    setPublishSettingsOpen(false)
+    setPublishEpisode(null)
+  }}
+  onSave={handleSavePublishSettings}
+  isChatStory={storyType === 'chat_story'}
+/>
 
       <ConfirmDeleteModal
         episode={deleteEpisode}
