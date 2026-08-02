@@ -406,73 +406,12 @@ useEffect(() => {
   }, [slideSectionKey])
 
   useEffect(() => {
-    if (slidesLoading || typeof onReady !== 'function') return undefined
-
-    let finished = false
-    let quietTimer = 0
-    let retryTimer = 0
-    let fallbackTimer = 0
-    let observer = null
-
-    const finish = () => {
-      if (finished) return
-
-      finished = true
-      observer?.disconnect()
-      window.clearTimeout(quietTimer)
-      window.clearTimeout(retryTimer)
-      window.clearTimeout(fallbackTimer)
-
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(onReady)
-      })
-    }
-
-    const getRequiredImages = () =>
-  Array.from(document.images).filter((image) => {
-    if (image.closest('.shadow-splash')) return false
-
-    const rect = image.getBoundingClientRect()
-    return rect.top < window.innerHeight * 1.25 && rect.bottom > -100
-  })
-
-    const checkPage = () => {
-      window.clearTimeout(quietTimer)
-
-      quietTimer = window.setTimeout(() => {
-        const documentLoaded = document.readyState === 'complete'
-        const imagesLoaded = getRequiredImages().every((image) => image.complete)
-
-        if (documentLoaded && imagesLoaded) {
-          finish()
-          return
-        }
-
-        retryTimer = window.setTimeout(checkPage, 150)
-      }, 250)
-    }
-
-    observer = new MutationObserver(checkPage)
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['src'],
-    })
-
-    window.addEventListener('load', checkPage, { once: true })
-    checkPage()
-    fallbackTimer = window.setTimeout(finish, 8000)
-
-    return () => {
-      finished = true
-      observer?.disconnect()
-      window.removeEventListener('load', checkPage)
-      window.clearTimeout(quietTimer)
-      window.clearTimeout(retryTimer)
-      window.clearTimeout(fallbackTimer)
-    }
-  }, [slidesLoading, onReady])
+  if (typeof onReady !== 'function') return undefined
+  const timer = window.setTimeout(() => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(onReady))
+  }, 400)
+  return () => window.clearTimeout(timer)
+}, [onReady])
 
   useEffect(() => {
     if (
