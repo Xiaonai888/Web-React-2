@@ -6,6 +6,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -14,264 +16,346 @@ function getAuthToken() {
   )
 }
 
-function money(value) {
+function formatMoney(value) {
   const number = Number(value || 0)
 
   if (!Number.isFinite(number)) return '$0.00'
 
-  return `$${number.toFixed(2)}`
-}
-
-function percent(value) {
-  const number = Number(value || 0)
-
-  if (!Number.isFinite(number)) return '0%'
-
-  return `${number.toFixed(number % 1 === 0 ? 0 : 1)}%`
-}
-
-function dateText(value) {
-  if (!value) return 'Not scheduled yet'
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) return 'Not scheduled yet'
-
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  return number.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
 }
 
-function methodLabel(method) {
-  if (!method) return 'Missing'
-  if (method.method_type === 'bank_qr') return 'Bank QR'
-  if (method.method_type === 'paypal') return 'PayPal'
-  if (method.method_type === 'phone') return 'Phone Number'
-  return 'Payment Method'
+function formatNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) return '0'
+
+  return number.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+  })
 }
 
-function statusStyle(status) {
-  if (status === 'paid') return 'bg-[#ecfdf3] text-[#16803c]'
-  if (status === 'failed' || status === 'missing_payment_method') return 'bg-[#fff1f2] text-[#e11d48]'
-  if (status === 'scheduled') return 'bg-[#fff7ed] text-[#c05621]'
-  return 'bg-[#f2f4f7] text-[#667085]'
+function cambodiaDateValue(date = new Date()) {
+  const cambodiaDate = new Date(date.getTime() + CAMBODIA_OFFSET_MS)
+  const year = cambodiaDate.getUTCFullYear()
+  const month = String(cambodiaDate.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(cambodiaDate.getUTCDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
 }
 
-function normalizeEarning(item) {
-  const metadata = item.metadata || {}
+function timeText(value) {
+  const date = new Date(value)
 
-  return {
-    id: item.id,
-    title: metadata.story_title || metadata.episode_title || 'Episode unlock',
-    subtitle: metadata.package_label || metadata.episode_title || 'Diamond unlock',
-    amount: Number(item.author_net_payout_usd || 0),
-    diamonds: Number(item.author_earned_diamonds || 0),
-    share: Number(item.author_share_percent || 0),
-    status: item.earning_status || 'available',
-    createdAt: item.created_at,
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleTimeString('en-US', {
+    timeZone: 'Asia/Phnom_Penh',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function getInitial(value) {
+  return String(value || 'R').slice(0, 1).toUpperCase()
+}
+
+function ReaderAvatar({ record }) {
+  if (record.reader_avatar_url) {
+    return (
+      <img
+        src={record.reader_avatar_url}
+        alt=""
+        className="h-11 w-11 shrink-0 rounded-full object-cover"
+      />
+    )
   }
+
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[15px] font-black text-[#ff3b5f]">
+      {getInitial(record.reader_name)}
+    </div>
+  )
 }
 
-function HeaderButton({ icon, onClick, label }) {
+function SummaryCard({ label, value, icon, active, onClick, useDiamondIcon = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 active:scale-95"
+      className={`relative min-w-0 rounded-[17px] border bg-white px-1.5 pb-3 pt-3 text-center shadow-sm transition active:scale-[0.98] ${
+        active
+          ? 'border-[#ff3b5f] ring-1 ring-[#ff3b5f]/25'
+          : 'border-[#f0f0f2]'
+      }`}
     >
-      <i className={`${icon} text-[15px]`} />
+      <div
+        className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${
+          active ? 'bg-[#ff3b5f]' : 'bg-[#fff1f5]'
+        }`}
+      >
+        {useDiamondIcon ? (
+          <img
+            src="/assets/Icons/Diamond.svg"
+            alt=""
+            className={`h-[18px] w-[18px] object-contain ${active ? 'brightness-0 invert' : ''}`}
+          />
+        ) : (
+          <i
+            className={`${icon} text-[14px] ${
+              active ? 'text-white' : 'text-[#ff3b5f]'
+            }`}
+          />
+        )}
+      </div>
+
+      <div className="mt-2 truncate text-[9.5px] font-semibold text-[#667085]">
+        {label}
+      </div>
+
+      <div
+        className={`mt-1 truncate text-[13px] font-black tracking-[-0.02em] ${
+          active ? 'text-[#ff3b5f]' : 'text-[#111827]'
+        }`}
+      >
+        {formatMoney(value)}
+      </div>
+
+      {active ? (
+        <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-[#ff3b5f]" />
+      ) : null}
     </button>
   )
 }
 
-function SummaryCard({ label, value, detail, icon, dark = false }) {
+function TransactionRow({ record }) {
+  const episodeText = Number(record.episode_number || 0) > 0
+    ? `Episode ${record.episode_number}`
+    : record.episode_title || 'Episode unlock'
+
   return (
-        <div className={`flex h-full min-h-[142px] flex-col justify-between rounded-[24px] p-4 shadow-sm ring-1 ring-black/5 ${dark ? 'bg-[#111827] text-white' : 'bg-white text-[#111827]'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className={`text-[11px] font-extrabold uppercase tracking-[0.08em] ${dark ? 'text-white/55' : 'text-[#98a2b3]'}`}>
-            {label}
+    <div className="flex items-center gap-3 border-b border-[#f1f1f2] px-4 py-3.5 last:border-b-0">
+      <ReaderAvatar record={record} />
+
+      <div className="min-w-0 flex-1">
+        <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
+          <span className="font-black">{record.reader_name || 'Reader'}</span>
+          <span className="font-medium text-[#667085]"> unlocked </span>
+          {episodeText}
+        </div>
+
+        <div className="mt-1 line-clamp-1 text-[11.5px] font-semibold text-[#ff3b5f]">
+          {record.story_title || 'Story'}
+        </div>
+
+        <div className="mt-1 text-[10.5px] font-medium text-[#98a2b3]">
+          {timeText(record.created_at)}
+        </div>
+      </div>
+
+      <div className="shrink-0 text-right">
+        <div className="text-[13.5px] font-black text-[#111827]">
+          +{formatMoney(record.author_net_payout_usd)}
+        </div>
+
+        <div className="mt-1 flex items-center justify-end gap-1 text-[10.5px] font-semibold text-[#98a2b3]">
+          <img
+            src="/assets/Icons/Diamond.svg"
+            alt=""
+            className="h-3.5 w-3.5 object-contain"
+          />
+          <span>{formatNumber(record.author_earned_diamonds)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CalendarSheet({
+  open,
+  period,
+  selectedDate,
+  onClose,
+  onApply,
+}) {
+  const [draftValue, setDraftValue] = useState(selectedDate)
+
+  useEffect(() => {
+    if (!open) return
+
+    if (period === 'month') {
+      setDraftValue(selectedDate.slice(0, 7))
+      return
+    }
+
+    if (period === 'year') {
+      setDraftValue(selectedDate.slice(0, 4))
+      return
+    }
+
+    setDraftValue(selectedDate)
+  }, [open, period, selectedDate])
+
+  if (!open) return null
+
+  const currentYear = Number(cambodiaDateValue().slice(0, 4))
+  const years = Array.from({ length: 10 }, (_, index) => currentYear - index)
+
+  function applySelection() {
+    if (!draftValue) return
+
+    if (period === 'month') {
+      onApply(`${draftValue}-01`)
+      return
+    }
+
+    if (period === 'year') {
+      onApply(`${draftValue}-01-01`)
+      return
+    }
+
+    onApply(draftValue)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-end bg-black/35">
+      <button
+        type="button"
+        aria-label="Close calendar"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
+
+      <div className="relative w-full rounded-t-[26px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-3 shadow-[0_-16px_50px_rgba(15,23,42,0.18)]">
+        <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+
+        <div className="mt-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[18px] font-black text-[#111827]">Choose record date</h2>
+            <p className="mt-1 text-[12px] font-medium text-[#98a2b3]">
+              Select the {period === 'week' ? 'week date' : period} you want to view.
+            </p>
           </div>
-          <div className="mt-3 text-[25px] font-black tracking-[-0.04em]">{value}</div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f6] text-[#667085]"
+          >
+            <i className="fa-solid fa-xmark text-[13px]" />
+          </button>
         </div>
 
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${dark ? 'bg-white/10 text-[#f7c948]' : 'bg-[#f7f4ee] text-[#c89b1e]'}`}>
-          <i className={`${icon} text-[15px]`} />
+        <div className="mt-5">
+          {period === 'year' ? (
+            <select
+              value={draftValue}
+              onChange={(event) => setDraftValue(event.target.value)}
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-bold text-[#111827] outline-none focus:border-[#ff3b5f]"
+            >
+              {years.map((year) => (
+                <option key={year} value={String(year)}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={period === 'month' ? 'month' : 'date'}
+              value={draftValue}
+              onChange={(event) => setDraftValue(event.target.value)}
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-bold text-[#111827] outline-none focus:border-[#ff3b5f]"
+            />
+          )}
         </div>
-      </div>
 
-      <div className={`mt-3 text-[12px] font-semibold leading-5 ${dark ? 'text-white/60' : 'text-[#8d94a1]'}`}>
-        {detail}
+        <button
+          type="button"
+          onClick={applySelection}
+          className="mt-5 h-12 w-full rounded-full bg-[#ff3b5f] text-[14px] font-black text-white active:scale-[0.99]"
+        >
+          View income
+        </button>
       </div>
     </div>
   )
 }
 
-function SmallStat({ label, value }) {
-  return (
-    <div className="rounded-[20px] bg-white/10 px-3 py-3 text-center">
-      <div className="text-[17px] font-black text-white">{value}</div>
-      <div className="mt-1 text-[10.5px] font-bold uppercase tracking-[0.06em] text-white/50">{label}</div>
-    </div>
-  )
-}
-
-function SectionCard({ title, subtitle, action, children }) {
-  return (
-    <section className="rounded-[26px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#111827]">{title}</h2>
-          {subtitle ? <p className="mt-1 text-[12.5px] font-medium leading-5 text-[#8d94a1]">{subtitle}</p> : null}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function EmptyState({ icon, title, text }) {
-  return (
-    <div className="rounded-[22px] border border-dashed border-[#e4e7ec] bg-[#fafafa] px-4 py-8 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#98a2b3] shadow-sm ring-1 ring-black/5">
-        <i className={`${icon} text-[17px]`} />
-      </div>
-      <div className="mt-3 text-[14px] font-black text-[#111827]">{title}</div>
-      <div className="mx-auto mt-1 max-w-[270px] text-[12px] font-medium leading-5 text-[#8d94a1]">{text}</div>
-    </div>
-  )
-}
-
-function EarningRow({ item }) {
-  return (
-    <div className="flex items-center gap-3 rounded-[20px] border border-[#f0eef6] bg-white p-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f7f4ee] text-[#c89b1e]">
-        <i className="fa-solid fa-gem text-[15px]" />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[13.5px] font-black text-[#111827]">{item.title}</div>
-        <div className="mt-0.5 line-clamp-1 text-[11.5px] font-semibold text-[#98a2b3]">
-          {item.subtitle} · {percent(item.share)} share
-        </div>
-      </div>
-
-      <div className="text-right">
-        <div className="text-[14px] font-black text-[#111827]">+{money(item.amount)}</div>
-        <div className="mt-0.5 text-[11px] font-bold text-[#98a2b3]">
-          {item.diamonds.toFixed(item.diamonds % 1 === 0 ? 0 : 1)} Diamonds
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SupporterRow({ item, index }) {
-  return (
-    <div className="flex items-center gap-3 rounded-[18px] bg-[#fafafa] px-3 py-3">
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-black ${
-        index === 0 ? 'bg-[#111827] text-white' : 'bg-white text-[#111827] ring-1 ring-black/5'
-      }`}>
-        {index + 1}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[13px] font-black text-[#111827]">Reader Supporter</div>
-        <div className="mt-0.5 text-[11px] font-semibold text-[#98a2b3]">Diamond unlock support</div>
-      </div>
-
-      <div className="text-right">
-        <div className="text-[13px] font-black text-[#111827]">{money(item.total_usd)}</div>
-        <div className="mt-0.5 text-[11px] font-bold text-[#98a2b3]">
-          {Number(item.total_diamonds || 0).toFixed(Number(item.total_diamonds || 0) % 1 === 0 ? 0 : 1)} Diamonds
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PayoutRow({ item }) {
-  return (
-    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-[18px] bg-[#fafafa] px-3 py-3">
-      <div className="min-w-0">
-        <div className="text-[13px] font-black text-[#111827]">{item.payout_month || 'Monthly payout'}</div>
-        <div className="mt-0.5 text-[11px] font-semibold text-[#98a2b3]">
-          {item.paid_at ? `Paid ${dateText(item.paid_at)}` : item.scheduled_at ? `Scheduled ${dateText(item.scheduled_at)}` : 'Auto payout'}
-        </div>
-      </div>
-
-      <div className="text-right">
-        <div className="text-[13px] font-black text-[#111827]">{money(item.net_payout_usd)}</div>
-        <div className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black capitalize ${statusStyle(item.status)}`}>
-          {String(item.status || 'scheduled').replaceAll('_', ' ')}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function LoadingSkeleton() {
+function LoadingPage() {
   return (
     <div className="space-y-4">
-      <div className="h-[170px] animate-pulse rounded-[28px] bg-white" />
-      <div className="grid grid-cols-2 gap-3">
-        <div className="h-[128px] animate-pulse rounded-[24px] bg-white" />
-        <div className="h-[128px] animate-pulse rounded-[24px] bg-white" />
+      <div className="grid grid-cols-4 gap-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-[110px] animate-pulse rounded-[17px] bg-white" />
+        ))}
       </div>
-      <div className="h-[260px] animate-pulse rounded-[26px] bg-white" />
+      <div className="h-[150px] animate-pulse rounded-[20px] bg-white" />
+      <div className="h-[320px] animate-pulse rounded-[20px] bg-white" />
     </div>
   )
 }
 
 export default function AuthorIncomePage() {
   const navigate = useNavigate()
+  const [period, setPeriod] = useState('day')
+  const [selectedDate, setSelectedDate] = useState(cambodiaDateValue())
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
-  const [showTip, setShowTip] = useState(false)
 
   useEffect(() => {
     let ignore = false
 
     async function loadIncome() {
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login', { replace: true })
+        return
+      }
+
       try {
         setLoading(true)
         setError('')
 
-        const token = getAuthToken()
-
-        if (!token) {
-          navigate('/login', { replace: true })
-          return
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/authors/me/income`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const search = new URLSearchParams({
+          record_period: period,
+          record_date: selectedDate,
         })
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/authors/me/income?${search.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
 
         const result = await response.json().catch(() => ({}))
 
         if (!response.ok || result.ok === false) {
-          throw new Error(result.message || 'Failed to load income')
+          throw new Error(result.message || 'Failed to load income records')
         }
 
         if (!ignore) {
           setData(result)
         }
-      } catch (err) {
+      } catch (loadError) {
         if (!ignore) {
-          setError(err.message || 'Failed to load income')
+          setError(
+            loadError.message === 'Failed to fetch'
+              ? 'Cannot connect to backend.'
+              : loadError.message || 'Failed to load income records'
+          )
         }
       } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+        if (!ignore) setLoading(false)
       }
     }
 
@@ -280,226 +364,221 @@ export default function AuthorIncomePage() {
     return () => {
       ignore = true
     }
-  }, [navigate])
+  }, [navigate, period, selectedDate])
 
-  const recentEarnings = useMemo(() => {
-    return (data?.recent_earnings || []).map(normalizeEarning)
-  }, [data])
+  const summaries = data?.income_summary || {}
+  const record = data?.income_record || {}
+  const records = useMemo(
+    () => Array.isArray(record.records) ? record.records : [],
+    [record.records]
+  )
 
-  const paymentMethod = data?.payment_method?.primary || null
-  const paymentComplete = Boolean(data?.payment_method?.complete)
+  const cards = [
+    {
+      key: 'day',
+      label: 'Today',
+      value: summaries.today_usd,
+      useDiamondIcon: true,
+    },
+    {
+      key: 'week',
+      label: 'This Week',
+      value: summaries.this_week_usd,
+      icon: 'fa-regular fa-calendar',
+    },
+    {
+      key: 'month',
+      label: 'This Month',
+      value: summaries.this_month_usd,
+      icon: 'fa-solid fa-wallet',
+    },
+    {
+      key: 'year',
+      label: 'This Year',
+      value: summaries.this_year_usd,
+      icon: 'fa-regular fa-crown',
+    },
+  ]
+
+  function selectCurrentPeriod(nextPeriod) {
+    setPeriod(nextPeriod)
+    setSelectedDate(cambodiaDateValue())
+  }
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-10">
-      <div className="sticky top-0 z-40 border-b border-black/5 bg-[#f8f5ef]/95 backdrop-blur">
-        <div className="mx-auto flex h-[58px] max-w-[760px] items-center justify-between px-4">
-          <HeaderButton icon="fa-solid fa-chevron-left" label="Back" onClick={() => navigate('/author/profile', { replace: true })} />
+    <div className="min-h-screen bg-[#fafafa] pb-10">
+      <header className="sticky top-0 z-40 border-b border-[#eeeeef] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-[58px] max-w-[720px] items-center justify-between px-4">
+          <button
+            type="button"
+            onClick={() => navigate('/author/profile')}
+            aria-label="Back"
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95"
+          >
+            <i className="fa-solid fa-chevron-left text-[17px]" />
+          </button>
 
-          <div className="text-center">
-            <h1 className="text-[16px] font-black text-[#111827]">My Income</h1>
-            <p className="mt-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">Net author earnings</p>
-          </div>
+          <h1 className="text-[17px] font-black text-[#111827]">Income Records</h1>
 
-          <HeaderButton icon="fa-solid fa-circle-info" label="Info" onClick={() => setShowTip(true)} />
+          <button
+            type="button"
+            onClick={() => setCalendarOpen(true)}
+            aria-label="Choose date"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f5] text-[#ff3b5f] active:scale-95"
+          >
+            <i className="fa-regular fa-calendar text-[16px]" />
+          </button>
         </div>
-      </div>
-      {showTip ? (
-  <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/40 px-4 pb-4 sm:items-center sm:pb-0">
-    <button
-      type="button"
-      aria-label="Close income tip"
-      onClick={() => setShowTip(false)}
-      className="absolute inset-0"
-    />
+      </header>
 
-    <div className="relative w-full max-w-[420px] rounded-[28px] bg-white p-5 shadow-2xl">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <div className="text-[18px] font-black text-[#111827]">How income works</div>
-          <div className="mt-1 text-[12.5px] font-semibold text-[#98a2b3]">
-            Quick guide for author earnings
-          </div>
-        </div>
+      <main className="mx-auto max-w-[720px] space-y-4 px-3 pt-4 sm:px-4">
+        {loading && !data ? <LoadingPage /> : null}
 
-        <button
-          type="button"
-          onClick={() => setShowTip(false)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f5f7]"
-        >
-          <i className="fa-solid fa-xmark text-[13px] text-[#555]" />
-        </button>
-      </div>
-
-      <div className="space-y-3 text-[13px] font-semibold leading-6 text-[#667085]">
-        <p>Your income is shown as money, but the system records earnings from Diamond unlocks.</p>
-        <p>Your share depends on your Quest stage.</p>
-        <p>Payouts are processed automatically every 15th. You don’t need to request withdrawal.</p>
-        <p>Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.</p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setShowTip(false)
-          navigate('/author/benefits')
-        }}
-        className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-[0.99]"
-      >
-        View Author Benefits
-      </button>
-    </div>
-  </div>
-) : null}
-
-      <main className="mx-auto max-w-[760px] space-y-4 px-4 pt-4">
-        {loading ? <LoadingSkeleton /> : null}
-
-        {!loading && error ? (
-          <div className="rounded-[24px] bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff1f2] text-[#e11d48]">
-              <i className="fa-solid fa-triangle-exclamation" />
-            </div>
-            <div className="mt-3 text-[15px] font-black text-[#111827]">{error}</div>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 h-11 rounded-full bg-[#111827] px-6 text-[13px] font-black text-white active:scale-95"
-            >
-              Try Again
-            </button>
+        {error ? (
+          <div className="rounded-[18px] bg-[#fff1f1] px-4 py-4 text-center text-[12.5px] font-semibold text-[#e5484d]">
+            {error}
           </div>
         ) : null}
 
-        {!loading && !error && data ? (
+        {data ? (
           <>
-            <section className="overflow-hidden rounded-[30px] bg-[#111827] p-5 text-white shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="text-[11px] font-black uppercase tracking-[0.1em] text-white/55">This Month</div>
-                  <div className="mt-2 text-[36px] font-black tracking-[-0.06em]">{money(data.income?.this_month_usd)}</div>
-                  <p className="mt-2 max-w-[420px] text-[12.5px] font-semibold leading-5 text-white/60">
-                    Your income is shown as money. Shadow still records earnings from Diamond unlocks behind the scenes.
-                  </p>
+            <section className="grid grid-cols-4 gap-2">
+              {cards.map((card) => (
+                <SummaryCard
+                  key={card.key}
+                  label={card.label}
+                  value={card.value}
+                  icon={card.icon}
+                  useDiamondIcon={card.useDiamondIcon}
+                  active={period === card.key}
+                  onClick={() => selectCurrentPeriod(card.key)}
+                />
+              ))}
+            </section>
+
+            <section className="overflow-hidden rounded-[20px] border border-[#f1e5e8] bg-gradient-to-br from-[#fff1f5] via-white to-white shadow-sm">
+              <div className="px-4 pb-4 pt-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">
+                      {record.label || 'Selected income'}
+                    </div>
+
+                    <div className="mt-2 text-[32px] font-black leading-none tracking-[-0.04em] text-[#ff3b5f]">
+                      {formatMoney(record.total_usd)}
+                    </div>
+
+                    <div className="mt-2 text-[11px] font-semibold text-[#667085]">
+                      Net author income (USD)
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCalendarOpen(true)}
+                    className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-[#ffd4dd] bg-white px-3 text-[11px] font-bold text-[#ff3b5f] active:scale-95"
+                  >
+                    <i className="fa-regular fa-calendar" />
+                    Change
+                  </button>
                 </div>
 
-                <div className="rounded-[18px] bg-white/10 px-3 py-2 text-right">
-                  <div className="text-[10px] font-black uppercase tracking-[0.08em] text-white/45">Share</div>
-                  <div className="mt-1 text-[20px] font-black text-[#f7c948]">{percent(data.current_share_percent)}</div>
-                </div>
-              </div>
+                <div className="mt-5 grid grid-cols-2 divide-x divide-[#f1dbe0] rounded-[15px] bg-white/80 py-3">
+                  <div className="px-4">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src="/assets/Icons/Diamond.svg"
+                        alt=""
+                        className="h-[19px] w-[19px] object-contain"
+                      />
+                      <span className="text-[18px] font-black text-[#111827]">
+                        {formatNumber(record.total_diamonds)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[10.5px] font-semibold text-[#98a2b3]">
+                      Diamonds earned
+                    </div>
+                  </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-2">
-                <SmallStat label="Today" value={money(data.income?.today_usd)} />
-                <SmallStat label="Week" value={money(data.income?.this_week_usd)} />
-                <SmallStat label="Total" value={money(data.income?.total_usd)} />
+                  <div className="px-4">
+                    <div className="flex items-center gap-2">
+                      <i className="fa-solid fa-lock-open text-[16px] text-[#ff3b5f]" />
+                      <span className="text-[18px] font-black text-[#111827]">
+                        {formatNumber(record.unlock_count)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[10.5px] font-semibold text-[#98a2b3]">
+                      Paid unlocks
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
-              <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
-              <SummaryCard
-                label="Next Payout"
-                value={dateText(data.next_payout_date)}
-                detail="Payout is handled automatically. You do not need to request withdrawal."
-                icon="fa-solid fa-calendar-check"
-              />
-
-                <button type="button" onClick={() => navigate('/author/payment-method')} className="h-full w-full text-left">
-                <SummaryCard
-                  label="Payment Method"
-                  value={paymentComplete ? methodLabel(paymentMethod) : 'Missing'}
-                  detail={paymentComplete ? 'Tap to review or update your payout details.' : 'Tap to add Bank QR, PayPal, or phone payout details.'}
-                  icon={paymentComplete ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'}
-                  dark={!paymentComplete}
-                />
-              </button>
-            </div>
-
-            <SectionCard
-              title="Recent Earnings"
-              subtitle="Net earnings from paid Diamond unlocks."
-              action={
-                <button type="button" className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[11.5px] font-black text-[#111827]">
-                  Latest
-                </button>
-              }
-            >
-              {recentEarnings.length ? (
-                <div className="space-y-2.5">
-                  {recentEarnings.map((item) => (
-                    <EarningRow key={item.id} item={item} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon="fa-solid fa-gem"
-                  title="No earnings yet"
-                  text="Paid Diamond unlocks will appear here after readers unlock your locked episodes."
-                />
-              )}
-            </SectionCard>
-
-            <SectionCard
-              title="Top Supporters"
-              subtitle="Readers who supported your stories through paid unlocks."
-            >
-              {data.top_supporters?.length ? (
-                <div className="space-y-2.5">
-                  {data.top_supporters.map((item, index) => (
-                    <SupporterRow key={item.reader_id || index} item={item} index={index} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon="fa-solid fa-users"
-                  title="No supporters yet"
-                  text="When readers unlock paid episodes, your strongest supporters will appear here."
-                />
-              )}
-            </SectionCard>
-
-            <SectionCard
-              title="Payout History"
-              subtitle="Automatic monthly payout records."
-            >
-              {data.payout_history?.length ? (
-                <div className="space-y-2.5">
-                  {data.payout_history.map((item) => (
-                    <PayoutRow key={item.id} item={item} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon="fa-solid fa-receipt"
-                  title="No payout yet"
-                  text="Your monthly payout history will appear here after admin processes payments."
-                />
-              )}
-            </SectionCard>
-
-           <button
-  type="button"
-  onClick={() => navigate('/author/quest?from=income')}
-  className="w-full rounded-[26px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
->
-  <div className="flex items-center justify-between gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f7f4ee] text-[#c89b1e]">
-                  <i className="fa-solid fa-scale-balanced text-[15px]" />
-                </div>
+            <section className="overflow-hidden rounded-[20px] border border-[#eeeeef] bg-white shadow-sm">
+              <div className="flex items-center justify-between gap-4 border-b border-[#f1f1f2] px-4 py-4">
                 <div>
-                  <div className="text-[15px] font-black text-[#111827]">Income Rules</div>
-                  <p className="mt-1 text-[12.5px] font-medium leading-6 text-[#8d94a1]">
-                    Income is calculated from net Diamond unlock revenue after package discounts. Your current share comes from Quest progress. Free unlocks, Gems, Vouchers, Story Cards, and Episodes 1–5 do not count as paid income.
+                  <h2 className="text-[14px] font-black text-[#111827]">Income Sources</h2>
+                  <p className="mt-1 text-[10.5px] font-medium text-[#98a2b3]">
+                    Readers who unlocked your episodes
                   </p>
-                  
                 </div>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#98a2b3]">
-      <i className="fa-solid fa-chevron-right text-[12px]" />
-    </div>
-  </div>
-</button>
+
+                <div className="text-right">
+                  <div className="text-[12px] font-black text-[#111827]">
+                    {formatNumber(record.unlock_count)} unlocks
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold text-[#98a2b3]">
+                    {record.has_more ? 'Latest 100 shown' : 'All shown'}
+                  </div>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="space-y-3 px-4 py-5">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="h-14 animate-pulse rounded-[14px] bg-[#f5f5f6]" />
+                  ))}
+                </div>
+              ) : records.length ? (
+                records.map((item) => <TransactionRow key={item.id} record={item} />)
+              ) : (
+                <div className="px-5 py-14 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f5]">
+                    <img
+                      src="/assets/Icons/Diamond.svg"
+                      alt=""
+                      className="h-6 w-6 object-contain"
+                    />
+                  </div>
+                  <div className="mt-4 text-[14px] font-black text-[#111827]">
+                    No paid income found
+                  </div>
+                  <div className="mx-auto mt-2 max-w-[260px] text-[11.5px] font-medium leading-5 text-[#98a2b3]">
+                    Paid episode unlocks for this selected period will appear here.
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <div className="rounded-[17px] bg-[#fff1f5] px-4 py-3 text-[11px] font-medium leading-5 text-[#8c4a59]">
+              <i className="fa-solid fa-circle-info mr-2 text-[#ff3b5f]" />
+              Income shown here is the author’s net USD amount from paid Diamond unlocks.
+            </div>
           </>
         ) : null}
       </main>
+
+      <CalendarSheet
+        open={calendarOpen}
+        period={period}
+        selectedDate={selectedDate}
+        onClose={() => setCalendarOpen(false)}
+        onApply={(value) => {
+          setSelectedDate(value)
+          setCalendarOpen(false)
+        }}
+      />
     </div>
   )
 }
