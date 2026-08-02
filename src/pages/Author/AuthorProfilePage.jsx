@@ -443,7 +443,16 @@ export default function AuthorProfilePage() {
 
               <div className="mt-4 grid grid-cols-3 divide-x divide-[#f3f3f3] px-2 py-1">
                 <SummaryItem value={formatNumber(summary?.income?.today_diamonds)} label="Diamond" />
-                <SummaryItem value={formatMoney(summary?.income?.this_month_usd)} label="Earned" />
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/author/income')}
+                  className="min-w-0 active:scale-[0.98]"
+                  aria-label="Open income records"
+                >
+                  <SummaryItem value={formatMoney(summary?.income?.this_month_usd)} label="Earned" />
+                </button>
+
                 <SummaryItem value={formatNumber(summary?.gifts?.total_received)} label="Gift" />
               </div>
             </>
