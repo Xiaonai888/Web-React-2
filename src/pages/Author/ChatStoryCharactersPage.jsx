@@ -990,11 +990,14 @@ export default function ChatStoryCharactersPage() {
   const startNewEpisode =
   searchParams.get('new') === '1'
   const requestedReturnTo = searchParams.get('returnTo')
+const storyManagerPath = `/author/story/${storyId}/manage`
+
 const returnTo =
   requestedReturnTo === '/author/stories' ||
-  requestedReturnTo === '/author/dashboard'
+  requestedReturnTo === '/author/dashboard' ||
+  requestedReturnTo === storyManagerPath
     ? requestedReturnTo
-    : '/author/dashboard'
+    : storyManagerPath
 const castStorageKey =
   `chat_story_episode_cast_${storyId || 'unknown'}_new`
 const fileInputRef = useRef(null)
