@@ -82,52 +82,16 @@ function ReaderAvatar({ record }) {
   )
 }
 
-function SummaryCard({ label, value, icon, active, onClick, useDiamondIcon = false }) {
+function PeriodTab({ label, active, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative min-w-0 rounded-[17px] border bg-white px-1.5 pb-3 pt-3 text-center shadow-sm transition active:scale-[0.98] ${
-        active
-          ? 'border-[#ff3b5f] ring-1 ring-[#ff3b5f]/25'
-          : 'border-[#f0f0f2]'
+      className={`flex h-9 min-w-0 items-center justify-center whitespace-nowrap rounded-full px-1 text-[10.5px] font-semibold text-[#111827] transition active:scale-[0.98] ${
+        active ? 'bg-[#ffe8ee]' : 'bg-transparent'
       }`}
     >
-      <div
-        className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${
-          active ? 'bg-[#ff3b5f]' : 'bg-[#fff1f5]'
-        }`}
-      >
-        {useDiamondIcon ? (
-          <img
-            src="/assets/Icons/Diamond.svg"
-            alt=""
-            className={`h-[18px] w-[18px] object-contain ${active ? 'brightness-0 invert' : ''}`}
-          />
-        ) : (
-          <i
-            className={`${icon} text-[14px] ${
-              active ? 'text-white' : 'text-[#ff3b5f]'
-            }`}
-          />
-        )}
-      </div>
-
-      <div className="mt-2 truncate text-[9.5px] font-semibold text-[#667085]">
-        {label}
-      </div>
-
-      <div
-        className={`mt-1 truncate text-[13px] font-black tracking-[-0.02em] ${
-          active ? 'text-[#ff3b5f]' : 'text-[#111827]'
-        }`}
-      >
-        {formatMoney(value)}
-      </div>
-
-      {active ? (
-        <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-[#ff3b5f]" />
-      ) : null}
+      {label}
     </button>
   )
 }
@@ -288,9 +252,9 @@ function CalendarSheet({
 function LoadingPage() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f6] p-1">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-[110px] animate-pulse rounded-[17px] bg-white" />
+          <div key={index} className="h-9 animate-pulse rounded-full bg-white" />
         ))}
       </div>
       <div className="h-[150px] animate-pulse rounded-[20px] bg-white" />
@@ -366,38 +330,17 @@ export default function AuthorIncomePage() {
     }
   }, [navigate, period, selectedDate])
 
-  const summaries = data?.income_summary || {}
   const record = data?.income_record || {}
   const records = useMemo(
     () => Array.isArray(record.records) ? record.records : [],
     [record.records]
   )
 
-  const cards = [
-    {
-      key: 'day',
-      label: 'Today',
-      value: summaries.today_usd,
-      useDiamondIcon: true,
-    },
-    {
-      key: 'week',
-      label: 'This Week',
-      value: summaries.this_week_usd,
-      icon: 'fa-regular fa-calendar',
-    },
-    {
-      key: 'month',
-      label: 'This Month',
-      value: summaries.this_month_usd,
-      icon: 'fa-solid fa-wallet',
-    },
-    {
-      key: 'year',
-      label: 'This Year',
-      value: summaries.this_year_usd,
-      icon: 'fa-regular fa-crown',
-    },
+  const periods = [
+    { key: 'day', label: 'Today' },
+    { key: 'week', label: 'This Week' },
+    { key: 'month', label: 'This Month' },
+    { key: 'year', label: 'This Year' },
   ]
 
   function selectCurrentPeriod(nextPeriod) {
@@ -442,16 +385,13 @@ export default function AuthorIncomePage() {
 
         {data ? (
           <>
-            <section className="grid grid-cols-4 gap-2">
-              {cards.map((card) => (
-                <SummaryCard
-                  key={card.key}
-                  label={card.label}
-                  value={card.value}
-                  icon={card.icon}
-                  useDiamondIcon={card.useDiamondIcon}
-                  active={period === card.key}
-                  onClick={() => selectCurrentPeriod(card.key)}
+            <section className="grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f6] p-1">
+              {periods.map((item) => (
+                <PeriodTab
+                  key={item.key}
+                  label={item.label}
+                  active={period === item.key}
+                  onClick={() => selectCurrentPeriod(item.key)}
                 />
               ))}
             </section>
