@@ -1659,11 +1659,14 @@ export default function ChatStoryEditorPage() {
 const startNewEpisode =
   searchParams.get('new') === '1'
   const requestedReturnTo = searchParams.get('returnTo')
+const storyManagerPath = `/author/story/${storyId}/manage`
+
 const returnTo =
   requestedReturnTo === '/author/stories' ||
-  requestedReturnTo === '/author/dashboard'
+  requestedReturnTo === '/author/dashboard' ||
+  requestedReturnTo === storyManagerPath
     ? requestedReturnTo
-    : '/author/dashboard'
+    : storyManagerPath
 const draftScope = startNewEpisode
   ? 'new'
   : requestedEpisodeId
