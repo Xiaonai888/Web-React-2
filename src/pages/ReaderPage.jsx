@@ -1655,15 +1655,10 @@ const [showAutoHint, setShowAutoHint] = useState(false)
     if (!option || unlocking || !option.enabled) return
 
     const price = Number(option.price || 0)
-    const requestedCount = Number(option.requested_count || 0)
-    const isMultiPackage =
-      requestedCount >= 10 ||
-      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
-
-    if (isMultiPackage && diamondBalance < price) {
-      goPurchase()
-      return
-    }
+    if (diamondBalance < price) {
+  goPurchase()
+  return
+}
 
     onUnlock(option.key)
   }
@@ -1673,7 +1668,11 @@ const [showAutoHint, setShowAutoHint] = useState(false)
 
     const price = Number(option.price || 0)
     const originalPrice = Number(option.original_price || 0)
-    const discount = Number(option.discount_percent || 0)
+    const discount = Number(
+  option.total_discount_percent ??
+    option.discount_percent ??
+    0
+)
     const requestedCount = Number(option.requested_count || 0)
     const isMultiPackage =
       requestedCount >= 10 ||
@@ -1683,15 +1682,24 @@ const [showAutoHint, setShowAutoHint] = useState(false)
     if (primary) {
       return (
         <button
-          type="button"
-          onClick={goPurchase}
-          disabled={unlocking || !option.enabled}
+  type="button"
+  onClick={() => handlePackageClick(option)}
+  disabled={unlocking || !option.enabled}
           className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
         >
           <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
   <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-  <span className="font-semibold text-[#111827]">{formatNumber(price)}</span>
-  <span>to unlock this Ep.</span>
+  <span className="font-semibold text-[#111827]">
+  {formatNumber(price)}
+</span>
+
+{originalPrice > price ? (
+  <span className="text-[12px] text-[#A0A6B0] line-through">
+    {formatNumber(originalPrice)}
+  </span>
+) : null}
+
+<span>to unlock this Ep.</span>
 </span>
         </button>
       )
