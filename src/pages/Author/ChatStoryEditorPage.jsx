@@ -3860,8 +3860,14 @@ setPublishSettingsOpen(true)
         onAddEpisode={() => {
   setSuccessOpen(false)
   localStorage.removeItem(storageKey)
+
+  const params = new URLSearchParams({
+    new: '1',
+    returnTo,
+  })
+
   navigate(
-    `/author/story/${storyId}/chat/characters?new=1`,
+    `/author/story/${storyId}/chat/characters?${params.toString()}`,
     { replace: true }
   )
 }}
