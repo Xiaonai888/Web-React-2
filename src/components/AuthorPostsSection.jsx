@@ -26,6 +26,27 @@ function getAuthToken() {
     ''
   )
 }
+const POST_URL_PATTERN = /(https?:\/\/[^\s]+)/gi
+const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
+
+function renderPostTextWithLinks(text) {
+  return String(text || '').split(POST_URL_PATTERN).map((part, index) => {
+    if (!POST_URL_ONLY_PATTERN.test(part)) return part
+
+    return (
+      <a
+        key={`${part}-${index}`}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) => event.stopPropagation()}
+        className="break-all text-[#2563eb] underline underline-offset-2"
+      >
+        {part}
+      </a>
+    )
+  })
+}
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -367,7 +388,7 @@ function cancelReactionPress() {
                 : undefined
             }
           >
-            {post.content}
+            {renderPostTextWithLinks(post.content)}
           </p>
 
           {canCollapse ? (
