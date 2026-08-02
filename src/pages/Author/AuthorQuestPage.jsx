@@ -373,6 +373,8 @@ export default function AuthorQuestPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
+  const [activatingBoost, setActivatingBoost] = useState(false)
+  const [boostNotice, setBoostNotice] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -476,6 +478,92 @@ export default function AuthorQuestPage() {
 
   const requiredDoneCount = requiredMilestones.filter((item) => numberValue(item.current) >= numberValue(item.required)).length
   const growthDoneCount = growthMilestones.filter((item) => numberValue(item.current) >= numberValue(item.required)).length
+
+  async function activateBoost() {
+    if (
+      activatingBoost ||
+      lifetimeBoost?.status !== 'eligible'
+    ) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      'Activate the 100-Day Creator Boost now? It starts immediately, cannot be paused, and can be used only once.'
+    )
+
+    if (!confirmed) return
+
+    try {
+      setActivatingBoost(true)
+      setBoostNotice(null)
+
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login', { replace: true })
+        return
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/quest/boost/activate`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok || result.ok === false) {
+        throw new Error(
+          result.message ||
+            'Failed to activate 100-Day Creator Boost'
+        )
+      }
+
+      const refreshResponse = await fetch(
+        `${API_BASE_URL}/api/authors/me/quest`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const refreshResult =
+        await refreshResponse.json().catch(() => ({}))
+
+      if (
+        !refreshResponse.ok ||
+        refreshResult.ok === false
+      ) {
+        throw new Error(
+          refreshResult.message ||
+            'Boost activated, but the page could not refresh'
+        )
+      }
+
+      setData(refreshResult)
+      setBoostNotice({
+        type: 'success',
+        text:
+          result.message ||
+          '100-Day Creator Boost activated successfully',
+      })
+    } catch (err) {
+      setBoostNotice({
+        type: 'error',
+        text:
+          err.message ||
+          'Failed to activate 100-Day Creator Boost',
+      })
+    } finally {
+      setActivatingBoost(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f3fa] pb-10">
@@ -607,6 +695,52 @@ export default function AuthorQuestPage() {
               {lifetimeBoost?.status === 'active' ? (
                 <div className="mt-4 rounded-[22px] bg-[#ecfdf3] p-4 text-[13px] font-black text-[#16803c]">
                   Boost active until {dateText(lifetimeBoost.ended_at)}.
+                </div>
+              ) : null}
+
+              {lifetimeBoost?.status === 'eligible' ? (
+                <div className="mt-4 rounded-[22px] bg-[#fff8e6] p-4 text-[#111827] ring-1 ring-[#d4a72c]">
+                  <div className="text-[14px] font-black">
+                    Your 100-Day Creator Boost is ready.
+                  </div>
+                  <p className="mt-1 text-[11.5px] font-semibold leading-5 text-[#7a5b00]">
+                    It starts immediately, cannot be paused, and can be activated only once.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={activateBoost}
+                    disabled={activatingBoost}
+                    className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#111827] px-5 text-[13px] font-black text-[#f7c948] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <i
+                      className={
+                        activatingBoost
+                          ? 'fa-solid fa-spinner fa-spin'
+                          : 'fa-solid fa-bolt'
+                      }
+                    />
+                    {activatingBoost
+                      ? 'Activating...'
+                      : 'Activate 100-Day Boost'}
+                  </button>
+                </div>
+              ) : null}
+
+              {lifetimeBoost?.status === 'expired' ? (
+                <div className="mt-4 rounded-[22px] bg-white/10 p-4 text-[12.5px] font-bold leading-5 text-white/65 ring-1 ring-white/10">
+                  This one-time 100-Day Creator Boost has ended.
+                </div>
+              ) : null}
+
+              {boostNotice ? (
+                <div
+                  className={`mt-4 rounded-[22px] p-4 text-[12.5px] font-bold leading-5 ${
+                    boostNotice.type === 'success'
+                      ? 'bg-[#ecfdf3] text-[#16803c]'
+                      : 'bg-[#fff1f2] text-[#be123c]'
+                  }`}
+                >
+                  {boostNotice.text}
                 </div>
               ) : null}
 
