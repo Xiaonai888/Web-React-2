@@ -366,6 +366,28 @@ const safeReturnPath =
 
 const fileInputRef = useRef(null)
 
+  const handleBack = () => {
+  if (safeReturnPath) {
+    navigate(safeReturnPath, { replace: true })
+    return
+  }
+
+  if (window.history.state?.idx > 0) {
+    navigate(-1)
+    return
+  }
+
+  const charactersPath =
+    `/author/story/${storyId}/chat/characters`
+
+  navigate(
+    startNewEpisode
+      ? `${charactersPath}?new=1`
+      : charactersPath,
+    { replace: true }
+  )
+}
+
   const [nickname, setNickname] = useState('')
   const [roleGroup, setRoleGroup] = useState('main')
   const [groupSheetOpen, setGroupSheetOpen] = useState(false)
