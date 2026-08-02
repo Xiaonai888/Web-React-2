@@ -446,7 +446,7 @@ export default function AuthorQuestPage() {
 
       if (item.key === 'episodes') current = totals.total_published_episodes
       if (item.key === 'words') current = totals.total_words
-      if (item.key === 'paid_fans') current = totals.total_paid_fans || totals.total_fans || 0
+      if (item.key === 'paid_fans') current = totals.total_paid_fans ?? 0
       if (item.key === 'paid_earnings') current = totals.total_net_paid_earnings_usd || 0
       if (item.key === 'policy') current = totals.has_serious_policy_violation ? 0 : 1
 
