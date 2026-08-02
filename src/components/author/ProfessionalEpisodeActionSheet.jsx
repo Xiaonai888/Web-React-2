@@ -16,12 +16,27 @@ function ActionButton({ icon, label, onClick, disabled, danger = false }) {
   )
 }
 
-function ActionContent({ episode, busy, onEdit, onPreview, onPublish, onMoveToDraft, onDelete, desktop = false }) {
-  const isPublished = String(episode.status || '').toLowerCase() === 'published'
+function ActionContent({
+  episode,
+  busy,
+  onEdit,
+  onPublish,
+  onMoveToDraft,
+  onDelete,
+  desktop = false,
+}) {
+  const isPublished =
+    String(episode.status || '').toLowerCase() === 'published'
 
   return (
     <div className={desktop ? 'p-2' : 'px-3 pb-2'}>
-      <div className={`${desktop ? 'px-3 pb-2 pt-1 text-[13px]' : 'px-1 pb-3 text-[15px]'} line-clamp-1 font-normal text-[#111827]`}>
+      <div
+        className={`${
+          desktop
+            ? 'px-3 pb-2 pt-1 text-[13px]'
+            : 'px-1 pb-3 text-[15px]'
+        } line-clamp-1 font-normal text-[#111827]`}
+      >
         {episode.title || 'Untitled Episode'}
       </div>
 
@@ -32,18 +47,23 @@ function ActionContent({ episode, busy, onEdit, onPreview, onPublish, onMoveToDr
           disabled={busy}
           onClick={() => onEdit(episode)}
         />
+
         <ActionButton
-          icon="fa-regular fa-eye"
-          label="Preview Episode"
+          icon="fa-regular fa-circle-up"
+          label="Publish Episode"
           disabled={busy}
-          onClick={() => onPreview(episode)}
+          onClick={() => onPublish(episode)}
         />
-        <ActionButton
-          icon={isPublished ? 'fa-regular fa-file-lines' : 'fa-regular fa-circle-up'}
-          label={isPublished ? 'Move to Draft' : 'Publish Episode'}
-          disabled={busy}
-          onClick={() => (isPublished ? onMoveToDraft(episode) : onPublish(episode))}
-        />
+
+        {isPublished ? (
+          <ActionButton
+            icon="fa-regular fa-file-lines"
+            label="Move to Draft"
+            disabled={busy}
+            onClick={() => onMoveToDraft(episode)}
+          />
+        ) : null}
+
         <ActionButton
           icon="fa-regular fa-trash-can"
           label="Delete Episode"
@@ -61,7 +81,6 @@ export default function ProfessionalEpisodeActionSheet({
   open,
   onClose,
   onEdit,
-  onPreview,
   onPublish,
   onMoveToDraft,
   onDelete,
@@ -140,7 +159,12 @@ export default function ProfessionalEpisodeActionSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label="Episode actions">
+    <div
+      className="fixed inset-0 z-[150]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Episode actions"
+    >
       <button
         type="button"
         aria-label="Close episode actions"
@@ -168,7 +192,6 @@ export default function ProfessionalEpisodeActionSheet({
           episode={episode}
           busy={busy}
           onEdit={onEdit}
-          onPreview={onPreview}
           onPublish={onPublish}
           onMoveToDraft={onMoveToDraft}
           onDelete={onDelete}
@@ -184,7 +207,6 @@ export default function ProfessionalEpisodeActionSheet({
           episode={episode}
           busy={busy}
           onEdit={onEdit}
-          onPreview={onPreview}
           onPublish={onPublish}
           onMoveToDraft={onMoveToDraft}
           onDelete={onDelete}
