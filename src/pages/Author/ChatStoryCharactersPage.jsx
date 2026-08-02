@@ -1992,7 +1992,14 @@ navigate(
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate(returnTo, { replace: true })}
+            onClick={() => {
+  if (window.history.state?.idx > 0) {
+    navigate(-1)
+    return
+  }
+
+  navigate(returnTo, { replace: true })
+}}
             className="flex h-10 w-10 shrink-0 items-center justify-center text-[#111827] active:scale-95"
             aria-label="Go back"
           >
