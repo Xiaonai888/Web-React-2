@@ -1194,7 +1194,7 @@ const shouldShowOpeningAds =
       </Routes>
 
       {showShadowSplash ? (
-        <ShadowSplashScreen onFinish={finishShadowSplash} duration={15000} />
+        <ShadowSplashScreen onFinish={finishShadowSplash} duration={8000} />
       ) : null}
 
       {!showShadowSplash && shouldShowOpeningAds && adStep === 'splash' ? (
