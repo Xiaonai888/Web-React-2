@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const CAMBODIA_TIME_ZONE = 'Asia/Phnom_Penh'
+const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
+
+function getCambodiaDate(value = new Date()) {
+  return new Date(
+    new Date(value).getTime() +
+      CAMBODIA_OFFSET_MS
+  )
+}
+
 const BENEFITS = [
   { icon: 'fa-gem', label: 'Diamonds', color: 'text-[#7C3AED]', bg: 'bg-[#F1EAFE]' },
   { icon: 'fa-coins', label: 'Coins', color: 'text-[#E9A400]', bg: 'bg-[#FFF6D8]' },
@@ -14,24 +24,51 @@ const RULES = [
   'Limited to the event time',
 ]
 
-function getNextSunday(now, skipToday = false) {
-  const date = new Date(now)
-  date.setHours(0, 0, 0, 0)
+function getNextSunday(
+  now,
+  skipToday = false
+) {
+  const cambodiaDate =
+    getCambodiaDate(now)
 
-  let daysUntilSunday = (7 - date.getDay()) % 7
+  let daysUntilSunday =
+    (7 - cambodiaDate.getUTCDay()) % 7
 
-  if (daysUntilSunday === 0 && skipToday) {
+  if (
+    daysUntilSunday === 0 &&
+    skipToday
+  ) {
     daysUntilSunday = 7
   }
 
-  date.setDate(date.getDate() + daysUntilSunday)
-  return date
+  const sundayMidnightUtc = Date.UTC(
+    cambodiaDate.getUTCFullYear(),
+    cambodiaDate.getUTCMonth(),
+    cambodiaDate.getUTCDate() +
+      daysUntilSunday
+  )
+
+  return new Date(
+    sundayMidnightUtc -
+      CAMBODIA_OFFSET_MS
+  )
 }
 
 function getEndOfToday(now) {
-  const date = new Date(now)
-  date.setHours(23, 59, 59, 999)
-  return date
+  const cambodiaDate =
+    getCambodiaDate(now)
+
+  const nextMidnightUtc = Date.UTC(
+    cambodiaDate.getUTCFullYear(),
+    cambodiaDate.getUTCMonth(),
+    cambodiaDate.getUTCDate() + 1
+  )
+
+  return new Date(
+    nextMidnightUtc -
+      CAMBODIA_OFFSET_MS -
+      1
+  )
 }
 
 function getTimeParts(target, now) {
@@ -52,6 +89,7 @@ function pad(value) {
 
 function formatEventDate(date) {
   return new Intl.DateTimeFormat('en-US', {
+    timeZone: CAMBODIA_TIME_ZONE,
     weekday: 'long',
     month: 'short',
     day: 'numeric',
@@ -268,7 +306,8 @@ export default function BlackSundayEventTab() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const isLive = now.getDay() === 0
+  const isLive =
+  getCambodiaDate(now).getUTCDay() === 0
 
   const upcomingEvent = useMemo(
     () => getNextSunday(now, isLive),
