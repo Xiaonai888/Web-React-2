@@ -12,7 +12,6 @@ import WalletPage from './pages/WalletPage'
 import WalletOrderHistoryPage from './pages/WalletOrderHistoryPage'
 import EventPage from './pages/EventPage'
 import ProfilePage from './pages/ProfilePage'
-import EditProfilePage from './pages/EditProfilePage'
 import EditProfileLinksPage from './pages/EditProfileLinksPage'
 import ProfileFollowListPage from './pages/ProfileFollowListPage'
 import StoryDetailPage from './pages/StoryDetailPage'
@@ -40,6 +39,7 @@ import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
+import AuthorDiamondPage from './pages/Author/AuthorDiamondPage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
@@ -225,6 +225,7 @@ function AppShell() {
     '/author/profile',
     '/author/insights',
     '/author/income',
+    '/author/diamonds',
     '/author/payment-method',
     '/author/benefits',
     '/author/quest',
@@ -1169,6 +1170,7 @@ const shouldShowOpeningAds =
         <Route path="/authors/top" element={<TopAuthorsPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
+        <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
