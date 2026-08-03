@@ -460,7 +460,14 @@ export default function AuthorProfilePage() {
                   <SummaryItem value={formatMoney(summary?.income?.this_month_usd)} label="Earned" />
                 </button>
 
-                <SummaryItem value={formatNumber(summary?.gifts?.total_received)} label="Gift" />
+                <button
+  type="button"
+  onClick={() => navigate('/author/gifts')}
+  className="min-w-0 active:scale-[0.98]"
+  aria-label="Open Gift history"
+>
+  <SummaryItem value={formatNumber(summary?.gifts?.total_received)} label="Gift" />
+</button>
               </div>
             </>
           ) : null}
