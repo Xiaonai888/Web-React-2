@@ -24,8 +24,10 @@ function normalizeUsername(value) {
 export default function AuthorEditPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const fromSettings = new URLSearchParams(location.search).get('from') === 'settings'
   const returnTo =
-  location.state?.returnTo || '/author/page-settings'
+  location.state?.returnTo ||
+  (fromSettings ? '/author/page-options' : '/author/page-settings')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
