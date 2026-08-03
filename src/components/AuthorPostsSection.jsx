@@ -4,6 +4,11 @@ import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReportModal from './ReportModal'
+import {
+  deleteSavedPostBySource,
+  fetchSavedPostStatus,
+  saveSavedPost,
+} from '../services/savedPostsApi'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -553,10 +558,13 @@ function SheetOption({
 function PostOptionsSheet({
   post,
   busy,
+  saveBusy,
+  isSaved,
   isOwner,
   author,
   onClose,
   onPinChange,
+  onSaveToggle,
   onReport,
   onMessage,
 }) {
@@ -796,15 +804,26 @@ function PostOptionsSheet({
               />
 
               <SheetOption
-                icon="fa-regular fa-bookmark"
-                title="Save post"
-                subtext="Add this to your saved items."
-                onClick={() =>
-                  handleComingSoon(
-                    'Post saved'
-                  )
-                }
-              />
+  icon={
+    isSaved
+      ? 'fa-solid fa-bookmark'
+      : 'fa-regular fa-bookmark'
+  }
+  title={
+    isSaved
+      ? 'Remove from saved'
+      : 'Save post'
+  }
+  subtext={
+    isSaved
+      ? 'Remove this post from your saved items.'
+      : 'Add this post to your saved items.'
+  }
+  disabled={saveBusy}
+  onClick={() =>
+    onSaveToggle?.(post)
+  }
+/>
 
               <SheetOption
                 icon="fa-solid fa-pen"
@@ -852,15 +871,26 @@ function PostOptionsSheet({
           ) : (
             <>
               <SheetOption
-                icon="fa-regular fa-bookmark"
-                title="Save post"
-                subtext="Add this to your saved items."
-                onClick={() =>
-                  handleComingSoon(
-                    'Post saved'
-                  )
-                }
-              />
+  icon={
+    isSaved
+      ? 'fa-solid fa-bookmark'
+      : 'fa-regular fa-bookmark'
+  }
+  title={
+    isSaved
+      ? 'Remove from saved'
+      : 'Save post'
+  }
+  subtext={
+    isSaved
+      ? 'Remove this post from your saved items.'
+      : 'Add this post to your saved items.'
+  }
+  disabled={saveBusy}
+  onClick={() =>
+    onSaveToggle?.(post)
+  }
+/>
 
               <SheetOption
                 icon="fa-regular fa-eye-slash"
@@ -977,7 +1007,47 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [commentPost, setCommentPost] = useState(null)
   const [viewImageUrl, setViewImageUrl] = useState('')    
   const [pinBusy, setPinBusy] = useState(false)
+  const [saveBusy, setSaveBusy] = useState(false)
+  const [
+    selectedPostSaved,
+    setSelectedPostSaved,
+  ] = useState(false)
   const [reactionBusyId, setReactionBusyId] = useState('')
+
+  useEffect(() => {
+    if (!selectedPost?.id) {
+      setSelectedPostSaved(false)
+      return undefined
+    }
+
+    const controller =
+      new AbortController()
+
+    setSelectedPostSaved(false)
+
+    fetchSavedPostStatus(
+      'author_post',
+      String(selectedPost.id),
+      controller.signal
+    )
+      .then((data) => {
+        setSelectedPostSaved(
+          Boolean(data.saved)
+        )
+      })
+      .catch((error) => {
+        if (
+          error?.name !==
+          'AbortError'
+        ) {
+          setSelectedPostSaved(false)
+        }
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [selectedPost?.id])
 
   useEffect(() => {
     let ignore = false
@@ -1049,6 +1119,69 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       setSaving(false)
     }
   }
+
+  async function handleSavePost(post) {
+  if (!post?.id || saveBusy) return
+
+  try {
+    setSaveBusy(true)
+    setLocalError('')
+
+    if (selectedPostSaved) {
+      await deleteSavedPostBySource(
+        'author_post',
+        String(post.id)
+      )
+
+      setSelectedPostSaved(false)
+      onMessage?.(
+        'Removed from saved.'
+      )
+      return
+    }
+
+    const username =
+      author?.page_username || ''
+
+    const sourceUrl = username
+      ? `/author/page/${username}?post=${post.id}`
+      : `/author/page?post=${post.id}`
+
+    await saveSavedPost({
+      source_type: 'author_post',
+      source_id: String(post.id),
+      source_url: sourceUrl,
+      snapshot_data: {
+        content: post.content || '',
+        page_name:
+          author?.page_name ||
+          'Author',
+        page_username: username,
+        avatar_url:
+          author?.avatar_url || '',
+        image_urls: Array.isArray(
+          post.image_urls
+        )
+          ? post.image_urls
+          : [],
+      },
+      original_created_at:
+        post.created_at || null,
+    })
+
+    setSelectedPostSaved(true)
+    onMessage?.('Post saved.')
+  } catch (error) {
+    const message =
+      error.message ||
+      'Failed to save post'
+
+    setLocalError(message)
+    onMessage?.(message)
+  } finally {
+    setSaveBusy(false)
+  }
+}
 
   async function handlePinChange(post, isPinned) {
     if (!post?.id || pinBusy) return
@@ -1197,12 +1330,15 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
 
       <PostOptionsSheet
-        post={selectedPost}
-        busy={pinBusy}
-        isOwner={Boolean(author?.is_owner)}
+  post={selectedPost}
+  busy={pinBusy}
+  saveBusy={saveBusy}
+  isSaved={selectedPostSaved}
+  isOwner={Boolean(author?.is_owner)}
         author={author}
         onClose={() => setSelectedPost(null)}
         onPinChange={handlePinChange}
+        onSaveToggle={handleSavePost}
         onReport={(post) => {
           setSelectedPost(null)
           setReportPost(post)
