@@ -88,10 +88,18 @@ function sortAuthorPosts(posts) {
   })
 }
 
-async function fetchAuthorPosts(pageUsername) {
+async function fetchAuthorPosts(pageUsername, before = '') {
   if (!pageUsername) return []
 
-  const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts`)
+  const params = new URLSearchParams({ limit: '30' })
+
+  if (before) {
+    params.set('before', before)
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername)}/posts?${params.toString()}`
+  )
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
@@ -1197,7 +1205,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
         setLoading(true)
         setLocalError('')
 
-        const nextPosts = await fetchAuthorPosts(author.page_username)
+        const nextPosts = await fetchAuthorPosts(author.page_username, postFilterDate)
 
         if (!ignore) {
           const sortedPosts = sortAuthorPosts(nextPosts)
@@ -1220,7 +1228,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     return () => {
       ignore = true
     }
-  }, [author?.page_username, onCountChange])
+  }, [author?.page_username, onCountChange, postFilterDate])
 
   async function handleCreatePost(content, imageUrls = []) {
     const nextContent = String(content || '').trim()
@@ -1552,9 +1560,9 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
       {loading ? (
         <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
-      ) : filteredPosts.length ? (
+      ) : posts.length ? (
         <div className="space-y-2 bg-[#f3f4f6]">
-          {filteredPosts.map((post) => (
+          {posts.map((post) => (
             <AuthorPostCard
               key={post.id}
               post={post}
