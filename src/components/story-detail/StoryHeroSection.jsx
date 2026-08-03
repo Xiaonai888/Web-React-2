@@ -22,7 +22,7 @@ function getStoryStatus(story) {
   return story?.story_status || story?.storyStatus || 'New'
 }
 
-export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBookmark }) {
+export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBookmark, onEcho }) {
   const slides = useMemo(() => normalizeSlides(story), [story])
   const [activeIndex, setActiveIndex] = useState(0)  
   const [menuOpen, setMenuOpen] = useState(false)
@@ -66,23 +66,10 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     }
   }
 
-  const handleEcho = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: story?.title || 'Story',
-          text: story?.title || 'Story',
-          url: window.location.href,
-        })
-      } else {
-        await navigator.clipboard.writeText(window.location.href)
-      }
-
-      setMenuOpen(false)
-    } catch {
-      setMenuOpen(false)
-    }
-  }
+  const handleEcho = () => {
+  setMenuOpen(false)
+  onEcho?.()
+}
 
   return (
     <section className="relative bg-[#f5f3fa]">
