@@ -10,7 +10,13 @@ import {
 } from '../../features/reader-posts/readerPostDraft'
 
 const API_BASE_URL =
-  'https://shadow-backend-kucw.onrender.com'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const MAX_POST_PHOTOS = 5
 
 const AUDIENCES = [
   {
@@ -87,6 +93,24 @@ function getAuthToken() {
   )
 }
 
+function getImageUrls(draft) {
+  if (!Array.isArray(draft?.image_urls)) {
+    return []
+  }
+
+  return [
+    ...new Set(
+      draft.image_urls
+        .filter(
+          (url) =>
+            typeof url === 'string'
+        )
+        .map((url) => url.trim())
+        .filter(Boolean)
+    ),
+  ].slice(0, MAX_POST_PHOTOS)
+}
+
 function getAudienceLabel(value) {
   return (
     AUDIENCES.find(
@@ -100,6 +124,45 @@ function getCommentLabel(value) {
     COMMENT_OPTIONS.find(
       (item) => item.value === value
     )?.label || 'Everyone'
+  )
+}
+
+function ReviewImagePreview({
+  imageUrls,
+}) {
+  if (!imageUrls.length) {
+    return null
+  }
+
+  if (imageUrls.length === 1) {
+    return (
+      <div className="mb-5 overflow-hidden rounded-[18px] bg-[#f3f4f6]">
+        <img
+          src={imageUrls[0]}
+          alt=""
+          className="max-h-[560px] w-full object-contain"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="mb-5 grid grid-cols-2 gap-1 overflow-hidden rounded-[18px]">
+      {imageUrls.map(
+        (imageUrl, index) => (
+          <div
+            key={`${imageUrl}-${index}`}
+            className="aspect-square bg-[#f3f4f6]"
+          >
+            <img
+              src={imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        )
+      )}
+    </div>
   )
 }
 
@@ -169,6 +232,7 @@ function SelectionRow({
         <span className="block text-[15px] font-normal text-[#111827]">
           {label}
         </span>
+
         {description ? (
           <span className="mt-0.5 block text-[11px] font-normal leading-4 text-[#8b93a1]">
             {description}
@@ -202,6 +266,13 @@ export default function ReaderPostReviewPage() {
   const [message, setMessage] =
     useState('')
 
+  const imageUrls =
+    getImageUrls(draft)
+  const hasContent = Boolean(
+    draft.content?.trim() ||
+      imageUrls.length
+  )
+
   function updateDraft(patch) {
     const next = {
       ...draft,
@@ -213,10 +284,13 @@ export default function ReaderPostReviewPage() {
   }
 
   async function publishPost() {
-    if (!draft.content?.trim()) {
-      navigate('/reader/post/create', {
-        replace: true,
-      })
+    if (!hasContent) {
+      navigate(
+        '/reader/post/create',
+        {
+          replace: true,
+        }
+      )
       return
     }
 
@@ -236,7 +310,9 @@ export default function ReaderPostReviewPage() {
           },
           body: JSON.stringify({
             content:
-              draft.content.trim(),
+              draft.content?.trim() ||
+              '',
+            image_urls: imageUrls,
             visibility:
               draft.visibility,
             comments_permission:
@@ -411,7 +487,7 @@ export default function ReaderPostReviewPage() {
             onClick={publishPost}
             disabled={
               saving ||
-              !draft.content?.trim()
+              !hasContent
             }
             className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
           >
@@ -426,6 +502,20 @@ export default function ReaderPostReviewPage() {
         {message ? (
           <div className="mb-4 rounded-[14px] bg-red-50 px-3 py-2 text-[12px] font-normal leading-5 text-red-600">
             {message}
+          </div>
+        ) : null}
+
+        <ReviewImagePreview
+          imageUrls={imageUrls}
+        />
+
+        {imageUrls.length ? (
+          <div className="mb-3 text-[12px] font-normal text-[#6b7280]">
+            {imageUrls.length}{' '}
+            {imageUrls.length === 1
+              ? 'photo'
+              : 'photos'}{' '}
+            selected
           </div>
         ) : null}
 
