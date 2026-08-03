@@ -443,8 +443,6 @@ export default function AuthorPostComposerSheet({
           }}
         />
 
-                />
-
         <ImageDropZone
           onFiles={handlePickImages}
           onRejectedFiles={() => setImageError('Only image files can be dropped here.')}
