@@ -127,6 +127,35 @@ async function createAuthorPost(content, imageUrls = []) {
   return data.post || null
 }
 
+async function updateAuthorPost(postId, content, imageUrls = []) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        content,
+        image_urls: Array.isArray(imageUrls) ? imageUrls : [],
+      }),
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update post')
+  }
+
+  return data.post || null
+}
+
 async function setAuthorPostPinned(postId, isPinned) {
   const token = getAuthToken()
 
@@ -565,6 +594,7 @@ function PostOptionsSheet({
   onClose,
   onPinChange,
   onSaveToggle,
+  onEdit,
   onReport,
   onMessage,
 }) {
@@ -828,11 +858,7 @@ function PostOptionsSheet({
               <SheetOption
                 icon="fa-solid fa-pen"
                 title="Edit post"
-                onClick={() =>
-                  handleComingSoon(
-                    'Edit post is coming soon.'
-                  )
-                }
+                onClick={() => onEdit?.(post)}
               />
 
               <SheetOption
@@ -1002,6 +1028,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
+  const [editingPost, setEditingPost] = useState(null)
   const [selectedPost, setSelectedPost] = useState(null)
   const [reportPost, setReportPost] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
@@ -1112,6 +1139,57 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
       return false
     } catch (error) {
       const message = error.message || 'Failed to create post'
+      setLocalError(message)
+      onMessage?.(message)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleUpdatePost(postId, content, imageUrls = []) {
+    const nextContent = String(content || '').trim()
+    const nextImageUrls = Array.isArray(imageUrls) ? imageUrls : []
+
+    if (!postId || (!nextContent && !nextImageUrls.length) || saving) {
+      return false
+    }
+
+    try {
+      setSaving(true)
+      setLocalError('')
+
+      const updatedPost = await updateAuthorPost(
+        postId,
+        nextContent,
+        nextImageUrls
+      )
+
+      if (!updatedPost) return false
+
+      setPosts((current) =>
+        sortAuthorPosts(
+          current.map((item) =>
+            item.id === postId
+              ? {
+                  ...item,
+                  ...updatedPost,
+                  my_reaction: item.my_reaction,
+                  reaction_summary:
+                    Array.isArray(updatedPost.reaction_summary) &&
+                    updatedPost.reaction_summary.length
+                      ? updatedPost.reaction_summary
+                      : item.reaction_summary,
+                }
+              : item
+          )
+        )
+      )
+
+      onMessage?.('Post updated.')
+      return true
+    } catch (error) {
+      const message = error.message || 'Failed to update post'
       setLocalError(message)
       onMessage?.(message)
       return false
@@ -1274,7 +1352,10 @@ function handleAuthorPostCommentChanged(nextComments = []) {
       {author?.is_owner ? (
         <AuthorPostComposer
           author={author}
-          onOpenComposer={() => setComposerOpen(true)}
+          onOpenComposer={() => {
+            setEditingPost(null)
+            setComposerOpen(true)
+          }}
           onOpenFilter={() => onMessage?.('Post filter is coming soon.')}
           onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
         />
@@ -1323,8 +1404,13 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         open={composerOpen}
         author={author}
         saving={saving}
-        onClose={() => setComposerOpen(false)}
+        editingPost={editingPost}
+        onClose={() => {
+          setComposerOpen(false)
+          setEditingPost(null)
+        }}
         onPublishText={handleCreatePost}
+        onUpdatePost={handleUpdatePost}
         onMessage={onMessage}
       />
 
@@ -1339,6 +1425,11 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         onClose={() => setSelectedPost(null)}
         onPinChange={handlePinChange}
         onSaveToggle={handleSavePost}
+        onEdit={(post) => {
+          setSelectedPost(null)
+          setEditingPost(post)
+          setComposerOpen(true)
+        }}
         onReport={(post) => {
           setSelectedPost(null)
           setReportPost(post)
