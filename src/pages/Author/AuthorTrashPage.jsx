@@ -70,7 +70,7 @@ function TrashStoryCard({
   const daysLeft = getDaysLeft(story)
 
   return (
-    <article className="rounded-[22px] bg-white p-3.5 shadow-sm">
+    <article className="bg-white px-4 py-4">
       <div className="flex gap-3.5">
         <div className="h-[122px] w-[84px] shrink-0 overflow-hidden rounded-[15px] bg-[#e5e7eb]">
           {story.cover_url ? (
@@ -160,7 +160,7 @@ function TrashPostCard({
   ).trim()
 
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm">
+    <article className="bg-white px-4 py-4">
       <div className="flex items-start gap-3">
         <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#f2f4f7] text-[#98a2b3]">
           {images[0] ? (
@@ -270,7 +270,7 @@ function TrashCommentCard({
     'Reader'
 
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm">
+    <article className="bg-white px-4 py-4">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[#667085]">
           <i className="fa-regular fa-comment-dots text-[17px]" />
@@ -334,7 +334,7 @@ function EmptyState({
   text,
 }) {
   return (
-    <section className="mt-5 rounded-[22px] bg-white px-5 py-10 text-center shadow-sm">
+    <section className="bg-white px-5 py-12 text-center">
       <div className="mx-auto flex h-12 w-12 items-center justify-center text-[#98a2b3]">
         <i className={`${icon} text-[21px]`} />
       </div>
@@ -836,8 +836,8 @@ export default function AuthorTrashPage() {
         : visibleComments.length
 
   return (
-    <div className="min-h-screen bg-[#f7f7f9] pb-[110px]">
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 backdrop-blur">
+    <div className="min-h-screen bg-[#f8f7fb] pb-[110px]">
+      <header className="bg-gradient-to-b from-[#fff8ed] to-[#f8f7fb] px-4 pb-3 pt-4">
         <div className="relative mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
@@ -847,10 +847,10 @@ export default function AuthorTrashPage() {
             className="flex h-10 w-10 items-center justify-start text-[#111827] active:scale-95"
             aria-label="Go back"
           >
-            <i className="fa-solid fa-arrow-left text-[18px]" />
+            <i className="fa-solid fa-chevron-left text-[16px]" />
           </button>
 
-          <h1 className="text-[18px] font-semibold text-[#111827]">
+          <h1 className="text-[16px] font-semibold text-[#111827]">
             Trash
           </h1>
 
@@ -865,218 +865,262 @@ export default function AuthorTrashPage() {
             aria-label="Trash information"
             aria-expanded={showHint}
           >
-            <i className="fa-regular fa-circle-question text-[20px]" />
+            <i className="fa-regular fa-circle-question text-[18px]" />
           </button>
 
           {showHint ? (
-            <div className="absolute right-0 top-12 z-20 w-[270px] rounded-[16px] bg-white p-4 text-[12px] font-normal leading-5 text-[#475467] shadow-xl">
+            <div className="absolute right-0 top-12 z-20 w-[270px] rounded-[12px] bg-white p-4 text-[12px] font-normal leading-5 text-[#475467] shadow-xl">
               Deleted items are shown here for 30 days. After 30 days, they disappear from your Trash and cannot be restored.
             </div>
           ) : null}
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
-        <div className="flex items-center gap-3 bg-transparent p-0">
-          {[
-            ['stories', 'Stories', visibleStories.length],
-            ['posts', 'Posts', visiblePosts.length],
-            ['comments', 'Comments', visibleComments.length],
-          ].map(([value, label, count]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() =>
-                setActiveTab(value)
-              }
-              className={`h-10 rounded-full px-5 text-[12px] font-medium transition ${
-                activeTab === value
-                  ? 'bg-[#fff1f2] text-[#e11d48]'
-                  : 'text-[#667085]'
-              }`}
-            >
-              {label} · {count}
-            </button>
-          ))}
-        </div>
+      <main className="mx-auto max-w-5xl px-3 pt-4">
+        <section className="overflow-hidden rounded-[10px] bg-white">
+          <div className="grid grid-cols-3 gap-2 px-3 py-3">
+            {[
+              ['stories', 'Stories', visibleStories.length],
+              ['posts', 'Posts', visiblePosts.length],
+              ['comments', 'Comments', visibleComments.length],
+            ].map(([value, label, count]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() =>
+                  setActiveTab(value)
+                }
+                className={`h-10 rounded-full px-3 text-[12px] font-medium transition ${
+                  activeTab === value
+                    ? 'bg-[#fff0f2] text-[#e11d48]'
+                    : 'bg-transparent text-[#667085]'
+                }`}
+              >
+                {label} · {count}
+              </button>
+            ))}
+          </div>
 
-        <div className="mt-4 flex items-center gap-2">
-          <select
-            value={sortOrder}
-            onChange={(event) =>
-              setSortOrder(
-                event.target.value
-              )
-            }
-            className="h-11 rounded-[14px] bg-white px-3 text-[12px] font-medium text-[#111827] shadow-sm outline-none"
-          >
-            <option value="newest">
-              Newest first
-            </option>
-            <option value="oldest">
-              Oldest first
-            </option>
-          </select>
+          <div className="h-px bg-[#eef0f3]" />
 
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] bg-white px-3 shadow-sm">
-            <i className="fa-solid fa-magnifying-glass text-[13px] text-[#98a2b3]" />
-
-            <input
-              value={query}
-              onChange={(event) =>
-                setQuery(
-                  event.target.value
-                )
-              }
-              placeholder="Search"
-              className="min-w-0 flex-1 bg-transparent text-[12px] text-[#111827] outline-none placeholder:text-[#98a2b3]"
-            />
-          </label>
-        </div>
-
-        {message ? (
-          <button
-            type="button"
-            onClick={() =>
-              setMessage('')
-            }
-            className="mt-4 w-full rounded-[16px] bg-white px-4 py-3 text-left text-[12px] font-medium leading-5 text-[#475467] shadow-sm"
-          >
-            {message}
-          </button>
-        ) : null}
-
-        {loading ? (
-          <section className="mt-5 rounded-[22px] bg-white p-6 text-center shadow-sm">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-            <div className="text-[13px] font-medium text-[#667085]">
-              Loading trash...
+          <div className="grid grid-cols-[118px_minmax(0,1fr)]">
+            <div className="flex h-12 items-center border-r border-[#eef0f3] px-4">
+              <select
+                value={sortOrder}
+                onChange={(event) =>
+                  setSortOrder(
+                    event.target.value
+                  )
+                }
+                className="w-full bg-transparent text-[12px] font-medium text-[#111827] outline-none"
+              >
+                <option value="newest">
+                  Newest first
+                </option>
+                <option value="oldest">
+                  Oldest first
+                </option>
+              </select>
             </div>
-          </section>
-        ) : null}
 
-        {!loading &&
-        activeTab === 'stories' ? (
-          visibleStories.length ? (
-            <section className="mt-5">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[16px] font-semibold text-[#111827]">
-                  Can Restore
-                </h2>
+            <label className="flex h-12 min-w-0 items-center gap-2 px-4">
+              <i className="fa-solid fa-magnifying-glass text-[12px] text-[#98a2b3]" />
 
-                <span className="text-[11px] font-medium text-[#667085]">
-                  {activeCount}
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                {visibleStories.map(
-                  (story) => (
-                    <TrashStoryCard
-                      key={story.id}
-                      story={story}
-                      busy={
-                        busyId ===
-                        `story:${story.id}`
-                      }
-                      onRestore={
-                        handleRestoreStory
-                      }
-                    />
+              <input
+                value={query}
+                onChange={(event) =>
+                  setQuery(
+                    event.target.value
                   )
-                )}
-              </div>
-            </section>
-          ) : (
-            <EmptyState
-              icon="fa-regular fa-folder-open"
-              title="Story trash is empty"
-              text="Deleted stories that can still be restored will appear here."
-            />
-          )
-        ) : null}
+                }
+                placeholder="Search"
+                className="min-w-0 flex-1 bg-transparent text-[12px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
+              />
+            </label>
+          </div>
 
-        {!loading &&
-        activeTab === 'posts' ? (
-          visiblePosts.length ? (
-            <section className="mt-5">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[16px] font-semibold text-[#111827]">
-                  Deleted Posts
-                </h2>
+          {message ? (
+            <>
+              <div className="h-px bg-[#eef0f3]" />
 
-                <span className="text-[11px] font-medium text-[#667085]">
-                  {activeCount}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setMessage('')
+                }
+                className="w-full bg-white px-4 py-3 text-left text-[12px] font-normal leading-5 text-[#475467]"
+              >
+                {message}
+              </button>
+            </>
+          ) : null}
 
-              <div className="space-y-3">
-                {visiblePosts.map(
-                  (post) => (
-                    <TrashPostCard
-                      key={post.id}
-                      post={post}
-                      busy={
-                        busyId ===
-                        `post:${post.id}`
-                      }
-                      onRestore={
-                        handleRestorePost
-                      }
-                    />
-                  )
-                )}
-              </div>
-            </section>
-          ) : (
-            <EmptyState
-              icon="fa-regular fa-note-sticky"
-              title="Post trash is empty"
-              text="Deleted Author Posts that can still be restored will appear here."
-            />
-          )
-        ) : null}
+          {loading ? (
+            <>
+              <div className="h-px bg-[#eef0f3]" />
 
-        {!loading &&
-        activeTab === 'comments' ? (
-          visibleComments.length ? (
-            <section className="mt-5">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[16px] font-semibold text-[#111827]">
-                  Deleted Comments
-                </h2>
+              <section className="bg-white p-7 text-center">
+                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
+                <div className="text-[13px] font-medium text-[#667085]">
+                  Loading trash...
+                </div>
+              </section>
+            </>
+          ) : null}
 
-                <span className="text-[11px] font-medium text-[#667085]">
-                  {activeCount}
-                </span>
-              </div>
+          {!loading &&
+          activeTab === 'stories' ? (
+            visibleStories.length ? (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
 
-              <div className="space-y-3">
-                {visibleComments.map(
-                  (item) => (
-                    <TrashCommentCard
-                      key={`${item.source}:${item.comment_id}`}
-                      item={item}
-                      busy={
-                        busyId ===
-                        `${item.source}:${item.comment_id}`
-                      }
-                      onRestore={
-                        handleRecoverComment
-                      }
-                    />
-                  )
-                )}
-              </div>
-            </section>
-          ) : (
-            <EmptyState
-              icon="fa-regular fa-comments"
-              title="Comment trash is empty"
-              text="Deleted comments that can still be recovered will appear here."
-            />
-          )
-        ) : null}
+                <section>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <h2 className="text-[14px] font-semibold text-[#111827]">
+                      Can Restore
+                    </h2>
+
+                    <span className="text-[11px] font-normal text-[#667085]">
+                      {activeCount}
+                    </span>
+                  </div>
+
+                  <div className="h-px bg-[#eef0f3]" />
+
+                  <div className="divide-y divide-[#eef0f3]">
+                    {visibleStories.map(
+                      (story) => (
+                        <TrashStoryCard
+                          key={story.id}
+                          story={story}
+                          busy={
+                            busyId ===
+                            `story:${story.id}`
+                          }
+                          onRestore={
+                            handleRestoreStory
+                          }
+                        />
+                      )
+                    )}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
+
+                <EmptyState
+                  icon="fa-regular fa-folder-open"
+                  title="Story trash is empty"
+                  text="Deleted stories that can still be restored will appear here."
+                />
+              </>
+            )
+          ) : null}
+
+          {!loading &&
+          activeTab === 'posts' ? (
+            visiblePosts.length ? (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
+
+                <section>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <h2 className="text-[14px] font-semibold text-[#111827]">
+                      Deleted Posts
+                    </h2>
+
+                    <span className="text-[11px] font-normal text-[#667085]">
+                      {activeCount}
+                    </span>
+                  </div>
+
+                  <div className="h-px bg-[#eef0f3]" />
+
+                  <div className="divide-y divide-[#eef0f3]">
+                    {visiblePosts.map(
+                      (post) => (
+                        <TrashPostCard
+                          key={post.id}
+                          post={post}
+                          busy={
+                            busyId ===
+                            `post:${post.id}`
+                          }
+                          onRestore={
+                            handleRestorePost
+                          }
+                        />
+                      )
+                    )}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
+
+                <EmptyState
+                  icon="fa-regular fa-note-sticky"
+                  title="Post trash is empty"
+                  text="Deleted Author Posts that can still be restored will appear here."
+                />
+              </>
+            )
+          ) : null}
+
+          {!loading &&
+          activeTab === 'comments' ? (
+            visibleComments.length ? (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
+
+                <section>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <h2 className="text-[14px] font-semibold text-[#111827]">
+                      Deleted Comments
+                    </h2>
+
+                    <span className="text-[11px] font-normal text-[#667085]">
+                      {activeCount}
+                    </span>
+                  </div>
+
+                  <div className="h-px bg-[#eef0f3]" />
+
+                  <div className="divide-y divide-[#eef0f3]">
+                    {visibleComments.map(
+                      (item) => (
+                        <TrashCommentCard
+                          key={`${item.source}:${item.comment_id}`}
+                          item={item}
+                          busy={
+                            busyId ===
+                            `${item.source}:${item.comment_id}`
+                          }
+                          onRestore={
+                            handleRecoverComment
+                          }
+                        />
+                      )
+                    )}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <>
+                <div className="h-px bg-[#eef0f3]" />
+
+                <EmptyState
+                  icon="fa-regular fa-comments"
+                  title="Comment trash is empty"
+                  text="Deleted comments that can still be recovered will appear here."
+                />
+              </>
+            )
+          ) : null}
+        </section>
       </main>
     </div>
   )
