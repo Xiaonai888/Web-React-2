@@ -9,6 +9,7 @@ import LatestCommentSection from '../components/story-detail/LatestCommentSectio
 import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
+import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -321,6 +322,7 @@ export default function StoryDetailPage() {
   const [authorFollowLoading, setAuthorFollowLoading] = useState(false)
   const [authorIsOwnerPage, setAuthorIsOwnerPage] = useState(false)
   const [giftTopFans, setGiftTopFans] = useState([])
+  const [echoShareOpen, setEchoShareOpen] = useState(false)
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
@@ -731,6 +733,7 @@ setSubscribed(isSubscribed)
         onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
+        onEcho={() => setEchoShareOpen(true)}
       />
 
       <main className="mx-auto max-w-5xl px-0 sm:px-4">
@@ -810,6 +813,19 @@ setSubscribed(isSubscribed)
           navigate(`/story/${realStoryId}/episode/${episode.id}`)
         }}
       />
+
+      <SocialEchoShareSheet
+  open={echoShareOpen}
+  sourceType="story"
+  sourceId={story?.id || realStoryId}
+  sourceName={story?.title || 'Story'}
+  sourceAvatarUrl={story?.author_page?.avatar_url || ''}
+  sourceImageUrl={story?.landscape_thumbnail_url || story?.cover_url || ''}
+  sourceLabel="story"
+  endpoint={continueEpisode?.id ? `${API_BASE_URL}/api/echoes/episode/${encodeURIComponent(continueEpisode.id)}` : ''}
+  shareUrl={`${window.location.origin}/story/${story?.id || realStoryId}`}
+  onClose={() => setEchoShareOpen(false)}
+/>
 
       <CommentsModal
         open={commentsOpen}
