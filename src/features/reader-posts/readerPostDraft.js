@@ -3,10 +3,51 @@ const DRAFT_KEY =
 
 export const DEFAULT_READER_POST_DRAFT = {
   content: '',
+  image_urls: [],
   visibility: 'public',
   comments_permission: 'everyone',
   story_sharing: false,
   publish_at: null,
+}
+
+function normalizeImageUrls(value) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return [
+    ...new Set(
+      value
+        .filter(
+          (url) =>
+            typeof url === 'string'
+        )
+        .map((url) => url.trim())
+        .filter(Boolean)
+    ),
+  ].slice(0, 5)
+}
+
+function normalizeDraft(value) {
+  const source =
+    value &&
+    typeof value === 'object'
+      ? value
+      : {}
+
+  return {
+    ...DEFAULT_READER_POST_DRAFT,
+    ...source,
+    content:
+      typeof source.content ===
+      'string'
+        ? source.content
+        : '',
+    image_urls:
+      normalizeImageUrls(
+        source.image_urls
+      ),
+  }
 }
 
 export function readReaderPostDraft() {
@@ -17,13 +58,7 @@ export function readReaderPostDraft() {
       ) || 'null'
     )
 
-    return {
-      ...DEFAULT_READER_POST_DRAFT,
-      ...(saved &&
-      typeof saved === 'object'
-        ? saved
-        : {}),
-    }
+    return normalizeDraft(saved)
   } catch {
     return {
       ...DEFAULT_READER_POST_DRAFT,
@@ -36,10 +71,9 @@ export function writeReaderPostDraft(
 ) {
   sessionStorage.setItem(
     DRAFT_KEY,
-    JSON.stringify({
-      ...DEFAULT_READER_POST_DRAFT,
-      ...draft,
-    })
+    JSON.stringify(
+      normalizeDraft(draft)
+    )
   )
 }
 
