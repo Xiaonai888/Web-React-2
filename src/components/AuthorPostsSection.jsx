@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
@@ -517,21 +517,34 @@ function ToastBubble({ text, author }) {
   )
 }
 
-function SheetOption({ icon, title, subtext, danger = false, disabled = false, onClick }) {
+function SheetOption({
+  icon,
+  title,
+  subtext,
+  disabled = false,
+  onClick,
+}) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3.5 text-left active:bg-[#f3f4f6] disabled:opacity-60"
+      className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2.5 text-left active:bg-black/[0.04] disabled:opacity-50"
     >
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${danger ? 'bg-[#fff1f2] text-[#dc2626]' : 'bg-[#f3f4f6] text-[#111827]'}`}>
-        <i className={`${icon} text-[17px]`} />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[16px]`} />
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className={`block text-[16px] font-semibold ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>{title}</span>
-        {subtext ? <span className="mt-0.5 block text-[12px] font-normal leading-5 text-[#8b93a1]">{subtext}</span> : null}
+        <span className="block text-[14px] font-normal text-[#111827]">
+          {title}
+        </span>
+
+        {subtext ? (
+          <span className="mt-0.5 block text-[10px] font-normal leading-4 text-[#98a2b3]">
+            {subtext}
+          </span>
+        ) : null}
       </span>
     </button>
   )
@@ -547,28 +560,154 @@ function PostOptionsSheet({
   onReport,
   onMessage,
 }) {
+  const startYRef = useRef(0)
+  const currentYRef = useRef(0)
+  const toastTimerRef = useRef(null)
 
-  const [toast, setToast] = useState('')
-  const [notificationsOff, setNotificationsOff] = useState(false)
+  const [sheetOffset, setSheetOffset] =
+    useState(0)
+
+  const [dragging, setDragging] =
+    useState(false)
+
+  const [toast, setToast] =
+    useState('')
+
+  const [
+    notificationsOff,
+    setNotificationsOff,
+  ] = useState(false)
+
+  useEffect(() => {
+    if (!post) return undefined
+
+    const bodyOverflow =
+      document.body.style.overflow
+
+    const htmlOverflow =
+      document.documentElement.style
+        .overflow
+
+    document.body.style.overflow =
+      'hidden'
+
+    document.documentElement.style.overflow =
+      'hidden'
+
+    return () => {
+      document.body.style.overflow =
+        bodyOverflow
+
+      document.documentElement.style.overflow =
+        htmlOverflow
+    }
+  }, [post])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(
+          toastTimerRef.current
+        )
+      }
+    }
+  }, [])
 
   if (!post) return null
 
-  const isPinned = Boolean(post.is_pinned || post.pinned)
+  const isPinned = Boolean(
+    post.is_pinned || post.pinned
+  )
 
   function showToast(text) {
     setToast(text)
-    window.clearTimeout(showToast.timer)
-    showToast.timer = window.setTimeout(() => setToast(''), 1600)
+
+    if (toastTimerRef.current) {
+      window.clearTimeout(
+        toastTimerRef.current
+      )
+    }
+
+    toastTimerRef.current =
+      window.setTimeout(() => {
+        setToast('')
+      }, 1600)
+  }
+
+  function handleTouchStart(event) {
+    const point = event.touches?.[0]
+
+    const startY =
+      point?.clientY || 0
+
+    startYRef.current = startY
+    currentYRef.current = startY
+
+    setDragging(true)
+  }
+
+  function handleTouchMove(event) {
+    const point = event.touches?.[0]
+
+    const currentY =
+      point?.clientY ||
+      startYRef.current
+
+    const offset = Math.max(
+      0,
+      currentY - startYRef.current
+    )
+
+    currentYRef.current = currentY
+
+    setSheetOffset(
+      Math.min(offset, 240)
+    )
+  }
+
+  function handleTouchEnd() {
+    const distance =
+      currentYRef.current -
+      startYRef.current
+
+    setDragging(false)
+
+    if (distance > 70) {
+      setSheetOffset(0)
+      onClose?.()
+      return
+    }
+
+    setSheetOffset(0)
   }
 
   async function copyPostLink() {
-    const username = author?.page_username || ''
-    const path = username ? `/author/page/${username}?post=${post.id}` : `/author/page?post=${post.id}`
-    const link = `${window.location.origin}${path}`
+    const username =
+      author?.page_username || ''
 
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(link)
-      showToast('Post link copied')
+    const path = username
+      ? `/author/page/${username}?post=${post.id}`
+      : `/author/page?post=${post.id}`
+
+    const link =
+      `${window.location.origin}${path}`
+
+    try {
+      if (
+        navigator.clipboard?.writeText
+      ) {
+        await navigator.clipboard.writeText(
+          link
+        )
+
+        showToast(
+          'Post link copied'
+        )
+
+        return
+      }
+    } catch {
+      onMessage?.(link)
       return
     }
 
@@ -576,9 +715,16 @@ function PostOptionsSheet({
   }
 
   function handleNotificationToggle() {
-    const nextValue = !notificationsOff
+    const nextValue =
+      !notificationsOff
+
     setNotificationsOff(nextValue)
-    showToast(nextValue ? 'Notifications turned off' : 'Notifications turned on')
+
+    showToast(
+      nextValue
+        ? 'Notifications turned off'
+        : 'Notifications turned on'
+    )
   }
 
   function handleComingSoon(message) {
@@ -588,57 +734,195 @@ function PostOptionsSheet({
 
   return (
     <div className="fixed inset-0 z-[230]">
-      <button type="button" aria-label="Close post options" onClick={onClose} className="absolute inset-0 bg-black/35" />
+      <button
+        type="button"
+        aria-label="Close post options"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+      />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[28px] bg-white px-5 pb-7 pt-4 shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+      <section
+        className={`absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[560px] rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl ${
+          dragging
+            ? ''
+            : 'transition-transform duration-200 ease-out'
+        }`}
+        style={{
+          transform:
+            `translateY(${sheetOffset}px)`,
+          touchAction: 'none',
+        }}
+        onTouchStart={
+          handleTouchStart
+        }
+        onTouchMove={
+          handleTouchMove
+        }
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={
+          handleTouchEnd
+        }
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#b8bec8]" />
 
-        <div className="mb-2 text-[15px] font-semibold text-[#111827]">Post options</div>
+        <div className="space-y-0.5">
+          {isOwner ? (
+            <>
+              <SheetOption
+                icon={`fa-solid ${
+                  isPinned
+                    ? 'fa-thumbtack-slash'
+                    : 'fa-thumbtack'
+                }`}
+                title={
+                  isPinned
+                    ? 'Unpin post'
+                    : 'Pin to top'
+                }
+                subtext={
+                  isPinned
+                    ? 'Remove this post from the top of your page'
+                    : 'Show this post first on your page'
+                }
+                disabled={busy}
+                onClick={() =>
+                  onPinChange(
+                    post,
+                    !isPinned
+                  )
+                }
+              />
 
-        {isOwner ? (
-          <>
-            <SheetOption
-              icon={`fa-solid ${isPinned ? 'fa-thumbtack-slash' : 'fa-thumbtack'}`}
-              title={isPinned ? 'Unpin post' : 'Pin to top'}
-              subtext={isPinned ? 'Remove this post from the top of your page' : 'Show this post first on your page'}
-              disabled={busy}
-              onClick={() => onPinChange(post, !isPinned)}
-            />
-            <SheetOption icon="fa-regular fa-bookmark" title="Save post" subtext="Add this to your saved items." onClick={() => handleComingSoon('Post saved')} />
-            <SheetOption icon="fa-solid fa-pen" title="Edit post" onClick={() => handleComingSoon('Edit post is coming soon.')} />
-            <SheetOption icon="fa-solid fa-trash-can" title="Move to trash" subtext="Items in your trash are deleted after 30 days." danger onClick={() => handleComingSoon('Move to trash is coming soon.')} />
-            <SheetOption icon="fa-regular fa-bell-slash" title={notificationsOff ? 'Turn on notifications for this post' : 'Turn off notifications for this post'} onClick={handleNotificationToggle} />
-            <SheetOption icon="fa-regular fa-copy" title="Copy link" onClick={copyPostLink} />
-          </>
-        ) : (
-          <>
-            <SheetOption icon="fa-regular fa-bookmark" title="Save post" subtext="Add this to your saved items." onClick={() => handleComingSoon('Post saved')} />
-            <SheetOption icon="fa-regular fa-eye-slash" title="Hide post" subtext="See fewer posts like this." onClick={() => handleComingSoon('Post hidden')} />
-            <SheetOption
-              icon="fa-regular fa-flag"
-              title="Report Author Post"
-              subtext="Tell us if this post violates platform rules."
-              onClick={() => onReport?.(post)}
-            />
-            <SheetOption icon="fa-solid fa-user-slash" title="Block author" subtext="Stop seeing this author in your experience." onClick={() => handleComingSoon('Block author is coming soon.')} />
-            <SheetOption icon="fa-regular fa-bell-slash" title={notificationsOff ? 'Turn on notifications for this post' : 'Turn off notifications for this post'} onClick={handleNotificationToggle} />
-            <SheetOption icon="fa-regular fa-copy" title="Copy link" onClick={copyPostLink} />
-          </>
-        )}
+              <SheetOption
+                icon="fa-regular fa-bookmark"
+                title="Save post"
+                subtext="Add this to your saved items."
+                onClick={() =>
+                  handleComingSoon(
+                    'Post saved'
+                  )
+                }
+              />
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-2 flex w-full items-center gap-4 rounded-[16px] px-1 py-3.5 text-left active:bg-[#f3f4f6]"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-            <i className="fa-solid fa-xmark text-[16px]" />
-          </span>
-          <span className="text-[16px] font-semibold text-[#111827]">Close</span>
-        </button>
-      </div>
+              <SheetOption
+                icon="fa-solid fa-pen"
+                title="Edit post"
+                onClick={() =>
+                  handleComingSoon(
+                    'Edit post is coming soon.'
+                  )
+                }
+              />
 
-      <ToastBubble text={toast} author={author} />
+              <SheetOption
+                icon="fa-solid fa-trash-can"
+                title="Move to trash"
+                subtext="Items in your trash are deleted after 30 days."
+                onClick={() =>
+                  handleComingSoon(
+                    'Move to trash is coming soon.'
+                  )
+                }
+              />
+
+              <SheetOption
+                icon={
+                  notificationsOff
+                    ? 'fa-regular fa-bell'
+                    : 'fa-regular fa-bell-slash'
+                }
+                title={
+                  notificationsOff
+                    ? 'Turn on notifications for this post'
+                    : 'Turn off notifications for this post'
+                }
+                onClick={
+                  handleNotificationToggle
+                }
+              />
+
+              <SheetOption
+                icon="fa-regular fa-copy"
+                title="Copy link"
+                onClick={copyPostLink}
+              />
+            </>
+          ) : (
+            <>
+              <SheetOption
+                icon="fa-regular fa-bookmark"
+                title="Save post"
+                subtext="Add this to your saved items."
+                onClick={() =>
+                  handleComingSoon(
+                    'Post saved'
+                  )
+                }
+              />
+
+              <SheetOption
+                icon="fa-regular fa-eye-slash"
+                title="Hide post"
+                subtext="See fewer posts like this."
+                onClick={() =>
+                  handleComingSoon(
+                    'Post hidden'
+                  )
+                }
+              />
+
+              <SheetOption
+                icon="fa-regular fa-flag"
+                title="Report Author Post"
+                subtext="Tell us if this post violates platform rules."
+                onClick={() =>
+                  onReport?.(post)
+                }
+              />
+
+              <SheetOption
+                icon="fa-solid fa-user-slash"
+                title="Block author"
+                subtext="Stop seeing this author in your experience."
+                onClick={() =>
+                  handleComingSoon(
+                    'Block author is coming soon.'
+                  )
+                }
+              />
+
+              <SheetOption
+                icon={
+                  notificationsOff
+                    ? 'fa-regular fa-bell'
+                    : 'fa-regular fa-bell-slash'
+                }
+                title={
+                  notificationsOff
+                    ? 'Turn on notifications for this post'
+                    : 'Turn off notifications for this post'
+                }
+                onClick={
+                  handleNotificationToggle
+                }
+              />
+
+              <SheetOption
+                icon="fa-regular fa-copy"
+                title="Copy link"
+                onClick={copyPostLink}
+              />
+            </>
+          )}
+        </div>
+      </section>
+
+      <ToastBubble
+        text={toast}
+        author={author}
+      />
     </div>
   )
 }
