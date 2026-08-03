@@ -41,6 +41,7 @@ import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorDiamondPage from './pages/Author/AuthorDiamondPage'
+import AuthorGiftPage from './pages/Author/AuthorGiftPage'
 import AuthorPaymentMethodPage from './pages/Author/AuthorPaymentMethodPage'
 import AuthorBenefitsPage from './pages/Author/AuthorBenefitsPage'
 import AuthorQuestPage from './pages/Author/AuthorQuestPage'
@@ -227,6 +228,7 @@ function AppShell() {
     '/author/insights',
     '/author/income',
     '/author/diamonds',
+    '/author/gifts',
     '/author/payment-method',
     '/author/benefits',
     '/author/quest',
@@ -1172,6 +1174,7 @@ const shouldShowOpeningAds =
         <Route path="/search" element={<Search />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
+        <Route path="/author/gifts" element={<AuthorGiftPage />} />
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
