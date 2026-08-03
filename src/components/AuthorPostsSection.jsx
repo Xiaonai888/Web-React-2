@@ -4,6 +4,7 @@ import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReportModal from './ReportModal'
+import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
@@ -1096,6 +1097,8 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [saving, setSaving] = useState(false)
   const [localError, setLocalError] = useState('')
   const [composerOpen, setComposerOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [postFilterDate, setPostFilterDate] = useState('')
   const [editingPost, setEditingPost] = useState(null)
   const [selectedPost, setSelectedPost] = useState(null)
   const [reportPost, setReportPost] = useState(null)
@@ -1529,7 +1532,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
             setEditingPost(null)
             setComposerOpen(true)
           }}
-          onOpenFilter={() => onMessage?.('Post filter is coming soon.')}
+          onOpenFilter={() => setFilterOpen(true)}
           onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
         />
       ) : null}
@@ -1549,9 +1552,9 @@ function handleAuthorPostCommentChanged(nextComments = []) {
 
       {loading ? (
         <PostsEmpty title="Loading posts..." text="Please wait while author posts load." />
-      ) : posts.length ? (
+      ) : filteredPosts.length ? (
         <div className="space-y-2 bg-[#f3f4f6]">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <AuthorPostCard
               key={post.id}
               post={post}
@@ -1572,6 +1575,14 @@ function handleAuthorPostCommentChanged(nextComments = []) {
           text="Updates, notes, and announcements will appear here."
         />
       )}
+
+      <AuthorPostFilterSheet
+  open={filterOpen}
+  value={postFilterDate}
+  onClose={() => setFilterOpen(false)}
+  onApply={setPostFilterDate}
+  onClear={() => setPostFilterDate('')}
+/>
 
       <AuthorPostComposerSheet
         open={composerOpen}
