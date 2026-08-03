@@ -67,9 +67,9 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
   }
 
   const handleEcho = () => {
-  setMenuOpen(false)
-  onEcho?.()
-}
+    setMenuOpen(false)
+    onEcho?.()
+  }
 
   return (
     <section className="relative bg-[#f5f3fa]">
@@ -136,29 +136,29 @@ export default function StoryHeroSection({ story, onBack, bookmarked, onToggleBo
     setMenuOpen(false)
     setReportOpen(true)
   }}
-  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
+  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
 >
-  <i className="fa-regular fa-flag w-4 text-[#8d94a1]" />
+  <i className="fa-regular fa-flag w-4 text-[#111827]" />
   Report
 </button>
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
                   >
-                    <i className="fa-solid fa-link w-4 text-[#8d94a1]" />
+                    <i className="fa-solid fa-link w-4 text-[#111827]" />
                     Copy link
                   </button>
 
                   <button
                     type="button"
                     onClick={handleEcho}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-extrabold hover:bg-[#f5f3fa]"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-normal hover:bg-[#f5f3fa]"
                   >
                     <img
   src="/assets/Icons/echo.svg"
   alt="Echo"
-    className="h-4 w-4 opacity-55"
+    className="h-4 w-4 brightness-0"
 />
                     Echo
                   </button>
