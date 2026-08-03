@@ -144,6 +144,90 @@ function TrashStoryCard({
   )
 }
 
+function TrashPostCard({
+  post,
+  busy,
+  onRestore,
+}) {
+  const daysLeft = getDaysLeft(post)
+  const images = Array.isArray(
+    post.image_urls
+  )
+    ? post.image_urls
+    : []
+  const excerpt = String(
+    post.content || 'Photo post'
+  ).trim()
+
+  return (
+    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#f2f4f7] text-[#98a2b3]">
+          {images[0] ? (
+            <img
+              src={images[0]}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <i className="fa-regular fa-note-sticky text-[22px]" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[10px] font-medium capitalize text-[#475467]">
+                {post.post_type || 'article'}
+              </span>
+
+              <p className="mt-2 line-clamp-2 break-words text-[13px] font-medium leading-5 text-[#111827]">
+                {excerpt || 'Photo post'}
+              </p>
+            </div>
+
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3]">
+              <i className="fa-regular fa-trash-can text-[14px]" />
+            </span>
+          </div>
+
+          <div className="mt-3 space-y-1.5 text-[11.5px] font-medium text-[#667085]">
+            <div className="flex items-center gap-2">
+              <i className="fa-regular fa-calendar text-[12px] text-[#98a2b3]" />
+              <span>
+                Deleted {formatDate(post.deleted_at)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <i className="fa-regular fa-clock text-[12px] text-[#98a2b3]" />
+              <span>
+                Restore before{' '}
+                {formatDate(post.delete_expires_at)}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold text-[#e11d48]">
+              {daysLeft} days left
+            </span>
+
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onRestore(post)}
+              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+            >
+              {busy ? 'Restoring...' : 'Restore'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 function getCommentType(item) {
   if (item.content_type === 'author_post') {
     return 'Author Post'
@@ -273,9 +357,13 @@ export default function AuthorTrashPage() {
     useState('stories')
   const [stories, setStories] =
     useState([])
+  const [posts, setPosts] =
+    useState([])
   const [comments, setComments] =
     useState([])
   const [loadingStories, setLoadingStories] =
+    useState(true)
+  const [loadingPosts, setLoadingPosts] =
     useState(true)
   const [loadingComments, setLoadingComments] =
     useState(true)
@@ -320,6 +408,37 @@ export default function AuthorTrashPage() {
         : bTime - aTime
     })
   }, [stories, query, sortOrder])
+
+  const visiblePosts = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
+
+    const filtered = posts.filter((post) => {
+      if (getDaysLeft(post) <= 0) {
+        return false
+      }
+
+      if (!keyword) return true
+
+      return String(
+        `${post.content || ''} ${post.post_type || ''}`
+      )
+        .toLowerCase()
+        .includes(keyword)
+    })
+
+    return [...filtered].sort((a, b) => {
+      const aTime = new Date(
+        a.deleted_at || 0
+      ).getTime()
+      const bTime = new Date(
+        b.deleted_at || 0
+      ).getTime()
+
+      return sortOrder === 'oldest'
+        ? aTime - bTime
+        : bTime - aTime
+    })
+  }, [posts, query, sortOrder])
 
   const visibleComments = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -411,6 +530,57 @@ export default function AuthorTrashPage() {
       )
     } finally {
       setLoadingStories(false)
+    }
+  }
+
+  async function loadPosts() {
+    const token = requireToken()
+
+    if (!token) return
+
+    try {
+      setLoadingPosts(true)
+      setMessage('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/posts/trash`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to load post trash'
+        )
+      }
+
+      setPosts(
+        Array.isArray(data.posts)
+          ? data.posts
+          : []
+      )
+    } catch (error) {
+      setPosts([])
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend.'
+          : error.message ||
+              'Failed to load post trash'
+      )
+    } finally {
+      setLoadingPosts(false)
     }
   }
 
@@ -518,6 +688,60 @@ export default function AuthorTrashPage() {
     }
   }
 
+  async function handleRestorePost(post) {
+    const token = requireToken()
+
+    if (!token) return
+
+    try {
+      setBusyId(`post:${post.id}`)
+      setMessage('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(
+          post.id
+        )}/restore`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to restore post'
+        )
+      }
+
+      setPosts((current) =>
+        current.filter(
+          (item) => item.id !== post.id
+        )
+      )
+
+      setMessage(
+        'Post restored successfully.'
+      )
+    } catch (error) {
+      setMessage(
+        error.message ||
+          'Failed to restore post'
+      )
+    } finally {
+      setBusyId('')
+    }
+  }
+
   async function handleRecoverComment(item) {
     const token = requireToken()
 
@@ -589,6 +813,7 @@ export default function AuthorTrashPage() {
 
   useEffect(() => {
     loadStories()
+    loadPosts()
     loadComments()
   }, [])
 
@@ -599,16 +824,16 @@ export default function AuthorTrashPage() {
   const loading =
     activeTab === 'stories'
       ? loadingStories
-      : activeTab === 'comments'
-        ? loadingComments
-        : false
+      : activeTab === 'posts'
+        ? loadingPosts
+        : loadingComments
 
   const activeCount =
     activeTab === 'stories'
       ? visibleStories.length
-      : activeTab === 'comments'
-        ? visibleComments.length
-        : 0
+      : activeTab === 'posts'
+        ? visiblePosts.length
+        : visibleComments.length
 
   return (
     <div className="min-h-screen bg-[#f7f7f9] pb-[110px]">
@@ -655,7 +880,7 @@ export default function AuthorTrashPage() {
         <div className="grid grid-cols-3 border-b border-[#e5e7eb] bg-white px-1 py-1">
           {[
             ['stories', 'Stories', visibleStories.length],
-            ['posts', 'Posts', 0],
+            ['posts', 'Posts', visiblePosts.length],
             ['comments', 'Comments', visibleComments.length],
           ].map(([value, label, count]) => (
             <button
@@ -773,11 +998,43 @@ export default function AuthorTrashPage() {
 
         {!loading &&
         activeTab === 'posts' ? (
-          <EmptyState
-            icon="fa-regular fa-note-sticky"
-            title="Post trash is not connected yet"
-            text="The next step will connect Author Posts to this tab."
-          />
+          visiblePosts.length ? (
+            <section className="mt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[16px] font-semibold text-[#111827]">
+                  Deleted Posts
+                </h2>
+
+                <span className="text-[11px] font-medium text-[#667085]">
+                  {activeCount}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {visiblePosts.map(
+                  (post) => (
+                    <TrashPostCard
+                      key={post.id}
+                      post={post}
+                      busy={
+                        busyId ===
+                        `post:${post.id}`
+                      }
+                      onRestore={
+                        handleRestorePost
+                      }
+                    />
+                  )
+                )}
+              </div>
+            </section>
+          ) : (
+            <EmptyState
+              icon="fa-regular fa-note-sticky"
+              title="Post trash is empty"
+              text="Deleted Author Posts that can still be restored will appear here."
+            />
+          )
         ) : null}
 
         {!loading &&
