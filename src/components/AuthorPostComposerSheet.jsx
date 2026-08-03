@@ -105,6 +105,30 @@ function getSelectedImageSize(images) {
   return images.reduce((sum, image) => sum + Number(image.file?.size || 0), 0)
 }
 
+function revokeImagePreview(image) {
+  if (image?.file && String(image.url || '').startsWith('blob:')) {
+    URL.revokeObjectURL(image.url)
+  }
+}
+
+function buildExistingImages(imageUrls) {
+  return (Array.isArray(imageUrls) ? imageUrls : [])
+    .map((url) => String(url || '').trim())
+    .filter(Boolean)
+    .slice(0, MAX_POST_PHOTOS)
+    .map((url, index) => ({
+      id: `existing-${index}-${url}`,
+      file: null,
+      url,
+    }))
+}
+
+function getImageUrls(images) {
+  return images
+    .map((image) => String(image?.url || '').trim())
+    .filter(Boolean)
+}
+
 async function uploadAuthorPostImage(file) {
   const token = getAuthToken()
 
@@ -182,7 +206,13 @@ function SelectedImagePreview({ images, onRemove, removable = true }) {
   )
 }
 
-function LeavePostSheet({ open, onSave, onDiscard, onContinue }) {
+function LeavePostSheet({
+  open,
+  editing = false,
+  onSave,
+  onDiscard,
+  onContinue,
+}) {
   if (!open) return null
 
   return (
@@ -200,16 +230,18 @@ function LeavePostSheet({ open, onSave, onDiscard, onContinue }) {
         <h3 className="mb-3 text-[15px] font-semibold text-[#111827]">Leave this post?</h3>
 
         <div className="space-y-1">
-          <button
-            type="button"
-            onClick={onSave}
-            className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-              <i className="fa-regular fa-bookmark text-[15px]" />
-            </span>
-            <span className="text-[15px] font-normal text-[#111827]">Save for later</span>
-          </button>
+          {!editing ? (
+            <button
+              type="button"
+              onClick={onSave}
+              className="flex w-full items-center gap-3 rounded-[14px] px-1 py-3 text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+                <i className="fa-regular fa-bookmark text-[15px]" />
+              </span>
+              <span className="text-[15px] font-normal text-[#111827]">Save for later</span>
+            </button>
+          ) : null}
 
           <button
             type="button"
@@ -219,7 +251,7 @@ function LeavePostSheet({ open, onSave, onDiscard, onContinue }) {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
               <i className="fa-regular fa-trash-can text-[15px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">Discard</span>
+            <span className="text-[15px] font-normal text-[#111827]">{editing ? 'Discard changes' : 'Discard'}</span>
           </button>
 
           <button
@@ -230,7 +262,7 @@ function LeavePostSheet({ open, onSave, onDiscard, onContinue }) {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
               <i className="fa-solid fa-pen text-[14px]" />
             </span>
-            <span className="text-[15px] font-normal text-[#111827]">Continue writing</span>
+            <span className="text-[15px] font-normal text-[#111827]">{editing ? 'Continue editing' : 'Continue writing'}</span>
           </button>
         </div>
       </div>
@@ -266,11 +298,17 @@ export default function AuthorPostComposerSheet({
   open,
   author,
   saving,
+  editingPost = null,
   onClose,
   onPublishText,
+  onUpdatePost,
   onMessage,
 }) {
   const fileInputRef = useRef(null)
+  const selectedImagesRef = useRef([])
+  const initialDraftRef = useRef('')
+  const initialImageUrlsRef = useRef([])
+  const editorKeyRef = useRef('')
   const [screen, setScreen] = useState('compose')
   const [draft, setDraft] = useState('')
   const [selectedImages, setSelectedImages] = useState([])
@@ -280,9 +318,15 @@ export default function AuthorPostComposerSheet({
 
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
+  const isEditing = Boolean(editingPost?.id)
+  const editorKey = isEditing ? `edit:${editingPost.id}` : 'create'
+  const currentImageUrls = getImageUrls(selectedImages)
   const hasContent = Boolean(draft.trim() || selectedImages.length)
-  const canReview = hasContent && !uploading
-  const canPublish = hasContent && !saving && !uploading
+  const hasChanges =
+    draft !== initialDraftRef.current ||
+    currentImageUrls.join('\n') !== initialImageUrlsRef.current.join('\n')
+  const canReview = hasContent && !uploading && (!isEditing || hasChanges)
+  const canPublish = hasContent && !saving && !uploading && (!isEditing || hasChanges)
 
   useEffect(() => {
     if (!open) return undefined
@@ -305,17 +349,46 @@ export default function AuthorPostComposerSheet({
       setLeaveSheetOpen(false)
       setImageError('')
       setUploading(false)
+      return
     }
-  }, [open])
 
-  useEffect(() => () => {
-    selectedImages.forEach((image) => URL.revokeObjectURL(image.url))
+    if (editorKeyRef.current === editorKey) return
+
+    selectedImagesRef.current.forEach(revokeImagePreview)
+
+    const initialDraft = isEditing
+      ? String(editingPost?.content || '').slice(0, MAX_POST_LENGTH)
+      : ''
+    const initialImages = isEditing
+      ? buildExistingImages(editingPost?.image_urls)
+      : []
+
+    setDraft(initialDraft)
+    setSelectedImages(initialImages)
+    setScreen('compose')
+    setLeaveSheetOpen(false)
+    setImageError('')
+    setUploading(false)
+
+    initialDraftRef.current = initialDraft
+    initialImageUrlsRef.current = getImageUrls(initialImages)
+    editorKeyRef.current = editorKey
+  }, [editorKey, editingPost, isEditing, open])
+
+  useEffect(() => {
+    selectedImagesRef.current = selectedImages
   }, [selectedImages])
+
+  useEffect(() => {
+    return () => {
+      selectedImagesRef.current.forEach(revokeImagePreview)
+    }
+  }, [])
 
   if (!open) return null
 
   function clearImages() {
-    selectedImages.forEach((image) => URL.revokeObjectURL(image.url))
+    selectedImages.forEach(revokeImagePreview)
     setSelectedImages([])
   }
 
@@ -326,10 +399,15 @@ export default function AuthorPostComposerSheet({
     setLeaveSheetOpen(false)
     setScreen('compose')
     setUploading(false)
+    initialDraftRef.current = ''
+    initialImageUrlsRef.current = []
+    editorKeyRef.current = ''
     onClose?.()
   }
 
   function saveForLater() {
+    if (isEditing) return
+
     setLeaveSheetOpen(false)
     setScreen('compose')
     onClose?.()
@@ -337,9 +415,13 @@ export default function AuthorPostComposerSheet({
   }
 
   function requestClose() {
-    if (hasContent) {
+    if (hasChanges) {
       setLeaveSheetOpen(true)
       return
+    }
+
+    if (isEditing) {
+      editorKeyRef.current = ''
     }
 
     onClose?.()
@@ -406,21 +488,40 @@ export default function AuthorPostComposerSheet({
       const imageUrls = []
 
       for (const image of selectedImages) {
-        const imageUrl = await uploadAuthorPostImage(image.file)
+        const imageUrl = image.file
+          ? await uploadAuthorPostImage(image.file)
+          : String(image.url || '').trim()
+
+        if (!imageUrl) {
+          throw new Error('Upload completed without an image URL')
+        }
+
         imageUrls.push(imageUrl)
       }
 
-      const ok = await onPublishText?.(draft.trim(), imageUrls)
+      const ok = isEditing
+        ? await onUpdatePost?.(
+            editingPost.id,
+            draft.trim(),
+            imageUrls
+          )
+        : await onPublishText?.(
+            draft.trim(),
+            imageUrls
+          )
 
       if (ok) {
         clearImages()
         setDraft('')
         setImageError('')
         setScreen('compose')
+        initialDraftRef.current = ''
+        initialImageUrlsRef.current = []
+        editorKeyRef.current = ''
         onClose?.()
       }
     } catch (error) {
-      const message = error.message || 'Failed to publish post'
+      const message = error.message || (isEditing ? 'Failed to update post' : 'Failed to publish post')
       setImageError(message)
       onMessage?.(message)
     } finally {
@@ -466,7 +567,7 @@ export default function AuthorPostComposerSheet({
                 </button>
 
                 <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
-                  New Page Post
+                  {isEditing ? 'Edit Page Post' : 'New Page Post'}
                 </div>
 
                 <button
@@ -583,7 +684,9 @@ export default function AuthorPostComposerSheet({
                   <i className="fa-solid fa-chevron-left text-[18px]" />
                 </button>
 
-                <div className="text-[16px] font-semibold text-[#111827]">Review Post</div>
+                <div className="text-[16px] font-semibold text-[#111827]">
+                  {isEditing ? 'Review Changes' : 'Review Post'}
+                </div>
 
                 <button
                   type="button"
@@ -591,7 +694,13 @@ export default function AuthorPostComposerSheet({
                   onClick={publishPost}
                   className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
                 >
-                  {uploading || saving ? 'Publishing' : 'Publish'}
+                  {uploading || saving
+                    ? isEditing
+                      ? 'Saving'
+                      : 'Publishing'
+                    : isEditing
+                      ? 'Save'
+                      : 'Publish'}
                 </button>
               </div>
             </header>
@@ -618,6 +727,7 @@ export default function AuthorPostComposerSheet({
 
       <LeavePostSheet
         open={leaveSheetOpen}
+        editing={isEditing}
         onSave={saveForLater}
         onDiscard={discardPost}
         onContinue={() => setLeaveSheetOpen(false)}
