@@ -3807,7 +3807,7 @@ releaseOption={releaseOption}
               </section>
             ) : (
               <section className="bg-white px-4 pb-4 pt-0 md:mt-4 md:rounded-[12px] md:p-4 md:shadow-sm">
-                <div className="hidden items-center gap-2 bg-white py-2 md:flex">
+                <div className="hidden items-center gap-2 border-b border-[#f0f1f3] bg-white py-2 md:sticky md:top-[57px] md:z-40 md:-mx-4 md:flex md:px-4">
   <ToolButton
     Icon={Bold}
     label="Bold"
