@@ -206,6 +206,58 @@ async function setAuthorPostReaction(postId, reactionType = 'love') {
   return data
 }
 
+async function fetchAuthorPostNotificationPreference(postId, signal) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/notification-preference`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      signal,
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load notification preference')
+  }
+
+  return data.notifications_enabled !== false
+}
+
+async function updateAuthorPostNotificationPreference(postId, enabled) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/notification-preference`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        notifications_enabled: Boolean(enabled),
+      }),
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to update notification preference')
+  }
+
+  return data.preference?.notifications_enabled !== false
+}
+
 function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePosts }) {
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
@@ -588,12 +640,15 @@ function PostOptionsSheet({
   post,
   busy,
   saveBusy,
+  notificationBusy,
   isSaved,
+  notificationsEnabled,
   isOwner,
   author,
   onClose,
   onPinChange,
   onSaveToggle,
+  onNotificationToggle,
   onEdit,
   onReport,
   onMessage,
@@ -610,11 +665,6 @@ function PostOptionsSheet({
 
   const [toast, setToast] =
     useState('')
-
-  const [
-    notificationsOff,
-    setNotificationsOff,
-  ] = useState(false)
 
   useEffect(() => {
     if (!post) return undefined
@@ -752,19 +802,6 @@ function PostOptionsSheet({
     onMessage?.(link)
   }
 
-  function handleNotificationToggle() {
-    const nextValue =
-      !notificationsOff
-
-    setNotificationsOff(nextValue)
-
-    showToast(
-      nextValue
-        ? 'Notifications turned off'
-        : 'Notifications turned on'
-    )
-  }
-
   function handleComingSoon(message) {
     showToast(message)
     onMessage?.(message)
@@ -874,17 +911,18 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon={
-                  notificationsOff
-                    ? 'fa-regular fa-bell'
-                    : 'fa-regular fa-bell-slash'
+                  notificationsEnabled
+                    ? 'fa-regular fa-bell-slash'
+                    : 'fa-regular fa-bell'
                 }
                 title={
-                  notificationsOff
-                    ? 'Turn on notifications for this post'
-                    : 'Turn off notifications for this post'
+                  notificationsEnabled
+                    ? 'Turn off notifications for this post'
+                    : 'Turn on notifications for this post'
                 }
-                onClick={
-                  handleNotificationToggle
+                disabled={notificationBusy}
+                onClick={() =>
+                  onNotificationToggle?.(post)
                 }
               />
 
@@ -951,17 +989,18 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon={
-                  notificationsOff
-                    ? 'fa-regular fa-bell'
-                    : 'fa-regular fa-bell-slash'
+                  notificationsEnabled
+                    ? 'fa-regular fa-bell-slash'
+                    : 'fa-regular fa-bell'
                 }
                 title={
-                  notificationsOff
-                    ? 'Turn on notifications for this post'
-                    : 'Turn off notifications for this post'
+                  notificationsEnabled
+                    ? 'Turn off notifications for this post'
+                    : 'Turn on notifications for this post'
                 }
-                onClick={
-                  handleNotificationToggle
+                disabled={notificationBusy}
+                onClick={() =>
+                  onNotificationToggle?.(post)
                 }
               />
 
@@ -1035,10 +1074,15 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [viewImageUrl, setViewImageUrl] = useState('')    
   const [pinBusy, setPinBusy] = useState(false)
   const [saveBusy, setSaveBusy] = useState(false)
+  const [notificationBusy, setNotificationBusy] = useState(false)
   const [
     selectedPostSaved,
     setSelectedPostSaved,
   ] = useState(false)
+  const [
+    selectedPostNotificationsEnabled,
+    setSelectedPostNotificationsEnabled,
+  ] = useState(true)
   const [reactionBusyId, setReactionBusyId] = useState('')
 
   useEffect(() => {
@@ -1068,6 +1112,36 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
           'AbortError'
         ) {
           setSelectedPostSaved(false)
+        }
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [selectedPost?.id])
+
+  useEffect(() => {
+    if (!selectedPost?.id) {
+      setSelectedPostNotificationsEnabled(true)
+      return undefined
+    }
+
+    const controller = new AbortController()
+
+    setSelectedPostNotificationsEnabled(true)
+
+    fetchAuthorPostNotificationPreference(
+      String(selectedPost.id),
+      controller.signal
+    )
+      .then((enabled) => {
+        setSelectedPostNotificationsEnabled(
+          Boolean(enabled)
+        )
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') {
+          setSelectedPostNotificationsEnabled(true)
         }
       })
 
@@ -1261,6 +1335,43 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   }
 }
 
+  async function handlePostNotificationToggle(post) {
+    if (!post?.id || notificationBusy) return
+
+    const nextEnabled =
+      !selectedPostNotificationsEnabled
+
+    try {
+      setNotificationBusy(true)
+      setLocalError('')
+
+      const enabled =
+        await updateAuthorPostNotificationPreference(
+          post.id,
+          nextEnabled
+        )
+
+      setSelectedPostNotificationsEnabled(
+        Boolean(enabled)
+      )
+
+      onMessage?.(
+        enabled
+          ? 'Post notifications turned on.'
+          : 'Post notifications turned off.'
+      )
+    } catch (error) {
+      const message =
+        error.message ||
+        'Failed to update notification preference'
+
+      setLocalError(message)
+      onMessage?.(message)
+    } finally {
+      setNotificationBusy(false)
+    }
+  }
+
   async function handlePinChange(post, isPinned) {
     if (!post?.id || pinBusy) return
 
@@ -1419,12 +1530,15 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   post={selectedPost}
   busy={pinBusy}
   saveBusy={saveBusy}
+  notificationBusy={notificationBusy}
   isSaved={selectedPostSaved}
+  notificationsEnabled={selectedPostNotificationsEnabled}
   isOwner={Boolean(author?.is_owner)}
         author={author}
         onClose={() => setSelectedPost(null)}
         onPinChange={handlePinChange}
         onSaveToggle={handleSavePost}
+        onNotificationToggle={handlePostNotificationToggle}
         onEdit={(post) => {
           setSelectedPost(null)
           setEditingPost(post)
