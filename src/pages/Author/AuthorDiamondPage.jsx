@@ -94,7 +94,7 @@ function ReaderAvatar({ item }) {
   }
 
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef6ff] text-[15px] font-black text-[#4386d8]">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eaf4ff] text-[15px] font-extrabold text-[#4386d8]">
       {getInitial(item.reader_name)}
     </div>
   )
@@ -107,11 +107,11 @@ function DiamondHistoryRow({ item }) {
       : item.episode_title || 'Episode unlock'
 
   return (
-    <div className="flex items-center gap-3 border-b border-[#f1f3f6] px-4 py-3.5 last:border-b-0">
+    <div className="mx-2 mb-2 flex items-center gap-3 rounded-[14px] bg-[#f7fbff] px-3 py-3.5 last:mb-0">
       <ReaderAvatar item={item} />
 
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-[13px] font-bold text-[#111827]">
+        <div className="line-clamp-1 text-[13px] font-extrabold text-[#111827]">
           {item.reader_name || 'Reader'}
         </div>
 
@@ -125,7 +125,7 @@ function DiamondHistoryRow({ item }) {
       </div>
 
       <div className="shrink-0 text-right">
-        <div className="flex items-center justify-end gap-1 text-[14px] font-black text-[#111827]">
+        <div className="flex items-center justify-end gap-1 text-[14px] font-extrabold text-[#111827]">
           <span>+{formatNumber(item.diamonds)}</span>
           <img
             src="/assets/Icons/Diamond.svg"
@@ -142,15 +142,67 @@ function DiamondHistoryRow({ item }) {
   )
 }
 
+function DiamondHintPopup({ open, onClose }) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-end justify-center sm:items-center sm:px-4">
+      <button
+        type="button"
+        aria-label="Close Diamond help"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/30"
+      />
+
+      <div className="relative w-full max-w-[420px] overflow-hidden rounded-t-[28px] bg-white p-5 shadow-2xl sm:rounded-[24px]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-[#eaf4ff] via-[#f6faff] to-[#fff8e8]" />
+
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eaf4ff] text-[#4386d8]">
+              <i className="fa-solid fa-circle-info text-[17px]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#111827] shadow-sm active:scale-95"
+            >
+              <i className="fa-solid fa-xmark text-[14px]" />
+            </button>
+          </div>
+
+          <h2 className="mt-5 text-[18px] font-extrabold text-[#111827]">
+            How Diamonds Work
+          </h2>
+
+          <p className="mt-2 text-[12.5px] font-medium leading-6 text-[#65758b]">
+            Diamonds are added when readers unlock your paid episodes. Their
+            USD value is also added to your monthly income immediately.
+          </p>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-5 h-11 w-full rounded-full bg-[#4386d8] text-[13px] font-extrabold text-white shadow-[0_12px_24px_rgba(67,134,216,0.22)] active:scale-[0.98]"
+          >
+            Got It
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function LoadingPage() {
   return (
-    <div className="space-y-4 animate-pulse">
+    <div className="animate-pulse space-y-4">
       <div className="h-[176px] rounded-[24px] bg-[#eaf3ff]" />
       <div className="grid grid-cols-2 gap-3">
         <div className="h-[92px] rounded-[18px] bg-white" />
         <div className="h-[92px] rounded-[18px] bg-white" />
       </div>
-      <div className="h-[90px] rounded-[18px] bg-white" />
       <div className="h-[320px] rounded-[20px] bg-white" />
     </div>
   )
@@ -161,6 +213,7 @@ export default function AuthorDiamondPage() {
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('all')
   const [filterOpen, setFilterOpen] = useState(false)
+  const [hintOpen, setHintOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -217,6 +270,17 @@ export default function AuthorDiamondPage() {
     }
   }, [navigate])
 
+  useEffect(() => {
+    if (!hintOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [hintOpen])
+
   const summary = data?.summary || {}
   const history = useMemo(
     () => (Array.isArray(data?.history) ? data.history : []),
@@ -251,8 +315,22 @@ export default function AuthorDiamondPage() {
         : 'All'
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-10">
-      <header className="sticky top-0 z-40 border-b border-[#edf0f4] bg-white/95 backdrop-blur">
+    <div
+      className="min-h-screen pb-10"
+      style={{
+        backgroundColor: '#FAFAFA',
+        backgroundImage:
+          'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,0.18) 38%, rgba(250,250,250,0.72) 76%, #FAFAFA 100%), linear-gradient(90deg, #EAF4FF 0%, #FFF8E8 100%)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '100% 270px, 100% 270px',
+      }}
+    >
+      <DiamondHintPopup
+        open={hintOpen}
+        onClose={() => setHintOpen(false)}
+      />
+
+      <header className="sticky top-0 z-40 bg-transparent">
         <div className="mx-auto flex h-[58px] max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
@@ -263,22 +341,15 @@ export default function AuthorDiamondPage() {
             <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="text-[17px] font-black text-[#111827]">
+          <h1 className="text-[17px] font-extrabold text-[#111827]">
             My Diamonds
           </h1>
 
           <button
             type="button"
-            onClick={() =>
-              document
-                .getElementById('diamond-help')
-                ?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center',
-                })
-            }
+            onClick={() => setHintOpen(true)}
             aria-label="Diamond help"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d9e9fb] bg-white text-[#4386d8] active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eaf4ff] text-[#4386d8] shadow-sm active:scale-95"
           >
             <i className="fa-solid fa-question text-[13px]" />
           </button>
@@ -289,15 +360,15 @@ export default function AuthorDiamondPage() {
         {loading && !data ? <LoadingPage /> : null}
 
         {error ? (
-          <div className="rounded-[18px] bg-[#fff1f1] px-4 py-4 text-center text-[12.5px] font-semibold text-[#e5484d]">
+          <div className="rounded-[18px] bg-[#fff1f1] px-4 py-4 text-center text-[12.5px] font-semibold text-[#e5484d] shadow-sm">
             {error}
           </div>
         ) : null}
 
         {data ? (
           <>
-            <section className="overflow-hidden rounded-[24px] bg-gradient-to-br from-[#eef7ff] via-[#f5faff] to-white px-5 py-5 shadow-sm ring-1 ring-[#dcecff]">
-              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#7b8ca5]">
+            <section className="overflow-hidden rounded-[24px] bg-gradient-to-br from-[#eaf4ff] via-[#f7fbff] to-white px-5 py-5 shadow-sm">
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#7b8ca5]">
                 Diamond Today
               </div>
 
@@ -308,7 +379,7 @@ export default function AuthorDiamondPage() {
                   className="h-10 w-10 object-contain"
                 />
 
-                <div className="text-[38px] font-black leading-none tracking-[-0.04em] text-[#111827]">
+                <div className="text-[38px] font-extrabold leading-none tracking-[-0.04em] text-[#111827]">
                   {formatNumber(summary.today_diamonds)}
                 </div>
               </div>
@@ -317,14 +388,12 @@ export default function AuthorDiamondPage() {
                 {formatMoney(summary.today_usd)} earned today
               </div>
 
-              <div className="mt-5 h-px bg-[#dbeafb]" />
-
-              <div className="mt-4 flex items-center justify-between gap-4">
+              <div className="mt-6 flex items-center justify-between gap-4">
                 <div>
                   <div className="text-[10.5px] font-semibold text-[#7b8ca5]">
                     Paid unlocks today
                   </div>
-                  <div className="mt-1 text-[16px] font-black text-[#111827]">
+                  <div className="mt-1 text-[16px] font-extrabold text-[#111827]">
                     {formatNumber(summary.today_unlocks)}
                   </div>
                 </div>
@@ -332,7 +401,7 @@ export default function AuthorDiamondPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/author/income')}
-                  className="rounded-full bg-[#4386d8] px-4 py-2 text-[11.5px] font-bold text-white active:scale-[0.98]"
+                  className="rounded-full bg-[#4386d8] px-4 py-2 text-[11.5px] font-extrabold text-white shadow-[0_10px_20px_rgba(67,134,216,0.2)] active:scale-[0.98]"
                 >
                   View Income
                 </button>
@@ -340,8 +409,8 @@ export default function AuthorDiamondPage() {
             </section>
 
             <section className="grid grid-cols-2 gap-3">
-              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/[0.04]">
-                <div className="text-[10.5px] font-semibold text-[#98a2b3]">
+              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm">
+                <div className="text-[10.5px] font-bold text-[#98a2b3]">
                   This Month
                 </div>
 
@@ -351,14 +420,14 @@ export default function AuthorDiamondPage() {
                     alt=""
                     className="h-5 w-5 object-contain"
                   />
-                  <span className="text-[20px] font-black text-[#111827]">
+                  <span className="text-[20px] font-extrabold text-[#111827]">
                     {formatNumber(summary.this_month_diamonds)}
                   </span>
                 </div>
               </div>
 
-              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm ring-1 ring-black/[0.04]">
-                <div className="text-[10.5px] font-semibold text-[#98a2b3]">
+              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm">
+                <div className="text-[10.5px] font-bold text-[#98a2b3]">
                   All Time
                 </div>
 
@@ -368,40 +437,17 @@ export default function AuthorDiamondPage() {
                     alt=""
                     className="h-5 w-5 object-contain"
                   />
-                  <span className="text-[20px] font-black text-[#111827]">
+                  <span className="text-[20px] font-extrabold text-[#111827]">
                     {formatNumber(summary.all_time_diamonds)}
                   </span>
                 </div>
               </div>
             </section>
 
-            <section
-              id="diamond-help"
-              className="rounded-[18px] bg-[#edf6ff] px-4 py-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#4386d8] shadow-sm">
-                  <i className="fa-solid fa-circle-info text-[14px]" />
-                </div>
-
+            <section className="overflow-hidden rounded-[20px] bg-white py-2 shadow-sm">
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
                 <div>
-                  <div className="text-[13px] font-black text-[#111827]">
-                    How Diamonds Work
-                  </div>
-
-                  <p className="mt-1 text-[11.5px] font-medium leading-5 text-[#65758b]">
-                    Diamonds are added when readers unlock your paid episodes.
-                    Their USD value is also added to your monthly income
-                    immediately.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="overflow-hidden rounded-[20px] bg-white shadow-sm ring-1 ring-black/[0.04]">
-              <div className="flex items-center justify-between gap-4 border-b border-[#f1f3f6] px-4 py-4">
-                <div>
-                  <h2 className="text-[14px] font-black text-[#111827]">
+                  <h2 className="text-[14px] font-extrabold text-[#111827]">
                     Diamond History
                   </h2>
                   <p className="mt-1 text-[10.5px] font-medium text-[#98a2b3]">
@@ -413,7 +459,7 @@ export default function AuthorDiamondPage() {
                   <button
                     type="button"
                     onClick={() => setFilterOpen((value) => !value)}
-                    className="flex h-9 items-center gap-2 rounded-full bg-[#f5f7fa] px-3 text-[11px] font-bold text-[#111827] active:scale-95"
+                    className="flex h-9 items-center gap-2 rounded-full bg-[#f3f7fb] px-3 text-[11px] font-extrabold text-[#111827] active:scale-95"
                   >
                     {filterLabel}
                     <i className="fa-solid fa-chevron-down text-[9px] text-[#98a2b3]" />
@@ -428,7 +474,7 @@ export default function AuthorDiamondPage() {
                         className="fixed inset-0 z-40"
                       />
 
-                      <div className="absolute right-0 top-11 z-50 w-36 overflow-hidden rounded-[15px] bg-white p-1.5 shadow-xl ring-1 ring-black/[0.06]">
+                      <div className="absolute right-0 top-11 z-50 w-36 overflow-hidden rounded-[15px] bg-white p-1.5 shadow-xl">
                         {[
                           ['all', 'All'],
                           ['today', 'Today'],
@@ -441,9 +487,9 @@ export default function AuthorDiamondPage() {
                               setFilter(value)
                               setFilterOpen(false)
                             }}
-                            className={`flex w-full items-center justify-between rounded-[11px] px-3 py-2.5 text-left text-[11.5px] font-semibold ${
+                            className={`flex w-full items-center justify-between rounded-[11px] px-3 py-2.5 text-left text-[11.5px] font-bold ${
                               filter === value
-                                ? 'bg-[#edf6ff] text-[#4386d8]'
+                                ? 'bg-[#eaf4ff] text-[#4386d8]'
                                 : 'text-[#111827]'
                             }`}
                           >
@@ -468,7 +514,7 @@ export default function AuthorDiamondPage() {
                 ))
               ) : (
                 <div className="px-5 py-14 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#edf6ff]">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#eaf4ff]">
                     <img
                       src="/assets/Icons/Diamond.svg"
                       alt=""
@@ -476,7 +522,7 @@ export default function AuthorDiamondPage() {
                     />
                   </div>
 
-                  <div className="mt-4 text-[14px] font-black text-[#111827]">
+                  <div className="mt-4 text-[14px] font-extrabold text-[#111827]">
                     No Diamond history found
                   </div>
 
@@ -487,7 +533,7 @@ export default function AuthorDiamondPage() {
               )}
 
               {data.has_more ? (
-                <div className="border-t border-[#f1f3f6] px-4 py-3 text-center text-[10.5px] font-semibold text-[#98a2b3]">
+                <div className="px-4 py-3 text-center text-[10.5px] font-semibold text-[#98a2b3]">
                   Latest 100 records are shown
                 </div>
               ) : null}
