@@ -156,6 +156,30 @@ async function updateAuthorPost(postId, content, imageUrls = []) {
   return data.post || null
 }
 
+async function moveAuthorPostToTrash(postId) {
+  const token = getAuthToken()
+
+  if (!token) throw new Error('Please login first')
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/trash`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to move post to trash')
+  }
+
+  return data.post || null
+}
+
 async function setAuthorPostPinned(postId, isPinned) {
   const token = getAuthToken()
 
@@ -641,6 +665,7 @@ function PostOptionsSheet({
   busy,
   saveBusy,
   notificationBusy,
+  trashBusy,
   isSaved,
   notificationsEnabled,
   isOwner,
@@ -649,6 +674,7 @@ function PostOptionsSheet({
   onPinChange,
   onSaveToggle,
   onNotificationToggle,
+  onMoveToTrash,
   onEdit,
   onReport,
   onMessage,
@@ -900,12 +926,15 @@ function PostOptionsSheet({
 
               <SheetOption
                 icon="fa-solid fa-trash-can"
-                title="Move to trash"
-                subtext="Items in your trash are deleted after 30 days."
+                title={
+                  trashBusy
+                    ? 'Moving to trash...'
+                    : 'Move to trash'
+                }
+                subtext="You can restore this post within 30 days."
+                disabled={trashBusy}
                 onClick={() =>
-                  handleComingSoon(
-                    'Move to trash is coming soon.'
-                  )
+                  onMoveToTrash?.(post)
                 }
               />
 
@@ -1075,6 +1104,7 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [pinBusy, setPinBusy] = useState(false)
   const [saveBusy, setSaveBusy] = useState(false)
   const [notificationBusy, setNotificationBusy] = useState(false)
+  const [trashBusy, setTrashBusy] = useState(false)
   const [
     selectedPostSaved,
     setSelectedPostSaved,
@@ -1372,6 +1402,38 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     }
   }
 
+  async function handleMovePostToTrash(post) {
+    if (!post?.id || trashBusy) return
+
+    try {
+      setTrashBusy(true)
+      setLocalError('')
+
+      await moveAuthorPostToTrash(post.id)
+
+      setPosts((current) => {
+        const nextPosts = current.filter(
+          (item) => item.id !== post.id
+        )
+
+        onCountChange?.(nextPosts.length)
+        return nextPosts
+      })
+
+      setSelectedPost(null)
+      onMessage?.('Post moved to trash.')
+    } catch (error) {
+      const message =
+        error.message ||
+        'Failed to move post to trash'
+
+      setLocalError(message)
+      onMessage?.(message)
+    } finally {
+      setTrashBusy(false)
+    }
+  }
+
   async function handlePinChange(post, isPinned) {
     if (!post?.id || pinBusy) return
 
@@ -1531,6 +1593,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   busy={pinBusy}
   saveBusy={saveBusy}
   notificationBusy={notificationBusy}
+  trashBusy={trashBusy}
   isSaved={selectedPostSaved}
   notificationsEnabled={selectedPostNotificationsEnabled}
   isOwner={Boolean(author?.is_owner)}
@@ -1539,6 +1602,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         onPinChange={handlePinChange}
         onSaveToggle={handleSavePost}
         onNotificationToggle={handlePostNotificationToggle}
+        onMoveToTrash={handleMovePostToTrash}
         onEdit={(post) => {
           setSelectedPost(null)
           setEditingPost(post)
