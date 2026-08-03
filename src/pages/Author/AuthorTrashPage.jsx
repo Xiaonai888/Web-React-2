@@ -29,23 +29,15 @@ function formatDate(value) {
 }
 
 function getDaysLeft(item) {
-  if (
-    Number.isFinite(
-      Number(item?.days_left)
-    )
-  ) {
-    return Math.max(
-      0,
-      Number(item.days_left)
-    )
+  if (Number.isFinite(Number(item?.days_left))) {
+    return Math.max(0, Number(item.days_left))
   }
 
-  const value =
-    item?.delete_expires_at
+  const expiresAt = item?.delete_expires_at
 
-  if (!value) return 0
+  if (!expiresAt) return 0
 
-  const date = new Date(value)
+  const date = new Date(expiresAt)
 
   if (Number.isNaN(date.getTime())) {
     return 0
@@ -62,8 +54,8 @@ function getDaysLeft(item) {
 
 function EmptyCover({ title }) {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#111827] to-[#374151] px-2 text-center">
-      <span className="line-clamp-3 text-[10px] font-extrabold leading-4 text-white/80">
+    <div className="flex h-full w-full items-center justify-center bg-[#e5e7eb] px-2 text-center">
+      <span className="line-clamp-3 text-[10px] font-semibold leading-4 text-[#667085]">
         {title || 'Story'}
       </span>
     </div>
@@ -76,96 +68,74 @@ function TrashStoryCard({
   onRestore,
 }) {
   const daysLeft = getDaysLeft(story)
-  const canRestore = daysLeft > 0
 
   return (
-    <article className="rounded-[22px] bg-white p-3 shadow-sm ring-1 ring-black/5">
-      <div className="flex gap-3">
-        <div className="h-[112px] w-[78px] shrink-0 overflow-hidden rounded-[14px] bg-[#111827]">
+    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-3.5 shadow-sm">
+      <div className="flex gap-3.5">
+        <div className="h-[122px] w-[84px] shrink-0 overflow-hidden rounded-[15px] bg-[#e5e7eb]">
           {story.cover_url ? (
             <img
               src={story.cover_url}
-              alt={story.title}
+              alt={story.title || ''}
               className="h-full w-full object-cover"
             />
           ) : (
-            <EmptyCover
-              title={story.title}
-            />
+            <EmptyCover title={story.title} />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="line-clamp-1 text-[15px] font-extrabold text-[#111827]">
-                {story.title ||
-                  'Untitled Story'}
+              <h2 className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                {story.title || 'Untitled Story'}
               </h2>
 
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#555b66]">
-                  {story.main_genre ||
-                    'Novel'}
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[10px] font-medium text-[#475467]">
+                  {story.main_genre || 'Novel'}
                 </span>
 
-                <span className="rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-bold text-[#e5484d]">
+                <span className="rounded-full bg-[#fff1f2] px-2.5 py-1 text-[10px] font-medium text-[#e11d48]">
                   Hidden
                 </span>
               </div>
             </div>
 
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3]">
               <i className="fa-regular fa-trash-can text-[14px]" />
-            </div>
+            </span>
           </div>
 
-          <div className="mt-3 space-y-1 text-[11.5px] font-semibold text-[#8d94a1]">
-            <div>
-              Deleted{' '}
-              <span className="font-extrabold text-[#555b66]">
-                {formatDate(
-                  story.deleted_at
-                )}
+          <div className="mt-3 space-y-1.5 text-[11.5px] font-medium text-[#667085]">
+            <div className="flex items-center gap-2">
+              <i className="fa-regular fa-calendar text-[12px] text-[#98a2b3]" />
+              <span>
+                Deleted {formatDate(story.deleted_at)}
               </span>
             </div>
 
-            <div>
-              Restore before{' '}
-              <span className="font-extrabold text-[#555b66]">
-                {formatDate(
-                  story.delete_expires_at
-                )}
+            <div className="flex items-center gap-2">
+              <i className="fa-regular fa-clock text-[12px] text-[#98a2b3]" />
+              <span>
+                Restore before{' '}
+                {formatDate(story.delete_expires_at)}
               </span>
             </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-3">
-            <span
-              className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${
-                canRestore
-                  ? 'bg-[#fff7df] text-[#a56a00]'
-                  : 'bg-[#f2f4f7] text-[#667085]'
-              }`}
-            >
-              {canRestore
-                ? `${daysLeft} days left`
-                : 'Restore expired'}
+            <span className="text-[11px] font-semibold text-[#e11d48]">
+              {daysLeft} days left
             </span>
 
             <button
               type="button"
-              disabled={
-                !canRestore || busy
-              }
-              onClick={() =>
-                onRestore(story)
-              }
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+              disabled={busy}
+              onClick={() => onRestore(story)}
+              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
             >
-              {busy
-                ? 'Restoring...'
-                : 'Restore'}
+              {busy ? 'Restoring...' : 'Restore'}
             </button>
           </div>
         </div>
@@ -175,16 +145,11 @@ function TrashStoryCard({
 }
 
 function getCommentType(item) {
-  if (
-    item.content_type ===
-    'author_post'
-  ) {
+  if (item.content_type === 'author_post') {
     return 'Author Post'
   }
 
-  if (
-    item.content_type === 'episode'
-  ) {
+  if (item.content_type === 'episode') {
     return 'Episode'
   }
 
@@ -192,10 +157,7 @@ function getCommentType(item) {
 }
 
 function getCommentTitle(item) {
-  if (
-    item.content_type ===
-    'author_post'
-  ) {
+  if (item.content_type === 'author_post') {
     return (
       item.context?.post_excerpt ||
       'Author Page post'
@@ -217,100 +179,65 @@ function TrashCommentCard({
   const canRestore =
     Boolean(item.can_recover) &&
     daysLeft > 0
+
   const userName =
     item.user?.name ||
     item.user?.username ||
     'Reader'
 
   return (
-    <article className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-          <i className="fa-regular fa-comment-dots text-[15px]" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[#667085]">
+          <i className="fa-regular fa-comment-dots text-[17px]" />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#eef2ff] px-2.5 py-1 text-[10px] font-bold text-[#4f46e5]">
+            <span className="rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[10px] font-medium text-[#475467]">
               {getCommentType(item)}
             </span>
 
             {item.parent_id ? (
-              <span className="rounded-full bg-[#f5f3fa] px-2.5 py-1 text-[10px] font-bold text-[#667085]">
+              <span className="rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[10px] font-medium text-[#667085]">
                 Reply
               </span>
             ) : null}
           </div>
 
-          <h2 className="mt-2 line-clamp-1 text-[13px] font-extrabold text-[#111827]">
+          <h2 className="mt-2 line-clamp-1 text-[13px] font-semibold text-[#111827]">
             {getCommentTitle(item)}
           </h2>
 
-          <p className="mt-2 whitespace-pre-wrap break-words rounded-[16px] bg-[#f7f7f9] px-3 py-2.5 text-[13px] font-medium leading-5 text-[#4b5563]">
-            {item.text ||
-              'Empty comment'}
+          <p className="mt-2 whitespace-pre-wrap break-words rounded-[15px] bg-[#f7f7f9] px-3 py-2.5 text-[13px] font-normal leading-5 text-[#475467]">
+            {item.text || 'Empty comment'}
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-[#8d94a1]">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-medium text-[#667085]">
+            <span>By {userName}</span>
             <span>
-              By{' '}
-              <strong className="text-[#555b66]">
-                {userName}
-              </strong>
-            </span>
-
-            <span>
-              Deleted{' '}
-              <strong className="text-[#555b66]">
-                {formatDate(
-                  item.deleted_at
-                )}
-              </strong>
+              Deleted {formatDate(item.deleted_at)}
             </span>
           </div>
 
-          {item.delete_reason ? (
-            <div className="mt-2 rounded-[14px] bg-[#fff7f7] px-3 py-2 text-[11px] font-semibold leading-5 text-[#b42318]">
-              Reason: {item.delete_reason}
-            </div>
-          ) : null}
-
           <div className="mt-3 flex items-center justify-between gap-3">
-            <span
-              className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${
-                daysLeft > 0
-                  ? 'bg-[#fff7df] text-[#a56a00]'
-                  : 'bg-[#f2f4f7] text-[#667085]'
-              }`}
-            >
-              {daysLeft > 0
-                ? `${daysLeft} days left`
-                : 'Recovery expired'}
+            <span className="text-[11px] font-semibold text-[#e11d48]">
+              {daysLeft} days left
             </span>
 
             <button
               type="button"
-              disabled={
-                !canRestore || busy
-              }
-              onClick={() =>
-                onRestore(item)
-              }
-              className="rounded-full bg-[#111827] px-4 py-2 text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+              disabled={!canRestore || busy}
+              onClick={() => onRestore(item)}
+              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
             >
               {busy
                 ? 'Recovering...'
-                : item.can_recover
+                : canRestore
                   ? 'Recover'
                   : 'Unavailable'}
             </button>
           </div>
-
-          {!item.can_recover ? (
-            <p className="mt-2 text-[10.5px] font-semibold leading-4 text-[#98a2b3]">
-              Only comments deleted by you can be recovered.
-            </p>
-          ) : null}
         </div>
       </div>
     </article>
@@ -323,16 +250,16 @@ function EmptyState({
   text,
 }) {
   return (
-    <section className="mt-4 rounded-[24px] bg-white px-5 py-10 text-center shadow-sm ring-1 ring-black/5">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-        <i className={`${icon} text-[22px]`} />
+    <section className="mt-5 rounded-[22px] border border-[#e5e7eb] bg-white px-5 py-10 text-center shadow-sm">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center text-[#98a2b3]">
+        <i className={`${icon} text-[21px]`} />
       </div>
 
-      <h2 className="mt-4 text-[16px] font-extrabold text-[#111827]">
+      <h2 className="mt-3 text-[15px] font-semibold text-[#111827]">
         {title}
       </h2>
 
-      <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-5 text-[#8d94a1]">
+      <p className="mx-auto mt-2 max-w-[320px] text-[12px] leading-5 text-[#667085]">
         {text}
       </p>
     </section>
@@ -341,6 +268,7 @@ function EmptyState({
 
 export default function AuthorTrashPage() {
   const navigate = useNavigate()
+
   const [activeTab, setActiveTab] =
     useState('stories')
   const [stories, setStories] =
@@ -355,24 +283,74 @@ export default function AuthorTrashPage() {
     useState('')
   const [message, setMessage] =
     useState('')
+  const [showHint, setShowHint] =
+    useState(false)
+  const [query, setQuery] =
+    useState('')
+  const [sortOrder, setSortOrder] =
+    useState('newest')
 
-  const activeStories = useMemo(
-    () =>
-      stories.filter(
-        (story) =>
-          getDaysLeft(story) > 0
-      ),
-    [stories]
-  )
+  const visibleStories = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
 
-  const expiredStories = useMemo(
-    () =>
-      stories.filter(
-        (story) =>
-          getDaysLeft(story) <= 0
-      ),
-    [stories]
-  )
+    const filtered = stories.filter((story) => {
+      if (getDaysLeft(story) <= 0) {
+        return false
+      }
+
+      if (!keyword) return true
+
+      return String(
+        `${story.title || ''} ${story.main_genre || ''}`
+      )
+        .toLowerCase()
+        .includes(keyword)
+    })
+
+    return [...filtered].sort((a, b) => {
+      const aTime = new Date(
+        a.deleted_at || 0
+      ).getTime()
+      const bTime = new Date(
+        b.deleted_at || 0
+      ).getTime()
+
+      return sortOrder === 'oldest'
+        ? aTime - bTime
+        : bTime - aTime
+    })
+  }, [stories, query, sortOrder])
+
+  const visibleComments = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
+
+    const filtered = comments.filter((item) => {
+      if (getDaysLeft(item) <= 0) {
+        return false
+      }
+
+      if (!keyword) return true
+
+      return String(
+        `${item.text || ''} ${getCommentTitle(item)}`
+      )
+        .toLowerCase()
+        .includes(keyword)
+    })
+
+    return [...filtered].sort((a, b) => {
+      const aTime = new Date(
+        a.deleted_at || 0
+      ).getTime()
+      const bTime = new Date(
+        b.deleted_at || 0
+      ).getTime()
+
+      return sortOrder === 'oldest'
+        ? aTime - bTime
+        : bTime - aTime
+    })
+  }, [comments, query, sortOrder])
 
   function requireToken() {
     const token = getAuthToken()
@@ -398,8 +376,7 @@ export default function AuthorTrashPage() {
         `${API_BASE_URL}/api/stories/trash`,
         {
           headers: {
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           cache: 'no-store',
         }
@@ -419,12 +396,15 @@ export default function AuthorTrashPage() {
         )
       }
 
-      setStories(data.stories || [])
+      setStories(
+        Array.isArray(data.stories)
+          ? data.stories
+          : []
+      )
     } catch (error) {
       setStories([])
       setMessage(
-        error.message ===
-          'Failed to fetch'
+        error.message === 'Failed to fetch'
           ? 'Cannot connect to backend.'
           : error.message ||
               'Failed to load story trash'
@@ -447,8 +427,7 @@ export default function AuthorTrashPage() {
         `${API_BASE_URL}/api/comment-trash/author?page=1&limit=100`,
         {
           headers: {
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           cache: 'no-store',
         }
@@ -476,8 +455,7 @@ export default function AuthorTrashPage() {
     } catch (error) {
       setComments([])
       setMessage(
-        error.message ===
-          'Failed to fetch'
+        error.message === 'Failed to fetch'
           ? 'Cannot connect to backend.'
           : error.message ||
               'Failed to load comment trash'
@@ -487,9 +465,7 @@ export default function AuthorTrashPage() {
     }
   }
 
-  async function handleRestoreStory(
-    story
-  ) {
+  async function handleRestoreStory(story) {
     const token = requireToken()
 
     if (!token) return
@@ -503,8 +479,7 @@ export default function AuthorTrashPage() {
         {
           method: 'POST',
           headers: {
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       )
@@ -529,6 +504,7 @@ export default function AuthorTrashPage() {
             item.id !== story.id
         )
       )
+
       setMessage(
         'Story restored successfully.'
       )
@@ -542,14 +518,13 @@ export default function AuthorTrashPage() {
     }
   }
 
-  async function handleRecoverComment(
-    item
-  ) {
+  async function handleRecoverComment(item) {
     const token = requireToken()
 
     if (!token) return
 
-    const key = `${item.source}:${item.comment_id}`
+    const key =
+      `${item.source}:${item.comment_id}`
 
     try {
       setBusyId(key)
@@ -564,8 +539,7 @@ export default function AuthorTrashPage() {
         {
           method: 'PATCH',
           headers: {
-            Authorization:
-              `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       )
@@ -599,6 +573,7 @@ export default function AuthorTrashPage() {
             )
         )
       )
+
       setMessage(
         'Comment recovered successfully.'
       )
@@ -617,93 +592,121 @@ export default function AuthorTrashPage() {
     loadComments()
   }, [])
 
+  useEffect(() => {
+    setQuery('')
+  }, [activeTab])
+
   const loading =
     activeTab === 'stories'
       ? loadingStories
-      : loadingComments
+      : activeTab === 'comments'
+        ? loadingComments
+        : false
+
+  const activeCount =
+    activeTab === 'stories'
+      ? visibleStories.length
+      : activeTab === 'comments'
+        ? visibleComments.length
+        : 0
 
   return (
-    <div className="min-h-screen bg-[#f5f3fa] pb-[110px]">
-      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
+    <div className="min-h-screen bg-[#f7f7f9] pb-[110px]">
+      <header className="sticky top-0 z-50 border-b border-[#eaecf0] bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
             onClick={() =>
-              navigate(
-                '/author/profile'
-              )
+              navigate('/author/profile')
             }
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            className="flex h-10 w-10 items-center justify-start text-[#111827] active:scale-95"
             aria-label="Go back"
           >
-            <i className="fa-solid fa-chevron-left text-[14px]" />
+            <i className="fa-solid fa-arrow-left text-[18px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">
+          <h1 className="text-[18px] font-semibold text-[#111827]">
             Trash
           </h1>
 
           <button
             type="button"
-            onClick={() => {
-              loadStories()
-              loadComments()
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#111827] text-white active:scale-95"
-            aria-label="Refresh trash"
+            onClick={() =>
+              setShowHint(
+                (current) => !current
+              )
+            }
+            className="flex h-10 w-10 items-center justify-end text-[#667085] active:scale-95"
+            aria-label="Trash information"
+            aria-expanded={showHint}
           >
-            <i className="fa-solid fa-rotate-right text-[13px]" />
+            <i className="fa-regular fa-circle-question text-[20px]" />
           </button>
+
+          {showHint ? (
+            <div className="absolute right-0 top-12 z-20 w-[270px] rounded-[16px] border border-[#e5e7eb] bg-white p-4 text-[12px] font-normal leading-5 text-[#475467] shadow-xl">
+              Deleted items are shown here for 30 days. After 30 days, they disappear from your Trash and cannot be restored.
+            </div>
+          ) : null}
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <section className="rounded-[24px] bg-[#111827] p-4 text-white shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f6b800]">
-              <i className="fa-regular fa-trash-can text-[17px]" />
-            </div>
+        <div className="grid grid-cols-3 border-b border-[#e5e7eb] bg-white px-1 py-1">
+          {[
+            ['stories', 'Stories', visibleStories.length],
+            ['posts', 'Posts', 0],
+            ['comments', 'Comments', visibleComments.length],
+          ].map(([value, label, count]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() =>
+                setActiveTab(value)
+              }
+              className={`mx-1 h-10 rounded-[16px] px-2 text-[12px] font-medium transition ${
+                activeTab === value
+                  ? 'bg-[#fff1f2] text-[#e11d48]'
+                  : 'text-[#667085]'
+              }`}
+            >
+              {label} · {count}
+            </button>
+          ))}
+        </div>
 
-            <div className="min-w-0">
-              <h2 className="text-[17px] font-extrabold">
-                Author Trash
-              </h2>
-
-              <p className="mt-1 text-[12.5px] font-medium leading-5 text-white/65">
-                Deleted items stay here for up to 30 days. Recovery is available only during that period.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div className="mt-4 grid grid-cols-2 rounded-[18px] bg-white p-1 shadow-sm ring-1 ring-black/5">
-          <button
-            type="button"
-            onClick={() =>
-              setActiveTab('stories')
+        <div className="mt-4 flex items-center gap-2">
+          <select
+            value={sortOrder}
+            onChange={(event) =>
+              setSortOrder(
+                event.target.value
+              )
             }
-            className={`h-11 rounded-[15px] text-[13px] font-extrabold transition ${
-              activeTab === 'stories'
-                ? 'bg-[#111827] text-white'
-                : 'text-[#667085]'
-            }`}
+            className="h-11 rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[12px] font-medium text-[#111827] outline-none"
           >
-            Stories · {stories.length}
-          </button>
+            <option value="newest">
+              Newest first
+            </option>
+            <option value="oldest">
+              Oldest first
+            </option>
+          </select>
 
-          <button
-            type="button"
-            onClick={() =>
-              setActiveTab('comments')
-            }
-            className={`h-11 rounded-[15px] text-[13px] font-extrabold transition ${
-              activeTab === 'comments'
-                ? 'bg-[#111827] text-white'
-                : 'text-[#667085]'
-            }`}
-          >
-            Comments · {comments.length}
-          </button>
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-[#e5e7eb] bg-white px-3">
+            <i className="fa-solid fa-magnifying-glass text-[13px] text-[#98a2b3]" />
+
+            <input
+              value={query}
+              onChange={(event) =>
+                setQuery(
+                  event.target.value
+                )
+              }
+              placeholder="Search"
+              className="min-w-0 flex-1 bg-transparent text-[12px] text-[#111827] outline-none placeholder:text-[#98a2b3]"
+            />
+          </label>
         </div>
 
         {message ? (
@@ -712,16 +715,16 @@ export default function AuthorTrashPage() {
             onClick={() =>
               setMessage('')
             }
-            className="mt-4 w-full rounded-[18px] bg-white px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#111827] shadow-sm ring-1 ring-black/5"
+            className="mt-4 w-full rounded-[16px] border border-[#e5e7eb] bg-white px-4 py-3 text-left text-[12px] font-medium leading-5 text-[#475467] shadow-sm"
           >
             {message}
           </button>
         ) : null}
 
         {loading ? (
-          <section className="mt-4 rounded-[24px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+          <section className="mt-5 rounded-[22px] border border-[#e5e7eb] bg-white p-6 text-center shadow-sm">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
-            <div className="text-[13px] font-bold text-[#667085]">
+            <div className="text-[13px] font-medium text-[#667085]">
               Loading trash...
             </div>
           </section>
@@ -729,107 +732,71 @@ export default function AuthorTrashPage() {
 
         {!loading &&
         activeTab === 'stories' ? (
-          <>
-            {!stories.length ? (
-              <EmptyState
-                icon="fa-regular fa-folder-open"
-                title="Story trash is empty"
-                text="Deleted stories will appear here during their recovery period."
-              />
-            ) : null}
+          visibleStories.length ? (
+            <section className="mt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[16px] font-semibold text-[#111827]">
+                  Can Restore
+                </h2>
 
-            {activeStories.length ? (
-              <section className="mt-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-[17px] font-extrabold text-[#111827]">
-                    Can Restore
-                  </h2>
+                <span className="text-[11px] font-medium text-[#667085]">
+                  {activeCount}
+                </span>
+              </div>
 
-                  <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
-                    {activeStories.length}
-                  </span>
-                </div>
+              <div className="space-y-3">
+                {visibleStories.map(
+                  (story) => (
+                    <TrashStoryCard
+                      key={story.id}
+                      story={story}
+                      busy={
+                        busyId ===
+                        `story:${story.id}`
+                      }
+                      onRestore={
+                        handleRestoreStory
+                      }
+                    />
+                  )
+                )}
+              </div>
+            </section>
+          ) : (
+            <EmptyState
+              icon="fa-regular fa-folder-open"
+              title="Story trash is empty"
+              text="Deleted stories that can still be restored will appear here."
+            />
+          )
+        ) : null}
 
-                <div className="space-y-3">
-                  {activeStories.map(
-                    (story) => (
-                      <TrashStoryCard
-                        key={story.id}
-                        story={story}
-                        busy={
-                          busyId ===
-                          `story:${story.id}`
-                        }
-                        onRestore={
-                          handleRestoreStory
-                        }
-                      />
-                    )
-                  )}
-                </div>
-              </section>
-            ) : null}
-
-            {expiredStories.length ? (
-              <section className="mt-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-[17px] font-extrabold text-[#111827]">
-                    Recovery Expired
-                  </h2>
-
-                  <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
-                    {expiredStories.length}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {expiredStories.map(
-                    (story) => (
-                      <TrashStoryCard
-                        key={story.id}
-                        story={story}
-                        busy={false}
-                        onRestore={
-                          handleRestoreStory
-                        }
-                      />
-                    )
-                  )}
-                </div>
-              </section>
-            ) : null}
-          </>
+        {!loading &&
+        activeTab === 'posts' ? (
+          <EmptyState
+            icon="fa-regular fa-note-sticky"
+            title="Post trash is not connected yet"
+            text="The next step will connect Author Posts to this tab."
+          />
         ) : null}
 
         {!loading &&
         activeTab === 'comments' ? (
-          <>
-            {!comments.length ? (
-              <EmptyState
-                icon="fa-regular fa-comments"
-                title="Comment trash is empty"
-                text="Comments removed from your stories, episodes, Author Page, and Author Posts will appear here."
-              />
-            ) : (
-              <section className="mt-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-[17px] font-extrabold text-[#111827]">
-                      Deleted Comments
-                    </h2>
+          visibleComments.length ? (
+            <section className="mt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[16px] font-semibold text-[#111827]">
+                  Deleted Comments
+                </h2>
 
-                    <p className="mt-1 text-[11px] font-semibold text-[#8d94a1]">
-                      Recovery only. Manual emptying is unavailable.
-                    </p>
-                  </div>
+                <span className="text-[11px] font-medium text-[#667085]">
+                  {activeCount}
+                </span>
+              </div>
 
-                  <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#667085] shadow-sm ring-1 ring-black/5">
-                    {comments.length}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {comments.map((item) => (
+              <div className="space-y-3">
+                {visibleComments.map(
+                  (item) => (
                     <TrashCommentCard
                       key={`${item.source}:${item.comment_id}`}
                       item={item}
@@ -841,11 +808,17 @@ export default function AuthorTrashPage() {
                         handleRecoverComment
                       }
                     />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
+                  )
+                )}
+              </div>
+            </section>
+          ) : (
+            <EmptyState
+              icon="fa-regular fa-comments"
+              title="Comment trash is empty"
+              text="Deleted comments that can still be recovered will appear here."
+            />
+          )
         ) : null}
       </main>
     </div>
