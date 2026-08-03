@@ -9,19 +9,18 @@ function getStoredAuthorPage() {
   }
 }
 
-function ToolRow({ icon, label, subtext, danger = false, onClick }) {
+function ToolRow({ icon, label, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex w-full items-center gap-3 rounded-[14px] px-1 py-2.5 text-left active:bg-[#f3f4f6]"
     >
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>
-        <i className={`${icon} text-[18px]`} />
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[15px] font-normal`} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block text-[14px] font-normal ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>{label}</span>
-        {subtext ? <span className="mt-0.5 block text-[11px] font-normal text-[#8b93a1]">{subtext}</span> : null}
+        <span className="block text-[14px] font-normal text-[#111827]">{label}</span>
       </span>
     </button>
   )
@@ -120,29 +119,27 @@ function copyPageLink() {
 
         <SectionTitle>Manage</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-pen" label="Basic Page Info" subtext="Edit page name, username, and bio" onClick={() => navigate('/author/edit-page?from=settings')} />
-          <ToolRow icon="fa-solid fa-shield-halved" label="Page status" subtext="Active, review, or restriction status" onClick={() => setMessage('Page status is coming soon.')} />
-          <ToolRow icon="fa-solid fa-list" label="Activity log" subtext="Review important page actions" onClick={() => setMessage('Activity log is coming soon.')} />
+          <ToolRow icon="fa-regular fa-pen-to-square" label="Basic Page Info" onClick={() => navigate('/author/edit-page?from=settings')} />
+          <ToolRow icon="fa-regular fa-circle-check" label="Page status" onClick={() => setMessage('Page status is coming soon.')} />
+          <ToolRow icon="fa-regular fa-rectangle-list" label="Activity log" onClick={() => setMessage('Activity log is coming soon.')} />
         </div>
 
         <SectionTitle>Share</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-solid fa-share" label="Share Page" subtext="Share this author page" onClick={sharePage} />
-          <ToolRow icon="fa-solid fa-link" label="Copy Page link" subtext="Copy public author page URL" onClick={copyPageLink} />
+          <ToolRow icon="fa-regular fa-paper-plane" label="Share Page" onClick={sharePage} />
+          <ToolRow icon="fa-regular fa-copy" label="Copy Page link" onClick={copyPageLink} />
         </div>
 
         <SectionTitle>View</SectionTitle>
         <div className="mt-3 space-y-1">
-          <ToolRow icon="fa-regular fa-eye" label="View as reader" subtext="Open the public author page view" onClick={viewAsReader} />
+          <ToolRow icon="fa-regular fa-eye" label="View as reader" onClick={viewAsReader} />
         </div>
 
         <SectionTitle>Trash</SectionTitle>
         <div className="mt-3 space-y-1">
           <ToolRow
-            icon="fa-solid fa-trash-can"
+            icon="fa-regular fa-trash-can"
             label="Trash"
-            subtext="Review posts and page items moved to trash"
-            danger
             onClick={() => navigate('/author/trash')}
           />
         </div>
