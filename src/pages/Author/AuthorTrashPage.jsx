@@ -70,7 +70,7 @@ function TrashStoryCard({
   const daysLeft = getDaysLeft(story)
 
   return (
-    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-3.5 shadow-sm">
+    <article className="rounded-[22px] bg-white p-3.5 shadow-sm">
       <div className="flex gap-3.5">
         <div className="h-[122px] w-[84px] shrink-0 overflow-hidden rounded-[15px] bg-[#e5e7eb]">
           {story.cover_url ? (
@@ -102,21 +102,21 @@ function TrashStoryCard({
               </div>
             </div>
 
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#e11d48]">
               <i className="fa-regular fa-trash-can text-[14px]" />
             </span>
           </div>
 
-          <div className="mt-3 space-y-1.5 text-[11.5px] font-medium text-[#667085]">
+          <div className="mt-3 space-y-1.5 text-[11.5px] font-normal text-[#111827]">
             <div className="flex items-center gap-2">
-              <i className="fa-regular fa-calendar text-[12px] text-[#98a2b3]" />
+              <i className="fa-regular fa-calendar text-[12px] text-[#111827]" />
               <span>
                 Deleted {formatDate(story.deleted_at)}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <i className="fa-regular fa-clock text-[12px] text-[#98a2b3]" />
+              <i className="fa-regular fa-clock text-[12px] text-[#111827]" />
               <span>
                 Restore before{' '}
                 {formatDate(story.delete_expires_at)}
@@ -133,7 +133,7 @@ function TrashStoryCard({
               type="button"
               disabled={busy}
               onClick={() => onRestore(story)}
-              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+              className="min-w-[88px] rounded-full bg-[#111827] px-5 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
             >
               {busy ? 'Restoring...' : 'Restore'}
             </button>
@@ -160,7 +160,7 @@ function TrashPostCard({
   ).trim()
 
   return (
-    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
+    <article className="rounded-[22px] bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#f2f4f7] text-[#98a2b3]">
           {images[0] ? (
@@ -186,21 +186,21 @@ function TrashPostCard({
               </p>
             </div>
 
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#98a2b3]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#e11d48]">
               <i className="fa-regular fa-trash-can text-[14px]" />
             </span>
           </div>
 
-          <div className="mt-3 space-y-1.5 text-[11.5px] font-medium text-[#667085]">
+          <div className="mt-3 space-y-1.5 text-[11.5px] font-normal text-[#111827]">
             <div className="flex items-center gap-2">
-              <i className="fa-regular fa-calendar text-[12px] text-[#98a2b3]" />
+              <i className="fa-regular fa-calendar text-[12px] text-[#111827]" />
               <span>
                 Deleted {formatDate(post.deleted_at)}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <i className="fa-regular fa-clock text-[12px] text-[#98a2b3]" />
+              <i className="fa-regular fa-clock text-[12px] text-[#111827]" />
               <span>
                 Restore before{' '}
                 {formatDate(post.delete_expires_at)}
@@ -217,7 +217,7 @@ function TrashPostCard({
               type="button"
               disabled={busy}
               onClick={() => onRestore(post)}
-              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+              className="min-w-[88px] rounded-full bg-[#111827] px-5 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
             >
               {busy ? 'Restoring...' : 'Restore'}
             </button>
@@ -270,7 +270,7 @@ function TrashCommentCard({
     'Reader'
 
   return (
-    <article className="rounded-[22px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
+    <article className="rounded-[22px] bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[#667085]">
           <i className="fa-regular fa-comment-dots text-[17px]" />
@@ -297,7 +297,7 @@ function TrashCommentCard({
             {item.text || 'Empty comment'}
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-medium text-[#667085]">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-normal text-[#111827]">
             <span>By {userName}</span>
             <span>
               Deleted {formatDate(item.deleted_at)}
@@ -313,7 +313,7 @@ function TrashCommentCard({
               type="button"
               disabled={!canRestore || busy}
               onClick={() => onRestore(item)}
-              className="min-w-[86px] rounded-[14px] bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
+              className="min-w-[88px] rounded-full bg-[#111827] px-5 py-2 text-[12px] font-semibold text-white active:scale-95 disabled:bg-[#c9cdd6]"
             >
               {busy
                 ? 'Recovering...'
@@ -334,7 +334,7 @@ function EmptyState({
   text,
 }) {
   return (
-    <section className="mt-5 rounded-[22px] border border-[#e5e7eb] bg-white px-5 py-10 text-center shadow-sm">
+    <section className="mt-5 rounded-[22px] bg-white px-5 py-10 text-center shadow-sm">
       <div className="mx-auto flex h-12 w-12 items-center justify-center text-[#98a2b3]">
         <i className={`${icon} text-[21px]`} />
       </div>
@@ -837,7 +837,7 @@ export default function AuthorTrashPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f9] pb-[110px]">
-      <header className="sticky top-0 z-50 border-b border-[#eaecf0] bg-white/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-50 bg-white/95 px-4 py-3 backdrop-blur">
         <div className="relative mx-auto flex max-w-5xl items-center justify-between">
           <button
             type="button"
@@ -869,7 +869,7 @@ export default function AuthorTrashPage() {
           </button>
 
           {showHint ? (
-            <div className="absolute right-0 top-12 z-20 w-[270px] rounded-[16px] border border-[#e5e7eb] bg-white p-4 text-[12px] font-normal leading-5 text-[#475467] shadow-xl">
+            <div className="absolute right-0 top-12 z-20 w-[270px] rounded-[16px] bg-white p-4 text-[12px] font-normal leading-5 text-[#475467] shadow-xl">
               Deleted items are shown here for 30 days. After 30 days, they disappear from your Trash and cannot be restored.
             </div>
           ) : null}
@@ -877,7 +877,7 @@ export default function AuthorTrashPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 pt-4">
-        <div className="grid grid-cols-3 border-b border-[#e5e7eb] bg-white px-1 py-1">
+        <div className="flex items-center gap-3 bg-transparent p-0">
           {[
             ['stories', 'Stories', visibleStories.length],
             ['posts', 'Posts', visiblePosts.length],
@@ -889,7 +889,7 @@ export default function AuthorTrashPage() {
               onClick={() =>
                 setActiveTab(value)
               }
-              className={`mx-1 h-10 rounded-[16px] px-2 text-[12px] font-medium transition ${
+              className={`h-10 rounded-full px-5 text-[12px] font-medium transition ${
                 activeTab === value
                   ? 'bg-[#fff1f2] text-[#e11d48]'
                   : 'text-[#667085]'
@@ -908,7 +908,7 @@ export default function AuthorTrashPage() {
                 event.target.value
               )
             }
-            className="h-11 rounded-[14px] border border-[#e5e7eb] bg-white px-3 text-[12px] font-medium text-[#111827] outline-none"
+            className="h-11 rounded-[14px] bg-white px-3 text-[12px] font-medium text-[#111827] shadow-sm outline-none"
           >
             <option value="newest">
               Newest first
@@ -918,7 +918,7 @@ export default function AuthorTrashPage() {
             </option>
           </select>
 
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-[#e5e7eb] bg-white px-3">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[14px] bg-white px-3 shadow-sm">
             <i className="fa-solid fa-magnifying-glass text-[13px] text-[#98a2b3]" />
 
             <input
@@ -940,14 +940,14 @@ export default function AuthorTrashPage() {
             onClick={() =>
               setMessage('')
             }
-            className="mt-4 w-full rounded-[16px] border border-[#e5e7eb] bg-white px-4 py-3 text-left text-[12px] font-medium leading-5 text-[#475467] shadow-sm"
+            className="mt-4 w-full rounded-[16px] bg-white px-4 py-3 text-left text-[12px] font-medium leading-5 text-[#475467] shadow-sm"
           >
             {message}
           </button>
         ) : null}
 
         {loading ? (
-          <section className="mt-5 rounded-[22px] border border-[#e5e7eb] bg-white p-6 text-center shadow-sm">
+          <section className="mt-5 rounded-[22px] bg-white p-6 text-center shadow-sm">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e7eb] border-t-[#111827]" />
             <div className="text-[13px] font-medium text-[#667085]">
               Loading trash...
