@@ -96,15 +96,12 @@ function TrashStoryCard({
                   {story.main_genre || 'Novel'}
                 </span>
 
-                <span className="rounded-full bg-[#fff1f2] px-2.5 py-1 text-[10px] font-medium text-[#e11d48]">
+                <span className="rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[10px] font-medium text-[#475467]">
                   Hidden
                 </span>
               </div>
             </div>
 
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#e11d48]">
-              <i className="fa-regular fa-trash-can text-[14px]" />
-            </span>
           </div>
 
           <div className="mt-3 space-y-1.5 text-[11.5px] font-normal text-[#111827]">
@@ -186,9 +183,6 @@ function TrashPostCard({
               </p>
             </div>
 
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[#e11d48]">
-              <i className="fa-regular fa-trash-can text-[14px]" />
-            </span>
           </div>
 
           <div className="mt-3 space-y-1.5 text-[11.5px] font-normal text-[#111827]">
@@ -892,8 +886,8 @@ export default function AuthorTrashPage() {
                 }
                 className={`h-10 rounded-full px-3 text-[12px] font-medium transition ${
                   activeTab === value
-                    ? 'bg-[#fff0f2] text-[#e11d48]'
-                    : 'bg-transparent text-[#667085]'
+                    ? 'bg-[#fff0f2] text-[#111827]'
+                    : 'bg-transparent text-[#111827]'
                 }`}
               >
                 {label} · {count}
@@ -903,26 +897,7 @@ export default function AuthorTrashPage() {
 
           <div className="h-px bg-[#eef0f3]" />
 
-          <div className="grid grid-cols-[118px_minmax(0,1fr)]">
-            <div className="flex h-12 items-center border-r border-[#eef0f3] px-4">
-              <select
-                value={sortOrder}
-                onChange={(event) =>
-                  setSortOrder(
-                    event.target.value
-                  )
-                }
-                className="w-full bg-transparent text-[12px] font-medium text-[#111827] outline-none"
-              >
-                <option value="newest">
-                  Newest first
-                </option>
-                <option value="oldest">
-                  Oldest first
-                </option>
-              </select>
-            </div>
-
+          <div className="grid grid-cols-[minmax(0,1fr)_52px]">
             <label className="flex h-12 min-w-0 items-center gap-2 px-4">
               <i className="fa-solid fa-magnifying-glass text-[12px] text-[#98a2b3]" />
 
@@ -937,6 +912,38 @@ export default function AuthorTrashPage() {
                 className="min-w-0 flex-1 bg-transparent text-[12px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
               />
             </label>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSortOrder((current) =>
+                  current === 'newest'
+                    ? 'oldest'
+                    : 'newest'
+                )
+              }
+              className="flex h-12 items-center justify-center border-l border-[#eef0f3] bg-white active:bg-[#f5f5f7]"
+              aria-label={
+                sortOrder === 'newest'
+                  ? 'Show oldest first'
+                  : 'Show newest first'
+              }
+              title={
+                sortOrder === 'newest'
+                  ? 'Newest first'
+                  : 'Oldest first'
+              }
+            >
+              <img
+                src="/assets/Icons/Revers.svg"
+                alt=""
+                className={`h-[18px] w-[18px] transition-transform ${
+                  sortOrder === 'oldest'
+                    ? 'rotate-180'
+                    : ''
+                }`}
+              />
+            </button>
           </div>
 
           {message ? (
