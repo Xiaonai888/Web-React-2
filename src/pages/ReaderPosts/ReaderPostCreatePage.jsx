@@ -1,16 +1,43 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ImageDropZone from '../../components/common/ImageDropZone'
 import {
   clearReaderPostDraft,
   readReaderPostDraft,
   writeReaderPostDraft,
 } from '../../features/reader-posts/readerPostDraft'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
 const MAX_POST_LENGTH = 10000
+const MAX_POST_PHOTOS = 5
+const MAX_POST_IMAGE_BYTES = 800 * 1024
+const HARD_MAX_IMAGE_BYTES = 220 * 1024
+const MAX_IMAGE_WIDTH = 1080
+const MAX_IMAGE_HEIGHT = 1350
+const TARGET_IMAGE_BYTES = 150 * 1024
+
+function getAuthToken() {
+  return (
+    localStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    sessionStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    ''
+  )
+}
 
 function getStoredUser() {
   try {
@@ -28,8 +55,262 @@ function getStoredUser() {
   }
 }
 
+function formatBytes(bytes) {
+  const value = Number(bytes || 0)
+
+  if (
+    !Number.isFinite(value) ||
+    value <= 0
+  ) {
+    return '0KB'
+  }
+
+  if (value >= 1024 * 1024) {
+    return `${(
+      value /
+      1024 /
+      1024
+    ).toFixed(1)}MB`
+  }
+
+  return `${Math.max(
+    1,
+    Math.round(value / 1024)
+  )}KB`
+}
+
+function loadImageFromFile(file) {
+  return new Promise(
+    (resolve, reject) => {
+      const image = new Image()
+      const url =
+        URL.createObjectURL(file)
+
+      image.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve(image)
+      }
+
+      image.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(
+          new Error(
+            'Failed to load image'
+          )
+        )
+      }
+
+      image.src = url
+    }
+  )
+}
+
+function canvasToBlob(
+  canvas,
+  type,
+  quality
+) {
+  return new Promise((resolve) =>
+    canvas.toBlob(
+      resolve,
+      type,
+      quality
+    )
+  )
+}
+
+async function compressImageFile(file) {
+  if (
+    !file?.type?.startsWith(
+      'image/'
+    )
+  ) {
+    return null
+  }
+
+  const image =
+    await loadImageFromFile(file)
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_WIDTH / image.width,
+    MAX_IMAGE_HEIGHT / image.height
+  )
+  let width = Math.max(
+    1,
+    Math.round(image.width * scale)
+  )
+  let height = Math.max(
+    1,
+    Math.round(image.height * scale)
+  )
+  let quality = 0.82
+  let blob = null
+
+  for (
+    let attempt = 0;
+    attempt < 10;
+    attempt += 1
+  ) {
+    const canvas =
+      document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context =
+      canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error(
+        'Could not prepare this image'
+      )
+    }
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      width,
+      height
+    )
+
+    blob = await canvasToBlob(
+      canvas,
+      'image/webp',
+      quality
+    )
+
+    if (
+      blob &&
+      blob.size <=
+        TARGET_IMAGE_BYTES
+    ) {
+      break
+    }
+
+    if (
+      blob &&
+      blob.size <=
+        HARD_MAX_IMAGE_BYTES &&
+      quality <= 0.68
+    ) {
+      break
+    }
+
+    if (quality > 0.62) {
+      quality = Math.max(
+        0.62,
+        quality - 0.07
+      )
+    } else {
+      width = Math.max(
+        1,
+        Math.round(width * 0.9)
+      )
+      height = Math.max(
+        1,
+        Math.round(height * 0.9)
+      )
+    }
+  }
+
+  if (!blob) return file
+
+  if (
+    blob.size >
+    HARD_MAX_IMAGE_BYTES
+  ) {
+    throw new Error(
+      `Photo is still too large after compression. Selected: ${formatBytes(
+        blob.size
+      )} / Limit: ${formatBytes(
+        HARD_MAX_IMAGE_BYTES
+      )}.`
+    )
+  }
+
+  return new File(
+    [blob],
+    file.name.replace(
+      /\.[^.]+$/,
+      '.webp'
+    ),
+    {
+      type: 'image/webp',
+      lastModified: Date.now(),
+    }
+  )
+}
+
+async function uploadReaderPostImage(
+  file
+) {
+  const token = getAuthToken()
+
+  if (!token) {
+    throw new Error(
+      'Please login first'
+    )
+  }
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append(
+    'folder',
+    'reader_post_image'
+  )
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (
+    !response.ok ||
+    data.ok === false
+  ) {
+    const missingEnvText =
+      Array.isArray(
+        data.missing_env
+      ) &&
+      data.missing_env.length
+        ? ` Missing: ${data.missing_env.join(
+            ', '
+          )}`
+        : ''
+
+    throw new Error(
+      `${data.message || 'Failed to upload photo'}${missingEnvText}`
+    )
+  }
+
+  const imageUrl =
+    data.image_url ||
+    data.imageUrl ||
+    ''
+
+  if (!imageUrl) {
+    throw new Error(
+      'Upload completed without an image URL'
+    )
+  }
+
+  return imageUrl
+}
+
 function Avatar({ user }) {
-  const name = user?.name || 'Reader'
+  const name =
+    user?.name || 'Reader'
 
   return (
     <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
@@ -41,10 +322,76 @@ function Avatar({ user }) {
         />
       ) : (
         <span className="text-[16px] font-semibold text-[#111827]">
-          {name.slice(0, 1).toUpperCase()}
+          {name
+            .slice(0, 1)
+            .toUpperCase()}
         </span>
       )}
     </span>
+  )
+}
+
+function SelectedImagePreview({
+  imageUrls,
+  onRemove,
+}) {
+  if (!imageUrls.length) {
+    return null
+  }
+
+  if (imageUrls.length === 1) {
+    return (
+      <div className="mx-[-16px] mt-4 bg-white">
+        <div className="relative flex min-h-[260px] items-center justify-center bg-white">
+          <img
+            src={imageUrls[0]}
+            alt=""
+            className="max-h-[560px] w-full object-contain"
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              onRemove(imageUrls[0])
+            }
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white"
+            aria-label="Remove photo"
+          >
+            <i className="fa-solid fa-xmark text-[12px]" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
+      {imageUrls.map(
+        (imageUrl, index) => (
+          <div
+            key={`${imageUrl}-${index}`}
+            className="relative aspect-square bg-[#f3f4f6]"
+          >
+            <img
+              src={imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                onRemove(imageUrl)
+              }
+              className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white"
+              aria-label="Remove photo"
+            >
+              <i className="fa-solid fa-xmark text-[11px]" />
+            </button>
+          </div>
+        )
+      )}
+    </div>
   )
 }
 
@@ -119,6 +466,8 @@ function LeavePostSheet({
 
 export default function ReaderPostCreatePage() {
   const navigate = useNavigate()
+  const fileInputRef =
+    useRef(null)
   const user = useMemo(
     () => getStoredUser(),
     []
@@ -129,42 +478,47 @@ export default function ReaderPostCreatePage() {
   )
 
   const [content, setContent] =
-    useState(initialDraft.content || '')
+    useState(
+      initialDraft.content || ''
+    )
+  const [imageUrls, setImageUrls] =
+    useState(
+      Array.isArray(
+        initialDraft.image_urls
+      )
+        ? initialDraft.image_urls.slice(
+            0,
+            MAX_POST_PHOTOS
+          )
+        : []
+    )
   const [
     leaveSheetOpen,
     setLeaveSheetOpen,
   ] = useState(false)
-  const [
-    comingSoonVisible,
-    setComingSoonVisible,
-  ] = useState(false)
+  const [uploading, setUploading] =
+    useState(false)
+  const [imageError, setImageError] =
+    useState('')
+
+  const hasContent = Boolean(
+    content.trim() ||
+      imageUrls.length
+  )
+  const remainingPhotos =
+    MAX_POST_PHOTOS -
+    imageUrls.length
 
   useEffect(() => {
     writeReaderPostDraft({
       ...readReaderPostDraft(),
       content,
+      image_urls: imageUrls,
     })
-  }, [content])
-
-  useEffect(() => {
-    if (!comingSoonVisible) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(
-      () => {
-        setComingSoonVisible(false)
-      },
-      2200
-    )
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [comingSoonVisible])
+  }, [content, imageUrls])
 
   function requestClose() {
-    if (content.trim()) {
+    if (hasContent) {
       setLeaveSheetOpen(true)
       return
     }
@@ -174,6 +528,9 @@ export default function ReaderPostCreatePage() {
 
   function discardPost() {
     clearReaderPostDraft()
+    setContent('')
+    setImageUrls([])
+    setImageError('')
     setLeaveSheetOpen(false)
     navigate('/discover', {
       replace: true,
@@ -181,140 +538,317 @@ export default function ReaderPostCreatePage() {
   }
 
   function continueToReview() {
-    if (!content.trim()) return
+    if (
+      !hasContent ||
+      uploading
+    ) {
+      return
+    }
 
     writeReaderPostDraft({
       ...readReaderPostDraft(),
       content: content.trim(),
+      image_urls: imageUrls,
     })
 
-    navigate('/reader/post/review')
+    navigate(
+      '/reader/post/review'
+    )
+  }
+
+  async function handlePickImages(
+    fileList
+  ) {
+    const files = Array.from(
+      fileList || []
+    )
+    const imageFiles =
+      files.filter((file) =>
+        file?.type?.startsWith(
+          'image/'
+        )
+      )
+
+    if (!imageFiles.length) {
+      setImageError(
+        'Only image files can be uploaded.'
+      )
+      return
+    }
+
+    if (
+      imageFiles.length >
+      remainingPhotos
+    ) {
+      setImageError(
+        `You can add up to ${MAX_POST_PHOTOS} photos per post.`
+      )
+      return
+    }
+
+    try {
+      setUploading(true)
+      setImageError(
+        'Preparing photos...'
+      )
+
+      const compressedFiles =
+        await Promise.all(
+          imageFiles.map((file) =>
+            compressImageFile(file)
+          )
+        )
+
+      const validFiles =
+        compressedFiles.filter(Boolean)
+      const totalSize =
+        validFiles.reduce(
+          (sum, file) =>
+            sum +
+            Number(file.size || 0),
+          0
+        )
+
+      if (
+        totalSize >
+        MAX_POST_IMAGE_BYTES
+      ) {
+        throw new Error(
+          `Photos are too large. Selected: ${formatBytes(
+            totalSize
+          )} / Limit: ${formatBytes(
+            MAX_POST_IMAGE_BYTES
+          )}.`
+        )
+      }
+
+      const uploadedUrls = []
+
+      for (const file of validFiles) {
+        const imageUrl =
+          await uploadReaderPostImage(
+            file
+          )
+        uploadedUrls.push(
+          imageUrl
+        )
+      }
+
+      setImageUrls((current) => [
+        ...current,
+        ...uploadedUrls,
+      ].slice(0, MAX_POST_PHOTOS))
+      setImageError('')
+    } catch (error) {
+      setImageError(
+        error.message ||
+          'Could not upload these photos.'
+      )
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function removeImage(imageUrl) {
+    setImageUrls((current) =>
+      current.filter(
+        (item) =>
+          item !== imageUrl
+      )
+    )
+    setImageError('')
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white">
-        <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
-          <button
-            type="button"
-            onClick={requestClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Close composer"
-          >
-            <i className="fa-solid fa-xmark text-[22px]" />
-          </button>
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        disabled={
+          uploading ||
+          remainingPhotos <= 0
+        }
+        className="hidden"
+        onChange={(event) => {
+          handlePickImages(
+            event.target.files
+          )
+          event.target.value = ''
+        }}
+      />
 
-          <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
-            New Reader Post
+      <ImageDropZone
+        onFiles={handlePickImages}
+        onRejectedFiles={() =>
+          setImageError(
+            `Only images are allowed, with a maximum of ${MAX_POST_PHOTOS} photos.`
+          )
+        }
+        disabled={
+          uploading ||
+          remainingPhotos <= 0
+        }
+        multiple
+        maxFiles={Math.max(
+          1,
+          remainingPhotos
+        )}
+        accept="image/*"
+        className="min-h-screen bg-white"
+        label="Drop photos here"
+      >
+        <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white">
+          <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
+            <button
+              type="button"
+              onClick={requestClose}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+              aria-label="Close composer"
+            >
+              <i className="fa-solid fa-xmark text-[22px]" />
+            </button>
+
+            <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
+              New Reader Post
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                !hasContent ||
+                uploading
+              }
+              onClick={
+                continueToReview
+              }
+              className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
+            >
+              {uploading
+                ? 'Uploading'
+                : 'Next'}
+            </button>
           </div>
+        </header>
 
-          <button
-            type="button"
-            disabled={!content.trim()}
-            onClick={continueToReview}
-            className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
-          >
-            Next
-          </button>
-        </div>
-      </header>
+        <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white">
+          <div className="flex-1 px-4 pt-5">
+            <div className="mb-5 flex items-center gap-3">
+              <Avatar user={user} />
 
-      <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white">
-        <div className="flex-1 px-4 pt-5">
-          <div className="mb-5 flex items-center gap-3">
-            <Avatar user={user} />
+              <div className="min-w-0">
+                <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                  {user?.name ||
+                    'Reader'}
+                </div>
 
-            <div className="min-w-0">
-              <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
-                {user?.name || 'Reader'}
-              </div>
-
-              <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151]">
-                <i className="fa-solid fa-earth-americas text-[10px]" />
-                Public
+                <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151]">
+                  <i className="fa-solid fa-earth-americas text-[10px]" />
+                  Public
+                </div>
               </div>
             </div>
-          </div>
 
-          <textarea
-            autoFocus
-            value={content}
-            onChange={(event) =>
-              setContent(
-                event.target.value.slice(
-                  0,
-                  MAX_POST_LENGTH
+            <textarea
+              autoFocus
+              value={content}
+              onChange={(event) =>
+                setContent(
+                  event.target.value.slice(
+                    0,
+                    MAX_POST_LENGTH
+                  )
                 )
-              )
-            }
-            placeholder="Share your thoughts..."
-            maxLength={MAX_POST_LENGTH}
-            className="min-h-[260px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
-          />
+              }
+              placeholder="Share your thoughts..."
+              maxLength={
+                MAX_POST_LENGTH
+              }
+              className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
+            />
 
-        </div>
+            <SelectedImagePreview
+              imageUrls={imageUrls}
+              onRemove={removeImage}
+            />
 
-        <div className="relative border-t border-[#eef0f4] bg-white px-4 py-4">
-          <div
-            className={`mb-3 text-right text-[11px] font-normal ${
-              content.length >= MAX_POST_LENGTH
-                ? 'text-[#dc2626]'
-                : content.length >= MAX_POST_LENGTH - 500
-                  ? 'text-[#d97706]'
-                  : 'text-[#9ca3af]'
-            }`}
-          >
-            {content.length.toLocaleString()} / {MAX_POST_LENGTH.toLocaleString()}
+            {imageError ? (
+              <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
+                {imageError}
+              </div>
+            ) : null}
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setComingSoonVisible(true)
-            }
-            className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98]"
-          >
-            <svg
-              className="h-[27px] w-[27px]"
-              viewBox="0 0 22 26"
-              fill="none"
-              aria-hidden="true"
-            >
-              <rect
-                x="3"
-                y="3"
-                width="16"
-                height="20"
-                rx="3"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <circle
-                cx="7.5"
-                cy="8.8"
-                r="1.45"
-                fill="currentColor"
-              />
-              <path
-                d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
-                fill="currentColor"
-              />
-            </svg>
-            <span className="text-[14px] font-normal">
-              Gallery
-            </span>
-          </button>
-
-          {comingSoonVisible ? (
+          <div className="border-t border-[#eef0f4] bg-white px-4 py-4">
             <div
-              role="status"
-              className="absolute bottom-[106px] left-4 rounded-[12px] bg-[#111827] px-3 py-2 text-[11px] font-normal text-white shadow-lg"
+              className={`mb-3 text-right text-[11px] font-normal ${
+                content.length >=
+                MAX_POST_LENGTH
+                  ? 'text-[#dc2626]'
+                  : content.length >=
+                      MAX_POST_LENGTH -
+                        500
+                    ? 'text-[#d97706]'
+                    : 'text-[#9ca3af]'
+              }`}
             >
-              Image posting is coming soon.
+              {content.length.toLocaleString()}{' '}
+              /{' '}
+              {MAX_POST_LENGTH.toLocaleString()}
             </div>
-          ) : null}
-        </div>
-      </main>
+
+            <button
+              type="button"
+              disabled={
+                uploading ||
+                remainingPhotos <= 0
+              }
+              onClick={() =>
+                fileInputRef.current?.click()
+              }
+              className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Open Gallery"
+            >
+              <svg
+                className="h-[27px] w-[27px]"
+                viewBox="0 0 22 26"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="3"
+                  y="3"
+                  width="16"
+                  height="20"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx="7.5"
+                  cy="8.8"
+                  r="1.45"
+                  fill="currentColor"
+                />
+                <path
+                  d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
+                  fill="currentColor"
+                />
+              </svg>
+
+              <span className="text-[14px] font-normal">
+                {uploading
+                  ? 'Uploading'
+                  : remainingPhotos <=
+                      0
+                    ? '5 photos'
+                    : 'Gallery'}
+              </span>
+            </button>
+          </div>
+        </main>
+      </ImageDropZone>
 
       <LeavePostSheet
         open={leaveSheetOpen}
@@ -329,6 +863,6 @@ export default function ReaderPostCreatePage() {
           setLeaveSheetOpen(false)
         }
       />
-    </div>
+    </>
   )
 }
