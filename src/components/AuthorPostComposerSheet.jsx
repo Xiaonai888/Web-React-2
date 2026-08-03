@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ImageDropZone from './common/ImageDropZone'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -442,6 +443,17 @@ export default function AuthorPostComposerSheet({
           }}
         />
 
+                />
+
+        <ImageDropZone
+          onFiles={handlePickImages}
+          onRejectedFiles={() => setImageError('Only image files can be dropped here.')}
+          disabled={screen !== 'compose' || uploading || selectedImages.length >= MAX_POST_PHOTOS}
+          multiple
+          accept="image/*"
+          className="min-h-screen"
+          label="Drop photos here"
+        >
         {screen === 'compose' ? (
           <>
             <header className="sticky top-0 z-10 border-b border-[#eef0f4] bg-white">
@@ -602,7 +614,8 @@ export default function AuthorPostComposerSheet({
               </div>
             </main>
           </>
-        )}
+                )}
+        </ImageDropZone>
       </div>
 
       <LeavePostSheet
