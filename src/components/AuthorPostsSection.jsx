@@ -6,6 +6,10 @@ import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import {
+  CollapsiblePostText,
+  ProfessionalSinglePostImage,
+} from './common/ProfessionalPostContent'
+import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
   saveSavedPost,
@@ -366,15 +370,14 @@ function AuthorPostComposer({ author, onOpenComposer, onOpenFilter, onManagePost
 function PostImageGrid({ images, onView }) {
   if (!images.length) return null
 
-  if (images.length === 1) {
+    if (images.length === 1) {
     return (
-      <button
-        type="button"
+      <ProfessionalSinglePostImage
+        src={images[0]}
+        alt=""
         onClick={() => onView(images[0])}
-        className="mt-3 block w-full bg-white"
-      >
-        <img src={images[0]} alt="" className="max-h-[620px] w-full object-contain" />
-      </button>
+        className="mt-3"
+      />
     )
   }
 
@@ -410,11 +413,9 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const postText = String(
     post?.content || ''
   )
-  const canCollapse =
-    postText.length > 520 ||
-    postText.split('\n').length > 8
+  
 
-  const [expanded, setExpanded] = useState(false)
+  
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
 const [pressTimer, setPressTimer] = useState(null)
 const activeReaction = AUTHOR_POST_REACTIONS.find((item) => item.type === post.my_reaction) || null
@@ -493,40 +494,19 @@ function cancelReactionPress() {
       </div>
 
       {post.content ? (
-        <div className="mt-2 px-4">
-          <p
-            className="whitespace-pre-wrap text-[16px] font-normal leading-7 text-[#111827]"
-            style={
-              !expanded && canCollapse
-                ? {
-                    display: '-webkit-box',
-                    WebkitLineClamp: 8,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }
-                : undefined
-            }
+        <div className="mt-2 px-4 pb-3">
+          <CollapsiblePostText
+            text={postText}
+            lines={3}
+            className="text-[16px] font-normal leading-7 text-[#111827]"
           >
-            {renderPostTextWithLinks(post.content)}
-          </p>
-
-          {canCollapse ? (
-            <button
-              type="button"
-              onClick={() =>
-                setExpanded(
-                  (current) => !current
-                )
-              }
-              className="mt-1 text-[13px] font-semibold text-[#475569] active:opacity-70"
-            >
-              {expanded
-                ? 'See less'
-                : 'See more'}
-            </button>
-          ) : null}
+            {renderPostTextWithLinks(
+              post.content
+            )}
+          </CollapsiblePostText>
         </div>
       ) : null}
+
 
       <PostImageGrid images={postImages} onView={onViewImage} />
 
