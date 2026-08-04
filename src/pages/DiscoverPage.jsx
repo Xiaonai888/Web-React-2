@@ -19,7 +19,10 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
-
+import {
+  CollapsiblePostText,
+  ProfessionalSinglePostImage,
+} from '../components/common/ProfessionalPostContent'
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
@@ -371,18 +374,13 @@ function RealPostImageGrid({ images, authorName }) {
   const alt = `${authorName || 'Author'} post`
 
   if (urls.length === 1) {
-    return (
-      <div className="bg-gray-100">
-        <img
-          src={urls[0]}
-          alt={alt}
-          loading="lazy"
-          decoding="async"
-          className="max-h-[620px] w-full object-cover"
-        />
-      </div>
-    )
-  }
+  return (
+    <ProfessionalSinglePostImage
+      src={urls[0]}
+      alt={alt}
+    />
+  )
+}
 
   if (urls.length === 2) {
     return (
@@ -625,10 +623,16 @@ function RealFollowedPostCard({
       </div>
 
       {post.content ? (
-        <p className="whitespace-pre-wrap break-words px-4 pb-3 text-[13px] font-normal leading-5 text-[#111827]">
-          {post.content}
-        </p>
-      ) : null}
+  <div className="px-4 pb-3">
+    <CollapsiblePostText
+      text={post.content}
+      lines={3}
+      className="text-[13px] font-normal leading-5 text-[#111827]"
+    >
+      {post.content}
+    </CollapsiblePostText>
+  </div>
+) : null}
 
       <RealPostImageGrid
         images={post.image_urls}
