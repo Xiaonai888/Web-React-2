@@ -541,9 +541,43 @@ function ReaderPostImages({
 
 
 
-function ReaderEchoCard({ post }) {
+function ReaderEchoMenuItem({
+  icon,
+  title,
+  danger = false,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left active:bg-black/[0.04]"
+    >
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center ${
+          danger
+            ? 'text-[#e5484d]'
+            : 'text-[#111827]'
+        }`}
+      >
+        <i className={`${icon} text-[17px]`} />
+      </span>
+
+      <span
+        className={`text-[14px] font-normal ${
+          danger
+            ? 'text-[#e5484d]'
+            : 'text-[#111827]'
+        }`}
+      >
+        {title}
+      </span>
+    </button>
+  )
+}
+
+function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
-  const user = post?.user || {}
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
@@ -610,29 +644,13 @@ function ReaderEchoCard({ post }) {
     )
       ? authorPost.image_urls
       : []),
-    ...(Array.isArray(post?.image_urls)
-      ? post.image_urls
-      : []),
   ].filter(Boolean)
   const coverUrl = imageCandidates[0] || ''
-  const echoText = String(
-    post?.content || ''
-  ).trim()
-  const isAutomaticText =
-    /^Echoed\s+[“"].+[”"]/.test(
-      echoText
-    )
   const sourceLabels = {
     story: 'story',
     episode: 'episode',
     reader_post: 'reader post',
     author_post: 'author post',
-  }
-  const viewLabels = {
-    story: 'View story',
-    episode: 'Read episode',
-    reader_post: 'View post',
-    author_post: 'View post',
   }
   const placeholderIcons = {
     story: 'fa-solid fa-book-open',
@@ -645,9 +663,6 @@ function ReaderEchoCard({ post }) {
   const sourceLabel =
     sourceLabels[sourceType] ||
     String(source?.label || 'content')
-  const viewLabel =
-    viewLabels[sourceType] ||
-    'View source'
   const placeholderIcon =
     placeholderIcons[sourceType] ||
     'fa-regular fa-file-lines'
@@ -713,185 +728,66 @@ function ReaderEchoCard({ post }) {
     sourceDetail = 'Author post'
   }
 
-  const destinationLabels = {
-    feed: 'Echoed to Feed',
-    shadow: 'Added to My Shadow',
-    reader: 'Sent to Reader',
-    circle: 'Echoed to Circle',
-  }
-  const destinationLabel =
-    destinationLabels[
-      post?.echo_destination
-    ] || 'Echoed to Feed'
-  const shareCount = Math.max(
-    1,
-    Number(
-      post?.share_count ||
-        post?.echo_count ||
-        1
-    )
-  )
-
   function openSource() {
     if (sourceUrl) {
       navigate(sourceUrl)
     }
   }
 
-  function viewReaderProfile() {
-    const username = String(
-      user?.username || ''
-    ).trim()
-
-    if (username) {
-      navigate(
-        `/profile?username=${encodeURIComponent(
-          username
-        )}`
-      )
-    }
-  }
-
   return (
-    <article
-      id={`reader-post-${post.id}`}
-      className="overflow-hidden bg-white sm:rounded-[12px]"
+    <button
+      type="button"
+      onClick={openSource}
+      disabled={!sourceUrl}
+      className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] text-left ring-1 ring-black/10 active:scale-[0.995] disabled:cursor-default"
     >
-      <div className="flex items-start gap-2 px-4 pb-3 pt-4">
-        <button
-          type="button"
-          onClick={viewReaderProfile}
-          className="shrink-0 rounded-full active:opacity-70"
-        >
-          <ReaderAvatar user={user} />
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={viewReaderProfile}
-            className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70"
-          >
-            {user?.name || 'Reader'}
-          </button>
-
-          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] font-normal text-gray-400">
-            <span>
-              {formatPostTime(
-                post?.created_at
-              )}
-            </span>
-            <span>·</span>
-            <i
-              className={`${getVisibilityIcon(
-                post?.visibility
-              )} text-[10px]`}
-            />
-            <span>·</span>
-            <img
-              src="/assets/Icons/echo.svg"
-              alt=""
-              aria-hidden="true"
-              className="h-[11px] w-[11px] brightness-0 opacity-55"
-            />
-            <span>
-              Echoed a {sourceLabel}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {echoText && !isAutomaticText ? (
-        <div className="px-4 pb-4">
-          <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
-            {renderPostTextWithLinks(
-              echoText
-            )}
-          </p>
-        </div>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={openSource}
-        disabled={!sourceUrl}
-        className="mx-4 mb-4 block overflow-hidden rounded-[18px] bg-[#f7f7fa] text-left ring-1 ring-black/5 active:scale-[0.995] disabled:cursor-default"
-      >
-        {coverUrl ? (
-          <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
-            <img
-              src={coverUrl}
-              alt={sourceTitle}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
-            <i
-              className={`${placeholderIcon} text-[30px] text-white/90`}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-              {sourceLabel}
-            </div>
-
-            <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
-              {sourceTitle}
-            </div>
-
-            {sourceSummary ? (
-              <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
-                {sourceSummary}
-              </div>
-            ) : null}
-
-            {sourceDetail &&
-            sourceDetail !==
-              sourceSummary ? (
-              <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
-                {sourceDetail}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-            <i className="fa-solid fa-chevron-right text-[12px]" />
-          </div>
-        </div>
-      </button>
-
-      <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
-        <div className="inline-flex min-w-0 items-center gap-2 text-[11px] font-normal text-gray-500">
+      {coverUrl ? (
+        <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
           <img
-            src="/assets/Icons/echo.svg"
-            alt=""
-            aria-hidden="true"
-            className="h-[14px] w-[14px] shrink-0 brightness-0 opacity-65"
+            src={coverUrl}
+            alt={sourceTitle}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
           />
-          <span className="truncate">
-            {destinationLabel}
-            {shareCount > 1
-              ? ` · ${shareCount.toLocaleString()} times`
-              : ''}
-          </span>
+        </div>
+      ) : (
+        <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
+          <i
+            className={`${placeholderIcon} text-[30px] text-white/90`}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+            {sourceLabel}
+          </div>
+
+          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+            {sourceTitle}
+          </div>
+
+          {sourceSummary ? (
+            <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
+              {sourceSummary}
+            </div>
+          ) : null}
+
+          {sourceDetail &&
+          sourceDetail !== sourceSummary ? (
+            <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+              {sourceDetail}
+            </div>
+          ) : null}
         </div>
 
-        <button
-          type="button"
-          onClick={openSource}
-          disabled={!sourceUrl}
-          className="shrink-0 text-[12px] font-semibold text-[#6d28d9] active:opacity-70 disabled:text-[#98a2b3]"
-        >
-          {viewLabel}
-        </button>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+          <i className="fa-solid fa-chevron-right text-[12px]" />
+        </div>
       </div>
-    </article>
+    </button>
   )
 }
 
@@ -1072,6 +968,11 @@ function StandardReaderPostCard({
     Boolean(post?.is_owner) ||
     String(storedUser?.id || '') ===
       String(post?.user_id || '')
+  const isEchoPost =
+    Boolean(post?.is_echo)
+  const isLegacyEcho =
+    isEchoPost &&
+    !post?.reader_post_id
 
   const postText = String(
     post?.content || ''
@@ -1095,7 +996,8 @@ function StandardReaderPostCard({
     MAX_POST_PHOTOS -
     editImageUrls.length
   const canSaveEdit = Boolean(
-    content.trim() ||
+    isEchoPost ||
+      content.trim() ||
       editImageUrls.length
   )
 
@@ -1583,8 +1485,17 @@ function StandardReaderPostCard({
     try {
       setDeleting(true)
 
+      const endpoint =
+        isLegacyEcho && post?.echo_id
+          ? `${API_BASE_URL}/api/echoes/${encodeURIComponent(
+              post.echo_id
+            )}`
+          : `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(
+              post.id
+            )}`
+
       const response = await fetch(
-        `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(post.id)}`,
+        endpoint,
         {
           method: 'DELETE',
           headers: {
@@ -1622,6 +1533,14 @@ function StandardReaderPostCard({
   }
 
   function openEditor() {
+    if (isLegacyEcho) {
+      window.alert(
+        'Delete this old Echo and Echo it again to edit it as a normal post.'
+      )
+      setMenuOpen(false)
+      return
+    }
+
     setContent(post.content || '')
     setEditImageUrls(
       Array.isArray(
@@ -1818,6 +1737,12 @@ function StandardReaderPostCard({
               </button>
             ) : null}
           </div>
+        ) : null}
+
+        {isEchoPost ? (
+          <ReaderEchoSourceBlock
+            post={post}
+          />
         ) : null}
 
         <ReaderPostImages
@@ -2335,10 +2260,6 @@ function StandardReaderPostCard({
 export default function ReaderPostCard(
   props
 ) {
-  if (props?.post?.is_echo) {
-    return <ReaderEchoCard {...props} />
-  }
-
   return (
     <StandardReaderPostCard
       {...props}
