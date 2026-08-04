@@ -2011,10 +2011,13 @@ const canSave =
   }}
 />
 
-<ScheduleWheelPicker
+<ScheduleReleasePicker
   open={schedulePickerOpen}
+  hideTrigger
   date={scheduleDate}
   time={scheduleTime}
+  onDateChange={onScheduleDateChange}
+  onTimeChange={onScheduleTimeChange}
   onClose={() => setSchedulePickerOpen(false)}
   onSave={(nextDate, nextTime) => {
     onScheduleDateChange(nextDate)
@@ -2023,6 +2026,7 @@ const canSave =
     setSchedulePickerOpen(false)
   }}
 />
+
       
       <LanguageWheelPicker
         open={languagePickerOpen}
