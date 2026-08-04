@@ -422,7 +422,7 @@ export default function ScheduleReleasePicker({
                   <button
                     type="button"
                     onClick={confirmPicker}
-                    className="text-[12px] font-semibold text-[#ff4d67]"
+                    className="text-[12px] font-semibold text-[#2d9cdb]"
                   >
                     OK
                   </button>
