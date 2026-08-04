@@ -21,6 +21,10 @@ function pad(value) {
   return String(value).padStart(2, '0')
 }
 
+function wrap(value, max) {
+  return (value + max + 1) % (max + 1)
+}
+
 function toDateValue(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
@@ -37,6 +41,15 @@ function parseDateValue(value) {
   const date = new Date(year, month - 1, day)
 
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+function parseTimeValue(value) {
+  const [hour, minute] = String(value || '').split(':').map(Number)
+
+  return {
+    hour: Number.isFinite(hour) ? wrap(hour, 23) : 0,
+    minute: Number.isFinite(minute) ? wrap(minute, 59) : 0,
+  }
 }
 
 function getDefaultSchedule() {
@@ -81,6 +94,113 @@ function buildCalendarDays(cursor) {
   })
 }
 
+function LoopingTimeColumn({ value, max, label, onChange }) {
+  const [text, setText] = useState(pad(value))
+  const touchStartRef = useRef(null)
+
+  useEffect(() => {
+    setText(pad(value))
+  }, [value])
+
+  const move = (amount) => {
+    onChange(wrap(value + amount, max))
+  }
+
+  const commitText = () => {
+    if (!text.trim()) {
+      setText(pad(value))
+      return
+    }
+
+    const parsed = Number(text)
+    const nextValue = Number.isFinite(parsed)
+      ? Math.min(max, Math.max(0, parsed))
+      : value
+
+    onChange(nextValue)
+    setText(pad(nextValue))
+  }
+
+  return (
+    <div
+      className="w-[108px] select-none text-center"
+      onWheel={(event) => {
+        event.preventDefault()
+        move(event.deltaY > 0 ? 1 : -1)
+      }}
+      onTouchStart={(event) => {
+        touchStartRef.current = event.touches[0]?.clientY ?? null
+      }}
+      onTouchEnd={(event) => {
+        const start = touchStartRef.current
+        const end = event.changedTouches[0]?.clientY
+
+        touchStartRef.current = null
+
+        if (start == null || end == null || Math.abs(start - end) < 16) return
+
+        move(start > end ? 1 : -1)
+      }}
+    >
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#98a2b3]">
+        {label}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => move(-1)}
+        className="h-10 w-full text-[15px] text-[#98a2b3]"
+      >
+        {pad(wrap(value - 1, max))}
+      </button>
+
+      <div className="border-y-2 border-[#2d9cdb] py-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={2}
+          value={text}
+          aria-label={label}
+          onFocus={(event) => event.target.select()}
+          onChange={(event) => {
+            const digits = event.target.value.replace(/\D/g, '').slice(0, 2)
+            setText(digits)
+
+            if (digits.length === 2) {
+              const parsed = Number(digits)
+
+              if (parsed >= 0 && parsed <= max) onChange(parsed)
+            }
+          }}
+          onBlur={commitText}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              move(-1)
+            }
+
+            if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              move(1)
+            }
+
+            if (event.key === 'Enter') event.currentTarget.blur()
+          }}
+          className="h-10 w-full bg-transparent text-center text-[22px] font-semibold text-[#111827] outline-none"
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => move(1)}
+        className="h-10 w-full text-[15px] text-[#98a2b3]"
+      >
+        {pad(wrap(value + 1, max))}
+      </button>
+    </div>
+  )
+}
+
 export default function ScheduleReleasePicker({
   date,
   time,
@@ -96,6 +216,7 @@ export default function ScheduleReleasePicker({
   const [view, setView] = useState('main')
   const [draftDate, setDraftDate] = useState(initialDate)
   const [draftTime, setDraftTime] = useState(initialTime)
+  const [timeBeforeEdit, setTimeBeforeEdit] = useState(initialTime)
   const [cursor, setCursor] = useState(initialCursor)
   const [pickerMonth, setPickerMonth] = useState(initialCursor.getMonth())
   const [pickerYear, setPickerYear] = useState(initialCursor.getFullYear())
@@ -105,6 +226,7 @@ export default function ScheduleReleasePicker({
 
   const selectedDate = parseDateValue(date || defaultSchedule.date)
   const draftSelectedDate = parseDateValue(draftDate)
+  const draftTimeParts = parseTimeValue(draftTime)
   const calendarDays = useMemo(() => buildCalendarDays(cursor), [cursor])
   const currentYear = new Date().getFullYear()
   const years = useMemo(
@@ -146,6 +268,11 @@ export default function ScheduleReleasePicker({
     ? `${MONTHS[selectedDate.getMonth()]} ${selectedDate.getDate()}`
     : 'Select date'
 
+  const updateDraftTime = (hour, minute) => {
+    setDraftTime(`${pad(hour)}:${pad(minute)}`)
+    setInvalid(false)
+  }
+
   const openPicker = () => {
     const nextDate = date || defaultSchedule.date
     const nextTime = time || defaultSchedule.time
@@ -153,6 +280,7 @@ export default function ScheduleReleasePicker({
 
     setDraftDate(nextDate)
     setDraftTime(nextTime)
+    setTimeBeforeEdit(nextTime)
     setCursor(nextCursor)
     setPickerMonth(nextCursor.getMonth())
     setPickerYear(nextCursor.getFullYear())
@@ -188,6 +316,17 @@ export default function ScheduleReleasePicker({
     setPickerMonth(cursor.getMonth())
     setPickerYear(cursor.getFullYear())
     setView('monthYear')
+  }
+
+  const openTimePicker = () => {
+    setTimeBeforeEdit(draftTime)
+    setView('time')
+  }
+
+  const cancelTimePicker = () => {
+    setDraftTime(timeBeforeEdit)
+    setInvalid(false)
+    setView('main')
   }
 
   const showSelectedMonth = () => {
@@ -263,16 +402,13 @@ export default function ScheduleReleasePicker({
 
                     <span className="pb-2 text-[13px] text-[#111827]">at</span>
 
-                    <input
-                      type="time"
-                      step="60"
-                      value={draftTime}
-                      onChange={(event) => {
-                        setDraftTime(event.target.value)
-                        setInvalid(false)
-                      }}
-                      className="w-[92px] border-b-2 border-[#2d9cdb] bg-transparent pb-2 text-center text-[15px] font-medium text-[#111827] outline-none"
-                    />
+                    <button
+                      type="button"
+                      onClick={openTimePicker}
+                      className="w-[92px] border-b-2 border-[#2d9cdb] bg-transparent pb-2 text-center text-[15px] font-medium text-[#111827]"
+                    >
+                      {draftTime}
+                    </button>
                   </div>
 
                   {invalid ? (
@@ -280,6 +416,56 @@ export default function ScheduleReleasePicker({
                       Choose a future date and time.
                     </div>
                   ) : null}
+                </div>
+              </>
+            ) : null}
+
+            {view === 'time' ? (
+              <>
+                <div className="px-5 pb-2 pt-5">
+                  <div className="text-[17px] font-semibold text-[#252b36]">
+                    Select Time
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 px-5 py-5">
+                  <LoopingTimeColumn
+                    value={draftTimeParts.hour}
+                    max={23}
+                    label="Hour"
+                    onChange={(hour) => updateDraftTime(hour, draftTimeParts.minute)}
+                  />
+
+                  <div className="pt-5 text-[24px] font-semibold text-[#111827]">:</div>
+
+                  <LoopingTimeColumn
+                    value={draftTimeParts.minute}
+                    max={59}
+                    label="Minute"
+                    onChange={(minute) => updateDraftTime(draftTimeParts.hour, minute)}
+                  />
+                </div>
+
+                <div className="px-6 text-center text-[11px] leading-5 text-[#98a2b3]">
+                  Scroll, swipe, tap, or type the time directly.
+                </div>
+
+                <div className="flex justify-end gap-8 px-6 pb-5 pt-5">
+                  <button
+                    type="button"
+                    onClick={cancelTimePicker}
+                    className="text-[14px] font-medium text-[#168fd0]"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setView('main')}
+                    className="text-[14px] font-medium text-[#168fd0]"
+                  >
+                    Show
+                  </button>
                 </div>
               </>
             ) : null}
