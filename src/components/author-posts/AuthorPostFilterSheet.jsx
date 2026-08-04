@@ -197,7 +197,7 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
                   <span
                     className={`flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-normal transition-colors ${
                       selected
-                        ? 'bg-[#ede9fe] text-[#7c3aed] ring-1 ring-[#c4b5fd]'
+                        ? 'bg-[#8b5cf6] text-white shadow-[0_3px_10px_rgba(139,92,246,0.28)]'
                         : inCurrentMonth
                           ? 'text-[#111827] hover:bg-[#f5f3ff] active:bg-[#ede9fe]'
                           : 'text-[#b5bbc5] hover:bg-[#f5f3ff]'
