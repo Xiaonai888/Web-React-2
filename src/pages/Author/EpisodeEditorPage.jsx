@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
 import ImageDropZone from '../../components/common/ImageDropZone'
+import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import {
   MANGA_MAX_FILES_PER_PICK,
   MANGA_MAX_PAGES,
