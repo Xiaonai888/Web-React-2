@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -83,7 +83,12 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
     year: 'numeric',
   })
 
-  const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+  const currentMonth = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1
+  )
+
   const nextMonthDisabled =
     viewDate.getFullYear() === currentMonth.getFullYear() &&
     viewDate.getMonth() === currentMonth.getMonth()
@@ -127,11 +132,11 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
         aria-label="Choose date"
       >
         <div className="border-b border-[#e5e7eb] px-5 py-4">
-          <div className="text-[12px] font-medium text-[#6b7280]">
+          <div className="text-[11px] font-medium text-[#6b7280]">
             {selectedDate?.getFullYear()}
           </div>
 
-          <div className="mt-1 truncate text-[24px] font-medium text-[#111827]">
+          <div className="mt-1 truncate text-[20px] font-medium text-[#111827]">
             {selectedDate?.toLocaleDateString('en-US', {
               weekday: 'short',
               month: 'short',
@@ -145,7 +150,7 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
             <button
               type="button"
               onClick={() => moveMonth(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] hover:bg-[#f5f3ff] active:bg-[#ede9fe]"
               aria-label="Previous month"
             >
               <i className="fa-solid fa-chevron-left text-[13px]" />
@@ -159,7 +164,7 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
               type="button"
               disabled={nextMonthDisabled}
               onClick={() => moveMonth(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:text-[#c4c9d1]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] hover:bg-[#f5f3ff] active:bg-[#ede9fe] disabled:text-[#c4c9d1]"
               aria-label="Next month"
             >
               <i className="fa-solid fa-chevron-right text-[13px]" />
@@ -190,13 +195,13 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
                   className="flex h-10 items-center justify-center disabled:cursor-not-allowed"
                 >
                   <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-normal ${
+                    className={`flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-normal transition-colors ${
                       selected
-                        ? 'bg-[#111827] text-white'
+                        ? 'bg-[#ede9fe] text-[#7c3aed] ring-1 ring-[#c4b5fd]'
                         : inCurrentMonth
-                          ? 'text-[#111827] active:bg-[#f3f4f6]'
-                          : 'text-[#b5bbc5]'
-                    } ${disabled ? 'text-[#d1d5db]' : ''}`}
+                          ? 'text-[#111827] hover:bg-[#f5f3ff] active:bg-[#ede9fe]'
+                          : 'text-[#b5bbc5] hover:bg-[#f5f3ff]'
+                    } ${disabled ? 'text-[#d1d5db] hover:bg-transparent' : ''}`}
                   >
                     {date.getDate()}
                   </span>
@@ -210,7 +215,7 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
           <button
             type="button"
             onClick={chooseToday}
-            className="rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#374151] active:bg-[#f3f4f6]"
+            className="rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#6d28d9] hover:bg-[#f5f3ff] active:bg-[#ede9fe]"
           >
             Today
           </button>
@@ -218,7 +223,7 @@ function CalendarDialog({ open, value, onClose, onConfirm }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#374151] active:bg-[#f3f4f6]"
+            className="rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#374151] hover:bg-[#f5f3ff] active:bg-[#ede9fe]"
           >
             Cancel
           </button>
@@ -243,13 +248,19 @@ export default function AuthorPostFilterSheet({
   onApply,
   onClear,
 }) {
+  const dragStartYRef = useRef(0)
+  const dragOffsetRef = useRef(0)
+  const draggingRef = useRef(false)
   const [draft, setDraft] = useState(value || '')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
 
   useEffect(() => {
     if (!open) return
     setDraft(value || getTodayValue())
     setCalendarOpen(false)
+    dragOffsetRef.current = 0
+    setDragOffset(0)
   }, [open, value])
 
   useEffect(() => {
@@ -290,6 +301,51 @@ export default function AuthorPostFilterSheet({
 
   if (!open) return null
 
+  function startDrag(event) {
+    if (!event.isPrimary) return
+
+    if (
+      event.pointerType === 'mouse' &&
+      event.button !== 0
+    ) {
+      return
+    }
+
+    draggingRef.current = true
+    dragStartYRef.current = event.clientY
+    dragOffsetRef.current = 0
+
+    event.currentTarget.setPointerCapture?.(
+      event.pointerId
+    )
+  }
+
+  function moveDrag(event) {
+    if (!draggingRef.current) return
+
+    const nextOffset = Math.max(
+      0,
+      event.clientY - dragStartYRef.current
+    )
+
+    dragOffsetRef.current = Math.min(nextOffset, 260)
+    setDragOffset(dragOffsetRef.current)
+  }
+
+  function endDrag() {
+    if (!draggingRef.current) return
+
+    draggingRef.current = false
+
+    if (dragOffsetRef.current > 80) {
+      onClose?.()
+      return
+    }
+
+    dragOffsetRef.current = 0
+    setDragOffset(0)
+  }
+
   function handleDone() {
     if (!draft) return
     onApply?.(draft)
@@ -313,21 +369,37 @@ export default function AuthorPostFilterSheet({
         />
 
         <section
-          className="absolute bottom-0 left-0 right-0 mx-auto w-full rounded-t-[24px] bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:bottom-6 sm:max-w-[500px] sm:rounded-[24px]"
+          className={`absolute bottom-0 left-0 right-0 mx-auto w-full rounded-t-[24px] bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:bottom-6 sm:max-w-[500px] sm:rounded-[24px] ${
+            draggingRef.current
+              ? ''
+              : 'transition-transform duration-200 ease-out'
+          }`}
+          style={{
+            transform: `translateY(${dragOffset}px)`,
+          }}
           role="dialog"
           aria-modal="true"
           aria-label="Post filters"
         >
-          <div className="mx-auto h-1 w-12 rounded-full bg-[#8f96a0]" />
+          <div
+            className="mx-auto flex h-7 w-full cursor-grab items-start justify-center active:cursor-grabbing"
+            style={{ touchAction: 'none' }}
+            onPointerDown={startDrag}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
+            <span className="mt-0.5 h-1 w-12 rounded-full bg-[#8f96a0]" />
+          </div>
 
-          <h2 className="py-5 text-center text-[19px] font-medium text-[#111827]">
+          <h2 className="pb-5 text-center text-[19px] font-medium text-[#111827]">
             Post filters
           </h2>
 
           <div className="border-t border-[#e5e7eb] pt-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5 text-[#111827]">
-                <i className="fa-regular fa-calendar-days shrink-0 text-[21px]" />
+                <i className="fa-regular fa-calendar-days shrink-0 text-[21px] text-[#8b5cf6]" />
                 <span className="truncate text-[16px] font-normal">
                   Go to:
                 </span>
@@ -358,7 +430,7 @@ export default function AuthorPostFilterSheet({
                 type="button"
                 onClick={handleDone}
                 disabled={!draft}
-                className="h-12 rounded-[14px] bg-[#111827] text-[14px] font-medium text-white active:scale-[0.99] disabled:bg-[#d1d5db] disabled:text-[#9ca3af]"
+                className="h-12 rounded-[14px] bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] text-[14px] font-medium text-white shadow-[0_6px_16px_rgba(139,92,246,0.24)] active:scale-[0.99] disabled:opacity-60"
               >
                 Done
               </button>
