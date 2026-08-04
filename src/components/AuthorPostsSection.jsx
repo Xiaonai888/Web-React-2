@@ -881,11 +881,7 @@ function PostOptionsSheet({
           {isOwner ? (
             <>
               <SheetOption
-                icon={`fa-solid ${
-                  isPinned
-                    ? 'fa-thumbtack-slash'
-                    : 'fa-thumbtack'
-                }`}
+                icon="fa-solid fa-thumbtack"
                 title={
                   isPinned
                     ? 'Unpin post'
