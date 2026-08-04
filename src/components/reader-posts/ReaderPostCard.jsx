@@ -539,6 +539,126 @@ function ReaderPostImages({
   )
 }
 
+function EchoPostPreviewImages({
+  imageUrls,
+  alt = '',
+}) {
+  const images = Array.isArray(
+    imageUrls
+  )
+    ? imageUrls
+        .filter(
+          (url) =>
+            typeof url === 'string' &&
+            url.trim()
+        )
+        .slice(0, 5)
+    : []
+
+  if (!images.length) {
+    return (
+      <div className="flex min-h-0 items-center justify-center bg-[#f3f4f6] text-[#98a2b3]">
+        <i className="fa-regular fa-image text-[28px]" />
+      </div>
+    )
+  }
+
+  if (images.length === 1) {
+    return (
+      <div className="min-h-0 overflow-hidden bg-[#f3f4f6]">
+        <img
+          src={images[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  if (images.length === 2) {
+    return (
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+        {images.map((imageUrl) => (
+          <img
+            key={imageUrl}
+            src={imageUrl}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="h-full min-h-0 w-full object-cover"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (images.length === 3) {
+    return (
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+        <img
+          src={images[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full min-h-0 w-full object-cover"
+        />
+
+        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
+          {images.slice(1).map(
+            (imageUrl) => (
+              <img
+                key={imageUrl}
+                src={imageUrl}
+                alt={alt}
+                loading="lazy"
+                decoding="async"
+                className="h-full min-h-0 w-full object-cover"
+              />
+            )
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const visibleImages = images.slice(0, 4)
+  const hiddenCount = Math.max(
+    0,
+    images.length - 4
+  )
+
+  return (
+    <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-[2px] bg-white">
+      {visibleImages.map(
+        (imageUrl, index) => (
+          <div
+            key={imageUrl}
+            className="relative min-h-0 overflow-hidden"
+          >
+            <img
+              src={imageUrl}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              className="h-full min-h-0 w-full object-cover"
+            />
+
+            {index === 3 &&
+            hiddenCount > 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[22px] font-semibold text-white">
+                +{hiddenCount}
+              </div>
+            ) : null}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+
 
 
 function ReaderEchoMenuItem({
@@ -824,40 +944,43 @@ function ReaderEchoSourceBlock({ post }) {
       tabIndex={sourceUrl ? 0 : -1}
       onClick={openSource}
       onKeyDown={handleKeyDown}
-      className="mx-4 mb-4 overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995]"
+      className="mx-4 mb-4 grid aspect-square w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995]"
     >
-      <div className="flex items-start gap-2.5 px-3.5 pb-3 pt-3.5">
-        <ReaderAvatar user={previewUser} />
+      <div className="min-w-0 bg-white">
+        <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
+          <ReaderAvatar user={previewUser} />
 
-        <div className="min-w-0 flex-1">
-          <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
-            {previewUser.name || 'Post'}
-          </div>
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
+              {previewUser.name || 'Post'}
+            </div>
 
-          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-            <span>
-              {formatPostTime(previewTime)}
-            </span>
-            <span>·</span>
-            <i
-              className={`${getVisibilityIcon(previewVisibility)} text-[10px]`}
-            />
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+              <span>
+                {formatPostTime(previewTime)}
+              </span>
+              <span>·</span>
+              <i
+                className={`${getVisibilityIcon(previewVisibility)} text-[10px]`}
+              />
+            </div>
           </div>
         </div>
+
+        {previewText ? (
+          <div className="px-3.5 pb-3">
+            <p className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] font-normal leading-5 text-[#111827]">
+              {renderPostTextWithLinks(
+                previewText
+              )}
+            </p>
+          </div>
+        ) : null}
       </div>
 
-      {previewText ? (
-        <div className="px-3.5 pb-3">
-          <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
-            {renderPostTextWithLinks(
-              previewText
-            )}
-          </p>
-        </div>
-      ) : null}
-
-      <ReaderPostImages
+      <EchoPostPreviewImages
         imageUrls={previewImages}
+        alt={previewUser.name || 'Post'}
       />
     </div>
   )
