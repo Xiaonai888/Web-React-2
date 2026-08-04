@@ -206,13 +206,19 @@ export default function ScheduleReleasePicker({
   time,
   onDateChange,
   onTimeChange,
+  open: controlledOpen,
+  onClose,
+  onSave,
+  hideTrigger = false,
 }) {
   const defaultSchedule = useMemo(() => getDefaultSchedule(), [])
   const initialDate = date || defaultSchedule.date
   const initialTime = time || defaultSchedule.time
   const initialCursor = parseDateValue(initialDate) || new Date()
+  const isControlled = typeof controlledOpen === 'boolean'
 
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isControlled ? controlledOpen : internalOpen
   const [view, setView] = useState('main')
   const [draftDate, setDraftDate] = useState(initialDate)
   const [draftTime, setDraftTime] = useState(initialTime)
@@ -235,9 +241,36 @@ export default function ScheduleReleasePicker({
   )
 
   useEffect(() => {
-    if (!date) onDateChange(defaultSchedule.date)
-    if (!time) onTimeChange(defaultSchedule.time)
-  }, [date, defaultSchedule.date, defaultSchedule.time, onDateChange, onTimeChange, time])
+    if (isControlled && !open) return
+    if (!date) onDateChange?.(defaultSchedule.date)
+    if (!time) onTimeChange?.(defaultSchedule.time)
+  }, [
+    date,
+    defaultSchedule.date,
+    defaultSchedule.time,
+    isControlled,
+    onDateChange,
+    onTimeChange,
+    open,
+    time,
+  ])
+
+  useEffect(() => {
+    if (!open) return
+
+    const nextDate = date || defaultSchedule.date
+    const nextTime = time || defaultSchedule.time
+    const nextCursor = parseDateValue(nextDate) || new Date()
+
+    setDraftDate(nextDate)
+    setDraftTime(nextTime)
+    setTimeBeforeEdit(nextTime)
+    setCursor(nextCursor)
+    setPickerMonth(nextCursor.getMonth())
+    setPickerYear(nextCursor.getFullYear())
+    setView('main')
+    setInvalid(false)
+  }, [date, defaultSchedule.date, defaultSchedule.time, open, time])
 
   useEffect(() => {
     if (!open) return undefined
@@ -274,24 +307,18 @@ export default function ScheduleReleasePicker({
   }
 
   const openPicker = () => {
-    const nextDate = date || defaultSchedule.date
-    const nextTime = time || defaultSchedule.time
-    const nextCursor = parseDateValue(nextDate) || new Date()
-
-    setDraftDate(nextDate)
-    setDraftTime(nextTime)
-    setTimeBeforeEdit(nextTime)
-    setCursor(nextCursor)
-    setPickerMonth(nextCursor.getMonth())
-    setPickerYear(nextCursor.getFullYear())
-    setView('main')
-    setInvalid(false)
-    setOpen(true)
+    if (!isControlled) setInternalOpen(true)
   }
 
   const closePicker = () => {
     setInvalid(false)
-    setOpen(false)
+
+    if (isControlled) {
+      onClose?.()
+      return
+    }
+
+    setInternalOpen(false)
   }
 
   const confirmPicker = () => {
@@ -302,10 +329,21 @@ export default function ScheduleReleasePicker({
       return
     }
 
-    onDateChange(draftDate)
-    onTimeChange(draftTime)
+    if (onSave) {
+      onSave(draftDate, draftTime)
+    } else {
+      onDateChange?.(draftDate)
+      onTimeChange?.(draftTime)
+    }
+
     setInvalid(false)
-    setOpen(false)
+
+    if (isControlled) {
+      onClose?.()
+      return
+    }
+
+    setInternalOpen(false)
   }
 
   const moveMonth = (amount) => {
@@ -345,21 +383,23 @@ export default function ScheduleReleasePicker({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openPicker}
-        className="mx-auto flex w-full max-w-[330px] items-end justify-center gap-7 rounded-[18px] bg-white px-4 py-5 text-[#111827] active:scale-[0.99]"
-      >
-        <span className="min-w-[112px] border-b border-[#d7dce3] pb-2 text-center text-[14px] font-semibold">
-          {displayDate}
-        </span>
+      {!hideTrigger ? (
+        <button
+          type="button"
+          onClick={openPicker}
+          className="mx-auto flex w-full max-w-[330px] items-end justify-center gap-7 rounded-[18px] bg-white px-4 py-5 text-[#111827] active:scale-[0.99]"
+        >
+          <span className="min-w-[112px] border-b border-[#d7dce3] pb-2 text-center text-[14px] font-semibold">
+            {displayDate}
+          </span>
 
-        <span className="pb-2 text-[13px] font-medium">at</span>
+          <span className="pb-2 text-[13px] font-medium">at</span>
 
-        <span className="min-w-[82px] border-b-2 border-[#2d9cdb] pb-2 text-center text-[14px] font-semibold">
-          {time || defaultSchedule.time}
-        </span>
-      </button>
+          <span className="min-w-[82px] border-b-2 border-[#2d9cdb] pb-2 text-center text-[14px] font-semibold">
+            {time || defaultSchedule.time}
+          </span>
+        </button>
+      ) : null}
 
       {open ? (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 px-3">
