@@ -1,947 +1,1477 @@
-import { createPortal } from 'react-dom'
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AdminSecurityBell from '../components/AdminSecurityBell';
+import AdminSidebar from '../components/AdminSidebar';
+const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://shadow-backend-kucw.onrender.com'
 
-const DESTINATIONS = [
-  {
-    key: 'feed',
-    title: 'Echo to Feed',
-    subtitle:
-      'Show this echo in your Shadow feed and profile.',
-    icon: 'fa-solid fa-newspaper',
-  },
-  {
-    key: 'shadow',
-    title: 'Add to My Shadow',
-    subtitle:
-      'Keep this echo on your own Shadow space.',
-    icon: 'fa-regular fa-circle-user',
-  },
-  {
-    key: 'reader',
-    title: 'Send to Reader',
-    subtitle:
-      'Share this post with selected readers.',
-    icon: 'fa-solid fa-user-group',
-  },
-  {
-    key: 'circle',
-    title: 'Echo to Circle',
-    subtitle:
-      'Share this echo with your reading circle.',
-    icon: 'fa-solid fa-users',
-  },
-]
-
-const AUDIENCES = [
-  {
-    key: 'public',
-    title: 'Public',
-    subtitle:
-      'Anyone on Shadow can view this echo.',
-    icon: 'fa-solid fa-earth-americas',
-  },
-  {
-    key: 'followers',
-    title: 'Followers',
-    subtitle:
-      'Only people who follow you can view this echo.',
-    icon: 'fa-solid fa-user-check',
-  },
-  {
-    key: 'close-readers',
-    title: 'Close readers',
-    subtitle:
-      'Only your selected close readers can view it.',
-    icon: 'fa-solid fa-star',
-  },
-  {
-    key: 'only-me',
-    title: 'Only me',
-    subtitle: 'Keep this echo private.',
-    icon: 'fa-solid fa-lock',
-  },
-]
-
-function getReaderToken() {
-  return (
-    sessionStorage.getItem(
-      'shadow_reader_token'
-    ) ||
-    localStorage.getItem(
-      'shadow_reader_token'
-    ) ||
-    ''
-  )
-}
-
-function getStoredUser() {
-  try {
-    return JSON.parse(
-      localStorage.getItem(
-        'shadow_reader_user'
-      ) ||
-        sessionStorage.getItem(
-          'shadow_reader_user'
-        ) ||
-        'null'
-    )
-  } catch {
-    return null
+const styles = `
+  :root {
+    --bg-main: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --primary: #4F46E5;
+    --primary-light: #EEF2FF;
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --success: #10B981;
+    --success-light: #D1FAE5;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --danger-light: #FEE2E2;
+    --border: #E2E8F0;
   }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes barGrow {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+
+  .dashboard-wrapper {
+    display: flex;
+    height: 100vh;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    overflow: hidden;
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    height: 70px;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left h2 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  /* Search Bar */
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-input {
+    background: #F1F5F9;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    padding: 9px 14px 9px 40px;
+    width: 300px;
+    outline: none;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    transition: all 0.2s;
+  }
+
+  .search-input:focus {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    width: 340px;
+  }
+
+  .search-input::placeholder { color: #94A3B8; }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    pointer-events: none;
+  }
+
+  /* Search dropdown */
+  .search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 340px;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    z-index: 999;
+    animation: fadeIn 0.15s ease;
+  }
+
+  .search-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    padding: 10px 14px 6px;
+  }
+
+  .search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .search-result-item:hover { background: #F8FAFC; }
+
+  .search-result-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .search-result-item .info { flex: 1; min-width: 0; }
+  .search-result-item .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-result-item .sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .search-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+
+  /* Profile */
+  .profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 12px;
+    transition: background 0.15s;
+  }
+
+  .profile-btn:hover { background: #F1F5F9; }
+
+  .profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid #E2E8F0;
+    flex-shrink: 0;
+  }
+
+  .profile-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    width: 220px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease;
+    z-index: 200;
+  }
+
+  .profile-menu-header {
+    padding: 16px;
+    background: linear-gradient(135deg, #F0F0FF, #EEF2FF);
+    border-bottom: 1px solid #E0E7FF;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .profile-menu-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .profile-menu-name { font-weight: 700; font-size: 14px; }
+  .profile-menu-role { font-size: 11px; color: var(--primary); font-weight: 600; }
+
+  .profile-menu-body { padding: 8px; }
+
+  .profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #475569;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+
+  .profile-menu-item:hover { background: #F1F5F9; }
+  .profile-menu-item.danger { color: #EF4444; }
+  .profile-menu-item.danger:hover { background: #FEF2F2; }
+
+  .profile-menu-divider { height: 1px; background: #F1F5F9; margin: 4px 0; }
+
+  /* ===== CONTENT BODY ===== */
+  .content-body {
+    padding: 28px 36px;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  .welcome-row {
+    margin-bottom: 24px;
+  }
+
+  .welcome-row h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .welcome-row p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* ===== STAT CARDS ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .stat-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .stat-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ===== BENTO GRID ===== */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .card-panel {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .panel-header h4 { font-weight: 700; font-size: 15px; }
+
+  .panel-link {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+
+  .panel-link:hover { background: var(--primary-light); }
+
+  /* Chart */
+  .chart-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 160px;
+    padding-top: 10px;
+  }
+
+  .chart-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .chart-bar-wrap {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .chart-bar {
+    width: 80%;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.3s ease;
+    transform-origin: bottom;
+    animation: barGrow 0.6s ease-out forwards;
+  }
+
+  .chart-value {
+    font-size: 10px;
+    color: var(--text-main);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .chart-day {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .dashboard-search-state {
+    padding: 18px 14px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  /* Log Items */
+  .log-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .log-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .log-text { font-size: 13px; line-height: 1.5; }
+  .log-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .view-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .view-all-btn:hover { background: var(--primary-light); }
+
+  /* ===== SHADOW EXCLUSIVE TABLE ===== */
+  .exclusive-table-wrap { overflow-x: auto; }
+
+  .exclusive-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .exclusive-table thead tr {
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .exclusive-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .exclusive-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #F8FAFC;
+    vertical-align: middle;
+  }
+
+  .exclusive-table tr:last-child td { border-bottom: none; }
+
+  .exclusive-table tr:hover td { background: #FAFBFF; }
+
+  .exclusive-title-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    margin-right: 6px;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+    50% { box-shadow: 0 0 0 5px rgba(16,185,129,0.1); }
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  .badge-published {
+    background: var(--success-light);
+    color: var(--success);
+  }
+
+  .badge-pending {
+    background: #FEF3C7;
+    color: #D97706;
+  }
+
+  .badge-approved {
+    background: var(--success-light);
+    color: var(--success);
+  }
+
+  .badge-rejected {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+
+  .badge-removed {
+    background: #F1F5F9;
+    color: #475569;
+  }
+
+  @media (max-width: 768px) {
+    .header {
+      height: auto;
+      min-height: 70px;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 12px !important;
+      padding-right: 12px !important;
+      padding-bottom: 12px !important;
+    }
+
+    .header-left {
+      min-width: 0;
+    }
+
+    .header-left h2 {
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      width: 100%;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      align-items: center;
+      gap: 8px !important;
+    }
+
+    .search-wrap {
+      min-width: 0;
+    }
+
+    .search-input,
+    .search-input:focus {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .search-dropdown {
+      width: min(340px, calc(100vw - 94px));
+    }
+
+    .profile-btn {
+      gap: 0;
+      padding: 4px;
+    }
+
+    .profile-btn > svg {
+      display: none;
+    }
+
+    .profile-menu {
+      width: min(220px, calc(100vw - 32px));
+    }
+
+    .bento-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .content-body {
+      padding: 20px 16px 36px;
+    }
+
+    .stat-card,
+    .card-panel {
+      padding: 18px;
+    }
+
+    .panel-header {
+      gap: 10px;
+    }
+
+    .chart-wrap {
+      gap: 5px;
+    }
+
+    .exclusive-table {
+      min-width: 680px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .welcome-row h1 {
+      font-size: 20px;
+    }
+
+    .panel-header {
+      align-items: flex-start;
+    }
+  }
+`;
+
+const Icon = ({ d, size = 20, color }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color || "currentColor"} strokeWidth={2.2}
+    strokeLinecap="round" strokeLinejoin="round"
+    style={{ minWidth: `${size}px`, flexShrink: 0 }}>
+    <path d={d} />
+  </svg>
+);
+
+function getAdminToken() {
+  return sessionStorage.getItem('shadow_admin_token') || localStorage.getItem('shadow_admin_token') || '';
+}
+function getLogInitial(record) {
+  const actor = record?.actor || 'Admin';
+  return actor.charAt(0).toUpperCase();
 }
 
-function ShareCircle({
-  icon,
-  iconNode,
-  label,
-  bg = 'bg-white',
-  color = 'text-[#111827]',
-  onClick,
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-[82px] shrink-0 text-center active:scale-95"
-    >
-      <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 ${bg} ${color}`}
-      >
-        {iconNode || (
-          <i
-            className={`${icon} text-[22px]`}
-          />
-        )}
-      </div>
+function getLogColor(action) {
+  const value = String(action || '').toUpperCase();
 
-      <div className="mt-2 text-[12px] font-normal leading-4 text-[#111827]">
-        {label}
-      </div>
-    </button>
-  )
+  if (value === 'DELETE') return '#EF4444';
+  if (value === 'CREATE') return '#10B981';
+  if (value === 'VISIBILITY') return '#F59E0B';
+  if (value === 'UPDATE') return '#4F46E5';
+
+  return '#6366F1';
 }
 
-function ReaderCircle({
-  reader,
-  active,
-  onClick,
-}) {
-  const name =
-    reader?.name ||
-    reader?.username ||
-    'Reader'
+function formatLogTime(value) {
+  if (!value) return '';
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-[76px] shrink-0 text-center active:scale-95"
-    >
-      <div
-        className={`mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-[17px] font-semibold text-white ring-2 ${
-          active
-            ? 'ring-[#8b5cf6]'
-            : 'ring-transparent'
-        }`}
-      >
-        {reader?.avatar_url ? (
-          <img
-            src={reader.avatar_url}
-            alt={name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          name.slice(0, 1).toUpperCase()
-        )}
-      </div>
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
 
-      <div
-        className={`mt-2 line-clamp-2 text-[11.5px] font-semibold leading-4 ${
-          active
-            ? 'text-[#6d28d9]'
-            : 'text-[#667085]'
-        }`}
-      >
-        {name}
-      </div>
-    </button>
-  )
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+  return date.toLocaleString();
 }
 
-function ChoiceSheet({
-  title,
-  subtitle,
-  options,
-  value,
-  onChoose,
-  onBack,
-}) {
-  return (
-    <div className="fixed inset-0 z-[200010] bg-white text-[#111827]">
-      <div className="flex items-center gap-3 border-b border-[#eceaf2] px-4 py-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f5f3fa]"
-          aria-label="Back"
-        >
-          <i className="fa-solid fa-chevron-left text-[18px]" />
-        </button>
+function getLogText(record) {
+  const action = String(record?.action || 'UPDATE').toUpperCase();
+  const title = record?.slide_title || (record?.order_index ? `Slide ${record.order_index}` : 'item');
+  const detail = record?.details || '';
 
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[20px] font-normal leading-7">
-            {title}
-          </h2>
+  if (detail) return detail;
+  if (action === 'DELETE') return `Deleted ${title}`;
+  if (action === 'CREATE') return `Created ${title}`;
+  if (action === 'VISIBILITY') return `Changed visibility for ${title}`;
 
-          {subtitle ? (
-            <p className="mt-1 text-[12px] font-normal leading-5 text-[#8d94a1]">
-              {subtitle}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="px-4 py-3">
-        {options.map((item) => {
-          const active = item.key === value
-
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() =>
-                onChoose(item.key)
-              }
-              className="flex w-full items-center gap-4 rounded-[20px] px-2 py-4 text-left active:bg-[#f5f3fa]"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
-                <i
-                  className={`${item.icon} text-[18px]`}
-                />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="text-[16px] font-normal text-[#111827]">
-                  {item.title}
-                </div>
-
-                <div className="mt-0.5 text-[12.5px] font-normal leading-5 text-[#8d94a1]">
-                  {item.subtitle}
-                </div>
-              </div>
-
-              <div
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                  active
-                    ? 'border-[#111827] bg-[#111827]'
-                    : 'border-[#98a2b3]'
-                }`}
-              >
-                {active ? (
-                  <i className="fa-solid fa-check text-[10px] text-white" />
-                ) : null}
-              </div>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return `Updated ${title}`;
 }
 
-export default function SocialEchoShareSheet({
-  open,
-  sourceType = 'post',
-  sourceId,
-  sourceName = 'Shadow',
-  sourceAvatarUrl = '',
-  sourceContent = '',
-  sourceImageUrl = '',
-  sourceLabel = 'post',
-  shareUrl,
-  onClose,
-  onEchoed,
-}) {
-  const sheetRef = useRef(null)
-  const dragStartYRef = useRef(0)
-  const dragOffsetRef = useRef(0)
-  const draggingRef = useRef(false)
-  const [postText, setPostText] =
-    useState('')
-  const [message, setMessage] =
-    useState('')
-  const [destination, setDestination] =
-    useState('feed')
-  const [audience, setAudience] =
-    useState('public')
-  const [activePanel, setActivePanel] =
-    useState('')
-  const [selectedReaders, setSelectedReaders] =
-    useState([])
-  const [sending, setSending] =
-    useState(false)
-  const [followers, setFollowers] =
-    useState([])
-  const [followersLoading, setFollowersLoading] =
-    useState(false)
-  const [followersError, setFollowersError] =
-    useState('')
-  const [dragOffset, setDragOffset] =
-    useState(0)
-  const user = useMemo(
-    () => getStoredUser(),
-    []
-  )
+const CAMBODIA_OFFSET_MS =
+  7 * 60 * 60 * 1000;
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`;
+}
 
-  const resolvedShareUrl = useMemo(
-    () =>
-      String(
-        shareUrl || window.location.href
-      ),
-    [shareUrl]
-  )
+function getCambodiaDate(
+  value = new Date()
+) {
+  return new Date(
+    new Date(value).getTime() +
+      CAMBODIA_OFFSET_MS
+  );
+}
 
-  useEffect(() => {
-    if (!open) return undefined
+function getLocalDayRange(offsetDays = 0) {
+  const cambodiaDate =
+    getCambodiaDate();
 
-    const scrollY = window.scrollY
-    const body = document.body
-    const html = document.documentElement
-    const previousBody = {
-      overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      left: body.style.left,
-      right: body.style.right,
-      width: body.style.width,
-    }
-    const previousHtmlOverflow =
-      html.style.overflow
+  const startUtc = Date.UTC(
+    cambodiaDate.getUTCFullYear(),
+    cambodiaDate.getUTCMonth(),
+    cambodiaDate.getUTCDate() +
+      offsetDays
+  );
 
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.left = '0'
-    body.style.right = '0'
-    body.style.width = '100%'
-    dragOffsetRef.current = 0
-    setDragOffset(0)
-    setMessage('')
+  const start = new Date(
+    startUtc - CAMBODIA_OFFSET_MS
+  );
 
-    return () => {
-      html.style.overflow =
-        previousHtmlOverflow
-      body.style.overflow =
-        previousBody.overflow
-      body.style.position =
-        previousBody.position
-      body.style.top = previousBody.top
-      body.style.left = previousBody.left
-      body.style.right =
-        previousBody.right
-      body.style.width =
-        previousBody.width
-      window.scrollTo(0, scrollY)
-    }
-  }, [open])
+  const end = new Date(
+    start.getTime() +
+      24 * 60 * 60 * 1000
+  );
 
-  useEffect(() => {
-    if (!open) return undefined
+  return {
+    from: start.toISOString(),
+    to: end.toISOString(),
+  };
+}
 
-    const token = getReaderToken()
-    const username = String(
-      user?.username || ''
-    ).trim()
+function formatExclusiveStatus(value) {
+  const status = String(value || 'pending').toLowerCase();
+  if (status === 'approved') return 'Approved';
+  if (status === 'rejected') return 'Rejected';
+  if (status === 'removed' || status === 'none') return 'Removed';
+  return 'Pending';
+}
 
-    if (!token || !username) {
-      setFollowers([])
-      setFollowersError('')
-      return undefined
-    }
+function formatExclusiveSections(value) {
+  const sections = Array.isArray(value) ? value : [];
+  if (!sections.length) return 'Not assigned';
 
-    let ignore = false
+  return sections
+    .map((item) => String(item || '').replace(/_/g, ' '))
+    .map((item) => item.replace(/\b\w/g, (letter) => letter.toUpperCase()))
+    .join(' / ');
+}
 
-    async function loadFollowers() {
-      try {
-        setFollowersLoading(true)
-        setFollowersError('')
+async function fetchAdminJson(path) {
+  const token = getAdminToken();
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  const data = await response.json().catch(() => ({}));
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/users/${encodeURIComponent(
-            username
-          )}/followers?page=1&limit=50`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-            cache: 'no-store',
-          }
-        )
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'Failed to load dashboard data');
+  }
 
-        const data = await response
-          .json()
-          .catch(() => ({}))
+  return data;
+}
 
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              'Failed to load followers'
-          )
-        }
-
-        if (!ignore) {
-          setFollowers(
-            Array.isArray(data.users)
-              ? data.users
-              : []
-          )
-        }
-      } catch (error) {
-        if (!ignore) {
-          setFollowers([])
-          setFollowersError(
-            error.message ||
-              'Failed to load followers.'
-          )
-        }
-      } finally {
-        if (!ignore) {
-          setFollowersLoading(false)
-        }
-      }
-    }
-
-    loadFollowers()
-
-    return () => {
-      ignore = true
-    }
-  }, [open, user?.username])
-
-  if (!open) return null
-
-  const displayName =
-    user?.name ||
-    user?.username ||
-    'Reader'
-  const avatarLetter = displayName
-    .slice(0, 1)
-    .toUpperCase()
-  const sourceLetter = String(
-    sourceName || 'S'
-  )
-    .slice(0, 1)
-    .toUpperCase()
-  const destinationItem =
-    DESTINATIONS.find(
-      (item) => item.key === destination
-    ) || DESTINATIONS[0]
-  const audienceItem =
-    AUDIENCES.find(
-      (item) => item.key === audience
-    ) || AUDIENCES[0]
-
-  const handleCopyLink = async () => {
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState({ exclusive: [], authors: [] });
+  const [activityLog, setActivityLog] = useState([]);
+  const [activityLogLoading, setActivityLogLoading] = useState(true);
+  const [exclusiveLoading, setExclusiveLoading] = useState(true);
+  const [exclusiveSummary, setExclusiveSummary] = useState({ exclusive_stories: 0, pending_requests: 0 });
+  const [exclusiveStories, setExclusiveStories] = useState([]);
+  const [visitorSummary, setVisitorSummary] = useState({
+    total_unique_visitors: 0,
+    total_sessions: 0,
+    visitors_today: 0,
+    visitors_this_month: 0,
+    active_last_10_minutes: 0,
+    total_page_views: 0,
+    readers_today: 0,
+    active_readers_last_10_minutes: 0,
+    stories_updated_today: 0,
+    episodes_published_today: 0,
+  });
+  const [incomeSummary, setIncomeSummary] = useState({ today: 0, yesterday: 0 });
+  const [growthSummary, setGrowthSummary] = useState({
+    reader_online: 0,
+    new_readers: 0,
+    new_authors: 0,
+    new_orders: 0,
+    shadow_mall_orders: 0,
+    author_store_orders: 0,
+  });
+  const [adminProfile, setAdminProfile] = useState(() => {
     try {
-      await navigator.clipboard.writeText(
-        resolvedShareUrl
-      )
-      setMessage('Link copied.')
+      return JSON.parse(
+        sessionStorage.getItem('shadow_admin_user')
+        || localStorage.getItem('shadow_admin_user')
+        || '{}'
+      );
     } catch {
-      setMessage(resolvedShareUrl)
+      return {};
     }
-  }
+  });
 
-  const handleTelegram = () => {
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(
-        resolvedShareUrl
-      )}&text=${encodeURIComponent(
-        `${sourceName} ${sourceLabel}`
-      )}`,
-      '_blank',
-      'noopener,noreferrer'
-    )
-  }
+  const currentUserName = adminProfile.name || adminProfile.email || 'Loading...';
+  const currentUserRole = adminProfile.role || 'Loading...';
 
-  const handleFacebook = () => {
-    window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-        resolvedShareUrl
-      )}`,
-      '_blank',
-      'noopener,noreferrer'
-    )
-  }
+  const handleSignOut = () => {
+    sessionStorage.removeItem('shadow_admin_token');
+    localStorage.removeItem('shadow_admin_token');
+    sessionStorage.removeItem('shadow_admin_user');
+    localStorage.removeItem('shadow_admin_user');
+    navigate('/login', { replace: true });
+  };
 
-  const handleReaderToggle = (
-    readerId
-  ) => {
-    const value = String(readerId || '')
-
-    if (!value) return
-
-    setSelectedReaders((current) =>
-      current.includes(value)
-        ? current.filter(
-            (item) => item !== value
-          )
-        : [...current, value]
-    )
-  }
-
-  const startDrag = (event) => {
-    if (!event.isPrimary) return
-
-    if (
-      event.pointerType === 'mouse' &&
-      event.button !== 0
-    ) {
-      return
-    }
-
-    draggingRef.current = true
-    dragStartYRef.current = event.clientY
-    dragOffsetRef.current = 0
-    event.currentTarget.setPointerCapture?.(
-      event.pointerId
-    )
-  }
-
-  const moveDrag = (event) => {
-    if (!draggingRef.current) return
-
-    const nextOffset = Math.max(
-      0,
-      event.clientY -
-        dragStartYRef.current
-    )
-
-    dragOffsetRef.current = nextOffset
-    setDragOffset(nextOffset)
-  }
-
-  const endDrag = () => {
-    if (!draggingRef.current) return
-
-    draggingRef.current = false
-
-    if (dragOffsetRef.current > 80) {
-      onClose?.()
-      return
-    }
-
-    dragOffsetRef.current = 0
-    setDragOffset(0)
-  }
-
-  const handleEchoNow = async () => {
-    const normalizedSourceType = String(
-      sourceType || ''
-    )
-      .trim()
-      .toLowerCase()
-    const normalizedSourceId = String(
-      sourceId || ''
-    ).trim()
-
-    if (
-      !normalizedSourceType ||
-      !normalizedSourceId
-    ) {
-      setMessage(
-        'This content is not ready yet.'
-      )
-      return
-    }
-
-    if (
-      (destination === 'reader' ||
-        destination === 'circle' ||
-        audience === 'close-readers') &&
-      !selectedReaders.length
-    ) {
-      setMessage(
-        'Select at least one reader.'
-      )
-      return
-    }
-
-    const token = getReaderToken()
-
-    if (!token) {
-      setMessage(
-        'Please log in before echoing.'
-      )
-      return
-    }
-
+  const fetchActivityLogs = async () => {
     try {
-      setSending(true)
-      setMessage('')
+      setActivityLogLoading(true);
+      const token = getAdminToken();
+      const response = await fetch(`${API_URL}/api/slides/records?page=1&limit=3`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'X-Admin-Name': 'Admin',
+        },
+      });
+      const data = await response.json().catch(() => ({}));
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/echoes`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-            'Content-Type':
-              'application/json',
-          },
-          body: JSON.stringify({
-            source_type:
-              normalizedSourceType,
-            source_id:
-              normalizedSourceId,
-            echo_text: postText.trim(),
-            destination,
-            audience,
-            selected_reader_ids:
-              selectedReaders,
-          }),
-        }
-      )
-
-      const data = await response
-        .json()
-        .catch(() => ({}))
-
-      if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        throw new Error(
-          data.message ||
-            'Failed to echo content'
-        )
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load admin activity logs');
       }
 
-      setPostText('')
-      setMessage('')
-      setSelectedReaders([])
-      onEchoed?.(
-        data.echo || null,
-        Number(data.echo_count || 0)
-      )
-      onClose?.()
-    } catch (error) {
-      setMessage(
-        error.message ||
-          'Failed to echo content.'
-      )
+      setActivityLog(data.records || []);
+    } catch {
+      setActivityLog([]);
     } finally {
-      setSending(false)
+      setActivityLogLoading(false);
     }
-  }
+  };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[200000] flex items-end justify-center">
-      <button
-        type="button"
-        aria-label="Close echo share"
-        onClick={() => onClose?.()}
-        className="absolute inset-0 bg-black/60"
-      />
+  const fetchExclusiveDashboard = async () => {
+    try {
+      setExclusiveLoading(true);
+      const [pendingData, approvedData] = await Promise.all([
+        fetchAdminJson('/api/admin/exclusive/stories?status=pending&limit=3'),
+        fetchAdminJson('/api/admin/exclusive/stories?status=approved&limit=3'),
+      ]);
 
-      <section
-        ref={sheetRef}
-        className="relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]"
-        style={{
-          transform:
-            `translateY(${dragOffset}px)`,
-          transition: draggingRef.current
-            ? 'none'
-            : 'transform 220ms ease',
-        }}
-      >
-        <div
-          role="presentation"
-          onPointerDown={startDrag}
-          onPointerMove={moveDrag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          onLostPointerCapture={endDrag}
-          className="sticky top-0 z-20 mx-auto mb-4 flex h-5 w-20 cursor-grab items-start justify-center bg-[#f5f3fa]"
-          style={{ touchAction: 'none' }}
-        >
-          <div className="h-1.5 w-14 rounded-full bg-[#9ca3af]" />
-        </div>
+      const summary = pendingData.summary || approvedData.summary || {};
+      const storyMap = new Map();
 
-        <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[18px] font-semibold text-white">
-              {user?.avatarUrl ||
-              user?.avatar_url ? (
-                <img
-                  src={
-                    user.avatarUrl ||
-                    user.avatar_url
-                  }
-                  alt={displayName}
-                  className="h-full w-full object-cover"
+      [...(pendingData.stories || []), ...(approvedData.stories || [])].forEach((story) => {
+        storyMap.set(story.id, story);
+      });
+
+      const stories = [...storyMap.values()]
+        .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+        .slice(0, 3);
+
+      setExclusiveSummary({
+        exclusive_stories: Number(summary.exclusive_stories || 0),
+        pending_requests: Number(summary.pending_requests || 0),
+      });
+      setExclusiveStories(stories);
+    } catch {
+      setExclusiveSummary({ exclusive_stories: 0, pending_requests: 0 });
+      setExclusiveStories([]);
+    } finally {
+      setExclusiveLoading(false);
+    }
+  };
+
+  const fetchVisitorDashboard = async () => {
+    try {
+      const data = await fetchAdminJson('/api/admin/community/visitors/overview');
+      setVisitorSummary((current) => ({ ...current, ...(data.summary || {}) }));
+    } catch {
+      setVisitorSummary({
+        total_unique_visitors: 0,
+        total_sessions: 0,
+        visitors_today: 0,
+        visitors_this_month: 0,
+        active_last_10_minutes: 0,
+        total_page_views: 0,
+        readers_today: 0,
+        active_readers_last_10_minutes: 0,
+        stories_updated_today: 0,
+        episodes_published_today: 0,
+      });
+    }
+  };
+
+  const fetchIncomeDashboard = async () => {
+    try {
+      const today = getLocalDayRange(0);
+      const yesterday = getLocalDayRange(-1);
+      const [todayData, yesterdayData] = await Promise.all([
+        fetchAdminJson(`/api/admin/income/summary?from=${encodeURIComponent(today.from)}&to=${encodeURIComponent(today.to)}`),
+        fetchAdminJson(`/api/admin/income/summary?from=${encodeURIComponent(yesterday.from)}&to=${encodeURIComponent(yesterday.to)}`),
+      ]);
+
+      setIncomeSummary({
+        today: Number(todayData.summary?.net_platform_income_usd || 0),
+        yesterday: Number(yesterdayData.summary?.net_platform_income_usd || 0),
+      });
+    } catch {
+      setIncomeSummary({ today: 0, yesterday: 0 });
+    }
+  };
+
+  const fetchGrowthDashboard = async () => {
+    try {
+      const data = await fetchAdminJson('/api/admin/community/dashboard/growth');
+      setGrowthSummary((current) => ({ ...current, ...(data.summary || {}) }));
+    } catch {
+      setGrowthSummary({
+        reader_online: 0,
+        new_readers: 0,
+        new_authors: 0,
+        new_orders: 0,
+        shadow_mall_orders: 0,
+        author_store_orders: 0,
+      });
+    }
+  };
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAdminProfile() {
+      const token = getAdminToken();
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!ignore && response.ok && data.ok && data.admin) {
+          setAdminProfile(data.admin);
+          sessionStorage.setItem('shadow_admin_user', JSON.stringify(data.admin));
+
+          if (localStorage.getItem('shadow_admin_token')) {
+            localStorage.setItem('shadow_admin_user', JSON.stringify(data.admin));
+          }
+        }
+      } catch {
+      }
+    }
+
+    fetchActivityLogs();
+    fetchExclusiveDashboard();
+    fetchVisitorDashboard();
+    fetchIncomeDashboard();
+    fetchGrowthDashboard();
+    loadAdminProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+
+    if (!query) {
+      setSearchLoading(false);
+      setSearchResults({ exclusive: [], authors: [] });
+      return undefined;
+    }
+
+    let ignore = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        const encoded = encodeURIComponent(query);
+        const [pendingData, approvedData, authorsData] = await Promise.all([
+          fetchAdminJson(`/api/admin/exclusive/stories?status=pending&search=${encoded}&limit=5`),
+          fetchAdminJson(`/api/admin/exclusive/stories?status=approved&search=${encoded}&limit=5`),
+          fetchAdminJson(`/api/admin/community/authors?q=${encoded}&limit=5`),
+        ]);
+
+        if (ignore) return;
+
+        const storyMap = new Map();
+        [...(pendingData.stories || []), ...(approvedData.stories || [])].forEach((story) => {
+          storyMap.set(story.id, story);
+        });
+
+        setSearchResults({
+          exclusive: [...storyMap.values()].slice(0, 5).map((story) => {
+            const status = formatExclusiveStatus(story.exclusive_status);
+            const approved = status === 'Approved';
+            return {
+              id: story.id,
+              name: story.title || 'Untitled story',
+              sub: `${story.main_genre || 'Story'} · EP ${Number(story.total_episodes || 0)}`,
+              color: approved ? '#EEF2FF' : '#FFF7ED',
+              icon: approved ? '◆' : '◈',
+              badge: status,
+              badgeColor: approved ? '#D1FAE5' : '#FEF3C7',
+              badgeText: approved ? '#047857' : '#B45309',
+            };
+          }),
+          authors: (authorsData.authors || []).slice(0, 5).map((author) => ({
+            id: author.id,
+            name: author.author_name || author.username || 'Author',
+            sub: `@${author.username || 'no_username'} · ${Number(author.books_count || 0)} stories`,
+            color: '#F0FDF4',
+            icon: '✍',
+          })),
+        });
+      } catch {
+        if (!ignore) setSearchResults({ exclusive: [], authors: [] });
+      } finally {
+        if (!ignore) setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  const incomeDifference = incomeSummary.today - incomeSummary.yesterday;
+  const incomeTrendUp = incomeDifference >= 0;
+  const incomeTrend = incomeSummary.yesterday > 0
+    ? `${incomeDifference >= 0 ? '+' : ''}${((incomeDifference / incomeSummary.yesterday) * 100).toFixed(1)}% vs yesterday`
+    : incomeSummary.today > 0
+      ? 'Income received today'
+      : 'No income today';
+
+  const chartData = [
+    { day: 'Today', value: Number(visitorSummary.visitors_today || 0), active: true },
+    { day: 'Month', value: Number(visitorSummary.visitors_this_month || 0) },
+    { day: 'Active', value: Number(visitorSummary.active_last_10_minutes || 0) },
+    { day: 'Unique', value: Number(visitorSummary.total_unique_visitors || 0) },
+    { day: 'Sessions', value: Number(visitorSummary.total_sessions || 0) },
+    { day: 'Views', value: Number(visitorSummary.total_page_views || 0) },
+  ];
+  const maxVal = Math.max(1, ...chartData.map((item) => item.value));
+  const hasResults = searchResults.exclusive.length + searchResults.authors.length > 0;
+
+  const stats = [
+    {
+      label: 'Stories Updated Today',
+      value: Number(visitorSummary.stories_updated_today || 0).toLocaleString(),
+      trend: `${Number(visitorSummary.episodes_published_today || 0).toLocaleString()} new episodes today`,
+      trendUp: true,
+      icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z M12 7v6 M9 10h6',
+      iconBg: '#EEF2FF', iconColor: '#4F46E5', valueColor: '#0F172A',
+    },
+    {
+      label: 'Readers Today',
+      value: Number(visitorSummary.readers_today || 0).toLocaleString(),
+      trend: `${Number(visitorSummary.active_readers_last_10_minutes || 0).toLocaleString()} active in 10 min`,
+      trendUp: true,
+      icon: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+      iconBg: '#FFF7ED', iconColor: '#F59E0B', valueColor: '#0F172A',
+    },
+    {
+      label: 'Visitors Today',
+      value: Number(visitorSummary.visitors_today || 0).toLocaleString(),
+      trend: `${Number(visitorSummary.active_last_10_minutes || 0).toLocaleString()} active in 10 min`,
+      trendUp: true,
+      icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+      iconBg: '#F0FDF4', iconColor: '#10B981', valueColor: '#0F172A',
+    },
+    {
+      label: 'Daily Income',
+      value: formatMoney(incomeSummary.today),
+      trend: incomeTrend,
+      trendUp: incomeTrendUp,
+      icon: 'M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+      iconBg: '#F0FDF4', iconColor: '#10B981', valueColor: '#10B981',
+    },
+    {
+      hidden: true,
+      label: 'Exclusive Stories',
+      value: exclusiveSummary.exclusive_stories.toLocaleString(),
+      trend: `${exclusiveSummary.pending_requests} pending review`,
+      trendUp: true,
+      icon: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+      iconBg: '#EEF2FF', iconColor: '#4F46E5', valueColor: '#0F172A',
+    },
+    {
+      hidden: true,
+      label: 'Consent Requests',
+      value: exclusiveSummary.pending_requests.toLocaleString(),
+      trend: exclusiveSummary.pending_requests === 1 ? 'Request needs attention' : 'Requests need attention',
+      trendUp: false,
+      icon: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01',
+      iconBg: '#FEF2F2', iconColor: '#EF4444', valueColor: '#EF4444',
+    },
+  ];
+
+  const visibleStats = stats.filter((stat) => !stat.hidden);
+
+  const growthStats = [
+    {
+      label: 'Reader Online',
+      value: Number(growthSummary.reader_online || 0).toLocaleString(),
+      trend: 'Task Center activity in 10 min',
+      trendUp: true,
+      icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+      iconBg: '#ECFDF5',
+      iconColor: '#10B981',
+      valueColor: '#0F172A',
+    },
+    {
+      label: 'New Reader',
+      value: Number(growthSummary.new_readers || 0).toLocaleString(),
+      trend: 'New reader accounts today',
+      trendUp: true,
+      icon: 'M15 19a6 6 0 0 0-12 0 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M19 8v6 M16 11h6',
+      iconBg: '#EFF6FF',
+      iconColor: '#2563EB',
+      valueColor: '#0F172A',
+    },
+    {
+      label: 'New Author',
+      value: Number(growthSummary.new_authors || 0).toLocaleString(),
+      trend: 'New author pages today',
+      trendUp: true,
+      icon: 'M12 20h9 M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z',
+      iconBg: '#F5F3FF',
+      iconColor: '#7C3AED',
+      valueColor: '#0F172A',
+    },
+    {
+      label: 'New Order',
+      value: Number(growthSummary.new_orders || 0).toLocaleString(),
+      trend: `${Number(growthSummary.shadow_mall_orders || 0).toLocaleString()} Mall · ${Number(growthSummary.author_store_orders || 0).toLocaleString()} Author Store`,
+      trendUp: true,
+      icon: 'M6 2h12l2 5H4l2-5z M5 7v15h14V7 M9 11h6',
+      iconBg: '#FFF7ED',
+      iconColor: '#F59E0B',
+      valueColor: '#0F172A',
+    },
+  ];
+
+  const dashboardStats = [...visibleStats, ...growthStats];
+
+  const getHour = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="dashboard-wrapper">
+        <AdminSidebar />
+        <div className="main-content">
+          <header className="header">
+            <div className="header-left">
+              <h2>Dashboard Overview</h2>
+            </div>
+
+            <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="search-wrap">
+                <svg className="search-icon" width={16} height={16} fill="none" stroke="#94A3B8" strokeWidth={2.5}>
+                  <circle cx={7} cy={7} r={5} />
+                  <line x1={11} y1={11} x2={15} y2={15} />
+                </svg>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search exclusive stories and authors..."
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setShowSearchDropdown(true);
+                  }}
+                  onFocus={() => setShowSearchDropdown(true)}
+                  onBlur={() => window.setTimeout(() => setShowSearchDropdown(false), 200)}
                 />
-              ) : (
-                avatarLetter
-              )}
-            </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-semibold text-[#111827]">
-                {displayName}
-              </div>
+                {showSearchDropdown && searchQuery.trim() && (
+                  <div className="search-dropdown">
+                    {searchLoading ? (
+                      <div className="dashboard-search-state">Searching real data...</div>
+                    ) : hasResults ? (
+                      <>
+                        {searchResults.exclusive.length > 0 && (
+                          <>
+                            <div className="search-section-title">Shadow Exclusive</div>
+                            {searchResults.exclusive.map((item) => (
+                              <div
+                                className="search-result-item"
+                                key={`story-${item.id}`}
+                                onMouseDown={() => navigate('/shadow-exclusive')}
+                              >
+                                <div className="search-result-icon" style={{ background: item.color }}>{item.icon}</div>
+                                <div className="info">
+                                  <div className="name">{item.name}</div>
+                                  <div className="sub">{item.sub}</div>
+                                </div>
+                                <span className="search-badge" style={{ background: item.badgeColor, color: item.badgeText }}>
+                                  {item.badge}
+                                </span>
+                              </div>
+                            ))}
+                          </>
+                        )}
 
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActivePanel(
-                      'destination'
-                    )
-                  }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
-                >
-                  <span>
-                    {destinationItem.title}
-                  </span>
-                  <i className="fa-solid fa-caret-down text-[11px]" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActivePanel(
-                      'audience'
-                    )
-                  }
-                  className="flex h-8 items-center gap-2 rounded-full bg-[#eef0f4] px-3 text-[12px] font-normal text-[#111827] active:scale-95"
-                >
-                  <i
-                    className={`${audienceItem.icon} text-[12px]`}
-                  />
-                  <span>
-                    {audienceItem.title}
-                  </span>
-                  <i className="fa-solid fa-caret-down text-[11px]" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <textarea
-            value={postText}
-            onChange={(event) =>
-              setPostText(
-                event.target.value
-              )
-            }
-            rows={2}
-            maxLength={280}
-            placeholder="Say something..."
-            className="mt-3 w-full resize-none bg-transparent text-[14px] font-normal leading-6 text-[#111827] outline-none placeholder:font-normal placeholder:text-[#98a2b3]"
-          />
-
-          <div className="mt-3 rounded-[16px] bg-[#f7f7fa] px-3 py-3 ring-1 ring-black/5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[13px] font-semibold text-white">
-                {sourceAvatarUrl ? (
-                  <img
-                    src={sourceAvatarUrl}
-                    alt={sourceName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  sourceLetter
+                        {searchResults.authors.length > 0 && (
+                          <>
+                            <div className="search-section-title">Authors</div>
+                            {searchResults.authors.map((item) => (
+                              <div
+                                className="search-result-item"
+                                key={`author-${item.id}`}
+                                onMouseDown={() => navigate('/authors')}
+                              >
+                                <div className="search-result-icon" style={{ background: item.color }}>{item.icon}</div>
+                                <div className="info">
+                                  <div className="name">{item.name}</div>
+                                  <div className="sub">{item.sub}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <div className="dashboard-search-state">No matching real data found.</div>
+                    )}
+                  </div>
                 )}
               </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[13px] font-semibold text-[#111827]">
-                  {sourceName}
+              <div
+                style={{ position: 'relative', cursor: 'pointer', padding: '6px', borderRadius: '10px' }}
+                onClick={() => navigate('/reader-mails')}
+                title="Reader Mail"
+              >
+                <Icon d="M4 4h16v16H4z M4 7l8 6 8-6" size={20} color="#64748B" />
+              </div>
+
+              <AdminSecurityBell />
+
+              <div style={{ position: 'relative' }}>
+                <div className="profile-btn" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                  <div className="profile-avatar">{currentUserName.charAt(0)}</div>
+                  <Icon d="M6 9l6 6 6-6" size={16} color="#64748B" />
                 </div>
 
-                <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-[12px] font-normal leading-5 text-[#667085]">
-                  {sourceContent ||
-                    sourceLabel}
-                </p>
-              </div>
-
-              {sourceImageUrl ? (
-                <img
-                  src={sourceImageUrl}
-                  alt=""
-                  className="h-12 w-12 shrink-0 rounded-[10px] object-cover"
-                />
-              ) : null}
-            </div>
-          </div>
-
-          <div className="mt-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() =>
-                setMessage(
-                  'Tag reader is selected for the next update.'
-                )
-              }
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#667085] active:scale-95 active:bg-[#f2f3f5]"
-              aria-label="Tag reader"
-            >
-              <i className="fa-solid fa-user-tag text-[18px]" />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleEchoNow}
-              disabled={sending}
-              className="h-9 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] px-5 text-[13px] font-normal text-white shadow-[0_6px_16px_rgba(139,92,246,0.24)] active:scale-95 disabled:opacity-60"
-            >
-              {sending
-                ? 'Echoing...'
-                : 'Echo now'}
-            </button>
-          </div>
-        </div>
-
-        {message ? (
-          <div className="mt-3 rounded-[16px] bg-white px-4 py-3 text-[12px] font-normal text-[#667085] ring-1 ring-black/5">
-            {message}
-          </div>
-        ) : null}
-
-        <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Readers
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto pb-1">
-            {followersLoading ? (
-              Array.from({ length: 5 }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="w-[76px] shrink-0"
-                  >
-                    <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-[#e5e7eb]" />
-                    <div className="mx-auto mt-2 h-3 w-12 animate-pulse rounded-full bg-[#e5e7eb]" />
+                {showProfileMenu && (
+                  <div className="profile-menu">
+                    <div className="profile-menu-header">
+                      <div className="profile-menu-avatar">{currentUserName.charAt(0)}</div>
+                      <div>
+                        <div className="profile-menu-name">{currentUserName}</div>
+                        <div className="profile-menu-role">{currentUserRole}</div>
+                      </div>
+                    </div>
+                    <div className="profile-menu-body">
+                      <div className="profile-menu-item">
+                        <Icon d="M12 20h9 M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" size={15} />
+                        Edit Profile
+                      </div>
+                      <div className="profile-menu-item" onClick={() => navigate('/admin/settings')}>
+                        <Icon d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .33 1.65 1.65 0 0 0-.82 1.43V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-.82-1.43 1.65 1.65 0 0 0-1-.33 1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.33-1 1.65 1.65 0 0 0-1.43-.82H2.75a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.43-.82A1.65 1.65 0 0 0 4.6 7a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.33A1.65 1.65 0 0 0 10.82 2.84V2.75a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 .82 1.43 1.65 1.65 0 0 0 1 .33 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c0 .35.11.69.33 1 .21.31.52.53.88.62h.09a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.43.82c-.22.31-.33.65-.33 1z" size={15} />
+                        Settings
+                      </div>
+                      <div className="profile-menu-divider" />
+                      <div className="profile-menu-item danger" onClick={handleSignOut}>
+                        <Icon d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9" size={15} color="#EF4444" />
+                        Sign Out
+                      </div>
+                    </div>
                   </div>
-                )
-              )
-            ) : followers.length ? (
-              followers.map((reader) => (
-                <ReaderCircle
-                  key={reader.id}
-                  reader={reader}
-                  active={selectedReaders.includes(
-                    String(reader.id)
-                  )}
-                  onClick={() =>
-                    handleReaderToggle(
-                      reader.id
-                    )
-                  }
-                />
-              ))
-            ) : (
-              <div className="py-3 text-[12px] font-normal text-[#98a2b3]">
-                {followersError ||
-                  'No followers yet.'}
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </header>
 
-        <div className="mt-5">
-          <div className="mb-3 text-[12px] font-normal uppercase tracking-[0.08em] text-[#98a2b3]">
-            Share outside Shadow
-          </div>
+          <main className="content-body">
+            <div className="welcome-row">
+              <h1>{getHour()}, {currentUserName.split(' ')[0]}! 👋</h1>
+              <p>Here&apos;s what&apos;s happening on Shadow today.</p>
+            </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            <ShareCircle
-              label="Copy link"
-              iconNode={
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-[23px] w-[23px]"
+            <div className="stats-grid">
+              {dashboardStats.map((stat) => (
+                <div className="stat-card" key={stat.label}>
+                  <div className="stat-card-top">
+                    <span className="stat-label">{stat.label}</span>
+                    <div className="stat-icon-box" style={{ background: stat.iconBg }}>
+                      <Icon d={stat.icon} size={18} color={stat.iconColor} />
+                    </div>
+                  </div>
+                  <div className="stat-value" style={{ color: stat.valueColor }}>{stat.value}</div>
+                  <div className="stat-trend" style={{ color: stat.trendUp ? 'var(--success)' : 'var(--danger)' }}>
+                    <Icon
+                      d={stat.trendUp ? 'M23 6l-9.5 9.5-5-5L1 18' : 'M23 18l-9.5-9.5-5 5L1 6'}
+                      size={13}
+                      color={stat.trendUp ? '#10B981' : '#EF4444'}
+                    />
+                    {stat.trend}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bento-grid">
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h4>Visitor Activity Overview</h4>
+                  <span className="panel-link" onClick={() => navigate('/authors')}>View Report</span>
+                </div>
+                <div className="chart-wrap">
+                  {chartData.map((item, index) => (
+                    <div className="chart-col" key={item.day} title={`${item.day}: ${item.value.toLocaleString()}`}>
+                      <span className="chart-value">{item.value.toLocaleString()}</span>
+                      <div className="chart-bar-wrap">
+                        <div
+                          className="chart-bar"
+                          style={{
+                            height: `${Math.max(item.value > 0 ? 8 : 0, (item.value / maxVal) * 100)}%`,
+                            background: item.active
+                              ? 'linear-gradient(180deg, #4F46E5, #7C3AED)'
+                              : 'linear-gradient(180deg, #6EE7B7, #D1FAE5)',
+                            animationDelay: `${index * 0.08}s`,
+                          }}
+                        />
+                      </div>
+                      <span className="chart-day">{item.day}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h4>Admin Activity Log</h4>
+                </div>
+                <div className="log-list">
+                  {activityLogLoading ? (
+                    <div className="log-time">Loading activity logs...</div>
+                  ) : activityLog.length === 0 ? (
+                    <div className="log-time">No activity logs yet.</div>
+                  ) : (
+                    activityLog.map((log) => (
+                      <div className="log-item" key={log.id}>
+                        <div className="log-avatar" style={{ background: getLogColor(log.action) }}>
+                          {getLogInitial(log)}
+                        </div>
+                        <div>
+                          <div className="log-text">
+                            <strong>{log.actor || 'Admin'}</strong> {getLogText(log)}
+                          </div>
+                          <div className="log-time">{formatLogTime(log.created_at)}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="view-all-btn"
+                  onClick={() => navigate('/admin/activity-logs')}
                 >
-                  <path d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15" />
-                  <path d="M14 11a5 5 0 0 0-7.07 0l-2 2A5 5 0 0 0 12 20.07l1.15-1.15" />
-                </svg>
-              }
-              onClick={handleCopyLink}
-            />
+                  View All Logs
+                </button>
+              </section>
+            </div>
 
-            <ShareCircle
-              icon="fa-brands fa-telegram"
-              label="Telegram"
-              bg="bg-[#2aabee]"
-              color="text-white"
-              onClick={handleTelegram}
-            />
-
-            <ShareCircle
-              icon="fa-brands fa-facebook-f"
-              label="Facebook"
-              bg="bg-[#1877f2]"
-              color="text-white"
-              onClick={handleFacebook}
-            />
-          </div>
+            <section className="card-panel">
+              <div className="panel-header">
+                <h4>Shadow Exclusive Workflow <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 500 }}>(Real Data)</span></h4>
+                <span className="panel-link" onClick={() => navigate('/shadow-exclusive')}>Open Manager</span>
+              </div>
+              <div className="exclusive-table-wrap">
+                <table className="exclusive-table">
+                  <thead>
+                    <tr>
+                      <th>Story Title</th>
+                      <th>Episodes</th>
+                      <th>Exclusive Section</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {exclusiveLoading ? (
+                      <tr>
+                        <td colSpan={4} style={{ color: '#64748B' }}>Loading exclusive stories...</td>
+                      </tr>
+                    ) : exclusiveStories.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ color: '#64748B' }}>No pending or approved exclusive stories yet.</td>
+                      </tr>
+                    ) : (
+                      exclusiveStories.map((story) => {
+                        const status = formatExclusiveStatus(story.exclusive_status);
+                        return (
+                          <tr key={story.id}>
+                            <td>
+                              <div className="exclusive-title-cell">
+                                <span
+                                  className="live-dot"
+                                  style={{ background: status === 'Approved' ? '#10B981' : '#F59E0B' }}
+                                />
+                                <span style={{ fontWeight: 600 }}>{story.title || 'Untitled story'}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: '#475569' }}>{Number(story.total_episodes || 0).toLocaleString()}</td>
+                            <td style={{ color: '#475569' }}>{formatExclusiveSections(story.exclusive_sections)}</td>
+                            <td>
+                              <span className={`status-badge badge-${status.toLowerCase()}`}>
+                                {status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </main>
         </div>
-      </section>
+      </div>
+    </>
+  );
+};
 
-      {activePanel === 'destination' ? (
-        <ChoiceSheet
-          title="Echo destination"
-          subtitle="Choose where this echo should appear on Shadow."
-          options={DESTINATIONS}
-          value={destination}
-          onBack={() =>
-            setActivePanel('')
-          }
-          onChoose={(value) => {
-            setDestination(value)
-            setActivePanel('')
-          }}
-        />
-      ) : null}
-
-      {activePanel === 'audience' ? (
-        <ChoiceSheet
-          title="Who can view this echo?"
-          subtitle="Choose who can see your echo on Shadow."
-          options={AUDIENCES}
-          value={audience}
-          onBack={() =>
-            setActivePanel('')
-          }
-          onChoose={(value) => {
-            setAudience(value)
-            setActivePanel('')
-          }}
-        />
-      ) : null}
-    </div>,
-    document.body
-  )
-}
+export default AdminDashboard;
