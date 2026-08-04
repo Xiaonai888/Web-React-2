@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import StoryPublishAgreementModal from '../../components/author/StoryPublishAgreementModal'
+import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -697,31 +698,18 @@ const handleAcceptAgreement = async (agreement) => {
             />
           </div>
 
-          {releaseOption === 'schedule' ? (
+{releaseOption === 'schedule' ? (
             <div className="mt-5 rounded-[20px] bg-[#fafafe] p-4">
-              <div className="mb-3 text-[13px] font-extrabold text-[#111827]">Schedule Date & Time</div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label>
-                  <div className="mb-2 text-[12px] font-extrabold text-[#555b66]">Date</div>
-                  <input
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(event) => setScheduleDate(event.target.value)}
-                    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
-                  />
-                </label>
-
-                <label>
-                  <div className="mb-2 text-[12px] font-extrabold text-[#555b66]">Time</div>
-                  <input
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(event) => setScheduleTime(event.target.value)}
-                    className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none focus:border-[#111827]"
-                  />
-                </label>
+              <div className="mb-3 text-[13px] font-extrabold text-[#111827]">
+                Schedule Date & Time
               </div>
+
+              <ScheduleReleasePicker
+                date={scheduleDate}
+                time={scheduleTime}
+                onDateChange={setScheduleDate}
+                onTimeChange={setScheduleTime}
+              />
 
               <p className="mt-3 text-[11.5px] leading-5 text-[#8d94a1]">
                 The episode will publish automatically at the selected date and time.
