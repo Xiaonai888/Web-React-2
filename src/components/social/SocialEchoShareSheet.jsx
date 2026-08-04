@@ -99,45 +99,6 @@ function getStoredUser() {
   }
 }
 
-function getEchoPosts() {
-  try {
-    const parsed = JSON.parse(
-      localStorage.getItem(
-        'shadow_profile_echo_posts'
-      ) || '[]'
-    )
-
-    return Array.isArray(parsed)
-      ? parsed
-      : []
-  } catch {
-    return []
-  }
-}
-
-function saveEchoPost(post) {
-  localStorage.setItem(
-    'shadow_profile_echo_posts',
-    JSON.stringify([
-      post,
-      ...getEchoPosts(),
-    ])
-  )
-}
-
-function createLocalId() {
-  if (
-    typeof crypto !== 'undefined' &&
-    crypto.randomUUID
-  ) {
-    return crypto.randomUUID()
-  }
-
-  return `${Date.now()}-${Math.random()
-    .toString(16)
-    .slice(2)}`
-}
-
 function ShareCircle({
   icon,
   iconNode,
@@ -306,7 +267,6 @@ export default function SocialEchoShareSheet({
   sourceContent = '',
   sourceImageUrl = '',
   sourceLabel = 'post',
-  endpoint,
   shareUrl,
   onClose,
   onEchoed,
@@ -353,18 +313,45 @@ export default function SocialEchoShareSheet({
   useEffect(() => {
     if (!open) return undefined
 
-    const previousOverflow =
-      document.body.style.overflow
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+    const previousBody = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    }
+    const previousHtmlOverflow =
+      html.style.overflow
 
-    document.body.style.overflow =
-      'hidden'
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
     dragOffsetRef.current = 0
     setDragOffset(0)
     setMessage('')
 
     return () => {
-      document.body.style.overflow =
-        previousOverflow
+      html.style.overflow =
+        previousHtmlOverflow
+      body.style.overflow =
+        previousBody.overflow
+      body.style.position =
+        previousBody.position
+      body.style.top = previousBody.top
+      body.style.left = previousBody.left
+      body.style.right =
+        previousBody.right
+      body.style.width =
+        previousBody.width
+      window.scrollTo(0, scrollY)
     }
   }, [open])
 
@@ -563,9 +550,33 @@ export default function SocialEchoShareSheet({
   }
 
   const handleEchoNow = async () => {
-    if (!sourceId || !endpoint) {
+    const normalizedSourceType = String(
+      sourceType || ''
+    )
+      .trim()
+      .toLowerCase()
+    const normalizedSourceId = String(
+      sourceId || ''
+    ).trim()
+
+    if (
+      !normalizedSourceType ||
+      !normalizedSourceId
+    ) {
       setMessage(
-        'This post is not ready yet.'
+        'This content is not ready yet.'
+      )
+      return
+    }
+
+    if (
+      (destination === 'reader' ||
+        destination === 'circle' ||
+        audience === 'close-readers') &&
+      !selectedReaders.length
+    ) {
+      setMessage(
+        'Select at least one reader.'
       )
       return
     }
@@ -584,7 +595,7 @@ export default function SocialEchoShareSheet({
       setMessage('')
 
       const response = await fetch(
-        endpoint,
+        `${API_BASE_URL}/api/echoes`,
         {
           method: 'POST',
           headers: {
@@ -594,6 +605,10 @@ export default function SocialEchoShareSheet({
               'application/json',
           },
           body: JSON.stringify({
+            source_type:
+              normalizedSourceType,
+            source_id:
+              normalizedSourceId,
             echo_text: postText.trim(),
             destination,
             audience,
@@ -613,68 +628,22 @@ export default function SocialEchoShareSheet({
       ) {
         throw new Error(
           data.message ||
-            'Failed to echo post'
+            'Failed to echo content'
         )
       }
 
-      const savedPost = {
-        id:
-          data.echo?.id ||
-          createLocalId(),
-        type: `${sourceType}_echo`,
-        source_type: sourceType,
-        source_id: sourceId,
-        source_name: sourceName,
-        source_avatar_url:
-          sourceAvatarUrl,
-        source_content:
-          sourceContent,
-        source_image_url:
-          sourceImageUrl,
-        source_label: sourceLabel,
-        echo_text: postText.trim(),
-        destination,
-        destination_label:
-          destinationItem.title,
-        audience,
-        audience_label:
-          audienceItem.title,
-        selected_readers: followers
-          .filter((reader) =>
-            selectedReaders.includes(
-              String(reader.id)
-            )
-          )
-          .map((reader) => ({
-            id: reader.id,
-            name:
-              reader.name ||
-              reader.username ||
-              'Reader',
-            username:
-              reader.username || '',
-            avatar_url:
-              reader.avatar_url || '',
-          })),
-        user_name: displayName,
-        created_at:
-          data.echo?.created_at ||
-          new Date().toISOString(),
-      }
-
-      saveEchoPost(savedPost)
       setPostText('')
       setMessage('')
       setSelectedReaders([])
       onEchoed?.(
-        data.echo || savedPost,
+        data.echo || null,
         Number(data.echo_count || 0)
       )
       onClose?.()
     } catch (error) {
       setMessage(
         error.message ||
-          'Failed to echo post.'
+          'Failed to echo content.'
       )
     } finally {
       setSending(false)
@@ -686,7 +655,7 @@ export default function SocialEchoShareSheet({
       <button
         type="button"
         aria-label="Close echo share"
-        onClick={onClose}
+        onClick={() => onClose?.()}
         className="absolute inset-0 bg-black/60"
       />
 
