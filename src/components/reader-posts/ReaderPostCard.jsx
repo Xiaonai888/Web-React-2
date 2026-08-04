@@ -540,6 +540,192 @@ function ReaderPostImages({
 }
 
 
+
+function ReaderEchoCard({ post }) {
+  const navigate = useNavigate()
+  const user = post?.user || {}
+  const story = post?.source_story || {}
+  const episode = post?.source_episode || {}
+  const sourceUrl =
+    post?.source_url ||
+    (story?.id && episode?.id
+      ? `/story/${story.id}/episode/${episode.id}`
+      : story?.id
+        ? `/story/${story.id}`
+        : '')
+  const coverUrl =
+    story?.landscape_thumbnail_url ||
+    story?.cover_url ||
+    episode?.cover_url ||
+    (Array.isArray(post?.image_urls)
+      ? post.image_urls[0]
+      : '') ||
+    ''
+  const echoText = String(
+    post?.content || ''
+  ).trim()
+  const isAutomaticText =
+    /^Echoed\s+[“"].+[”"]/.test(
+      echoText
+    )
+
+  function openSource() {
+    if (sourceUrl) {
+      navigate(sourceUrl)
+    }
+  }
+
+  function viewReaderProfile() {
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    if (username) {
+      navigate(
+        `/profile?username=${encodeURIComponent(
+          username
+        )}`
+      )
+    }
+  }
+
+  return (
+    <article
+      id={`reader-post-${post.id}`}
+      className="overflow-hidden bg-white sm:rounded-[12px]"
+    >
+      <div className="flex items-start gap-2 px-4 pb-3 pt-4">
+        <button
+          type="button"
+          onClick={viewReaderProfile}
+          className="shrink-0 rounded-full active:opacity-70"
+        >
+          <ReaderAvatar user={user} />
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={viewReaderProfile}
+            className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70"
+          >
+            {user?.name || 'Reader'}
+          </button>
+
+          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] font-normal text-gray-400">
+            <span>
+              {formatPostTime(
+                post?.created_at
+              )}
+            </span>
+            <span>·</span>
+            <i
+              className={`${getVisibilityIcon(
+                post?.visibility
+              )} text-[10px]`}
+            />
+            <span>·</span>
+            <img
+              src="/assets/Icons/echo.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-[11px] w-[11px] brightness-0 opacity-55"
+            />
+            <span>Echoed a story</span>
+          </div>
+        </div>
+      </div>
+
+      {echoText && !isAutomaticText ? (
+        <div className="px-4 pb-4">
+          <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+            {renderPostTextWithLinks(
+              echoText
+            )}
+          </p>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={openSource}
+        disabled={!sourceUrl}
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[18px] bg-[#f7f7fa] text-left ring-1 ring-black/5 active:scale-[0.995] disabled:cursor-default"
+      >
+        {coverUrl ? (
+          <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
+            <img
+              src={coverUrl}
+              alt={story?.title || 'Story'}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
+            <i className="fa-solid fa-book-open text-[30px] text-white/90" />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+              {story?.title ||
+                'Story'}
+            </div>
+
+            <div className="mt-1 line-clamp-1 text-[12px] font-normal text-[#667085]">
+              {episode?.title ||
+                `Episode ${Number(
+                  episode?.episode_number ||
+                    0
+                )}`}
+            </div>
+
+            {story?.main_genre ? (
+              <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+                {story.main_genre}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+            <i className="fa-solid fa-chevron-right text-[12px]" />
+          </div>
+        </div>
+      </button>
+
+      <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
+        <div className="inline-flex items-center gap-2 text-[11px] font-normal text-gray-500">
+          <img
+            src="/assets/Icons/echo.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-[14px] w-[14px] brightness-0 opacity-65"
+          />
+          <span>
+            {post?.echo_destination ===
+            'shadow'
+              ? 'Added to My Shadow'
+              : 'Echoed to Feed'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={openSource}
+          disabled={!sourceUrl}
+          className="text-[12px] font-semibold text-[#6d28d9] active:opacity-70 disabled:text-[#98a2b3]"
+        >
+          View story
+        </button>
+      </div>
+    </article>
+  )
+}
+
+
 function EditorAvatar({ user }) {
   const name = user?.name || 'Reader'
 
@@ -626,7 +812,7 @@ function EditImagePreview({
   )
 }
 
-export default function ReaderPostCard({
+function StandardReaderPostCard({
   post,
   onUpdated,
   onDeleted,
@@ -1940,3 +2126,19 @@ export default function ReaderPostCard({
     </>
   )
 }
+
+
+export default function ReaderPostCard(
+  props
+) {
+  if (props?.post?.is_echo) {
+    return <ReaderEchoCard {...props} />
+  }
+
+  return (
+    <StandardReaderPostCard
+      {...props}
+    />
+  )
+}
+
