@@ -10,7 +10,7 @@ import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
-import ReaderPostEchoShareSheet from './ReaderPostEchoShareSheet'
+import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
 import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
@@ -1843,11 +1843,44 @@ function StandardReaderPostCard({
         }}
       />
 
-      <ReaderPostEchoShareSheet
+      <SocialEchoShareSheet
         open={echoOpen}
-        post={post}
-        onClose={() => setEchoOpen(false)}
-        onEchoed={(nextEcho, nextTotal) => {
+        sourceType="reader_post"
+        sourceId={post?.id}
+        sourceName={
+          user?.name ||
+          user?.username ||
+          'Reader'
+        }
+        sourceAvatarUrl={
+          user?.avatar_url || ''
+        }
+        sourceContent={
+          post?.content ||
+          'Reader post'
+        }
+        sourceImageUrl={
+          Array.isArray(
+            post?.image_urls
+          )
+            ? post.image_urls[0] || ''
+            : ''
+        }
+        sourceLabel="reader post"
+        shareUrl={`${window.location.origin}${
+          user?.username
+            ? `/profile?username=${encodeURIComponent(
+                user.username
+              )}`
+            : '/profile'
+        }#reader-post-${post?.id || ''}`}
+        onClose={() =>
+          setEchoOpen(false)
+        }
+        onEchoed={(
+          nextEcho,
+          nextTotal
+        ) => {
           const total = Number(
             nextTotal ??
               (nextEcho
