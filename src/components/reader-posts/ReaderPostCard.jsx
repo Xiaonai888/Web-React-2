@@ -1745,9 +1745,11 @@ function StandardReaderPostCard({
           />
         ) : null}
 
-        <ReaderPostImages
-          imageUrls={imageUrls}
-        />
+        {!isEchoPost ? (
+          <ReaderPostImages
+            imageUrls={imageUrls}
+          />
+        ) : null}
 
         <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
           <div
