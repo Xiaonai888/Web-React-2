@@ -59,36 +59,24 @@ function normalizeInteractionType(value) {
 function buildEndpoint(sourceType, interactionType, sourceId) {
   const id = encodeURIComponent(sourceId)
 
-  if (sourceType === 'episode' && interactionType === 'like') {
-    return `/api/reactions/episode/${id}`
+  if (interactionType === 'echo' && sourceType) {
+    return `/api/echoes/source/${encodeURIComponent(sourceType)}/${id}`
   }
 
-  if (sourceType === 'episode' && interactionType === 'echo') {
-    return `/api/echoes/episode/${id}`
+  if (sourceType === 'episode' && interactionType === 'like') {
+    return `/api/reactions/episode/${id}`
   }
 
   if (sourceType === 'story' && interactionType === 'like') {
     return `/api/reactions/story/${id}/users`
   }
 
-  if (sourceType === 'story' && interactionType === 'echo') {
-    return `/api/echoes/story/${id}`
-  }
-
   if (sourceType === 'author_post' && interactionType === 'like') {
     return `/api/authors/page/posts/${id}/reactions`
   }
 
-  if (sourceType === 'author_post' && interactionType === 'echo') {
-    return `/api/authors/page/posts/${id}/echoes`
-  }
-
   if (sourceType === 'reader_post' && interactionType === 'like') {
     return `/api/reader-posts/${id}/reactions`
-  }
-
-  if (sourceType === 'reader_post' && interactionType === 'echo') {
-    return `/api/reader-posts/${id}/echoes`
   }
 
   return ''
@@ -114,10 +102,12 @@ function normalizeItem(item, interactionType) {
   return {
     id:
       item?.id ||
-      `${user.id}-${item?.created_at || item?.reaction_type || interactionType}`,
+      item?.echo_id ||
+      `${user.id}-${item?.updated_at || item?.created_at || item?.reaction_type || interactionType}`,
     user,
     reaction_type: String(item?.reaction_type || item?.type || 'love').toLowerCase(),
-    created_at: item?.created_at || '',
+    created_at: item?.updated_at || item?.created_at || '',
+    share_count: Math.max(1, Number(item?.share_count || item?.echo_count || 1)),
   }
 }
 
@@ -149,6 +139,31 @@ function mergeUnique(current, incoming) {
   }
 
   return result
+}
+
+function formatInteractionTime(value) {
+  const date = value ? new Date(value) : null
+
+  if (!date || Number.isNaN(date.getTime())) return ''
+
+  const seconds = Math.max(
+    0,
+    Math.floor((Date.now() - date.getTime()) / 1000)
+  )
+
+  if (seconds < 60) return 'Just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year:
+      date.getFullYear() === new Date().getFullYear()
+        ? undefined
+        : 'numeric',
+  })
 }
 
 function Avatar({ user }) {
@@ -186,7 +201,9 @@ export default function SocialInteractionUsersPage() {
   const [activeReaction, setActiveReaction] = useState('all')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [shareTotal, setShareTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
+  const [echoLimitReached, setEchoLimitReached] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
@@ -216,8 +233,12 @@ export default function SocialInteractionUsersPage() {
 
       try {
         const token = getReaderToken()
+        const query =
+          interactionType === 'echo'
+            ? '?limit=50'
+            : `?page=${nextPage}&limit=50`
         const response = await fetch(
-          `${API_BASE_URL}${endpoint}?page=${nextPage}&limit=50`,
+          `${API_BASE_URL}${endpoint}${query}`,
           {
             headers: token
               ? { Authorization: `Bearer ${token}` }
@@ -244,7 +265,9 @@ export default function SocialInteractionUsersPage() {
         )
 
         setItems((current) =>
-          append ? mergeUnique(current, nextItems) : nextItems
+          append && interactionType !== 'echo'
+            ? mergeUnique(current, nextItems)
+            : nextItems
         )
         setCounts(
           data.counts && typeof data.counts === 'object'
@@ -253,10 +276,24 @@ export default function SocialInteractionUsersPage() {
         )
         setPage(nextPage)
         setTotal(nextTotal)
+        setShareTotal(
+          interactionType === 'echo'
+            ? Math.max(
+                nextTotal,
+                Number(data.echo_count ?? nextTotal)
+              )
+            : nextTotal
+        )
+        setEchoLimitReached(
+          interactionType === 'echo' &&
+            Boolean(data.has_more)
+        )
         setHasMore(
-          typeof data.has_more === 'boolean'
-            ? data.has_more
-            : nextPage * 50 < nextTotal
+          interactionType === 'echo'
+            ? false
+            : typeof data.has_more === 'boolean'
+              ? data.has_more
+              : nextPage * 50 < nextTotal
         )
       } catch (error) {
         if (!append) setItems([])
@@ -279,7 +316,9 @@ export default function SocialInteractionUsersPage() {
     setActiveReaction('all')
     setPage(1)
     setTotal(0)
+    setShareTotal(0)
     setHasMore(false)
+    setEchoLimitReached(false)
     loadPage(1)
   }, [loadPage])
 
@@ -342,12 +381,16 @@ export default function SocialInteractionUsersPage() {
     {title}
   </h1>
 
-  {interactionType !== 'echo' ? (
-    <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
-      {sourceName || sourceLabel}
-      {total > 0 ? ` · ${total.toLocaleString()}` : ''}
-    </p>
-  ) : null}
+  <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
+    {sourceName || sourceLabel}
+    {interactionType === 'echo' && shareTotal > 0
+      ? ` · ${shareTotal.toLocaleString()} ${
+          shareTotal === 1 ? 'echo' : 'echoes'
+        }`
+      : interactionType !== 'echo' && total > 0
+        ? ` · ${total.toLocaleString()}`
+        : ''}
+  </p>
 </div>
 
           <div className="h-10 w-10" />
@@ -393,8 +436,13 @@ export default function SocialInteractionUsersPage() {
 {interactionType === 'echo' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
     <div className="text-[15px] font-bold text-[#111827]">
-      {total.toLocaleString()} Echoed
+      {total.toLocaleString()} {total === 1 ? 'Reader' : 'Readers'}
     </div>
+    {shareTotal > total ? (
+      <div className="mt-1 text-[11px] font-medium text-[#98a2b3]">
+        {shareTotal.toLocaleString()} total echo actions
+      </div>
+    ) : null}
   </section>
 ) : null}
 
@@ -471,11 +519,27 @@ export default function SocialInteractionUsersPage() {
                     <div className="truncate text-[15px] font-semibold">
                       {item.user.name}
                     </div>
-                    {item.user.username ? (
-                      <div className="mt-0.5 truncate text-[12px] font-medium text-[#98a2b3]">
-                        @{item.user.username}
-                      </div>
-                    ) : null}
+                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[12px] font-medium text-[#98a2b3]">
+                      {item.user.username ? (
+                        <span className="truncate">
+                          @{item.user.username}
+                        </span>
+                      ) : null}
+                      {interactionType === 'echo' &&
+                      item.user.username ? (
+                        <span>·</span>
+                      ) : null}
+                      {interactionType === 'echo' ? (
+                        <span className="shrink-0">
+                          {item.share_count > 1
+                            ? `${item.share_count.toLocaleString()} echoes`
+                            : 'Echoed'}
+                          {formatInteractionTime(item.created_at)
+                            ? ` · ${formatInteractionTime(item.created_at)}`
+                            : ''}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
 
                   {canOpenProfile ? (
@@ -494,6 +558,12 @@ export default function SocialInteractionUsersPage() {
               >
                 {loadingMore ? 'Loading...' : 'Load more'}
               </button>
+            ) : null}
+
+            {echoLimitReached ? (
+              <div className="mt-4 rounded-[14px] bg-[#f8fafc] px-4 py-3 text-center text-[11px] font-medium text-[#98a2b3]">
+                Showing the latest 50 readers.
+              </div>
             ) : null}
           </div>
         ) : (
