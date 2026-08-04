@@ -308,7 +308,7 @@ export default function ReaderProfilePostsPanel({
 
   if (loading) {
     return (
-      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5 md:mt-3">
+      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
         <div className="h-[140px] animate-pulse bg-white sm:rounded-[12px]" />
         <div className="h-[140px] animate-pulse bg-white sm:rounded-[12px]" />
       </section>
@@ -372,7 +372,7 @@ export default function ReaderProfilePostsPanel({
 
   return (
     <>
-      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5 md:mt-3">
+      <section className="mt-2 space-y-1 bg-[#f5f3fa] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
         {posts.map((post) => (
           <ReaderPostCard
             key={post.id}
