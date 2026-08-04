@@ -606,8 +606,7 @@ function ReaderEchoSourceBlock({ post }) {
     story?.id &&
     episode?.id
       ? `/story/${story.id}/episode/${episode.id}`
-      : sourceType === 'story' &&
-          story?.id
+      : sourceType === 'story' && story?.id
         ? `/story/${story.id}`
         : sourceType === 'reader_post' &&
             readerPost?.id
@@ -617,8 +616,7 @@ function ReaderEchoSourceBlock({ post }) {
               )}#reader-post-${readerPost.id}`
             : `/profile#reader-post-${readerPost.id}`
           : sourceType === 'author_post' &&
-              authorPost?.author_page
-                ?.page_username
+              authorPost?.author_page?.page_username
             ? `/author/page/${encodeURIComponent(
                 authorPost.author_page
                   .page_username
@@ -626,107 +624,6 @@ function ReaderEchoSourceBlock({ post }) {
                 authorPost.id || ''
               )}`
             : '')
-  const imageCandidates = [
-    ...(Array.isArray(source?.image_urls)
-      ? source.image_urls
-      : []),
-    source?.image_url,
-    story?.landscape_thumbnail_url,
-    story?.cover_url,
-    episode?.cover_url,
-    ...(Array.isArray(
-      readerPost?.image_urls
-    )
-      ? readerPost.image_urls
-      : []),
-    ...(Array.isArray(
-      authorPost?.image_urls
-    )
-      ? authorPost.image_urls
-      : []),
-  ].filter(Boolean)
-  const coverUrl = imageCandidates[0] || ''
-  const sourceLabels = {
-    story: 'story',
-    episode: 'episode',
-    reader_post: 'reader post',
-    author_post: 'author post',
-  }
-  const placeholderIcons = {
-    story: 'fa-solid fa-book-open',
-    episode: 'fa-solid fa-book-open-reader',
-    reader_post:
-      'fa-regular fa-message',
-    author_post:
-      'fa-regular fa-newspaper',
-  }
-  const sourceLabel =
-    sourceLabels[sourceType] ||
-    String(source?.label || 'content')
-  const placeholderIcon =
-    placeholderIcons[sourceType] ||
-    'fa-regular fa-file-lines'
-  let sourceTitle =
-    source?.name || 'Shared content'
-  let sourceSummary =
-    source?.content || ''
-  let sourceDetail = ''
-
-  if (sourceType === 'story') {
-    sourceTitle =
-      story?.title ||
-      source?.name ||
-      'Story'
-    sourceSummary =
-      sourceOwner?.page_name ||
-      sourceOwner?.name ||
-      story?.main_genre ||
-      'Story'
-    sourceDetail = story?.main_genre || ''
-  }
-
-  if (sourceType === 'episode') {
-    sourceTitle =
-      story?.title ||
-      source?.name ||
-      'Story'
-    sourceSummary =
-      episode?.title ||
-      source?.content ||
-      `Episode ${Number(
-        episode?.episode_number || 0
-      )}`
-    sourceDetail =
-      sourceOwner?.page_name ||
-      story?.main_genre ||
-      ''
-  }
-
-  if (sourceType === 'reader_post') {
-    sourceTitle =
-      readerPost?.user?.name ||
-      readerPost?.user?.username ||
-      source?.name ||
-      'Reader Post'
-    sourceSummary =
-      readerPost?.content ||
-      source?.content ||
-      'Reader post'
-    sourceDetail = 'Reader post'
-  }
-
-  if (sourceType === 'author_post') {
-    sourceTitle =
-      authorPost?.author_page
-        ?.page_name ||
-      source?.name ||
-      'Author Post'
-    sourceSummary =
-      authorPost?.content ||
-      source?.content ||
-      'Author post'
-    sourceDetail = 'Author post'
-  }
 
   function openSource() {
     if (sourceUrl) {
@@ -734,60 +631,235 @@ function ReaderEchoSourceBlock({ post }) {
     }
   }
 
+  function handleKeyDown(event) {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' '
+    ) {
+      event.preventDefault()
+      openSource()
+    }
+  }
+
+  if (
+    sourceType === 'story' ||
+    sourceType === 'episode'
+  ) {
+    const imageCandidates = [
+      ...(Array.isArray(source?.image_urls)
+        ? source.image_urls
+        : []),
+      source?.image_url,
+      story?.landscape_thumbnail_url,
+      story?.cover_url,
+      episode?.cover_url,
+    ].filter(Boolean)
+    const coverUrl = imageCandidates[0] || ''
+    const sourceLabel =
+      sourceType === 'episode'
+        ? 'episode'
+        : 'story'
+    const placeholderIcon =
+      sourceType === 'episode'
+        ? 'fa-solid fa-book-open-reader'
+        : 'fa-solid fa-book-open'
+    const sourceTitle =
+      story?.title ||
+      source?.name ||
+      'Story'
+    const sourceSummary =
+      sourceType === 'episode'
+        ? episode?.title ||
+          source?.content ||
+          `Episode ${Number(
+            episode?.episode_number || 0
+          )}`
+        : sourceOwner?.page_name ||
+          sourceOwner?.name ||
+          story?.main_genre ||
+          'Story'
+    const sourceDetail =
+      sourceType === 'episode'
+        ? sourceOwner?.page_name ||
+          story?.main_genre ||
+          ''
+        : story?.main_genre || ''
+
+    return (
+      <button
+        type="button"
+        onClick={openSource}
+        disabled={!sourceUrl}
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] text-left ring-1 ring-black/10 active:scale-[0.995] disabled:cursor-default"
+      >
+        {coverUrl ? (
+          <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
+            <img
+              src={coverUrl}
+              alt={sourceTitle}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
+            <i
+              className={`${placeholderIcon} text-[30px] text-white/90`}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+              {sourceLabel}
+            </div>
+
+            <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+              {sourceTitle}
+            </div>
+
+            {sourceSummary ? (
+              <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
+                {sourceSummary}
+              </div>
+            ) : null}
+
+            {sourceDetail &&
+            sourceDetail !== sourceSummary ? (
+              <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+                {sourceDetail}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+            <i className="fa-solid fa-chevron-right text-[12px]" />
+          </div>
+        </div>
+      </button>
+    )
+  }
+
+  const previewUser =
+    sourceType === 'author_post'
+      ? {
+          name:
+            authorPost?.author_page
+              ?.page_name ||
+            source?.name ||
+            'Author Page',
+          avatar_url:
+            authorPost?.author_page
+              ?.avatar_url ||
+            authorPost?.author_page
+              ?.profile_image_url ||
+            authorPost?.author_page
+              ?.profile_picture_url ||
+            authorPost?.author_page
+              ?.page_avatar_url ||
+            '',
+        }
+      : {
+          name:
+            readerPost?.user?.name ||
+            readerPost?.user?.username ||
+            source?.name ||
+            'Reader',
+          avatar_url:
+            readerPost?.user
+              ?.avatar_url || '',
+        }
+
+  const previewTime =
+    sourceType === 'author_post'
+      ? authorPost?.created_at ||
+        source?.created_at ||
+        ''
+      : readerPost?.created_at ||
+        readerPost?.publish_at ||
+        source?.created_at ||
+        ''
+
+  const previewVisibility =
+    sourceType === 'author_post'
+      ? 'public'
+      : readerPost?.visibility || 'public'
+
+  const previewText = String(
+    sourceType === 'author_post'
+      ? authorPost?.content ||
+          source?.content ||
+          ''
+      : readerPost?.content ||
+          source?.content ||
+          ''
+  ).trim()
+
+  const previewImages =
+    sourceType === 'author_post'
+      ? Array.isArray(
+          authorPost?.image_urls
+        )
+        ? authorPost.image_urls
+        : Array.isArray(source?.image_urls)
+          ? source.image_urls
+          : source?.image_url
+            ? [source.image_url]
+            : []
+      : Array.isArray(
+          readerPost?.image_urls
+        )
+        ? readerPost.image_urls
+        : Array.isArray(source?.image_urls)
+          ? source.image_urls
+          : source?.image_url
+            ? [source.image_url]
+            : []
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={sourceUrl ? 0 : -1}
       onClick={openSource}
-      disabled={!sourceUrl}
-      className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] text-left ring-1 ring-black/10 active:scale-[0.995] disabled:cursor-default"
+      onKeyDown={handleKeyDown}
+      className="mx-4 mb-4 overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995]"
     >
-      {coverUrl ? (
-        <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
-          <img
-            src={coverUrl}
-            alt={sourceTitle}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
-          <i
-            className={`${placeholderIcon} text-[30px] text-white/90`}
-          />
-        </div>
-      )}
+      <div className="flex items-start gap-2.5 px-3.5 pb-3 pt-3.5">
+        <ReaderAvatar user={previewUser} />
 
-      <div className="flex items-center gap-3 px-4 py-3">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-            {sourceLabel}
+          <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
+            {previewUser.name || 'Post'}
           </div>
 
-          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
-            {sourceTitle}
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+            <span>
+              {formatPostTime(previewTime)}
+            </span>
+            <span>·</span>
+            <i
+              className={`${getVisibilityIcon(previewVisibility)} text-[10px]`}
+            />
           </div>
-
-          {sourceSummary ? (
-            <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
-              {sourceSummary}
-            </div>
-          ) : null}
-
-          {sourceDetail &&
-          sourceDetail !== sourceSummary ? (
-            <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
-              {sourceDetail}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
-          <i className="fa-solid fa-chevron-right text-[12px]" />
         </div>
       </div>
-    </button>
+
+      {previewText ? (
+        <div className="px-3.5 pb-3">
+          <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+            {renderPostTextWithLinks(
+              previewText
+            )}
+          </p>
+        </div>
+      ) : null}
+
+      <ReaderPostImages
+        imageUrls={previewImages}
+      />
+    </div>
   )
 }
 
