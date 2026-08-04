@@ -12,6 +12,10 @@ import ReaderPostOptionsSheet, {
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
 import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
 import {
+  CollapsiblePostText,
+  ProfessionalSinglePostImage,
+} from '../common/ProfessionalPostContent'
+import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
   saveSavedPost,
@@ -493,18 +497,13 @@ function ReaderPostImages({
   }
 
   if (images.length === 1) {
-    return (
-      <div className="overflow-hidden bg-[#f3f4f6]">
-        <img
-          src={images[0]}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="max-h-[620px] w-full object-contain"
-        />
-      </div>
-    )
-  }
+  return (
+    <ProfessionalSinglePostImage
+      src={images[0]}
+      alt=""
+    />
+  )
+}
 
   return (
     <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white">
@@ -1123,8 +1122,7 @@ function StandardReaderPostCard({
     useState(false)
   const [message, setMessage] =
     useState('')
-  const [expanded, setExpanded] =
-    useState(false)
+  
   const [
     reactionPickerOpen,
     setReactionPickerOpen,
@@ -1184,9 +1182,7 @@ function StandardReaderPostCard({
           )
           .slice(0, 5)
       : []
-  const canCollapse =
-    postText.length > 520 ||
-    postText.split('\n').length > 8
+  
   const editRemainingPhotos =
     MAX_POST_PHOTOS -
     editImageUrls.length
@@ -1891,49 +1887,19 @@ function StandardReaderPostCard({
   </div>
 </div>
 
-        {postText ? (
-          <div className="px-4 pb-4">
-            <p
-              className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]"
-              style={
-                !expanded &&
-                canCollapse
-                  ? {
-                      display:
-                        '-webkit-box',
-                      WebkitLineClamp: 8,
-                      WebkitBoxOrient:
-                        'vertical',
-                      overflow:
-                        'hidden',
-                    }
-                  : undefined
-              }
-            >
-              {renderPostTextWithLinks(
-                postText
-              )}
-            </p>
-
-            {canCollapse ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setExpanded(
-                    (current) =>
-                      !current
-                  )
-                }
-                className="mt-1 text-[13px] font-semibold text-[#475569] active:opacity-70"
-              >
-                {expanded
-                  ? 'See less'
-                  : 'See more'}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
+       {postText ? (
+  <div className="px-4 pb-4">
+    <CollapsiblePostText
+      text={postText}
+      lines={3}
+      className="text-[14px] font-normal leading-6 text-[#111827]"
+    >
+      {renderPostTextWithLinks(
+        postText
+      )}
+    </CollapsiblePostText>
+  </div>
+) : null}
         {isEchoPost ? (
           <ReaderEchoSourceBlock
             post={post}
