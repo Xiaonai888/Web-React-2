@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorDashboardContentTab from '../../components/Author/AuthorDashboardContentTab'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -116,7 +117,7 @@ function DashboardTab({ label, icon, active, onClick }) {
       className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-semibold transition active:scale-[0.98] sm:h-11 sm:px-6 ${
         active
           ? 'bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-white shadow-[0_8px_22px_rgba(139,92,246,0.24)]'
-          : 'bg-white text-[#6f6b80] ring-1 ring-[#e8e2f4]'
+          : 'bg-transparent text-[#6f6b80] hover:bg-[#f2ecff] hover:text-[#7c3aed]'
       }`}
     >
       <i className={`${icon} text-[12px]`} />
@@ -508,6 +509,7 @@ function LoadingDashboard({ navigate }) {
 
 export default function AuthorPageDashboardPage() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('Overview')
   const [dashboardData, setDashboardData] = useState(null)
   const [authorPage, setAuthorPage] = useState(null)
   const [posts, setPosts] = useState([])
@@ -666,12 +668,14 @@ export default function AuthorPageDashboardPage() {
                 key={tab.label}
                 label={tab.label}
                 icon={tab.icon}
-                active={tab.label === 'Overview'}
-                onClick={() => {
-                  if (tab.label !== 'Overview') {
-                    setMessage(`${tab.label} will be created in the next stage.`)
-                  }
-                }}
+                active={tab.label === activeTab}
+onClick={() => {
+  if (tab.label === 'Overview' || tab.label === 'Content') {
+    setActiveTab(tab.label)
+    return
+  }
+  setMessage(`${tab.label} will be created in the next stage.`)
+}}
               />
             ))}
           </div>
