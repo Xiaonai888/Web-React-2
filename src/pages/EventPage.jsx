@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
+import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
@@ -1137,9 +1138,12 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
               <MostReadThisWeekSection />
             </section>
           </>
-                ) : (
-          <BlackSundayEventTab />
-        )}
+               ) : (
+  <>
+    <WriterWednesdayEventCard />
+    <BlackSundayEventTab />
+  </>
+)}
       </main>
     </div>
   )
