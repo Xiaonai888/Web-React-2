@@ -350,7 +350,7 @@ export default function AuthorIncomePage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-10">
-      <header className="sticky top-0 z-40 border-b border-[#eeeeef] bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-40 bg-transparent">
         <div className="mx-auto flex h-[58px] max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
@@ -361,13 +361,13 @@ export default function AuthorIncomePage() {
             <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="text-[17px] font-black text-[#111827]">Income Records</h1>
+          <h1 className="text-[17px] font-bold text-[#111827]">Income Records</h1>
 
           <button
             type="button"
             onClick={() => setCalendarOpen(true)}
             aria-label="Choose date"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f5] text-[#ff3b5f] active:scale-95"
+            className="flex h-10 w-10 items-center justify-center text-black active:scale-95"
           >
             <i className="fa-regular fa-calendar text-[16px]" />
           </button>
