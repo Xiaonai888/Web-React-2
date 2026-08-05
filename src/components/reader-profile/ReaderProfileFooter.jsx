@@ -1,6 +1,22 @@
-import { useMemo, useState } from 'react'
-import { Clapperboard, House, Send } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import {
+  Clapperboard,
+  House,
+  Send,
+} from 'lucide-react'
+import {
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import {
+  getChatConversations,
+  hasReaderSession,
+} from '../../services/chatApi'
 
 function getStoredUser() {
   try {
@@ -68,9 +84,18 @@ function LibraryIcon({ highlighted }) {
   )
 }
 
-function ProfileIcon({ highlighted, avatarUrl, profileName }) {
-  const [imageFailed, setImageFailed] = useState(false)
-  const letter = String(profileName || 'Me').trim().charAt(0).toUpperCase() || 'M'
+function ProfileIcon({
+  highlighted,
+  avatarUrl,
+  profileName,
+}) {
+  const [imageFailed, setImageFailed] =
+    useState(false)
+  const letter =
+    String(profileName || 'Me')
+      .trim()
+      .charAt(0)
+      .toUpperCase() || 'M'
 
   return (
     <span
@@ -85,7 +110,9 @@ function ProfileIcon({ highlighted, avatarUrl, profileName }) {
           src={avatarUrl}
           alt=""
           className="h-full w-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() =>
+            setImageFailed(true)
+          }
         />
       ) : (
         letter
@@ -108,9 +135,15 @@ export default function ReaderProfileFooter({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const storedUser = useMemo(() => getStoredUser(), [])
+  const storedUser = useMemo(
+    () => getStoredUser(),
+    []
+  )
   const [message, setMessage] = useState('')
-  const [hoveredKey, setHoveredKey] = useState('')
+  const [hoveredKey, setHoveredKey] =
+    useState('')
+  const [chatBadgeCount, setChatBadgeCount] =
+    useState(0)
 
   const finalAvatarUrl =
     avatarUrl ||
@@ -136,9 +169,101 @@ export default function ReaderProfileFooter({
           ? 'me'
           : ''
 
+  const loadChatBadge = useCallback(
+    async () => {
+      if (!hasReaderSession()) {
+        setChatBadgeCount(0)
+        return
+      }
+
+      try {
+        const data =
+          await getChatConversations('all')
+        const conversations =
+          Array.isArray(data.conversations)
+            ? data.conversations
+            : []
+
+        const total = conversations.reduce(
+          (sum, item) => {
+            if (
+              item.request_status ===
+                'declined' ||
+              item.request_status ===
+                'blocked'
+            ) {
+              return sum
+            }
+
+            const unread = Math.max(
+              0,
+              Number(item.unread_count || 0)
+            )
+
+            const incomingRequest =
+              item.viewer_role === 'author' &&
+              item.request_status ===
+                'pending'
+
+            return (
+              sum +
+              (incomingRequest
+                ? Math.max(1, unread)
+                : unread)
+            )
+          },
+          0
+        )
+
+        setChatBadgeCount(total)
+      } catch {
+        setChatBadgeCount(0)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    loadChatBadge()
+
+    const intervalId =
+      window.setInterval(
+        loadChatBadge,
+        10000
+      )
+
+    const handleChatUpdated = () => {
+      loadChatBadge()
+    }
+
+    window.addEventListener(
+      'shadow-chat-updated',
+      handleChatUpdated
+    )
+    window.addEventListener(
+      'storage',
+      handleChatUpdated
+    )
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener(
+        'shadow-chat-updated',
+        handleChatUpdated
+      )
+      window.removeEventListener(
+        'storage',
+        handleChatUpdated
+      )
+    }
+  }, [loadChatBadge, location.pathname])
+
   const showMessage = (text) => {
     setMessage(text)
-    window.setTimeout(() => setMessage(''), 1800)
+    window.setTimeout(
+      () => setMessage(''),
+      1800
+    )
   }
 
   const handleClick = (key) => {
@@ -157,14 +282,46 @@ export default function ReaderProfileFooter({
       return
     }
 
-    showMessage(`${key === 'home' ? 'Home' : 'Reel'} is coming soon.`)
+    showMessage(
+      `${key === 'home' ? 'Home' : 'Reel'} is coming soon.`
+    )
   }
 
-  const renderIcon = (key, highlighted) => {
-    if (key === 'home') return <HomeIcon highlighted={highlighted} />
-    if (key === 'reel') return <FastIcon highlighted={highlighted} />
-    if (key === 'chat') return <ChatIcon highlighted={highlighted} />
-    if (key === 'library') return <LibraryIcon highlighted={highlighted} />
+  const renderIcon = (
+    key,
+    highlighted
+  ) => {
+    if (key === 'home') {
+      return (
+        <HomeIcon
+          highlighted={highlighted}
+        />
+      )
+    }
+
+    if (key === 'reel') {
+      return (
+        <FastIcon
+          highlighted={highlighted}
+        />
+      )
+    }
+
+    if (key === 'chat') {
+      return (
+        <ChatIcon
+          highlighted={highlighted}
+        />
+      )
+    }
+
+    if (key === 'library') {
+      return (
+        <LibraryIcon
+          highlighted={highlighted}
+        />
+      )
+    }
 
     return (
       <ProfileIcon
@@ -185,28 +342,66 @@ export default function ReaderProfileFooter({
 
       <footer
         className="fixed bottom-0 left-0 right-0 z-[100000] border-t border-[#ececf1] bg-white/95 backdrop-blur-xl"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        style={{
+          paddingBottom:
+            'env(safe-area-inset-bottom, 0px)',
+        }}
       >
         <nav className="mx-auto flex h-[64px] w-full max-w-[560px] items-center justify-around px-3">
           {NAV_ITEMS.map((item) => {
-            const active = activeKey === item.key
-            const highlighted = active || hoveredKey === item.key
+            const active =
+              activeKey === item.key
+            const highlighted =
+              active ||
+              hoveredKey === item.key
+            const isChat =
+              item.key === 'chat'
+            const accessibleLabel =
+              isChat && chatBadgeCount > 0
+                ? `Chat, ${chatBadgeCount} unread`
+                : item.label
 
             return (
               <button
                 key={item.key}
                 type="button"
-                onClick={() => handleClick(item.key)}
-                onMouseEnter={() => setHoveredKey(item.key)}
-                onMouseLeave={() => setHoveredKey('')}
-                onFocus={() => setHoveredKey(item.key)}
-                onBlur={() => setHoveredKey('')}
-                aria-label={item.label}
+                onClick={() =>
+                  handleClick(item.key)
+                }
+                onMouseEnter={() =>
+                  setHoveredKey(item.key)
+                }
+                onMouseLeave={() =>
+                  setHoveredKey('')
+                }
+                onFocus={() =>
+                  setHoveredKey(item.key)
+                }
+                onBlur={() =>
+                  setHoveredKey('')
+                }
+                aria-label={accessibleLabel}
                 title={item.label}
-                aria-current={active ? 'page' : undefined}
-                className="flex h-12 w-12 items-center justify-center rounded-full transition active:scale-90"
+                aria-current={
+                  active
+                    ? 'page'
+                    : undefined
+                }
+                className="relative flex h-12 w-12 items-center justify-center rounded-full transition active:scale-90"
               >
-                {renderIcon(item.key, highlighted)}
+                {renderIcon(
+                  item.key,
+                  highlighted
+                )}
+
+                {isChat &&
+                chatBadgeCount > 0 ? (
+                  <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-[#ef4444] px-1 text-[8px] font-black leading-none text-white">
+                    {chatBadgeCount > 99
+                      ? '99+'
+                      : chatBadgeCount}
+                  </span>
+                ) : null}
               </button>
             )
           })}
