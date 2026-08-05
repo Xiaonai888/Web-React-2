@@ -124,6 +124,9 @@ const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
+const AuthorPostsContentLibraryPage = lazy(() =>
+  import('./pages/Author/AuthorPostsContentLibraryPage')
+)
 const AuthorPageNotificationsPage = lazy(() => import('./pages/Author/AuthorPageNotificationsPage'))
 const AuthorPageSettingsPage = lazy(() => import('./pages/Author/AuthorPageSettingsPage'))
 const AuthorCartPage = lazy(() => import('./pages/Author/AuthorCartPage'))
@@ -258,6 +261,7 @@ function AppShell() {
     '/author/comment-protection/moderation-history',
     '/author/page-settings',
     '/author/page/edit',
+    '/author/page/posts',
     '/author/edit-page',
     '/author/cart',
     '/author/checkout',
@@ -839,6 +843,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <AuthorPageDashboardPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/page/posts"
+  element={
+    <LazyPage>
+      <AuthorPostsContentLibraryPage />
     </LazyPage>
   }
 />
