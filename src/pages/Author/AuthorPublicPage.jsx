@@ -1463,13 +1463,19 @@ function handleOpenMessage() {
     ]
   }
 
-  return [
+    return [
     {
       label: 'Follow',
       icon: 'fa-user-plus',
       type: 'primary',
       onClick: handleToggleFollow,
       disabled: followLoading,
+    },
+    {
+      label: 'Message',
+      icon: 'fa-comment',
+      type: 'secondary',
+      onClick: handleOpenMessage,
     },
   ]
 }, [ownerResolved, author?.id, author?.is_owner, author?.is_following, followLoading, navigate])
