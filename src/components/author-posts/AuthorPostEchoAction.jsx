@@ -3,7 +3,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
 import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
 
 const API_BASE_URL =
@@ -45,7 +44,6 @@ export default function AuthorPostEchoAction({
   className = '',
   onCountChange,
 }) {
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [echoCount, setEchoCount] =
     useState(
@@ -89,51 +87,27 @@ export default function AuthorPostEchoAction({
     )
   }
 
-  const handleOpenEchoes = () => {
-    if (!post?.id) return
-
-    navigate(
-      `/interactions/author_post/${post.id}/echoes`,
-      {
-        state: {
-          sourceName:
-            author?.page_name ||
-            'Author Post',
-        },
-      }
-    )
-  }
+  
 
   return (
     <>
-      <div
-        className={`inline-flex items-center gap-1.5 ${className}`}
-      >
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="active:scale-95"
-          aria-label="Echo author post"
-        >
-          <img
-            src="/assets/Icons/echo.svg"
-            alt=""
-            aria-hidden="true"
-            className="h-[15px] w-[15px] object-contain opacity-70"
-          />
-        </button>
+     <button
+  type="button"
+  onClick={() => setOpen(true)}
+  className={`inline-flex items-center gap-1.5 active:scale-95 ${className}`}
+  aria-label="Echo author post"
+>
+  <img
+    src="/assets/Icons/echo.svg"
+    alt=""
+    aria-hidden="true"
+    className="h-[15px] w-[15px] object-contain opacity-70"
+  />
 
-        <button
-          type="button"
-          onClick={handleOpenEchoes}
-          className="active:scale-95"
-          aria-label="View people who echoed"
-        >
-          {formatCompactNumber(
-            echoCount
-          )}
-        </button>
-      </div>
+  <span>
+    {formatCompactNumber(echoCount)}
+  </span>
+</button>
 
       <SocialEchoShareSheet
         open={open}
