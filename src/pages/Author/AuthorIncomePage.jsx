@@ -404,7 +404,7 @@ export default function AuthorIncomePage() {
               ))}
             </section>
 
-            <section className="overflow-hidden rounded-[20px] border border-[#edf0f4] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <section className="overflow-hidden rounded-[20px] border border-[#edf0f4] bg-[#ffffff] shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
               <div className="px-4 pb-4 pt-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -424,14 +424,14 @@ export default function AuthorIncomePage() {
                   <button
                     type="button"
                     onClick={() => setCalendarOpen(true)}
-                    className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-[#ffd4dd] bg-white px-3 text-[11px] font-bold text-[#ff3b5f] active:scale-95"
+                    className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-[#ffd4dd] bg-white px-3 text-[11px] font-bold text-[#111827] active:scale-95"
                   >
                     <i className="fa-regular fa-calendar" />
                     Change
                   </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 divide-x divide-[#f1dbe0] rounded-[15px] bg-white/80 py-3">
+                <div className="mt-5 grid grid-cols-2 divide-x divide-[#edf0f4] rounded-[15px] bg-[#ffffff] py-3">
                   <div className="px-4">
                     <div className="flex items-center gap-2">
                       <img
