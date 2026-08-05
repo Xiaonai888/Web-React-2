@@ -68,6 +68,7 @@ import StoryPerformancePage from './pages/Author/StoryPerformancePage'
 import AuthorHiddenCommentsPage from './pages/Author/AuthorHiddenCommentsPage'
 import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
 import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
+import UpdateTodayPage from './pages/UpdateTodayPage'
 
 
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
@@ -85,7 +86,6 @@ const ShadowMallSecondHandPage = lazy(() => import('./pages/Shop/ShadowMallSecon
 const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestSellerPage'))
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
-const UpdateTodayPage = lazy(() => import('./pages/UpdateTodayPage'))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
