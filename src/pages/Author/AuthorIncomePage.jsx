@@ -88,7 +88,7 @@ function PeriodTab({ label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex h-9 min-w-0 items-center justify-center whitespace-nowrap rounded-full px-1 text-[10.5px] font-semibold text-[#111827] transition active:scale-[0.98] ${
-        active ? 'bg-[#ffe8ee]' : 'bg-transparent'
+        active ? 'bg-[#ffd6df]' : 'bg-white'
       }`}
     >
       {label}
@@ -349,7 +349,15 @@ export default function AuthorIncomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pb-10">
+    <div
+  className="min-h-screen pb-10"
+  style={{
+    backgroundColor: '#FAFAFA',
+    backgroundImage: 'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,0.18) 38%, rgba(250,250,250,0.72) 76%, #FAFAFA 100%), linear-gradient(90deg, #FFF1F5 0%, #FFF8E8 100%)',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '100% 270px, 100% 270px',
+  }}
+>
       <header className="sticky top-0 z-40 bg-transparent">
         <div className="mx-auto flex h-[58px] max-w-[720px] items-center justify-between px-4">
           <button
@@ -396,7 +404,7 @@ export default function AuthorIncomePage() {
               ))}
             </section>
 
-            <section className="overflow-hidden rounded-[20px] border border-[#f1e5e8] bg-gradient-to-br from-[#fff1f5] via-white to-white shadow-sm">
+            <section className="overflow-hidden rounded-[20px] border border-[#edf0f4] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
               <div className="px-4 pb-4 pt-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -404,7 +412,7 @@ export default function AuthorIncomePage() {
                       {record.label || 'Selected income'}
                     </div>
 
-                    <div className="mt-2 text-[32px] font-black leading-none tracking-[-0.04em] text-[#ff3b5f]">
+                    <div className="mt-2 text-[32px] font-bold leading-none tracking-[-0.04em] text-[#ff3b5f]">
                       {formatMoney(record.total_usd)}
                     </div>
 
