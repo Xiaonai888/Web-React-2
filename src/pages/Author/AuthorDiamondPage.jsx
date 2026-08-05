@@ -367,7 +367,7 @@ export default function AuthorDiamondPage() {
 
         {data ? (
           <>
-            <section className="overflow-hidden rounded-[24px] bg-gradient-to-br from-[#eaf4ff] via-[#f7fbff] to-white px-5 py-5 shadow-sm">
+            <section className="overflow-hidden rounded-[24px] border border-[#edf0f4] bg-white px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
               <div className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#7b8ca5]">
                 Diamond Today
               </div>
@@ -401,7 +401,7 @@ export default function AuthorDiamondPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/author/income')}
-                  className="rounded-full bg-[#4386d8] px-4 py-2 text-[11.5px] font-extrabold text-white shadow-[0_10px_20px_rgba(67,134,216,0.2)] active:scale-[0.98]"
+                  className="rounded-full bg-[#4386d8] px-4 py-2 text-[11.5px] font-extrabold text-white active:scale-[0.98]"
                 >
                   View Income
                 </button>
@@ -409,7 +409,7 @@ export default function AuthorDiamondPage() {
             </section>
 
             <section className="grid grid-cols-2 gap-3">
-              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm">
+              <div className="rounded-[18px] border border-[#edf0f4] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
                 <div className="text-[10.5px] font-bold text-[#98a2b3]">
                   This Month
                 </div>
@@ -426,7 +426,7 @@ export default function AuthorDiamondPage() {
                 </div>
               </div>
 
-              <div className="rounded-[18px] bg-white px-4 py-4 shadow-sm">
+              <div className="rounded-[18px] border border-[#edf0f4] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
                 <div className="text-[10.5px] font-bold text-[#98a2b3]">
                   All Time
                 </div>
@@ -444,7 +444,7 @@ export default function AuthorDiamondPage() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[20px] bg-white py-2 shadow-sm">
+            <section className="overflow-hidden rounded-[20px] border border-[#edf0f4] bg-white py-2 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between gap-4 px-4 py-3">
                 <div>
                   <h2 className="text-[14px] font-extrabold text-[#111827]">
