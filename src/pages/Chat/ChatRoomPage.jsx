@@ -2,8 +2,10 @@ import {
   Ban,
   Check,
   ChevronLeft,
+  EllipsisVertical,
   LoaderCircle,
   Send,
+  UserRound,
   X,
 } from 'lucide-react'
 import {
@@ -95,7 +97,14 @@ function RequestPanel({
               disabled={Boolean(busyAction)}
               className="flex h-10 items-center justify-center gap-1 rounded-[12px] bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-[10px] font-extrabold text-white disabled:opacity-50"
             >
-              <Check size={15} />
+              {busyAction === 'accept' ? (
+                <LoaderCircle
+                  size={15}
+                  className="animate-spin"
+                />
+              ) : (
+                <Check size={15} />
+              )}
               Accept
             </button>
 
@@ -107,7 +116,14 @@ function RequestPanel({
               disabled={Boolean(busyAction)}
               className="flex h-10 items-center justify-center gap-1 rounded-[12px] border border-[#d7d7dc] bg-white text-[10px] font-extrabold text-[#5c5c65] disabled:opacity-50"
             >
-              <X size={15} />
+              {busyAction === 'decline' ? (
+                <LoaderCircle
+                  size={15}
+                  className="animate-spin"
+                />
+              ) : (
+                <X size={15} />
+              )}
               Decline
             </button>
 
@@ -119,7 +135,14 @@ function RequestPanel({
               disabled={Boolean(busyAction)}
               className="flex h-10 items-center justify-center gap-1 rounded-[12px] border border-[#f0c8ca] bg-white text-[10px] font-extrabold text-[#c1353b] disabled:opacity-50"
             >
-              <Ban size={14} />
+              {busyAction === 'block' ? (
+                <LoaderCircle
+                  size={14}
+                  className="animate-spin"
+                />
+              ) : (
+                <Ban size={14} />
+              )}
               Block
             </button>
           </div>
@@ -165,6 +188,60 @@ function RequestPanel({
   return null
 }
 
+function ConversationMenu({
+  open,
+  canOpenProfile,
+  canBlock,
+  busyAction,
+  onClose,
+  onOpenProfile,
+  onBlock,
+}) {
+  if (!open) return null
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Close conversation menu"
+        onClick={onClose}
+        className="fixed inset-0 z-[84]"
+      />
+
+      <div className="absolute right-3 top-[56px] z-[85] w-[210px] overflow-hidden rounded-[18px] border border-[#eceaf2] bg-white p-1.5 shadow-[0_18px_45px_rgba(17,24,39,0.17)]">
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          disabled={!canOpenProfile}
+          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
+        >
+          <UserRound size={17} />
+          View profile
+        </button>
+
+        {canBlock ? (
+          <button
+            type="button"
+            onClick={onBlock}
+            disabled={Boolean(busyAction)}
+            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+          >
+            {busyAction === 'block' ? (
+              <LoaderCircle
+                size={17}
+                className="animate-spin"
+              />
+            ) : (
+              <Ban size={17} />
+            )}
+            Block account
+          </button>
+        ) : null}
+      </div>
+    </>
+  )
+}
+
 export default function ChatRoomPage() {
   const navigate = useNavigate()
   const { conversationId } = useParams()
@@ -180,7 +257,15 @@ export default function ChatRoomPage() {
     useState(false)
   const [busyAction, setBusyAction] =
     useState('')
+  const [menuOpen, setMenuOpen] =
+    useState(false)
   const [error, setError] = useState('')
+
+  const notifyChatUpdated = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent('shadow-chat-updated')
+    )
+  }, [])
 
   const loadRoom = useCallback(
     async ({ silent = false } = {}) => {
@@ -215,6 +300,7 @@ export default function ChatRoomPage() {
           await markChatRead(
             conversationId
           )
+          notifyChatUpdated()
         }
       } catch (loadError) {
         if (loadError.status === 401) {
@@ -242,7 +328,11 @@ export default function ChatRoomPage() {
         setLoading(false)
       }
     },
-    [conversationId, navigate]
+    [
+      conversationId,
+      navigate,
+      notifyChatUpdated,
+    ]
   )
 
   useEffect(() => {
@@ -272,6 +362,10 @@ export default function ChatRoomPage() {
     })
   }, [messages.length])
 
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [conversationId])
+
   const handleSend = async () => {
     const message = text.trim()
 
@@ -297,6 +391,7 @@ export default function ChatRoomPage() {
       ])
       setText('')
       setError('')
+      notifyChatUpdated()
     } catch (sendError) {
       setError(
         sendError.message ||
@@ -315,7 +410,7 @@ export default function ChatRoomPage() {
     if (
       action === 'block' &&
       !window.confirm(
-        'Block this reader and stop all messages?'
+        'Block this account and stop all messages?'
       )
     ) {
       return
@@ -333,7 +428,9 @@ export default function ChatRoomPage() {
       setConversation(
         data.conversation || null
       )
+      setMenuOpen(false)
       setError('')
+      notifyChatUpdated()
     } catch (decisionError) {
       setError(
         decisionError.message ||
@@ -359,11 +456,39 @@ export default function ChatRoomPage() {
   const canSend = Boolean(
     conversation?.can_send
   )
+  const canOpenProfile = Boolean(
+    person.username
+  )
+  const canBlock = Boolean(
+    conversation &&
+      conversation.request_status !== 'blocked'
+  )
+
+  const handleOpenProfile = () => {
+    if (!person.username) return
+
+    setMenuOpen(false)
+
+    if (person.type === 'author') {
+      navigate(
+        `/author/page/${encodeURIComponent(
+          person.username
+        )}`
+      )
+      return
+    }
+
+    navigate(
+      `/profile?username=${encodeURIComponent(
+        person.username
+      )}`
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f7f9]">
       <header className="sticky top-0 z-[80] border-b border-[#e9e9ed] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[64px] max-w-[620px] items-center gap-3 px-3">
+        <div className="relative mx-auto flex h-[64px] max-w-[620px] items-center gap-3 px-3">
           <button
             type="button"
             onClick={() =>
@@ -378,9 +503,22 @@ export default function ChatRoomPage() {
             />
           </button>
 
-          <RoomAvatar person={person} />
+          <button
+            type="button"
+            onClick={handleOpenProfile}
+            disabled={!canOpenProfile}
+            aria-label="Open profile"
+            className="shrink-0 rounded-full disabled:cursor-default"
+          >
+            <RoomAvatar person={person} />
+          </button>
 
-          <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={handleOpenProfile}
+            disabled={!canOpenProfile}
+            className="min-w-0 flex-1 text-left disabled:cursor-default"
+          >
             <h1 className="truncate text-[14px] font-extrabold text-[#111827]">
               {person.name ||
                 'Conversation'}
@@ -393,15 +531,42 @@ export default function ChatRoomPage() {
                   ? 'Messages'
                   : 'Message request'}
             </p>
-          </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setMenuOpen(
+                (current) => !current
+              )
+            }
+            aria-label="Conversation options"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] transition hover:bg-[#f4f2f7] active:scale-90"
+          >
+            <EllipsisVertical size={21} />
+          </button>
+
+          <ConversationMenu
+            open={menuOpen}
+            canOpenProfile={canOpenProfile}
+            canBlock={canBlock}
+            busyAction={busyAction}
+            onClose={() => setMenuOpen(false)}
+            onOpenProfile={handleOpenProfile}
+            onBlock={() => handleDecision('block')}
+          />
         </div>
       </header>
 
       <main className="mx-auto max-w-[620px] pb-[118px]">
         {error ? (
-          <div className="mx-4 mt-4 rounded-[16px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
+          <button
+            type="button"
+            onClick={() => setError('')}
+            className="mx-4 mt-4 block w-[calc(100%_-_2rem)] rounded-[16px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
+          >
             {error}
-          </div>
+          </button>
         ) : null}
 
         {loading ? (
