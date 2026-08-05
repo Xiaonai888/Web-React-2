@@ -211,7 +211,7 @@ export default function SocialInteractionUsersPage() {
   const title =
   interactionType === 'echo'
     ? 'Readers who echoed this'
-    : 'People who liked'
+    : 'People who reacted'
 
   const sourceLabel = SOURCE_LABELS[sourceType] || 'Content'
   const sourceName =
@@ -382,15 +382,13 @@ export default function SocialInteractionUsersPage() {
   </h1>
 
   <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
-    {sourceName || sourceLabel}
-    {interactionType === 'echo' && shareTotal > 0
-      ? ` · ${shareTotal.toLocaleString()} ${
-          shareTotal === 1 ? 'echo' : 'echoes'
-        }`
-      : interactionType !== 'echo' && total > 0
-        ? ` · ${total.toLocaleString()}`
-        : ''}
-  </p>
+  {sourceName || sourceLabel}
+  {interactionType === 'echo' && shareTotal > 0
+    ? ` · ${shareTotal.toLocaleString()} ${
+        shareTotal === 1 ? 'echo' : 'echoes'
+      }`
+    : ''}
+</p>
 </div>
 
           <div className="h-10 w-10" />
@@ -433,6 +431,16 @@ export default function SocialInteractionUsersPage() {
         ) : null}
      </header>
 
+
+      {interactionType === 'like' ? (
+  <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
+    <div className="text-[15px] font-bold text-[#111827]">
+      {total.toLocaleString()}{' '}
+      {total === 1 ? 'reaction' : 'reactions'}
+    </div>
+  </section>
+) : null}
+      
 {interactionType === 'echo' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
     <div className="text-[15px] font-bold text-[#111827]">
@@ -578,10 +586,16 @@ export default function SocialInteractionUsersPage() {
               />
             </div>
             <div className="mt-4 text-[16px] font-semibold">
-              {interactionType === 'echo'
-                ? 'No echoes yet'
-                : 'No likes yet'}
-            </div>
+  {interactionType === 'echo'
+    ? 'No echoes yet'
+    : 'No reactions yet'}
+</div>
+
+<p className="mx-auto mt-2 max-w-[280px] text-[13px] leading-5 text-[#98a2b3]">
+  {interactionType === 'echo'
+    ? 'Be the first to echo this.'
+    : 'Be the first to react to this post.'}
+</p>
           </div>
         )}
       </section>
