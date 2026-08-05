@@ -7,15 +7,19 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const filters = ['All', 'Unread', 'Comments', 'Orders', 'Income']
+const filters = ['All', 'Unread', 'Comments', 'Activity', 'Orders', 'Income']
 
 const typeMap = {
   comments: 'Comments',
   comment: 'Comments',
   mention: 'Comments',
   mentions: 'Comments',
-  post: 'Comments',
-  posts: 'Comments',
+  reaction: 'Activity',
+  echo: 'Activity',
+  follower: 'Activity',
+  review: 'Activity',
+  post: 'Activity',
+  posts: 'Activity',
   orders: 'Orders',
   order: 'Orders',
   income: 'Income',
@@ -30,6 +34,10 @@ const iconMap = {
   comment: 'fa-regular fa-comment',
   mention: 'fa-solid fa-at',
   mentions: 'fa-solid fa-at',
+  reaction: 'fa-solid fa-heart',
+  echo: 'fa-solid fa-retweet',
+  follower: 'fa-solid fa-user-plus',
+  review: 'fa-solid fa-star',
   post: 'fa-regular fa-file-lines',
   posts: 'fa-regular fa-file-lines',
   orders: 'fa-solid fa-bag-shopping',
@@ -84,7 +92,36 @@ function formatTime(value) {
   })
 }
 
+function getActorMetadata(metadata = {}) {
+  return {
+    name:
+      metadata.reader_name ||
+      metadata.reviewer_name ||
+      metadata.buyer_name ||
+      metadata.actor_name ||
+      '',
+    username:
+      metadata.reader_username ||
+      metadata.reviewer_username ||
+      metadata.buyer_username ||
+      metadata.actor_username ||
+      '',
+    avatarUrl:
+      metadata.reader_avatar_url ||
+      metadata.reviewer_avatar_url ||
+      metadata.buyer_avatar_url ||
+      metadata.actor_avatar_url ||
+      '',
+  }
+}
+
 function normalizeNotification(item) {
+  const metadata =
+    item.metadata && typeof item.metadata === 'object'
+      ? item.metadata
+      : {}
+  const actor = getActorMetadata(metadata)
+
   return {
     id: item.id,
     type: item.type || 'system',
@@ -95,6 +132,10 @@ function normalizeNotification(item) {
     unread: !Boolean(item.is_read),
     time: formatTime(item.created_at),
     createdAt: item.created_at || '',
+    metadata,
+    actorName: actor.name,
+    actorUsername: actor.username,
+    actorAvatarUrl: actor.avatarUrl,
   }
 }
 
@@ -103,11 +144,14 @@ async function fetchPageNotifications() {
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/authors/me/page-notifications`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/page-notifications`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
 
   const data = await response.json().catch(() => ({}))
 
@@ -128,12 +172,17 @@ async function markNotificationRead(notificationId) {
 
   if (!token || !notificationId) return
 
-  await fetch(`${API_BASE_URL}/api/authors/me/page-notifications/${encodeURIComponent(notificationId)}/read`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  await fetch(
+    `${API_BASE_URL}/api/authors/me/page-notifications/${encodeURIComponent(
+      notificationId
+    )}/read`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
 }
 
 async function markAllNotificationsRead() {
@@ -141,12 +190,15 @@ async function markAllNotificationsRead() {
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(`${API_BASE_URL}/api/authors/me/page-notifications/read-all`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/page-notifications/read-all`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
 
   const data = await response.json().catch(() => ({}))
 
@@ -156,9 +208,28 @@ async function markAllNotificationsRead() {
 }
 
 function NotificationIcon({ notification }) {
+  const hasAvatar = Boolean(notification.actorAvatarUrl)
+
   return (
-    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-      <i className={`${getNotificationIcon(notification.type)} text-[17px]`} />
+    <div className="relative h-12 w-12 shrink-0">
+      {hasAvatar ? (
+        <img
+          src={notification.actorAvatarUrl}
+          alt={notification.actorName || 'Reader'}
+          className="h-12 w-12 rounded-full bg-[#f3f4f6] object-cover"
+        />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
+          <i className={`${getNotificationIcon(notification.type)} text-[17px]`} />
+        </div>
+      )}
+
+      {hasAvatar ? (
+        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#111827] text-white">
+          <i className={`${getNotificationIcon(notification.type)} text-[10px]`} />
+        </span>
+      ) : null}
+
       {notification.unread ? (
         <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
       ) : null}
@@ -168,65 +239,77 @@ function NotificationIcon({ notification }) {
 
 function NotificationItem({ notification, onOpen, onOptions }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(notification)}
-      className={`flex w-full gap-3 px-4 py-3 text-left transition active:bg-[#eef0f4] ${
+    <div
+      className={`flex w-full gap-3 px-4 py-3 text-left transition ${
         notification.unread ? 'bg-[#eef6ff]' : 'bg-white'
       }`}
     >
-      <NotificationIcon notification={notification} />
+      <button
+        type="button"
+        onClick={() => onOpen(notification)}
+        className="flex min-w-0 flex-1 gap-3 text-left active:opacity-80"
+      >
+        <NotificationIcon notification={notification} />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <p
-              className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
-                notification.unread ? 'font-black' : 'font-semibold'
+        <div className="min-w-0 flex-1">
+          <p
+            className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
+              notification.unread ? 'font-black' : 'font-semibold'
+            }`}
+          >
+            {notification.title}
+            {notification.message ? (
+              <span className="font-semibold text-[#374151]">
+                {' '}
+                · {notification.message}
+              </span>
+            ) : null}
+          </p>
+
+          <div className="mt-1 flex items-center gap-2">
+            <span
+              className={`text-[12px] ${
+                notification.unread
+                  ? 'font-black text-[#2563eb]'
+                  : 'font-semibold text-[#8b93a1]'
               }`}
             >
-              {notification.title}
-              {notification.message ? (
-                <span className="font-semibold text-[#374151]"> · {notification.message}</span>
-              ) : null}
-            </p>
-
-            <div className="mt-1 flex items-center gap-2">
-              <span
-                className={`text-[12px] ${
-                  notification.unread ? 'font-black text-[#2563eb]' : 'font-semibold text-[#8b93a1]'
-                }`}
-              >
-                {notification.time}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
-              <span className="text-[12px] font-semibold text-[#8b93a1]">{notification.typeLabel}</span>
-            </div>
+              {notification.time}
+            </span>
+            <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
+            <span className="text-[12px] font-semibold text-[#8b93a1]">
+              {notification.typeLabel}
+            </span>
           </div>
-
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onOptions(notification)
-            }}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
-            aria-label="Notification options"
-          >
-            <i className="fa-solid fa-ellipsis text-[14px]" />
-          </button>
         </div>
-      </div>
-    </button>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onOptions(notification)}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
+        aria-label="Notification options"
+      >
+        <i className="fa-solid fa-ellipsis text-[14px]" />
+      </button>
+    </div>
   )
 }
 
-function NotificationGroup({ title, notifications, onOpen, onOptions }) {
+function NotificationGroup({
+  title,
+  notifications,
+  onOpen,
+  onOptions,
+}) {
   if (!notifications.length) return null
 
   return (
     <section>
-      <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">{title}</h2>
+      <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">
+        {title}
+      </h2>
+
       <div className="overflow-hidden border-y border-[#eef0f4] bg-white">
         {notifications.map((notification, index) => (
           <div
@@ -251,9 +334,12 @@ function EmptyState({ filter }) {
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
-      <h2 className="text-[17px] font-black text-[#111827]">No {filter.toLowerCase()} notifications</h2>
+      <h2 className="text-[17px] font-black text-[#111827]">
+        No {filter.toLowerCase()} notifications
+      </h2>
       <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Page income, orders, comments, mentions, and admin notices will appear here.
+        Comments, reactions, echoes, followers, reviews, orders, income, and
+        admin notices will appear here.
       </p>
     </div>
   )
@@ -291,18 +377,29 @@ export default function AuthorPageNotificationsPage() {
 
   const filteredNotifications = useMemo(() => {
     if (activeFilter === 'All') return notifications
-    if (activeFilter === 'Unread') return notifications.filter((item) => item.unread)
-    return notifications.filter((item) => item.typeLabel === activeFilter)
+    if (activeFilter === 'Unread') {
+      return notifications.filter((item) => item.unread)
+    }
+
+    return notifications.filter(
+      (item) => item.typeLabel === activeFilter
+    )
   }, [activeFilter, notifications])
 
-  const newNotifications = filteredNotifications.filter((item) => item.unread)
-  const earlierNotifications = filteredNotifications.filter((item) => !item.unread)
+  const newNotifications = filteredNotifications.filter(
+    (item) => item.unread
+  )
+  const earlierNotifications = filteredNotifications.filter(
+    (item) => !item.unread
+  )
 
   async function handleOpen(notification) {
     if (notification.unread) {
       setNotifications((current) =>
         current.map((item) =>
-          item.id === notification.id ? { ...item, unread: false } : item
+          item.id === notification.id
+            ? { ...item, unread: false }
+            : item
         )
       )
       setUnreadCount((current) => Math.max(0, current - 1))
@@ -318,16 +415,20 @@ export default function AuthorPageNotificationsPage() {
   }
 
   function handleOptions() {
-    setMessage('Notification options will be connected later.')
+    setMessage('Notification options will be connected in the final step.')
   }
 
   async function handleMarkAllRead() {
     try {
       await markAllNotificationsRead()
-      setNotifications((current) => current.map((item) => ({ ...item, unread: false })))
+      setNotifications((current) =>
+        current.map((item) => ({ ...item, unread: false }))
+      )
       setUnreadCount(0)
     } catch (error) {
-      setMessage(error.message || 'Failed to mark notifications as read')
+      setMessage(
+        error.message || 'Failed to mark notifications as read'
+      )
     }
   }
 
@@ -344,7 +445,9 @@ export default function AuthorPageNotificationsPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-black text-[#111827]">Page Notifications</div>
+          <div className="text-[18px] font-black text-[#111827]">
+            Page Notifications
+          </div>
 
           <button
             type="button"
@@ -386,7 +489,9 @@ export default function AuthorPageNotificationsPage() {
                 >
                   {filter}
                   {filter === 'Unread' && unreadCount > 0 ? (
-                    <span className="ml-1 text-[11px] font-black text-[#2563eb]">{unreadCount}</span>
+                    <span className="ml-1 text-[11px] font-black text-[#2563eb]">
+                      {unreadCount}
+                    </span>
                   ) : null}
                 </button>
               )
