@@ -146,6 +146,16 @@ export function sendChatMessage(
   )
 }
 
+export function getChatBlockStatus(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/block`
+  )
+}
+
 export function blockChatConversation(
   conversationId
 ) {
@@ -155,6 +165,19 @@ export function blockChatConversation(
     )}/block`,
     {
       method: 'PATCH',
+    }
+  )
+}
+
+export function unblockChatConversation(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/block`,
+    {
+      method: 'DELETE',
     }
   )
 }
