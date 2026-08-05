@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ReportModal from '../ReportModal'
 
 const API_BASE_URL =
@@ -585,6 +586,10 @@ function EditCommentSheet({
 export default function ReaderPostCommentsModal({
   open,
   postId,
+  postName = 'Reader Post',
+  echoSourceType = 'reader_post',
+  echoSourceId,
+  echoSourceName = 'Reader Post',
   postOwnerId,
   commentsPermission = 'everyone',
   reactionCount = 0,
@@ -593,6 +598,7 @@ export default function ReaderPostCommentsModal({
   onClose,
   onTotalChange,
 }) {
+  const navigate = useNavigate()
   const sheetRef = useRef(null)
   const composerRef = useRef(null)
   const dragStartYRef = useRef(0)
@@ -1223,6 +1229,57 @@ export default function ReaderPostCommentsModal({
     setDragOffset(0)
   }
 
+  const openReactionList = () => {
+    if (!postId) return
+
+    onClose?.()
+
+    navigate(
+      `/interactions/reader_post/${encodeURIComponent(
+        postId
+      )}/likes`,
+      {
+        state: {
+          sourceName: postName,
+        },
+      }
+    )
+  }
+
+  const openEchoList = () => {
+    const type = String(
+      echoSourceType ||
+        'reader_post'
+    )
+      .trim()
+      .toLowerCase()
+
+    const id = String(
+      echoSourceId ||
+        postId ||
+        ''
+    ).trim()
+
+    if (!type || !id) return
+
+    onClose?.()
+
+    navigate(
+      `/interactions/${encodeURIComponent(
+        type
+      )}/${encodeURIComponent(
+        id
+      )}/echoes`,
+      {
+        state: {
+          sourceName:
+            echoSourceName ||
+            postName,
+        },
+      }
+    )
+  }
+
   if (!open) return null
 
   return createPortal(
@@ -1257,21 +1314,37 @@ export default function ReaderPostCommentsModal({
           style={{ touchAction: 'none' }}
         >
           <div className="grid grid-cols-3 items-center gap-2 text-center">
-            <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
+            <button
+              type="button"
+              onPointerDown={(event) =>
+                event.stopPropagation()
+              }
+              onClick={openReactionList}
+              className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+              aria-label="View people who reacted"
+            >
               <i className="fa-solid fa-heart text-[14px] text-[#ff3b5f]" />
               <span>
                 {formatCompactNumber(
                   reactionCount
                 )}
               </span>
-            </div>
+            </button>
 
             <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[14px] font-normal text-[#111827]">
               {formatCompactNumber(total)}{' '}
               comments
             </div>
 
-            <div className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827]">
+            <button
+              type="button"
+              onPointerDown={(event) =>
+                event.stopPropagation()
+              }
+              onClick={openEchoList}
+              className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
+              aria-label="View people who echoed"
+            >
               <img
                 src="/assets/Icons/echo.svg"
                 alt=""
@@ -1283,7 +1356,7 @@ export default function ReaderPostCommentsModal({
                   echoCount
                 )}
               </span>
-            </div>
+            </button>
           </div>
         </header>
 
