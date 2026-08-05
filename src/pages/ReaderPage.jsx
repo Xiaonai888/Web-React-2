@@ -2607,33 +2607,45 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/45 px-4">
-      <div className="w-full max-w-[420px] rounded-[26px] bg-white p-6 text-center shadow-2xl">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d]">
+    <div
+      className="fixed inset-0 z-[160] flex items-center justify-center bg-black/60 px-5"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adult-warning-title"
+    >
+      <div className="w-full max-w-[380px] rounded-[26px] bg-white px-6 pb-6 pt-7 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
           <i className="fa-solid fa-triangle-exclamation text-[26px]" />
         </div>
 
-        <h2 className="mt-4 text-[20px] font-extrabold text-[#111827]">18+ Episode Warning</h2>
+        <h2
+          id="adult-warning-title"
+          className="mt-4 text-[20px] font-bold text-[#111827]"
+        >
+          18+ Content Warning
+        </h2>
 
-        <p className="mt-3 text-[13px] leading-6 text-[#667085]">
-          This episode may include mature content. Please continue only if you are allowed to view adult content.
+        <p className="mt-3 text-[13px] font-normal leading-6 text-[#667085]">
+          This episode may contain mature themes, including violence, strong
+          language, sexual or suggestive content, or other sensitive material.
+          Please continue at your own discretion.
         </p>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-6 flex flex-col gap-3">
           <button
             type="button"
-            onClick={onCancel}
-            className="h-12 rounded-full border border-[#e4e7ec] bg-white text-[13px] font-extrabold text-[#111827] active:scale-95"
+            onClick={onContinue}
+            className="h-12 w-full rounded-full bg-[#FE526E] text-[14px] font-medium text-white transition active:scale-[0.98]"
           >
-            Go Back
+            Continue Reading
           </button>
 
           <button
             type="button"
-            onClick={onContinue}
-            className="h-12 rounded-full bg-[#111827] text-[13px] font-extrabold text-white active:scale-95"
+            onClick={onCancel}
+            className="h-12 w-full rounded-full border border-[#e4e7ec] bg-white text-[14px] font-medium text-[#111827] transition active:scale-[0.98]"
           >
-            Continue
+            Go Back
           </button>
         </div>
       </div>
