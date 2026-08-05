@@ -128,11 +128,13 @@ export default function ReaderProfileFooter({
     'Me'
 
   const activeKey =
-    location.pathname === '/library'
-      ? 'library'
-      : location.pathname === '/profile'
-        ? 'me'
-        : ''
+    location.pathname.startsWith('/chat')
+      ? 'chat'
+      : location.pathname === '/library'
+        ? 'library'
+        : location.pathname === '/profile'
+          ? 'me'
+          : ''
 
   const showMessage = (text) => {
     setMessage(text)
@@ -151,7 +153,7 @@ export default function ReaderProfileFooter({
     }
 
     if (key === 'chat') {
-      showMessage('Chat is being built.')
+      navigate('/chat')
       return
     }
 
