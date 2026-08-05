@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import ReaderProfileFooter from '../../components/reader-profile/ReaderProfileFooter'
 import ChatSuggestedPeople from '../../components/chat/ChatSuggestedPeople'
+import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import {
   decideChatRequest,
   getChatConversations,
@@ -306,6 +307,8 @@ export default function ChatInboxPage() {
     useState(false)
   const [moreOpen, setMoreOpen] =
     useState(false)
+  const [newMessageOpen, setNewMessageOpen] =
+    useState(false)
   const [busyRequest, setBusyRequest] =
     useState(null)
   const [error, setError] = useState('')
@@ -552,9 +555,7 @@ export default function ChatInboxPage() {
   }
 
   const openNewMessage = () => {
-    setNotice(
-      'Open an author profile and tap Message to start a chat.'
-    )
+    setNewMessageOpen(true)
   }
 
   return (
@@ -895,6 +896,11 @@ export default function ChatInboxPage() {
 
         <ChatSuggestedPeople />
       </main>
+
+      <ChatNewMessageSheet
+        open={newMessageOpen}
+        onClose={() => setNewMessageOpen(false)}
+      />
 
       <ReaderProfileFooter />
     </div>
