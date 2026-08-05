@@ -147,9 +147,14 @@ function CalendarSheet({
   onApply,
 }) {
   const [draftValue, setDraftValue] = useState(selectedDate)
+  const [dragStartY, setDragStartY] = useState(null)
+  const [dragY, setDragY] = useState(0)
 
   useEffect(() => {
     if (!open) return
+
+    setDragStartY(null)
+    setDragY(0)
 
     if (period === 'month') {
       setDraftValue(selectedDate.slice(0, 7))
@@ -164,10 +169,41 @@ function CalendarSheet({
     setDraftValue(selectedDate)
   }, [open, period, selectedDate])
 
+  useEffect(() => {
+    if (!open) return undefined
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const root = document.documentElement
+    const previousBodyOverflow = body.style.overflow
+    const previousBodyPosition = body.style.position
+    const previousBodyTop = body.style.top
+    const previousBodyWidth = body.style.width
+    const previousRootOverflow = root.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    root.style.overflow = 'hidden'
+
+    return () => {
+      body.style.overflow = previousBodyOverflow
+      body.style.position = previousBodyPosition
+      body.style.top = previousBodyTop
+      body.style.width = previousBodyWidth
+      root.style.overflow = previousRootOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
   if (!open) return null
 
   const currentYear = Number(cambodiaDateValue().slice(0, 4))
-  const years = Array.from({ length: 10 }, (_, index) => currentYear - index)
+  const years = Array.from(
+    { length: 10 },
+    (_, index) => currentYear - index
+  )
 
   function applySelection() {
     if (!draftValue) return
@@ -185,6 +221,41 @@ function CalendarSheet({
     onApply(draftValue)
   }
 
+  function handleTouchStart(event) {
+    setDragStartY(event.touches[0].clientY)
+    setDragY(0)
+  }
+
+  function handleTouchMove(event) {
+    if (dragStartY === null) return
+
+    const distance = Math.max(
+      0,
+      event.touches[0].clientY - dragStartY
+    )
+
+    setDragY(distance)
+  }
+
+  function handleTouchEnd(event) {
+    const endY =
+      event.changedTouches[0]?.clientY ?? dragStartY ?? 0
+    const distance =
+      dragStartY === null ? 0 : endY - dragStartY
+
+    setDragStartY(null)
+    setDragY(0)
+
+    if (distance >= 90) {
+      onClose()
+    }
+  }
+
+  function handleTouchCancel() {
+    setDragStartY(null)
+    setDragY(0)
+  }
+
   return (
     <div className="fixed inset-0 z-[200] flex items-end bg-black/35">
       <button
@@ -194,32 +265,47 @@ function CalendarSheet({
         className="absolute inset-0"
       />
 
-      <div className="relative w-full rounded-t-[26px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-3 shadow-[0_-16px_50px_rgba(15,23,42,0.18)]">
-        <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
+      <div
+        className="relative w-full rounded-t-[26px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-2 shadow-[0_-16px_50px_rgba(15,23,42,0.18)]"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition:
+            dragStartY === null
+              ? 'transform 220ms ease'
+              : 'none',
+        }}
+      >
+        <div
+          className="select-none pb-1 pt-1"
+          style={{ touchAction: 'none' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
+          <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d0d5dd]" />
 
-        <div className="mt-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-[18px] font-black text-[#111827]">Choose record date</h2>
-            <p className="mt-1 text-[12px] font-medium text-[#98a2b3]">
-              Select the {period === 'week' ? 'week date' : period} you want to view.
+          <div className="mt-5">
+            <h2 className="text-[18px] font-bold text-[#111827]">
+              Choose record date
+            </h2>
+
+            <p className="mt-1 text-[12px] font-normal text-[#98a2b3]">
+              Select the{' '}
+              {period === 'week' ? 'week date' : period}{' '}
+              you want to view.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f6] text-[#667085]"
-          >
-            <i className="fa-solid fa-xmark text-[13px]" />
-          </button>
         </div>
 
         <div className="mt-5">
           {period === 'year' ? (
             <select
               value={draftValue}
-              onChange={(event) => setDraftValue(event.target.value)}
-              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-bold text-[#111827] outline-none focus:border-[#ff3b5f]"
+              onChange={(event) =>
+                setDraftValue(event.target.value)
+              }
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f]"
             >
               {years.map((year) => (
                 <option key={year} value={String(year)}>
@@ -231,8 +317,10 @@ function CalendarSheet({
             <input
               type={period === 'month' ? 'month' : 'date'}
               value={draftValue}
-              onChange={(event) => setDraftValue(event.target.value)}
-              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-bold text-[#111827] outline-none focus:border-[#ff3b5f]"
+              onChange={(event) =>
+                setDraftValue(event.target.value)
+              }
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f]"
             />
           )}
         </div>
@@ -240,9 +328,9 @@ function CalendarSheet({
         <button
           type="button"
           onClick={applySelection}
-          className="mt-5 h-12 w-full rounded-full bg-[#ff3b5f] text-[14px] font-black text-white active:scale-[0.99]"
+          className="mt-5 h-12 w-full rounded-full bg-[#ff3b5f] text-[14px] font-normal text-white active:scale-[0.99]"
         >
-          View income
+          View Income
         </button>
       </div>
     </div>
