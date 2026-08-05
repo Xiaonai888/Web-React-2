@@ -139,25 +139,31 @@ function normalizeNotification(item) {
   }
 }
 
-async function fetchPageNotifications() {
+async function apiRequest(path, options = {}) {
   const token = getAuthToken()
 
   if (!token) throw new Error('Please login first')
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/authors/me/page-notifications`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  )
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
+  })
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load notifications')
+    throw new Error(data.message || 'Request failed')
   }
+
+  return data
+}
+
+async function fetchPageNotifications() {
+  const data = await apiRequest('/api/authors/me/page-notifications')
 
   return {
     notifications: Array.isArray(data.notifications)
@@ -167,44 +173,37 @@ async function fetchPageNotifications() {
   }
 }
 
-async function markNotificationRead(notificationId) {
-  const token = getAuthToken()
-
-  if (!token || !notificationId) return
-
-  await fetch(
-    `${API_BASE_URL}/api/authors/me/page-notifications/${encodeURIComponent(
+function markNotificationRead(notificationId) {
+  return apiRequest(
+    `/api/authors/me/page-notifications/${encodeURIComponent(
       notificationId
     )}/read`,
-    {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { method: 'PATCH' }
   )
 }
 
-async function markAllNotificationsRead() {
-  const token = getAuthToken()
-
-  if (!token) throw new Error('Please login first')
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/authors/me/page-notifications/read-all`,
-    {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+function markNotificationUnread(notificationId) {
+  return apiRequest(
+    `/api/authors/me/page-notifications/${encodeURIComponent(
+      notificationId
+    )}/unread`,
+    { method: 'PATCH' }
   )
+}
 
-  const data = await response.json().catch(() => ({}))
+function deleteNotification(notificationId) {
+  return apiRequest(
+    `/api/authors/me/page-notifications/${encodeURIComponent(
+      notificationId
+    )}`,
+    { method: 'DELETE' }
+  )
+}
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to mark notifications as read')
-  }
+function markAllNotificationsRead() {
+  return apiRequest('/api/authors/me/page-notifications/read-all', {
+    method: 'PATCH',
+  })
 }
 
 function NotificationIcon({ notification }) {
@@ -345,6 +344,98 @@ function EmptyState({ filter }) {
   )
 }
 
+function OptionsSheet({
+  notification,
+  loading,
+  onClose,
+  onToggleRead,
+  onDelete,
+}) {
+  useEffect(() => {
+    if (!notification) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [notification])
+
+  if (!notification) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[120]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Notification options"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+        aria-label="Close notification options"
+      />
+
+      <section className="absolute inset-x-0 bottom-0 rounded-t-[24px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_50px_rgba(17,24,39,0.22)]">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#cfd3da]" />
+
+        <div className="mb-4 flex items-center gap-3 rounded-[18px] bg-[#f6f7f9] p-3">
+          <NotificationIcon notification={notification} />
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-[13px] font-black leading-5 text-[#111827]">
+              {notification.title}
+            </p>
+            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
+              {notification.typeLabel} · {notification.time}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onToggleRead}
+          className="flex h-12 w-full items-center gap-3 rounded-[16px] px-4 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef2ff] text-[#2563eb]">
+            <i
+              className={
+                notification.unread
+                  ? 'fa-solid fa-check'
+                  : 'fa-regular fa-envelope'
+              }
+            />
+          </span>
+          {notification.unread ? 'Mark as read' : 'Mark as unread'}
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onDelete}
+          className="mt-1 flex h-12 w-full items-center gap-3 rounded-[16px] px-4 text-left text-[14px] font-bold text-[#dc2626] active:bg-[#fff1f2] disabled:opacity-50"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f2]">
+            <i className="fa-regular fa-trash-can" />
+          </span>
+          Delete notification
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onClose}
+          className="mt-3 h-12 w-full rounded-[16px] bg-[#f3f4f6] text-[14px] font-black text-[#111827] active:scale-[0.99] disabled:opacity-50"
+        >
+          {loading ? 'Please wait...' : 'Cancel'}
+        </button>
+      </section>
+    </div>
+  )
+}
+
 export default function AuthorPageNotificationsPage() {
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('All')
@@ -352,6 +443,8 @@ export default function AuthorPageNotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [optionsLoading, setOptionsLoading] = useState(false)
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -377,6 +470,7 @@ export default function AuthorPageNotificationsPage() {
 
   const filteredNotifications = useMemo(() => {
     if (activeFilter === 'All') return notifications
+
     if (activeFilter === 'Unread') {
       return notifications.filter((item) => item.unread)
     }
@@ -414,8 +508,68 @@ export default function AuthorPageNotificationsPage() {
     setMessage('This notification does not have a target page yet.')
   }
 
-  function handleOptions() {
-    setMessage('Notification options will be connected in the final step.')
+  function handleOptions(notification) {
+    setMessage('')
+    setSelectedNotification(notification)
+  }
+
+  async function handleToggleRead() {
+    if (!selectedNotification || optionsLoading) return
+
+    try {
+      setOptionsLoading(true)
+
+      if (selectedNotification.unread) {
+        await markNotificationRead(selectedNotification.id)
+      } else {
+        await markNotificationUnread(selectedNotification.id)
+      }
+
+      const nextUnread = !selectedNotification.unread
+
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === selectedNotification.id
+            ? { ...item, unread: nextUnread }
+            : item
+        )
+      )
+
+      setUnreadCount((current) =>
+        selectedNotification.unread
+          ? Math.max(0, current - 1)
+          : current + 1
+      )
+
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to update notification')
+    } finally {
+      setOptionsLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!selectedNotification || optionsLoading) return
+
+    try {
+      setOptionsLoading(true)
+      await deleteNotification(selectedNotification.id)
+
+      setNotifications((current) =>
+        current.filter((item) => item.id !== selectedNotification.id)
+      )
+
+      if (selectedNotification.unread) {
+        setUnreadCount((current) => Math.max(0, current - 1))
+      }
+
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to delete notification')
+    } finally {
+      setOptionsLoading(false)
+    }
   }
 
   async function handleMarkAllRead() {
@@ -523,6 +677,16 @@ export default function AuthorPageNotificationsPage() {
       </main>
 
       <AuthorPageFooter active="Notifications" />
+
+      <OptionsSheet
+        notification={selectedNotification}
+        loading={optionsLoading}
+        onClose={() => {
+          if (!optionsLoading) setSelectedNotification(null)
+        }}
+        onToggleRead={handleToggleRead}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }
