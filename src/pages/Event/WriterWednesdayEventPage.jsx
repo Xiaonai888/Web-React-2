@@ -186,7 +186,7 @@ export default function WriterWednesdayEventPage() {
           }}
         >
           <button
-            onClick={() => navigate('/author-event')}
+            onClick={() => navigate('/event')}
             style={{
               border: 'none',
               background: 'transparent',
