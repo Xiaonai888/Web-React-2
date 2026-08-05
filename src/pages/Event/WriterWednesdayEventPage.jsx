@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const API_BASE_URL =
+  'https://shadow-backend-kucw.onrender.com'
 const PAGE_BG = '#ffffff'
 const CARD_BG = '#ffffff'
 const PRIMARY = '#7c3aed'
@@ -64,6 +66,25 @@ function getCountdownParts(totalSeconds) {
       (seconds % 3600) / 60
     ),
     seconds: Math.floor(seconds % 60),
+  }
+}
+function normalizeEvent(event) {
+  const fallback = getWriterWednesdayState()
+
+  if (!event) return fallback
+
+  return {
+    active: Boolean(event.active),
+    countdownSeconds: Number(
+      event.active
+        ? event.ends_in_seconds
+        : event.starts_in_seconds
+    ),
+    nextStart: new Date(
+      event.next_starts_at ||
+        event.starts_at ||
+        fallback.nextStart
+    ),
   }
 }
 
@@ -160,12 +181,52 @@ export default function WriterWednesdayEventPage() {
   )
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setEventState(getWriterWednesdayState())
-    }, 1000)
+  let ignore = false
 
-    return () => clearInterval(timer)
-  }, [])
+  async function syncEvent() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
+      )
+      const data = await response.json()
+
+      if (!response.ok || data.ok === false) {
+        throw new Error('Failed')
+      }
+
+      if (!ignore) {
+        setEventState(normalizeEvent(data.event))
+      }
+    } catch {
+      if (!ignore) {
+        setEventState(getWriterWednesdayState())
+      }
+    }
+  }
+
+  syncEvent()
+
+  const syncTimer = setInterval(
+    syncEvent,
+    60000
+  )
+
+  const countdownTimer = setInterval(() => {
+    setEventState((current) => ({
+      ...current,
+      countdownSeconds: Math.max(
+        0,
+        Number(current.countdownSeconds || 0) - 1
+      ),
+    }))
+  }, 1000)
+
+  return () => {
+    ignore = true
+    clearInterval(syncTimer)
+    clearInterval(countdownTimer)
+  }
+}, [])
 
   const countdown = getCountdownParts(
     eventState.countdownSeconds
