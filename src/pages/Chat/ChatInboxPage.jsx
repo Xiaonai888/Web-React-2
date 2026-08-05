@@ -757,7 +757,7 @@ export default function ChatInboxPage() {
           <button
             type="button"
             onClick={() => setError('')}
-            className="mx-4 mt-4 block w-[calc(100%-2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
+            className="mx-4 mt-4 block w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
           >
             {error}
           </button>
