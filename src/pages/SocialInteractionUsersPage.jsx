@@ -588,22 +588,14 @@ export default function SocialInteractionUsersPage() {
                   <div className="relative shrink-0">
                     <Avatar user={item.user} />
                     {interactionType === 'like' ? (
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
-                        <img
-                          src={meta.src}
-                          alt={meta.label}
-                          className="h-5 w-5 object-contain"
-                        />
-                      </span>
-                    ) : (
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827] text-white shadow-sm ring-2 ring-white">
-                        <img
-                          src="/assets/Icons/echo.svg"
-                          alt=""
-                          className="h-3.5 w-3.5 object-contain brightness-0 invert"
-                        />
-                      </span>
-                    )}
+  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+    <img
+      src={meta.src}
+      alt={meta.label}
+      className="h-5 w-5 object-contain"
+    />
+  </span>
+) : null}
                   </div>
 
                   <div className="min-w-0 flex-1">
