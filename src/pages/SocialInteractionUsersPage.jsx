@@ -105,9 +105,46 @@ function normalizeItem(item, interactionType) {
       item?.echo_id ||
       `${user.id}-${item?.updated_at || item?.created_at || item?.reaction_type || interactionType}`,
     user,
-    reaction_type: String(item?.reaction_type || item?.type || 'love').toLowerCase(),
-    created_at: item?.updated_at || item?.created_at || '',
-    share_count: Math.max(1, Number(item?.share_count || item?.echo_count || 1)),
+    reaction_type: String(
+      item?.reaction_type ||
+        item?.type ||
+        'love'
+    ).toLowerCase(),
+    created_at:
+      item?.updated_at ||
+      item?.created_at ||
+      '',
+    share_count: Math.max(
+      1,
+      Number(
+        item?.share_count ||
+          item?.echo_count ||
+          1
+      )
+    ),
+    content: String(
+      item?.content ||
+        item?.echo_text ||
+        ''
+    ).trim(),
+    visibility:
+      item?.visibility ||
+      'public',
+    like_count: Number(
+      item?.like_count || 0
+    ),
+    comment_count: Number(
+      item?.comment_count || 0
+    ),
+    echo_count: Number(
+      item?.echo_count || 0
+    ),
+    reader_post_id:
+      item?.reader_post_id ||
+      item?.id ||
+      '',
+    source:
+      item?.source || null,
   }
 }
 
@@ -261,8 +298,7 @@ export default function SocialInteractionUsersPage() {
   )
 
   const [items, setItems] = useState([])
-  const [source, setSource] =
-  useState(null)
+  const [source, setSource] = useState(null)
   const [counts, setCounts] = useState({})
   const [activeReaction, setActiveReaction] = useState('all')
   const [page, setPage] = useState(1)
@@ -275,9 +311,9 @@ export default function SocialInteractionUsersPage() {
   const [message, setMessage] = useState('')
 
   const title =
-  interactionType === 'echo'
-    ? 'Readers who echoed this'
-    : 'People who reacted'
+    interactionType === 'echo'
+      ? 'Readers who echoed this'
+      : 'People who reacted'
 
   const sourceLabel = SOURCE_LABELS[sourceType] || 'Content'
   const sourceName =
@@ -320,12 +356,12 @@ export default function SocialInteractionUsersPage() {
 
         const nextItems = extractItems(data, interactionType)
         if (interactionType === 'echo') {
-  setSource(
-    data.source ||
-      nextItems[0]?.source ||
-      null
-  )
-}
+          setSource(
+            data.source ||
+              nextItems[0]?.source ||
+              null
+          )
+        }
         const nextTotal = Math.max(
           0,
           Number(
