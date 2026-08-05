@@ -201,12 +201,15 @@ function deleteNotification(notificationId) {
   )
 }
 
-function updateNotificationPreference(type, isEnabled) {
+function updateNotificationPreference(type, isEnabled, frequencyLevel = 'normal') {
   return apiRequest(
     `/api/authors/me/story-notification-preferences/${encodeURIComponent(type)}`,
     {
       method: 'PUT',
-      body: JSON.stringify({ is_enabled: isEnabled }),
+      body: JSON.stringify({
+        is_enabled: isEnabled,
+        frequency_level: frequencyLevel,
+      }),
     }
   )
 }
