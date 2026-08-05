@@ -426,7 +426,7 @@ export default function AuthorGiftPage() {
               </div>
             </section>
 
-            <section className="overflow-visible">
+            <section className="overflow-visible rounded-[20px] border border-[#edf0f4] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between gap-4 border-b border-[#edf0f4] pb-4">
                 <div>
                   <h2 className="text-[14px] font-bold text-[#111827]">
