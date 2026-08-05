@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorDashboardContentTab from '../../components/Author/AuthorDashboardContentTab'
+import AuthorDashboardCommunityTab from '../../components/Author/AuthorDashboardCommunityTab'
+import AuthorDashboardPageToolsTab from '../../components/Author/AuthorDashboardPageToolsTab'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -669,20 +671,18 @@ export default function AuthorPageDashboardPage() {
                 label={tab.label}
                 icon={tab.icon}
                 active={tab.label === activeTab}
-onClick={() => {
-  if (tab.label === 'Overview' || tab.label === 'Content') {
-    setActiveTab(tab.label)
-    return
-  }
-  setMessage(`${tab.label} will be created in the next stage.`)
-}}
+onClick={() => setActiveTab(tab.label)}
               />
             ))}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1180px] space-y-4 px-4 py-4 sm:space-y-5 sm:py-5">
+      <main
+  className={`mx-auto max-w-[1180px] space-y-4 px-4 py-4 sm:space-y-5 sm:py-5 ${
+    activeTab === 'Overview' ? '' : 'hidden'
+  }`}
+>
         <section className="relative overflow-hidden rounded-[24px] bg-[#ddd6fe] p-4 shadow-[0_14px_38px_rgba(106,76,180,0.14)] sm:p-5">
   <img
     src="/assets/Author%20Page/Dashboard%20Banner.png"
