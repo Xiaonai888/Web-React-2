@@ -16,35 +16,65 @@ function getCambodiaNow() {
   return new Date(localTime + 7 * 60 * 60 * 1000)
 }
 
-function getNextWednesdayCambodia() {
+function getWriterWednesdayState() {
   const now = getCambodiaNow()
-  const next = new Date(now)
-  const currentDay = now.getDay()
-  const daysUntilWednesday = currentDay === 3 ? 7 : (3 - currentDay + 7) % 7
-  next.setDate(now.getDate() + daysUntilWednesday)
-  next.setHours(0, 0, 0, 0)
-  return next
+  const weekday = now.getDay()
+  const localSeconds =
+    now.getHours() * 3600 +
+    now.getMinutes() * 60 +
+    now.getSeconds()
+  const active = weekday === 3
+  const daysUntilWednesday =
+    (3 - weekday + 7) % 7
+  const startsInSeconds = active
+    ? 0
+    : daysUntilWednesday * 86400 -
+      localSeconds
+  const endsInSeconds = active
+    ? 86400 - localSeconds
+    : 0
+  const nextStartSeconds = active
+    ? 7 * 86400 - localSeconds
+    : startsInSeconds
+
+  return {
+    active,
+    countdownSeconds: active
+      ? endsInSeconds
+      : startsInSeconds,
+    nextStart: new Date(
+      Date.now() +
+        Math.max(0, nextStartSeconds) * 1000
+    ),
+  }
 }
 
-function getCountdownParts() {
-  const now = getCambodiaNow().getTime()
-  const target = getNextWednesdayCambodia().getTime()
-  const diff = Math.max(0, target - now)
-  const totalSeconds = Math.floor(diff / 1000)
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  return { days, hours, minutes }
+function getCountdownParts(totalSeconds) {
+  const seconds = Math.max(
+    0,
+    Number(totalSeconds || 0)
+  )
+
+  return {
+    days: Math.floor(seconds / 86400),
+    hours: Math.floor(
+      (seconds % 86400) / 3600
+    ),
+    minutes: Math.floor(
+      (seconds % 3600) / 60
+    ),
+    seconds: Math.floor(seconds % 60),
+  }
 }
 
-function formatNextWednesdayLabel() {
-  const next = getNextWednesdayCambodia()
-  return next.toLocaleDateString('en-US', {
+function formatNextWednesdayLabel(date) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Phnom_Penh',
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  })
+  }).format(date)
 }
 
 function StatItem({ icon, title, value, subValue }) {
@@ -125,17 +155,28 @@ function MiniCard({ icon, title, description }) {
 
 export default function WriterWednesdayEventPage() {
   const navigate = useNavigate()
-  const [countdown, setCountdown] = useState(getCountdownParts())
+  const [eventState, setEventState] = useState(
+    getWriterWednesdayState
+  )
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown(getCountdownParts())
-    }, 60000)
+      setEventState(getWriterWednesdayState())
+    }, 1000)
 
     return () => clearInterval(timer)
   }, [])
 
-  const nextWednesdayLabel = useMemo(() => formatNextWednesdayLabel(), [])
+  const countdown = getCountdownParts(
+    eventState.countdownSeconds
+  )
+  const nextWednesdayLabel = useMemo(
+    () =>
+      formatNextWednesdayLabel(
+        eventState.nextStart
+      ),
+    [eventState.nextStart]
+  )
 
   return (
     <div
@@ -310,15 +351,26 @@ export default function WriterWednesdayEventPage() {
             }}
           >
             <div>
-              <div style={{ color: PRIMARY, fontSize: 14, fontWeight: 800, marginBottom: 8 }}>NEXT WRITER WEDNESDAY</div>
-              <div style={{ color: TEXT, fontSize: 34, fontWeight: 900, marginBottom: 12 }}>{nextWednesdayLabel}</div>
+              <div style={{ color: PRIMARY, fontSize: 14, fontWeight: 800, marginBottom: 8 }}>
+                {eventState.active
+                  ? 'EVENT ENDS IN'
+                  : 'NEXT WRITER WEDNESDAY'}
+              </div>
+              <div style={{ color: TEXT, fontSize: 34, fontWeight: 900, marginBottom: 12 }}>
+                {eventState.active
+                  ? 'Today at 11:59 PM'
+                  : nextWednesdayLabel}
+              </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
                 <div style={{ background: PRIMARY_SOFT, color: PRIMARY_DARK, borderRadius: 16, padding: '10px 14px', fontWeight: 800 }}>{countdown.days} D</div>
                 <div style={{ background: PRIMARY_SOFT, color: PRIMARY_DARK, borderRadius: 16, padding: '10px 14px', fontWeight: 800 }}>{countdown.hours} H</div>
                 <div style={{ background: PRIMARY_SOFT, color: PRIMARY_DARK, borderRadius: 16, padding: '10px 14px', fontWeight: 800 }}>{countdown.minutes} M</div>
+                <div style={{ background: PRIMARY_SOFT, color: PRIMARY_DARK, borderRadius: 16, padding: '10px 14px', fontWeight: 800 }}>{countdown.seconds} S</div>
               </div>
               <div style={{ color: PRIMARY, fontSize: 16, fontWeight: 700 }}>
-                Starts in {countdown.days}d {countdown.hours}h {countdown.minutes}m
+                {eventState.active
+                  ? `Ends in ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`
+                  : `Starts in ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m`}
               </div>
             </div>
             <div
