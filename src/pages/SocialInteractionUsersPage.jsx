@@ -285,6 +285,155 @@ function EchoSourcePreview({
   )
 }
 
+
+function getEchoVisibilityMeta(value) {
+  const visibility = String(value || 'public')
+    .trim()
+    .toLowerCase()
+
+  if (visibility === 'followers') {
+    return {
+      label: 'Followers',
+      icon: 'fa-user-group',
+    }
+  }
+
+  if (visibility === 'friends') {
+    return {
+      label: 'Friends',
+      icon: 'fa-user-group',
+    }
+  }
+
+  if (
+    visibility === 'only_me' ||
+    visibility === 'private'
+  ) {
+    return {
+      label: 'Only me',
+      icon: 'fa-lock',
+    }
+  }
+
+  return {
+    label: 'Public',
+    icon: 'fa-earth-americas',
+  }
+}
+
+function EchoPostCard({
+  item,
+  onOpenProfile,
+  onOpenPost,
+}) {
+  const time =
+    formatInteractionTime(
+      item.created_at
+    )
+  const visibility =
+    getEchoVisibilityMeta(
+      item.visibility
+    )
+  const canOpenProfile =
+    Boolean(item.user?.username)
+  const hasStats =
+    item.like_count > 0 ||
+    item.comment_count > 0 ||
+    item.echo_count > 0
+
+  return (
+    <article className="border-b border-[#eef1f5] py-4">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          disabled={!canOpenProfile}
+          className="shrink-0 rounded-full disabled:cursor-default"
+          aria-label={`Open ${item.user.name} profile`}
+        >
+          <Avatar user={item.user} />
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            disabled={!canOpenProfile}
+            className="block max-w-full truncate text-left text-[15px] font-semibold text-[#111827] disabled:cursor-default"
+          >
+            {item.user.name}
+          </button>
+
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[#98a2b3]">
+            {time ? <span>{time}</span> : null}
+            {time ? <span>·</span> : null}
+            <i
+              className={`fa-solid ${visibility.icon} text-[10px]`}
+            />
+            <span>{visibility.label}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenPost}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#98a2b3] active:bg-[#f3f4f6]"
+          aria-label="Open echoed post"
+        >
+          <i className="fa-solid fa-chevron-right text-[11px]" />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={onOpenPost}
+        className="mt-3 block w-full text-left"
+      >
+        {item.content ? (
+          <p className="whitespace-pre-wrap break-words text-[14px] leading-6 text-[#111827]">
+            {item.content}
+          </p>
+        ) : (
+          <p className="text-[13px] font-medium text-[#667085]">
+            Echoed this
+          </p>
+        )}
+      </button>
+
+      {hasStats ? (
+        <div className="mt-3 flex items-center gap-3 border-t border-[#f2f4f7] pt-2.5 text-[11px] font-medium text-[#98a2b3]">
+          {item.like_count > 0 ? (
+            <span>
+              {item.like_count.toLocaleString()}{' '}
+              {item.like_count === 1
+                ? 'reaction'
+                : 'reactions'}
+            </span>
+          ) : null}
+
+          {item.comment_count > 0 ? (
+            <span>
+              {item.comment_count.toLocaleString()}{' '}
+              {item.comment_count === 1
+                ? 'comment'
+                : 'comments'}
+            </span>
+          ) : null}
+
+          {item.echo_count > 0 ? (
+            <span>
+              {item.echo_count.toLocaleString()}{' '}
+              {item.echo_count === 1
+                ? 'echo'
+                : 'echoes'}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
 export default function SocialInteractionUsersPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -473,6 +622,24 @@ export default function SocialInteractionUsersPage() {
     )
   }
 
+  const openEchoPost = (item) => {
+    const username = String(
+      item?.user?.username || ''
+    ).trim()
+    const postId = String(
+      item?.reader_post_id || ''
+    ).trim()
+
+    if (username && postId) {
+      navigate(
+        `/profile?username=${encodeURIComponent(username)}#reader-post-${encodeURIComponent(postId)}`
+      )
+      return
+    }
+
+    openProfile(item?.user)
+  }
+
   return (
     <main className="min-h-screen bg-white text-[#111827]">
       <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
@@ -608,57 +775,58 @@ export default function SocialInteractionUsersPage() {
         ) : visibleItems.length ? (
           <div>
             {visibleItems.map((item) => {
+              if (interactionType === 'echo') {
+                return (
+                  <EchoPostCard
+                    key={item.id}
+                    item={item}
+                    onOpenProfile={() =>
+                      openProfile(item.user)
+                    }
+                    onOpenPost={() =>
+                      openEchoPost(item)
+                    }
+                  />
+                )
+              }
+
               const meta =
                 REACTION_META[item.reaction_type] ||
                 REACTION_META.love
-              const canOpenProfile = Boolean(item.user.username)
+              const canOpenProfile =
+                Boolean(item.user.username)
 
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => openProfile(item.user)}
+                  onClick={() =>
+                    openProfile(item.user)
+                  }
                   disabled={!canOpenProfile}
                   className="flex w-full items-center gap-3 border-b border-[#f2f4f7] py-3 text-left active:bg-[#f8fafc] disabled:cursor-default"
                 >
                   <div className="relative shrink-0">
                     <Avatar user={item.user} />
-                    {interactionType === 'like' ? (
-  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
-    <img
-      src={meta.src}
-      alt={meta.label}
-      className="h-5 w-5 object-contain"
-    />
-  </span>
-) : null}
+                    <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                      <img
+                        src={meta.src}
+                        alt={meta.label}
+                        className="h-5 w-5 object-contain"
+                      />
+                    </span>
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[15px] font-semibold">
                       {item.user.name}
                     </div>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-[12px] font-medium text-[#98a2b3]">
-                      {item.user.username ? (
-                        <span className="truncate">
-                          @{item.user.username}
-                        </span>
-                      ) : null}
-                      {interactionType === 'echo' &&
-                      item.user.username ? (
-                        <span>·</span>
-                      ) : null}
-                      {interactionType === 'echo' ? (
-                        <span className="shrink-0">
-                          {item.share_count > 1
-                            ? `${item.share_count.toLocaleString()} echoes`
-                            : 'Echoed'}
-                          {formatInteractionTime(item.created_at)
-                            ? ` · ${formatInteractionTime(item.created_at)}`
-                            : ''}
-                        </span>
-                      ) : null}
-                    </div>
+
+                    {item.user.username ? (
+                      <div className="mt-0.5 truncate text-[12px] font-medium text-[#98a2b3]">
+                        @{item.user.username}
+                      </div>
+                    ) : null}
                   </div>
 
                   {canOpenProfile ? (
