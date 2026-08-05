@@ -221,6 +221,7 @@ function AppShell() {
     '/wallet',
     '/wallet/orders',
     '/profile',
+    '/library',
     '/event',
     '/author/create',
     '/author/dashboard',
