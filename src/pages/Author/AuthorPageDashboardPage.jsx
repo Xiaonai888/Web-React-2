@@ -994,6 +994,60 @@ onClick={() => setActiveTab(tab.label)}
         </section>
       </main>
 
+      {activeTab !== 'Overview' ? (
+  <main className="mx-auto max-w-[1180px] px-4 py-4 sm:py-5">
+    {activeTab === 'Content' ? (
+      <AuthorDashboardContentTab
+        overview={overview}
+        periodMetrics={periodMetrics}
+        topStories={dashboardData?.top_stories || []}
+        latestPost={latestPost}
+        analyticsPeriod={analyticsPeriod}
+        onPeriodChange={setAnalyticsPeriod}
+        onOpenStory={(story) => navigate(`/story/${story.id}`)}
+        onOpenPost={(post) => navigate(`/author/page?post=${post.id}`)}
+        onViewAll={() => navigate('/author/dashboard')}
+        onCreateContent={() => navigate('/author/create-story')}
+      />
+    ) : null}
+
+    {activeTab === 'Community' ? (
+      <AuthorDashboardCommunityTab
+        pageUsername={authorPage?.page_username || ''}
+        overview={overview}
+        periodMetrics={periodMetrics}
+        recentComments={recentComments}
+        analyticsPeriod={analyticsPeriod}
+        onPeriodChange={setAnalyticsPeriod}
+        onOpenReview={() => navigate('/author/page')}
+        onOpenDiscussion={(item) =>
+          navigate(item?.post?.id ? `/author/page?post=${item.post.id}` : '/author/page')
+        }
+        onViewAllReviews={() => navigate('/author/page')}
+        onViewAllDiscussions={() => navigate('/author/page/notifications')}
+      />
+    ) : null}
+
+    {activeTab === 'Page Tools' ? (
+      <AuthorDashboardPageToolsTab
+        authorPage={authorPage}
+        profileCompletion={profileCompletion}
+        notifications={notifications}
+        onEditInfo={() =>
+          navigate('/author/edit-page', {
+            state: { returnTo: '/author/page/dashboard' },
+          })
+        }
+        onTheme={() => navigate('/author/page/edit?section=cover')}
+        onLinks={() => navigate('/author/page/edit?section=links')}
+        onPinnedPosts={() => navigate('/author/page')}
+        onManageTools={() => navigate('/author/page-settings')}
+      />
+    ) : null}
+  </main>
+) : null}
+
+
       <DashboardFooter navigate={navigate} />
     </div>
   )
