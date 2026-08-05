@@ -2,6 +2,7 @@ import {
   Ban,
   Check,
   ChevronLeft,
+  ChevronUp,
   EllipsisVertical,
   LoaderCircle,
   Send,
@@ -41,6 +42,37 @@ function formatMessageTime(value) {
       minute: '2-digit',
     }
   ).format(date)
+}
+
+
+function mergeMessages(current, incoming) {
+  const messageMap = new Map()
+
+  for (const message of [
+    ...(current || []),
+    ...(incoming || []),
+  ]) {
+    if (message?.id) {
+      messageMap.set(message.id, message)
+    }
+  }
+
+  return [...messageMap.values()].sort(
+    (first, second) =>
+      new Date(first.created_at).getTime() -
+      new Date(second.created_at).getTime()
+  )
+}
+
+function isNearPageBottom() {
+  const pageHeight =
+    document.documentElement.scrollHeight
+
+  return (
+    window.scrollY +
+      window.innerHeight >=
+    pageHeight - 180
+  )
 }
 
 function RoomAvatar({ person }) {
@@ -247,13 +279,20 @@ export default function ChatRoomPage() {
   const navigate = useNavigate()
   const { conversationId } = useParams()
   const bottomRef = useRef(null)
+  const shouldScrollBottomRef =
+    useRef(true)
+  const scrollRestoreRef = useRef(null)
   const [conversation, setConversation] =
     useState(null)
   const [messages, setMessages] =
     useState([])
+  const [nextBefore, setNextBefore] =
+    useState(null)
   const [text, setText] = useState('')
   const [loading, setLoading] =
     useState(true)
+  const [loadingOlder, setLoadingOlder] =
+    useState(false)
   const [sending, setSending] =
     useState(false)
   const [busyAction, setBusyAction] =
@@ -282,14 +321,33 @@ export default function ChatRoomPage() {
           { limit: 50 }
         )
 
-        setConversation(
-          data.conversation || null
-        )
-        setMessages(
+        const incomingMessages =
           Array.isArray(data.messages)
             ? data.messages
             : []
+
+        setConversation(
+          data.conversation || null
         )
+
+        if (silent) {
+          shouldScrollBottomRef.current =
+            isNearPageBottom()
+
+          setMessages((current) =>
+            mergeMessages(
+              current,
+              incomingMessages
+            )
+          )
+        } else {
+          shouldScrollBottomRef.current = true
+          setMessages(incomingMessages)
+          setNextBefore(
+            data.next_before || null
+          )
+        }
+
         setError('')
 
         if (
@@ -357,15 +415,90 @@ export default function ChatRoomPage() {
   }, [loadRoom, navigate])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'end',
-    })
+    if (scrollRestoreRef.current) {
+      const {
+        previousHeight,
+        previousY,
+      } = scrollRestoreRef.current
+
+      scrollRestoreRef.current = null
+
+      const nextHeight =
+        document.documentElement.scrollHeight
+
+      window.scrollTo({
+        top:
+          previousY +
+          (nextHeight - previousHeight),
+        behavior: 'auto',
+      })
+      return
+    }
+
+    if (shouldScrollBottomRef.current) {
+      bottomRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    }
   }, [messages.length])
 
   useEffect(() => {
     setMenuOpen(false)
   }, [conversationId])
+
+
+  const handleLoadOlder = async () => {
+    if (
+      !conversationId ||
+      !nextBefore ||
+      loadingOlder
+    ) {
+      return
+    }
+
+    scrollRestoreRef.current = {
+      previousHeight:
+        document.documentElement.scrollHeight,
+      previousY: window.scrollY,
+    }
+    shouldScrollBottomRef.current = false
+    setLoadingOlder(true)
+
+    try {
+      const data = await getChatMessages(
+        conversationId,
+        {
+          before: nextBefore,
+          limit: 50,
+        }
+      )
+
+      const olderMessages =
+        Array.isArray(data.messages)
+          ? data.messages
+          : []
+
+      setMessages((current) =>
+        mergeMessages(
+          olderMessages,
+          current
+        )
+      )
+      setNextBefore(
+        data.next_before || null
+      )
+      setError('')
+    } catch (historyError) {
+      scrollRestoreRef.current = null
+      setError(
+        historyError.message ||
+          'Failed to load earlier messages'
+      )
+    } finally {
+      setLoadingOlder(false)
+    }
+  }
 
   const handleSend = async () => {
     const message = text.trim()
@@ -378,6 +511,7 @@ export default function ChatRoomPage() {
       return
     }
 
+    shouldScrollBottomRef.current = true
     setSending(true)
 
     try {
@@ -604,6 +738,27 @@ export default function ChatRoomPage() {
             />
 
             <div className="space-y-3 px-4 py-5">
+              {nextBefore ? (
+                <div className="flex justify-center pb-2">
+                  <button
+                    type="button"
+                    onClick={handleLoadOlder}
+                    disabled={loadingOlder}
+                    className="flex h-10 items-center justify-center gap-2 rounded-full border border-[#ded9ea] bg-white px-4 text-[11px] font-extrabold text-[#6f52b5] shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loadingOlder ? (
+                      <LoaderCircle
+                        size={16}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <ChevronUp size={16} />
+                    )}
+                    Load earlier messages
+                  </button>
+                </div>
+              ) : null}
+
               {messages.map((message) => (
                 <div
                   key={message.id}
