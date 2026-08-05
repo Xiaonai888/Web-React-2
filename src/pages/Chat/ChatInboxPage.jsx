@@ -411,7 +411,7 @@ export default function ChatInboxPage() {
     () =>
       pendingConversations.filter(
         (item) =>
-          item.viewer_role === 'author'
+          item.can_decide === true
       ),
     [pendingConversations]
   )
@@ -812,9 +812,10 @@ export default function ChatInboxPage() {
                 const pending =
                   conversation.request_status ===
                   'pending'
-                const viewerIsAuthor =
-                  conversation.viewer_role ===
-                  'author'
+                const canDecideRequest =
+                  Boolean(
+                    conversation.can_decide
+                  )
 
                 return (
                   <button
@@ -852,7 +853,7 @@ export default function ChatInboxPage() {
 
                         {pending ? (
                           <span className="shrink-0 rounded-full bg-[#f2edff] px-2 py-1 text-[9px] font-extrabold text-[#7c3aed]">
-                            {viewerIsAuthor
+                            {canDecideRequest
                               ? 'Request'
                               : 'Pending'}
                           </span>
