@@ -100,6 +100,12 @@ const handleClick = () => {
           </div>
         )}
 
+        {episode.is_adult ? (
+  <span className="absolute left-2 top-2 z-10 rounded-full bg-[#FE526E] px-2 py-1 text-[10px] font-bold leading-none text-white shadow-sm">
+    18+
+  </span>
+) : null}
+
         {locked ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/32 text-white">
             <i className="fa-solid fa-lock text-[18px]" />
