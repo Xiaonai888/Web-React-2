@@ -767,8 +767,12 @@ export default function StoryNotificationsPage() {
         onClose={() => setSelectedNotification(null)}
         onToggleRead={handleToggleRead}
         onDisableType={handleDisableType}
-        onDelete={handleDelete}
-      />
+onDelete={handleDelete}
+onReport={() => {
+  setSelectedNotification(null)
+  navigate('/feedback')
+}}
+/>
     </div>
   )
 }
