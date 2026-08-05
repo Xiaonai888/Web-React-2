@@ -130,7 +130,7 @@ function RequestPanel({
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#f4efff] px-4 py-3 text-center">
         <p className="text-[11px] font-bold leading-5 text-[#705b9d]">
-          Waiting for the author to accept your message request.
+          Waiting for the recipient to accept your message request.
         </p>
       </section>
     )
