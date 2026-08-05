@@ -146,6 +146,19 @@ export function sendChatMessage(
   )
 }
 
+export function blockChatConversation(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/block`,
+    {
+      method: 'PATCH',
+    }
+  )
+}
+
 export function decideChatRequest(
   conversationId,
   action
