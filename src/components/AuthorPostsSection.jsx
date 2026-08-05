@@ -1076,6 +1076,7 @@ function PostsEmpty({ title, text }) {
 }
 
 export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -1517,7 +1518,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
             setComposerOpen(true)
           }}
           onOpenFilter={() => setFilterOpen(true)}
-          onManagePosts={() => onMessage?.('Manage posts is coming soon.')}
+          onManagePosts={() => navigate('/author/page/posts')}
         />
       ) : null}
 
