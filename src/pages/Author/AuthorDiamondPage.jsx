@@ -341,7 +341,7 @@ export default function AuthorDiamondPage() {
             <i className="fa-solid fa-chevron-left text-[17px]" />
           </button>
 
-          <h1 className="text-[17px] font-extrabold text-[#111827]">
+          <h1 className="text-[17px] font-bold text-[#111827]">
             My Diamonds
           </h1>
 
