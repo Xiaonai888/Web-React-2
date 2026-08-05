@@ -87,6 +87,7 @@ const ShadowMallBestSellerPage = lazy(() => import('./pages/Shop/ShadowMallBestS
 const ShadowMallRecentlySoldOutPage = lazy(() => import('./pages/Shop/ShadowMallRecentlySoldOutPage'))
 const ShadowMallPreOrderPage = lazy(() => import('./pages/Shop/ShadowMallPreOrderPage'))
 const DailyPicksPage = lazy(() => import('./pages/DailyPicksPage'))
+const WriterWednesdayEventPage = lazy(() => import('./pages/Event/WriterWednesdayEventPage'))
 const YouMightLikePage = lazy(() => import('./pages/YouMightLikePage'))
 const GenresPage = lazy(() => import('./pages/GenresPage'))
 const RomanceGenrePage = lazy(() => import('./pages/Genre/RomanceGenrePage'))
@@ -226,6 +227,7 @@ function AppShell() {
     '/library',
     '/chat',
     '/event',
+    '/event/writer-wednesday',
     '/author/create',
     '/author/dashboard',
     '/author/profile',
@@ -1133,6 +1135,10 @@ const shouldShowOpeningAds =
         <Route
   path="/author/story/:storyId/chat/shadow-gallery"
   element={<ShadowGalleryPage />}
+/>
+        <Route
+  path="/event/writer-wednesday"
+  element={<LazyPage><WriterWednesdayEventPage /></LazyPage>}
 />
 
 
