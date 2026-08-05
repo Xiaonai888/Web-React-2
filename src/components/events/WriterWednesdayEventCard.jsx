@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const API_BASE_URL =
+  'https://shadow-backend-kucw.onrender.com'
 const CAMBODIA_OFFSET_MS = 7 * 60 * 60 * 1000
-
 function getCambodiaDate(value = new Date()) {
   return new Date(
     new Date(value).getTime() +
@@ -68,23 +69,53 @@ function formatEventDate(date) {
 export default function WriterWednesdayEventCard() {
   const navigate = useNavigate()
   const [now, setNow] = useState(
-    () => new Date()
-  )
+  () => new Date()
+)
+const [serverEvent, setServerEvent] =
+  useState(null)
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(new Date())
-    }, 60000)
+  let ignore = false
 
-    return () => window.clearInterval(timer)
-  }, [])
+  async function syncEvent() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
+      )
+      const data = await response.json()
 
-  const isLive =
-    getCambodiaDate(now).getUTCDay() === 3
+      if (!response.ok || data.ok === false) {
+        throw new Error('Failed')
+      }
+
+      if (!ignore) setServerEvent(data.event)
+    } catch {
+      if (!ignore) setServerEvent(null)
+    }
+  }
+
+  syncEvent()
+  const timer = window.setInterval(
+    syncEvent,
+    60000
+  )
+
+  return () => {
+    ignore = true
+    window.clearInterval(timer)
+  }
+}, [])
+
+  const isLive = serverEvent
+  ? Boolean(serverEvent.active)
+  : getCambodiaDate(now).getUTCDay() === 3
 
   const eventDate = useMemo(
-    () => getNextWednesday(now, isLive),
-    [isLive, now]
+    () =>
+  serverEvent?.starts_at
+    ? new Date(serverEvent.starts_at)
+    : getNextWednesday(now, isLive),
+[serverEvent, isLive, now]
   )
 
   const countdown = getTimeParts(
