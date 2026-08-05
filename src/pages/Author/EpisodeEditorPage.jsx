@@ -3128,7 +3128,7 @@ export default function EpisodeEditorPage() {
           cover_url: episodeCoverUrl,
           content: isManga ? '' : sanitizeEpisodeHtml(content),
           pages: isManga ? pagesPayload : undefined,
-          is_adult: false,
+          is_adult: episodeAdult,
           is_free_published: episodeFree,
           status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
         }),
