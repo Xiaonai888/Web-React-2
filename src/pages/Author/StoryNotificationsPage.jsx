@@ -358,6 +358,8 @@ function OptionsSheet({
   loading,
   onClose,
   onToggleRead,
+  onShowMore,
+  onShowLess,
   onDisableType,
   onDelete,
   onReport,
@@ -490,6 +492,26 @@ function OptionsSheet({
           <button
             type="button"
             disabled={loading}
+            onClick={onShowMore}
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+          >
+            <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
+            <span>Show more</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onShowLess}
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+          >
+            <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
+            <span>Show less</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
             onClick={onToggleRead}
             className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
           >
@@ -531,7 +553,6 @@ function OptionsSheet({
     </div>
   )
 }
-
 
 export default function StoryNotificationsPage() {
   const navigate = useNavigate()
@@ -622,12 +643,31 @@ export default function StoryNotificationsPage() {
     }
   }
 
+  async function handleFrequency(level) {
+    if (!selectedNotification) return
+
+    try {
+      setActionLoading(true)
+      await updateNotificationPreference(selectedNotification.type, true, level)
+      setMessage(
+        level === 'more'
+          ? `You will see more ${selectedNotification.typeLabel.toLowerCase()} notifications.`
+          : `You will see fewer ${selectedNotification.typeLabel.toLowerCase()} notifications.`
+      )
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(error.message || 'Failed to update notification preference')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   async function handleDisableType() {
     if (!selectedNotification) return
 
     try {
       setActionLoading(true)
-      await updateNotificationPreference(selectedNotification.type, false)
+      await updateNotificationPreference(selectedNotification.type, false, 'normal')
       setMessage(`${selectedNotification.typeLabel} notifications are turned off.`)
       setSelectedNotification(null)
     } catch (error) {
@@ -674,7 +714,11 @@ export default function StoryNotificationsPage() {
 
   return (
     <div className="min-h-screen bg-white pb-[92px]">
-      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white">
+      <div
+        className={`sticky top-0 z-40 border-b border-[#eef0f4] bg-white ${
+          selectedNotification ? 'invisible' : ''
+        }`}
+      >
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
@@ -762,20 +806,24 @@ export default function StoryNotificationsPage() {
         )}
       </main>
 
-      <AuthorStudioBottomNav />
+      <div className={selectedNotification ? 'invisible' : ''}>
+        <AuthorStudioBottomNav />
+      </div>
 
       <OptionsSheet
         notification={selectedNotification}
         loading={actionLoading}
         onClose={() => setSelectedNotification(null)}
         onToggleRead={handleToggleRead}
+        onShowMore={() => handleFrequency('more')}
+        onShowLess={() => handleFrequency('less')}
         onDisableType={handleDisableType}
-onDelete={handleDelete}
-onReport={() => {
-  setSelectedNotification(null)
-  navigate('/feedback')
-}}
-/>
+        onDelete={handleDelete}
+        onReport={() => {
+          setSelectedNotification(null)
+          navigate('/feedback')
+        }}
+      />
     </div>
   )
 }
