@@ -5,6 +5,7 @@ import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePos
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
+import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -1250,6 +1251,8 @@ async function handleOtherProfileOption(action) {
   }
 />
 </main>
+      <ReaderProfileFooter />
+
     </div>
   )
 }
