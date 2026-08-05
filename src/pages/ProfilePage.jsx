@@ -6,6 +6,7 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
+import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -590,6 +591,7 @@ export default function ProfilePage() {
     !requestedUsername ||
     requestedUsername.toLowerCase() === String(storedUser?.username || '').toLowerCase()
   const [profileOptionsOpen, setProfileOptionsOpen] = useState(false)
+  const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
@@ -736,7 +738,25 @@ async function handleProfileFollow() {
     setFollowLoading(false)
   }
 }
-  
+
+
+  function handleOpenReaderMessage() {
+  const targetReady =
+    user?.id &&
+    String(user?.username || '').toLowerCase() ===
+      requestedUsername.toLowerCase()
+
+  if (!targetReady) {
+    setProfileTabMessage('Profile is still loading.')
+    window.setTimeout(
+      () => setProfileTabMessage(''),
+      2200
+    )
+    return
+  }
+
+  setMessageRequestOpen(true)
+}
   
 async function handleOtherProfileOption(action) {
   const profileUrl = `${window.location.origin}/profile?username=${encodeURIComponent(profile.username)}`
@@ -1015,6 +1035,11 @@ async function handleOtherProfileOption(action) {
         onSave={handleSaveProfileInfo}
       />
 
+      <ReaderReaderMessageRequestModal
+        open={!isOwnProfile && messageRequestOpen}
+        reader={user}
+        onClose={() => setMessageRequestOpen(false)}
+      />
 
       <main className="mx-auto min-h-screen w-full bg-white md:max-w-[560px] md:py-4">
         <div className="overflow-hidden bg-white md:rounded-[24px] md:border md:border-[#eceaf2] md:shadow-sm">
@@ -1176,7 +1201,11 @@ async function handleOtherProfileOption(action) {
     >
       {followLoading ? 'Please wait...' : user?.is_following ? 'Following' : 'Follow'}
     </button>
-    <button className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827]">
+    <button
+      type="button"
+      onClick={handleOpenReaderMessage}
+      className="h-10 rounded-[14px] border border-[#cfd3dc] text-[13px] font-extrabold text-[#111827] transition active:scale-[0.98]"
+    >
       Message
     </button>
   </div>
