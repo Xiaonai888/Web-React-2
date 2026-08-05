@@ -184,6 +184,70 @@ function Avatar({ user }) {
   )
 }
 
+function EchoSourcePreview({
+  source,
+  onOpen,
+}) {
+  if (!source) return null
+
+  const imageUrl =
+    source.image_url ||
+    source.image_urls?.[0] ||
+    ''
+
+  const ownerName =
+    source.owner?.page_name ||
+    source.owner?.name ||
+    source.owner?.username ||
+    ''
+
+  const label =
+    SOURCE_LABELS[source.type] ||
+    source.label ||
+    'Content'
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 rounded-[16px] border border-[#e5e7eb] bg-white p-3 text-left active:bg-[#f8fafc]"
+    >
+      <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#f3f4f6]">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <i className="fa-regular fa-image text-[20px] text-[#98a2b3]" />
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[14px] font-semibold text-[#111827]">
+          {source.name || label}
+        </div>
+
+        <div className="mt-1 truncate text-[11px] font-medium text-[#98a2b3]">
+          {label}
+          {ownerName
+            ? ` · ${ownerName}`
+            : ''}
+        </div>
+
+        {source.content ? (
+          <div className="mt-1 line-clamp-1 text-[12px] text-[#667085]">
+            {source.content}
+          </div>
+        ) : null}
+      </div>
+
+      <i className="fa-solid fa-chevron-right text-[11px] text-[#c1c7d0]" />
+    </button>
+  )
+}
+
 export default function SocialInteractionUsersPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -197,6 +261,8 @@ export default function SocialInteractionUsersPage() {
   )
 
   const [items, setItems] = useState([])
+  const [source, setSource] =
+  useState(null)
   const [counts, setCounts] = useState({})
   const [activeReaction, setActiveReaction] = useState('all')
   const [page, setPage] = useState(1)
@@ -253,6 +319,13 @@ export default function SocialInteractionUsersPage() {
         }
 
         const nextItems = extractItems(data, interactionType)
+        if (interactionType === 'echo') {
+  setSource(
+    data.source ||
+      nextItems[0]?.source ||
+      null
+  )
+}
         const nextTotal = Math.max(
           0,
           Number(
@@ -314,6 +387,7 @@ export default function SocialInteractionUsersPage() {
     setItems([])
     setCounts({})
     setActiveReaction('all')
+    setSource(null)
     setPage(1)
     setTotal(0)
     setShareTotal(0)
@@ -381,14 +455,11 @@ export default function SocialInteractionUsersPage() {
     {title}
   </h1>
 
-  <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
-  {sourceName || sourceLabel}
-  {interactionType === 'echo' && shareTotal > 0
-    ? ` · ${shareTotal.toLocaleString()} ${
-        shareTotal === 1 ? 'echo' : 'echoes'
-      }`
-    : ''}
-</p>
+  {interactionType !== 'echo' ? (
+    <p className="mt-0.5 truncate text-[10.5px] font-medium text-[#98a2b3]">
+      {sourceName || sourceLabel}
+    </p>
+  ) : null}
 </div>
 
           <div className="h-10 w-10" />
@@ -431,6 +502,19 @@ export default function SocialInteractionUsersPage() {
         ) : null}
      </header>
 
+      {interactionType === 'echo' ? (
+  <section className="mx-auto max-w-3xl px-4 pt-4">
+    <EchoSourcePreview
+      source={source}
+      onOpen={() => {
+        if (source?.url) {
+          navigate(source.url)
+        }
+      }}
+    />
+  </section>
+) : null}
+
 
       {interactionType === 'like' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
@@ -444,13 +528,12 @@ export default function SocialInteractionUsersPage() {
 {interactionType === 'echo' ? (
   <section className="mx-auto max-w-3xl px-4 pb-1 pt-4">
     <div className="text-[15px] font-bold text-[#111827]">
-      {total.toLocaleString()} {total === 1 ? 'Reader' : 'Readers'}
-    </div>
-    {shareTotal > total ? (
-      <div className="mt-1 text-[11px] font-medium text-[#98a2b3]">
-        {shareTotal.toLocaleString()} total echo actions
-      </div>
-    ) : null}
+  {shareTotal.toLocaleString()}{' '}
+  {shareTotal === 1
+    ? 'Echo'
+    : 'Echoes'}
+</div>
+  
   </section>
 ) : null}
 
