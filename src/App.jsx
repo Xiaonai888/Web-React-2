@@ -179,6 +179,8 @@ const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
 const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
+const ChatInboxPage = lazy(() => import('./pages/Chat/ChatInboxPage'))
+const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 
 
 function ComingSoon({ title }) {
@@ -222,6 +224,7 @@ function AppShell() {
     '/wallet/orders',
     '/profile',
     '/library',
+    '/chat',
     '/event',
     '/author/create',
     '/author/dashboard',
@@ -285,6 +288,7 @@ location.pathname.startsWith('/report/') ||
   location.pathname.startsWith('/author/page/') ||
   location.pathname.startsWith('/shop/mall/') ||
   location.pathname.startsWith('/profile/') ||
+  location.pathname.startsWith('/chat/') ||
   location.pathname.startsWith('/notifications/') ||
   location.pathname.startsWith('/interactions/')
   const readerToken =
@@ -1165,6 +1169,8 @@ const shouldShowOpeningAds =
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/chat" element={<LazyPage><ChatInboxPage /></LazyPage>} />
+        <Route path="/chat/:conversationId" element={<LazyPage><ChatRoomPage /></LazyPage>} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
         <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
