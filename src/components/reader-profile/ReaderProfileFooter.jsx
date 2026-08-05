@@ -201,7 +201,7 @@ export default function ReaderProfileFooter({
             )
 
             const incomingRequest =
-              item.viewer_role === 'author' &&
+              item.can_decide === true &&
               item.request_status ===
                 'pending'
 
