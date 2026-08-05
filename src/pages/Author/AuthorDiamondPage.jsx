@@ -349,7 +349,7 @@ export default function AuthorDiamondPage() {
             type="button"
             onClick={() => setHintOpen(true)}
             aria-label="Diamond help"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eaf4ff] text-[#4386d8] shadow-sm active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-black bg-transparent text-black active:scale-95"
           >
             <i className="fa-solid fa-question text-[13px]" />
           </button>
