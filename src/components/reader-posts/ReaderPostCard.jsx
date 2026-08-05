@@ -695,6 +695,128 @@ function ReaderEchoMenuItem({
   )
 }
 
+function resolveReaderPostEchoSource(
+  post,
+  user
+) {
+  const source = post?.source || {}
+  const sourceType = String(
+    post?.source_type ||
+      post?.echo_type ||
+      source?.type ||
+      ''
+  )
+    .trim()
+    .toLowerCase()
+  const sourceId = String(
+    post?.source_id ||
+      source?.id ||
+      ''
+  ).trim()
+
+  const useOriginalSource =
+    Boolean(post?.is_echo) &&
+    Boolean(sourceType) &&
+    Boolean(sourceId)
+
+  if (!useOriginalSource) {
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    return {
+      type: 'reader_post',
+      id: post?.id,
+      name:
+        user?.name ||
+        username ||
+        'Reader',
+      avatarUrl:
+        user?.avatar_url || '',
+      content:
+        post?.content ||
+        'Reader post',
+      imageUrl:
+        Array.isArray(
+          post?.image_urls
+        )
+          ? post.image_urls[0] || ''
+          : '',
+      label: 'reader post',
+      shareUrl:
+        `${window.location.origin}${
+          username
+            ? `/profile?username=${encodeURIComponent(
+                username
+              )}`
+            : '/profile'
+        }#reader-post-${post?.id || ''}`,
+    }
+  }
+
+  const owner =
+    source?.owner ||
+    post?.source_author_post
+      ?.author_page ||
+    post?.source_reader_post?.user ||
+    post?.source_story?.author_page ||
+    {}
+
+  const sourceName =
+    source?.name ||
+    post?.source_story?.title ||
+    post?.source_episode?.title ||
+    owner?.page_name ||
+    owner?.name ||
+    'Shared content'
+
+  const sourcePath = String(
+    post?.source_url ||
+      source?.url ||
+      ''
+  ).trim()
+
+  const shareUrl = sourcePath
+    ? /^https?:\/\//i.test(sourcePath)
+      ? sourcePath
+      : `${window.location.origin}${sourcePath}`
+    : window.location.href
+
+  return {
+    type: sourceType,
+    id: sourceId,
+    name: sourceName,
+    avatarUrl:
+      owner?.avatar_url ||
+      owner?.profile_image_url ||
+      '',
+    content:
+      source?.content ||
+      post?.source_episode?.title ||
+      post?.source_author_post
+        ?.content ||
+      post?.source_reader_post
+        ?.content ||
+      sourceName,
+    imageUrl:
+      source?.image_url ||
+      source?.image_urls?.[0] ||
+      post?.source_story
+        ?.landscape_thumbnail_url ||
+      post?.source_story?.cover_url ||
+      post?.source_episode?.cover_url ||
+      post?.source_author_post
+        ?.image_urls?.[0] ||
+      post?.source_reader_post
+        ?.image_urls?.[0] ||
+      '',
+    label:
+      source?.label ||
+      sourceType.replaceAll('_', ' '),
+    shareUrl,
+  }
+}
+
 function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
   const source = post?.source || {}
@@ -1182,7 +1304,16 @@ function StandardReaderPostCard({
           )
           .slice(0, 5)
       : []
-  
+
+  const echoShareSource = useMemo(
+    () =>
+      resolveReaderPostEchoSource(
+        post,
+        user
+      ),
+    [post, user]
+  )
+
   const editRemainingPhotos =
     MAX_POST_PHOTOS -
     editImageUrls.length
@@ -1216,11 +1347,85 @@ function StandardReaderPostCard({
     )
   }, [post?.comment_count])
 
-    useEffect(() => {
+  useEffect(() => {
     setEchoCount(
       Number(post?.echo_count || 0)
     )
   }, [post?.echo_count])
+
+  useEffect(() => {
+    if (
+      !isEchoPost ||
+      !echoShareSource.type ||
+      !echoShareSource.id
+    ) {
+      return undefined
+    }
+
+    const controller =
+      new AbortController()
+    const token = getAuthToken()
+    let ignore = false
+
+    async function loadSourceEchoCount() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/echoes/source/${encodeURIComponent(
+            echoShareSource.type
+          )}/${encodeURIComponent(
+            echoShareSource.id
+          )}?limit=1`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : {},
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          ignore ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setEchoCount(
+          Number(
+            data.echo_count ??
+              data.total ??
+              0
+          )
+        )
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError'
+        ) {
+          return
+        }
+      }
+    }
+
+    loadSourceEchoCount()
+
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [
+    echoShareSource.id,
+    echoShareSource.type,
+    isEchoPost,
+  ])
 
   useEffect(() => {
     const token = getAuthToken()
@@ -2036,43 +2241,25 @@ function StandardReaderPostCard({
             {formatCompactNumber(commentCount)}
           </button>
 
-          <div className="inline-flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setEchoOpen(true)}
-              className="active:scale-95"
-              aria-label="Echo this reader post"
-            >
-              <img
-                src="/assets/Icons/echo.svg"
-                alt=""
-                aria-hidden="true"
-                className="h-[15px] w-[15px] object-contain opacity-70"
-              />
-            </button>
+          <button
+            type="button"
+            onClick={() => setEchoOpen(true)}
+            className="inline-flex items-center gap-1.5 active:scale-95"
+            aria-label="Echo this post"
+          >
+            <img
+              src="/assets/Icons/echo.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-[15px] w-[15px] object-contain opacity-70"
+            />
 
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/interactions/reader_post/${post.id}/echoes`,
-                  {
-                    state: {
-                      sourceName:
-                        user?.name ||
-                        'Reader Post',
-                    },
-                  }
-                )
-              }
-              className="active:scale-95"
-              aria-label="View people who echoed"
-            >
+            <span>
               {formatCompactNumber(
                 echoCount
               )}
-            </button>
-          </div>
+            </span>
+          </button>
         </div>
       </article>
 
@@ -2085,6 +2272,20 @@ function StandardReaderPostCard({
       <ReaderPostCommentsModal
         open={commentOpen}
         postId={post.id}
+        postName={
+          user?.name ||
+          user?.username ||
+          'Reader Post'
+        }
+        echoSourceType={
+          echoShareSource.type
+        }
+        echoSourceId={
+          echoShareSource.id
+        }
+        echoSourceName={
+          echoShareSource.name
+        }
         postOwnerId={post.user_id}
         commentsPermission={
           post.comments_permission
@@ -2104,35 +2305,30 @@ function StandardReaderPostCard({
 
       <SocialEchoShareSheet
         open={echoOpen}
-        sourceType="reader_post"
-        sourceId={post?.id}
+        sourceType={
+          echoShareSource.type
+        }
+        sourceId={
+          echoShareSource.id
+        }
         sourceName={
-          user?.name ||
-          user?.username ||
-          'Reader'
+          echoShareSource.name
         }
         sourceAvatarUrl={
-          user?.avatar_url || ''
+          echoShareSource.avatarUrl
         }
         sourceContent={
-          post?.content ||
-          'Reader post'
+          echoShareSource.content
         }
         sourceImageUrl={
-          Array.isArray(
-            post?.image_urls
-          )
-            ? post.image_urls[0] || ''
-            : ''
+          echoShareSource.imageUrl
         }
-        sourceLabel="reader post"
-        shareUrl={`${window.location.origin}${
-          user?.username
-            ? `/profile?username=${encodeURIComponent(
-                user.username
-              )}`
-            : '/profile'
-        }#reader-post-${post?.id || ''}`}
+        sourceLabel={
+          echoShareSource.label
+        }
+        shareUrl={
+          echoShareSource.shareUrl
+        }
         onClose={() =>
           setEchoOpen(false)
         }
@@ -2148,10 +2344,13 @@ function StandardReaderPostCard({
           )
 
           setEchoCount(total)
-          onUpdated?.({
-            ...post,
-            echo_count: total,
-          })
+
+          if (!isEchoPost) {
+            onUpdated?.({
+              ...post,
+              echo_count: total,
+            })
+          }
         }}
       />
 
