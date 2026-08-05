@@ -77,6 +77,15 @@ export function getChatConversations(status = 'all') {
   return chatRequest(`/conversations${suffix}`)
 }
 
+export function searchChatUsers(search, limit = 12) {
+  const query = new URLSearchParams()
+
+  query.set('q', String(search || '').trim())
+  query.set('limit', String(limit))
+
+  return chatRequest(`/users/search?${query.toString()}`)
+}
+
 export function getChatMessages(
   conversationId,
   { before = '', limit = 50 } = {}
