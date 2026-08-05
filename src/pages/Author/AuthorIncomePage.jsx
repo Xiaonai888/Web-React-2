@@ -492,7 +492,7 @@ export default function AuthorIncomePage() {
                 records.map((item) => <TransactionRow key={item.id} record={item} />)
               ) : (
                 <div className="px-5 py-14 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1f5]">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center">
                     <img
                       src="/assets/Icons/Diamond.svg"
                       alt=""
@@ -509,10 +509,10 @@ export default function AuthorIncomePage() {
               )}
             </section>
 
-            <div className="rounded-[17px] bg-[#fff1f5] px-4 py-3 text-[11px] font-medium leading-5 text-[#8c4a59]">
-              <i className="fa-solid fa-circle-info mr-2 text-[#ff3b5f]" />
-              Income shown here is the author’s net USD amount from paid Diamond unlocks.
-            </div>
+            <div className="rounded-[17px] bg-[#fff6d8] px-4 py-3 text-[11px] font-normal leading-5 text-[#9a5b00]">
+  <i className="fa-solid fa-circle-info mr-2 text-[#9a5b00]" />
+  Income shown here is the author’s net USD amount from paid Diamond unlocks.
+</div>
           </>
         ) : null}
       </main>
