@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 
@@ -357,68 +357,178 @@ function OptionsSheet({
   onToggleRead,
   onDisableType,
   onDelete,
+  onReport,
 }) {
+  const [dragging, setDragging] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const dragStartRef = useRef(0)
+  const dragYRef = useRef(0)
+
+  useEffect(() => {
+    if (!notification) return undefined
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+    const previousBodyOverflow = body.style.overflow
+    const previousBodyPosition = body.style.position
+    const previousBodyTop = body.style.top
+    const previousBodyWidth = body.style.width
+    const previousHtmlOverflow = html.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
+
+    return () => {
+      body.style.overflow = previousBodyOverflow
+      body.style.position = previousBodyPosition
+      body.style.top = previousBodyTop
+      body.style.width = previousBodyWidth
+      html.style.overflow = previousHtmlOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [notification])
+
   if (!notification) return null
 
+  const fallbackText = String(notification.readerName || notification.typeLabel || 'N')
+    .trim()
+    .slice(0, 1)
+    .toUpperCase()
+
+  const closeSheet = () => {
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(false)
+    onClose()
+  }
+
+  const handleDragStart = (event) => {
+    dragStartRef.current = event.clientY
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handleDragMove = (event) => {
+    if (!dragging) return
+    const nextDragY = Math.max(0, event.clientY - dragStartRef.current)
+    dragYRef.current = nextDragY
+    setDragY(nextDragY)
+  }
+
+  const handleDragEnd = () => {
+    if (!dragging) return
+    setDragging(false)
+
+    if (dragYRef.current >= 80) {
+      closeSheet()
+      return
+    }
+
+    dragYRef.current = 0
+    setDragY(0)
+  }
+
   return (
-    <div className="fixed inset-0 z-[80]">
+    <div
+      className="fixed inset-0 z-[120]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Notification options"
+    >
       <button
         type="button"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/35"
+        onClick={closeSheet}
+        className="absolute inset-0 bg-black/45"
         aria-label="Close notification options"
       />
 
-      <div className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-white pb-[max(20px,env(safe-area-inset-bottom))] shadow-2xl">
-        <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
+      <section
+        className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
+          dragging ? '' : 'transition-transform duration-200 ease-out'
+        }`}
+        style={{ transform: `translateY(${dragY}px)` }}
+      >
+        <div
+          className="touch-none pb-2 pt-2"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+        >
+          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#cfd3da]" />
+        </div>
 
-        <div className="border-b border-[#eef0f4] px-5 pb-4 pt-3">
-          <p className="line-clamp-2 text-[14px] font-black leading-5 text-[#111827]">
-            {notification.title}
+        <div className="px-5 pb-4 text-center">
+          {notification.readerAvatar ? (
+            <img
+              src={notification.readerAvatar}
+              alt=""
+              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-black/5"
+            />
+          ) : (
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-semibold text-[#4b5563]">
+              {fallbackText}
+            </div>
+          )}
+
+          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[#4b5563]">
+            <span className="text-[#111827]">{notification.title}</span>
+            {notification.message ? ` · ${notification.message}` : ''}
           </p>
         </div>
 
-        <div className="px-3 py-2">
+        <div className="border-t border-[#eef0f4] px-5 py-2">
           <button
             type="button"
             disabled={loading}
             onClick={onToggleRead}
-            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-              <i className={`fa-solid ${notification.unread ? 'fa-check' : 'fa-envelope'}`} />
-            </span>
-            {notification.unread ? 'Mark as read' : 'Mark as unread'}
+            <i className={`w-5 text-center text-[16px] fa-solid ${notification.unread ? 'fa-check' : 'fa-envelope'}`} />
+            <span>{notification.unread ? 'Mark as read' : 'Mark as unread'}</span>
           </button>
 
           <button
             type="button"
             disabled={loading}
             onClick={onDisableType}
-            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6]">
-              <i className="fa-solid fa-bell-slash" />
-            </span>
-            Turn off {notification.typeLabel.toLowerCase()} notifications
+            <i className="fa-solid fa-bell-slash w-5 text-center text-[16px]" />
+            <span>Turn off {notification.typeLabel.toLowerCase()} notifications</span>
           </button>
 
           <button
             type="button"
             disabled={loading}
             onClick={onDelete}
-            className="flex h-14 w-full items-center gap-4 rounded-[14px] px-3 text-left text-[14px] font-bold text-[#dc2626] active:bg-[#fef2f2] disabled:opacity-50"
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fef2f2]">
-              <i className="fa-solid fa-trash" />
-            </span>
-            Delete notification
+            <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
+            <span>Delete this notification</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onReport}
+            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+          >
+            <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
+            <span>Report issue to Notifications Team</span>
           </button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
+
 
 export default function StoryNotificationsPage() {
   const navigate = useNavigate()
