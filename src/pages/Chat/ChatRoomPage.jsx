@@ -19,6 +19,7 @@ import {
   useParams,
 } from 'react-router-dom'
 import {
+  blockChatConversation,
   decideChatRequest,
   getChatMessages,
   hasReaderSession,
@@ -419,15 +420,33 @@ export default function ChatRoomPage() {
     setBusyAction(action)
 
     try {
-      const data =
-        await decideChatRequest(
-          conversationId,
-          action
+      if (action === 'block') {
+        await blockChatConversation(
+          conversationId
         )
 
-      setConversation(
-        data.conversation || null
-      )
+        setConversation((current) =>
+          current
+            ? {
+                ...current,
+                request_status: 'blocked',
+                can_send: false,
+                can_decide: false,
+              }
+            : current
+        )
+      } else {
+        const data =
+          await decideChatRequest(
+            conversationId,
+            action
+          )
+
+        setConversation(
+          data.conversation || null
+        )
+      }
+
       setMenuOpen(false)
       setError('')
       notifyChatUpdated()
