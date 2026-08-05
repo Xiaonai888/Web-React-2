@@ -22,10 +22,12 @@ import {
 import {
   blockChatConversation,
   decideChatRequest,
+  getChatBlockStatus,
   getChatMessages,
   hasReaderSession,
   markChatRead,
   sendChatMessage,
+  unblockChatConversation,
 } from '../../services/chatApi'
 
 function formatMessageTime(value) {
@@ -102,6 +104,7 @@ function RoomAvatar({ person }) {
 
 function RequestPanel({
   conversation,
+  blockStatus,
   busyAction,
   onDecision,
 }) {
@@ -209,10 +212,17 @@ function RequestPanel({
     conversation.request_status ===
     'blocked'
   ) {
+    const blockedMessage =
+      blockStatus.viewer_has_blocked
+        ? 'You blocked this account. Open the 3 dots menu to unblock it.'
+        : blockStatus.viewer_is_blocked
+          ? 'This account blocked messaging with you.'
+          : 'Messaging is blocked for this conversation.'
+
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#fff0f1] px-4 py-3 text-center">
-        <p className="text-[11px] font-bold text-[#bd3038]">
-          Messaging is blocked for this conversation.
+        <p className="text-[11px] font-bold leading-5 text-[#bd3038]">
+          {blockedMessage}
         </p>
       </section>
     )
@@ -225,10 +235,13 @@ function ConversationMenu({
   open,
   canOpenProfile,
   canBlock,
+  canUnblock,
+  blockedByOther,
   busyAction,
   onClose,
   onOpenProfile,
   onBlock,
+  onUnblock,
 }) {
   if (!open) return null
 
@@ -252,7 +265,24 @@ function ConversationMenu({
           View profile
         </button>
 
-        {canBlock ? (
+        {canUnblock ? (
+          <button
+            type="button"
+            onClick={onUnblock}
+            disabled={Boolean(busyAction)}
+            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#6f52b5] transition hover:bg-[#f6f2ff] active:bg-[#eee7ff] disabled:opacity-45"
+          >
+            {busyAction === 'unblock' ? (
+              <LoaderCircle
+                size={17}
+                className="animate-spin"
+              />
+            ) : (
+              <Check size={17} />
+            )}
+            Unblock account
+          </button>
+        ) : canBlock ? (
           <button
             type="button"
             onClick={onBlock}
@@ -269,6 +299,11 @@ function ConversationMenu({
             )}
             Block account
           </button>
+        ) : blockedByOther ? (
+          <div className="flex min-h-11 w-full items-center gap-3 rounded-[13px] px-3 py-2 text-left text-[11px] font-bold leading-5 text-[#a64a50]">
+            <Ban size={17} className="shrink-0" />
+            This account blocked messaging
+          </div>
         ) : null}
       </div>
     </>
@@ -284,6 +319,12 @@ export default function ChatRoomPage() {
   const scrollRestoreRef = useRef(null)
   const [conversation, setConversation] =
     useState(null)
+  const [blockStatus, setBlockStatus] =
+    useState({
+      is_blocked: false,
+      viewer_has_blocked: false,
+      viewer_is_blocked: false,
+    })
   const [messages, setMessages] =
     useState([])
   const [nextBefore, setNextBefore] =
@@ -316,15 +357,35 @@ export default function ChatRoomPage() {
       }
 
       try {
-        const data = await getChatMessages(
-          conversationId,
-          { limit: 50 }
-        )
+        const [data, blockData] =
+          await Promise.all([
+            getChatMessages(
+              conversationId,
+              { limit: 50 }
+            ),
+            getChatBlockStatus(
+              conversationId
+            ),
+          ])
 
         const incomingMessages =
           Array.isArray(data.messages)
             ? data.messages
             : []
+
+        setBlockStatus({
+          is_blocked: Boolean(
+            blockData.block_status?.is_blocked
+          ),
+          viewer_has_blocked: Boolean(
+            blockData.block_status
+              ?.viewer_has_blocked
+          ),
+          viewer_is_blocked: Boolean(
+            blockData.block_status
+              ?.viewer_is_blocked
+          ),
+        })
 
         setConversation(
           data.conversation || null
@@ -558,17 +619,7 @@ export default function ChatRoomPage() {
         await blockChatConversation(
           conversationId
         )
-
-        setConversation((current) =>
-          current
-            ? {
-                ...current,
-                request_status: 'blocked',
-                can_send: false,
-                can_decide: false,
-              }
-            : current
-        )
+        await loadRoom({ silent: true })
       } else {
         const data =
           await decideChatRequest(
@@ -588,6 +639,43 @@ export default function ChatRoomPage() {
       setError(
         decisionError.message ||
           'Failed to update request'
+      )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+
+  const handleUnblock = async () => {
+    if (
+      busyAction ||
+      !blockStatus.viewer_has_blocked
+    ) {
+      return
+    }
+
+    if (
+      !window.confirm(
+        'Unblock this account and restore the previous chat status?'
+      )
+    ) {
+      return
+    }
+
+    setBusyAction('unblock')
+
+    try {
+      await unblockChatConversation(
+        conversationId
+      )
+      await loadRoom({ silent: true })
+      setMenuOpen(false)
+      setError('')
+      notifyChatUpdated()
+    } catch (unblockError) {
+      setError(
+        unblockError.message ||
+          'Failed to unblock account'
       )
     } finally {
       setBusyAction('')
@@ -614,7 +702,16 @@ export default function ChatRoomPage() {
   )
   const canBlock = Boolean(
     conversation &&
-      conversation.request_status !== 'blocked'
+      !blockStatus.is_blocked
+  )
+  const canUnblock = Boolean(
+    conversation &&
+      blockStatus.viewer_has_blocked
+  )
+  const blockedByOther = Boolean(
+    conversation &&
+      blockStatus.viewer_is_blocked &&
+      !blockStatus.viewer_has_blocked
   )
 
   const handleOpenProfile = () => {
@@ -703,10 +800,13 @@ export default function ChatRoomPage() {
             open={menuOpen}
             canOpenProfile={canOpenProfile}
             canBlock={canBlock}
+            canUnblock={canUnblock}
+            blockedByOther={blockedByOther}
             busyAction={busyAction}
             onClose={() => setMenuOpen(false)}
             onOpenProfile={handleOpenProfile}
             onBlock={() => handleDecision('block')}
+            onUnblock={handleUnblock}
           />
         </div>
       </header>
@@ -733,6 +833,7 @@ export default function ChatRoomPage() {
           <>
             <RequestPanel
               conversation={conversation}
+              blockStatus={blockStatus}
               busyAction={busyAction}
               onDecision={handleDecision}
             />
