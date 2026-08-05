@@ -5,6 +5,7 @@ import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import ReportModal from '../../components/ReportModal'
+import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import Cropper from 'react-easy-crop'
 
 
@@ -1003,6 +1004,7 @@ const { pageUsername } = useParams()
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const [reportPageOpen, setReportPageOpen] = useState(false)
+  const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
   const readerName = readerUser?.name || 'Reader'
@@ -1421,9 +1423,16 @@ async function handleUnfollowFromSettings() {
 }
   
 function handleOpenMessage() {
-  const value = String(author?.profile_details?.message_url || author?.profile_details?.messenger || '').trim()
-  if (!value) return setMessage('Message link is not available.')
-  window.open(/^https?:\/\//i.test(value) ? value : `https://${value}`, '_blank', 'noopener,noreferrer')
+  const token = getAuthToken()
+
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  if (!author?.id || author?.is_owner) return
+
+  setMessageRequestOpen(true)
 }
   
  const actionButtons = useMemo(() => {
@@ -1463,7 +1472,7 @@ function handleOpenMessage() {
       disabled: followLoading,
     },
   ]
-}, [ownerResolved, author?.is_owner, author?.is_following, author?.profile_details, followLoading, navigate])
+}, [ownerResolved, author?.id, author?.is_owner, author?.is_following, followLoading, navigate])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -1716,6 +1725,13 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
         targetTitle={displayAuthor?.page_name}
         onClose={() => setReportPageOpen(false)}
       />
+
+      <ReaderAuthorMessageRequestModal
+        open={messageRequestOpen}
+        author={displayAuthor}
+        onClose={() => setMessageRequestOpen(false)}
+      />
+
       <CropImageModal
         open={cropModalOpen}
         image={rawImage}
