@@ -210,7 +210,7 @@ export default function VisitorTracker() {
         handleVisibilityChange
       )
     }
-  }, [])
+  }, [location.pathname])
 
 
   useEffect(() => {
