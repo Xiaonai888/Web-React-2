@@ -25,7 +25,7 @@ import {
   getChatConversations,
   getChatQuickContacts,
   hasReaderSession,
-    searchChatUsers,
+  searchChatUsers,
 } from '../../services/chatApi'
 
 function normalizeSearchValue(value) {
@@ -190,6 +190,22 @@ function EmptyInbox() {
   )
 }
 
+function EmptyRequests() {
+  return (
+    <div className="px-5 py-16 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
+        <MessageCircle size={30} strokeWidth={1.9} />
+      </div>
+      <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
+        No message requests
+      </h2>
+      <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-bold leading-6 text-[#8a8a95]">
+        New requests sent to you will appear here.
+      </p>
+    </div>
+  )
+}
+
 function EmptySearch({ query }) {
   return (
     <div className="px-5 py-14 text-center">
@@ -344,9 +360,9 @@ function ConversationRow({ conversation, onOpen }) {
 
 function SearchPersonRow({ user, onOpen }) {
   const resultType =
-  user?.result_type === 'author' || user?.author_page_id
-    ? 'author'
-    : 'reader'
+    user?.result_type === 'author' || user?.author_page_id
+      ? 'author'
+      : 'reader'
   const name =
     user?.name || user?.page_name || user?.username || 'Shadow User'
   const username = user?.username || user?.page_username || ''
@@ -526,11 +542,29 @@ export default function ChatInboxPage() {
 
   const unreadTotal = useMemo(
     () =>
-      conversations.reduce(
-        (total, item) =>
-          total + Number(item.unread_count || 0),
-        0
-      ),
+      conversations.reduce((total, item) => {
+        if (
+          item.request_status === 'declined' ||
+          item.request_status === 'blocked'
+        ) {
+          return total
+        }
+
+        const unread = Math.max(
+          0,
+          Number(item.unread_count || 0)
+        )
+        const incomingRequest =
+          item.can_decide === true &&
+          item.request_status === 'pending'
+
+        return (
+          total +
+          (incomingRequest
+            ? Math.max(1, unread)
+            : unread)
+        )
+      }, 0),
     [conversations]
   )
 
@@ -602,12 +636,13 @@ export default function ChatInboxPage() {
   const visibleConversations = useMemo(() => {
     return conversations.filter((conversation) => {
       if (
-  !normalizedQuery &&
-  activeFilter === 'pending' &&
-  conversation.can_decide !== true
-) {
-  return false
-}
+        !normalizedQuery &&
+        activeFilter === 'pending' &&
+        conversation.can_decide !== true
+      ) {
+        return false
+      }
+
       if (!normalizedQuery) {
         return true
       }
@@ -629,22 +664,43 @@ export default function ChatInboxPage() {
   }, [activeFilter, conversations, normalizedQuery])
 
   const peopleResults = useMemo(() => {
-    const existingKeys = new Set()
+    const existingReaderIds = new Set()
+    const existingReaderUsernames = new Set()
+    const existingAuthorPageIds = new Set()
 
     for (const conversation of conversations) {
       const person = conversation.counterpart || {}
+      const isAuthorConversation =
+        conversation.conversation_type === 'reader_author' ||
+        person.type === 'author' ||
+        Boolean(
+          conversation.author_page_id ||
+            person.author_page_id
+        )
 
-      if (person.user_id) {
-        existingKeys.add(`user:${person.user_id}`)
+      if (isAuthorConversation) {
+        const authorPageId =
+          conversation.author_page_id ||
+          person.author_page_id
+
+        if (authorPageId) {
+          existingAuthorPageIds.add(
+            String(authorPageId)
+          )
+        }
+
+        continue
       }
 
-      if (person.author_page_id) {
-        existingKeys.add(`author:${person.author_page_id}`)
+      if (person.user_id) {
+        existingReaderIds.add(
+          String(person.user_id)
+        )
       }
 
       if (person.username) {
-        existingKeys.add(
-          `username:${String(person.username).toLowerCase()}`
+        existingReaderUsernames.add(
+          String(person.username).toLowerCase()
         )
       }
     }
@@ -653,33 +709,31 @@ export default function ChatInboxPage() {
       const isAuthorResult =
         user.result_type === 'author' ||
         Boolean(user.author_page_id)
-      const authorPageId =
-        user.author_page_id ||
-        (isAuthorResult ? user.id : '')
-      const userId = user.user_id || user.id
-      const username =
-        user.username || user.page_username || ''
 
       if (isAuthorResult) {
-        if (
-          authorPageId &&
-          existingKeys.has(`author:${authorPageId}`)
-        ) {
-          return false
-        }
+        const authorPageId =
+          user.author_page_id || user.id
 
-        return true
+        return !existingAuthorPageIds.has(
+          String(authorPageId || '')
+        )
       }
 
-      if (userId && existingKeys.has(`user:${userId}`)) {
+      const userId = user.user_id || user.id
+      const username = String(
+        user.username || ''
+      ).toLowerCase()
+
+      if (
+        userId &&
+        existingReaderIds.has(String(userId))
+      ) {
         return false
       }
 
       if (
         username &&
-        existingKeys.has(
-          `username:${String(username).toLowerCase()}`
-        )
+        existingReaderUsernames.has(username)
       ) {
         return false
       }
@@ -699,12 +753,21 @@ export default function ChatInboxPage() {
         action
       )
 
-      setConversations((current) =>
-        current.map((item) =>
-          item.id === conversationId
-            ? data.conversation
-            : item
+      if (data.conversation) {
+        setConversations((current) =>
+          current.map((item) =>
+            item.id === conversationId
+              ? data.conversation
+              : item
+          )
         )
+      } else {
+        await loadConversations({ silent: true })
+      }
+
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
       )
       setError('')
     } catch (decisionError) {
@@ -717,6 +780,7 @@ export default function ChatInboxPage() {
   }
 
   const chooseRequestFilter = () => {
+    setQuery('')
     setActiveFilter((current) =>
       current === 'pending' ? 'all' : 'pending'
     )
@@ -728,10 +792,21 @@ export default function ChatInboxPage() {
       return
     }
 
-    const authorPageId =
-      user.author_page_id ||
-      (user.result_type === 'author' ? user.id : '')
-    const userId = user.user_id || user.id
+    if (user?.counterpart && user?.id) {
+      navigate(`/chat/${user.id}`)
+      return
+    }
+
+    const isAuthorTarget =
+      user?.result_type === 'author' ||
+      user?.type === 'author' ||
+      Boolean(user?.author_page_id)
+    const authorPageId = isAuthorTarget
+      ? user.author_page_id || user.id
+      : ''
+    const userId = isAuthorTarget
+      ? user.user_id || ''
+      : user.user_id || user.id
     const username = String(
       user.username || user.page_username || ''
     ).toLowerCase()
@@ -739,15 +814,27 @@ export default function ChatInboxPage() {
     const existing = conversations.find((conversation) => {
       const person = conversation.counterpart || {}
 
+      if (isAuthorTarget) {
+        return (
+          authorPageId &&
+          String(
+            conversation.author_page_id ||
+              person.author_page_id ||
+              ''
+          ) === String(authorPageId)
+        )
+      }
+
       return (
-        (authorPageId &&
-          String(conversation.author_page_id || '') ===
-            String(authorPageId)) ||
-        (userId &&
-          String(person.user_id || '') === String(userId)) ||
-        (username &&
-          String(person.username || '').toLowerCase() ===
-            username)
+        conversation.conversation_type ===
+          'reader_reader' &&
+        ((userId &&
+          String(person.user_id || '') ===
+            String(userId)) ||
+          (username &&
+            String(
+              person.username || ''
+            ).toLowerCase() === username))
       )
     })
 
@@ -756,7 +843,7 @@ export default function ChatInboxPage() {
       return
     }
 
-    if (authorPageId) {
+    if (isAuthorTarget && authorPageId) {
       setSelectedSearchAuthor({
         id: authorPageId,
         page_name:
@@ -768,10 +855,18 @@ export default function ChatInboxPage() {
       return
     }
 
+    if (!userId) {
+      setError('Reader profile is not available')
+      return
+    }
+
     setSelectedSearchReader({
       ...user,
       id: userId,
-      name: user.name || user.page_name || 'Shadow Reader',
+      name:
+        user.name ||
+        user.page_name ||
+        'Shadow Reader',
       username:
         user.username || user.page_username || '',
     })
@@ -883,7 +978,9 @@ export default function ChatInboxPage() {
           </button>
         ) : null}
 
-        {!hasSearch && incomingRequests[0] ? (
+        {!hasSearch &&
+        activeFilter === 'all' &&
+        incomingRequests[0] ? (
           <IncomingRequestCard
             conversation={incomingRequests[0]}
             busyAction={
@@ -899,7 +996,9 @@ export default function ChatInboxPage() {
           />
         ) : null}
 
-        {!hasSearch && incomingRequests.length > 1 ? (
+        {!hasSearch &&
+        activeFilter === 'all' &&
+        incomingRequests.length > 1 ? (
           <button
             type="button"
             onClick={() => setActiveFilter('pending')}
@@ -971,11 +1070,15 @@ export default function ChatInboxPage() {
               />
             ))}
           </div>
+        ) : activeFilter === 'pending' ? (
+          <EmptyRequests />
         ) : (
           <EmptyInbox />
         )}
 
-        {!hasSearch ? <ChatSuggestedPeople /> : null}
+        {!hasSearch && activeFilter === 'all' ? (
+          <ChatSuggestedPeople />
+        ) : null}
       </main>
 
       <ChatNewMessageSheet
