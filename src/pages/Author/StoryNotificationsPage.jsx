@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const PAGE_SIZE = 30
 const filters = ['All', 'Unread', 'Comments', 'Likes', 'Echoes', 'Income']
 
 const typeMap = {
@@ -119,7 +121,11 @@ function formatTime(value) {
 }
 
 function normalizeNotification(item) {
-  const metadata = item.metadata && typeof item.metadata === 'object' ? item.metadata : {}
+  const metadata =
+    item.metadata && typeof item.metadata === 'object'
+      ? item.metadata
+      : {}
+
   const readerName =
     metadata.reader_name ||
     metadata.user_name ||
@@ -155,7 +161,9 @@ async function apiRequest(path, options = {}) {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...(options.headers || {}),
     },
   })
@@ -169,8 +177,18 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
-async function fetchStoryNotifications() {
-  const data = await apiRequest('/api/authors/me/story-notifications')
+async function fetchStoryNotifications(before = '') {
+  const params = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+  })
+
+  if (before) {
+    params.set('before', before)
+  }
+
+  const data = await apiRequest(
+    `/api/authors/me/story-notifications?${params.toString()}`
+  )
 
   return {
     notifications: Array.isArray(data.notifications)
@@ -178,36 +196,51 @@ async function fetchStoryNotifications() {
       : [],
     unreadCount: Number(data.unread_count || 0),
     preferences:
-      data.preferences && typeof data.preferences === 'object'
+      data.preferences &&
+      typeof data.preferences === 'object'
         ? data.preferences
         : {},
+    hasMore: Boolean(data.has_more),
+    nextCursor: data.next_cursor || '',
   }
 }
 
 function markNotificationRead(notificationId) {
   return apiRequest(
-    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}/read`,
+    `/api/authors/me/story-notifications/${encodeURIComponent(
+      notificationId
+    )}/read`,
     { method: 'PATCH' }
   )
 }
 
 function markNotificationUnread(notificationId) {
   return apiRequest(
-    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}/unread`,
+    `/api/authors/me/story-notifications/${encodeURIComponent(
+      notificationId
+    )}/unread`,
     { method: 'PATCH' }
   )
 }
 
 function deleteNotification(notificationId) {
   return apiRequest(
-    `/api/authors/me/story-notifications/${encodeURIComponent(notificationId)}`,
+    `/api/authors/me/story-notifications/${encodeURIComponent(
+      notificationId
+    )}`,
     { method: 'DELETE' }
   )
 }
 
-function updateNotificationPreference(type, isEnabled, frequencyLevel = 'normal') {
+function updateNotificationPreference(
+  type,
+  isEnabled,
+  frequencyLevel = 'normal'
+) {
   return apiRequest(
-    `/api/authors/me/story-notification-preferences/${encodeURIComponent(type)}`,
+    `/api/authors/me/story-notification-preferences/${encodeURIComponent(
+      type
+    )}`,
     {
       method: 'PUT',
       body: JSON.stringify({
@@ -219,14 +252,21 @@ function updateNotificationPreference(type, isEnabled, frequencyLevel = 'normal'
 }
 
 function markAllNotificationsRead() {
-  return apiRequest('/api/authors/me/story-notifications/read-all', {
-    method: 'PATCH',
-  })
+  return apiRequest(
+    '/api/authors/me/story-notifications/read-all',
+    {
+      method: 'PATCH',
+    }
+  )
 }
 
 function NotificationAvatar({ notification }) {
   const action = getAction(notification.type)
-  const fallbackText = String(notification.readerName || notification.typeLabel || 'N')
+  const fallbackText = String(
+    notification.readerName ||
+      notification.typeLabel ||
+      'N'
+  )
     .trim()
     .slice(0, 1)
     .toUpperCase()
@@ -240,7 +280,7 @@ function NotificationAvatar({ notification }) {
           className="h-14 w-14 rounded-full object-cover ring-1 ring-black/5"
         />
       ) : (
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-black text-[#4b5563]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-bold text-[#4b5563]">
           {fallbackText}
         </div>
       )}
@@ -254,11 +294,17 @@ function NotificationAvatar({ notification }) {
   )
 }
 
-function NotificationItem({ notification, onOpen, onOptions }) {
+function NotificationItem({
+  notification,
+  onOpen,
+  onOptions,
+}) {
   return (
     <div
       className={`flex w-full items-start gap-3 px-4 py-3 transition ${
-        notification.unread ? 'bg-[#eef6ff]' : 'bg-white'
+        notification.unread
+          ? 'bg-[#eef6ff]'
+          : 'bg-white'
       }`}
     >
       <button
@@ -266,17 +312,24 @@ function NotificationItem({ notification, onOpen, onOptions }) {
         onClick={() => onOpen(notification)}
         className="flex min-w-0 flex-1 items-start gap-3 text-left active:opacity-80"
       >
-        <NotificationAvatar notification={notification} />
+        <NotificationAvatar
+          notification={notification}
+        />
 
         <div className="min-w-0 flex-1 pt-0.5">
           <p
             className={`line-clamp-3 text-[14px] leading-5 text-[#111827] ${
-              notification.unread ? 'font-black' : 'font-semibold'
+              notification.unread
+                ? 'font-bold'
+                : 'font-semibold'
             }`}
           >
             {notification.title}
             {notification.message ? (
-              <span className="font-medium text-[#4b5563]"> · {notification.message}</span>
+              <span className="font-medium text-[#4b5563]">
+                {' '}
+                · {notification.message}
+              </span>
             ) : null}
           </p>
 
@@ -284,7 +337,7 @@ function NotificationItem({ notification, onOpen, onOptions }) {
             <span
               className={`text-[12px] ${
                 notification.unread
-                  ? 'font-black text-[#1877f2]'
+                  ? 'font-bold text-[#1877f2]'
                   : 'font-semibold text-[#8b93a1]'
               }`}
             >
@@ -316,28 +369,50 @@ function NotificationItem({ notification, onOpen, onOptions }) {
   )
 }
 
-function NotificationGroup({ title, notifications, onOpen, onOptions }) {
+function NotificationGroup({
+  title,
+  notifications,
+  onOpen,
+  onOptions,
+}) {
   if (!notifications.length) return null
 
   return (
     <section className="bg-white">
-      <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">{title}</h2>
+      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[#111827]">
+        {title}
+      </h2>
 
       <div className="bg-white">
-        {notifications.map((notification, index) => (
-          <div
+        {notifications.map((notification) => (
+          <NotificationItem
             key={notification.id}
-            className={index > 0 ? 'border-t border-[#eef0f4]' : ''}
-          >
-            <NotificationItem
-              notification={notification}
-              onOpen={onOpen}
-              onOptions={onOptions}
-            />
-          </div>
+            notification={notification}
+            onOpen={onOpen}
+            onOptions={onOptions}
+          />
         ))}
       </div>
     </section>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="px-4 py-4">
+      {Array.from({ length: 7 }).map((_, index) => (
+        <div
+          key={index}
+          className="mb-3 flex animate-pulse gap-3 py-2"
+        >
+          <div className="h-14 w-14 shrink-0 rounded-full bg-[#eef0f4]" />
+          <div className="min-w-0 flex-1 pt-1">
+            <div className="h-4 w-4/5 rounded bg-[#eef0f4]" />
+            <div className="mt-2 h-3 w-2/5 rounded bg-[#f3f4f6]" />
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -347,11 +422,13 @@ function EmptyState({ filter }) {
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
-      <h2 className="text-[17px] font-black text-[#111827]">
+      <h2 className="text-[17px] font-bold text-[#111827]">
         No {filter.toLowerCase()} notifications
       </h2>
       <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Story comments, likes, echoes, Diamond unlocks, gifts, income, and publishing notices will appear here.
+        Story comments, likes, echoes, Diamond
+        unlocks, gifts, income, and publishing
+        notices will appear here.
       </p>
     </div>
   )
@@ -381,11 +458,14 @@ function OptionsSheet({
     const scrollY = window.scrollY
     const body = document.body
     const html = document.documentElement
-    const previousBodyOverflow = body.style.overflow
-    const previousBodyPosition = body.style.position
+    const previousBodyOverflow =
+      body.style.overflow
+    const previousBodyPosition =
+      body.style.position
     const previousBodyTop = body.style.top
     const previousBodyWidth = body.style.width
-    const previousHtmlOverflow = html.style.overflow
+    const previousHtmlOverflow =
+      html.style.overflow
 
     body.style.overflow = 'hidden'
     body.style.position = 'fixed'
@@ -405,7 +485,11 @@ function OptionsSheet({
 
   if (!notification) return null
 
-  const fallbackText = String(notification.readerName || notification.typeLabel || 'N')
+  const fallbackText = String(
+    notification.readerName ||
+      notification.typeLabel ||
+      'N'
+  )
     .trim()
     .slice(0, 1)
     .toUpperCase()
@@ -422,18 +506,26 @@ function OptionsSheet({
     dragYRef.current = 0
     setDragY(0)
     setDragging(true)
-    event.currentTarget.setPointerCapture(event.pointerId)
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    )
   }
 
   const handleDragMove = (event) => {
     if (!dragging) return
-    const nextDragY = Math.max(0, event.clientY - dragStartRef.current)
+
+    const nextDragY = Math.max(
+      0,
+      event.clientY - dragStartRef.current
+    )
+
     dragYRef.current = nextDragY
     setDragY(nextDragY)
   }
 
   const handleDragEnd = () => {
     if (!dragging) return
+
     setDragging(false)
 
     if (dragYRef.current >= 80) {
@@ -464,9 +556,13 @@ function OptionsSheet({
 
       <section
         className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
-          dragging ? '' : 'transition-transform duration-200 ease-out'
+          dragging
+            ? ''
+            : 'transition-transform duration-200 ease-out'
         }`}
-        style={{ transform: `translateY(${dragY}px)` }}
+        style={{
+          transform: `translateY(${dragY}px)`,
+        }}
       >
         <div
           className="touch-none pb-2 pt-2"
@@ -492,8 +588,12 @@ function OptionsSheet({
           )}
 
           <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[#4b5563]">
-            <span className="text-[#111827]">{notification.title}</span>
-            {notification.message ? ` · ${notification.message}` : ''}
+            <span className="text-[#111827]">
+              {notification.title}
+            </span>
+            {notification.message
+              ? ` · ${notification.message}`
+              : ''}
           </p>
         </div>
 
@@ -509,7 +609,9 @@ function OptionsSheet({
             }`}
           >
             <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
-            <span className="flex-1">Show more</span>
+            <span className="flex-1">
+              Show more
+            </span>
             {frequencyLevel === 'more' ? (
               <i className="fa-solid fa-check text-[12px]" />
             ) : null}
@@ -526,7 +628,9 @@ function OptionsSheet({
             }`}
           >
             <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
-            <span className="flex-1">Show less</span>
+            <span className="flex-1">
+              Show less
+            </span>
             {frequencyLevel === 'less' ? (
               <i className="fa-solid fa-check text-[12px]" />
             ) : null}
@@ -540,10 +644,16 @@ function OptionsSheet({
           >
             <i
               className={`w-5 text-center text-[16px] fa-solid ${
-                notification.unread ? 'fa-check' : 'fa-envelope'
+                notification.unread
+                  ? 'fa-check'
+                  : 'fa-envelope'
               }`}
             />
-            <span>{notification.unread ? 'Mark as read' : 'Mark as unread'}</span>
+            <span>
+              {notification.unread
+                ? 'Mark as read'
+                : 'Mark as unread'}
+            </span>
           </button>
 
           <button
@@ -554,12 +664,18 @@ function OptionsSheet({
           >
             <i
               className={`fa-solid ${
-                notificationEnabled ? 'fa-bell-slash' : 'fa-bell'
+                notificationEnabled
+                  ? 'fa-bell-slash'
+                  : 'fa-bell'
               } w-5 text-center text-[16px]`}
             />
             <span>
-              Turn {notificationEnabled ? 'off' : 'on'}{' '}
-              {notification.typeLabel.toLowerCase()} notifications
+              Turn{' '}
+              {notificationEnabled
+                ? 'off'
+                : 'on'}{' '}
+              {notification.typeLabel.toLowerCase()}{' '}
+              notifications
             </span>
           </button>
 
@@ -570,7 +686,9 @@ function OptionsSheet({
             className={`${actionClass} text-black`}
           >
             <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
-            <span>Delete this notification</span>
+            <span>
+              Delete this notification
+            </span>
           </button>
 
           <button
@@ -580,7 +698,9 @@ function OptionsSheet({
             className={`${actionClass} text-black`}
           >
             <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
-            <span>Report issue to Notifications Team</span>
+            <span>
+              Report issue to Notifications Team
+            </span>
           </button>
         </div>
       </section>
@@ -590,90 +710,187 @@ function OptionsSheet({
 
 export default function StoryNotificationsPage() {
   const navigate = useNavigate()
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [notifications, setNotifications] = useState([])
-  const [preferences, setPreferences] = useState({})
+  const [activeFilter, setActiveFilter] =
+    useState('All')
+  const [notifications, setNotifications] =
+    useState([])
+  const [preferences, setPreferences] =
+    useState({})
   const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [loadingMore, setLoadingMore] =
+    useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] =
+    useState('')
+  const [actionLoading, setActionLoading] =
+    useState(false)
+  const [unreadCount, setUnreadCount] =
+    useState(0)
+  const [
+    selectedNotification,
+    setSelectedNotification,
+  ] = useState(null)
   const [toast, setToast] = useState('')
-  const [toastVisible, setToastVisible] = useState(false)
+  const [toastVisible, setToastVisible] =
+    useState(false)
   const toastFadeTimerRef = useRef(null)
   const toastClearTimerRef = useRef(null)
 
   const showToast = useCallback((text) => {
-    window.clearTimeout(toastFadeTimerRef.current)
-    window.clearTimeout(toastClearTimerRef.current)
+    window.clearTimeout(
+      toastFadeTimerRef.current
+    )
+    window.clearTimeout(
+      toastClearTimerRef.current
+    )
+
     setToast(String(text || ''))
     setToastVisible(true)
 
-    toastFadeTimerRef.current = window.setTimeout(() => {
-      setToastVisible(false)
-    }, 1900)
+    toastFadeTimerRef.current =
+      window.setTimeout(() => {
+        setToastVisible(false)
+      }, 1900)
 
-    toastClearTimerRef.current = window.setTimeout(() => {
-      setToast('')
-    }, 2250)
+    toastClearTimerRef.current =
+      window.setTimeout(() => {
+        setToast('')
+      }, 2250)
   }, [])
 
   useEffect(() => {
     return () => {
-      window.clearTimeout(toastFadeTimerRef.current)
-      window.clearTimeout(toastClearTimerRef.current)
+      window.clearTimeout(
+        toastFadeTimerRef.current
+      )
+      window.clearTimeout(
+        toastClearTimerRef.current
+      )
     }
   }, [])
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      setLoading(true)
+  const loadNotifications = useCallback(
+    async ({
+      append = false,
+      cursor = '',
+    } = {}) => {
+      try {
+        if (append) {
+          setLoadingMore(true)
+        } else {
+          setLoading(true)
+        }
 
-      const data = await fetchStoryNotifications()
+        const data =
+          await fetchStoryNotifications(cursor)
 
-      setNotifications(data.notifications)
-      setUnreadCount(data.unreadCount)
-      setPreferences(data.preferences)
-    } catch (error) {
-      setNotifications([])
-      setPreferences({})
-      setUnreadCount(0)
-      showToast(error.message || 'Failed to load notifications')
-    } finally {
-      setLoading(false)
-    }
-  }, [showToast])
+        setNotifications((current) => {
+          if (!append) {
+            return data.notifications
+          }
+
+          const currentIds = new Set(
+            current.map((item) => item.id)
+          )
+
+          return [
+            ...current,
+            ...data.notifications.filter(
+              (item) =>
+                !currentIds.has(item.id)
+            ),
+          ]
+        })
+
+        setUnreadCount(data.unreadCount)
+        setPreferences(data.preferences)
+        setHasMore(data.hasMore)
+        setNextCursor(data.nextCursor)
+      } catch (error) {
+        if (!append) {
+          setNotifications([])
+          setPreferences({})
+          setUnreadCount(0)
+          setHasMore(false)
+          setNextCursor('')
+        }
+
+        showToast(
+          error.message ||
+            'Failed to load notifications'
+        )
+      } finally {
+        if (append) {
+          setLoadingMore(false)
+        } else {
+          setLoading(false)
+        }
+      }
+    },
+    [showToast]
+  )
 
   useEffect(() => {
     loadNotifications()
   }, [loadNotifications])
 
   const filteredNotifications = useMemo(() => {
-    if (activeFilter === 'All') return notifications
-    if (activeFilter === 'Unread') return notifications.filter((item) => item.unread)
-    return notifications.filter((item) => item.typeLabel === activeFilter)
+    if (activeFilter === 'All') {
+      return notifications
+    }
+
+    if (activeFilter === 'Unread') {
+      return notifications.filter(
+        (item) => item.unread
+      )
+    }
+
+    return notifications.filter(
+      (item) =>
+        item.typeLabel === activeFilter
+    )
   }, [activeFilter, notifications])
 
-  const newNotifications = filteredNotifications.filter((item) => item.unread)
-  const earlierNotifications = filteredNotifications.filter((item) => !item.unread)
-  const selectedPreference = selectedNotification
-    ? preferences[selectedNotification.type] || {
-        is_enabled: true,
-        frequency_level: 'normal',
-      }
-    : {
-        is_enabled: true,
-        frequency_level: 'normal',
-      }
+  const newNotifications =
+    filteredNotifications.filter(
+      (item) => item.unread
+    )
+
+  const earlierNotifications =
+    filteredNotifications.filter(
+      (item) => !item.unread
+    )
+
+  const selectedPreference =
+    selectedNotification
+      ? preferences[
+          selectedNotification.type
+        ] || {
+          is_enabled: true,
+          frequency_level: 'normal',
+        }
+      : {
+          is_enabled: true,
+          frequency_level: 'normal',
+        }
 
   async function handleOpen(notification) {
     if (notification.unread) {
       setNotifications((current) =>
         current.map((item) =>
-          item.id === notification.id ? { ...item, unread: false } : item
+          item.id === notification.id
+            ? { ...item, unread: false }
+            : item
         )
       )
-      setUnreadCount((current) => Math.max(0, current - 1))
-      markNotificationRead(notification.id).catch(() => null)
+
+      setUnreadCount((current) =>
+        Math.max(0, current - 1)
+      )
+
+      markNotificationRead(
+        notification.id
+      ).catch(() => null)
     }
 
     if (notification.targetUrl) {
@@ -681,7 +898,9 @@ export default function StoryNotificationsPage() {
       return
     }
 
-    showToast('This notification does not have a target page yet.')
+    showToast(
+      'This notification does not have a target page yet.'
+    )
   }
 
   async function handleToggleRead() {
@@ -691,23 +910,41 @@ export default function StoryNotificationsPage() {
       setActionLoading(true)
 
       if (selectedNotification.unread) {
-        await markNotificationRead(selectedNotification.id)
-        setUnreadCount((current) => Math.max(0, current - 1))
+        await markNotificationRead(
+          selectedNotification.id
+        )
+
+        setUnreadCount((current) =>
+          Math.max(0, current - 1)
+        )
       } else {
-        await markNotificationUnread(selectedNotification.id)
-        setUnreadCount((current) => current + 1)
+        await markNotificationUnread(
+          selectedNotification.id
+        )
+
+        setUnreadCount(
+          (current) => current + 1
+        )
       }
 
       setNotifications((current) =>
         current.map((item) =>
           item.id === selectedNotification.id
-            ? { ...item, unread: !selectedNotification.unread }
+            ? {
+                ...item,
+                unread:
+                  !selectedNotification.unread,
+              }
             : item
         )
       )
+
       setSelectedNotification(null)
     } catch (error) {
-      showToast(error.message || 'Failed to update notification')
+      showToast(
+        error.message ||
+          'Failed to update notification'
+      )
     } finally {
       setActionLoading(false)
     }
@@ -716,34 +953,51 @@ export default function StoryNotificationsPage() {
   async function handleFrequency(level) {
     if (!selectedNotification) return
 
-    const notificationType = selectedNotification.type
-    const notificationLabel = selectedNotification.typeLabel.toLowerCase()
+    const notificationType =
+      selectedNotification.type
+    const notificationLabel =
+      selectedNotification.typeLabel.toLowerCase()
 
     try {
       setActionLoading(true)
-      const data = await updateNotificationPreference(notificationType, true, level)
-      const preference = data.preference || {
-        type: notificationType,
-        is_enabled: true,
-        frequency_level: level,
-      }
+
+      const data =
+        await updateNotificationPreference(
+          notificationType,
+          true,
+          level
+        )
+
+      const preference =
+        data.preference || {
+          type: notificationType,
+          is_enabled: true,
+          frequency_level: level,
+        }
 
       setPreferences((current) => ({
         ...current,
         [notificationType]: {
-          is_enabled: preference.is_enabled !== false,
-          frequency_level: preference.frequency_level || level,
+          is_enabled:
+            preference.is_enabled !== false,
+          frequency_level:
+            preference.frequency_level ||
+            level,
         },
       }))
 
       setSelectedNotification(null)
+
       showToast(
         level === 'more'
           ? `You will see more ${notificationLabel} notifications.`
           : `You will see fewer ${notificationLabel} notifications.`
       )
     } catch (error) {
-      showToast(error.message || 'Failed to update notification preference')
+      showToast(
+        error.message ||
+          'Failed to update notification preference'
+      )
     } finally {
       setActionLoading(false)
     }
@@ -752,31 +1006,43 @@ export default function StoryNotificationsPage() {
   async function handleToggleType() {
     if (!selectedNotification) return
 
-    const notificationType = selectedNotification.type
-    const notificationLabel = selectedNotification.typeLabel
-    const currentPreference = preferences[notificationType] || {
-      is_enabled: true,
-      frequency_level: 'normal',
-    }
-    const nextEnabled = currentPreference.is_enabled === false
+    const notificationType =
+      selectedNotification.type
+    const notificationLabel =
+      selectedNotification.typeLabel
+    const currentPreference =
+      preferences[notificationType] || {
+        is_enabled: true,
+        frequency_level: 'normal',
+      }
+    const nextEnabled =
+      currentPreference.is_enabled === false
 
     try {
       setActionLoading(true)
-      const data = await updateNotificationPreference(
-        notificationType,
-        nextEnabled,
-        currentPreference.frequency_level || 'normal'
-      )
-      const preference = data.preference || {
-        type: notificationType,
-        is_enabled: nextEnabled,
-        frequency_level: currentPreference.frequency_level || 'normal',
-      }
+
+      const data =
+        await updateNotificationPreference(
+          notificationType,
+          nextEnabled,
+          currentPreference.frequency_level ||
+            'normal'
+        )
+
+      const preference =
+        data.preference || {
+          type: notificationType,
+          is_enabled: nextEnabled,
+          frequency_level:
+            currentPreference.frequency_level ||
+            'normal',
+        }
 
       setPreferences((current) => ({
         ...current,
         [notificationType]: {
-          is_enabled: preference.is_enabled !== false,
+          is_enabled:
+            preference.is_enabled !== false,
           frequency_level:
             preference.frequency_level ||
             currentPreference.frequency_level ||
@@ -785,13 +1051,19 @@ export default function StoryNotificationsPage() {
       }))
 
       setSelectedNotification(null)
+
       showToast(
         `${notificationLabel} notifications are turned ${
-          preference.is_enabled !== false ? 'on' : 'off'
+          preference.is_enabled !== false
+            ? 'on'
+            : 'off'
         }.`
       )
     } catch (error) {
-      showToast(error.message || 'Failed to update notification preference')
+      showToast(
+        error.message ||
+          'Failed to update notification preference'
+      )
     } finally {
       setActionLoading(false)
     }
@@ -802,79 +1074,128 @@ export default function StoryNotificationsPage() {
 
     try {
       setActionLoading(true)
-      await deleteNotification(selectedNotification.id)
+
+      await deleteNotification(
+        selectedNotification.id
+      )
 
       setNotifications((current) =>
-        current.filter((item) => item.id !== selectedNotification.id)
+        current.filter(
+          (item) =>
+            item.id !==
+            selectedNotification.id
+        )
       )
 
       if (selectedNotification.unread) {
-        setUnreadCount((current) => Math.max(0, current - 1))
+        setUnreadCount((current) =>
+          Math.max(0, current - 1)
+        )
       }
 
       setSelectedNotification(null)
     } catch (error) {
-      showToast(error.message || 'Failed to delete notification')
+      showToast(
+        error.message ||
+          'Failed to delete notification'
+      )
     } finally {
       setActionLoading(false)
     }
   }
 
   async function handleMarkAllRead() {
+    if (!unreadCount) return
+
     try {
       await markAllNotificationsRead()
+
       setNotifications((current) =>
-        current.map((item) => ({ ...item, unread: false }))
+        current.map((item) => ({
+          ...item,
+          unread: false,
+        }))
       )
+
       setUnreadCount(0)
+      showToast(
+        'All notifications marked as read.'
+      )
     } catch (error) {
-      showToast(error.message || 'Failed to mark notifications as read')
+      showToast(
+        error.message ||
+          'Failed to mark notifications as read'
+      )
     }
+  }
+
+  function handleLoadMore() {
+    if (
+      loadingMore ||
+      !hasMore ||
+      !nextCursor
+    ) {
+      return
+    }
+
+    loadNotifications({
+      append: true,
+      cursor: nextCursor,
+    })
   }
 
   return (
     <div className="min-h-screen bg-white pb-[92px]">
       <div
-        className={`sticky top-0 z-40 border-b border-[#eef0f4] bg-white ${
-          selectedNotification ? 'invisible' : ''
+        className={`sticky top-0 z-40 bg-white ${
+          selectedNotification
+            ? 'invisible'
+            : ''
         }`}
       >
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/dashboard')}
+            onClick={() =>
+              navigate('/author/dashboard')
+            }
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back to author dashboard"
           >
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-black text-[#111827]">
+          <div className="text-[18px] font-bold text-[#111827]">
             Story Notifications
           </div>
 
           <button
             type="button"
             onClick={handleMarkAllRead}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827] active:scale-95"
+            disabled={!unreadCount}
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
             aria-label="Mark all as read"
+            title="Mark all as read"
           >
-            <i className="fa-solid fa-check text-[14px]" />
+            <i className="fa-solid fa-broom text-[17px]" />
           </button>
         </div>
       </div>
 
       <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
-        <section className="sticky top-14 z-30 border-b border-[#eef0f4] bg-white">
+        <section className="sticky top-14 z-30 bg-white">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
-              const active = activeFilter === filter
+              const active =
+                activeFilter === filter
 
               return (
                 <button
                   key={filter}
                   type="button"
-                  onClick={() => setActiveFilter(filter)}
+                  onClick={() =>
+                    setActiveFilter(filter)
+                  }
                   className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-black/[0.045] active:scale-[0.98] ${
                     active
                       ? 'bg-black/[0.065] font-semibold text-[#111827]'
@@ -882,8 +1203,9 @@ export default function StoryNotificationsPage() {
                   }`}
                 >
                   {filter}
-                  {filter === 'Unread' && unreadCount > 0 ? (
-                    <span className="ml-1.5 text-[11px] font-black">
+                  {filter === 'Unread' &&
+                  unreadCount > 0 ? (
+                    <span className="ml-1.5 text-[11px] font-bold">
                       {unreadCount}
                     </span>
                   ) : null}
@@ -894,41 +1216,82 @@ export default function StoryNotificationsPage() {
         </section>
 
         {loading ? (
-          <EmptyState filter="loading" />
+          <LoadingState />
         ) : filteredNotifications.length ? (
           <div className="bg-white">
             <NotificationGroup
               title="New"
               notifications={newNotifications}
               onOpen={handleOpen}
-              onOptions={setSelectedNotification}
+              onOptions={
+                setSelectedNotification
+              }
             />
 
             <NotificationGroup
               title="Earlier"
-              notifications={earlierNotifications}
+              notifications={
+                earlierNotifications
+              }
               onOpen={handleOpen}
-              onOptions={setSelectedNotification}
+              onOptions={
+                setSelectedNotification
+              }
             />
+
+            {hasMore ? (
+              <div className="px-4 py-5">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:text-[#9ca3af]"
+                >
+                  {loadingMore
+                    ? 'Loading...'
+                    : 'Load more notifications'}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
-          <EmptyState filter={activeFilter} />
+          <EmptyState
+            filter={activeFilter}
+          />
         )}
       </main>
 
-      <div className={selectedNotification ? 'invisible' : ''}>
+      <div
+        className={
+          selectedNotification
+            ? 'invisible'
+            : ''
+        }
+      >
         <AuthorStudioBottomNav />
       </div>
 
       <OptionsSheet
         notification={selectedNotification}
         loading={actionLoading}
-        notificationEnabled={selectedPreference.is_enabled !== false}
-        frequencyLevel={selectedPreference.frequency_level || 'normal'}
-        onClose={() => setSelectedNotification(null)}
+        notificationEnabled={
+          selectedPreference.is_enabled !==
+          false
+        }
+        frequencyLevel={
+          selectedPreference.frequency_level ||
+          'normal'
+        }
+        onClose={() =>
+          setSelectedNotification(null)
+        }
         onToggleRead={handleToggleRead}
-        onShowMore={() => handleFrequency('more')}
-        onShowLess={() => handleFrequency('less')}
+        onShowMore={() =>
+          handleFrequency('more')
+        }
+        onShowLess={() =>
+          handleFrequency('less')
+        }
         onToggleType={handleToggleType}
         onDelete={handleDelete}
         onReport={() => {
@@ -949,7 +1312,9 @@ export default function StoryNotificationsPage() {
         >
           <div className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium leading-5 text-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.05]">
             <i className="fa-solid fa-check text-[13px]" />
-            <span className="min-w-0 flex-1">{toast}</span>
+            <span className="min-w-0 flex-1">
+              {toast}
+            </span>
           </div>
         </div>
       ) : null}
