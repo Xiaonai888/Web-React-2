@@ -211,11 +211,12 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
         className="flex min-w-0 flex-1 items-center text-left active:opacity-70"
       >
         <div className="min-w-0">
-          {isFree ? (
-            <span className="mb-1 inline-flex h-[18px] items-center rounded-full bg-[#FE526E] px-2 text-[9px] font-normal leading-none text-white">
-              Free
-            </span>
-          ) : null}
+          {isFree || episode.is_adult ? (
+  <div className="mb-1 flex items-center gap-1.5">
+    {isFree ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#FE526E] px-2 text-[9px] font-normal leading-none text-white">Free</span> : null}
+    {episode.is_adult ? <span className="inline-flex h-[18px] items-center rounded-full bg-[#111827] px-2 text-[9px] font-normal leading-none text-white">18+</span> : null}
+  </div>
+) : null}
 
           <div className="line-clamp-1 text-[14px] font-semibold leading-5 text-[#111827]">
             {episode.title || 'Untitled Episode'}
