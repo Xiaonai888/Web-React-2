@@ -123,7 +123,7 @@ export default function AuthorPageMoreMenu({
     return () => controller.abort()
   }, [open, pageUsername, author?.is_owner])
 
-  if (!open) return null
+  if (!open || author?.is_owner) return null
 
   const showMessage = (text) => {
     onMessage?.(text)
