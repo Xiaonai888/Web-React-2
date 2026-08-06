@@ -5,9 +5,10 @@ import {
   useState,
 } from 'react'
 import {
+  BookOpen,
   Clapperboard,
-  House,
   Send,
+  ShoppingBag,
 } from 'lucide-react'
 import {
   useLocation,
@@ -30,64 +31,46 @@ function getStoredUser() {
   }
 }
 
-function HomeIcon({ highlighted }) {
+function MallIcon() {
   return (
-    <House
-      size={24}
-      stroke="#111827"
-      strokeWidth={2.15}
-      fill={highlighted ? '#F6C800' : 'none'}
+    <ShoppingBag
+      size={23}
+      strokeWidth={2.1}
     />
   )
 }
 
-function FastIcon({ highlighted }) {
+function ReelIcon() {
   return (
     <Clapperboard
-      size={24}
-      stroke="#111827"
-      strokeWidth={2.15}
-      fill={highlighted ? '#F6C800' : 'none'}
+      size={23}
+      strokeWidth={2.1}
     />
   )
 }
 
-function ChatIcon({ highlighted }) {
+function ChatIcon() {
   return (
     <Send
-      size={24}
-      stroke="#111827"
-      strokeWidth={2.15}
-      fill={highlighted ? '#F6C800' : 'none'}
+      size={23}
+      strokeWidth={2.1}
     />
   )
 }
 
-function LibraryIcon({ highlighted }) {
+function LibraryIcon() {
   return (
-    <span className="relative block h-6 w-6">
-      <img
-        src="/assets/Icons/Library.svg"
-        alt=""
-        className={`absolute inset-0 h-6 w-6 object-contain transition-opacity ${
-          highlighted ? 'opacity-0' : 'opacity-100'
-        }`}
-      />
-      <img
-        src="/assets/Icons/Library-active.svg"
-        alt=""
-        className={`absolute inset-0 h-6 w-6 object-contain transition-opacity ${
-          highlighted ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-    </span>
+    <BookOpen
+      size={23}
+      strokeWidth={2.1}
+    />
   )
 }
 
 function ProfileIcon({
-  highlighted,
   avatarUrl,
   profileName,
+  active,
 }) {
   const [imageFailed, setImageFailed] =
     useState(false)
@@ -99,10 +82,8 @@ function ProfileIcon({
 
   return (
     <span
-      className={`flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border-2 bg-[#111827] text-[11px] font-extrabold text-white transition ${
-        highlighted
-          ? 'border-[#F6C800] ring-2 ring-[#F6C800]/25'
-          : 'border-[#111827]'
+      className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[11px] font-bold text-white transition ${
+        active ? 'scale-105' : ''
       }`}
     >
       {avatarUrl && !imageFailed ? (
@@ -122,7 +103,7 @@ function ProfileIcon({
 }
 
 const NAV_ITEMS = [
-  { key: 'home', label: 'Home' },
+  { key: 'mall', label: 'Mall' },
   { key: 'reel', label: 'Reel' },
   { key: 'chat', label: 'Chat' },
   { key: 'library', label: 'Library' },
@@ -161,13 +142,15 @@ export default function ReaderProfileFooter({
     'Me'
 
   const activeKey =
-    location.pathname.startsWith('/chat')
-      ? 'chat'
-      : location.pathname === '/library'
-        ? 'library'
-        : location.pathname === '/profile'
-          ? 'me'
-          : ''
+    location.pathname.startsWith('/fast')
+      ? 'reel'
+      : location.pathname.startsWith('/chat')
+        ? 'chat'
+        : location.pathname.startsWith('/library')
+          ? 'library'
+          : location.pathname.startsWith('/profile')
+            ? 'me'
+            : ''
 
   const loadChatBadge = useCallback(
     async () => {
@@ -267,13 +250,13 @@ export default function ReaderProfileFooter({
   }
 
   const handleClick = (key) => {
-    if (key === 'library') {
-      navigate('/library')
+    if (key === 'mall') {
+      showMessage('Mall is coming soon.')
       return
     }
 
-    if (key === 'me') {
-      navigate('/profile')
+    if (key === 'reel') {
+      navigate('/fast')
       return
     }
 
@@ -282,52 +265,36 @@ export default function ReaderProfileFooter({
       return
     }
 
-    showMessage(
-      `${key === 'home' ? 'Home' : 'Reel'} is coming soon.`
-    )
+    if (key === 'library') {
+      navigate('/library')
+      return
+    }
+
+    navigate('/profile')
   }
 
-  const renderIcon = (
-    key,
-    highlighted
-  ) => {
-    if (key === 'home') {
-      return (
-        <HomeIcon
-          highlighted={highlighted}
-        />
-      )
+  const renderIcon = (key, active) => {
+    if (key === 'mall') {
+      return <MallIcon />
     }
 
     if (key === 'reel') {
-      return (
-        <FastIcon
-          highlighted={highlighted}
-        />
-      )
+      return <ReelIcon />
     }
 
     if (key === 'chat') {
-      return (
-        <ChatIcon
-          highlighted={highlighted}
-        />
-      )
+      return <ChatIcon />
     }
 
     if (key === 'library') {
-      return (
-        <LibraryIcon
-          highlighted={highlighted}
-        />
-      )
+      return <LibraryIcon />
     }
 
     return (
       <ProfileIcon
-        highlighted={highlighted}
         avatarUrl={finalAvatarUrl}
         profileName={finalProfileName}
+        active={active}
       />
     )
   }
@@ -341,7 +308,7 @@ export default function ReaderProfileFooter({
       ) : null}
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-[100000] border-t border-[#ececf1] bg-white/95 backdrop-blur-xl"
+        className="fixed bottom-0 left-0 right-0 z-[100000] bg-white/95 backdrop-blur-xl"
         style={{
           paddingBottom:
             'env(safe-area-inset-bottom, 0px)',
@@ -352,8 +319,9 @@ export default function ReaderProfileFooter({
             const active =
               activeKey === item.key
             const highlighted =
-              active ||
-              hoveredKey === item.key
+              item.key !== 'me' &&
+              (active ||
+                hoveredKey === item.key)
             const isChat =
               item.key === 'chat'
             const accessibleLabel =
@@ -387,16 +355,19 @@ export default function ReaderProfileFooter({
                     ? 'page'
                     : undefined
                 }
-                className="relative flex h-12 w-12 items-center justify-center rounded-full transition active:scale-90"
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition active:scale-90 ${
+                  item.key === 'me'
+                    ? 'bg-transparent'
+                    : highlighted
+                      ? 'bg-[#7c3aed] text-white shadow-[0_6px_16px_rgba(124,58,237,0.28)]'
+                      : 'bg-transparent text-[#111827] hover:bg-[#7c3aed] hover:text-white'
+                }`}
               >
-                {renderIcon(
-                  item.key,
-                  highlighted
-                )}
+                {renderIcon(item.key, active)}
 
                 {isChat &&
                 chatBadgeCount > 0 ? (
-                  <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-[#ef4444] px-1 text-[8px] font-black leading-none text-white">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-[#ef4444] px-1 text-[8px] font-bold leading-none text-white">
                     {chatBadgeCount > 99
                       ? '99+'
                       : chatBadgeCount}
