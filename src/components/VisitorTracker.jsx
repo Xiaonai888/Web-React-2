@@ -161,6 +161,56 @@ async function readResponse(response) {
 export default function VisitorTracker() {
   const location = useLocation()
   const [debugState, setDebugState] = useState(null)
+    useEffect(() => {
+    if (!hasReaderAccount()) {
+      return undefined
+    }
+
+    const updatePresence = async () => {
+      try {
+        await touchChatPresence()
+      } catch {
+        return
+      }
+    }
+
+    updatePresence()
+
+    const intervalId = window.setInterval(
+      updatePresence,
+      45000
+    )
+
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible'
+      ) {
+        updatePresence()
+      }
+    }
+
+    window.addEventListener(
+      'focus',
+      updatePresence
+    )
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener(
+        'focus',
+        updatePresence
+      )
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
+    }
+  }, [])
+
 
   useEffect(() => {
     const debugEnabled = new URLSearchParams(window.location.search).get('visitorDebug') === '1'
