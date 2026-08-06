@@ -305,7 +305,7 @@ function CalendarSheet({
               onChange={(event) =>
                 setDraftValue(event.target.value)
               }
-              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f]"
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white pl-4 pr-8 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f] [&::-webkit-calendar-picker-indicator]:mr-1"
             >
               {years.map((year) => (
                 <option key={year} value={String(year)}>
@@ -320,7 +320,7 @@ function CalendarSheet({
               onChange={(event) =>
                 setDraftValue(event.target.value)
               }
-              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white px-4 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f]"
+              className="h-[52px] w-full rounded-[15px] border border-[#e4e7ec] bg-white pl-4 pr-8 text-[15px] font-normal text-[#111827] outline-none focus:border-[#ff3b5f] [&::-webkit-calendar-picker-indicator]:mr-1"
             />
           )}
         </div>
@@ -340,7 +340,7 @@ function CalendarSheet({
 function LoadingPage() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f6] p-1">
+      <div className="grid grid-cols-4 gap-2">
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="h-9 animate-pulse rounded-full bg-white" />
         ))}
@@ -481,7 +481,7 @@ export default function AuthorIncomePage() {
 
         {data ? (
           <>
-            <section className="grid grid-cols-4 gap-1 rounded-full bg-[#f5f5f6] p-1">
+            <section className="grid grid-cols-4 gap-2">
               {periods.map((item) => (
                 <PeriodTab
                   key={item.key}
@@ -509,14 +509,7 @@ export default function AuthorIncomePage() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setCalendarOpen(true)}
-                    className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#ff3b5f] px-3 text-[11px] font-bold text-white active:scale-95"
-                  >
-                    <i className="fa-regular fa-calendar" />
-                    Change
-                  </button>
+                  
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 divide-x divide-[#edf0f4] py-3">
