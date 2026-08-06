@@ -37,6 +37,7 @@ import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
 import DiscoverSearchPage from './pages/DiscoverSearchPage'
+import Search from './pages/Search'
 import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorDiamondPage from './pages/Author/AuthorDiamondPage'
@@ -243,6 +244,7 @@ function AppShell() {
     '/author/create-story',
     '/authors/top',
     '/search',
+    '/discover/search',
     '/notifications',
     '/update-today',
     '/daily-picks',
@@ -1196,7 +1198,8 @@ const shouldShowOpeningAds =
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
-        <Route path="/search" element={<DiscoverSearchPage />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/discover/search" element={<DiscoverSearchPage />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
         <Route path="/author/gifts" element={<AuthorGiftPage />} />
