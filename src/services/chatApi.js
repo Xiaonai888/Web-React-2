@@ -77,6 +77,21 @@ export function getChatConversations(status = 'all') {
   return chatRequest(`/conversations${suffix}`)
 }
 
+export function getChatQuickContacts(limit = 12) {
+  const query = new URLSearchParams()
+  query.set('limit', String(limit))
+
+  return chatRequest(
+    `/quick-contacts?${query.toString()}`
+  )
+}
+
+export function touchChatPresence() {
+  return chatRequest('/presence', {
+    method: 'PATCH',
+  })
+}
+
 export function searchChatUsers(search, limit = 12) {
   const query = new URLSearchParams()
 
