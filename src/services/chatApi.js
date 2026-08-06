@@ -494,3 +494,23 @@ export function forwardChatMessages({
   )
 }
 
+export function reportChatMessage(
+  conversationId,
+  messageId,
+  { reason, details = '' }
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages/${encodeURIComponent(
+      messageId
+    )}/report`,
+    {
+      method: 'POST',
+      body: {
+        reason,
+        details,
+      },
+    }
+  )
+}
