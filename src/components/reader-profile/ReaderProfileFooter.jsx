@@ -17,6 +17,7 @@ import {
 import {
   getChatConversations,
   hasReaderSession,
+  touchChatPresence,
 } from '../../services/chatApi'
 
 function getStoredUser() {
@@ -152,6 +153,16 @@ export default function ReaderProfileFooter({
             ? 'me'
             : ''
 
+  const updatePresence = useCallback(async () => {
+    if (!hasReaderSession()) return
+
+    try {
+      await touchChatPresence()
+    } catch {
+      return
+    }
+  }, [])
+
   const loadChatBadge = useCallback(
     async () => {
       if (!hasReaderSession()) {
@@ -208,6 +219,7 @@ export default function ReaderProfileFooter({
 
   useEffect(() => {
     loadChatBadge()
+    updatePresence()
 
     const intervalId =
       window.setInterval(
@@ -215,8 +227,15 @@ export default function ReaderProfileFooter({
         10000
       )
 
+    const presenceIntervalId =
+      window.setInterval(
+        updatePresence,
+        45000
+      )
+
     const handleChatUpdated = () => {
       loadChatBadge()
+      updatePresence()
     }
 
     window.addEventListener(
@@ -230,6 +249,9 @@ export default function ReaderProfileFooter({
 
     return () => {
       window.clearInterval(intervalId)
+      window.clearInterval(
+        presenceIntervalId
+      )
       window.removeEventListener(
         'shadow-chat-updated',
         handleChatUpdated
@@ -239,7 +261,7 @@ export default function ReaderProfileFooter({
         handleChatUpdated
       )
     }
-  }, [loadChatBadge, location.pathname])
+  }, [loadChatBadge, location.pathname, updatePresence])
 
   const showMessage = (text) => {
     setMessage(text)
