@@ -37,7 +37,7 @@ import EpisodePreviewPage from './pages/Author/EpisodePreviewPage'
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage'
 import TopAuthorsPage from './pages/Author/TopAuthorsPage'
-import Search from './pages/Search'
+import DiscoverSearchPage from './pages/DiscoverSearchPage'
 import ReaderPage from './pages/ReaderPage'
 import AuthorIncomePage from './pages/Author/AuthorIncomePage'
 import AuthorDiamondPage from './pages/Author/AuthorDiamondPage'
@@ -1197,7 +1197,7 @@ const shouldShowOpeningAds =
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/authors/top" element={<TopAuthorsPage />} />
-        <Route path="/search" element={<Search />} />
+        <Route path="/search" element={<DiscoverSearchPage />} />
         <Route path="/author/income" element={<AuthorIncomePage />} />
         <Route path="/author/diamonds" element={<AuthorDiamondPage />} />
         <Route path="/author/gifts" element={<AuthorGiftPage />} />
