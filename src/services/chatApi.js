@@ -77,6 +77,23 @@ export function getChatConversations(status = 'all') {
   return chatRequest(`/conversations${suffix}`)
 }
 
+export function getManagedChatConversations({
+  status = 'all',
+  view = 'active',
+} = {}) {
+  const query = new URLSearchParams()
+
+  if (status && status !== 'all') {
+    query.set('status', status)
+  }
+
+  query.set('view', view)
+
+  return chatRequest(
+    `/conversations/managed?${query.toString()}`
+  )
+}
+
 export function getChatQuickContacts(limit = 12) {
   const query = new URLSearchParams()
   query.set('limit', String(limit))
@@ -157,6 +174,45 @@ export function sendChatMessage(
     {
       method: 'POST',
       body: { message },
+    }
+  )
+}
+
+export function archiveChatConversation(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/archive`,
+    {
+      method: 'PATCH',
+    }
+  )
+}
+
+export function unarchiveChatConversation(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/archive`,
+    {
+      method: 'DELETE',
+    }
+  )
+}
+
+export function deleteChatConversation(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}`,
+    {
+      method: 'DELETE',
     }
   )
 }
