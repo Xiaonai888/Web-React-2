@@ -12,18 +12,24 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { searchChatUsers } from '../../services/chatApi'
+import ReaderAuthorMessageRequestModal from './ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from './ReaderReaderMessageRequestModal'
 
 function SearchAvatar({ user }) {
   const [failed, setFailed] = useState(false)
   const name =
-    user?.name || user?.username || 'Reader'
+    user?.name ||
+    user?.page_name ||
+    user?.username ||
+    'Reader'
   const letter =
-    String(name).trim().charAt(0).toUpperCase() ||
-    'R'
+    String(name)
+      .trim()
+      .charAt(0)
+      .toUpperCase() || 'R'
 
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-extrabold text-white">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-bold text-white">
       {user?.avatar_url && !failed ? (
         <img
           src={user.avatar_url}
@@ -35,6 +41,13 @@ function SearchAvatar({ user }) {
         letter
       )}
     </span>
+  )
+}
+
+function isAuthorResult(user) {
+  return (
+    user?.result_type === 'author' ||
+    Boolean(user?.author_page_id)
   )
 }
 
@@ -50,6 +63,8 @@ export default function ChatNewMessageSheet({
   const [error, setError] = useState('')
   const [selectedReader, setSelectedReader] =
     useState(null)
+  const [selectedAuthor, setSelectedAuthor] =
+    useState(null)
 
   useEffect(() => {
     if (!open) {
@@ -58,6 +73,7 @@ export default function ChatNewMessageSheet({
       setLoading(false)
       setError('')
       setSelectedReader(null)
+      setSelectedAuthor(null)
       return undefined
     }
 
@@ -70,16 +86,25 @@ export default function ChatNewMessageSheet({
     document.body.style.touchAction = 'none'
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.style.overflow =
+        previousOverflow
       document.body.style.touchAction =
         previousTouchAction
     }
   }, [open])
 
   useEffect(() => {
-    if (!open || selectedReader) return undefined
+    if (
+      !open ||
+      selectedReader ||
+      selectedAuthor
+    ) {
+      return undefined
+    }
 
-    const searchText = query.trim()
+    const searchText = query
+      .trim()
+      .replace(/^@+/, '')
 
     if (searchText.length < 2) {
       requestIdRef.current += 1
@@ -89,7 +114,8 @@ export default function ChatNewMessageSheet({
       return undefined
     }
 
-    const requestId = requestIdRef.current + 1
+    const requestId =
+      requestIdRef.current + 1
     requestIdRef.current = requestId
 
     const timeoutId = window.setTimeout(
@@ -100,10 +126,13 @@ export default function ChatNewMessageSheet({
 
           const data = await searchChatUsers(
             searchText,
-            12
+            20
           )
 
-          if (requestIdRef.current !== requestId) {
+          if (
+            requestIdRef.current !==
+            requestId
+          ) {
             return
           }
 
@@ -113,7 +142,10 @@ export default function ChatNewMessageSheet({
               : []
           )
         } catch (searchError) {
-          if (requestIdRef.current !== requestId) {
+          if (
+            requestIdRef.current !==
+            requestId
+          ) {
             return
           }
 
@@ -129,31 +161,75 @@ export default function ChatNewMessageSheet({
               'Failed to search people'
           )
         } finally {
-          if (requestIdRef.current === requestId) {
+          if (
+            requestIdRef.current ===
+            requestId
+          ) {
             setLoading(false)
           }
         }
       },
-      350
+      300
     )
 
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [navigate, onClose, open, query, selectedReader])
+  }, [
+    navigate,
+    onClose,
+    open,
+    query,
+    selectedAuthor,
+    selectedReader,
+  ])
 
   const closeAll = useCallback(() => {
     setSelectedReader(null)
+    setSelectedAuthor(null)
     onClose?.()
   }, [onClose])
 
-  const selectReader = (user) => {
-    setSelectedReader(user)
+  const selectPerson = (user) => {
+    if (isAuthorResult(user)) {
+      setSelectedAuthor({
+        id:
+          user.author_page_id ||
+          user.id,
+        page_name:
+          user.page_name ||
+          user.name ||
+          'Author',
+        page_username:
+          user.page_username ||
+          user.username ||
+          '',
+        avatar_url:
+          user.avatar_url || null,
+      })
+      return
+    }
+
+    setSelectedReader({
+      ...user,
+      id: user.user_id || user.id,
+      name:
+        user.name ||
+        user.username ||
+        'Shadow Reader',
+      username:
+        user.username || '',
+    })
   }
+
+  const showSearch =
+    open &&
+    !selectedReader &&
+    !selectedAuthor
 
   return (
     <>
-      {open && !selectedReader ? (
+      {showSearch ? (
         <div className="fixed inset-0 z-[310] flex items-end justify-center md:items-center md:px-4">
           <button
             type="button"
@@ -167,11 +243,11 @@ export default function ChatNewMessageSheet({
 
             <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4 md:px-5">
               <div>
-                <h2 className="text-[20px] font-extrabold text-[#111827]">
+                <h2 className="text-[20px] font-bold text-[#111827]">
                   New message
                 </h2>
                 <p className="mt-0.5 text-[11px] font-semibold text-[#8a8792]">
-                  Search for a reader
+                  Search readers and author pages
                 </p>
               </div>
 
@@ -195,9 +271,14 @@ export default function ChatNewMessageSheet({
                 autoFocus
                 value={query}
                 onChange={(event) =>
-                  setQuery(event.target.value.slice(0, 50))
+                  setQuery(
+                    event.target.value.slice(
+                      0,
+                      50
+                    )
+                  )
                 }
-                placeholder="Name or username"
+                placeholder="Name or @username"
                 className="h-[50px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-12 pr-4 text-[14px] font-medium text-[#111827] outline-none transition placeholder:text-[#94919b] focus:border-[#d9cdf8] focus:bg-white"
               />
             </div>
@@ -214,58 +295,78 @@ export default function ChatNewMessageSheet({
                 <div className="mx-1 mt-3 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
                   {error}
                 </div>
-              ) : query.trim().length < 2 ? (
+              ) : query
+                  .trim()
+                  .replace(/^@+/, '')
+                  .length < 2 ? (
                 <div className="flex min-h-[220px] flex-col items-center justify-center px-5 text-center">
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
                     <UserRound size={26} />
                   </span>
-                  <div className="mt-4 text-[14px] font-extrabold text-[#111827]">
+                  <div className="mt-4 text-[14px] font-bold text-[#111827]">
                     Find someone to message
                   </div>
                   <div className="mt-1 text-[11px] font-semibold leading-5 text-[#8a8792]">
-                    Enter at least 2 characters from their name or username.
+                    Enter at least 2 characters from a reader or author name or username.
                   </div>
                 </div>
               ) : users.length ? (
                 <div className="space-y-1 py-1">
-                  {users.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => selectReader(user)}
-                      className="flex w-full items-center gap-3 rounded-[16px] px-2 py-3 text-left transition hover:bg-[#faf9fc] active:bg-[#f3effc]"
-                    >
-                      <SearchAvatar user={user} />
+                  {users.map((user) => {
+                    const author =
+                      isAuthorResult(user)
+                    const username =
+                      user.page_username ||
+                      user.username ||
+                      ''
 
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <strong className="truncate text-[14px] font-extrabold text-[#111827]">
-                            {user.name || user.username}
-                          </strong>
+                    return (
+                      <button
+                        key={`${user.result_type || 'reader'}:${user.author_page_id || user.id}`}
+                        type="button"
+                        onClick={() =>
+                          selectPerson(user)
+                        }
+                        className="flex w-full items-center gap-3 rounded-[16px] px-2 py-3 text-left transition hover:bg-[#faf9fc] active:bg-[#f3effc]"
+                      >
+                        <SearchAvatar
+                          user={user}
+                        />
 
-                          {user.is_author ? (
-                            <span className="shrink-0 rounded-full bg-[#f2edff] px-2 py-1 text-[9px] font-extrabold text-[#7c3aed]">
-                              Author
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2">
+                            <strong className="truncate text-[14px] font-bold text-[#111827]">
+                              {user.page_name ||
+                                user.name ||
+                                username}
+                            </strong>
+
+                            <span className="shrink-0 rounded-full bg-[#f2edff] px-2 py-1 text-[9px] font-bold text-[#7c3aed]">
+                              {author
+                                ? 'Author'
+                                : 'Reader'}
                             </span>
-                          ) : null}
-                        </span>
+                          </span>
 
-                        <span className="mt-0.5 block truncate text-[11px] font-semibold text-[#8a8792]">
-                          {user.username
-                            ? `@${user.username}`
-                            : 'Reader'}
+                          <span className="mt-0.5 block truncate text-[11px] font-semibold text-[#8a8792]">
+                            {username
+                              ? `@${username}`
+                              : author
+                                ? 'Author page'
+                                : 'Reader'}
+                          </span>
                         </span>
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="flex min-h-[220px] flex-col items-center justify-center px-5 text-center">
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f4f7] text-[#777480]">
                     <Search size={25} />
                   </span>
-                  <div className="mt-4 text-[14px] font-extrabold text-[#111827]">
-                    No readers found
+                  <div className="mt-4 text-[14px] font-bold text-[#111827]">
+                    No people found
                   </div>
                   <div className="mt-1 text-[11px] font-semibold text-[#8a8792]">
                     Try another name or username.
@@ -278,8 +379,20 @@ export default function ChatNewMessageSheet({
       ) : null}
 
       <ReaderReaderMessageRequestModal
-        open={open && Boolean(selectedReader)}
+        open={
+          open &&
+          Boolean(selectedReader)
+        }
         reader={selectedReader}
+        onClose={closeAll}
+      />
+
+      <ReaderAuthorMessageRequestModal
+        open={
+          open &&
+          Boolean(selectedAuthor)
+        }
+        author={selectedAuthor}
         onClose={closeAll}
       />
     </>
