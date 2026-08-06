@@ -86,7 +86,7 @@ function ProfileIcon({
 
   return (
     <span
-      className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold text-white ring-2 ${
+      className={`flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full text-[9px] font-bold text-white ring-1 ${
         active
           ? 'bg-[#7c3aed] ring-[#7c3aed]'
           : 'bg-[#111827] ring-transparent'
