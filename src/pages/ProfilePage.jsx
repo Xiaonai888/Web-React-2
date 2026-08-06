@@ -1280,10 +1280,12 @@ async function handleOtherProfileOption(action) {
   }
 />
 </main>
-      <ReaderProfileFooter
-  avatarUrl={isOwnProfile ? profile.avatarUrl : ''}
-  profileName={isOwnProfile ? profile.name : ''}
-/>
+      {isOwnProfile ? (
+  <ReaderProfileFooter
+    avatarUrl={profile.avatarUrl}
+    profileName={profile.name}
+  />
+) : null}
 
     </div>
   )
