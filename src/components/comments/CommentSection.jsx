@@ -2118,10 +2118,17 @@ export default function CommentSection({
     )
 
     try {
+      const likeUrl =
+        targetType === 'author_post'
+          ? `${API_BASE_URL}/api/authors/me/post-comments/${encodeURIComponent(
+              commentId
+            )}/like`
+          : `${API_BASE_URL}/api/comments/${encodeURIComponent(
+              commentId
+            )}/like`
+
       const response = await fetch(
-        `${API_BASE_URL}/api/comments/${encodeURIComponent(
-          commentId
-        )}/like`,
+        likeUrl,
         {
           method: 'POST',
           headers: {
