@@ -283,8 +283,8 @@ export default function ChatSuggestedPeople() {
   return (
     <section className="border-t border-[#eeeeF2] px-4 pb-5 pt-5">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-[17px] font-extrabold text-[#111827]">
-          Accounts to follow
+        <h2 className="text-[15px] font-extrabold text-[#111827]">
+          People You May Know
         </h2>
 
         <button
@@ -366,7 +366,7 @@ export default function ChatSuggestedPeople() {
                   className={`flex h-9 min-w-[96px] items-center justify-center rounded-[10px] px-4 text-[12px] font-extrabold transition active:scale-[0.98] disabled:cursor-default ${
                     following
                       ? 'bg-[#f0eef5] text-[#5d5868]'
-                      : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-[0_6px_16px_rgba(124,58,237,0.22)]'
+                      : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-none'
                   }`}
                 >
                   {busy ? (
