@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { touchChatPresence } from '../services/chatApi'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
