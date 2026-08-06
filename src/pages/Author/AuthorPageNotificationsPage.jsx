@@ -1,13 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const filters = ['All', 'Unread', 'Comments', 'Activity', 'Orders', 'Income']
+const filters = [
+  'All',
+  'Unread',
+  'Comments',
+  'Activity',
+  'Orders',
+  'Income',
+]
 
 const typeMap = {
   comments: 'Comments',
@@ -58,11 +72,19 @@ function getAuthToken() {
 }
 
 function getNotificationTypeLabel(type) {
-  return typeMap[String(type || '').toLowerCase()] || 'System'
+  return (
+    typeMap[
+      String(type || '').toLowerCase()
+    ] || 'System'
+  )
 }
 
 function getNotificationIcon(type) {
-  return iconMap[String(type || '').toLowerCase()] || 'fa-regular fa-bell'
+  return (
+    iconMap[
+      String(type || '').toLowerCase()
+    ] || 'fa-regular fa-bell'
+  )
 }
 
 function formatTime(value) {
@@ -70,26 +92,43 @@ function formatTime(value) {
 
   const date = new Date(value)
 
-  if (Number.isNaN(date.getTime())) return 'Now'
+  if (Number.isNaN(date.getTime())) {
+    return 'Now'
+  }
 
   const diffMs = Date.now() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffMinutes = Math.floor(
+    diffMs / 60000
+  )
 
   if (diffMinutes < 1) return 'Now'
-  if (diffMinutes < 60) return `${diffMinutes}m`
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m`
+  }
 
-  const diffHours = Math.floor(diffMinutes / 60)
+  const diffHours = Math.floor(
+    diffMinutes / 60
+  )
 
-  if (diffHours < 24) return `${diffHours}h`
+  if (diffHours < 24) {
+    return `${diffHours}h`
+  }
 
-  const diffDays = Math.floor(diffHours / 24)
+  const diffDays = Math.floor(
+    diffHours / 24
+  )
 
-  if (diffDays < 7) return `${diffDays}d`
+  if (diffDays < 7) {
+    return `${diffDays}d`
+  }
 
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-  })
+  return date.toLocaleDateString(
+    'en-GB',
+    {
+      day: '2-digit',
+      month: 'short',
+    }
+  )
 }
 
 function getActorMetadata(metadata = {}) {
@@ -117,119 +156,221 @@ function getActorMetadata(metadata = {}) {
 
 function normalizeNotification(item) {
   const metadata =
-    item.metadata && typeof item.metadata === 'object'
+    item.metadata &&
+    typeof item.metadata === 'object'
       ? item.metadata
       : {}
-  const actor = getActorMetadata(metadata)
-const effectiveType =
-  metadata.notification_type ||
-  item.type ||
-  'system'
+  const actor =
+    getActorMetadata(metadata)
+  const effectiveType =
+    metadata.notification_type ||
+    item.type ||
+    'system'
 
-return {
-  id: item.id,
-  type: effectiveType,
-  typeLabel: getNotificationTypeLabel(effectiveType),
-    title: item.title || 'Notification',
+  return {
+    id: item.id,
+    type: effectiveType,
+    typeLabel:
+      getNotificationTypeLabel(
+        effectiveType
+      ),
+    title:
+      item.title || 'Notification',
     message: item.message || '',
-    targetUrl: item.target_url || item.targetUrl || '',
+    targetUrl:
+      item.target_url ||
+      item.targetUrl ||
+      '',
     unread: !Boolean(item.is_read),
-    time: formatTime(item.created_at),
-    createdAt: item.created_at || '',
+    time: formatTime(
+      item.created_at
+    ),
+    createdAt:
+      item.created_at || '',
     metadata,
     actorName: actor.name,
     actorUsername: actor.username,
-    actorAvatarUrl: actor.avatarUrl,
+    actorAvatarUrl:
+      actor.avatarUrl,
   }
 }
 
-async function apiRequest(path, options = {}) {
+async function apiRequest(
+  path,
+  options = {}
+) {
   const token = getAuthToken()
 
-  if (!token) throw new Error('Please login first')
+  if (!token) {
+    throw new Error(
+      'Please login first'
+    )
+  }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(options.headers || {}),
-    },
-  })
+  const response = await fetch(
+    `${API_BASE_URL}${path}`,
+    {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(options.body
+          ? {
+              'Content-Type':
+                'application/json',
+            }
+          : {}),
+        ...(options.headers || {}),
+      },
+    }
+  )
 
-  const data = await response.json().catch(() => ({}))
+  const data = await response
+    .json()
+    .catch(() => ({}))
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Request failed')
+  if (
+    !response.ok ||
+    data.ok === false
+  ) {
+    throw new Error(
+      data.message ||
+        'Request failed'
+    )
   }
 
   return data
 }
 
 async function fetchPageNotifications() {
-  const data = await apiRequest('/api/authors/me/page-notifications')
+  const data = await apiRequest(
+    '/api/authors/me/page-notifications'
+  )
 
   return {
-    notifications: Array.isArray(data.notifications)
-      ? data.notifications.map(normalizeNotification)
+    notifications: Array.isArray(
+      data.notifications
+    )
+      ? data.notifications.map(
+          normalizeNotification
+        )
       : [],
-    unreadCount: Number(data.unread_count || 0),
+    unreadCount: Number(
+      data.unread_count || 0
+    ),
+    preferences:
+      data.preferences &&
+      typeof data.preferences ===
+        'object'
+        ? data.preferences
+        : {},
   }
 }
 
-function markNotificationRead(notificationId) {
+function markNotificationRead(
+  notificationId
+) {
   return apiRequest(
     `/api/authors/me/page-notifications/${encodeURIComponent(
       notificationId
     )}/read`,
-    { method: 'PATCH' }
+    {
+      method: 'PATCH',
+    }
   )
 }
 
-function markNotificationUnread(notificationId) {
+function markNotificationUnread(
+  notificationId
+) {
   return apiRequest(
     `/api/authors/me/page-notifications/${encodeURIComponent(
       notificationId
     )}/unread`,
-    { method: 'PATCH' }
+    {
+      method: 'PATCH',
+    }
   )
 }
 
-function deleteNotification(notificationId) {
+function deleteNotification(
+  notificationId
+) {
   return apiRequest(
     `/api/authors/me/page-notifications/${encodeURIComponent(
       notificationId
     )}`,
-    { method: 'DELETE' }
+    {
+      method: 'DELETE',
+    }
   )
 }
 
 function markAllNotificationsRead() {
-  return apiRequest('/api/authors/me/page-notifications/read-all', {
-    method: 'PATCH',
-  })
+  return apiRequest(
+    '/api/authors/me/page-notifications/read-all',
+    {
+      method: 'PATCH',
+    }
+  )
 }
 
-function NotificationIcon({ notification }) {
-  const hasAvatar = Boolean(notification.actorAvatarUrl)
+function updateNotificationPreference(
+  type,
+  isEnabled,
+  frequencyLevel = 'normal'
+) {
+  return apiRequest(
+    `/api/authors/me/page-notification-preferences/${encodeURIComponent(
+      type
+    )}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({
+        is_enabled: isEnabled,
+        frequency_level:
+          frequencyLevel,
+      }),
+    }
+  )
+}
+
+function NotificationIcon({
+  notification,
+}) {
+  const hasAvatar = Boolean(
+    notification.actorAvatarUrl
+  )
 
   return (
     <div className="relative h-12 w-12 shrink-0">
       {hasAvatar ? (
         <img
-          src={notification.actorAvatarUrl}
-          alt={notification.actorName || 'Reader'}
+          src={
+            notification.actorAvatarUrl
+          }
+          alt={
+            notification.actorName ||
+            'Reader'
+          }
           className="h-12 w-12 rounded-full bg-[#f3f4f6] object-cover"
         />
       ) : (
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-          <i className={`${getNotificationIcon(notification.type)} text-[17px]`} />
+          <i
+            className={`${getNotificationIcon(
+              notification.type
+            )} text-[17px]`}
+          />
         </div>
       )}
 
       {hasAvatar ? (
         <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#111827] text-white">
-          <i className={`${getNotificationIcon(notification.type)} text-[10px]`} />
+          <i
+            className={`${getNotificationIcon(
+              notification.type
+            )} text-[10px]`}
+          />
         </span>
       ) : null}
 
@@ -240,31 +381,46 @@ function NotificationIcon({ notification }) {
   )
 }
 
-function NotificationItem({ notification, onOpen, onOptions }) {
+function NotificationItem({
+  notification,
+  onOpen,
+  onOptions,
+}) {
   return (
     <div
       className={`flex w-full gap-3 px-4 py-3 text-left transition ${
-        notification.unread ? 'bg-[#eef6ff]' : 'bg-white'
+        notification.unread
+          ? 'bg-[#eef6ff]'
+          : 'bg-white'
       }`}
     >
       <button
         type="button"
-        onClick={() => onOpen(notification)}
+        onClick={() =>
+          onOpen(notification)
+        }
         className="flex min-w-0 flex-1 gap-3 text-left active:opacity-80"
       >
-        <NotificationIcon notification={notification} />
+        <NotificationIcon
+          notification={notification}
+        />
 
         <div className="min-w-0 flex-1">
           <p
             className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
-              notification.unread ? 'font-black' : 'font-semibold'
+              notification.unread
+                ? 'font-black'
+                : 'font-semibold'
             }`}
           >
             {notification.title}
             {notification.message ? (
               <span className="font-semibold text-[#374151]">
                 {' '}
-                · {notification.message}
+                ·{' '}
+                {
+                  notification.message
+                }
               </span>
             ) : null}
           </p>
@@ -279,9 +435,13 @@ function NotificationItem({ notification, onOpen, onOptions }) {
             >
               {notification.time}
             </span>
+
             <span className="h-1 w-1 rounded-full bg-[#cbd5e1]" />
+
             <span className="text-[12px] font-semibold text-[#8b93a1]">
-              {notification.typeLabel}
+              {
+                notification.typeLabel
+              }
             </span>
           </div>
         </div>
@@ -289,7 +449,9 @@ function NotificationItem({ notification, onOpen, onOptions }) {
 
       <button
         type="button"
-        onClick={() => onOptions(notification)}
+        onClick={() =>
+          onOptions(notification)
+        }
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
         aria-label="Notification options"
       >
@@ -305,7 +467,9 @@ function NotificationGroup({
   onOpen,
   onOptions,
 }) {
-  if (!notifications.length) return null
+  if (!notifications.length) {
+    return null
+  }
 
   return (
     <section>
@@ -314,18 +478,29 @@ function NotificationGroup({
       </h2>
 
       <div className="overflow-hidden border-y border-[#eef0f4] bg-white">
-        {notifications.map((notification, index) => (
-          <div
-            key={notification.id}
-            className={index > 0 ? 'border-t border-[#eef0f4]' : ''}
-          >
-            <NotificationItem
-              notification={notification}
-              onOpen={onOpen}
-              onOptions={onOptions}
-            />
-          </div>
-        ))}
+        {notifications.map(
+          (
+            notification,
+            index
+          ) => (
+            <div
+              key={notification.id}
+              className={
+                index > 0
+                  ? 'border-t border-[#eef0f4]'
+                  : ''
+              }
+            >
+              <NotificationItem
+                notification={
+                  notification
+                }
+                onOpen={onOpen}
+                onOptions={onOptions}
+              />
+            </div>
+          )
+        )}
       </div>
     </section>
   )
@@ -337,12 +512,18 @@ function EmptyState({ filter }) {
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
+
       <h2 className="text-[17px] font-black text-[#111827]">
-        No {filter.toLowerCase()} notifications
+        No{' '}
+        {filter.toLowerCase()}{' '}
+        notifications
       </h2>
+
       <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
-        Comments, reactions, echoes, followers, reviews, orders, income, and
-        admin notices will appear here.
+        Comments, reactions,
+        echoes, followers, reviews,
+        orders, income, and admin
+        notices will appear here.
       </p>
     </div>
   )
@@ -351,22 +532,126 @@ function EmptyState({ filter }) {
 function OptionsSheet({
   notification,
   loading,
+  notificationEnabled,
+  frequencyLevel,
   onClose,
   onToggleRead,
+  onShowMore,
+  onShowLess,
+  onToggleType,
   onDelete,
+  onReport,
 }) {
-  useEffect(() => {
-    if (!notification) return undefined
+  const [dragging, setDragging] =
+    useState(false)
+  const [dragY, setDragY] =
+    useState(0)
+  const dragStartRef = useRef(0)
+  const dragYRef = useRef(0)
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+  useEffect(() => {
+    if (!notification) {
+      return undefined
+    }
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html =
+      document.documentElement
+    const previousBodyOverflow =
+      body.style.overflow
+    const previousBodyPosition =
+      body.style.position
+    const previousBodyTop =
+      body.style.top
+    const previousBodyWidth =
+      body.style.width
+    const previousHtmlOverflow =
+      html.style.overflow
+
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      body.style.overflow =
+        previousBodyOverflow
+      body.style.position =
+        previousBodyPosition
+      body.style.top =
+        previousBodyTop
+      body.style.width =
+        previousBodyWidth
+      html.style.overflow =
+        previousHtmlOverflow
+      window.scrollTo(0, scrollY)
     }
   }, [notification])
 
   if (!notification) return null
+
+  const fallbackText = String(
+    notification.actorName ||
+      notification.typeLabel ||
+      'N'
+  )
+    .trim()
+    .slice(0, 1)
+    .toUpperCase()
+
+  const closeSheet = () => {
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(false)
+    onClose()
+  }
+
+  const handleDragStart = (
+    event
+  ) => {
+    dragStartRef.current =
+      event.clientY
+    dragYRef.current = 0
+    setDragY(0)
+    setDragging(true)
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    )
+  }
+
+  const handleDragMove = (
+    event
+  ) => {
+    if (!dragging) return
+
+    const nextDragY = Math.max(
+      0,
+      event.clientY -
+        dragStartRef.current
+    )
+
+    dragYRef.current = nextDragY
+    setDragY(nextDragY)
+  }
+
+  const handleDragEnd = () => {
+    if (!dragging) return
+
+    setDragging(false)
+
+    if (dragYRef.current >= 80) {
+      closeSheet()
+      return
+    }
+
+    dragYRef.current = 0
+    setDragY(0)
+  }
+
+  const actionClass =
+    'flex min-h-12 w-full items-center gap-4 rounded-[12px] px-2 py-3 text-left text-[15px] font-normal transition hover:bg-black/[0.055] active:bg-black/[0.09] disabled:opacity-40'
 
   return (
     <div
@@ -377,64 +662,182 @@ function OptionsSheet({
     >
       <button
         type="button"
-        onClick={onClose}
+        onClick={closeSheet}
         className="absolute inset-0 bg-black/45"
         aria-label="Close notification options"
       />
 
-      <section className="absolute inset-x-0 bottom-0 rounded-t-[24px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_50px_rgba(17,24,39,0.22)]">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#cfd3da]" />
-
-        <div className="mb-4 flex items-center gap-3 rounded-[18px] bg-[#f6f7f9] p-3">
-          <NotificationIcon notification={notification} />
-          <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[13px] font-black leading-5 text-[#111827]">
-              {notification.title}
-            </p>
-            <p className="mt-0.5 text-[12px] font-semibold text-[#8b93a1]">
-              {notification.typeLabel} · {notification.time}
-            </p>
-          </div>
+      <section
+        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
+          dragging
+            ? ''
+            : 'transition-transform duration-200 ease-out'
+        }`}
+        style={{
+          transform: `translateY(${dragY}px)`,
+        }}
+      >
+        <div
+          className="touch-none pb-2 pt-2"
+          onPointerDown={
+            handleDragStart
+          }
+          onPointerMove={
+            handleDragMove
+          }
+          onPointerUp={
+            handleDragEnd
+          }
+          onPointerCancel={
+            handleDragEnd
+          }
+        >
+          <div className="mx-auto h-1.5 w-11 rounded-full bg-[#cfd3da]" />
         </div>
 
-        <button
-          type="button"
-          disabled={loading}
-          onClick={onToggleRead}
-          className="flex h-12 w-full items-center gap-3 rounded-[16px] px-4 text-left text-[14px] font-bold text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef2ff] text-[#2563eb]">
+        <div className="px-5 pb-3 text-center">
+          {notification.actorAvatarUrl ? (
+            <img
+              src={
+                notification.actorAvatarUrl
+              }
+              alt=""
+              className="mx-auto h-12 w-12 rounded-full object-cover ring-1 ring-black/5"
+            />
+          ) : (
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e5e7eb] text-[16px] font-semibold text-[#4b5563]">
+              {fallbackText}
+            </div>
+          )}
+
+          <p className="mx-auto mt-3 max-w-[330px] text-[13px] font-normal leading-5 text-[#4b5563]">
+            <span className="text-[#111827]">
+              {notification.title}
+            </span>
+
+            {notification.message
+              ? ` · ${notification.message}`
+              : ''}
+          </p>
+        </div>
+
+        <div className="px-4 pb-1 pt-1">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onShowMore}
+            className={`${actionClass} ${
+              frequencyLevel === 'more'
+                ? 'bg-black/[0.055] text-black'
+                : 'text-[#5f6368]'
+            }`}
+          >
+            <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
+
+            <span className="flex-1">
+              Show more
+            </span>
+
+            {frequencyLevel ===
+            'more' ? (
+              <i className="fa-solid fa-check text-[12px]" />
+            ) : null}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onShowLess}
+            className={`${actionClass} ${
+              frequencyLevel === 'less'
+                ? 'bg-black/[0.055] text-black'
+                : 'text-[#5f6368]'
+            }`}
+          >
+            <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
+
+            <span className="flex-1">
+              Show less
+            </span>
+
+            {frequencyLevel ===
+            'less' ? (
+              <i className="fa-solid fa-check text-[12px]" />
+            ) : null}
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onToggleRead}
+            className={`${actionClass} text-black`}
+          >
             <i
-              className={
+              className={`w-5 text-center text-[16px] ${
                 notification.unread
                   ? 'fa-solid fa-check'
                   : 'fa-regular fa-envelope'
-              }
+              }`}
             />
-          </span>
-          {notification.unread ? 'Mark as read' : 'Mark as unread'}
-        </button>
 
-        <button
-          type="button"
-          disabled={loading}
-          onClick={onDelete}
-          className="mt-1 flex h-12 w-full items-center gap-3 rounded-[16px] px-4 text-left text-[14px] font-bold text-[#dc2626] active:bg-[#fff1f2] disabled:opacity-50"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f2]">
-            <i className="fa-regular fa-trash-can" />
-          </span>
-          Delete notification
-        </button>
+            <span>
+              {notification.unread
+                ? 'Mark as read'
+                : 'Mark as unread'}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          disabled={loading}
-          onClick={onClose}
-          className="mt-3 h-12 w-full rounded-[16px] bg-[#f3f4f6] text-[14px] font-black text-[#111827] active:scale-[0.99] disabled:opacity-50"
-        >
-          {loading ? 'Please wait...' : 'Cancel'}
-        </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onToggleType}
+            className={`${actionClass} text-black`}
+          >
+            <i
+              className={`fa-solid ${
+                notificationEnabled
+                  ? 'fa-bell-slash'
+                  : 'fa-bell'
+              } w-5 text-center text-[16px]`}
+            />
+
+            <span>
+              Turn{' '}
+              {notificationEnabled
+                ? 'off'
+                : 'on'}{' '}
+              {notification.typeLabel.toLowerCase()}{' '}
+              notifications
+            </span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onDelete}
+            className={`${actionClass} text-black`}
+          >
+            <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
+
+            <span>
+              Delete this notification
+            </span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={onReport}
+            className={`${actionClass} text-black`}
+          >
+            <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
+
+            <span>
+              Report issue to
+              Notifications Team
+            </span>
+          </button>
+        </div>
       </section>
     </div>
   )
@@ -442,161 +845,419 @@ function OptionsSheet({
 
 export default function AuthorPageNotificationsPage() {
   const navigate = useNavigate()
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [message, setMessage] = useState('')
-  const [notifications, setNotifications] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [selectedNotification, setSelectedNotification] = useState(null)
-  const [optionsLoading, setOptionsLoading] = useState(false)
+  const [activeFilter, setActiveFilter] =
+    useState('All')
+  const [message, setMessage] =
+    useState('')
+  const [
+    notifications,
+    setNotifications,
+  ] = useState([])
+  const [
+    preferences,
+    setPreferences,
+  ] = useState({})
+  const [loading, setLoading] =
+    useState(true)
+  const [
+    unreadCount,
+    setUnreadCount,
+  ] = useState(0)
+  const [
+    selectedNotification,
+    setSelectedNotification,
+  ] = useState(null)
+  const [
+    optionsLoading,
+    setOptionsLoading,
+  ] = useState(false)
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      setLoading(true)
-      setMessage('')
+  const loadNotifications =
+    useCallback(async () => {
+      try {
+        setLoading(true)
+        setMessage('')
 
-      const data = await fetchPageNotifications()
+        const data =
+          await fetchPageNotifications()
 
-      setNotifications(data.notifications)
-      setUnreadCount(data.unreadCount)
-    } catch (error) {
-      setNotifications([])
-      setUnreadCount(0)
-      setMessage(error.message || 'Failed to load notifications')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+        setNotifications(
+          data.notifications
+        )
+        setUnreadCount(
+          data.unreadCount
+        )
+        setPreferences(
+          data.preferences
+        )
+      } catch (error) {
+        setNotifications([])
+        setPreferences({})
+        setUnreadCount(0)
+        setMessage(
+          error.message ||
+            'Failed to load notifications'
+        )
+      } finally {
+        setLoading(false)
+      }
+    }, [])
 
   useEffect(() => {
     loadNotifications()
   }, [loadNotifications])
 
-  const filteredNotifications = useMemo(() => {
-    if (activeFilter === 'All') return notifications
+  const filteredNotifications =
+    useMemo(() => {
+      if (activeFilter === 'All') {
+        return notifications
+      }
 
-    if (activeFilter === 'Unread') {
-      return notifications.filter((item) => item.unread)
-    }
+      if (
+        activeFilter === 'Unread'
+      ) {
+        return notifications.filter(
+          (item) => item.unread
+        )
+      }
 
-    return notifications.filter(
-      (item) => item.typeLabel === activeFilter
+      return notifications.filter(
+        (item) =>
+          item.typeLabel ===
+          activeFilter
+      )
+    }, [
+      activeFilter,
+      notifications,
+    ])
+
+  const newNotifications =
+    filteredNotifications.filter(
+      (item) => item.unread
     )
-  }, [activeFilter, notifications])
 
-  const newNotifications = filteredNotifications.filter(
-    (item) => item.unread
-  )
-  const earlierNotifications = filteredNotifications.filter(
-    (item) => !item.unread
-  )
+  const earlierNotifications =
+    filteredNotifications.filter(
+      (item) => !item.unread
+    )
 
-  async function handleOpen(notification) {
+  const selectedPreference =
+    selectedNotification
+      ? preferences[
+          selectedNotification.type
+        ] || {
+          is_enabled: true,
+          frequency_level: 'normal',
+        }
+      : {
+          is_enabled: true,
+          frequency_level: 'normal',
+        }
+
+  async function handleOpen(
+    notification
+  ) {
     if (notification.unread) {
       setNotifications((current) =>
         current.map((item) =>
-          item.id === notification.id
-            ? { ...item, unread: false }
+          item.id ===
+          notification.id
+            ? {
+                ...item,
+                unread: false,
+              }
             : item
         )
       )
-      setUnreadCount((current) => Math.max(0, current - 1))
-      markNotificationRead(notification.id).catch(() => null)
+
+      setUnreadCount((current) =>
+        Math.max(0, current - 1)
+      )
+
+      markNotificationRead(
+        notification.id
+      ).catch(() => null)
     }
 
     if (notification.targetUrl) {
-      navigate(notification.targetUrl)
+      navigate(
+        notification.targetUrl
+      )
       return
     }
 
-    setMessage('This notification does not have a target page yet.')
+    setMessage(
+      'This notification does not have a target page yet.'
+    )
   }
 
-  function handleOptions(notification) {
+  function handleOptions(
+    notification
+  ) {
     setMessage('')
-    setSelectedNotification(notification)
+    setSelectedNotification(
+      notification
+    )
   }
 
   async function handleToggleRead() {
-    if (!selectedNotification || optionsLoading) return
+    if (
+      !selectedNotification ||
+      optionsLoading
+    ) {
+      return
+    }
 
     try {
       setOptionsLoading(true)
 
-      if (selectedNotification.unread) {
-        await markNotificationRead(selectedNotification.id)
+      if (
+        selectedNotification.unread
+      ) {
+        await markNotificationRead(
+          selectedNotification.id
+        )
       } else {
-        await markNotificationUnread(selectedNotification.id)
+        await markNotificationUnread(
+          selectedNotification.id
+        )
       }
 
-      const nextUnread = !selectedNotification.unread
+      const nextUnread =
+        !selectedNotification.unread
 
       setNotifications((current) =>
         current.map((item) =>
-          item.id === selectedNotification.id
-            ? { ...item, unread: nextUnread }
+          item.id ===
+          selectedNotification.id
+            ? {
+                ...item,
+                unread: nextUnread,
+              }
             : item
         )
       )
 
       setUnreadCount((current) =>
         selectedNotification.unread
-          ? Math.max(0, current - 1)
+          ? Math.max(
+              0,
+              current - 1
+            )
           : current + 1
       )
 
       setSelectedNotification(null)
     } catch (error) {
-      setMessage(error.message || 'Failed to update notification')
+      setMessage(
+        error.message ||
+          'Failed to update notification'
+      )
+    } finally {
+      setOptionsLoading(false)
+    }
+  }
+
+  async function handleFrequency(
+    level
+  ) {
+    if (
+      !selectedNotification ||
+      optionsLoading
+    ) {
+      return
+    }
+
+    const notificationType =
+      selectedNotification.type
+
+    try {
+      setOptionsLoading(true)
+
+      const data =
+        await updateNotificationPreference(
+          notificationType,
+          true,
+          level
+        )
+
+      const preference =
+        data.preference || {
+          type: notificationType,
+          is_enabled: true,
+          frequency_level: level,
+        }
+
+      setPreferences((current) => ({
+        ...current,
+        [notificationType]: {
+          is_enabled:
+            preference.is_enabled !==
+            false,
+          frequency_level:
+            preference.frequency_level ||
+            level,
+        },
+      }))
+
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(
+        error.message ||
+          'Failed to update notification preference'
+      )
+    } finally {
+      setOptionsLoading(false)
+    }
+  }
+
+  async function handleToggleType() {
+    if (
+      !selectedNotification ||
+      optionsLoading
+    ) {
+      return
+    }
+
+    const notificationType =
+      selectedNotification.type
+    const currentPreference =
+      preferences[
+        notificationType
+      ] || {
+        is_enabled: true,
+        frequency_level: 'normal',
+      }
+    const nextEnabled =
+      currentPreference.is_enabled ===
+      false
+
+    try {
+      setOptionsLoading(true)
+
+      const data =
+        await updateNotificationPreference(
+          notificationType,
+          nextEnabled,
+          currentPreference.frequency_level ||
+            'normal'
+        )
+
+      const preference =
+        data.preference || {
+          type: notificationType,
+          is_enabled: nextEnabled,
+          frequency_level:
+            currentPreference.frequency_level ||
+            'normal',
+        }
+
+      setPreferences((current) => ({
+        ...current,
+        [notificationType]: {
+          is_enabled:
+            preference.is_enabled !==
+            false,
+          frequency_level:
+            preference.frequency_level ||
+            currentPreference.frequency_level ||
+            'normal',
+        },
+      }))
+
+      setSelectedNotification(null)
+    } catch (error) {
+      setMessage(
+        error.message ||
+          'Failed to update notification preference'
+      )
     } finally {
       setOptionsLoading(false)
     }
   }
 
   async function handleDelete() {
-    if (!selectedNotification || optionsLoading) return
+    if (
+      !selectedNotification ||
+      optionsLoading
+    ) {
+      return
+    }
 
     try {
       setOptionsLoading(true)
-      await deleteNotification(selectedNotification.id)
 
-      setNotifications((current) =>
-        current.filter((item) => item.id !== selectedNotification.id)
+      await deleteNotification(
+        selectedNotification.id
       )
 
-      if (selectedNotification.unread) {
-        setUnreadCount((current) => Math.max(0, current - 1))
+      setNotifications((current) =>
+        current.filter(
+          (item) =>
+            item.id !==
+            selectedNotification.id
+        )
+      )
+
+      if (
+        selectedNotification.unread
+      ) {
+        setUnreadCount((current) =>
+          Math.max(
+            0,
+            current - 1
+          )
+        )
       }
 
       setSelectedNotification(null)
     } catch (error) {
-      setMessage(error.message || 'Failed to delete notification')
+      setMessage(
+        error.message ||
+          'Failed to delete notification'
+      )
     } finally {
       setOptionsLoading(false)
     }
   }
 
   async function handleMarkAllRead() {
+    if (!unreadCount) return
+
     try {
       await markAllNotificationsRead()
+
       setNotifications((current) =>
-        current.map((item) => ({ ...item, unread: false }))
+        current.map((item) => ({
+          ...item,
+          unread: false,
+        }))
       )
+
       setUnreadCount(0)
     } catch (error) {
       setMessage(
-        error.message || 'Failed to mark notifications as read'
+        error.message ||
+          'Failed to mark notifications as read'
       )
     }
   }
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-[92px]">
-      <div className="sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur">
+      <div
+        className={`sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur ${
+          selectedNotification
+            ? 'invisible'
+            : ''
+        }`}
+      >
         <div className="mx-auto flex h-14 max-w-[980px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/author/page')}
+            onClick={() =>
+              navigate('/author/page')
+            }
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back to page"
           >
@@ -609,7 +1270,9 @@ export default function AuthorPageNotificationsPage() {
 
           <button
             type="button"
-            onClick={handleMarkAllRead}
+            onClick={
+              handleMarkAllRead
+            }
             disabled={!unreadCount}
             className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
             aria-label="Mark all as read"
@@ -623,7 +1286,9 @@ export default function AuthorPageNotificationsPage() {
         {message ? (
           <button
             type="button"
-            onClick={() => setMessage('')}
+            onClick={() =>
+              setMessage('')
+            }
             className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
           >
             {message}
@@ -633,13 +1298,18 @@ export default function AuthorPageNotificationsPage() {
         <section className="sticky top-14 z-30 border-b border-[#eef0f4] bg-white">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
-              const active = activeFilter === filter
+              const active =
+                activeFilter === filter
 
               return (
                 <button
                   key={filter}
                   type="button"
-                  onClick={() => setActiveFilter(filter)}
+                  onClick={() =>
+                    setActiveFilter(
+                      filter
+                    )
+                  }
                   className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
                     active
                       ? 'bg-[#f3f4f6] font-medium text-[#111827]'
@@ -647,7 +1317,10 @@ export default function AuthorPageNotificationsPage() {
                   }`}
                 >
                   {filter}
-                  {filter === 'Unread' && unreadCount > 0 ? (
+
+                  {filter ===
+                    'Unread' &&
+                  unreadCount > 0 ? (
                     <span className="ml-1 text-[11px] font-black text-[#2563eb]">
                       {unreadCount}
                     </span>
@@ -664,33 +1337,80 @@ export default function AuthorPageNotificationsPage() {
           <div>
             <NotificationGroup
               title="New"
-              notifications={newNotifications}
+              notifications={
+                newNotifications
+              }
               onOpen={handleOpen}
-              onOptions={handleOptions}
+              onOptions={
+                handleOptions
+              }
             />
 
             <NotificationGroup
               title="Earlier"
-              notifications={earlierNotifications}
+              notifications={
+                earlierNotifications
+              }
               onOpen={handleOpen}
-              onOptions={handleOptions}
+              onOptions={
+                handleOptions
+              }
             />
           </div>
         ) : (
-          <EmptyState filter={activeFilter} />
+          <EmptyState
+            filter={activeFilter}
+          />
         )}
       </main>
 
-      <AuthorPageFooter active="Notifications" />
+      <div
+        className={
+          selectedNotification
+            ? 'invisible'
+            : ''
+        }
+      >
+        <AuthorPageFooter active="Notifications" />
+      </div>
 
       <OptionsSheet
-        notification={selectedNotification}
+        notification={
+          selectedNotification
+        }
         loading={optionsLoading}
+        notificationEnabled={
+          selectedPreference.is_enabled !==
+          false
+        }
+        frequencyLevel={
+          selectedPreference.frequency_level ||
+          'normal'
+        }
         onClose={() => {
-          if (!optionsLoading) setSelectedNotification(null)
+          if (!optionsLoading) {
+            setSelectedNotification(
+              null
+            )
+          }
         }}
-        onToggleRead={handleToggleRead}
+        onToggleRead={
+          handleToggleRead
+        }
+        onShowMore={() =>
+          handleFrequency('more')
+        }
+        onShowLess={() =>
+          handleFrequency('less')
+        }
+        onToggleType={
+          handleToggleType
+        }
         onDelete={handleDelete}
+        onReport={() => {
+          setSelectedNotification(null)
+          navigate('/feedback')
+        }}
       />
     </div>
   )
