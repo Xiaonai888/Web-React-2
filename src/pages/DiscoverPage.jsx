@@ -344,7 +344,7 @@ function Header({ hidden }) {
           </Link>
 
           <Link
-            to="/search"
+            to="/discover/search"
             className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
             aria-label="Search"
           >
