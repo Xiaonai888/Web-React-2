@@ -14,7 +14,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ReaderProfileFooter from '../../components/reader-profile/ReaderProfileFooter'
 import ChatSuggestedPeople from '../../components/chat/ChatSuggestedPeople'
 import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
@@ -399,6 +399,8 @@ function SearchPersonRow({ user, onOpen }) {
 
 export default function ChatInboxPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
   const [conversations, setConversations] = useState([])
   const [quickContacts, setQuickContacts] = useState([])
@@ -1098,7 +1100,7 @@ className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] p
         onClose={() => setSelectedSearchAuthor(null)}
       />
 
-      <ReaderProfileFooter />
+      {!hideReaderFooter ? <ReaderProfileFooter /> : null}
     </div>
   )
 }
