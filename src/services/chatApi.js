@@ -70,11 +70,15 @@ export function getChatConversations(status = 'all') {
     query.set('status', status)
   }
 
+  query.set('view', 'active')
+
   const suffix = query.toString()
     ? `?${query.toString()}`
     : ''
 
-  return chatRequest(`/conversations${suffix}`)
+  return chatRequest(
+    `/conversations/managed${suffix}`
+  )
 }
 
 export function getManagedChatConversations({
