@@ -177,6 +177,10 @@ async function fetchStoryNotifications() {
       ? data.notifications.map(normalizeNotification)
       : [],
     unreadCount: Number(data.unread_count || 0),
+    preferences:
+      data.preferences && typeof data.preferences === 'object'
+        ? data.preferences
+        : {},
   }
 }
 
@@ -356,11 +360,13 @@ function EmptyState({ filter }) {
 function OptionsSheet({
   notification,
   loading,
+  notificationEnabled,
+  frequencyLevel,
   onClose,
   onToggleRead,
   onShowMore,
   onShowLess,
-  onDisableType,
+  onToggleType,
   onDelete,
   onReport,
 }) {
@@ -439,6 +445,9 @@ function OptionsSheet({
     setDragY(0)
   }
 
+  const actionClass =
+    'flex min-h-12 w-full items-center gap-4 rounded-[12px] px-2 py-3 text-left text-[15px] font-normal transition hover:bg-black/[0.055] active:bg-black/[0.09] disabled:opacity-40'
+
   return (
     <div
       className="fixed inset-0 z-[120]"
@@ -454,7 +463,7 @@ function OptionsSheet({
       />
 
       <section
-        className={`absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
+        className={`absolute inset-x-0 bottom-0 mx-auto max-h-[88vh] w-full max-w-[520px] overflow-y-auto rounded-t-[24px] bg-white pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-18px_50px_rgba(17,24,39,0.22)] ${
           dragging ? '' : 'transition-transform duration-200 ease-out'
         }`}
         style={{ transform: `translateY(${dragY}px)` }}
@@ -469,7 +478,7 @@ function OptionsSheet({
           <div className="mx-auto h-1.5 w-11 rounded-full bg-[#cfd3da]" />
         </div>
 
-        <div className="px-5 pb-4 text-center">
+        <div className="px-5 pb-3 text-center">
           {notification.readerAvatar ? (
             <img
               src={notification.readerAvatar}
@@ -488,52 +497,77 @@ function OptionsSheet({
           </p>
         </div>
 
-        <div className="border-t border-[#eef0f4] px-5 py-2">
+        <div className="px-4 pb-1 pt-1">
           <button
             type="button"
             disabled={loading}
             onClick={onShowMore}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            className={`${actionClass} ${
+              frequencyLevel === 'more'
+                ? 'bg-black/[0.055] text-black'
+                : 'text-[#5f6368]'
+            }`}
           >
             <i className="fa-solid fa-plus w-5 text-center text-[16px]" />
-            <span>Show more</span>
+            <span className="flex-1">Show more</span>
+            {frequencyLevel === 'more' ? (
+              <i className="fa-solid fa-check text-[12px]" />
+            ) : null}
           </button>
 
           <button
             type="button"
             disabled={loading}
             onClick={onShowLess}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            className={`${actionClass} ${
+              frequencyLevel === 'less'
+                ? 'bg-black/[0.055] text-black'
+                : 'text-[#5f6368]'
+            }`}
           >
             <i className="fa-solid fa-minus w-5 text-center text-[16px]" />
-            <span>Show less</span>
+            <span className="flex-1">Show less</span>
+            {frequencyLevel === 'less' ? (
+              <i className="fa-solid fa-check text-[12px]" />
+            ) : null}
           </button>
 
           <button
             type="button"
             disabled={loading}
             onClick={onToggleRead}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            className={`${actionClass} text-black`}
           >
-            <i className={`w-5 text-center text-[16px] fa-solid ${notification.unread ? 'fa-check' : 'fa-envelope'}`} />
+            <i
+              className={`w-5 text-center text-[16px] fa-solid ${
+                notification.unread ? 'fa-check' : 'fa-envelope'
+              }`}
+            />
             <span>{notification.unread ? 'Mark as read' : 'Mark as unread'}</span>
           </button>
 
           <button
             type="button"
             disabled={loading}
-            onClick={onDisableType}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            onClick={onToggleType}
+            className={`${actionClass} text-black`}
           >
-            <i className="fa-solid fa-bell-slash w-5 text-center text-[16px]" />
-            <span>Turn off {notification.typeLabel.toLowerCase()} notifications</span>
+            <i
+              className={`fa-solid ${
+                notificationEnabled ? 'fa-bell-slash' : 'fa-bell'
+              } w-5 text-center text-[16px]`}
+            />
+            <span>
+              Turn {notificationEnabled ? 'off' : 'on'}{' '}
+              {notification.typeLabel.toLowerCase()} notifications
+            </span>
           </button>
 
           <button
             type="button"
             disabled={loading}
             onClick={onDelete}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            className={`${actionClass} text-black`}
           >
             <i className="fa-regular fa-trash-can w-5 text-center text-[16px]" />
             <span>Delete this notification</span>
@@ -543,7 +577,7 @@ function OptionsSheet({
             type="button"
             disabled={loading}
             onClick={onReport}
-            className="flex min-h-12 w-full items-center gap-4 py-3 text-left text-[15px] font-normal text-black active:opacity-60 disabled:opacity-40"
+            className={`${actionClass} text-black`}
           >
             <i className="fa-solid fa-triangle-exclamation w-5 text-center text-[16px]" />
             <span>Report issue to Notifications Team</span>
@@ -557,30 +591,57 @@ function OptionsSheet({
 export default function StoryNotificationsPage() {
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('All')
-  const [message, setMessage] = useState('')
   const [notifications, setNotifications] = useState([])
+  const [preferences, setPreferences] = useState({})
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [selectedNotification, setSelectedNotification] = useState(null)
+  const [toast, setToast] = useState('')
+  const [toastVisible, setToastVisible] = useState(false)
+  const toastFadeTimerRef = useRef(null)
+  const toastClearTimerRef = useRef(null)
+
+  const showToast = useCallback((text) => {
+    window.clearTimeout(toastFadeTimerRef.current)
+    window.clearTimeout(toastClearTimerRef.current)
+    setToast(String(text || ''))
+    setToastVisible(true)
+
+    toastFadeTimerRef.current = window.setTimeout(() => {
+      setToastVisible(false)
+    }, 1900)
+
+    toastClearTimerRef.current = window.setTimeout(() => {
+      setToast('')
+    }, 2250)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(toastFadeTimerRef.current)
+      window.clearTimeout(toastClearTimerRef.current)
+    }
+  }, [])
 
   const loadNotifications = useCallback(async () => {
     try {
       setLoading(true)
-      setMessage('')
 
       const data = await fetchStoryNotifications()
 
       setNotifications(data.notifications)
       setUnreadCount(data.unreadCount)
+      setPreferences(data.preferences)
     } catch (error) {
       setNotifications([])
+      setPreferences({})
       setUnreadCount(0)
-      setMessage(error.message || 'Failed to load notifications')
+      showToast(error.message || 'Failed to load notifications')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showToast])
 
   useEffect(() => {
     loadNotifications()
@@ -594,6 +655,15 @@ export default function StoryNotificationsPage() {
 
   const newNotifications = filteredNotifications.filter((item) => item.unread)
   const earlierNotifications = filteredNotifications.filter((item) => !item.unread)
+  const selectedPreference = selectedNotification
+    ? preferences[selectedNotification.type] || {
+        is_enabled: true,
+        frequency_level: 'normal',
+      }
+    : {
+        is_enabled: true,
+        frequency_level: 'normal',
+      }
 
   async function handleOpen(notification) {
     if (notification.unread) {
@@ -611,7 +681,7 @@ export default function StoryNotificationsPage() {
       return
     }
 
-    setMessage('This notification does not have a target page yet.')
+    showToast('This notification does not have a target page yet.')
   }
 
   async function handleToggleRead() {
@@ -637,7 +707,7 @@ export default function StoryNotificationsPage() {
       )
       setSelectedNotification(null)
     } catch (error) {
-      setMessage(error.message || 'Failed to update notification')
+      showToast(error.message || 'Failed to update notification')
     } finally {
       setActionLoading(false)
     }
@@ -646,32 +716,82 @@ export default function StoryNotificationsPage() {
   async function handleFrequency(level) {
     if (!selectedNotification) return
 
+    const notificationType = selectedNotification.type
+    const notificationLabel = selectedNotification.typeLabel.toLowerCase()
+
     try {
       setActionLoading(true)
-      await updateNotificationPreference(selectedNotification.type, true, level)
-      setMessage(
-        level === 'more'
-          ? `You will see more ${selectedNotification.typeLabel.toLowerCase()} notifications.`
-          : `You will see fewer ${selectedNotification.typeLabel.toLowerCase()} notifications.`
-      )
+      const data = await updateNotificationPreference(notificationType, true, level)
+      const preference = data.preference || {
+        type: notificationType,
+        is_enabled: true,
+        frequency_level: level,
+      }
+
+      setPreferences((current) => ({
+        ...current,
+        [notificationType]: {
+          is_enabled: preference.is_enabled !== false,
+          frequency_level: preference.frequency_level || level,
+        },
+      }))
+
       setSelectedNotification(null)
+      showToast(
+        level === 'more'
+          ? `You will see more ${notificationLabel} notifications.`
+          : `You will see fewer ${notificationLabel} notifications.`
+      )
     } catch (error) {
-      setMessage(error.message || 'Failed to update notification preference')
+      showToast(error.message || 'Failed to update notification preference')
     } finally {
       setActionLoading(false)
     }
   }
 
-  async function handleDisableType() {
+  async function handleToggleType() {
     if (!selectedNotification) return
+
+    const notificationType = selectedNotification.type
+    const notificationLabel = selectedNotification.typeLabel
+    const currentPreference = preferences[notificationType] || {
+      is_enabled: true,
+      frequency_level: 'normal',
+    }
+    const nextEnabled = currentPreference.is_enabled === false
 
     try {
       setActionLoading(true)
-      await updateNotificationPreference(selectedNotification.type, false, 'normal')
-      setMessage(`${selectedNotification.typeLabel} notifications are turned off.`)
+      const data = await updateNotificationPreference(
+        notificationType,
+        nextEnabled,
+        currentPreference.frequency_level || 'normal'
+      )
+      const preference = data.preference || {
+        type: notificationType,
+        is_enabled: nextEnabled,
+        frequency_level: currentPreference.frequency_level || 'normal',
+      }
+
+      setPreferences((current) => ({
+        ...current,
+        [notificationType]: {
+          is_enabled: preference.is_enabled !== false,
+          frequency_level:
+            preference.frequency_level ||
+            currentPreference.frequency_level ||
+            'normal',
+        },
+      }))
+
       setSelectedNotification(null)
+      showToast(
+        `${notificationLabel} notifications are turned ${
+          preference.is_enabled !== false ? 'on' : 'off'
+        }.`
+      )
     } catch (error) {
-      setMessage(error.message || 'Failed to update notification preference')
+      showToast(error.message || 'Failed to update notification preference')
     } finally {
       setActionLoading(false)
     }
@@ -694,7 +814,7 @@ export default function StoryNotificationsPage() {
 
       setSelectedNotification(null)
     } catch (error) {
-      setMessage(error.message || 'Failed to delete notification')
+      showToast(error.message || 'Failed to delete notification')
     } finally {
       setActionLoading(false)
     }
@@ -708,7 +828,7 @@ export default function StoryNotificationsPage() {
       )
       setUnreadCount(0)
     } catch (error) {
-      setMessage(error.message || 'Failed to mark notifications as read')
+      showToast(error.message || 'Failed to mark notifications as read')
     }
   }
 
@@ -745,16 +865,6 @@ export default function StoryNotificationsPage() {
       </div>
 
       <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
-        {message ? (
-          <button
-            type="button"
-            onClick={() => setMessage('')}
-            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff7ed] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#9a3412]"
-          >
-            {message}
-          </button>
-        ) : null}
-
         <section className="sticky top-14 z-30 border-b border-[#eef0f4] bg-white">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
@@ -765,10 +875,10 @@ export default function StoryNotificationsPage() {
                   key={filter}
                   type="button"
                   onClick={() => setActiveFilter(filter)}
-                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
+                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-black/[0.045] active:scale-[0.98] ${
                     active
-                      ? 'bg-[#111827] font-bold text-white'
-                      : 'bg-[#f3f4f6] font-semibold text-[#6b7280]'
+                      ? 'bg-black/[0.065] font-semibold text-[#111827]'
+                      : 'bg-transparent font-normal text-[#9ca3af]'
                   }`}
                 >
                   {filter}
@@ -813,17 +923,36 @@ export default function StoryNotificationsPage() {
       <OptionsSheet
         notification={selectedNotification}
         loading={actionLoading}
+        notificationEnabled={selectedPreference.is_enabled !== false}
+        frequencyLevel={selectedPreference.frequency_level || 'normal'}
         onClose={() => setSelectedNotification(null)}
         onToggleRead={handleToggleRead}
         onShowMore={() => handleFrequency('more')}
         onShowLess={() => handleFrequency('less')}
-        onDisableType={handleDisableType}
+        onToggleType={handleToggleType}
         onDelete={handleDelete}
         onReport={() => {
           setSelectedNotification(null)
           navigate('/feedback')
         }}
       />
+
+      {toast ? (
+        <div
+          className={`pointer-events-none fixed left-1/2 top-[max(16px,env(safe-area-inset-top))] z-[150] w-[calc(100%-32px)] max-w-[380px] -translate-x-1/2 transition-all duration-300 ${
+            toastVisible
+              ? 'translate-y-0 opacity-100'
+              : '-translate-y-2 opacity-0'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium leading-5 text-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.05]">
+            <i className="fa-solid fa-check text-[13px]" />
+            <span className="min-w-0 flex-1">{toast}</span>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
