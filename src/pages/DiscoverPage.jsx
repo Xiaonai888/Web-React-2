@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Send } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
@@ -308,12 +309,9 @@ function SearchHeaderIcon() {
   )
 }
 
-function BellHeaderIcon() {
+function ChatHeaderIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111827" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M6.5 9a5.5 5.5 0 0 1 11 0v3.2c0 1.4.5 2.7 1.5 3.8H5c1-1.1 1.5-2.4 1.5-3.8V9Z" />
-      <path d="M10 19h4" />
-    </svg>
+    <Send size={20} strokeWidth={2.1} aria-hidden="true" />
   )
 }
 
@@ -352,12 +350,12 @@ function Header({ hidden }) {
           </Link>
 
           <Link
-            to="/notifications"
-            className="flex h-6 w-6 items-center justify-center transition-transform active:scale-95"
-            aria-label="Notifications"
-          >
-            <BellHeaderIcon />
-          </Link>
+  to="/chat"
+  className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95"
+  aria-label="Chat"
+>
+  <ChatHeaderIcon />
+</Link>
         </div>
       </div>
     </header>
