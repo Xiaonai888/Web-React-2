@@ -25,8 +25,7 @@ import {
   getChatConversations,
   getChatQuickContacts,
   hasReaderSession,
-  searchChatUsers,
-  touchChatPresence,
+    searchChatUsers,
 } from '../../services/chatApi'
 
 function normalizeSearchValue(value) {
@@ -405,7 +404,6 @@ export default function ChatInboxPage() {
 
   const loadQuickContacts = useCallback(async () => {
     try {
-      await touchChatPresence()
       const data = await getChatQuickContacts(12)
       setQuickContacts(
         Array.isArray(data.contacts) ? data.contacts : []
