@@ -5,6 +5,7 @@ import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import ReportModal from '../../components/ReportModal'
+import AuthorPageMoreMenu from '../../components/AuthorPageMoreMenu'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import Cropper from 'react-easy-crop'
 
@@ -1003,6 +1004,7 @@ const { pageUsername } = useParams()
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
+  const [pageMoreMenuOpen, setPageMoreMenuOpen] = useState(false)
   const [reportPageOpen, setReportPageOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
@@ -1732,6 +1734,15 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
         onClose={() => setReportPageOpen(false)}
       />
 
+      <AuthorPageMoreMenu
+  open={pageMoreMenuOpen}
+  author={displayAuthor}
+  onClose={() => setPageMoreMenuOpen(false)}
+  onReport={() => setReportPageOpen(true)}
+  onHelp={() => navigate('/help')}
+  onMessage={setMessage}
+/>
+
       <ReaderAuthorMessageRequestModal
         open={messageRequestOpen}
         author={displayAuthor}
@@ -2400,15 +2411,15 @@ onOpenStoreSetting={() => {
   </button>
 
  <button
-        type="button"
-        onClick={() => setReportPageOpen(true)}
-        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-          readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
-        }`}
-        aria-label="Report Author Page"
-      >
-        <i className="fa-regular fa-flag text-[15px]" />
-      </button>
+  type="button"
+  onClick={() => setPageMoreMenuOpen(true)}
+  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+    readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
+  }`}
+  aria-label="Author Page options"
+>
+  <i className="fa-solid fa-ellipsis text-[17px]" />
+</button>
         </div>
   </div>
 </header>
