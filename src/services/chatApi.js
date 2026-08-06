@@ -208,8 +208,25 @@ export function unarchiveChatConversation(
   )
 }
 
+function normalizeConversationDeleteScope(scope) {
+  const normalized = String(scope || 'for_me')
+    .trim()
+    .toLowerCase()
+
+  if (!['for_me', 'for_both'].includes(normalized)) {
+    throw new ChatApiError(
+      400,
+      'INVALID_DELETE_SCOPE',
+      'Delete option is not valid'
+    )
+  }
+
+  return normalized
+}
+
 export function deleteChatConversation(
-  conversationId
+  conversationId,
+  scope = 'for_me'
 ) {
   return chatRequest(
     `/conversations/${encodeURIComponent(
@@ -217,7 +234,31 @@ export function deleteChatConversation(
     )}`,
     {
       method: 'DELETE',
+      body: {
+        scope:
+          normalizeConversationDeleteScope(
+            scope
+          ),
+      },
     }
+  )
+}
+
+export function deleteChatConversationForMe(
+  conversationId
+) {
+  return deleteChatConversation(
+    conversationId,
+    'for_me'
+  )
+}
+
+export function deleteChatConversationForBoth(
+  conversationId
+) {
+  return deleteChatConversation(
+    conversationId,
+    'for_both'
   )
 }
 
