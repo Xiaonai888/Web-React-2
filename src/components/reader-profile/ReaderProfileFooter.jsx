@@ -86,8 +86,10 @@ function ProfileIcon({
 
   return (
     <span
-      className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[11px] font-bold text-white transition ${
-        active ? 'scale-105' : ''
+      className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold text-white ring-2 ${
+        active
+          ? 'bg-[#7c3aed] ring-[#7c3aed]'
+          : 'bg-[#111827] ring-transparent'
       }`}
     >
       {avatarUrl && !imageFailed ? (
@@ -125,8 +127,6 @@ export default function ReaderProfileFooter({
     () => getStoredUser()
   )
   const [message, setMessage] = useState('')
-  const [hoveredKey, setHoveredKey] =
-    useState('')
   const [chatBadgeCount, setChatBadgeCount] =
     useState(0)
 
@@ -146,16 +146,14 @@ export default function ReaderProfileFooter({
     'Me'
 
   const activeKey =
-    location.pathname.startsWith('/fast')
-      ? 'reel'
-      : location.pathname.startsWith('/chat')
-        ? 'chat'
-        : location.pathname.startsWith('/library')
-          ? 'library'
-          : location.pathname.startsWith('/profile') ||
-              location.pathname.startsWith('/me')
-            ? 'me'
-            : ''
+    location.pathname.startsWith('/chat')
+      ? 'chat'
+      : location.pathname.startsWith('/library')
+        ? 'library'
+        : location.pathname.startsWith('/profile') ||
+            location.pathname.startsWith('/me')
+          ? 'me'
+          : ''
 
   const refreshStoredUser = useCallback(() => {
     setStoredUser(getStoredUser())
@@ -294,7 +292,7 @@ export default function ReaderProfileFooter({
     }
 
     if (key === 'reel') {
-      navigate('/fast')
+      showMessage('Reel is coming soon.')
       return
     }
 
@@ -340,7 +338,7 @@ export default function ReaderProfileFooter({
   return (
     <>
       {message ? (
-        <div className="fixed bottom-[82px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white shadow-lg">
+        <div className="fixed bottom-[82px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white">
           {message}
         </div>
       ) : null}
@@ -350,16 +348,13 @@ export default function ReaderProfileFooter({
         style={{
           paddingBottom:
             'env(safe-area-inset-bottom, 0px)',
+          boxShadow: 'none',
         }}
       >
         <nav className="mx-auto flex h-[64px] w-full max-w-[560px] items-center justify-around px-3">
           {NAV_ITEMS.map((item) => {
             const active =
               activeKey === item.key
-            const highlighted =
-              item.key !== 'me' &&
-              (active ||
-                hoveredKey === item.key)
             const isChat =
               item.key === 'chat'
             const accessibleLabel =
@@ -374,18 +369,6 @@ export default function ReaderProfileFooter({
                 onClick={() =>
                   handleClick(item.key)
                 }
-                onMouseEnter={() =>
-                  setHoveredKey(item.key)
-                }
-                onMouseLeave={() =>
-                  setHoveredKey('')
-                }
-                onFocus={() =>
-                  setHoveredKey(item.key)
-                }
-                onBlur={() =>
-                  setHoveredKey('')
-                }
                 aria-label={accessibleLabel}
                 title={item.label}
                 aria-current={
@@ -393,12 +376,10 @@ export default function ReaderProfileFooter({
                     ? 'page'
                     : undefined
                 }
-                className={`relative flex h-11 w-11 items-center justify-center rounded-full transition active:scale-90 ${
-                  item.key === 'me'
-                    ? 'bg-transparent'
-                    : highlighted
-                      ? 'bg-[#7c3aed] text-white shadow-[0_6px_16px_rgba(124,58,237,0.28)]'
-                      : 'bg-transparent text-[#111827] hover:bg-[#7c3aed] hover:text-white'
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-transparent shadow-none transition active:scale-90 ${
+                  active
+                    ? 'text-[#7c3aed]'
+                    : 'text-[#111827] hover:text-[#7c3aed]'
                 }`}
               >
                 {renderIcon(item.key, active)}
