@@ -121,11 +121,15 @@ function normalizeNotification(item) {
       ? item.metadata
       : {}
   const actor = getActorMetadata(metadata)
+const effectiveType =
+  metadata.notification_type ||
+  item.type ||
+  'system'
 
-  return {
-    id: item.id,
-    type: item.type || 'system',
-    typeLabel: getNotificationTypeLabel(item.type),
+return {
+  id: item.id,
+  type: effectiveType,
+  typeLabel: getNotificationTypeLabel(effectiveType),
     title: item.title || 'Notification',
     message: item.message || '',
     targetUrl: item.target_url || item.targetUrl || '',
