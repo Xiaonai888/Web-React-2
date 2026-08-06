@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import Fast from './pages/Fast'
-import Footer from './components/Footer'
+import ReaderProfileFooter from './components/reader-profile/ReaderProfileFooter'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
@@ -1247,7 +1247,7 @@ const shouldShowOpeningAds =
 
       {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
 
-      {!shouldHideFooter ? <Footer /> : null}
+      {!shouldHideFooter ? <ReaderProfileFooter /> : null}
     </>
   )
 }
