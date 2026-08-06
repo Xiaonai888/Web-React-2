@@ -1,7 +1,7 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
+  useRef,
   useState,
 } from 'react'
 import {
@@ -22,8 +22,8 @@ import {
 function getStoredUser() {
   try {
     return JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-        sessionStorage.getItem('shadow_reader_user') ||
+      sessionStorage.getItem('shadow_reader_user') ||
+        localStorage.getItem('shadow_reader_user') ||
         'null'
     )
   } catch {
@@ -80,6 +80,10 @@ function ProfileIcon({
       .charAt(0)
       .toUpperCase() || 'M'
 
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatarUrl])
+
   return (
     <span
       className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[11px] font-bold text-white transition ${
@@ -116,9 +120,9 @@ export default function ReaderProfileFooter({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const storedUser = useMemo(
-    () => getStoredUser(),
-    []
+  const messageTimerRef = useRef(null)
+  const [storedUser, setStoredUser] = useState(
+    () => getStoredUser()
   )
   const [message, setMessage] = useState('')
   const [hoveredKey, setHoveredKey] =
@@ -148,73 +152,83 @@ export default function ReaderProfileFooter({
         ? 'chat'
         : location.pathname.startsWith('/library')
           ? 'library'
-          : location.pathname.startsWith('/profile')
+          : location.pathname.startsWith('/profile') ||
+              location.pathname.startsWith('/me')
             ? 'me'
             : ''
 
-  const loadChatBadge = useCallback(
-    async () => {
-      if (!hasReaderSession()) {
-        setChatBadgeCount(0)
-        return
-      }
+  const refreshStoredUser = useCallback(() => {
+    setStoredUser(getStoredUser())
+  }, [])
 
-      try {
-        const data =
-          await getChatConversations('all')
-        const conversations =
-          Array.isArray(data.conversations)
-            ? data.conversations
-            : []
+  const loadChatBadge = useCallback(async () => {
+    if (!hasReaderSession()) {
+      setChatBadgeCount(0)
+      return
+    }
 
-        const total = conversations.reduce(
-          (sum, item) => {
-            if (
-              item.request_status ===
-                'declined' ||
-              item.request_status ===
-                'blocked'
-            ) {
-              return sum
-            }
+    try {
+      const data =
+        await getChatConversations('all')
+      const conversations =
+        Array.isArray(data.conversations)
+          ? data.conversations
+          : []
 
-            const unread = Math.max(
-              0,
-              Number(item.unread_count || 0)
-            )
+      const total = conversations.reduce(
+        (sum, item) => {
+          if (
+            item.request_status === 'declined' ||
+            item.request_status === 'blocked'
+          ) {
+            return sum
+          }
 
-            const incomingRequest =
-              item.can_decide === true &&
-              item.request_status ===
-                'pending'
+          const unread = Math.max(
+            0,
+            Number(item.unread_count || 0)
+          )
+          const incomingRequest =
+            item.can_decide === true &&
+            item.request_status === 'pending'
 
-            return (
-              sum +
-              (incomingRequest
-                ? Math.max(1, unread)
-                : unread)
-            )
-          },
-          0
-        )
+          return (
+            sum +
+            (incomingRequest
+              ? Math.max(1, unread)
+              : unread)
+          )
+        },
+        0
+      )
 
-        setChatBadgeCount(total)
-      } catch {
-        setChatBadgeCount(0)
-      }
-    },
-    []
-  )
+      setChatBadgeCount(total)
+    } catch {
+      return
+    }
+  }, [])
 
   useEffect(() => {
     loadChatBadge()
-    const intervalId =
-      window.setInterval(
-        loadChatBadge,
-        10000
-      )
+    refreshStoredUser()
+
+    const intervalId = window.setInterval(
+      () => {
+        if (
+          document.visibilityState === 'visible'
+        ) {
+          loadChatBadge()
+        }
+      },
+      10000
+    )
 
     const handleChatUpdated = () => {
+      loadChatBadge()
+    }
+
+    const handleStorage = () => {
+      refreshStoredUser()
       loadChatBadge()
     }
 
@@ -223,32 +237,54 @@ export default function ReaderProfileFooter({
       handleChatUpdated
     )
     window.addEventListener(
+      'shadow-profile-updated',
+      refreshStoredUser
+    )
+    window.addEventListener(
       'storage',
-      handleChatUpdated
+      handleStorage
     )
 
     return () => {
       window.clearInterval(intervalId)
-      window.clearInterval(
-        presenceIntervalId
-      )
       window.removeEventListener(
         'shadow-chat-updated',
         handleChatUpdated
       )
       window.removeEventListener(
+        'shadow-profile-updated',
+        refreshStoredUser
+      )
+      window.removeEventListener(
         'storage',
-        handleChatUpdated
+        handleStorage
       )
     }
-  }, [loadChatBadge, location.pathname])
+  }, [loadChatBadge, refreshStoredUser])
+
+  useEffect(() => {
+    return () => {
+      if (messageTimerRef.current) {
+        window.clearTimeout(
+          messageTimerRef.current
+        )
+      }
+    }
+  }, [])
 
   const showMessage = (text) => {
+    if (messageTimerRef.current) {
+      window.clearTimeout(
+        messageTimerRef.current
+      )
+    }
+
     setMessage(text)
-    window.setTimeout(
-      () => setMessage(''),
-      1800
-    )
+    messageTimerRef.current =
+      window.setTimeout(() => {
+        setMessage('')
+        messageTimerRef.current = null
+      }, 1800)
   }
 
   const handleClick = (key) => {
@@ -304,13 +340,13 @@ export default function ReaderProfileFooter({
   return (
     <>
       {message ? (
-        <div className="fixed bottom-[82px] left-1/2 z-[100001] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white shadow-lg">
+        <div className="fixed bottom-[82px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white shadow-lg">
           {message}
         </div>
       ) : null}
 
       <footer
-        className="fixed bottom-0 left-0 right-0 z-[100000] bg-white/95 backdrop-blur-xl"
+        className="fixed bottom-0 left-0 right-0 z-[90] bg-white/95 backdrop-blur-xl"
         style={{
           paddingBottom:
             'env(safe-area-inset-bottom, 0px)',
