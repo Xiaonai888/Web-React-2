@@ -604,13 +604,12 @@ export default function ChatInboxPage() {
   const visibleConversations = useMemo(() => {
     return conversations.filter((conversation) => {
       if (
-        !normalizedQuery &&
-        activeFilter === 'pending' &&
-        conversation.request_status !== 'pending'
-      ) {
-        return false
-      }
-
+  !normalizedQuery &&
+  activeFilter === 'pending' &&
+  conversation.can_decide !== true
+) {
+  return false
+}
       if (!normalizedQuery) {
         return true
       }
@@ -831,7 +830,7 @@ export default function ChatInboxPage() {
           <div className="shadow-chat-scroll -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
             <QuickCircle
               label="Request"
-              count={pendingConversations.length}
+              count={incomingRequests.length}
               onClick={chooseRequestFilter}
               fallback={
                 <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#f1f1f4] text-[#7c3aed]">
