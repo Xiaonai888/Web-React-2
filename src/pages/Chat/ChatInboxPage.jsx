@@ -15,7 +15,6 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ReaderProfileFooter from '../../components/reader-profile/ReaderProfileFooter'
 import ChatSuggestedPeople from '../../components/chat/ChatSuggestedPeople'
 import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
@@ -1097,8 +1096,6 @@ export default function ChatInboxPage() {
         author={selectedSearchAuthor}
         onClose={() => setSelectedSearchAuthor(null)}
       />
-
-      <ReaderProfileFooter />
     </div>
   )
 }
