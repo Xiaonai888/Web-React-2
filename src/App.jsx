@@ -183,7 +183,8 @@ const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
 const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
-const ChatInboxPage = lazy(() => import('./pages/Chat/ChatInboxPage'))
+const ChatInboxShellPage = lazy(() => import('./pages/Chat/ChatInboxShellPage'))
+const ArchivedChatPage = lazy(() => import('./pages/Chat/ArchivedChatPage'))
 const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 
 
@@ -1189,7 +1190,8 @@ const shouldShowOpeningAds =
         <Route path="/check-in" element={<ComingSoon title="Check-in" />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/chat" element={<LazyPage><ChatInboxPage /></LazyPage>} />
+        <Route path="/chat" element={<LazyPage><ChatInboxShellPage /></LazyPage>} />
+        <Route path="/chat/archived" element={<LazyPage><ArchivedChatPage /></LazyPage>} />
         <Route path="/chat/:conversationId" element={<LazyPage><ChatRoomPage /></LazyPage>} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
