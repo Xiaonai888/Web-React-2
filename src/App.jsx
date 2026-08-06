@@ -320,7 +320,7 @@ const shouldShowOpeningAds =
         <Route path="/" element={<ForYou onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
-        <Route path="/fast" element={<Fast />} />
+        <Route path="/fast" element={<ComingSoon title="Fast / Reels" />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
 
