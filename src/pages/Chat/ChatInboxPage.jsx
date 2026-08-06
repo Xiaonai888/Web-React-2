@@ -915,8 +915,8 @@ export default function ChatInboxPage() {
               onChange={(event) =>
                 setQuery(event.target.value.slice(0, 50))
               }
-              placeholder="Search name or @username"
-              className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[14px] font-bold text-[#111827] outline-none transition placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
+              placeholder="Search by name or username"
+className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[14px] font-normal text-[#111827] outline-none transition placeholder:font-normal placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
             />
           </div>
 
