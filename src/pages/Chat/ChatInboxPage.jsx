@@ -23,8 +23,10 @@ import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderM
 import {
   decideChatRequest,
   getChatConversations,
+  getChatQuickContacts,
   hasReaderSession,
   searchChatUsers,
+  touchChatPresence,
 } from '../../services/chatApi'
 
 function normalizeSearchValue(value) {
@@ -386,6 +388,7 @@ export default function ChatInboxPage() {
   const navigate = useNavigate()
   const searchRequestRef = useRef(0)
   const [conversations, setConversations] = useState([])
+  const [quickContacts, setQuickContacts] = useState([])
   const [activeFilter, setActiveFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
@@ -399,6 +402,18 @@ export default function ChatInboxPage() {
     useState(null)
   const [selectedSearchAuthor, setSelectedSearchAuthor] =
     useState(null)
+
+  const loadQuickContacts = useCallback(async () => {
+    try {
+      await touchChatPresence()
+      const data = await getChatQuickContacts(12)
+      setQuickContacts(
+        Array.isArray(data.contacts) ? data.contacts : []
+      )
+    } catch {
+      setQuickContacts([])
+    }
+  }, [])
 
   const loadConversations = useCallback(
     async ({ silent = false } = {}) => {
@@ -440,15 +455,21 @@ export default function ChatInboxPage() {
     }
 
     loadConversations()
+    loadQuickContacts()
 
-    const intervalId = window.setInterval(() => {
+    const conversationIntervalId = window.setInterval(() => {
       loadConversations({ silent: true })
     }, 6000)
+    const contactsIntervalId = window.setInterval(
+      loadQuickContacts,
+      20000
+    )
 
     return () => {
-      window.clearInterval(intervalId)
+      window.clearInterval(conversationIntervalId)
+      window.clearInterval(contactsIntervalId)
     }
-  }, [loadConversations, navigate])
+  }, [loadConversations, loadQuickContacts, navigate])
 
   const normalizedQuery = useMemo(
     () => normalizeSearchValue(query),
@@ -577,6 +598,11 @@ export default function ChatInboxPage() {
       .slice(0, 12)
   }, [conversations])
 
+  const displayedQuickContacts =
+    quickContacts.length
+      ? quickContacts
+      : frequentContacts
+
   const visibleConversations = useMemo(() => {
     return conversations.filter((conversation) => {
       if (
@@ -702,6 +728,11 @@ export default function ChatInboxPage() {
   }
 
   const openSearchPerson = (user) => {
+    if (user?.conversation_id) {
+      navigate(`/chat/${user.conversation_id}`)
+      return
+    }
+
     const authorPageId =
       user.author_page_id ||
       (user.result_type === 'author' ? user.id : '')
@@ -811,21 +842,33 @@ export default function ChatInboxPage() {
               }
             />
 
-            {frequentContacts.map((conversation) => {
-              const person = conversation.counterpart || {}
+            {displayedQuickContacts.map((contact) => {
+              const person =
+                contact.counterpart || contact
 
               return (
                 <QuickCircle
-                  key={conversation.id}
+                  key={
+                    contact.key ||
+                    contact.conversation_id ||
+                    `${contact.type || 'reader'}:${
+                      contact.author_page_id ||
+                      contact.user_id ||
+                      contact.id
+                    }`
+                  }
                   label={
-                    person.name || person.username || 'Shadow'
+                    person.name ||
+                    person.username ||
+                    'Shadow'
                   }
                   person={person}
                   online={Boolean(
-                    conversation.is_online || person.is_online
+                    contact.is_online ||
+                    person.is_online
                   )}
                   onClick={() =>
-                    navigate(`/chat/${conversation.id}`)
+                    openSearchPerson(contact)
                   }
                 />
               )
