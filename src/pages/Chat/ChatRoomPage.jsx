@@ -1,4 +1,5 @@
 import {
+  Archive,
   Ban,
   Check,
   ChevronLeft,
@@ -6,6 +7,7 @@ import {
   EllipsisVertical,
   LoaderCircle,
   Send,
+  Trash2,
   UserRound,
   X,
 } from 'lucide-react'
@@ -20,8 +22,10 @@ import {
   useParams,
 } from 'react-router-dom'
 import {
+  archiveChatConversation,
   blockChatConversation,
   decideChatRequest,
+  deleteChatConversation,
   getChatBlockStatus,
   getChatMessages,
   hasReaderSession,
@@ -45,7 +49,6 @@ function formatMessageTime(value) {
     }
   ).format(date)
 }
-
 
 function mergeMessages(current, incoming) {
   const messageMap = new Map()
@@ -240,6 +243,8 @@ function ConversationMenu({
   busyAction,
   onClose,
   onOpenProfile,
+  onArchive,
+  onDelete,
   onBlock,
   onUnblock,
 }) {
@@ -258,12 +263,51 @@ function ConversationMenu({
         <button
           type="button"
           onClick={onOpenProfile}
-          disabled={!canOpenProfile}
+          disabled={
+            !canOpenProfile ||
+            Boolean(busyAction)
+          }
           className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
         >
           <UserRound size={17} />
           View profile
         </button>
+
+        <button
+          type="button"
+          onClick={onArchive}
+          disabled={Boolean(busyAction)}
+          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#6f52b5] transition hover:bg-[#f6f2ff] active:bg-[#eee7ff] disabled:opacity-45"
+        >
+          {busyAction === 'archive' ? (
+            <LoaderCircle
+              size={17}
+              className="animate-spin"
+            />
+          ) : (
+            <Archive size={17} />
+          )}
+          Archive chat
+        </button>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={Boolean(busyAction)}
+          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+        >
+          {busyAction === 'delete' ? (
+            <LoaderCircle
+              size={17}
+              className="animate-spin"
+            />
+          ) : (
+            <Trash2 size={17} />
+          )}
+          Delete chat
+        </button>
+
+        <div className="my-1 h-px bg-[#efedf3]" />
 
         {canUnblock ? (
           <button
@@ -508,7 +552,6 @@ export default function ChatRoomPage() {
     setMenuOpen(false)
   }, [conversationId])
 
-
   const handleLoadOlder = async () => {
     if (
       !conversationId ||
@@ -645,7 +688,6 @@ export default function ChatRoomPage() {
     }
   }
 
-
   const handleUnblock = async () => {
     if (
       busyAction ||
@@ -677,6 +719,66 @@ export default function ChatRoomPage() {
         unblockError.message ||
           'Failed to unblock account'
       )
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  const handleArchive = async () => {
+    if (busyAction || !conversationId) {
+      return
+    }
+
+    setBusyAction('archive')
+
+    try {
+      await archiveChatConversation(
+        conversationId
+      )
+      notifyChatUpdated()
+      navigate('/chat', {
+        replace: true,
+      })
+    } catch (archiveError) {
+      setError(
+        archiveError.message ||
+          'Failed to archive conversation'
+      )
+      setMenuOpen(false)
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (busyAction || !conversationId) {
+      return
+    }
+
+    if (
+      !window.confirm(
+        'Delete this conversation from your inbox? New messages can restore it.'
+      )
+    ) {
+      return
+    }
+
+    setBusyAction('delete')
+
+    try {
+      await deleteChatConversation(
+        conversationId
+      )
+      notifyChatUpdated()
+      navigate('/chat', {
+        replace: true,
+      })
+    } catch (deleteError) {
+      setError(
+        deleteError.message ||
+          'Failed to delete conversation'
+      )
+      setMenuOpen(false)
     } finally {
       setBusyAction('')
     }
@@ -805,6 +907,8 @@ export default function ChatRoomPage() {
             busyAction={busyAction}
             onClose={() => setMenuOpen(false)}
             onOpenProfile={handleOpenProfile}
+            onArchive={handleArchive}
+            onDelete={handleDelete}
             onBlock={() => handleDecision('block')}
             onUnblock={handleUnblock}
           />
