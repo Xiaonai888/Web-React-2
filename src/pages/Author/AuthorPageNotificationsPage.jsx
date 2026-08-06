@@ -43,24 +43,75 @@ const typeMap = {
   admin: 'System',
 }
 
-const iconMap = {
-  comments: 'fa-regular fa-comment',
-  comment: 'fa-regular fa-comment',
-  mention: 'fa-solid fa-at',
-  mentions: 'fa-solid fa-at',
-  reaction: 'fa-solid fa-heart',
-  echo: 'fa-solid fa-retweet',
-  follower: 'fa-solid fa-user-plus',
-  review: 'fa-solid fa-star',
-  post: 'fa-regular fa-file-lines',
-  posts: 'fa-regular fa-file-lines',
-  orders: 'fa-solid fa-bag-shopping',
-  order: 'fa-solid fa-bag-shopping',
-  income: 'fa-solid fa-wallet',
-  withdrawal: 'fa-solid fa-money-bill-transfer',
-  payout: 'fa-solid fa-money-check-dollar',
-  system: 'fa-solid fa-shield-halved',
-  admin: 'fa-solid fa-shield-halved',
+const actionMap = {
+  comments: {
+    icon: 'fa-solid fa-comment',
+    badge: 'bg-[#1877f2] text-white',
+  },
+  comment: {
+    icon: 'fa-solid fa-comment',
+    badge: 'bg-[#1877f2] text-white',
+  },
+  mention: {
+    icon: 'fa-solid fa-at',
+    badge: 'bg-[#2563eb] text-white',
+  },
+  mentions: {
+    icon: 'fa-solid fa-at',
+    badge: 'bg-[#2563eb] text-white',
+  },
+  reaction: {
+    icon: 'fa-solid fa-heart',
+    badge: 'bg-[#f43f5e] text-white',
+  },
+  echo: {
+    icon: 'fa-solid fa-share',
+    badge: 'bg-[#7c3aed] text-white',
+  },
+  follower: {
+    icon: 'fa-solid fa-user-plus',
+    badge: 'bg-[#0891b2] text-white',
+  },
+  review: {
+    icon: 'fa-solid fa-star',
+    badge: 'bg-[#f59e0b] text-white',
+  },
+  post: {
+    icon: 'fa-regular fa-file-lines',
+    badge: 'bg-[#4b5563] text-white',
+  },
+  posts: {
+    icon: 'fa-regular fa-file-lines',
+    badge: 'bg-[#4b5563] text-white',
+  },
+  orders: {
+    icon: 'fa-solid fa-bag-shopping',
+    badge: 'bg-[#7c3aed] text-white',
+  },
+  order: {
+    icon: 'fa-solid fa-bag-shopping',
+    badge: 'bg-[#7c3aed] text-white',
+  },
+  income: {
+    icon: 'fa-solid fa-wallet',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  withdrawal: {
+    icon: 'fa-solid fa-money-bill-transfer',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  payout: {
+    icon: 'fa-solid fa-money-check-dollar',
+    badge: 'bg-[#16a34a] text-white',
+  },
+  system: {
+    icon: 'fa-solid fa-shield-halved',
+    badge: 'bg-[#111827] text-white',
+  },
+  admin: {
+    icon: 'fa-solid fa-shield-halved',
+    badge: 'bg-[#111827] text-white',
+  },
 }
 
 function getAuthToken() {
@@ -79,11 +130,14 @@ function getNotificationTypeLabel(type) {
   )
 }
 
-function getNotificationIcon(type) {
+function getAction(type) {
   return (
-    iconMap[
+    actionMap[
       String(type || '').toLowerCase()
-    ] || 'fa-regular fa-bell'
+    ] || {
+      icon: 'fa-solid fa-bell',
+      badge: 'bg-[#111827] text-white',
+    }
   )
 }
 
@@ -334,49 +388,44 @@ function updateNotificationPreference(
   )
 }
 
-function NotificationIcon({
+function NotificationAvatar({
   notification,
 }) {
-  const hasAvatar = Boolean(
-    notification.actorAvatarUrl
+  const action = getAction(
+    notification.type
   )
+  const fallbackText = String(
+    notification.actorName ||
+      notification.typeLabel ||
+      'N'
+  )
+    .trim()
+    .slice(0, 1)
+    .toUpperCase()
 
   return (
-    <div className="relative h-12 w-12 shrink-0">
-      {hasAvatar ? (
+    <div className="relative h-14 w-14 shrink-0">
+      {notification.actorAvatarUrl ? (
         <img
           src={
             notification.actorAvatarUrl
           }
-          alt={
-            notification.actorName ||
-            'Reader'
-          }
-          className="h-12 w-12 rounded-full bg-[#f3f4f6] object-cover"
+          alt=""
+          className="h-14 w-14 rounded-full object-cover ring-1 ring-black/5"
         />
       ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
-          <i
-            className={`${getNotificationIcon(
-              notification.type
-            )} text-[17px]`}
-          />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e5e7eb] text-[18px] font-bold text-[#4b5563]">
+          {fallbackText}
         </div>
       )}
 
-      {hasAvatar ? (
-        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#111827] text-white">
-          <i
-            className={`${getNotificationIcon(
-              notification.type
-            )} text-[10px]`}
-          />
-        </span>
-      ) : null}
-
-      {notification.unread ? (
-        <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#f43f5e]" />
-      ) : null}
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white ${action.badge}`}
+      >
+        <i
+          className={`${action.icon} text-[10px]`}
+        />
+      </span>
     </div>
   )
 }
@@ -388,7 +437,7 @@ function NotificationItem({
 }) {
   return (
     <div
-      className={`flex w-full gap-3 px-4 py-3 text-left transition ${
+      className={`flex w-full items-start gap-3 px-4 py-3 transition ${
         notification.unread
           ? 'bg-[#eef6ff]'
           : 'bg-white'
@@ -399,23 +448,23 @@ function NotificationItem({
         onClick={() =>
           onOpen(notification)
         }
-        className="flex min-w-0 flex-1 gap-3 text-left active:opacity-80"
+        className="flex min-w-0 flex-1 items-start gap-3 text-left active:opacity-80"
       >
-        <NotificationIcon
+        <NotificationAvatar
           notification={notification}
         />
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pt-0.5">
           <p
-            className={`line-clamp-2 text-[14px] leading-5 text-[#111827] ${
+            className={`line-clamp-3 text-[14px] leading-5 text-[#111827] ${
               notification.unread
-                ? 'font-black'
+                ? 'font-bold'
                 : 'font-semibold'
             }`}
           >
             {notification.title}
             {notification.message ? (
-              <span className="font-semibold text-[#374151]">
+              <span className="font-medium text-[#4b5563]">
                 {' '}
                 ·{' '}
                 {
@@ -429,7 +478,7 @@ function NotificationItem({
             <span
               className={`text-[12px] ${
                 notification.unread
-                  ? 'font-black text-[#2563eb]'
+                  ? 'font-bold text-[#1877f2]'
                   : 'font-semibold text-[#8b93a1]'
               }`}
             >
@@ -447,16 +496,22 @@ function NotificationItem({
         </div>
       </button>
 
-      <button
-        type="button"
-        onClick={() =>
-          onOptions(notification)
-        }
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-white/70"
-        aria-label="Notification options"
-      >
-        <i className="fa-solid fa-ellipsis text-[14px]" />
-      </button>
+      <div className="flex shrink-0 items-center gap-1 pt-1">
+        {notification.unread ? (
+          <span className="h-3 w-3 rounded-full bg-[#1877f2]" />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() =>
+            onOptions(notification)
+          }
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[#111827] active:bg-[#eef0f4]"
+          aria-label="Notification options"
+        >
+          <i className="fa-solid fa-ellipsis text-[15px]" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -472,33 +527,22 @@ function NotificationGroup({
   }
 
   return (
-    <section>
-      <h2 className="px-4 pb-2 pt-4 text-[18px] font-black text-[#111827]">
+    <section className="bg-white">
+      <h2 className="px-4 pb-2 pt-4 text-[15px] font-bold text-[#111827]">
         {title}
       </h2>
 
-      <div className="overflow-hidden border-y border-[#eef0f4] bg-white">
+      <div className="bg-white">
         {notifications.map(
-          (
-            notification,
-            index
-          ) => (
-            <div
+          (notification) => (
+            <NotificationItem
               key={notification.id}
-              className={
-                index > 0
-                  ? 'border-t border-[#eef0f4]'
-                  : ''
+              notification={
+                notification
               }
-            >
-              <NotificationItem
-                notification={
-                  notification
-                }
-                onOpen={onOpen}
-                onOptions={onOptions}
-              />
-            </div>
+              onOpen={onOpen}
+              onOptions={onOptions}
+            />
           )
         )}
       </div>
@@ -506,20 +550,42 @@ function NotificationGroup({
   )
 }
 
+function LoadingState() {
+  return (
+    <div className="px-4 py-4">
+      {Array.from({
+        length: 7,
+      }).map((_, index) => (
+        <div
+          key={index}
+          className="mb-3 flex animate-pulse gap-3 py-2"
+        >
+          <div className="h-14 w-14 shrink-0 rounded-full bg-[#eef0f4]" />
+
+          <div className="min-w-0 flex-1 pt-1">
+            <div className="h-4 w-4/5 rounded bg-[#eef0f4]" />
+            <div className="mt-2 h-3 w-2/5 rounded bg-[#f3f4f6]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function EmptyState({ filter }) {
   return (
-    <div className="mx-4 mt-5 rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+    <div className="bg-white px-6 py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3f4f6] text-[#111827]">
         <i className="fa-regular fa-bell text-[20px]" />
       </div>
 
-      <h2 className="text-[17px] font-black text-[#111827]">
+      <h2 className="text-[17px] font-bold text-[#111827]">
         No{' '}
         {filter.toLowerCase()}{' '}
         notifications
       </h2>
 
-      <p className="mx-auto mt-2 max-w-[320px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
+      <p className="mx-auto mt-2 max-w-[340px] text-[13px] font-semibold leading-6 text-[#8b93a1]">
         Comments, reactions,
         echoes, followers, reviews,
         orders, income, and admin
@@ -1244,9 +1310,9 @@ export default function AuthorPageNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] pb-[92px]">
+    <div className="min-h-screen bg-white pb-[92px]">
       <div
-        className={`sticky top-0 z-40 border-b border-[#eef0f4] bg-white/95 backdrop-blur ${
+        className={`sticky top-0 z-40 bg-white ${
           selectedNotification
             ? 'invisible'
             : ''
@@ -1264,7 +1330,7 @@ export default function AuthorPageNotificationsPage() {
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
 
-          <div className="text-[18px] font-black text-[#111827]">
+          <div className="text-[18px] font-bold text-[#111827]">
             Page Notifications
           </div>
 
@@ -1282,7 +1348,7 @@ export default function AuthorPageNotificationsPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[980px]">
+      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-white">
         {message ? (
           <button
             type="button"
@@ -1295,7 +1361,7 @@ export default function AuthorPageNotificationsPage() {
           </button>
         ) : null}
 
-        <section className="sticky top-14 z-30 border-b border-[#eef0f4] bg-white">
+        <section className="sticky top-14 z-30 bg-white">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
               const active =
@@ -1310,9 +1376,9 @@ export default function AuthorPageNotificationsPage() {
                       filter
                     )
                   }
-                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition active:scale-[0.98] ${
+                  className={`h-9 shrink-0 rounded-full px-4 text-[13px] transition hover:bg-black/[0.045] active:scale-[0.98] ${
                     active
-                      ? 'bg-[#f3f4f6] font-medium text-[#111827]'
+                      ? 'bg-black/[0.065] font-semibold text-[#111827]'
                       : 'bg-transparent font-normal text-[#9ca3af]'
                   }`}
                 >
@@ -1321,7 +1387,7 @@ export default function AuthorPageNotificationsPage() {
                   {filter ===
                     'Unread' &&
                   unreadCount > 0 ? (
-                    <span className="ml-1 text-[11px] font-black text-[#2563eb]">
+                    <span className="ml-1.5 text-[11px] font-bold">
                       {unreadCount}
                     </span>
                   ) : null}
@@ -1332,9 +1398,9 @@ export default function AuthorPageNotificationsPage() {
         </section>
 
         {loading ? (
-          <EmptyState filter="loading" />
+          <LoadingState />
         ) : filteredNotifications.length ? (
-          <div>
+          <div className="bg-white">
             <NotificationGroup
               title="New"
               notifications={
