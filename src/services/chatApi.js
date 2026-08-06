@@ -282,3 +282,174 @@ export function markChatRead(conversationId) {
     }
   )
 }
+
+export const MAX_CHAT_MESSAGE_SELECTION = 100
+
+function normalizeChatMessageIds(messageIds) {
+  const values = Array.isArray(messageIds)
+    ? messageIds
+    : [messageIds]
+
+  const normalized = [
+    ...new Set(
+      values
+        .map((value) =>
+          String(value || '').trim()
+        )
+        .filter(Boolean)
+    ),
+  ]
+
+  if (!normalized.length) {
+    throw new ChatApiError(
+      400,
+      'MESSAGE_IDS_REQUIRED',
+      'Select at least one message'
+    )
+  }
+
+  if (
+    normalized.length >
+    MAX_CHAT_MESSAGE_SELECTION
+  ) {
+    throw new ChatApiError(
+      400,
+      'MESSAGE_SELECTION_LIMIT',
+      `You can select up to ${MAX_CHAT_MESSAGE_SELECTION} messages`
+    )
+  }
+
+  return normalized
+}
+
+export function replyChatMessage(
+  conversationId,
+  messageId,
+  message
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages/${encodeURIComponent(
+      messageId
+    )}/reply`,
+    {
+      method: 'POST',
+      body: { message },
+    }
+  )
+}
+
+export function editChatMessage(
+  conversationId,
+  messageId,
+  message
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages/${encodeURIComponent(
+      messageId
+    )}`,
+    {
+      method: 'PATCH',
+      body: { message },
+    }
+  )
+}
+
+export function deleteChatMessages(
+  conversationId,
+  messageIds
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages`,
+    {
+      method: 'DELETE',
+      body: {
+        message_ids:
+          normalizeChatMessageIds(
+            messageIds
+          ),
+      },
+    }
+  )
+}
+
+export function deleteChatMessage(
+  conversationId,
+  messageId
+) {
+  return deleteChatMessages(
+    conversationId,
+    [messageId]
+  )
+}
+
+export function getPinnedChatMessages(
+  conversationId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/pins`
+  )
+}
+
+export function pinChatMessage(
+  conversationId,
+  messageId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages/${encodeURIComponent(
+      messageId
+    )}/pin`,
+    {
+      method: 'POST',
+    }
+  )
+}
+
+export function unpinChatMessage(
+  conversationId,
+  messageId
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/messages/${encodeURIComponent(
+      messageId
+    )}/pin`,
+    {
+      method: 'DELETE',
+    }
+  )
+}
+
+export function forwardChatMessages({
+  sourceConversationId,
+  targetConversationId,
+  messageIds,
+}) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      sourceConversationId
+    )}/forward`,
+    {
+      method: 'POST',
+      body: {
+        target_conversation_id:
+          targetConversationId,
+        message_ids:
+          normalizeChatMessageIds(
+            messageIds
+          ),
+      },
+    }
+  )
+}
+
