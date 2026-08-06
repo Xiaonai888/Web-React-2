@@ -1030,7 +1030,7 @@ const { pageUsername } = useParams()
 
   window.setTimeout(() => {
     navigate('/me')
-  }, 900)
+  }, 800)
 }
 
   function handleAuthorFooterComingSoon(label) {
