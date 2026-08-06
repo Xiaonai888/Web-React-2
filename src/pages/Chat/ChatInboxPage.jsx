@@ -344,11 +344,9 @@ function ConversationRow({ conversation, onOpen }) {
 
 function SearchPersonRow({ user, onOpen }) {
   const resultType =
-    user?.result_type === 'author' || user?.author_page_id
-      ? 'author'
-      : user?.is_author
-        ? 'author'
-        : 'reader'
+  user?.result_type === 'author' || user?.author_page_id
+    ? 'author'
+    : 'reader'
   const name =
     user?.name || user?.page_name || user?.username || 'Shadow User'
   const username = user?.username || user?.page_username || ''
