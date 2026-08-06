@@ -403,6 +403,79 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
   )
 }
 
+function AuthorInboxButton({ navigate }) {
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadUnreadCount() {
+      const token = getAuthToken()
+
+      if (!token) {
+        if (active) setUnreadCount(0)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mails/unread-count`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (active && response.ok && data.ok) {
+          setUnreadCount(Number(data.unread_count || 0))
+        }
+      } catch {
+        if (active) setUnreadCount(0)
+      }
+    }
+
+    loadUnreadCount()
+
+    const intervalId = window.setInterval(loadUnreadCount, 30000)
+    window.addEventListener('focus', loadUnreadCount)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', loadUnreadCount)
+    }
+  }, [])
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/inbox')}
+      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
+      aria-label="Inbox"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[22px] w-[22px]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+        <path d="m4.5 7 7.5 6 7.5-6" />
+      </svg>
+
+      {unreadCount > 0 ? (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-[#8251e9]">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
+
 export default function AuthorDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -699,14 +772,7 @@ return {
               ) : null}
             </button>
 
-            <button
-  type="button"
-  onClick={() => navigate('/author/page/notifications')}
-  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/14 text-white backdrop-blur-sm active:scale-95"
-  aria-label="Mailbox"
->
-  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-</button>
+            <AuthorInboxButton navigate={navigate} />
           </div>
         </div>
 
