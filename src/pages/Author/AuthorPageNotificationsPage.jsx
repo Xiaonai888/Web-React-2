@@ -14,6 +14,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const PAGE_SIZE = 30
+
 const filters = [
   'All',
   'Unread',
@@ -295,9 +297,19 @@ async function apiRequest(
   return data
 }
 
-async function fetchPageNotifications() {
+async function fetchPageNotifications(
+  before = ''
+) {
+  const params = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+  })
+
+  if (before) {
+    params.set('before', before)
+  }
+
   const data = await apiRequest(
-    '/api/authors/me/page-notifications'
+    `/api/authors/me/page-notifications?${params.toString()}`
   )
 
   return {
@@ -317,6 +329,9 @@ async function fetchPageNotifications() {
         'object'
         ? data.preferences
         : {},
+    hasMore: Boolean(data.has_more),
+    nextCursor:
+      data.next_cursor || '',
   }
 }
 
@@ -926,6 +941,16 @@ export default function AuthorPageNotificationsPage() {
   const [loading, setLoading] =
     useState(true)
   const [
+    loadingMore,
+    setLoadingMore,
+  ] = useState(false)
+  const [hasMore, setHasMore] =
+    useState(false)
+  const [
+    nextCursor,
+    setNextCursor,
+  ] = useState('')
+  const [
     unreadCount,
     setUnreadCount,
   ] = useState(0)
@@ -939,35 +964,82 @@ export default function AuthorPageNotificationsPage() {
   ] = useState(false)
 
   const loadNotifications =
-    useCallback(async () => {
-      try {
-        setLoading(true)
-        setMessage('')
+    useCallback(
+      async ({
+        append = false,
+        cursor = '',
+      } = {}) => {
+        try {
+          if (append) {
+            setLoadingMore(true)
+          } else {
+            setLoading(true)
+            setMessage('')
+          }
 
-        const data =
-          await fetchPageNotifications()
+          const data =
+            await fetchPageNotifications(
+              cursor
+            )
 
-        setNotifications(
-          data.notifications
-        )
-        setUnreadCount(
-          data.unreadCount
-        )
-        setPreferences(
-          data.preferences
-        )
-      } catch (error) {
-        setNotifications([])
-        setPreferences({})
-        setUnreadCount(0)
-        setMessage(
-          error.message ||
-            'Failed to load notifications'
-        )
-      } finally {
-        setLoading(false)
-      }
-    }, [])
+          setNotifications(
+            (current) => {
+              if (!append) {
+                return data.notifications
+              }
+
+              const currentIds =
+                new Set(
+                  current.map(
+                    (item) => item.id
+                  )
+                )
+
+              return [
+                ...current,
+                ...data.notifications.filter(
+                  (item) =>
+                    !currentIds.has(
+                      item.id
+                    )
+                ),
+              ]
+            }
+          )
+
+          setUnreadCount(
+            data.unreadCount
+          )
+          setPreferences(
+            data.preferences
+          )
+          setHasMore(data.hasMore)
+          setNextCursor(
+            data.nextCursor
+          )
+        } catch (error) {
+          if (!append) {
+            setNotifications([])
+            setPreferences({})
+            setUnreadCount(0)
+            setHasMore(false)
+            setNextCursor('')
+          }
+
+          setMessage(
+            error.message ||
+              'Failed to load notifications'
+          )
+        } finally {
+          if (append) {
+            setLoadingMore(false)
+          } else {
+            setLoading(false)
+          }
+        }
+      },
+      []
+    )
 
   useEffect(() => {
     loadNotifications()
@@ -1309,6 +1381,21 @@ export default function AuthorPageNotificationsPage() {
     }
   }
 
+  function handleLoadMore() {
+    if (
+      loadingMore ||
+      !hasMore ||
+      !nextCursor
+    ) {
+      return
+    }
+
+    loadNotifications({
+      append: true,
+      cursor: nextCursor,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-white pb-[92px]">
       <div
@@ -1422,6 +1509,25 @@ export default function AuthorPageNotificationsPage() {
                 handleOptions
               }
             />
+
+            {hasMore ? (
+              <div className="px-4 py-5">
+                <button
+                  type="button"
+                  onClick={
+                    handleLoadMore
+                  }
+                  disabled={
+                    loadingMore
+                  }
+                  className="h-11 w-full rounded-full bg-[#f3f4f6] text-[13px] font-semibold text-[#111827] active:scale-[0.99] disabled:text-[#9ca3af]"
+                >
+                  {loadingMore
+                    ? 'Loading...'
+                    : 'Load more notifications'}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <EmptyState
