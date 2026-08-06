@@ -16,9 +16,12 @@ export default class AppErrorBoundary extends React.Component {
   }
 
   render() {
-    if (this.state.hasError) {
-      return <MaintenancePage />
-    }
+    const isMaintenanceTest =
+  new URLSearchParams(window.location.search).get('maintenance-test') === '1'
+
+if (this.state.hasError || isMaintenanceTest) {
+  return <MaintenancePage />
+}
 
     return this.props.children
   }
