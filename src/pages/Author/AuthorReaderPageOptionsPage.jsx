@@ -6,8 +6,6 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const BLOCKED_PAGES_KEY = 'shadow_blocked_author_pages'
-
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -16,28 +14,21 @@ function getAuthToken() {
   )
 }
 
-function readBlockedPages() {
-  try {
-    const value = JSON.parse(localStorage.getItem(BLOCKED_PAGES_KEY) || '[]')
-    return Array.isArray(value) ? value : []
-  } catch {
-    return []
-  }
-}
-
-function ActionRow({ icon, label, onClick, danger = false }) {
+function ActionRow({ icon, label, onClick, disabled = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[66px] w-full items-center gap-4 border-b border-[#e5e7eb] px-4 text-left active:bg-[#f3f4f6]"
+      disabled={disabled}
+      className="flex min-h-[58px] w-full items-center gap-3 border-b border-[#e5e7eb] px-4 text-left active:bg-[#f3f4f6] disabled:opacity-55"
     >
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>
-        <i className={`${icon} text-[21px]`} />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+        <i className={`${icon} text-[20px]`} />
       </span>
-      <span className={`text-[16px] font-normal ${danger ? 'text-[#dc2626]' : 'text-[#111827]'}`}>
+      <span className="min-w-0 flex-1 text-[15px] font-normal text-[#111827]">
         {label}
       </span>
+      <i className="fa-solid fa-chevron-right text-[11px] text-[#9ca3af]" />
     </button>
   )
 }
@@ -49,6 +40,10 @@ export default function AuthorReaderPageOptionsPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [blocked, setBlocked] = useState(false)
+  const [blockStatusLoading, setBlockStatusLoading] = useState(false)
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false)
+  const [blockLoading, setBlockLoading] = useState(false)
+  const [blockError, setBlockError] = useState('')
 
   const pageName = authorPage?.page_name || authorPage?.name || 'Author Page'
   const pageId = authorPage?.id || ''
@@ -61,6 +56,7 @@ export default function AuthorReaderPageOptionsPage() {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadPage() {
       try {
@@ -72,6 +68,7 @@ export default function AuthorReaderPageOptionsPage() {
           `${API_BASE_URL}/api/authors/page/${encodeURIComponent(pageUsername || '')}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            signal: controller.signal,
           }
         )
         const data = await response.json().catch(() => ({}))
@@ -82,16 +79,33 @@ export default function AuthorReaderPageOptionsPage() {
 
         const page = data.author_page || data.author || data.page || null
 
-        if (!page) {
-          throw new Error('Author page not found')
-        }
+        if (!page) throw new Error('Author page not found')
+        if (!ignore) setAuthorPage(page)
 
-        if (!ignore) {
-          setAuthorPage(page)
-          setBlocked(readBlockedPages().includes(page.page_username || pageUsername))
+        if (token) {
+          try {
+            if (!ignore) setBlockStatusLoading(true)
+
+            const statusResponse = await fetch(
+              `${API_BASE_URL}/api/authors/page/${encodeURIComponent(page.page_username || pageUsername || '')}/block-status`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal,
+              }
+            )
+            const statusData = await statusResponse.json().catch(() => ({}))
+
+            if (statusResponse.ok && statusData.ok !== false && !ignore) {
+              setBlocked(Boolean(statusData.block_status?.is_blocked))
+            }
+          } finally {
+            if (!ignore) setBlockStatusLoading(false)
+          }
         }
       } catch (error) {
-        if (!ignore) setMessage(error.message || 'Failed to load Author Page')
+        if (!ignore && error?.name !== 'AbortError') {
+          setMessage(error.message || 'Failed to load Author Page')
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -101,6 +115,7 @@ export default function AuthorReaderPageOptionsPage() {
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [pageUsername])
 
@@ -113,36 +128,54 @@ export default function AuthorReaderPageOptionsPage() {
     }
   }
 
-  async function sharePage() {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: pageName,
-          text: `View ${pageName} on Shadow.`,
-          url: pageLink,
-        })
-      } catch {
-        return
-      }
-      return
+  async function sharePage(invite = false) {
+    const shareData = {
+      title: invite ? `Follow ${pageName} on Shadow` : pageName,
+      text: invite ? `Come follow ${pageName} on Shadow.` : `View ${pageName} on Shadow.`,
+      url: pageLink,
     }
 
-    copyPageLink()
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        return
+      }
+
+      await navigator.clipboard.writeText(pageLink)
+      setMessage('Page link copied.')
+    } catch (error) {
+      if (error?.name !== 'AbortError') setMessage('Unable to share this page.')
+    }
   }
 
-  function toggleBlock() {
-    const key = authorPage?.page_username || pageUsername
+  function searchThisPage() {
+    const query = window.prompt(`Search ${pageName}`)
 
-    if (!key) return
+    if (!query?.trim()) return
 
-    const current = readBlockedPages()
-    const next = blocked
-      ? current.filter((item) => item !== key)
-      : [...new Set([...current, key])]
+    const normalizedQuery = query.trim().toLowerCase()
+    navigate(publicPath)
 
-    localStorage.setItem(BLOCKED_PAGES_KEY, JSON.stringify(next))
-    setBlocked(!blocked)
-    setMessage(blocked ? `${pageName} unblocked.` : `${pageName} blocked.`)
+    window.setTimeout(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+      let matchedElement = null
+
+      while (walker.nextNode()) {
+        const node = walker.currentNode
+        const parent = node.parentElement
+
+        if (!parent || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) continue
+
+        if (String(node.nodeValue || '').toLowerCase().includes(normalizedQuery)) {
+          matchedElement = parent
+          break
+        }
+      }
+
+      if (matchedElement) {
+        matchedElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 700)
   }
 
   function openReportPage() {
@@ -154,22 +187,81 @@ export default function AuthorReaderPageOptionsPage() {
     navigate(`/report/author_page/${pageId}`)
   }
 
+  function openBlockConfirmation() {
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    setBlockError('')
+    setBlockConfirmOpen(true)
+  }
+
+  async function handleBlockAction() {
+    const token = getAuthToken()
+    const username = authorPage?.page_username || pageUsername
+
+    if (!token) {
+      setBlockConfirmOpen(false)
+      navigate('/login')
+      return
+    }
+
+    if (!username || blockLoading) return
+
+    try {
+      setBlockLoading(true)
+      setBlockError('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/block`,
+        {
+          method: blocked ? 'DELETE' : 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page'))
+      }
+
+      const nextBlocked = Boolean(data.block_status?.is_blocked)
+      setBlocked(nextBlocked)
+      setBlockConfirmOpen(false)
+      setMessage(data.message || (nextBlocked ? `${pageName} blocked.` : `${pageName} unblocked.`))
+
+      if (nextBlocked) {
+        window.setTimeout(() => navigate('/discover'), 350)
+      }
+    } catch (error) {
+      setBlockError(error.message || (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page'))
+    } finally {
+      setBlockLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#eef0f3] pb-8">
       <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white">
-        <div className="mx-auto flex h-[58px] max-w-[720px] items-center justify-center px-4">
+        <div className="mx-auto flex min-h-[66px] max-w-[720px] items-center px-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="absolute left-2 flex h-11 w-11 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
             aria-label="Back"
           >
-            <i className="fa-solid fa-chevron-left text-[22px]" />
+            <i className="fa-solid fa-chevron-left text-[20px]" />
           </button>
 
-          <h1 className="max-w-[72%] truncate text-[17px] font-bold text-[#111827]">
-            {loading ? 'Loading...' : pageName}
-          </h1>
+          <div className="min-w-0 flex-1 px-1">
+            <h1 className="truncate text-[17px] font-bold text-[#111827]">
+              {loading ? 'Loading...' : pageName}
+            </h1>
+            <p className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Page options</p>
+          </div>
         </div>
       </header>
 
@@ -178,65 +270,96 @@ export default function AuthorReaderPageOptionsPage() {
           <button
             type="button"
             onClick={() => setMessage('')}
-            className="w-full border-b border-[#e5e7eb] bg-[#fff7d6] px-4 py-3 text-left text-[13px] text-[#111827]"
+            className="w-full border-b border-[#e5e7eb] bg-[#fff7d6] px-4 py-3 text-left text-[13px] font-normal text-[#111827]"
           >
             {message}
           </button>
         ) : null}
 
-        <section className="bg-white">
+        <section className="mt-2 bg-white">
+          <ActionRow icon="fa-regular fa-flag" label="Report Page" onClick={openReportPage} />
+          <ActionRow icon="fa-regular fa-heart" label={`Help ${pageName}`} onClick={() => navigate('/help')} />
           <ActionRow
-            icon="fa-regular fa-flag"
-            label="Report Page"
-            onClick={openReportPage}
+            icon={blocked ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash'}
+            label={blockStatusLoading ? 'Checking...' : blocked ? 'Unblock' : 'Block'}
+            onClick={openBlockConfirmation}
+            disabled={blockStatusLoading}
           />
-
-          <div className="h-[58px] border-b border-[#e5e7eb]" />
-
-          <ActionRow
-            icon="fa-solid fa-user-slash"
-            label={blocked ? 'Unblock' : 'Block'}
-            onClick={toggleBlock}
-            danger={blocked}
-          />
-
-          <div className="h-[58px] border-b border-[#e5e7eb]" />
-
-          <ActionRow
-            icon="fa-regular fa-address-card"
-            label="Invite friends"
-            onClick={sharePage}
-          />
-
-          <ActionRow
-            icon="fa-solid fa-share"
-            label="Share profile"
-            onClick={sharePage}
-          />
+          <ActionRow icon="fa-solid fa-magnifying-glass" label="Search this Page" onClick={searchThisPage} />
+          <ActionRow icon="fa-regular fa-address-book" label="Invite friends" onClick={() => sharePage(true)} />
+          <ActionRow icon="fa-solid fa-share" label="Share Page" onClick={() => sharePage(false)} />
         </section>
 
         <section className="mt-3 bg-white px-4 pb-5 pt-5">
-          <h2 className="text-[18px] font-bold text-[#111827]">
+          <h2 className="truncate text-[17px] font-bold text-[#111827]">
             {pageName}&apos;s Page link
           </h2>
-
-          <p className="mt-1 text-[15px] leading-5 text-[#6b7280]">
-            {pageName}&apos;s personalized link on Shadow.
+          <p className="mt-1 text-[13px] font-normal leading-5 text-[#6b7280]">
+            Share this personalized Shadow Page link.
           </p>
 
-          <div className="mt-5 border-t border-[#e5e7eb] pt-4">
-            <p className="break-all text-[15px] text-[#111827]">{pageLink}</p>
+          <p className="mt-4 break-all text-[14px] font-normal leading-5 text-[#111827]">
+            {pageLink}
+          </p>
 
-            <button
-              type="button"
-              onClick={copyPageLink}
-              className="mt-4 h-11 w-full rounded-[10px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:bg-[#d8dde5]"
-            >
-              Copy link
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={copyPageLink}
+            className="mt-4 h-11 w-full rounded-[10px] bg-[#e5e7eb] text-[15px] font-medium text-[#111827] active:bg-[#d8dde5]"
+          >
+            Copy link
+          </button>
         </section>
       </main>
+
+      {blockConfirmOpen ? (
+        <div className="fixed inset-0 z-[270] flex items-end justify-center bg-black/45 md:items-center md:px-4">
+          <button
+            type="button"
+            aria-label="Close block confirmation"
+            onClick={() => {
+              if (!blockLoading) setBlockConfirmOpen(false)
+            }}
+            className="absolute inset-0"
+          />
+
+          <section className="relative w-full rounded-t-[24px] bg-white px-5 pb-6 pt-5 shadow-2xl md:max-w-[420px] md:rounded-[24px]">
+            <h2 className="text-center text-[18px] font-bold text-[#111827]">
+              {blocked ? `Unblock ${pageName}?` : `Block ${pageName}?`}
+            </h2>
+            <p className="mt-2 text-center text-[13px] font-normal leading-5 text-[#6b7280]">
+              {blocked
+                ? 'This will unblock both the Author Page and its Reader account.'
+                : 'This will block both the Author Page and its Reader account, including direct messages between both accounts.'}
+            </p>
+
+            {blockError ? (
+              <div className="mt-4 rounded-[10px] bg-[#f3f4f6] px-4 py-3 text-[12px] font-normal leading-5 text-[#111827]">
+                {blockError}
+              </div>
+            ) : null}
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setBlockConfirmOpen(false)}
+                disabled={blockLoading}
+                className="h-11 rounded-[10px] bg-[#eef0f3] text-[14px] font-medium text-[#111827] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBlockAction}
+                disabled={blockLoading}
+                className="h-11 rounded-[10px] bg-[#111827] text-[14px] font-medium text-white disabled:opacity-60"
+              >
+                {blockLoading ? 'Please wait...' : blocked ? 'Unblock' : 'Block'}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
