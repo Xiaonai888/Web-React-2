@@ -149,34 +149,8 @@ export default function AuthorReaderPageOptionsPage() {
   }
 
   function searchThisPage() {
-    const query = window.prompt(`Search ${pageName}`)
-
-    if (!query?.trim()) return
-
-    const normalizedQuery = query.trim().toLowerCase()
-    navigate(publicPath)
-
-    window.setTimeout(() => {
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-      let matchedElement = null
-
-      while (walker.nextNode()) {
-        const node = walker.currentNode
-        const parent = node.parentElement
-
-        if (!parent || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) continue
-
-        if (String(node.nodeValue || '').toLowerCase().includes(normalizedQuery)) {
-          matchedElement = parent
-          break
-        }
-      }
-
-      if (matchedElement) {
-        matchedElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    }, 700)
-  }
+  navigate(`/author/page/${pageUsername}/search`)
+}
 
   function openReportPage() {
     if (!pageId) {
