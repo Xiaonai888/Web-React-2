@@ -23,6 +23,7 @@ const SOURCE_LABELS = {
   story: 'Story',
   author_post: 'Author post',
   reader_post: 'Reader post',
+  shadow_mall_promotion: 'Shadow Mall promotion',
 }
 
 function getReaderToken() {
@@ -60,7 +61,7 @@ function buildEndpoint(sourceType, interactionType, sourceId) {
   const id = encodeURIComponent(sourceId)
 
   if (interactionType === 'echo' && sourceType) {
-    return `/api/echoes/source/${encodeURIComponent(sourceType)}/${id}`
+    return `/api/echo-v2/source/${encodeURIComponent(sourceType)}/${id}`
   }
 
   if (sourceType === 'episode' && interactionType === 'like') {
@@ -128,8 +129,12 @@ function normalizeItem(item, interactionType) {
         ''
     ).trim(),
     visibility:
+      item?.audience ||
       item?.visibility ||
       'public',
+    destination:
+      item?.destination ||
+      'feed',
     like_count: Number(
       item?.like_count || 0
     ),
@@ -141,7 +146,6 @@ function normalizeItem(item, interactionType) {
     ),
     reader_post_id:
       item?.reader_post_id ||
-      item?.id ||
       '',
     source:
       item?.source || null,
@@ -306,6 +310,16 @@ function getEchoVisibilityMeta(value) {
   }
 
   if (
+    visibility === 'close-readers' ||
+    visibility === 'close_readers'
+  ) {
+    return {
+      label: 'Close readers',
+      icon: 'fa-star',
+    }
+  }
+
+  if (
     visibility === 'only_me' ||
     visibility === 'private'
   ) {
@@ -371,6 +385,14 @@ function EchoPostCard({
               className={`fa-solid ${visibility.icon} text-[10px]`}
             />
             <span>{visibility.label}</span>
+            {item.share_count > 1 ? (
+              <>
+                <span>·</span>
+                <span>
+                  {item.share_count.toLocaleString()} echoes
+                </span>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -454,7 +476,6 @@ export default function SocialInteractionUsersPage() {
   const [total, setTotal] = useState(0)
   const [shareTotal, setShareTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
-  const [echoLimitReached, setEchoLimitReached] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
@@ -485,9 +506,7 @@ export default function SocialInteractionUsersPage() {
       try {
         const token = getReaderToken()
         const query =
-          interactionType === 'echo'
-            ? '?limit=50'
-            : `?page=${nextPage}&limit=50`
+          `?page=${nextPage}&limit=50`
         const response = await fetch(
           `${API_BASE_URL}${endpoint}${query}`,
           {
@@ -523,7 +542,7 @@ export default function SocialInteractionUsersPage() {
         )
 
         setItems((current) =>
-          append && interactionType !== 'echo'
+          append
             ? mergeUnique(current, nextItems)
             : nextItems
         )
@@ -532,7 +551,7 @@ export default function SocialInteractionUsersPage() {
             ? data.counts
             : {}
         )
-        setPage(nextPage)
+        setPage(Math.max(1, Number(data.page || nextPage)))
         setTotal(nextTotal)
         setShareTotal(
           interactionType === 'echo'
@@ -542,16 +561,10 @@ export default function SocialInteractionUsersPage() {
               )
             : nextTotal
         )
-        setEchoLimitReached(
-          interactionType === 'echo' &&
-            Boolean(data.has_more)
-        )
         setHasMore(
-          interactionType === 'echo'
-            ? false
-            : typeof data.has_more === 'boolean'
-              ? data.has_more
-              : nextPage * 50 < nextTotal
+          typeof data.has_more === 'boolean'
+            ? data.has_more
+            : nextPage * 50 < nextTotal
         )
       } catch (error) {
         if (!append) setItems([])
@@ -577,7 +590,6 @@ export default function SocialInteractionUsersPage() {
     setTotal(0)
     setShareTotal(0)
     setHasMore(false)
-    setEchoLimitReached(false)
     loadPage(1)
   }, [loadPage])
 
@@ -622,7 +634,33 @@ export default function SocialInteractionUsersPage() {
     )
   }
 
+  const openSourceUrl = (url) => {
+    const value = String(url || '').trim()
+
+    if (!value) return false
+
+    if (/^https?:\/\//i.test(value)) {
+      window.open(
+        value,
+        '_blank',
+        'noopener,noreferrer'
+      )
+      return true
+    }
+
+    navigate(value)
+    return true
+  }
+
   const openEchoPost = (item) => {
+    if (
+      openSourceUrl(
+        item?.source?.url
+      )
+    ) {
+      return
+    }
+
     const username = String(
       item?.user?.username || ''
     ).trim()
@@ -709,11 +747,9 @@ export default function SocialInteractionUsersPage() {
   <section className="mx-auto max-w-3xl px-4 pt-4">
     <EchoSourcePreview
       source={source}
-      onOpen={() => {
-        if (source?.url) {
-          navigate(source.url)
-        }
-      }}
+      onOpen={() =>
+        openSourceUrl(source?.url)
+      }
     />
   </section>
 ) : null}
@@ -847,11 +883,6 @@ export default function SocialInteractionUsersPage() {
               </button>
             ) : null}
 
-            {echoLimitReached ? (
-              <div className="mt-4 rounded-[14px] bg-[#f8fafc] px-4 py-3 text-center text-[11px] font-medium text-[#98a2b3]">
-                Showing the latest 50 readers.
-              </div>
-            ) : null}
           </div>
         ) : (
           <div className="py-16 text-center">
