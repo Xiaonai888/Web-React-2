@@ -989,6 +989,7 @@ export default function ChatInboxPage() {
   ) => {
     setQuery('')
     setActiveFilter('all')
+    setNewMessageOpen(false)
     setSelectionMenuOpen(false)
     setSelectedConversationIds(
       new Set([String(conversationId)])
@@ -1366,7 +1367,8 @@ export default function ChatInboxPage() {
           </button>
         ) : null}
 
-        {!hasSearch &&
+        {!selectionMode &&
+        !hasSearch &&
         activeFilter === 'all' &&
         incomingRequests[0] ? (
           <IncomingRequestCard
@@ -1384,7 +1386,8 @@ export default function ChatInboxPage() {
           />
         ) : null}
 
-        {!hasSearch &&
+        {!selectionMode &&
+        !hasSearch &&
         activeFilter === 'all' &&
         incomingRequests.length > 1 ? (
           <button
@@ -1492,7 +1495,9 @@ export default function ChatInboxPage() {
           <EmptyInbox />
         )}
 
-        {!hasSearch && activeFilter === 'all' ? (
+        {!selectionMode &&
+        !hasSearch &&
+        activeFilter === 'all' ? (
           <ChatSuggestedPeople />
         ) : null}
       </main>
@@ -1514,7 +1519,9 @@ export default function ChatInboxPage() {
         onClose={() => setSelectedSearchAuthor(null)}
       />
 
-      {!hideReaderFooter ? <ReaderProfileFooter /> : null}
+      {!hideReaderFooter && !selectionMode ? (
+        <ReaderProfileFooter />
+      ) : null}
     </div>
   )
 }
