@@ -383,10 +383,146 @@ function cleanEpisodeHtmlSpacing(value) {
   return sanitizeEpisodeHtml(output.join(''))
 }
 
+const NOVEL_IMAGE_INPUT_MAX_BYTES = 5 * 1024 * 1024
+const NOVEL_IMAGE_TARGET_MAX_BYTES = 300 * 1024
+const NOVEL_IMAGE_HARD_MAX_BYTES = 500 * 1024
+const NOVEL_IMAGE_MAX_COUNT = 2
+const NOVEL_IMAGE_WIDTHS = [1600, 1360, 1120, 960]
+const NOVEL_IMAGE_QUALITIES = [0.86, 0.8, 0.74, 0.7]
+
+function countEpisodeImages(value) {
+  const source = String(value || '')
+  if (!source.trim()) return 0
+  if (typeof DOMParser === 'undefined') {
+    return (source.match(/<img\b/gi) || []).length
+  }
+
+  const parsed = new DOMParser().parseFromString(`<div>${source}</div>`, 'text/html')
+  return parsed.body.querySelectorAll('img').length
+}
+
+function loadNovelImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+
+    image.onload = () => resolve({ image, url })
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Could not read this image.'))
+    }
+
+    image.src = url
+  })
+}
+
+function canvasToNovelWebp(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('This browser could not compress the image.'))
+          return
+        }
+
+        resolve(blob)
+      },
+      'image/webp',
+      quality
+    )
+  })
+}
+
+function novelWebpName(name = 'episode-image') {
+  const base = String(name)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return `${base || 'episode-image'}.webp`
+}
+
+function chooseBestNovelImage(candidates) {
+  return [...candidates].sort(
+    (first, second) =>
+      second.quality * second.width - first.quality * first.width
+  )[0] || null
+}
+
+async function optimizeNovelEpisodeImage(file) {
+  if (!file) throw new Error('Choose an image first.')
+  if (!file.type?.startsWith('image/')) {
+    throw new Error('Please choose an image file.')
+  }
+  if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
+    throw new Error('Image must be 5 MB or smaller.')
+  }
+
+  const loaded = await loadNovelImage(file)
+  const targetCandidates = []
+  const fallbackCandidates = []
+  const usedWidths = new Set()
+
+  try {
+    for (const maxWidth of NOVEL_IMAGE_WIDTHS) {
+      const width = Math.min(maxWidth, loaded.image.naturalWidth)
+      if (!width || usedWidths.has(width)) continue
+      usedWidths.add(width)
+
+      const ratio = width / loaded.image.naturalWidth
+      const height = Math.max(1, Math.round(loaded.image.naturalHeight * ratio))
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')
+
+      if (!context) {
+        throw new Error('Image processing is unavailable in this browser.')
+      }
+
+      canvas.width = width
+      canvas.height = height
+      context.drawImage(loaded.image, 0, 0, width, height)
+
+      for (const quality of NOVEL_IMAGE_QUALITIES) {
+        const blob = await canvasToNovelWebp(canvas, quality)
+        const candidate = { blob, width, height, quality }
+
+        if (blob.size <= NOVEL_IMAGE_HARD_MAX_BYTES) {
+          fallbackCandidates.push(candidate)
+        }
+        if (blob.size <= NOVEL_IMAGE_TARGET_MAX_BYTES) {
+          targetCandidates.push(candidate)
+        }
+      }
+
+      canvas.width = 0
+      canvas.height = 0
+    }
+
+    const selected =
+      chooseBestNovelImage(targetCandidates) ||
+      chooseBestNovelImage(fallbackCandidates)
+
+    if (!selected) {
+      throw new Error('This image could not be compressed below 500 KB.')
+    }
+
+    return new File([selected.blob], novelWebpName(file.name), {
+      type: 'image/webp',
+      lastModified: Date.now(),
+    })
+  } finally {
+    URL.revokeObjectURL(loaded.url)
+  }
+}
+
 async function uploadEpisodeInlineImage({ token, file, storyId }) {
   if (!file) throw new Error('Choose an image first.')
-  if (!file.type?.startsWith('image/')) throw new Error('Please choose an image file.')
-  if (file.size > 5 * 1024 * 1024) throw new Error('Image must be 5 MB or smaller.')
+  if (file.type !== 'image/webp') {
+    throw new Error('Episode image must be WebP.')
+  }
+  if (file.size > NOVEL_IMAGE_HARD_MAX_BYTES) {
+    throw new Error('Compressed image must not exceed 500 KB.')
+  }
 
   const formData = new FormData()
   formData.append('image', file)
@@ -405,6 +541,7 @@ async function uploadEpisodeInlineImage({ token, file, storyId }) {
 
   return data.image_url || data.imageUrl
 }
+
 
 function isDialogueOrSpecialLine(line) {
   const text = String(line || '').trim()
@@ -2824,30 +2961,43 @@ export default function EpisodeEditorPage() {
   }
 
   const handleInlineImagePick = async (file) => {
-    if (!file) return
+  if (!file) return
 
-    try {
-      const token = getAuthToken()
-      if (!token) {
-        navigate('/login')
-        return
-      }
+  try {
+    const currentHtml = editorRef.current?.innerHTML || content
 
-      setInlineImageUploading(true)
-      const imageUrl = await uploadEpisodeInlineImage({ token, file, storyId })
-      if (!imageUrl) throw new Error('Image URL was missing.')
-
-      insertHtmlAtSelection(
-        `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
-      )
-      showToast('Image added.')
-    } catch (error) {
-      showToast(error.message || 'Could not add image.')
-    } finally {
-      setInlineImageUploading(false)
-      if (imageInputRef.current) imageInputRef.current.value = ''
+    if (countEpisodeImages(currentHtml) >= NOVEL_IMAGE_MAX_COUNT) {
+      throw new Error('Only 2 images are allowed in one episode.')
     }
+
+    const token = getAuthToken()
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    setInlineImageUploading(true)
+    const optimizedFile = await optimizeNovelEpisodeImage(file)
+    const imageUrl = await uploadEpisodeInlineImage({
+      token,
+      file: optimizedFile,
+      storyId,
+    })
+
+    if (!imageUrl) throw new Error('Image URL was missing.')
+
+    insertHtmlAtSelection(
+      `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
+    )
+    showToast(`Image added (${Math.round(optimizedFile.size / 1024)} KB).`)
+  } catch (error) {
+    showToast(error.message || 'Could not add image.')
+  } finally {
+    setInlineImageUploading(false)
+    if (imageInputRef.current) imageInputRef.current.value = ''
   }
+}
+
 
   const handleConfirmCleanParagraphs = () => {
     const cleanedContent = cleanEpisodeHtmlSpacing(content)
