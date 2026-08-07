@@ -6,7 +6,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import ReportModal from '../ReportModal'
-import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
+import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -2536,10 +2536,117 @@ export default function ShadowMallPromotionSocial({
   }, [promotion?.comment_count])
 
   useEffect(() => {
+    const promotionId = String(
+      promotion?.id || ''
+    ).trim()
+
     setEchoCount(
       Number(promotion?.echo_count || 0)
     )
-  }, [promotion?.echo_count])
+
+    if (!promotionId) {
+      return undefined
+    }
+
+    const controller =
+      new AbortController()
+    const token = getAuthToken()
+    let ignore = false
+
+    async function loadEchoCount() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/echo-v2/source/shadow_mall_promotion/${encodeURIComponent(
+            promotionId
+          )}?page=1&limit=1`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : {},
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          ignore ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setEchoCount(
+          Math.max(
+            0,
+            Number(
+              data.echo_count ??
+                data.total ??
+                0
+            )
+          )
+        )
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError'
+        ) {
+          return
+        }
+      }
+    }
+
+    function handleEchoUpdated(event) {
+      const detail =
+        event?.detail || {}
+
+      if (
+        String(
+          detail.sourceType || ''
+        ) !==
+          'shadow_mall_promotion' ||
+        String(
+          detail.sourceId || ''
+        ) !== promotionId
+      ) {
+        return
+      }
+
+      setEchoCount(
+        Math.max(
+          0,
+          Number(
+            detail.echoCount || 0
+          )
+        )
+      )
+    }
+
+    window.addEventListener(
+      'shadow:echo-v2-updated',
+      handleEchoUpdated
+    )
+
+    loadEchoCount()
+
+    return () => {
+      ignore = true
+      controller.abort()
+      window.removeEventListener(
+        'shadow:echo-v2-updated',
+        handleEchoUpdated
+      )
+    }
+  }, [
+    promotion?.echo_count,
+    promotion?.id,
+  ])
 
   useEffect(() => {
     if (!reactionPickerOpen) {
@@ -2900,16 +3007,44 @@ export default function ShadowMallPromotionSocial({
         }
       />
 
-      <SocialEchoShareSheet
-  open={echoOpen}
-  sourceType="shadow_mall_promotion" sourceId={promotion?.id}
-  sourceName={promotion?.sponsor || 'Shadow Mall'} sourceAvatarUrl={promotion?.profile_image_url || ''}
-  sourceContent={promotion?.description || promotion?.title || 'Shadow Mall promotion'}
-  sourceImageUrl={promotion?.image_url || promotion?.profile_image_url || ''} sourceLabel="Shadow Mall promotion"
-  endpoint={`${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(promotion?.id || '')}/echoes`}
-  shareUrl={getPromotionLink(promotion)} onClose={() => setEchoOpen(false)}
-  onEchoed={(_, nextTotal) => setEchoCount(Number(nextTotal || 0))}
-/>
+      <EchoShareSheetV2Connected
+        open={echoOpen}
+        sourceType="shadow_mall_promotion"
+        sourceId={promotion?.id}
+        sourceName={
+          promotion?.sponsor ||
+          'Shadow Mall'
+        }
+        sourceAvatarUrl={
+          promotion?.profile_image_url ||
+          ''
+        }
+        sourceContent={
+          promotion?.description ||
+          promotion?.title ||
+          'Shadow Mall promotion'
+        }
+        sourceImageUrl={
+          promotion?.image_url ||
+          promotion?.profile_image_url ||
+          ''
+        }
+        sourceLabel="Shadow Mall promotion"
+        shareUrl={getPromotionLink(
+          promotion
+        )}
+        onClose={() =>
+          setEchoOpen(false)
+        }
+        onEchoed={(_, nextTotal) =>
+          setEchoCount(
+            Math.max(
+              0,
+              Number(nextTotal || 0)
+            )
+          )
+        }
+      />
     </>
   )
 }
