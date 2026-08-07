@@ -9,7 +9,7 @@ import LatestCommentSection from '../components/story-detail/LatestCommentSectio
 import CommentsModal from '../components/story-detail/CommentsModal'
 import RecommendationSection from '../components/story-detail/RecommendationSection'
 import StoryBottomBar from '../components/story-detail/StoryBottomBar'
-import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
+import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -814,7 +814,7 @@ setSubscribed(isSubscribed)
         }}
       />
 
-      <SocialEchoShareSheet
+      <EchoShareSheetV2Connected
   open={echoShareOpen}
   sourceType="story"
   sourceId={story?.id || realStoryId}
