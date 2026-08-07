@@ -10,31 +10,31 @@ const API_BASE_URL =
 const REACTION_META = {
   love: {
     label: 'Love',
-    src: '/assets/React/1%20React_Love.svg',
+    src: '/assets/React/Love.svg',
   },
   haha: {
     label: 'Haha',
-    src: '/assets/React/2%20React_Haha.svg',
+    src: '/assets/React/Haha.svg',
   },
   wow: {
     label: 'Wow',
-    src: '/assets/React/3%20React_Wow.svg',
+    src: '/assets/React/Wow.svg',
   },
   sad: {
     label: 'Sad',
-    src: '/assets/React/4%20React_Sad.svg',
+    src: '/assets/React/Sad.svg',
   },
   angry: {
     label: 'Angry',
-    src: '/assets/React/5%20React_Angry.svg',
+    src: '/assets/React/Angry.svg',
   },
   support: {
     label: 'Support',
-    src: '/assets/React/6%20React_Support.svg',
+    src: '/assets/React/Support.svg',
   },
   touched: {
     label: 'Touched',
-    src: '/assets/React/7%20React_Touched.svg',
+    src: '/assets/React/Touched.svg',
   },
 }
 
