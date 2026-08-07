@@ -906,6 +906,14 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     0
   )
 
+  const echoCount = Number(
+  episode?.echo_count ||
+  episode?.echoes_count ||
+  story?.echo_count ||
+  story?.echoes_count ||
+  0
+)
+
   const fallbackCommentCount = Number(
     episode?.total_comments ||
     episode?.comment_count ||
@@ -1052,7 +1060,7 @@ async function handleToggleLike() {
 
   return (
     <section className="mt-8 bg-white px-4 pb-8 pt-2">
-      <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
+      <div className="grid grid-cols-3 border-b border-[#eef1f5] pb-5">
        <div className="flex flex-col items-center justify-center gap-1">
   <button
     type="button"
