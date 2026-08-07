@@ -2050,6 +2050,10 @@ export default function ChatRoomPage() {
       !blockStatus.viewer_has_blocked
   )
 
+  const handleOpenChatInfo = () => {
+  setMenuOpen(false)
+  navigate(`/chat/${conversationId}/info`)
+}
   const handleOpenProfile = () => {
     if (!person.username) return
 
@@ -2165,9 +2169,8 @@ export default function ChatRoomPage() {
 
               <button
                 type="button"
-                onClick={handleOpenProfile}
-                disabled={!canOpenProfile}
-                aria-label="Open profile"
+                onClick={handleOpenChatInfo}
+                aria-label="Open chat info"
                 className="shrink-0 rounded-full disabled:cursor-default"
               >
                 <RoomAvatar person={person} />
@@ -2175,9 +2178,8 @@ export default function ChatRoomPage() {
 
               <button
                 type="button"
-                onClick={handleOpenProfile}
-                disabled={!canOpenProfile}
-                className="min-w-0 flex-1 text-left disabled:cursor-default"
+                onClick={handleOpenChatInfo}
+                className="min-w-0 flex-1 text-left"
               >
                 <h1 className="truncate text-[14px] font-extrabold text-[#111827]">
                   {person.name || 'Conversation'}
