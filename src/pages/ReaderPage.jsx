@@ -1095,18 +1095,22 @@ async function handleToggleLike() {
   </button>
 </div>
 
-        <button
-          type="button"
-          onClick={onOpenGift}
-          className="flex flex-col items-center justify-center gap-1 active:scale-95"
-        >
-       <img src="/assets/Icons/Gift%203.svg" alt="" className="h-[26px] w-[26px] object-contain" />
-          <span className="text-[13px] font-normal text-[#111827]">Gift</span>
-          <span className="text-[11px] font-normal text-[#98a2b3]">
-            {formatCompactNumber(giftCount)}
-          </span>
-        </button>
-      </div>
+        <button type="button" onClick={onOpenGift} className="flex flex-col items-center justify-center gap-1 active:scale-95">
+  <img src="/assets/Icons/Gift%203.svg" alt="" className="h-[26px] w-[26px] object-contain" />
+  <span className="text-[13px] font-normal text-[#111827]">Gift</span>
+  <span className="text-[11px] font-normal text-[#98a2b3]">{formatCompactNumber(giftCount)}</span>
+</button>
+
+<button type="button" onClick={() => {
+  const targetStoryId = story?.id || story?.story_id
+  if (!targetStoryId || !episodeId) return
+  navigate(`/story/${targetStoryId}/episode/${episodeId}/echoes`)
+}} className="flex flex-col items-center justify-center gap-1 active:scale-95">
+  <i className="fa-solid fa-rotate text-[24px] text-[#111827]" />
+  <span className="text-[13px] font-normal text-[#111827]">Echo</span>
+  <span className="text-[11px] font-normal text-[#98a2b3]">{formatCompactNumber(echoCount)}</span>
+</button>
+</div>
 
       <div className="pt-5">
         <div className="mb-4 flex items-center justify-between">
