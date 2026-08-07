@@ -76,7 +76,7 @@ export default function ChatInboxShellPage() {
           navigate('/chat/archived')
         }
         aria-label="Open archived messages"
-        className="fixed bottom-[102px] right-4 z-[96] flex h-12 items-center gap-2 rounded-full border border-[#e4dcf8] bg-white px-4 text-[12px] font-extrabold text-[#6f52b5] shadow-[0_10px_30px_rgba(71,45,120,0.18)] transition active:scale-95"
+        className="fixed bottom-[102px] right-4 z-[96] flex h-12 items-center gap-2 rounded-full bg-white px-4 text-[12px] font-extrabold text-[#6f52b5] shadow-none transition active:scale-95"
       >
         {loading ? (
           <LoaderCircle
