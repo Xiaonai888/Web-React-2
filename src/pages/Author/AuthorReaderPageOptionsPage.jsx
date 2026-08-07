@@ -250,10 +250,10 @@ export default function AuthorReaderPageOptionsPage() {
         <section className="mt-2 bg-white">
           <ActionRow icon="fa-regular fa-flag" label="Report Page" onClick={openReportPage} />
           <ActionRow
-            icon="fa-regular fa-heart"
-            label={`Help ${pageName}`}
-            onClick={() => navigate('/help')}
-          />
+  icon="fa-regular fa-heart"
+  label={`Help ${pageName}`}
+  onClick={() => navigate(`/author/page/${pageUsername}/help`)}
+/>
           <ActionRow
             icon={blocked ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash'}
             label={blockStatusLoading ? 'Checking...' : blocked ? 'Unblock' : 'Block'}
