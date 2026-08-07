@@ -3,9 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
+    : 'https://shadow-backend-kucw.onrender.com')
 
 function getAuthToken() {
   return (
@@ -130,33 +131,24 @@ export default function AuthorReaderPageOptionsPage() {
     }
   }
 
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData)
-        return
-      }
-
-      await navigator.clipboard.writeText(pageLink)
-      setMessage('Page link copied.')
-    } catch (error) {
-      if (error?.name !== 'AbortError') setMessage('Unable to share this page.')
-    }
+  function searchThisPage() {
+    navigate(`/author/page/${pageUsername}/search`)
   }
 
-  function searchThisPage() {
-  navigate(`/author/page/${pageUsername}/search`)
-}
-
   function openReportPage() {
-  if (!pageId) return setMessage('Unable to open Report Page.')
-  navigate(`/report/author_page/${pageId}`, {
-    state: {
-      targetTitle: pageName,
-      sourceUrl: pageLink,
-      returnTo: `/author/page/${pageUsername}/options`,
-    },
-  })
-}
+    if (!pageId) {
+      setMessage('Unable to open Report Page.')
+      return
+    }
+
+    navigate(`/report/author_page/${pageId}`, {
+      state: {
+        targetTitle: pageName,
+        sourceUrl: pageLink,
+        returnTo: `/author/page/${pageUsername}/options`,
+      },
+    })
+  }
 
   function openBlockConfirmation() {
     const token = getAuthToken()
@@ -196,19 +188,27 @@ export default function AuthorReaderPageOptionsPage() {
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page'))
+        throw new Error(
+          data.message ||
+            (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page')
+        )
       }
 
       const nextBlocked = Boolean(data.block_status?.is_blocked)
       setBlocked(nextBlocked)
       setBlockConfirmOpen(false)
-      setMessage(data.message || (nextBlocked ? `${pageName} blocked.` : `${pageName} unblocked.`))
+      setMessage(
+        data.message || (nextBlocked ? `${pageName} blocked.` : `${pageName} unblocked.`)
+      )
 
       if (nextBlocked) {
         window.setTimeout(() => navigate('/discover'), 350)
       }
     } catch (error) {
-      setBlockError(error.message || (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page'))
+      setBlockError(
+        error.message ||
+          (blocked ? 'Failed to unblock Author Page' : 'Failed to block Author Page')
+      )
     } finally {
       setBlockLoading(false)
     }
@@ -249,16 +249,32 @@ export default function AuthorReaderPageOptionsPage() {
 
         <section className="mt-2 bg-white">
           <ActionRow icon="fa-regular fa-flag" label="Report Page" onClick={openReportPage} />
-          <ActionRow icon="fa-regular fa-heart" label={`Help ${pageName}`} onClick={() => navigate('/help')} />
+          <ActionRow
+            icon="fa-regular fa-heart"
+            label={`Help ${pageName}`}
+            onClick={() => navigate('/help')}
+          />
           <ActionRow
             icon={blocked ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash'}
             label={blockStatusLoading ? 'Checking...' : blocked ? 'Unblock' : 'Block'}
             onClick={openBlockConfirmation}
             disabled={blockStatusLoading}
           />
-          <ActionRow icon="fa-solid fa-magnifying-glass" label="Search this Page" onClick={searchThisPage} />
-          <ActionRow icon="fa-regular fa-address-book" label="Invite friends" onClick={() => navigate(`/author/page/${pageUsername}/invite`)} />
-          <ActionRow icon="fa-solid fa-share" label="Share Page" onClick={() => setShareOpen(true)} />
+          <ActionRow
+            icon="fa-solid fa-magnifying-glass"
+            label="Search this Page"
+            onClick={searchThisPage}
+          />
+          <ActionRow
+            icon="fa-regular fa-address-book"
+            label="Invite friends"
+            onClick={() => navigate(`/author/page/${pageUsername}/invite`)}
+          />
+          <ActionRow
+            icon="fa-solid fa-share"
+            label="Share Page"
+            onClick={() => setShareOpen(true)}
+          />
         </section>
 
         <section className="mt-3 bg-white px-4 pb-5 pt-5">
@@ -284,12 +300,12 @@ export default function AuthorReaderPageOptionsPage() {
       </main>
 
       <AuthorPageShareSheet
-  open={shareOpen}
-  pageName={pageName}
-  pageLink={pageLink}
-  onClose={() => setShareOpen(false)}
-  onCopied={(value) => setMessage(value || 'Page link copied.')}
-/>
+        open={shareOpen}
+        pageName={pageName}
+        pageLink={pageLink}
+        onClose={() => setShareOpen(false)}
+        onCopied={(value) => setMessage(value || 'Page link copied.')}
+      />
 
       {blockConfirmOpen ? (
         <div className="fixed inset-0 z-[270] flex items-end justify-center bg-black/45 md:items-center md:px-4">
