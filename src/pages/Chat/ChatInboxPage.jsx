@@ -38,9 +38,71 @@ import {
 
 function normalizeSearchValue(value) {
   return String(value || '')
-    .trim()
+    .normalize('NFKC')
+    .toLocaleLowerCase()
     .replace(/^@+/, '')
-    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}._\-\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function getSmartSearchScore(query, values) {
+  const target = normalizeSearchValue(query)
+  if (!target) return 0
+
+  const terms = target.split(' ').filter(Boolean)
+  const compactTarget = target.replace(/\s+/g, '')
+  const texts = (values || [])
+    .map(normalizeSearchValue)
+    .filter(Boolean)
+  const compactTexts = texts.map((text) =>
+    text.replace(/\s+/g, '')
+  )
+
+  let score = 0
+
+  for (const text of texts) {
+    if (text === target) score = Math.max(score, 1000)
+    else if (text.startsWith(target)) score = Math.max(score, 700)
+    else if (text.includes(target)) score = Math.max(score, 500)
+  }
+
+  if (compactTarget !== target) {
+    for (const text of compactTexts) {
+      if (text === compactTarget) score = Math.max(score, 900)
+      else if (text.startsWith(compactTarget)) score = Math.max(score, 650)
+      else if (text.includes(compactTarget)) score = Math.max(score, 450)
+    }
+  }
+
+  let matchedTerms = 0
+
+  for (const term of terms) {
+    let best = 0
+
+    for (let index = 0; index < texts.length; index += 1) {
+      const text = texts[index]
+      const compactText = compactTexts[index]
+
+      if (text === term || compactText === term) best = Math.max(best, 160)
+      else if (text.startsWith(term) || compactText.startsWith(term)) {
+        best = Math.max(best, 110)
+      } else if (text.includes(term) || compactText.includes(term)) {
+        best = Math.max(best, 70)
+      }
+    }
+
+    if (best > 0) {
+      matchedTerms += 1
+      score += best
+    }
+  }
+
+  if (terms.length > 1 && matchedTerms === terms.length) {
+    score += 300
+  }
+
+  return matchedTerms > 0 || score > 0 ? score : 0
 }
 
 function formatConversationTime(value) {
@@ -738,33 +800,55 @@ export default function ChatInboxPage() {
       : frequentContacts
 
   const visibleConversations = useMemo(() => {
-    return conversations.filter((conversation) => {
+    const ranked = []
+
+    for (const conversation of conversations) {
       if (
         !normalizedQuery &&
         activeFilter === 'pending' &&
         conversation.can_decide !== true
       ) {
-        return false
+        continue
       }
 
       if (!normalizedQuery) {
-        return true
+        ranked.push({
+          conversation,
+          score: 0,
+        })
+        continue
       }
 
       const person = conversation.counterpart || {}
-      const searchable = [
-        person.name,
-        person.page_name,
-        person.username,
-        person.page_username,
-        conversation.latest_message?.body,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
+      const score = getSmartSearchScore(
+        normalizedQuery,
+        [
+          person.username,
+          person.page_username,
+          person.name,
+          person.page_name,
+          conversation.latest_message?.body,
+        ]
+      )
 
-      return searchable.includes(normalizedQuery)
-    })
+      if (score > 0) {
+        ranked.push({
+          conversation,
+          score,
+        })
+      }
+    }
+
+    if (normalizedQuery) {
+      ranked.sort(
+        (first, second) =>
+          second.score - first.score
+      )
+    }
+
+    return ranked.map(
+      (item) => item.conversation
+    )
   }, [activeFilter, conversations, normalizedQuery])
 
   const peopleResults = useMemo(() => {
