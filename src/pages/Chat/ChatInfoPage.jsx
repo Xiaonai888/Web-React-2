@@ -12,6 +12,7 @@ import {
   Trash2,
   UserRound,
   VolumeX,
+  X,
 } from 'lucide-react'
 import {
   useEffect,
@@ -43,6 +44,33 @@ const REPORT_REASONS = [
   ['privacy', 'Privacy or personal information'],
   ['other', 'Something else'],
 ]
+
+const MAX_SEARCH_MESSAGES = 1000
+
+function normalizeMessageSearchValue(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[^\p{L}\p{N}@._-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function formatSearchMessageDate(value) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
 
 function Avatar({ person }) {
   const [failed, setFailed] = useState(false)
@@ -165,6 +193,11 @@ export default function ChatInfoPage() {
   const [reportReason, setReportReason] = useState('spam')
   const [reportDetails, setReportDetails] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchMessages, setSearchMessages] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchLoaded, setSearchLoaded] = useState(false)
 
   const person = conversation?.counterpart || {}
   const name =
@@ -192,6 +225,40 @@ export default function ChatInfoPage() {
         ) || null,
     [messages]
   )
+
+  const normalizedSearchQuery = useMemo(
+    () => normalizeMessageSearchValue(searchQuery),
+    [searchQuery]
+  )
+
+  const searchResults = useMemo(() => {
+    if (!normalizedSearchQuery) return []
+
+    const terms = normalizedSearchQuery
+      .split(' ')
+      .filter(Boolean)
+
+    return searchMessages
+      .filter(
+        (message) =>
+          !message.is_deleted &&
+          String(message.body || '').trim()
+      )
+      .filter((message) => {
+        const body = normalizeMessageSearchValue(
+          message.body
+        )
+
+        return terms.every((term) =>
+          body.includes(term)
+        )
+      })
+      .sort(
+        (first, second) =>
+          new Date(second.created_at).getTime() -
+          new Date(first.created_at).getTime()
+      )
+  }, [normalizedSearchQuery, searchMessages])
 
   const notifyUpdated = () => {
     window.dispatchEvent(new CustomEvent('shadow-chat-updated'))
@@ -249,6 +316,85 @@ export default function ChatInfoPage() {
   useEffect(() => {
     loadInfo()
   }, [conversationId])
+
+  const loadSearchHistory = async () => {
+    if (
+      searchLoading ||
+      searchLoaded ||
+      !conversationId
+    ) {
+      return
+    }
+
+    setSearchLoading(true)
+
+    try {
+      let before = ''
+      let collected = []
+      let pageCount = 0
+
+      do {
+        const data = await getChatMessages(
+          conversationId,
+          {
+            before,
+            limit: 100,
+          }
+        )
+
+        const pageMessages = Array.isArray(
+          data.messages
+        )
+          ? data.messages
+          : []
+
+        const messageMap = new Map(
+          collected.map((message) => [
+            String(message.id),
+            message,
+          ])
+        )
+
+        pageMessages.forEach((message) => {
+          if (message?.id) {
+            messageMap.set(
+              String(message.id),
+              message
+            )
+          }
+        })
+
+        collected = [...messageMap.values()]
+        before = data.next_before || ''
+        pageCount += 1
+      } while (
+        before &&
+        collected.length < MAX_SEARCH_MESSAGES &&
+        pageCount < 10
+      )
+
+      setSearchMessages(
+        collected.slice(-MAX_SEARCH_MESSAGES)
+      )
+      setSearchLoaded(true)
+    } catch (error) {
+      showNotice(
+        error.message ||
+          'Failed to load messages for search'
+      )
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  const openSearch = () => {
+    setSearchOpen(true)
+    setSearchQuery('')
+
+    if (!searchLoaded) {
+      loadSearchHistory()
+    }
+  }
 
   const openProfile = () => {
     if (!username) return
@@ -344,6 +490,133 @@ export default function ChatInfoPage() {
     }
   }
 
+  if (searchOpen) {
+    return (
+      <div className="min-h-screen bg-white text-[#111827]">
+        <header className="sticky top-0 z-40 border-b border-[#ececf0] bg-white/95 backdrop-blur">
+          <div className="mx-auto flex h-[58px] max-w-[560px] items-center gap-2 px-3">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchOpen(false)
+                setSearchQuery('')
+              }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f3f4f6]"
+              aria-label="Back to chat info"
+            >
+              <ChevronLeft size={27} strokeWidth={2} />
+            </button>
+
+            <div className="relative min-w-0 flex-1">
+              <Search
+                size={18}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#85858f]"
+              />
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(
+                    event.target.value.slice(0, 120)
+                  )
+                }
+                placeholder="Search in chat"
+                className="h-10 w-full rounded-full bg-[#f2f3f5] pl-10 pr-10 text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#92929b] focus:bg-[#eeeeF2]"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#777781] active:bg-[#dedee4]"
+                >
+                  <X size={17} />
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-[560px] px-4 pb-10">
+          {notice ? (
+            <div className="fixed left-1/2 top-[70px] z-[170] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[11px] font-medium text-white">
+              {notice}
+            </div>
+          ) : null}
+
+          {searchLoading ? (
+            <div className="flex min-h-[260px] items-center justify-center text-[#7c3aed]">
+              <LoaderCircle
+                size={27}
+                className="animate-spin"
+              />
+            </div>
+          ) : !normalizedSearchQuery ? (
+            <div className="px-5 py-20 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f2f3f5] text-[#777781]">
+                <Search size={25} />
+              </div>
+              <h2 className="mt-4 text-[16px] font-semibold">
+                Search this chat
+              </h2>
+              <p className="mx-auto mt-2 max-w-[300px] text-[12px] font-normal leading-5 text-[#868690]">
+                Enter one or more words. The words can appear anywhere in the message and do not need to be typed as one exact phrase.
+              </p>
+            </div>
+          ) : searchResults.length ? (
+            <section className="py-3">
+              <div className="px-2 pb-2 text-[11px] font-normal text-[#888892]">
+                {searchResults.length} result
+                {searchResults.length === 1 ? '' : 's'}
+              </div>
+
+              <div className="divide-y divide-[#efeff2]">
+                {searchResults.map((message) => (
+                  <button
+                    key={message.id}
+                    type="button"
+                    onClick={() =>
+                      navigate(`/chat/${conversationId}`)
+                    }
+                    className="block w-full px-2 py-4 text-left active:bg-[#f7f7f9]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="truncate text-[12px] font-semibold text-[#111827]">
+                        {message.is_mine
+                          ? 'You'
+                          : name}
+                      </span>
+                      <span className="shrink-0 text-[10px] font-normal text-[#9999a2]">
+                        {formatSearchMessageDate(
+                          message.created_at
+                        )}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-[#4b4b54]">
+                      {message.body}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <div className="px-5 py-20 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f2f3f5] text-[#777781]">
+                <Search size={25} />
+              </div>
+              <h2 className="mt-4 text-[16px] font-semibold">
+                No messages found
+              </h2>
+              <p className="mt-2 text-[12px] font-normal text-[#888892]">
+                Try another word or a shorter part of the message.
+              </p>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white text-[#7c3aed]">
@@ -391,7 +664,7 @@ export default function ChatInfoPage() {
             <Shortcut
               icon={Search}
               label="Search"
-              onClick={() => showNotice('Search in chat is coming soon.')}
+              onClick={openSearch}
             />
           </div>
         </section>
