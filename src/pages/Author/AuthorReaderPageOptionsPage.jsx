@@ -148,13 +148,15 @@ export default function AuthorReaderPageOptionsPage() {
 }
 
   function openReportPage() {
-    if (!pageId) {
-      setMessage('Unable to open Report Page.')
-      return
-    }
-
-    navigate(`/report/author_page/${pageId}`)
-  }
+  if (!pageId) return setMessage('Unable to open Report Page.')
+  navigate(`/report/author_page/${pageId}`, {
+    state: {
+      targetTitle: pageName,
+      sourceUrl: pageLink,
+      returnTo: `/author/page/${pageUsername}/options`,
+    },
+  })
+}
 
   function openBlockConfirmation() {
     const token = getAuthToken()
