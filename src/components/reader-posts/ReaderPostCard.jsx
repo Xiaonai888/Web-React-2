@@ -10,7 +10,7 @@ import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
-import SocialEchoShareSheet from '../social/SocialEchoShareSheet'
+import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import {
   CollapsiblePostText,
   ProfessionalSinglePostImage,
@@ -983,6 +983,73 @@ function ReaderEchoSourceBlock({ post }) {
     )
   }
 
+  if (
+    sourceType ===
+    'shadow_mall_promotion'
+  ) {
+    const promotion =
+      source?.promotion || {}
+    const imageUrl =
+      promotion.image_url ||
+      source?.image_url ||
+      source?.image_urls?.[0] ||
+      ''
+    const sponsor =
+      promotion.sponsor ||
+      source?.owner?.name ||
+      source?.name ||
+      'Shadow Mall'
+    const title =
+      promotion.title ||
+      source?.name ||
+      'Promotion'
+    const description =
+      promotion.description ||
+      source?.content ||
+      ''
+
+    return (
+      <button
+        type="button"
+        onClick={openSource}
+        disabled={!sourceUrl}
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995] disabled:cursor-default"
+      >
+        {imageUrl ? (
+          <div className="aspect-video w-full overflow-hidden bg-[#f3f4f6]">
+            <img
+              src={imageUrl}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+
+        <div className="px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b5cf6]">
+            Shadow Mall promotion
+          </div>
+
+          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#667085]">
+            {sponsor}
+          </div>
+
+          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+            {title}
+          </div>
+
+          {description ? (
+            <p className="mt-2 line-clamp-3 text-[12px] font-normal leading-5 text-[#667085]">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      </button>
+    )
+  }
+
   const previewUser =
     sourceType === 'author_post'
       ? {
@@ -1348,17 +1415,33 @@ function StandardReaderPostCard({
   }, [post?.comment_count])
 
   useEffect(() => {
+    if (
+      echoShareSource.type &&
+      echoShareSource.id
+    ) {
+      return
+    }
+
     setEchoCount(
       Number(post?.echo_count || 0)
     )
-  }, [post?.echo_count])
+  }, [
+    echoShareSource.id,
+    echoShareSource.type,
+    post?.echo_count,
+  ])
 
   useEffect(() => {
-    if (
-      !isEchoPost ||
-      !echoShareSource.type ||
-      !echoShareSource.id
-    ) {
+    const sourceType = String(
+      echoShareSource.type || ''
+    )
+      .trim()
+      .toLowerCase()
+    const sourceId = String(
+      echoShareSource.id || ''
+    ).trim()
+
+    if (!sourceType || !sourceId) {
       return undefined
     }
 
@@ -1370,11 +1453,11 @@ function StandardReaderPostCard({
     async function loadSourceEchoCount() {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/echoes/source/${encodeURIComponent(
-            echoShareSource.type
+          `${API_BASE_URL}/api/echo-v2/source/${encodeURIComponent(
+            sourceType
           )}/${encodeURIComponent(
-            echoShareSource.id
-          )}?limit=1`,
+            sourceId
+          )}?page=1&limit=1`,
           {
             headers: token
               ? {
@@ -1400,10 +1483,13 @@ function StandardReaderPostCard({
         }
 
         setEchoCount(
-          Number(
-            data.echo_count ??
-              data.total ??
-              0
+          Math.max(
+            0,
+            Number(
+              data.echo_count ??
+                data.total ??
+                0
+            )
           )
         )
       } catch (error) {
@@ -1415,16 +1501,48 @@ function StandardReaderPostCard({
       }
     }
 
+    function handleEchoV2Updated(event) {
+      const detail = event?.detail || {}
+
+      if (
+        String(
+          detail.sourceType || ''
+        )
+          .trim()
+          .toLowerCase() === sourceType &&
+        String(
+          detail.sourceId || ''
+        ).trim() === sourceId
+      ) {
+        setEchoCount(
+          Math.max(
+            0,
+            Number(
+              detail.echoCount || 0
+            )
+          )
+        )
+      }
+    }
+
+    window.addEventListener(
+      'shadow:echo-v2-updated',
+      handleEchoV2Updated
+    )
+
     loadSourceEchoCount()
 
     return () => {
       ignore = true
       controller.abort()
+      window.removeEventListener(
+        'shadow:echo-v2-updated',
+        handleEchoV2Updated
+      )
     }
   }, [
     echoShareSource.id,
     echoShareSource.type,
-    isEchoPost,
   ])
 
   useEffect(() => {
@@ -2303,7 +2421,7 @@ function StandardReaderPostCard({
         }}
       />
 
-      <SocialEchoShareSheet
+      <EchoShareSheetV2Connected
         open={echoOpen}
         sourceType={
           echoShareSource.type
@@ -2336,11 +2454,14 @@ function StandardReaderPostCard({
           nextEcho,
           nextTotal
         ) => {
-          const total = Number(
-            nextTotal ??
-              (nextEcho
-                ? echoCount + 1
-                : echoCount)
+          const total = Math.max(
+            0,
+            Number(
+              nextTotal ??
+                (nextEcho
+                  ? echoCount + 1
+                  : echoCount)
+            )
           )
 
           setEchoCount(total)
