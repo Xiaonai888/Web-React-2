@@ -979,9 +979,17 @@ export default function ChatInboxPage() {
   const selectionMode =
     selectedConversationIds.size > 0
 
+  const clearConversationSelection = () => {
+    setSelectedConversationIds(new Set())
+    setSelectionMenuOpen(false)
+  }
+
   const startConversationSelection = (
     conversationId
   ) => {
+    setQuery('')
+    setActiveFilter('all')
+    setSelectionMenuOpen(false)
     setSelectedConversationIds(
       new Set([String(conversationId)])
     )
@@ -1005,6 +1013,100 @@ export default function ChatInboxPage() {
     })
   }
 
+  const showSelectionNotice = (message) => {
+    setSelectionMenuOpen(false)
+    setSelectionNotice(message)
+
+    window.setTimeout(() => {
+      setSelectionNotice('')
+    }, 2200)
+  }
+
+  const handleArchiveSelected = async () => {
+    if (
+      selectionBusy ||
+      !selectedConversationIds.size
+    ) {
+      return
+    }
+
+    const ids = [...selectedConversationIds]
+    setSelectionBusy('archive')
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          archiveChatConversation(id)
+        )
+      )
+      clearConversationSelection()
+      await loadConversations({ silent: true })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+    } catch (archiveError) {
+      setError(
+        archiveError.message ||
+          'Failed to archive selected chats'
+      )
+      await loadConversations({ silent: true })
+      clearConversationSelection()
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (
+      selectionBusy ||
+      !selectedConversationIds.size
+    ) {
+      return
+    }
+
+    const count = selectedConversationIds.size
+
+    if (
+      !window.confirm(
+        `Delete ${count} chat${
+          count === 1 ? '' : 's'
+        } from your inbox?`
+      )
+    ) {
+      return
+    }
+
+    const ids = [...selectedConversationIds]
+    setSelectionBusy('delete')
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          deleteChatConversation(
+            id,
+            'for_me'
+          )
+        )
+      )
+      clearConversationSelection()
+      await loadConversations({ silent: true })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+    } catch (deleteError) {
+      setError(
+        deleteError.message ||
+          'Failed to delete selected chats'
+      )
+      await loadConversations({ silent: true })
+      clearConversationSelection()
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
   const hasSearch = Boolean(normalizedQuery)
   const hasAnySearchResult =
     visibleConversations.length > 0 || peopleResults.length > 0
@@ -1014,91 +1116,244 @@ export default function ChatInboxPage() {
       <style>{`.shadow-chat-scroll::-webkit-scrollbar{display:none}.shadow-chat-scroll{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
       <header className="sticky top-0 z-[70] border-b border-[#f0f0f3] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto max-w-[620px] px-4 pb-4 pt-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-[25px] font-bold tracking-[-0.03em] text-[#111827]">
-                Messages
-              </h1>
+        <div
+          className={`relative mx-auto max-w-[620px] px-4 ${
+            selectionMode ? 'py-2' : 'pb-4 pt-4'
+          }`}
+        >
+          {selectionMode ? (
+            <div className="flex h-[48px] items-center gap-2">
+              <button
+                type="button"
+                onClick={clearConversationSelection}
+                aria-label="Exit selection"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+              >
+                <X size={25} />
+              </button>
 
-              <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
-                <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
-                {unreadTotal} unread
+              <div className="min-w-[36px] text-[20px] font-semibold text-[#111827]">
+                {selectedConversationIds.size}
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => setNewMessageOpen(true)}
-              aria-label="New message"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1fb] text-[#7c3aed] transition active:scale-90"
-            >
-              <SquarePen size={21} strokeWidth={2.2} />
-            </button>
-          </div>
-
-          <div className="relative mt-4">
-            <Search
-              size={19}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777480]"
-            />
-
-            <input
-              value={query}
-              onChange={(event) =>
-                setQuery(event.target.value.slice(0, 50))
-              }
-              placeholder="Search by name or username"
-className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[14px] font-normal text-[#111827] outline-none transition placeholder:font-normal placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
-            />
-          </div>
-
-          <div className="shadow-chat-scroll -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
-            <QuickCircle
-              label="Request"
-              count={incomingRequests.length}
-              onClick={chooseRequestFilter}
-              fallback={
-                <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#f1f1f4] text-[#7c3aed]">
-                  <MessageCircle size={26} strokeWidth={2} />
-                </span>
-              }
-            />
-
-            {displayedQuickContacts.map((contact) => {
-              const person =
-                contact.counterpart || contact
-
-              return (
-                <QuickCircle
-                  key={
-                    contact.key ||
-                    contact.conversation_id ||
-                    `${contact.type || 'reader'}:${
-                      contact.author_page_id ||
-                      contact.user_id ||
-                      contact.id
-                    }`
-                  }
-                  label={
-                    person.name ||
-                    person.username ||
-                    'Shadow'
-                  }
-                  person={person}
-                  online={Boolean(
-                    contact.is_online ||
-                    person.is_online
-                  )}
+              <div className="ml-auto flex items-center gap-1">
+                <button
+                  type="button"
                   onClick={() =>
-                    openSearchPerson(contact)
+                    showSelectionNotice(
+                      'Mute is coming soon.'
+                    )
+                  }
+                  aria-label="Mute selected chats"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+                >
+                  <VolumeX size={21} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleArchiveSelected}
+                  disabled={Boolean(selectionBusy)}
+                  aria-label="Archive selected chats"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
+                >
+                  {selectionBusy === 'archive' ? (
+                    <LoaderCircle
+                      size={20}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Archive size={21} />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteSelected}
+                  disabled={Boolean(selectionBusy)}
+                  aria-label="Delete selected chats"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
+                >
+                  {selectionBusy === 'delete' ? (
+                    <LoaderCircle
+                      size={20}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Trash2 size={21} />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectionMenuOpen(
+                      (current) => !current
+                    )
+                  }
+                  aria-label="More selected chat actions"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+                >
+                  <EllipsisVertical size={22} />
+                </button>
+              </div>
+
+              {selectionMenuOpen ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close selection menu"
+                    onClick={() =>
+                      setSelectionMenuOpen(false)
+                    }
+                    className="fixed inset-0 z-[74]"
+                  />
+
+                  <div className="absolute right-4 top-[58px] z-[75] w-[210px] overflow-hidden rounded-[16px] bg-white py-1 shadow-[0_14px_38px_rgba(17,24,39,0.16)]">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        showSelectionNotice(
+                          'Saved Messages is coming soon.'
+                        )
+                      }
+                      className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
+                    >
+                      <Bookmark size={20} />
+                      Saved Messages
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        showSelectionNotice(
+                          'New Group is coming soon.'
+                        )
+                      }
+                      className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
+                    >
+                      <UsersRound size={20} />
+                      New Group
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-[25px] font-bold tracking-[-0.03em] text-[#111827]">
+                    Messages
+                  </h1>
+
+                  <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
+                    <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
+                    {unreadTotal} unread
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNewMessageOpen(true)
+                  }
+                  aria-label="New message"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1fb] text-[#7c3aed] transition active:scale-90"
+                >
+                  <SquarePen
+                    size={21}
+                    strokeWidth={2.2}
+                  />
+                </button>
+              </div>
+
+              <div className="relative mt-4">
+                <Search
+                  size={19}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777480]"
+                />
+
+                <input
+                  value={query}
+                  onChange={(event) =>
+                    setQuery(
+                      event.target.value.slice(
+                        0,
+                        50
+                      )
+                    )
+                  }
+                  placeholder="Search by name or username"
+                  className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[14px] font-normal text-[#111827] outline-none transition placeholder:font-normal placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
+                />
+              </div>
+
+              <div className="shadow-chat-scroll -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
+                <QuickCircle
+                  label="Request"
+                  count={incomingRequests.length}
+                  onClick={chooseRequestFilter}
+                  fallback={
+                    <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#f1f1f4] text-[#7c3aed]">
+                      <MessageCircle
+                        size={26}
+                        strokeWidth={2}
+                      />
+                    </span>
                   }
                 />
-              )
-            })}
-          </div>
+
+                {displayedQuickContacts.map(
+                  (contact) => {
+                    const quickPerson =
+                      contact.counterpart ||
+                      contact
+
+                    return (
+                      <QuickCircle
+                        key={
+                          contact.key ||
+                          contact.conversation_id ||
+                          `${
+                            contact.type ||
+                            'reader'
+                          }:${
+                            contact.author_page_id ||
+                            contact.user_id ||
+                            contact.id
+                          }`
+                        }
+                        label={
+                          quickPerson.name ||
+                          quickPerson.username ||
+                          'Shadow'
+                        }
+                        person={quickPerson}
+                        online={Boolean(
+                          contact.is_online ||
+                            quickPerson.is_online
+                        )}
+                        onClick={() =>
+                          openSearchPerson(
+                            contact
+                          )
+                        }
+                      />
+                    )
+                  }
+                )}
+              </div>
+            </>
+          )}
         </div>
       </header>
+
+      {selectionNotice ? (
+        <div className="fixed left-1/2 top-[72px] z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[11px] font-normal text-white">
+          {selectionNotice}
+        </div>
+      ) : null}
 
       <main className="mx-auto max-w-[620px]">
         {error ? (
