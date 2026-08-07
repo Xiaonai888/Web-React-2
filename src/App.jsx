@@ -187,6 +187,7 @@ const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
 const ChatInboxShellPage = lazy(() => import('./pages/Chat/ChatInboxShellPage'))
 const ArchivedChatPage = lazy(() => import('./pages/Chat/ArchivedChatPage'))
 const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
+const AuthorPageInviteFriendsPage = lazy(() => import('./pages/Author/AuthorPageInviteFriendsPage'))
 
 
 function ComingSoon({ title }) {
@@ -1230,6 +1231,7 @@ const shouldShowOpeningAds =
         <Route path="/genre/:genreSlug/latest" element={<LazyPage><GenreStoriesPage tab="latest" /></LazyPage>} />
         <Route path="/genre/:genreSlug/updates" element={<LazyPage><GenreStoriesPage tab="updates" /></LazyPage>} />
         <Route path="/genre/:genreSlug/completed" element={<LazyPage><GenreStoriesPage tab="completed" /></LazyPage>} />
+        <Route path="/author/page/:pageUsername/invite" element={<LazyPage><AuthorPageInviteFriendsPage /></LazyPage>} />
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
