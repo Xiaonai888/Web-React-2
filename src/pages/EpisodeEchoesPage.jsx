@@ -86,7 +86,7 @@ function SourceCard({ story, episode, author, total, onOpen }) {
             {episode?.title || 'Episode'}
           </div>
           <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-[#9b93a5]">
-            <span>{author?.page_name || 'Shadow Author'}</span>
+            <span>{author?.page_name || author?.name || 'Shadow Author'}</span>
             <span className="h-1 w-1 rounded-full bg-[#c8c1d1]" />
             <span>{Number(total || 0).toLocaleString()} {Number(total || 0) === 1 ? 'echo' : 'echoes'}</span>
           </div>
@@ -101,6 +101,7 @@ function SourceCard({ story, episode, author, total, onOpen }) {
 function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
   const user = echo?.user || {}
   const name = user.name || user.username || 'Reader'
+  const shareCount = Math.max(1, Number(echo?.share_count || 1))
 
   return (
     <article className="rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(45,35,64,0.06)] ring-1 ring-[#ebe6f2]">
@@ -112,9 +113,15 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
             <div className="min-w-0">
               <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">{name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-semibold text-[#9b93a5]">
-                <span>{formatDate(echo.created_at)}</span>
+                <span>{formatDate(echo.updated_at || echo.created_at)}</span>
                 <span className="h-1 w-1 rounded-full bg-[#cbc4d4]" />
                 <AudienceBadge audience={echo.audience} />
+                {shareCount > 1 ? (
+                  <>
+                    <span className="h-1 w-1 rounded-full bg-[#cbc4d4]" />
+                    <span>{shareCount} echoes</span>
+                  </>
+                ) : null}
               </div>
             </div>
 
@@ -135,7 +142,9 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
           {echo.echo_text}
         </p>
       ) : (
-        <p className="mt-4 text-[13px] font-semibold italic text-[#9a92a4]">Shared this episode without a message.</p>
+        <p className="mt-4 text-[13px] font-semibold italic text-[#9a92a4]">
+          Shared this episode without a message.
+        </p>
       )}
 
       <div className="mt-4 overflow-hidden rounded-[17px] bg-[#f7f4fa] ring-1 ring-[#ebe6f2]">
@@ -146,7 +155,7 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
           <div className="min-w-0 flex-1">
             <div className="line-clamp-1 text-[12px] font-black text-[#17131f]">Open original episode</div>
             <div className="mt-0.5 line-clamp-1 text-[10.5px] font-semibold text-[#91889b]">
-              Echoed to {String(echo.destination || 'feed').replace('-', ' ')}
+              Echoed to {String(echo.destination || 'feed').replaceAll('-', ' ')}
             </div>
           </div>
           <i className="fa-solid fa-chevron-right text-[10px] text-[#a79fb2]" />
@@ -173,6 +182,28 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
       </div>
     </article>
   )
+}
+
+function mergeEchoes(current, incoming) {
+  const items = [...current]
+  const indexById = new Map(items.map((item, index) => [String(item?.id || ''), index]))
+
+  incoming.forEach((item) => {
+    const id = String(item?.id || '')
+    if (!id) return
+
+    const existingIndex = indexById.get(id)
+
+    if (existingIndex === undefined) {
+      indexById.set(id, items.length)
+      items.push(item)
+      return
+    }
+
+    items[existingIndex] = item
+  })
+
+  return items
 }
 
 export default function EpisodeEchoesPage() {
@@ -217,15 +248,18 @@ export default function EpisodeEchoesPage() {
   }
 
   const loadEchoes = async (nextPage, append = false) => {
+    if (!episodeId) return
+
     append ? setLoadingMore(true) : setLoading(true)
     setMessage('')
 
     try {
       const token = getReaderToken()
       const response = await fetch(
-        `${API_BASE_URL}/api/echoes/episode/${episodeId}?page=${nextPage}&limit=20`,
+        `${API_BASE_URL}/api/echo-v2/source/episode/${encodeURIComponent(episodeId)}?page=${nextPage}&limit=20`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          cache: 'no-store',
         }
       )
       const data = await response.json().catch(() => ({}))
@@ -234,15 +268,27 @@ export default function EpisodeEchoesPage() {
         throw new Error(data.message || 'Failed to load echoes')
       }
 
-      setStory(data.story || null)
-      setEpisode(data.episode || null)
-      setAuthor(data.author || null)
-      setTotal(Number(data.total || 0))
-      setPage(nextPage)
+      const source = data.source || {}
+      const nextStory = source.story || null
+      const nextEpisode = source.episode || null
+      const nextAuthor = source.owner || null
+      const nextEchoes = Array.isArray(data.echoes) ? data.echoes : []
+
+      setStory(nextStory)
+      setEpisode(nextEpisode)
+      setAuthor(nextAuthor)
+      setTotal(Math.max(0, Number(data.echo_count ?? data.total ?? 0)))
+      setPage(Math.max(1, Number(data.page || nextPage)))
       setHasMore(Boolean(data.has_more))
-      setEchoes((current) => append ? [...current, ...(data.echoes || [])] : (data.echoes || []))
+      setEchoes((current) =>
+        append ? mergeEchoes(current, nextEchoes) : nextEchoes
+      )
     } catch (error) {
-      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to backend.' : error.message || 'Failed to load echoes')
+      setMessage(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to backend.'
+          : error.message || 'Failed to load echoes'
+      )
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -251,6 +297,13 @@ export default function EpisodeEchoesPage() {
 
   useEffect(() => {
     if (!episodeId) return
+    setEchoes([])
+    setStory(null)
+    setEpisode(null)
+    setAuthor(null)
+    setTotal(0)
+    setPage(1)
+    setHasMore(false)
     loadEchoes(1)
   }, [episodeId])
 
@@ -274,8 +327,8 @@ export default function EpisodeEchoesPage() {
           </button>
 
           <div className="min-w-0 text-center">
-  <h1 className="truncate text-[17px] font-black">Readers who echoed this</h1>
-</div>
+            <h1 className="truncate text-[17px] font-black">Readers who echoed this</h1>
+          </div>
 
           <button
             type="button"
@@ -356,7 +409,7 @@ export default function EpisodeEchoesPage() {
                   disabled={loadingMore}
                   className="h-12 w-full rounded-[16px] bg-white text-[12px] font-black text-[#7658a6] ring-1 ring-[#e7e0ef] active:scale-[0.995] disabled:opacity-60"
                 >
-                  {loadingMore ? 'Loading...' : 'Load more echoes'}
+                  {loadingMore ? 'Loading...' : 'Load more readers'}
                 </button>
               ) : null}
             </div>
