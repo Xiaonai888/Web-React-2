@@ -158,6 +158,7 @@ const ReaderSettingsPage = lazy(() =>
 
 const AuthorPageOptionsPage = lazy(() => import('./pages/Author/AuthorPageOptionsPage'))
 const AuthorReaderPageOptionsPage = lazy(() => import('./pages/Author/AuthorReaderPageOptionsPage'))
+const AuthorPageSearchPage = lazy(() => import('./pages/Author/AuthorPageSearchPage'))
 const AuthorFollowersPage = lazy(() => import('./pages/Author/AuthorFollowersPage'))
 const AuthorTopFansPage = lazy(() => import('./pages/Author/AuthorTopFansPage'))
 const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'))
@@ -1154,6 +1155,11 @@ const shouldShowOpeningAds =
         <Route
   path="/event/writer-wednesday"
   element={<LazyPage><WriterWednesdayEventPage /></LazyPage>}
+/>
+
+        <Route
+  path="/author/page/:pageUsername/search"
+  element={<LazyPage><AuthorPageSearchPage /></LazyPage>}
 />
 
 
