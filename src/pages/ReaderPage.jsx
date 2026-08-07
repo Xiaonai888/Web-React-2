@@ -1053,44 +1053,47 @@ async function handleToggleLike() {
   return (
     <section className="mt-8 bg-white px-4 pb-8 pt-2">
       <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
-       <button
-  type="button"
-  onClick={handleToggleLike}
-  disabled={likeBusy || !episodeId}
-  aria-pressed={liked}
-  className="flex flex-col items-center justify-center gap-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
->
-  <HeartLineIcon
-    filled={liked}
-    className={`h-[26px] w-[26px] transition-all duration-200 ${
-      liked
-        ? 'scale-110 text-[#E5484D]'
-        : 'text-[#111827]'
-    }`}
-  />
+       <div className="flex flex-col items-center justify-center gap-1">
+  <button
+    type="button"
+    onClick={handleToggleLike}
+    disabled={likeBusy || !episodeId}
+    aria-pressed={liked}
+    className="flex flex-col items-center justify-center gap-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    <HeartLineIcon
+      filled={liked}
+      className={`h-[26px] w-[26px] transition-all duration-200 ${
+        liked
+          ? 'scale-110 text-[#E5484D]'
+          : 'text-[#111827]'
+      }`}
+    />
 
-  <span
-    className={`text-[13px] font-normal transition-colors duration-200 ${
-      liked ? 'text-[#E5484D]' : 'text-[#111827]'
+    <span
+      className={`text-[13px] font-normal transition-colors duration-200 ${
+        liked ? 'text-[#E5484D]' : 'text-[#111827]'
+      }`}
+    >
+      Like
+    </span>
+  </button>
+
+  <button
+    type="button"
+    onClick={() => {
+      const targetStoryId = story?.id || story?.story_id
+      if (!targetStoryId || !episodeId) return
+      navigate(`/story/${targetStoryId}/episode/${episodeId}/reactions`)
+    }}
+    disabled={!episodeId}
+    className={`text-[11px] font-normal transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed ${
+      liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
     }`}
   >
-    Like
-  </span>
-
-  <span
-  onClick={(event) => {
-    event.stopPropagation()
-    const targetStoryId = story?.id || story?.story_id
-    if (!targetStoryId || !episodeId) return
-    navigate(`/story/${targetStoryId}/episode/${episodeId}/reactions`)
-  }}
-  className={`cursor-pointer text-[11px] font-normal transition-colors duration-200 ${
-    liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
-  }`}
->
-  {formatCompactNumber(likeCount)}
-</span>
-</button>
+    {formatCompactNumber(likeCount)}
+  </button>
+</div>
 
         <button
           type="button"
