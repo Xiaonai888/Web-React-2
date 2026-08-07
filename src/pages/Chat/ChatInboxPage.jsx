@@ -1,10 +1,16 @@
 import {
+  Archive,
   BookOpen,
+  Bookmark,
   Check,
+  EllipsisVertical,
   LoaderCircle,
   MessageCircle,
   Search,
   SquarePen,
+  Trash2,
+  UsersRound,
+  VolumeX,
   X,
 } from 'lucide-react'
 import {
@@ -21,7 +27,9 @@ import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import {
+  archiveChatConversation,
   decideChatRequest,
+  deleteChatConversation,
   getChatConversations,
   getChatQuickContacts,
   hasReaderSession,
@@ -417,6 +425,12 @@ export default function ChatInboxPage() {
     useState(null)
   const [selectedSearchAuthor, setSelectedSearchAuthor] =
     useState(null)
+  const [selectedConversationIds, setSelectedConversationIds] =
+    useState(() => new Set())
+  const [selectionMenuOpen, setSelectionMenuOpen] =
+    useState(false)
+  const [selectionBusy, setSelectionBusy] = useState('')
+  const [selectionNotice, setSelectionNotice] = useState('')
 
   const loadQuickContacts = useCallback(async () => {
     try {
