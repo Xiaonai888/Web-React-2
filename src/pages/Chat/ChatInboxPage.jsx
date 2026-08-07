@@ -306,23 +306,111 @@ function IncomingRequestCard({
   )
 }
 
-function ConversationRow({ conversation, onOpen }) {
+function ConversationRow({
+  conversation,
+  selected,
+  selectionMode,
+  onOpen,
+  onStartSelection,
+  onToggleSelection,
+}) {
+  const longPressRef = useRef(null)
+  const pointerStartRef = useRef(null)
+  const suppressClickRef = useRef(false)
   const person = conversation.counterpart || {}
   const latest = conversation.latest_message
   const unread = Number(conversation.unread_count || 0)
   const pending = conversation.request_status === 'pending'
   const canDecideRequest = Boolean(conversation.can_decide)
 
+  const clearLongPress = () => {
+    if (longPressRef.current) {
+      window.clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+
+    pointerStartRef.current = null
+  }
+
+  const handlePointerDown = (event) => {
+    if (selectionMode || event.button > 0) return
+
+    pointerStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+    }
+
+    longPressRef.current = window.setTimeout(() => {
+      suppressClickRef.current = true
+      onStartSelection()
+      longPressRef.current = null
+    }, 500)
+  }
+
+  const handlePointerMove = (event) => {
+    const startPoint = pointerStartRef.current
+    if (!startPoint) return
+
+    if (
+      Math.abs(event.clientX - startPoint.x) > 10 ||
+      Math.abs(event.clientY - startPoint.y) > 10
+    ) {
+      clearLongPress()
+    }
+  }
+
+  const handleClick = () => {
+    clearLongPress()
+
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+
+    if (selectionMode) {
+      onToggleSelection()
+      return
+    }
+
+    onOpen()
+  }
+
+  const handleContextMenu = (event) => {
+    event.preventDefault()
+    clearLongPress()
+
+    if (selectionMode) {
+      onToggleSelection()
+      return
+    }
+
+    onStartSelection()
+  }
+
   return (
     <button
       type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-[18px] px-2 py-3 text-left transition hover:bg-[#faf9fc] active:bg-[#f4f2f8]"
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={clearLongPress}
+      onPointerCancel={clearLongPress}
+      onPointerLeave={clearLongPress}
+      className={`flex w-full select-none items-center gap-3 rounded-[18px] px-2 py-3 text-left transition ${
+        selected
+          ? 'bg-[#eef8f0]'
+          : 'hover:bg-[#faf9fc] active:bg-[#f4f2f8]'
+      }`}
     >
       <div className="relative">
         <PersonAvatar person={person} />
 
-        {person.type === 'author' ? (
+        {selected ? (
+          <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#35b44a] text-white">
+            <Check size={14} strokeWidth={3} />
+          </span>
+        ) : person.type === 'author' ? (
           <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#7c3aed] text-white">
             <BookOpen size={10} strokeWidth={2.4} />
           </span>
@@ -888,6 +976,35 @@ export default function ChatInboxPage() {
     })
   }
 
+  const selectionMode =
+    selectedConversationIds.size > 0
+
+  const startConversationSelection = (
+    conversationId
+  ) => {
+    setSelectedConversationIds(
+      new Set([String(conversationId)])
+    )
+  }
+
+  const toggleConversationSelection = (
+    conversationId
+  ) => {
+    const key = String(conversationId)
+
+    setSelectedConversationIds((current) => {
+      const next = new Set(current)
+
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+
+      return next
+    })
+  }
+
   const hasSearch = Boolean(normalizedQuery)
   const hasAnySearchResult =
     visibleConversations.length > 0 || peopleResults.length > 0
@@ -1037,6 +1154,20 @@ className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] p
                   <ConversationRow
                     key={conversation.id}
                     conversation={conversation}
+                    selected={selectedConversationIds.has(
+                      String(conversation.id)
+                    )}
+                    selectionMode={selectionMode}
+                    onStartSelection={() =>
+                      startConversationSelection(
+                        conversation.id
+                      )
+                    }
+                    onToggleSelection={() =>
+                      toggleConversationSelection(
+                        conversation.id
+                      )
+                    }
                     onOpen={() =>
                       navigate(`/chat/${conversation.id}`)
                     }
@@ -1080,6 +1211,20 @@ className="h-[46px] w-full rounded-full border border-transparent bg-[#f4f4f7] p
               <ConversationRow
                 key={conversation.id}
                 conversation={conversation}
+                selected={selectedConversationIds.has(
+                  String(conversation.id)
+                )}
+                selectionMode={selectionMode}
+                onStartSelection={() =>
+                  startConversationSelection(
+                    conversation.id
+                  )
+                }
+                onToggleSelection={() =>
+                  toggleConversationSelection(
+                    conversation.id
+                  )
+                }
                 onOpen={() =>
                   navigate(`/chat/${conversation.id}`)
                 }
