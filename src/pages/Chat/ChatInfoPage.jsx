@@ -32,6 +32,11 @@ import {
   reportChatMessage,
   unblockChatConversation,
 } from '../../services/chatApi'
+import {
+  getChatMuteStatus,
+  muteChatConversation,
+  unmuteChatConversation,
+} from '../../services/chatMuteApi'
 
 const REPORT_REASONS = [
   ['spam', 'Spam'],
@@ -46,6 +51,14 @@ const REPORT_REASONS = [
 ]
 
 const MAX_SEARCH_MESSAGES = 1000
+
+const MUTE_OPTIONS = [
+  ['1h', '1 hour'],
+  ['8h', '8 hours'],
+  ['1d', '1 day'],
+  ['7d', '7 days'],
+  ['forever', 'Until I turn it back on'],
+]
 
 function normalizeMessageSearchValue(value) {
   return String(value || '')
@@ -198,6 +211,11 @@ export default function ChatInfoPage() {
   const [searchMessages, setSearchMessages] = useState([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchLoaded, setSearchLoaded] = useState(false)
+  const [muteOpen, setMuteOpen] = useState(false)
+  const [muteStatus, setMuteStatus] = useState({
+    is_muted: false,
+    muted_until: null,
+  })
 
   const person = conversation?.counterpart || {}
   const name =
@@ -279,10 +297,12 @@ export default function ChatInfoPage() {
 
     try {
       setLoading(true)
-      const [roomData, blockData] = await Promise.all([
-        getChatMessages(conversationId, { limit: 50 }),
-        getChatBlockStatus(conversationId),
-      ])
+      const [roomData, blockData, muteData] =
+        await Promise.all([
+          getChatMessages(conversationId, { limit: 50 }),
+          getChatBlockStatus(conversationId),
+          getChatMuteStatus(conversationId),
+        ])
 
       setConversation(roomData.conversation || null)
       setMessages(
@@ -296,6 +316,10 @@ export default function ChatInfoPage() {
         viewer_is_blocked: Boolean(
           blockData.block_status?.viewer_is_blocked
         ),
+      })
+      setMuteStatus({
+        is_muted: Boolean(muteData.is_muted),
+        muted_until: muteData.muted_until || null,
       })
     } catch (error) {
       if (
@@ -405,6 +429,57 @@ export default function ChatInfoPage() {
     }
 
     navigate(`/profile?username=${encodeURIComponent(username)}`)
+  }
+
+  const handleMute = async (duration) => {
+    if (busy) return
+
+    setBusy('mute')
+
+    try {
+      const data = await muteChatConversation(
+        conversationId,
+        duration
+      )
+
+      setMuteStatus({
+        is_muted: true,
+        muted_until: data.muted_until || null,
+      })
+      setMuteOpen(false)
+      notifyUpdated()
+      showNotice('Chat muted')
+    } catch (error) {
+      showNotice(
+        error.message || 'Failed to mute chat'
+      )
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const handleUnmute = async () => {
+    if (busy) return
+
+    setBusy('unmute')
+
+    try {
+      await unmuteChatConversation(
+        conversationId
+      )
+      setMuteStatus({
+        is_muted: false,
+        muted_until: null,
+      })
+      notifyUpdated()
+      showNotice('Chat unmuted')
+    } catch (error) {
+      showNotice(
+        error.message || 'Failed to unmute chat'
+      )
+    } finally {
+      setBusy('')
+    }
   }
 
   const handleBlock = async () => {
@@ -691,8 +766,28 @@ export default function ChatInfoPage() {
           </h2>
           <Row
             icon={VolumeX}
-            title={`Mute ${name}`}
-            onClick={() => showNotice('Mute is coming soon.')}
+            title={
+              muteStatus.is_muted
+                ? `Unmute ${name}`
+                : `Mute ${name}`
+            }
+            subtitle={
+              muteStatus.is_muted
+                ? muteStatus.muted_until
+                  ? `Muted until ${formatSearchMessageDate(
+                      muteStatus.muted_until
+                    )}`
+                  : 'Muted until you turn it back on'
+                : ''
+            }
+            onClick={() => {
+              if (muteStatus.is_muted) {
+                handleUnmute()
+                return
+              }
+
+              setMuteOpen(true)
+            }}
           />
           <Row
             icon={Bell}
@@ -749,6 +844,39 @@ export default function ChatInfoPage() {
           />
         </section>
       </main>
+
+      {muteOpen ? (
+        <Sheet
+          title="Mute notifications"
+          onClose={() => setMuteOpen(false)}
+        >
+          <p className="mb-3 text-[11px] font-normal leading-5 text-[#777781]">
+            Choose how long you want to mute notifications from this chat.
+          </p>
+
+          <div className="overflow-hidden rounded-[14px] bg-[#f5f5f7]">
+            {MUTE_OPTIONS.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleMute(value)}
+                disabled={busy === 'mute'}
+                className="flex h-12 w-full items-center gap-3 border-b border-white px-4 text-left text-[13px] font-normal text-[#111827] last:border-b-0 active:bg-[#ececf0] disabled:opacity-50"
+              >
+                {busy === 'mute' ? (
+                  <LoaderCircle
+                    size={18}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <VolumeX size={18} />
+                )}
+                {label}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      ) : null}
 
       {reportOpen ? (
         <Sheet title="Report this chat" onClose={() => setReportOpen(false)}>
