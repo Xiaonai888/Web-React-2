@@ -364,7 +364,7 @@ export default function ReportPage() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#d9363e]">
             <i className="fa-solid fa-triangle-exclamation text-[20px]" />
           </div>
-          <h1 className="mt-4 text-[20px] font-black text-[#111827]">
+          <h1 className="mt-4 text-[20px] font-bold text-[#111827]">
             Invalid report
           </h1>
           <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
@@ -373,7 +373,7 @@ export default function ReportPage() {
           <button
             type="button"
             onClick={handleBack}
-            className="mt-5 h-11 rounded-full bg-[#111827] px-6 text-[13px] font-black text-white"
+            className="mt-5 h-11 rounded-full bg-[#111827] px-6 text-[13px] font-bold text-white"
           >
             Go Back
           </button>
@@ -390,7 +390,7 @@ export default function ReportPage() {
             <i className="fa-solid fa-check text-[24px]" />
           </div>
 
-          <h1 className="mt-5 text-[22px] font-black text-[#111827]">
+          <h1 className="mt-5 text-[22px] font-bold text-[#111827]">
             Report received
           </h1>
 
@@ -405,7 +405,7 @@ export default function ReportPage() {
           <button
             type="button"
             onClick={handleBack}
-            className="mt-6 h-12 w-full rounded-full bg-[#111827] text-[14px] font-black text-white active:scale-[0.99]"
+            className="mt-6 h-12 w-full rounded-full bg-[#111827] text-[14px] font-bold text-white active:scale-[0.99]"
           >
             Done
           </button>
@@ -427,7 +427,7 @@ export default function ReportPage() {
             <i className="fa-solid fa-chevron-left text-[14px]" />
           </button>
 
-          <h1 className="truncate text-center text-[17px] font-black text-[#171a21]">
+          <h1 className="truncate text-center text-[17px] font-bold text-[#171a21]">
             {config.title}
           </h1>
         </div>
@@ -441,11 +441,11 @@ export default function ReportPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="text-[10.5px] font-black uppercase tracking-[0.65px] text-[#8a8f98]">
+              <div className="text-[10.5px] font-bold uppercase tracking-[0.65px] text-[#8a8f98]">
                 {config.typeLabel}
               </div>
 
-              <h2 className="mt-1 line-clamp-2 text-[15px] font-black leading-6 text-[#171a21]">
+              <h2 className="mt-1 line-clamp-2 text-[15px] font-bold leading-6 text-[#171a21]">
                 {targetTitle || `Reported ${config.typeLabel}`}
               </h2>
 
@@ -458,12 +458,12 @@ export default function ReportPage() {
 
         <section className="mt-5">
           <div className="flex items-start gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[11px] font-black text-[#ff3b5f]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff1f5] text-[11px] font-bold text-[#ff3b5f]">
               1
             </span>
 
             <div className="min-w-0">
-              <h3 className="text-[15.5px] font-black leading-6 text-[#171a21]">
+              <h3 className="text-[15.5px] font-bold leading-6 text-[#171a21]">
                 Why are you reporting this?
               </h3>
 
@@ -508,7 +508,7 @@ export default function ReportPage() {
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-black leading-5 text-[#171a21]">
+                      <span className="block text-[13.5px] font-bold leading-5 text-[#171a21]">
                         {option.label}
                       </span>
 
@@ -538,13 +538,13 @@ export default function ReportPage() {
 
         <section className="mt-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f1f1ef] text-[11px] font-black text-[#5f646d]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f1f1ef] text-[11px] font-bold text-[#5f646d]">
               2
             </span>
 
             <label
               htmlFor="shadow-report-details"
-              className="text-[14.5px] font-black text-[#171a21]"
+              className="text-[14.5px] font-bold text-[#171a21]"
             >
               Tell us more
               <span className="ml-1 text-[12px] font-semibold text-[#92969d]">
@@ -588,7 +588,7 @@ export default function ReportPage() {
   </span>
 
   <div className="min-w-0">
-    <div className="text-[11.5px] font-black leading-5 text-[#374151]">
+    <div className="text-[11.5px] font-bold leading-5 text-[#374151]">
       Your report is confidential.
     </div>
 
@@ -603,7 +603,7 @@ export default function ReportPage() {
             type="button"
             onClick={handleSubmit}
             disabled={submitting || !reasonCode}
-            className="h-12 w-full rounded-[14px] bg-[#ff3b5f] text-[14px] font-black text-white shadow-[0_8px_18px_rgba(255,59,95,0.22)] transition hover:bg-[#e93254] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
+            className="h-12 w-full rounded-[14px] bg-[#ff3b5f] text-[14px] font-bold text-white shadow-[0_8px_18px_rgba(255,59,95,0.22)] transition hover:bg-[#e93254] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#c9c9c6] disabled:text-white disabled:shadow-none"
           >
             {submitting ? 'Submitting...' : 'Submit Report'}
           </button>
