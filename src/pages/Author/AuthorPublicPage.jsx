@@ -2412,7 +2412,7 @@ onOpenStoreSetting={() => {
 
  <button
   type="button"
-  onClick={() => setPageMoreMenuOpen(true)}
+  onClick={() => navigate(`/author/page/${displayAuthor?.page_username || pageUsername}/options`)}
   className={`flex h-10 w-10 items-center justify-center rounded-full ${
     readerHeaderSolid ? 'bg-white text-[#111827] shadow-sm' : 'bg-transparent text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
   }`}
