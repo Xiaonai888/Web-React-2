@@ -260,7 +260,7 @@ export default function AuthorReaderPageOptionsPage() {
             disabled={blockStatusLoading}
           />
           <ActionRow icon="fa-solid fa-magnifying-glass" label="Search this Page" onClick={searchThisPage} />
-          <ActionRow icon="fa-regular fa-address-book" label="Invite friends" onClick={() => sharePage(true)} />
+          <ActionRow icon="fa-regular fa-address-book" label="Invite friends" onClick={() => navigate(`/author/page/${pageUsername}/invite`)} />
           <ActionRow icon="fa-solid fa-share" label="Share Page" onClick={() => sharePage(false)} />
         </section>
 
