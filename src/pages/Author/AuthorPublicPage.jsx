@@ -4,8 +4,6 @@ import AuthorPageFooter from '../../components/AuthorPageFooter'
 import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
-import ReportModal from '../../components/ReportModal'
-import AuthorPageMoreMenu from '../../components/AuthorPageMoreMenu'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import Cropper from 'react-easy-crop'
 
@@ -1043,8 +1041,6 @@ const { pageUsername } = useParams()
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
   const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
-  const [pageMoreMenuOpen, setPageMoreMenuOpen] = useState(false)
-  const [reportPageOpen, setReportPageOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
@@ -1784,23 +1780,6 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-10">
-
-      <ReportModal
-        open={reportPageOpen}
-        reportType="author_page"
-        targetId={displayAuthor?.id}
-        targetTitle={displayAuthor?.page_name}
-        onClose={() => setReportPageOpen(false)}
-      />
-
-      <AuthorPageMoreMenu
-  open={pageMoreMenuOpen}
-  author={displayAuthor}
-  onClose={() => setPageMoreMenuOpen(false)}
-  onReport={() => setReportPageOpen(true)}
-  onHelp={() => navigate('/help')}
-  onMessage={setMessage}
-/>
 
       <ReaderAuthorMessageRequestModal
         open={messageRequestOpen}
