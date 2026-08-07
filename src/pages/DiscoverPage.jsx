@@ -351,7 +351,7 @@ function Header({ hidden }) {
 
           <Link
   to="/chat"
-  state={{ hideReaderFooter: true }}
+  state={{ hideReaderFooter: true, fromDiscover: true }}
   className="flex h-6 w-6 items-center justify-center text-[#111827] transition-transform active:scale-95"
   aria-label="Chat"
 >
