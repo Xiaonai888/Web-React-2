@@ -187,6 +187,7 @@ const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
 const ChatInboxShellPage = lazy(() => import('./pages/Chat/ChatInboxShellPage'))
 const ArchivedChatPage = lazy(() => import('./pages/Chat/ArchivedChatPage'))
 const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
+const ChatInfoPage = lazy(() => import('./pages/Chat/ChatInfoPage'))
 const AuthorPageInviteFriendsPage = lazy(() => import('./pages/Author/AuthorPageInviteFriendsPage'))
 
 
@@ -1199,6 +1200,7 @@ const shouldShowOpeningAds =
         <Route path="/inbox" element={<InboxPage />} />
         <Route path="/chat" element={<LazyPage><ChatInboxShellPage /></LazyPage>} />
         <Route path="/chat/archived" element={<LazyPage><ArchivedChatPage /></LazyPage>} />
+        <Route path="/chat/:conversationId/info" element={<LazyPage><ChatInfoPage /></LazyPage>} />
         <Route path="/chat/:conversationId" element={<LazyPage><ChatRoomPage /></LazyPage>} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
