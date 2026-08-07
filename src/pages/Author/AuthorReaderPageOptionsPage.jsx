@@ -130,13 +130,6 @@ export default function AuthorReaderPageOptionsPage() {
     }
   }
 
-  async function sharePage(invite = false) {
-    const shareData = {
-      title: invite ? `Follow ${pageName} on Shadow` : pageName,
-      text: invite ? `Come follow ${pageName} on Shadow.` : `View ${pageName} on Shadow.`,
-      url: pageLink,
-    }
-
     try {
       if (navigator.share) {
         await navigator.share(shareData)
