@@ -100,7 +100,7 @@ export default function AuthorPageInviteFriendsPage() {
 
         if (!ignore) {
           setAuthorPage(authorData.author_page || authorData.page || null)
-          setFriends(allFriends)
+          setFriends(allFriends.filter((user) => !user?.is_author))
         }
       } catch (error) {
         if (!ignore && error?.name !== 'AbortError') {
