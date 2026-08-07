@@ -274,11 +274,8 @@ export default function EpisodeEchoesPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="truncate text-[17px] font-black">Readers who echoed this</h1>
-            <p className="mt-0.5 text-[10.5px] font-semibold text-[#9b93a5]">
-              {Number(total || 0).toLocaleString()} {Number(total || 0) === 1 ? 'echo' : 'echoes'}
-            </p>
-          </div>
+  <h1 className="truncate text-[17px] font-black">Readers who echoed this</h1>
+</div>
 
           <button
             type="button"
