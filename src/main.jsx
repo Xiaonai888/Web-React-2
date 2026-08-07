@@ -4,8 +4,10 @@ import './index.css'
 import App from './App.jsx'
 import AppErrorBoundary from './components/AppErrorBoundary.jsx'
 import { installApiAuthFetch } from './utils/installApiAuthFetch'
+import { installPaidContentRequirementFetch } from './utils/installPaidContentRequirementFetch'
 
 installApiAuthFetch()
+installPaidContentRequirementFetch()
 const APP_UPDATE_CHECK_INTERVAL_MS = 60000
 let appUpdateCheckRunning = false
 let lastAppUpdateCheckAt = 0
