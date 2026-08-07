@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -44,6 +45,7 @@ export default function AuthorReaderPageOptionsPage() {
   const [blockConfirmOpen, setBlockConfirmOpen] = useState(false)
   const [blockLoading, setBlockLoading] = useState(false)
   const [blockError, setBlockError] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
 
   const pageName = authorPage?.page_name || authorPage?.name || 'Author Page'
   const pageId = authorPage?.id || ''
@@ -261,7 +263,7 @@ export default function AuthorReaderPageOptionsPage() {
           />
           <ActionRow icon="fa-solid fa-magnifying-glass" label="Search this Page" onClick={searchThisPage} />
           <ActionRow icon="fa-regular fa-address-book" label="Invite friends" onClick={() => navigate(`/author/page/${pageUsername}/invite`)} />
-          <ActionRow icon="fa-solid fa-share" label="Share Page" onClick={() => sharePage(false)} />
+          <ActionRow icon="fa-solid fa-share" label="Share Page" onClick={() => setShareOpen(true)} />
         </section>
 
         <section className="mt-3 bg-white px-4 pb-5 pt-5">
@@ -285,6 +287,14 @@ export default function AuthorReaderPageOptionsPage() {
           </button>
         </section>
       </main>
+
+      <AuthorPageShareSheet
+  open={shareOpen}
+  pageName={pageName}
+  pageLink={pageLink}
+  onClose={() => setShareOpen(false)}
+  onCopied={(value) => setMessage(value || 'Page link copied.')}
+/>
 
       {blockConfirmOpen ? (
         <div className="fixed inset-0 z-[270] flex items-end justify-center bg-black/45 md:items-center md:px-4">
