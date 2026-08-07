@@ -35,6 +35,10 @@ import {
   hasReaderSession,
   searchChatUsers,
 } from '../../services/chatApi'
+import {
+  muteChatConversation,
+  unmuteChatConversation,
+} from '../../services/chatMuteApi'
 
 function normalizeSearchValue(value) {
   return String(value || '')
@@ -104,6 +108,14 @@ function getSmartSearchScore(query, values) {
 
   return matchedTerms > 0 || score > 0 ? score : 0
 }
+
+const MUTE_OPTIONS = [
+  ['1h', '1 hour'],
+  ['8h', '8 hours'],
+  ['1d', '1 day'],
+  ['7d', '7 days'],
+  ['forever', 'Until I turn it back on'],
+]
 
 function formatConversationTime(value) {
   if (!value) return ''
@@ -490,6 +502,14 @@ function ConversationRow({
               {canDecideRequest ? 'Request' : 'Pending'}
             </span>
           ) : null}
+
+          {conversation.is_muted ? (
+            <VolumeX
+              size={14}
+              strokeWidth={2}
+              className="shrink-0 text-[#96929d]"
+            />
+          ) : null}
         </span>
 
         <span
@@ -581,6 +601,7 @@ export default function ChatInboxPage() {
     useState(false)
   const [selectionBusy, setSelectionBusy] = useState('')
   const [selectionNotice, setSelectionNotice] = useState('')
+  const [muteSheetOpen, setMuteSheetOpen] = useState(false)
 
   const loadQuickContacts = useCallback(async () => {
     try {
@@ -1063,9 +1084,27 @@ export default function ChatInboxPage() {
   const selectionMode =
     selectedConversationIds.size > 0
 
+  const selectedConversations = useMemo(
+    () =>
+      conversations.filter((conversation) =>
+        selectedConversationIds.has(
+          String(conversation.id)
+        )
+      ),
+    [conversations, selectedConversationIds]
+  )
+
+  const allSelectedMuted =
+    selectedConversations.length > 0 &&
+    selectedConversations.every(
+      (conversation) =>
+        Boolean(conversation.is_muted)
+    )
+
   const clearConversationSelection = () => {
     setSelectedConversationIds(new Set())
     setSelectionMenuOpen(false)
+    setMuteSheetOpen(false)
   }
 
   const startConversationSelection = (
@@ -1075,6 +1114,7 @@ export default function ChatInboxPage() {
     setActiveFilter('all')
     setNewMessageOpen(false)
     setSelectionMenuOpen(false)
+    setMuteSheetOpen(false)
     setSelectedConversationIds(
       new Set([String(conversationId)])
     )
@@ -1105,6 +1145,85 @@ export default function ChatInboxPage() {
     window.setTimeout(() => {
       setSelectionNotice('')
     }, 2200)
+  }
+
+  const handleMuteSelected = async (duration) => {
+    if (
+      selectionBusy ||
+      !selectedConversationIds.size
+    ) {
+      return
+    }
+
+    const ids = [...selectedConversationIds]
+    setSelectionBusy('mute')
+    setMuteSheetOpen(false)
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          muteChatConversation(id, duration)
+        )
+      )
+      clearConversationSelection()
+      await loadConversations({ silent: true })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice(
+        ids.length === 1
+          ? 'Chat muted'
+          : `${ids.length} chats muted`
+      )
+    } catch (muteError) {
+      setError(
+        muteError.message ||
+          'Failed to mute selected chats'
+      )
+      await loadConversations({ silent: true })
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleUnmuteSelected = async () => {
+    if (
+      selectionBusy ||
+      !selectedConversationIds.size
+    ) {
+      return
+    }
+
+    const ids = [...selectedConversationIds]
+    setSelectionBusy('unmute')
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          unmuteChatConversation(id)
+        )
+      )
+      clearConversationSelection()
+      await loadConversations({ silent: true })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice(
+        ids.length === 1
+          ? 'Chat unmuted'
+          : `${ids.length} chats unmuted`
+      )
+    } catch (muteError) {
+      setError(
+        muteError.message ||
+          'Failed to unmute selected chats'
+      )
+      await loadConversations({ silent: true })
+    } finally {
+      setSelectionBusy('')
+    }
   }
 
   const handleArchiveSelected = async () => {
@@ -1224,15 +1343,31 @@ export default function ChatInboxPage() {
               <div className="ml-auto flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() =>
-                    showSelectionNotice(
-                      'Mute is coming soon.'
-                    )
+                  onClick={() => {
+                    if (allSelectedMuted) {
+                      handleUnmuteSelected()
+                      return
+                    }
+
+                    setMuteSheetOpen(true)
+                  }}
+                  disabled={Boolean(selectionBusy)}
+                  aria-label={
+                    allSelectedMuted
+                      ? 'Unmute selected chats'
+                      : 'Mute selected chats'
                   }
-                  aria-label="Mute selected chats"
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-40"
                 >
-                  <VolumeX size={21} />
+                  {selectionBusy === 'mute' ||
+                  selectionBusy === 'unmute' ? (
+                    <LoaderCircle
+                      size={20}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <VolumeX size={21} />
+                  )}
                 </button>
 
                 <button
@@ -1438,6 +1573,52 @@ export default function ChatInboxPage() {
         <div className="fixed left-1/2 top-[72px] z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[11px] font-normal text-white">
           {selectionNotice}
         </div>
+      ) : null}
+
+      {muteSheetOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close mute options"
+            onClick={() => setMuteSheetOpen(false)}
+            className="fixed inset-0 z-[118] bg-black/30"
+          />
+
+          <section className="fixed inset-x-0 bottom-0 z-[119] mx-auto w-full max-w-[620px] rounded-t-[24px] bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-4 shadow-[0_-14px_36px_rgba(17,24,39,0.14)]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d7d7dc]" />
+            <h2 className="px-1 text-[16px] font-semibold text-[#111827]">
+              Mute notifications
+            </h2>
+            <p className="mt-1 px-1 text-[11px] font-normal text-[#85818c]">
+              Choose how long to mute the selected chat.
+            </p>
+
+            <div className="mt-3 overflow-hidden rounded-[16px] bg-[#f6f6f8]">
+              {MUTE_OPTIONS.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() =>
+                    handleMuteSelected(value)
+                  }
+                  disabled={Boolean(selectionBusy)}
+                  className="flex h-12 w-full items-center gap-3 border-b border-white px-4 text-left text-[14px] font-normal text-[#111827] last:border-b-0 active:bg-[#ececf0] disabled:opacity-50"
+                >
+                  <VolumeX size={19} />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMuteSheetOpen(false)}
+              className="mt-3 h-11 w-full rounded-[14px] bg-[#f0f0f3] text-[13px] font-semibold text-[#555560]"
+            >
+              Cancel
+            </button>
+          </section>
+        </>
       ) : null}
 
       <main className="mx-auto max-w-[620px]">
