@@ -20,12 +20,12 @@ function ActionRow({ icon, label, onClick, disabled = false }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex min-h-[58px] w-full items-center gap-3 border-b border-[#e5e7eb] px-4 text-left active:bg-[#f3f4f6] disabled:opacity-55"
+      className="flex min-h-[58px] w-full items-center gap-3 px-4 text-left active:bg-[#f3f4f6] disabled:opacity-55"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-        <i className={`${icon} text-[20px]`} />
+        <i className={`${icon} text-[18px]`} />
       </span>
-      <span className="min-w-0 flex-1 text-[15px] font-normal text-[#111827]">
+      <span className="min-w-0 flex-1 text-[14px] font-normal text-[#111827]">
         {label}
       </span>
       <i className="fa-solid fa-chevron-right text-[11px] text-[#9ca3af]" />
