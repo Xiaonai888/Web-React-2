@@ -569,29 +569,29 @@ function CropImageModal({
 function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMute, onUnfollow }) {
   const [dragY, setDragY] = useState(0)
   const dragStartYRef = useRef(null)
+  const dragCurrentYRef = useRef(0)
 
   if (!open || !author) return null
 
   function handleDragStart(event) {
     dragStartYRef.current = event.clientY
+    dragCurrentYRef.current = 0
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   function handleDragMove(event) {
     if (dragStartYRef.current === null) return
-    setDragY(Math.max(0, event.clientY - dragStartYRef.current))
+    const nextDragY = Math.max(0, event.clientY - dragStartYRef.current)
+    dragCurrentYRef.current = nextDragY
+    setDragY(nextDragY)
   }
 
   function handleDragEnd() {
+    const shouldClose = dragCurrentYRef.current >= 80
     dragStartYRef.current = null
-
-    if (dragY >= 80) {
-      setDragY(0)
-      onClose()
-      return
-    }
-
+    dragCurrentYRef.current = 0
     setDragY(0)
+    if (shouldClose) onClose()
   }
 
   return (
@@ -1081,12 +1081,14 @@ const { pageUsername } = useParams()
   if (!followSettingsOpen) return undefined
 
   const scrollY = window.scrollY
+  const previousHtmlOverflow = document.documentElement.style.overflow
   const previousOverflow = document.body.style.overflow
   const previousPosition = document.body.style.position
   const previousTop = document.body.style.top
   const previousWidth = document.body.style.width
 
   document.body.classList.add('mobile-popup-open')
+  document.documentElement.style.overflow = 'hidden'
   document.body.style.overflow = 'hidden'
   document.body.style.position = 'fixed'
   document.body.style.top = `-${scrollY}px`
@@ -1094,6 +1096,7 @@ const { pageUsername } = useParams()
 
   return () => {
     document.body.classList.remove('mobile-popup-open')
+    document.documentElement.style.overflow = previousHtmlOverflow
     document.body.style.overflow = previousOverflow
     document.body.style.position = previousPosition
     document.body.style.top = previousTop
