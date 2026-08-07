@@ -55,6 +55,16 @@ async function submitEchoV2({
     )
   }
 
+  window.dispatchEvent(
+    new CustomEvent('shadow:echo-v2-updated', {
+      detail: {
+        sourceType,
+        sourceId: String(sourceId),
+        echoCount: Number(data.echo_count || 0),
+      },
+    })
+  )
+
   return data
 }
 
