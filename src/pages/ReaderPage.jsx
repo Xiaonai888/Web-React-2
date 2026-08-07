@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
-import SocialEchoShareSheet from '../components/social/SocialEchoShareSheet'
+import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
+import EchoV2Count from '../components/social/EchoV2Count'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
@@ -1116,7 +1117,7 @@ async function handleToggleLike() {
 }} className="flex flex-col items-center justify-center gap-1 active:scale-95">
   <i className="fa-solid fa-rotate text-[24px] text-[#111827]" />
   <span className="text-[13px] font-normal text-[#111827]">Echo</span>
-  <span className="text-[11px] font-normal text-[#98a2b3]">{formatCompactNumber(echoCount)}</span>
+  <span className="text-[11px] font-normal text-[#98a2b3]"><EchoV2Count sourceType="episode" sourceId={episodeId} fallback={echoCount} /></span>
 </button>
 </div>
 
@@ -5984,7 +5985,7 @@ autoScrollEnabled ? (
   />
 )}
 
-      <SocialEchoShareSheet
+      <EchoShareSheetV2Connected
   open={echoShareOpen}
   sourceType="episode"
   sourceId={episode?.id || episodeId}
