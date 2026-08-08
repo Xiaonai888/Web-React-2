@@ -90,34 +90,21 @@ function getAuthToken() {
   )
 }
 
-function SheetHeader({ title, onBack, onClose }) {
+function PageHeader({ title, onBack }) {
   return (
-    <>
-      <div className="mx-auto h-1.5 w-11 rounded-full bg-[#9ca3af]" />
-      <div className="relative mt-2 flex h-12 items-center justify-center px-14">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="absolute left-3 flex h-10 w-10 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
-            aria-label="Back"
-          >
-            <i className="fa-solid fa-arrow-left text-[18px]" />
-          </button>
-        ) : null}
-        <h1 className="text-[18px] font-bold text-[#111827]">{title}</h1>
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-3 flex h-10 w-10 items-center justify-center text-[#6b7280] active:bg-[#f3f4f6]"
-            aria-label="Close"
-          >
-            <i className="fa-solid fa-xmark text-[17px]" />
-          </button>
-        ) : null}
+    <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white">
+      <div className="relative mx-auto flex min-h-[60px] w-full max-w-[720px] items-center justify-center px-14">
+        <button
+          type="button"
+          onClick={onBack}
+          className="absolute left-2 flex h-11 w-11 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+          aria-label="Back"
+        >
+          <i className="fa-solid fa-chevron-left text-[19px]" />
+        </button>
+        <h1 className="truncate text-[17px] font-bold text-[#111827]">{title}</h1>
       </div>
-    </>
+    </header>
   )
 }
 
@@ -251,10 +238,7 @@ export default function AuthorPageHelpPage() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (
-        response.status === 409 &&
-        data.code === 'REPORT_ALREADY_OPEN'
-      ) {
+      if (response.status === 409 && data.code === 'REPORT_ALREADY_OPEN') {
         setSubmitMessage(data.message || 'You already submitted a report for this Page.')
         setStep('success')
         return
@@ -308,130 +292,122 @@ export default function AuthorPageHelpPage() {
     }
   }
 
+  const headerTitle = step === 'review' ? 'Review report' : 'Help Page'
+  const headerBack =
+    step === 'success'
+      ? () => navigate(`/author/page/${pageUsername}`)
+      : goBack
+
   return (
-    <div className="min-h-screen bg-black/35 pt-[54px]">
-      <section className="mx-auto min-h-[calc(100vh-54px)] w-full max-w-[720px] rounded-t-[26px] bg-[#f5f6f8] px-4 pb-6 pt-3 shadow-2xl">
+    <div className="min-h-screen bg-[#f5f6f8]">
+      <PageHeader title={headerTitle} onBack={headerBack} />
+
+      <main className="mx-auto w-full max-w-[720px] px-4 pb-8">
         {loading ? (
-          <>
-            <SheetHeader title="Help Page" onClose={() => navigate(-1)} />
-            <div className="flex min-h-[420px] items-center justify-center">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d1d5db] border-t-[#111827]" />
-            </div>
-          </>
+          <div className="flex min-h-[420px] items-center justify-center">
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d1d5db] border-t-[#111827]" />
+          </div>
         ) : error ? (
-          <>
-            <SheetHeader title="Help Page" onClose={() => navigate(-1)} />
-            <div className="px-4 py-16 text-center">
-              <i className="fa-solid fa-circle-exclamation text-[30px] text-[#9ca3af]" />
-              <p className="mt-3 text-[14px] font-normal text-[#4b5563]">{error}</p>
-            </div>
-          </>
+          <div className="px-4 py-16 text-center">
+            <i className="fa-solid fa-circle-exclamation text-[30px] text-[#9ca3af]" />
+            <p className="mt-3 text-[14px] font-normal text-[#4b5563]">{error}</p>
+          </div>
         ) : step === 'reason' ? (
-          <>
-            <SheetHeader title="Help Page" onClose={() => navigate(-1)} />
-            <div className="pt-5">
-              <h2 className="text-[22px] font-bold leading-7 text-[#111827]">
-                Why do you think {pageName} needs support?
-              </h2>
-              <p className="mt-2 text-[14px] font-normal leading-5 text-[#6b7280]">
-                {pageName} won&apos;t be notified about this. Choose the option that best describes what is happening.
-              </p>
+          <div className="pt-5">
+            <h2 className="text-[22px] font-bold leading-7 text-[#111827]">
+              Why do you think {pageName} needs support?
+            </h2>
+            <p className="mt-2 text-[14px] font-normal leading-5 text-[#6b7280]">
+              {pageName} won&apos;t be notified about this. Choose the option that best describes what is happening.
+            </p>
 
-              <div className="mt-5 overflow-hidden rounded-[14px] bg-white">
-                {HELP_GROUPS.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => chooseGroup(group.id)}
-                    className="flex min-h-[64px] w-full items-center gap-3 px-4 text-left active:bg-[#f3f4f6]"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
-                      <i className={`${group.icon} text-[18px]`} />
-                    </span>
-                    <span className="min-w-0 flex-1 text-[15px] font-normal text-[#111827]">
-                      {group.label}
-                    </span>
-                    <i className="fa-solid fa-chevron-right text-[15px] text-[#6b7280]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : step === 'detail' ? (
-          <>
-            <SheetHeader title="Help Page" onBack={goBack} />
-            <div className="pt-5">
-              <h2 className="text-[22px] font-bold leading-7 text-[#111827]">
-                {selectedGroup?.label}
-              </h2>
-              <p className="mt-2 text-[14px] font-normal leading-5 text-[#6b7280]">
-                {selectedGroup?.description}
-              </p>
-
-              <div className="mt-5 overflow-hidden rounded-[14px] bg-white">
-                {(selectedGroup?.details || []).map((detail) => (
-                  <button
-                    key={detail}
-                    type="button"
-                    onClick={() => chooseDetail(detail)}
-                    className="flex min-h-[66px] w-full items-center gap-3 px-4 text-left active:bg-[#f3f4f6]"
-                  >
-                    <span className="min-w-0 flex-1 text-[15px] font-normal leading-5 text-[#111827]">
-                      {detail}
-                    </span>
-                    <i className="fa-solid fa-chevron-right text-[15px] text-[#6b7280]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : step === 'review' ? (
-          <>
-            <SheetHeader title="Review report" onBack={goBack} />
-            <div className="pt-5">
-              <div className="rounded-[16px] bg-white px-4 py-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef0f3] text-[#111827]">
-                    <i className={`${selectedGroup?.icon || 'fa-regular fa-flag'} text-[18px]`} />
+            <div className="mt-5 overflow-hidden rounded-[14px] bg-white">
+              {HELP_GROUPS.map((group) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => chooseGroup(group.id)}
+                  className="flex min-h-[64px] w-full items-center gap-3 px-4 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827]">
+                    <i className={`${group.icon} text-[18px]`} />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[16px] font-bold text-[#111827]">{pageName}</div>
-                    <div className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Author Page</div>
-                  </div>
-                </div>
+                  <span className="min-w-0 flex-1 text-[15px] font-normal text-[#111827]">
+                    {group.label}
+                  </span>
+                  <i className="fa-solid fa-chevron-right text-[15px] text-[#6b7280]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : step === 'detail' ? (
+          <div className="pt-5">
+            <h2 className="text-[22px] font-bold leading-7 text-[#111827]">
+              {selectedGroup?.label}
+            </h2>
+            <p className="mt-2 text-[14px] font-normal leading-5 text-[#6b7280]">
+              {selectedGroup?.description}
+            </p>
 
-                <div className="mt-5 rounded-[12px] bg-[#f5f6f8] px-4 py-4">
-                  <div className="text-[13px] font-bold text-[#111827]">{selectedGroup?.label}</div>
-                  <div className="mt-1 text-[13px] font-normal leading-5 text-[#6b7280]">
-                    {selectedDetail}
-                  </div>
+            <div className="mt-5 overflow-hidden rounded-[14px] bg-white">
+              {(selectedGroup?.details || []).map((detail) => (
+                <button
+                  key={detail}
+                  type="button"
+                  onClick={() => chooseDetail(detail)}
+                  className="flex min-h-[66px] w-full items-center gap-3 px-4 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="min-w-0 flex-1 text-[15px] font-normal leading-5 text-[#111827]">
+                    {detail}
+                  </span>
+                  <i className="fa-solid fa-chevron-right text-[15px] text-[#6b7280]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : step === 'review' ? (
+          <div className="pt-5">
+            <div className="rounded-[16px] bg-white px-4 py-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef0f3] text-[#111827]">
+                  <i className={`${selectedGroup?.icon || 'fa-regular fa-flag'} text-[18px]`} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[16px] font-bold text-[#111827]">{pageName}</div>
+                  <div className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Author Page</div>
                 </div>
               </div>
 
-              {submitMessage ? (
-                <div className="mt-4 rounded-[12px] bg-[#fff7d6] px-4 py-3 text-[13px] font-normal leading-5 text-[#111827]">
-                  {submitMessage}
+              <div className="mt-5 rounded-[12px] bg-[#f5f6f8] px-4 py-4">
+                <div className="text-[13px] font-bold text-[#111827]">{selectedGroup?.label}</div>
+                <div className="mt-1 text-[13px] font-normal leading-5 text-[#6b7280]">
+                  {selectedDetail}
                 </div>
-              ) : null}
-
-              <p className="mt-4 text-[12px] font-normal leading-5 text-[#6b7280]">
-                Your report will be sent to Shadow Admin for review. The Author Page won&apos;t be told who submitted it.
-              </p>
-
-              <button
-                type="button"
-                onClick={submitReport}
-                disabled={submitting}
-                className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[15px] font-bold text-white disabled:opacity-60"
-              >
-                {submitting ? 'Submitting...' : 'Submit report'}
-              </button>
+              </div>
             </div>
-          </>
+
+            {submitMessage ? (
+              <div className="mt-4 rounded-[12px] bg-[#fff7d6] px-4 py-3 text-[13px] font-normal leading-5 text-[#111827]">
+                {submitMessage}
+              </div>
+            ) : null}
+
+            <p className="mt-4 text-[12px] font-normal leading-5 text-[#6b7280]">
+              Your report will be sent to Shadow Admin for review. The Author Page won&apos;t be told who submitted it.
+            </p>
+
+            <button
+              type="button"
+              onClick={submitReport}
+              disabled={submitting}
+              className="mt-5 h-12 w-full rounded-[12px] bg-[#111827] text-[15px] font-bold text-white disabled:opacity-60"
+            >
+              {submitting ? 'Submitting...' : 'Submit report'}
+            </button>
+          </div>
         ) : (
-          <>
-            <SheetHeader title="Help Page" />
-            <div className="pt-6 text-center">
+          <div className="pt-6">
+            <div className="text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#2e9d4d] text-white">
                 <i className="fa-solid fa-check text-[24px]" />
               </div>
@@ -468,7 +444,9 @@ export default function AuthorPageHelpPage() {
                   <i className="fa-solid fa-check text-[18px]" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-bold text-[#111827]">Submitted to Shadow for Review</span>
+                  <span className="block text-[15px] font-bold text-[#111827]">
+                    Submitted to Shadow for Review
+                  </span>
                   <span className="mt-0.5 block text-[12px] font-normal text-[#6b7280]">
                     Your report has been sent to Admin.
                   </span>
@@ -483,9 +461,9 @@ export default function AuthorPageHelpPage() {
             >
               Done
             </button>
-          </>
+          </div>
         )}
-      </section>
+      </main>
     </div>
   )
 }
