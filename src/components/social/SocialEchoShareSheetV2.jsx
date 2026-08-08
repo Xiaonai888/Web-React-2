@@ -690,7 +690,7 @@ export default function SocialEchoShareSheetV2({
 
       <section
         ref={sheetRef}
-        className="relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl md:mb-5 md:max-w-[520px] md:rounded-[30px]"
+        className="relative max-h-[92dvh] w-screen max-w-none overflow-y-auto rounded-t-[30px] bg-[#f5f3fa] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3 shadow-2xl lg:mb-5 lg:w-full lg:max-w-[520px] lg:rounded-[30px]"
         style={{
           transform:
             `translateY(${dragOffset}px)`,
