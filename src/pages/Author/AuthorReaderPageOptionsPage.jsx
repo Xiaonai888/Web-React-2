@@ -30,7 +30,6 @@ function ActionRow({ icon, label, onClick, disabled = false }) {
       <span className="min-w-0 flex-1 text-[14px] font-normal text-[#111827]">
         {label}
       </span>
-      <i className="fa-solid fa-chevron-right text-[11px] text-[#9ca3af]" />
     </button>
   )
 }
