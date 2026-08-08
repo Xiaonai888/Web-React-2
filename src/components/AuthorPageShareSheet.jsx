@@ -43,7 +43,7 @@ export default function AuthorPageShareSheet({ open, pageName, pageLink, onClose
         <div className="mx-auto h-1.5 w-10 rounded-full bg-[#b9bec6]" />
         <div className="flex items-center justify-between px-5 pb-3 pt-4">
           <h2 className="text-[17px] font-bold text-[#111827]">Share Page</h2>
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#6b7280]" aria-label="Close share"><i className="fa-solid fa-xmark text-[13px]" /></button>
+          
         </div>
         <div className="overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max gap-1">
