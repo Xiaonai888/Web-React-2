@@ -2831,7 +2831,14 @@ function ChoiceButton({ active, children, onClick, className = '' }) {
 }
 
 function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
-  if (!open) return null
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : ''
+    document.documentElement.style.overflow = open ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [open])
 
   const groups = FONT_OPTIONS.reduce((result, font) => {
     if (!result[font.group]) result[font.group] = []
@@ -2858,7 +2865,7 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
                 {group}
               </h3>
 
-              <div className="space-y-2">
+              <div className="overflow-hidden rounded-[10px] border border-[#ececf0] bg-white">
                 {fonts.map((font) => {
                   const active = font.key === selectedFontKey
 
@@ -2870,9 +2877,9 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
                         onSelect(font.key)
                         onClose()
                       }}
-                      className={`flex w-full items-center justify-between gap-3 rounded-[18px] px-4 py-3 text-left active:scale-[0.995] ${
-                        active ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#111827]'
-                      }`}
+                      className={`flex w-full items-center justify-between gap-3 border-b border-[#eeeeF2] px-4 py-3 text-left last:border-b-0 active:scale-[0.995] ${
+  active ? 'bg-[#111827] text-white' : 'bg-white text-[#111827]'
+}`}
                     >
                       <span
   className="line-clamp-1 text-[14px] font-bold"
@@ -4064,13 +4071,12 @@ export default function ReaderPage() {
   const [unlockingEpisode, setUnlockingEpisode] = useState(false)
   const [fontSizeIndex, setFontSizeIndex] = useState(getInitialFontSizeIndex)
   const [fontKey, setFontKey] = useState(() => localStorage.getItem('reader_font_key') || 'noto-sans-khmer')
-  const [themeName, setThemeName] = useState(() => {
-  localStorage.setItem('reader_theme', 'white')
-  return 'white'
-})
+  const [themeName, setThemeName] = useState(
+  () => localStorage.getItem('reader_theme') || 'white'
+)
 const [brightness, setBrightness] = useState(() => {
-  localStorage.setItem('reader_brightness', '100')
-  return 100
+  const saved = Number(localStorage.getItem('reader_brightness'))
+  return saved >= 60 && saved <= 100 ? saved : 100
 })
   const [lineSpacing, setLineSpacing] = useState(() => localStorage.getItem('reader_line_spacing') || 'comfort')
   const [readingMode, setReadingMode] = useState(() => localStorage.getItem('reader_reading_mode') || 'scroll')
@@ -5861,7 +5867,11 @@ const readerControlsVisible =
 
 
 return (
-    <div className="min-h-screen bg-[#FFFFFF] pb-[110px]">
+  <div className={`min-h-screen ${theme.page} pb-[110px]`}>
+    {brightnessOpacity > 0 ? (
+      <div className="pointer-events-none fixed inset-0 z-[140] bg-black"
+        style={{ opacity: brightnessOpacity }} />
+    ) : null}
       
 
       {!isChatStory &&
