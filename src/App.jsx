@@ -177,7 +177,9 @@ const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
 const SocialInteractionUsersPage = lazy(() =>
   import('./pages/SocialInteractionUsersPage')
 )
-
+const ReceivedEchoesPage = lazy(() =>
+  import('./pages/ReceivedEchoesPage')
+)
 const CreateAuthorStoryPage = lazy(() => import('./pages/Author/CreateAuthorStoryPage'))
 const CreateReaderStoryPage = lazy(() => import('./pages/ReaderStories/CreateReaderStoryPage'))
 const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
@@ -780,6 +782,10 @@ const shouldShowOpeningAds =
       <MeCommentsPage />
     </LazyPage>
   }
+/>
+        <Route
+  path="/echoes/received"
+  element={<LazyPage><ReceivedEchoesPage /></LazyPage>}
 />
 
         <Route
