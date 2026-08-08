@@ -184,9 +184,10 @@ export default function ChatSuggestedPeople() {
       Object.keys(hiddenSuggestions)
     )
 
-    return users
+        return users
       .filter(
         (user) =>
+          !user.is_following &&
           !hiddenIds.has(String(user.id))
       )
       .slice(0, 3)
@@ -292,7 +293,7 @@ export default function ChatSuggestedPeople() {
           onClick={() =>
             navigate('/profile/discover-people')
           }
-          className="text-[13px] font-extrabold text-[#7c3aed] active:opacity-70"
+          className="text-[13px] font-normal text-[#7c3aed] active:opacity-70"
         >
           See all
         </button>
@@ -336,24 +337,36 @@ export default function ChatSuggestedPeople() {
                 key={user.id}
                 className="flex items-center gap-3"
               >
-                <SuggestedAvatar user={user} />
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/profile?username=${encodeURIComponent(
+                        user.username
+                      )}`
+                    )
+                  }
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <SuggestedAvatar user={user} />
 
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-extrabold text-[#111827]">
-                    {user.name ||
-                      user.username}
-                  </div>
-                  <div className="mt-0.5 truncate text-[11px] font-medium text-[#8a8a95]">
-                    {user.is_author
-                      ? 'Author'
-                      : 'Reader'}
-                    {' · '}
-                    {formatFollowers(
-                      user.followers_count
-                    )}{' '}
-                    followers
-                  </div>
-                </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-extrabold text-[#111827]">
+                      {user.name ||
+                        user.username}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[11px] font-medium text-[#8a8a95]">
+                      {user.is_author
+                        ? 'Author'
+                        : 'Reader'}
+                      {' · '}
+                      {formatFollowers(
+                        user.followers_count
+                      )}{' '}
+                      followers
+                    </span>
+                  </span>
+                </button>
 
                 <button
                   type="button"
