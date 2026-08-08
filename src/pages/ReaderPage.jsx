@@ -908,14 +908,6 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     0
   )
 
-  const echoCount = Number(
-  episode?.echo_count ||
-  episode?.echoes_count ||
-  story?.echo_count ||
-  story?.echoes_count ||
-  0
-)
-
   const fallbackCommentCount = Number(
     episode?.total_comments ||
     episode?.comment_count ||
@@ -1062,7 +1054,7 @@ async function handleToggleLike() {
 
   return (
     <section className="mt-8 bg-white px-4 pb-8 pt-2">
-      <div className="grid grid-cols-3 border-b border-[#eef1f5] pb-5">
+      <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
        <div className="flex flex-col items-center justify-center gap-1">
   <button
     type="button"
@@ -1111,15 +1103,6 @@ async function handleToggleLike() {
   <span className="text-[11px] font-normal text-[#98a2b3]">{formatCompactNumber(giftCount)}</span>
 </button>
 
-<button type="button" onClick={() => {
-  const targetStoryId = story?.id || story?.story_id
-  if (!targetStoryId || !episodeId) return
-  navigate(`/story/${targetStoryId}/episode/${episodeId}/echoes`)
-}} className="flex flex-col items-center justify-center gap-1 active:scale-95">
-  <i className="fa-solid fa-rotate text-[24px] text-[#111827]" />
-  <span className="text-[13px] font-normal text-[#111827]">Echo</span>
-  <span className="text-[11px] font-normal text-[#98a2b3]"><EchoV2Count sourceType="episode" sourceId={episodeId} fallback={echoCount} /></span>
-</button>
 </div>
 
       <div className="pt-5">
