@@ -701,13 +701,12 @@ function resolveReaderPostEchoSource(
 ) {
   const source = post?.source || {}
   const sourceType = String(
-    post?.source_type ||
-      post?.echo_type ||
-      source?.type ||
-      ''
-  )
-    .trim()
-    .toLowerCase()
+  post?.source_type || post?.echo_type || source?.type ||
+  (post?.source_episode?.id ? 'episode' :
+    post?.source_story?.id ? 'story' : '')
+)
+  .trim().toLowerCase()
+  .replaceAll('-', '_')
   const sourceId = String(
     post?.source_id ||
       source?.id ||
