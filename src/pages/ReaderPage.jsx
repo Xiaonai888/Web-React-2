@@ -2838,7 +2838,9 @@ function FontSelectDrawer({ open, onClose, selectedFontKey, onSelect }) {
       document.body.style.overflow = ''
       document.documentElement.style.overflow = ''
     }
-  }, [open])
+   }, [open])
+
+  if (!open) return null
 
   const groups = FONT_OPTIONS.reduce((result, font) => {
     if (!result[font.group]) result[font.group] = []
