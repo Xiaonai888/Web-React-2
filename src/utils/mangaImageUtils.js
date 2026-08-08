@@ -135,21 +135,25 @@ export async function optimizeMangaImage(file) {
       if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
     }
 
-    if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
-    throw new Error('This image could not be compressed below 800 KB. Try a smaller image.')
+       if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
+    throw new Error('Client compression unavailable.')
+  } catch {
+    return {
+      file,
+      width: loaded.width,
+      height: loaded.height,
+      fileSize: file.size,
+      mimeType: file.type || 'image/jpeg',
+      compressed: false,
+    }
   } finally {
     URL.revokeObjectURL(loaded.url)
   }
 }
 
-export async function uploadMangaPageFile({ token, file, storyId, pageId }) {
+export async function uploadMangaPageFile({ token, file }) {
   const formData = new FormData()
-  const safeStoryId = String(storyId || 'story').replace(/[^a-zA-Z0-9-_]/g, '')
-  const safePageId = String(pageId || Date.now()).replace(/[^a-zA-Z0-9-_]/g, '')
-  const uploadFile = new File([file], `manga-${safeStoryId}-${safePageId}.webp`, {
-    type: file.type || 'image/webp',
-    lastModified: Date.now(),
-  })
+  const uploadFile = file
 
   formData.append('image', uploadFile)
   formData.append('folder', 'episode_content')
