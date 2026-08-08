@@ -517,12 +517,12 @@ async function optimizeNovelEpisodeImage(file) {
 
 async function uploadEpisodeInlineImage({ token, file, storyId }) {
   if (!file) throw new Error('Choose an image first.')
-  if (file.type !== 'image/webp') {
-    throw new Error('Episode image must be WebP.')
-  }
-  if (file.size > NOVEL_IMAGE_HARD_MAX_BYTES) {
-    throw new Error('Compressed image must not exceed 500 KB.')
-  }
+  if (!file.type?.startsWith('image/')) {
+  throw new Error('Please choose an image file.')
+}
+if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
+  throw new Error('Image must be 5 MB or smaller.')
+}
 
   const formData = new FormData()
   formData.append('image', file)
@@ -2977,19 +2977,18 @@ export default function EpisodeEditorPage() {
     }
 
     setInlineImageUploading(true)
-    const optimizedFile = await optimizeNovelEpisodeImage(file)
     const imageUrl = await uploadEpisodeInlineImage({
-      token,
-      file: optimizedFile,
-      storyId,
-    })
+  token,
+  file,
+  storyId,
+})
 
     if (!imageUrl) throw new Error('Image URL was missing.')
 
     insertHtmlAtSelection(
       `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
     )
-    showToast(`Image added (${Math.round(optimizedFile.size / 1024)} KB).`)
+    showToast('Image added.')
   } catch (error) {
     showToast(error.message || 'Could not add image.')
   } finally {
