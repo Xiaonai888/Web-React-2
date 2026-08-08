@@ -473,7 +473,7 @@ export default function AuthorPageHelpPage() {
             <button
               type="button"
               onClick={() => navigate(`/author/page/${pageUsername}`)}
-              className="mt-8 h-12 w-full rounded-[12px] bg-[#6d28d9] text-[15px] font-bold text-white"
+              className="mt-8 h-12 w-full rounded-[12px] bg-gradient-to-r from-[#7c3aed] via-[#8b5cf6] to-[#a855f7] text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(139,92,246,0.28)]"
             >
               Done
             </button>
