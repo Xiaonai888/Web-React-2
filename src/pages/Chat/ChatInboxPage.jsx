@@ -32,6 +32,7 @@ import {
   deleteChatConversation,
   getChatConversations,
   getChatQuickContacts,
+  getManagedChatConversations,
   hasReaderSession,
   searchChatUsers,
 } from '../../services/chatApi'
@@ -580,7 +581,8 @@ export default function ChatInboxPage() {
   const location = useLocation()
   const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
-  const [conversations, setConversations] = useState([])
+    const [conversations, setConversations] = useState([])
+  const [archivedCount, setArchivedCount] = useState(0)
   const [quickContacts, setQuickContacts] = useState([])
   const [activeFilter, setActiveFilter] = useState('all')
   const [query, setQuery] = useState('')
@@ -620,13 +622,24 @@ export default function ChatInboxPage() {
         setLoading(true)
       }
 
-      try {
-        const data = await getChatConversations('all')
+            try {
+        const [data, archivedData] =
+          await Promise.all([
+            getChatConversations('all'),
+            getManagedChatConversations({
+              view: 'archived',
+            }),
+          ])
 
         setConversations(
           Array.isArray(data.conversations)
             ? data.conversations
             : []
+        )
+        setArchivedCount(
+          Array.isArray(archivedData.conversations)
+            ? archivedData.conversations.length
+            : 0
         )
         setError('')
       } catch (loadError) {
@@ -1629,6 +1642,33 @@ export default function ChatInboxPage() {
             className="mx-4 mt-4 block w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
           >
             {error}
+        {!selectionMode &&
+        !hasSearch &&
+        activeFilter === 'all' &&
+        archivedCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => navigate('/chat/archived')}
+            className="mx-2 mt-2 flex w-[calc(100%_-_1rem)] items-center gap-3 rounded-[18px] px-2 py-3 text-left transition hover:bg-[#faf9fc] active:bg-[#f4f2f8]"
+          >
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f1f1f4] text-[#7c3aed]">
+              <Archive size={24} />
+            </span>
+
+            <span className="min-w-0 flex-1">
+              <strong className="block text-[15px] font-bold text-[#111827]">
+                Archived chats
+              </strong>
+              <span className="mt-1 block text-[12px] font-normal text-[#87838f]">
+                {archivedCount}{' '}
+                {archivedCount === 1
+                  ? 'conversation'
+                  : 'conversations'}
+              </span>
+            </span>
+          </button>
+        ) : null}
+            
           </button>
         ) : null}
 
