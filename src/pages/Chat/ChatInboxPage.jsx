@@ -581,7 +581,7 @@ export default function ChatInboxPage() {
   const location = useLocation()
   const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
-    const [conversations, setConversations] = useState([])
+  const [conversations, setConversations] = useState([])
   const [archivedCount, setArchivedCount] = useState(0)
   const [quickContacts, setQuickContacts] = useState([])
   const [activeFilter, setActiveFilter] = useState('all')
@@ -622,7 +622,7 @@ export default function ChatInboxPage() {
         setLoading(true)
       }
 
-            try {
+      try {
         const [data, archivedData] =
           await Promise.all([
             getChatConversations('all'),
@@ -1642,6 +1642,9 @@ export default function ChatInboxPage() {
             className="mx-4 mt-4 block w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
           >
             {error}
+          </button>
+        ) : null}
+
         {!selectionMode &&
         !hasSearch &&
         activeFilter === 'all' &&
@@ -1666,9 +1669,6 @@ export default function ChatInboxPage() {
                   : 'conversations'}
               </span>
             </span>
-          </button>
-        ) : null}
-            
           </button>
         ) : null}
 
