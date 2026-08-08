@@ -2440,10 +2440,11 @@ export default function ChatRoomPage() {
                   type="button"
                   onClick={clearComposerMode}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#7552c6] transition hover:bg-[#ece6fa] active:scale-90"
-                >
+                                >
                   <X size={17} />
                 </button>
-                          ) : null}
+              </div>
+            ) : null}
 
             <button
               type="button"
@@ -2455,7 +2456,6 @@ export default function ChatRoomPage() {
             </button>
 
             <div className="flex items-end gap-2">
-              <textarea
               <textarea
                 ref={textareaRef}
                 value={text}
