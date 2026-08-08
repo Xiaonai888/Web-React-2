@@ -2977,9 +2977,10 @@ export default function EpisodeEditorPage() {
     }
 
     setInlineImageUploading(true)
-    const imageUrl = await uploadEpisodeInlineImage({
+const optimizedFile = await optimizeNovelEpisodeImage(file)
+const imageUrl = await uploadEpisodeInlineImage({
   token,
-  file,
+  file: optimizedFile,
   storyId,
 })
 
