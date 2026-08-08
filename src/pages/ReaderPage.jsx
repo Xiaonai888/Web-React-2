@@ -6136,8 +6136,8 @@ autoScrollEnabled ? (
       <header
   className={`${isChatStory || readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
     lockedHeaderActive
-      ? 'border-[#111111] bg-[#111111]'
-      : 'border-[#F2F2F2] bg-[#FFFFFF]'
+  ? 'border-[#111111] bg-[#111111]'
+  : `${theme.border} ${theme.card}`
   }`}
 >
   <div className="mx-auto flex max-w-3xl items-center justify-between">
@@ -6243,7 +6243,7 @@ autoScrollEnabled ? (
 
       <main
   onClick={isChatStory ? undefined : handleReaderDoubleTap}
-  className="mx-auto max-w-3xl bg-[#FFFFFF] px-0 pb-[92px] pt-[50px] sm:px-4"
+  className={`mx-auto max-w-3xl ${theme.card} px-0 pb-[92px] pt-[50px] sm:px-4`}
 >
         {loading ? <LoadingCard /> : null}
 
