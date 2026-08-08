@@ -6137,7 +6137,7 @@ autoScrollEnabled ? (
   className={`${isChatStory || readerHeaderVisible ? 'translate-y-0' : '-translate-y-full'} fixed left-0 right-0 top-0 z-50 border-b px-4 py-3 transition-transform duration-300 ease-out ${
     lockedHeaderActive
   ? 'border-[#111111] bg-[#111111]'
-  : `${theme.border} ${theme.card}`
+  : 'border-[#F2F2F2] bg-[#FFFFFF]'
   }`}
 >
   <div className="mx-auto flex max-w-3xl items-center justify-between">
@@ -6154,7 +6154,7 @@ autoScrollEnabled ? (
           },
         })
       }}
-      className={lockedHeaderActive ? '!text-white' : theme.text}
+      className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
     />
 
     <div className="min-w-0 flex-1 px-3 text-center">
@@ -6165,7 +6165,7 @@ autoScrollEnabled ? (
         'Untitled Episode'}
     </h1>
   ) : (
-    <h1 className={`line-clamp-1 text-[14.5px] font-extrabold ${theme.text}`}>
+    <h1 className="line-clamp-1 text-[14.5px] font-extrabold text-[#111827]">
       {isChatStory
   ? episode?.title || 'Untitled Episode'
   : story?.title || 'Reader'}
@@ -6182,14 +6182,14 @@ autoScrollEnabled ? (
             icon="fa-solid fa-gear"
             label="Reader settings"
             onClick={() => setSettingsOpen(true)}
-            className={theme.text}
+            className="text-[#111827]"
           />
 
           <ReaderIconButton
   icon="fa-solid fa-list-ul"
   label="Episode list"
   onClick={() => setEpisodeListOpen(true)}
-  className={theme.text}
+  className="text-[#111827]"
 />
         </>
       ) : null}
@@ -6199,7 +6199,7 @@ autoScrollEnabled ? (
           icon="fa-solid fa-ellipsis-vertical"
           label="More options"
           onClick={() => setReaderMoreOpen((value) => !value)}
-          className={theme.text}
+          className="text-[#111827]"
         />
 
         {readerMoreOpen ? (
