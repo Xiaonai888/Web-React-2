@@ -9,6 +9,7 @@ import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatStoryEpisodeListDrawer from '../components/chat-story/ChatStoryEpisodeListDrawer'
 import useReadingProgressSync from '../hooks/useReadingProgressSync'
 import useContinuousEpisodeReader from '../hooks/useContinuousEpisodeReader'
+import ReportModal from '../components/ReportModal'
 import RichEpisodeContent, {
   episodeContentToPlainText,
 } from '../components/reader/RichEpisodeContent'
@@ -4120,6 +4121,7 @@ const [adultWarningOpen, setAdultWarningOpen] =
   const [adultConsentGranted, setAdultConsentGranted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [readerMoreOpen, setReaderMoreOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const [fontSelectOpen, setFontSelectOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [episodeListOpen, setEpisodeListOpen] = useState(false)
@@ -5457,9 +5459,8 @@ const handleReaderCopyLink = async () => {
 
 const handleReaderReport = () => {
   setReaderMoreOpen(false)
-  window.alert('Report is coming soon.')
+  setReportOpen(true)
 }
-
 const handleReaderEcho = () => {
   setReaderMoreOpen(false)
   setEchoShareOpen(true)
@@ -5984,6 +5985,14 @@ autoScrollEnabled ? (
     theme={theme}
   />
 )}
+
+      <ReportModal
+  open={reportOpen}
+  reportType="story"
+  targetId={story?.id || storyId}
+  targetTitle={story?.title}
+  onClose={() => setReportOpen(false)}
+/>
 
       <EchoShareSheetV2Connected
   open={echoShareOpen}
