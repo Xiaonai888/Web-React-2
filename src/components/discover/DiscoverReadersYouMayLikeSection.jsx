@@ -324,7 +324,7 @@ export default function DiscoverReadersYouMayLikeSection() {
                     onClick={() =>
                       followReader(reader)
                     }
-                    className="mt-4 h-9 w-full rounded-[10px] bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-[12px] font-semibold text-white shadow-[0_6px_16px_rgba(139,92,246,0.28)] active:scale-[0.98] disabled:opacity-60"
+                    className="mt-4 h-9 w-full rounded-[10px] bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] text-[12px] font-semibold text-white active:scale-[0.98] disabled:opacity-60"
                   >
                     {busy ? (
                       <>
