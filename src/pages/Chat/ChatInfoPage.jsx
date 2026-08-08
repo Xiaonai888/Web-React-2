@@ -29,9 +29,11 @@ import {
   deleteChatConversation,
   getChatBlockStatus,
   getChatMessages,
+  getPinnedChatMessages,
   hasReaderSession,
   reportChatMessage,
   unblockChatConversation,
+  unpinChatMessage,
 } from '../../services/chatApi'
 import {
   getChatMuteStatus,
@@ -243,6 +245,11 @@ export default function ChatInfoPage() {
     auto_delete_enabled: false,
     auto_delete_seconds: 0,
   })
+  const [pinnedOpen, setPinnedOpen] = useState(false)
+  const [pinnedItems, setPinnedItems] = useState([])
+  const [pinnedLoading, setPinnedLoading] = useState(false)
+  const [pinnedError, setPinnedError] = useState('')
+  const [pinnedBusyId, setPinnedBusyId] = useState('')
 
   const person = conversation?.counterpart || {}
   const name =
@@ -469,6 +476,68 @@ export default function ChatInfoPage() {
     }
 
     navigate(`/profile?username=${encodeURIComponent(username)}`)
+  }
+
+  const openPinnedMessages = async () => {
+    if (!conversationId) return
+
+    setPinnedOpen(true)
+    setPinnedLoading(true)
+    setPinnedError('')
+
+    try {
+      const data = await getPinnedChatMessages(
+        conversationId
+      )
+
+      setPinnedItems(
+        Array.isArray(data.pins)
+          ? data.pins
+          : []
+      )
+    } catch (error) {
+      setPinnedError(
+        error.message ||
+          'Failed to load pinned messages'
+      )
+    } finally {
+      setPinnedLoading(false)
+    }
+  }
+
+  const handleUnpinPinnedMessage = async (
+    messageId
+  ) => {
+    if (pinnedBusyId) return
+
+    setPinnedBusyId(String(messageId))
+    setPinnedError('')
+
+    try {
+      await unpinChatMessage(
+        conversationId,
+        messageId
+      )
+
+      setPinnedItems((current) =>
+        current.filter(
+          (pin) =>
+            String(pin.message_id) !==
+              String(messageId) &&
+            String(pin.message?.id) !==
+              String(messageId)
+        )
+      )
+      notifyUpdated()
+      showNotice('Message unpinned')
+    } catch (error) {
+      setPinnedError(
+        error.message ||
+          'Failed to unpin message'
+      )
+    } finally {
+      setPinnedBusyId('')
+    }
   }
 
   const handleMute = async (duration) => {
@@ -874,7 +943,7 @@ export default function ChatInfoPage() {
           <Row
             icon={Pin}
             title="Pinned messages"
-            onClick={() => showNotice('Coming soon')}
+            onClick={openPinnedMessages}
           />
         </section>
 
@@ -997,6 +1066,106 @@ export default function ChatInfoPage() {
               </button>
             ))}
           </div>
+        </Sheet>
+      ) : null}
+
+      {pinnedOpen ? (
+        <Sheet
+          title="Pinned messages"
+          onClose={() => setPinnedOpen(false)}
+        >
+          {pinnedError ? (
+            <p className="mb-3 rounded-[12px] bg-[#fff0f1] px-3 py-2.5 text-[11px] font-medium text-[#c7353d]">
+              {pinnedError}
+            </p>
+          ) : null}
+
+          {pinnedLoading ? (
+            <div className="flex min-h-[180px] items-center justify-center text-[#7c3aed]">
+              <LoaderCircle
+                size={25}
+                className="animate-spin"
+              />
+            </div>
+          ) : pinnedItems.length ? (
+            <div className="overflow-hidden rounded-[14px] bg-[#f6f6f8]">
+              {pinnedItems.map((pin) => {
+                const message = pin.message || {}
+                const messageId =
+                  message.id || pin.message_id
+                const busy =
+                  String(pinnedBusyId) ===
+                  String(messageId)
+
+                return (
+                  <div
+                    key={pin.id || messageId}
+                    className="flex items-start gap-3 border-b border-white px-3 py-3 last:border-b-0"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/chat/${conversationId}`
+                        )
+                      }
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#7c3aed]">
+                        <Pin size={12} />
+                        Pinned message
+                      </div>
+
+                      <p className="mt-1 whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-[#2f2f37]">
+                        {message.body ||
+                          'Message'}
+                      </p>
+
+                      <p className="mt-1 text-[10px] font-normal text-[#92929b]">
+                        {formatSearchMessageDate(
+                          message.created_at ||
+                            pin.created_at
+                        )}
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUnpinPinnedMessage(
+                          messageId
+                        )
+                      }
+                      disabled={busy}
+                      aria-label="Unpin message"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#7c3aed] active:bg-[#ece7f8] disabled:opacity-50"
+                    >
+                      {busy ? (
+                        <LoaderCircle
+                          size={17}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <X size={17} />
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="px-4 py-12 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
+                <Pin size={24} />
+              </div>
+              <h3 className="mt-4 text-[15px] font-semibold text-[#111827]">
+                No pinned messages
+              </h3>
+              <p className="mx-auto mt-2 max-w-[280px] text-[11px] font-normal leading-5 text-[#8b8b95]">
+                Pin a message from the chat and it will appear here.
+              </p>
+            </div>
+          )}
         </Sheet>
       ) : null}
 
