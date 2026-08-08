@@ -27,6 +27,7 @@ import {
   useState,
 } from 'react'
 import {
+  useLocation,
   useNavigate,
   useParams,
 } from 'react-router-dom'
@@ -1245,12 +1246,14 @@ function MessageBubble({
 
 export default function ChatRoomPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { conversationId } = useParams()
   const bottomRef = useRef(null)
   const textareaRef = useRef(null)
   const shouldScrollBottomRef = useRef(true)
   const scrollRestoreRef = useRef(null)
   const messageRefs = useRef(new Map())
+  const jumpHandledRef = useRef('')
   const [conversation, setConversation] = useState(null)
   const [blockStatus, setBlockStatus] = useState({
     is_blocked: false,
@@ -1565,6 +1568,35 @@ export default function ChatRoomPage() {
     )
   }, 1600)
 }
+
+  useEffect(() => {
+  const messageId = String(
+    location.state?.jumpToMessageId || ''
+  )
+  const jumpKey = `${conversationId}:${messageId}`
+
+  if (
+    !messageId ||
+    loading ||
+    jumpHandledRef.current === jumpKey
+  ) {
+    return
+  }
+
+  jumpHandledRef.current = jumpKey
+  scrollToMessage(messageId)
+
+  navigate(location.pathname, {
+    replace: true,
+    state: null,
+  })
+}, [
+  conversationId,
+  loading,
+  location.pathname,
+  location.state,
+  navigate,
+])
 
   const refreshPins = async () => {
     const data = await getPinnedChatMessages(
