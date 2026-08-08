@@ -37,20 +37,32 @@ async function chatRequest(path, options = {}) {
     )
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/chat${path}`, {
-    method: options.method || 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.body
-        ? { 'Content-Type': 'application/json' }
-        : {}),
-    },
-    ...(options.body
-      ? { body: JSON.stringify(options.body) }
-      : {}),
-  })
+  const isFormData =
+    options.body instanceof FormData
 
-  const data = await response.json().catch(() => ({}))
+  const response = await fetch(
+    `${API_BASE_URL}/api/chat${path}`,
+    {
+      method: options.method || 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(options.body && !isFormData
+          ? { 'Content-Type': 'application/json' }
+          : {}),
+      },
+      ...(options.body
+        ? {
+            body: isFormData
+              ? options.body
+              : JSON.stringify(options.body),
+          }
+        : {}),
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
     throw new ChatApiError(
@@ -178,6 +190,49 @@ export function sendChatMessage(
     {
       method: 'POST',
       body: { message },
+    }
+  )
+}
+
+export function sendChatAttachment(
+  conversationId,
+  file,
+  message = ''
+) {
+  if (!file) {
+    throw new ChatApiError(
+      400,
+      'CHAT_ATTACHMENT_REQUIRED',
+      'Choose a file to send'
+    )
+  }
+
+  if (Number(file.size || 0) > 8 * 1024 * 1024) {
+    throw new ChatApiError(
+      413,
+      'CHAT_ATTACHMENT_TOO_LARGE',
+      'File must be 8 MB or smaller'
+    )
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const caption = String(message || '')
+    .trim()
+    .slice(0, 2000)
+
+  if (caption) {
+    formData.append('message', caption)
+  }
+
+  return chatRequest(
+    `/conversations/${encodeURIComponent(
+      conversationId
+    )}/attachments`,
+    {
+      method: 'POST',
+      body: formData,
     }
   )
 }
