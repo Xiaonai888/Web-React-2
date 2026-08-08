@@ -5,7 +5,9 @@ import {
   ChevronLeft,
   Clock3,
   FileImage,
+  FileText,
   Flag,
+  Link2,
   LoaderCircle,
   Pin,
   Search,
@@ -107,6 +109,63 @@ function formatSearchMessageDate(value) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date)
+}
+
+function extractSharedUrls(value) {
+  return (
+    String(value || '').match(
+      /https?:\/\/[^\s<>"']+/gi
+    ) || []
+  ).map((url) =>
+    url.replace(/[),.;!?]+$/g, '')
+  )
+}
+
+function isImageUrl(value) {
+  try {
+    return /\.(jpg|jpeg|png|webp|gif|avif)$/i.test(
+      new URL(value).pathname
+    )
+  } catch {
+    return false
+  }
+}
+
+function classifySharedUrl(value) {
+  try {
+    const path = new URL(value).pathname
+
+    if (
+      /\.(jpg|jpeg|png|webp|gif|avif|mp4|webm|mov)$/i.test(
+        path
+      )
+    ) {
+      return 'media'
+    }
+
+    if (
+      /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|txt|epub)$/i.test(
+        path
+      )
+    ) {
+      return 'files'
+    }
+  } catch {
+    return 'links'
+  }
+
+  return 'links'
+}
+
+function getSharedUrlLabel(value) {
+  try {
+    return new URL(value).hostname.replace(
+      /^www\./,
+      ''
+    )
+  } catch {
+    return value
+  }
 }
 
 function Avatar({ person }) {
@@ -250,6 +309,8 @@ export default function ChatInfoPage() {
   const [pinnedLoading, setPinnedLoading] = useState(false)
   const [pinnedError, setPinnedError] = useState('')
   const [pinnedBusyId, setPinnedBusyId] = useState('')
+  const [sharedOpen, setSharedOpen] = useState(false)
+  const [sharedTab, setSharedTab] = useState('media')
 
   const person = conversation?.counterpart || {}
   const name =
@@ -311,6 +372,52 @@ export default function ChatInfoPage() {
           new Date(first.created_at).getTime()
       )
   }, [normalizedSearchQuery, searchMessages])
+  const sharedContent = useMemo(() => {
+  const source = searchLoaded
+    ? searchMessages
+    : messages
+  const items = []
+  const seen = new Set()
+
+  source.forEach((message) => {
+    if (message.is_deleted) return
+
+    extractSharedUrls(message.body).forEach(
+      (url) => {
+        if (seen.has(url)) return
+        seen.add(url)
+
+        items.push({
+          id: `${message.id}:${url}`,
+          url,
+          kind: classifySharedUrl(url),
+          image: isImageUrl(url),
+          name: getSharedUrlLabel(url),
+          created_at: message.created_at,
+        })
+      }
+    )
+  })
+
+  return {
+    media: items.filter(
+      (item) => item.kind === 'media'
+    ),
+    files: items.filter(
+      (item) => item.kind === 'files'
+    ),
+    links: items.filter(
+      (item) => item.kind === 'links'
+    ),
+  }
+}, [
+  messages,
+  searchLoaded,
+  searchMessages,
+])
+
+const activeSharedItems =
+  sharedContent[sharedTab] || []
 
   const notifyUpdated = () => {
     window.dispatchEvent(new CustomEvent('shadow-chat-updated'))
@@ -466,6 +573,15 @@ export default function ChatInfoPage() {
       loadSearchHistory()
     }
   }
+
+  const openSharedContent = () => {
+  setSharedTab('media')
+  setSharedOpen(true)
+
+  if (!searchLoaded) {
+    loadSearchHistory()
+  }
+}
 
   const openProfile = () => {
     if (!username) return
@@ -940,10 +1056,10 @@ export default function ChatInfoPage() {
             Chat info
           </h2>
           <Row
-            icon={FileImage}
-            title="View media, files & links"
-            onClick={() => showNotice('Coming soon')}
-          />
+  icon={FileImage}
+  title="View media, files & links"
+  onClick={openSharedContent}
+/>
           <Row
             icon={Pin}
             title="Pinned messages"
@@ -1073,6 +1189,117 @@ export default function ChatInfoPage() {
         </Sheet>
       ) : null}
 
+      {sharedOpen ? (
+  <Sheet
+    title="Media, files & links"
+    onClose={() => setSharedOpen(false)}
+  >
+    <div className="mb-4 grid grid-cols-3 rounded-[14px] bg-[#f3f3f6] p-1">
+      {[
+        ['media', 'Media'],
+        ['files', 'Files'],
+        ['links', 'Links'],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setSharedTab(key)}
+          className={`h-9 rounded-[11px] text-[12px] font-semibold ${
+            sharedTab === key
+              ? 'bg-white text-[#7c3aed] shadow-sm'
+              : 'text-[#777781]'
+          }`}
+        >
+          {label} ({sharedContent[key].length})
+        </button>
+      ))}
+    </div>
+
+    {searchLoading && !searchLoaded ? (
+      <div className="flex min-h-[180px] items-center justify-center text-[#7c3aed]">
+        <LoaderCircle
+          size={25}
+          className="animate-spin"
+        />
+      </div>
+    ) : activeSharedItems.length ? (
+      sharedTab === 'media' ? (
+        <div className="grid grid-cols-3 gap-2">
+          {activeSharedItems.map((item) => (
+            <a
+              key={item.id}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex aspect-square overflow-hidden rounded-[12px] bg-[#f2f2f5]"
+            >
+              {item.image ? (
+                <img
+                  src={item.url}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-[#7c3aed]">
+                  <FileImage size={25} />
+                </span>
+              )}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[14px] bg-[#f6f6f8]">
+          {activeSharedItems.map((item) => (
+            <a
+              key={item.id}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 border-b border-white px-3 py-3 last:border-b-0"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#7c3aed]">
+                {sharedTab === 'files' ? (
+                  <FileText size={19} />
+                ) : (
+                  <Link2 size={19} />
+                )}
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-semibold text-[#22222b]">
+                  {item.name}
+                </span>
+                <span className="mt-0.5 block text-[10px] text-[#92929b]">
+                  {formatSearchMessageDate(
+                    item.created_at
+                  )}
+                </span>
+              </span>
+            </a>
+          ))}
+        </div>
+      )
+    ) : (
+      <div className="px-4 py-12 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
+          {sharedTab === 'files' ? (
+            <FileText size={24} />
+          ) : sharedTab === 'links' ? (
+            <Link2 size={24} />
+          ) : (
+            <FileImage size={24} />
+          )}
+        </div>
+
+        <h3 className="mt-4 text-[15px] font-semibold">
+          No {sharedTab} yet
+        </h3>
+      </div>
+    )}
+  </Sheet>
+) : null}
+
       {pinnedOpen ? (
         <Sheet
           title="Pinned messages"
@@ -1109,10 +1336,12 @@ export default function ChatInfoPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        navigate(
-                          `/chat/${conversationId}`
-                        )
-                      }
+  navigate(`/chat/${conversationId}`, {
+    state: {
+      jumpToMessageId: messageId,
+    },
+  })
+}
                       className="min-w-0 flex-1 text-left"
                     >
                       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#7c3aed]">
