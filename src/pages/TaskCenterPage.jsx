@@ -417,7 +417,7 @@ function DailyVoteRewardCard({ reward, claiming = false, onClaim }) {
 
             <div className="mt-2 flex items-center gap-1 text-[12px] font-black text-[#d97706]">
   <img
-    src="/assets/Icons/Vote.svg"
+    src="/assets/Icons/Voucher.svg"
     alt=""
     className="h-4 w-4 shrink-0 object-contain"
     loading="lazy"
