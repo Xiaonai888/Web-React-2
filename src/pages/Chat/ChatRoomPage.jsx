@@ -1496,27 +1496,75 @@ export default function ChatRoomPage() {
     []
   )
 
-  const scrollToMessage = useCallback((messageId) => {
-    const key = String(messageId || '')
-    const node = messageRefs.current.get(key)
+  const scrollToMessage = async (messageId) => {
+  const key = String(messageId || '')
+  let node = messageRefs.current.get(key)
+  let cursor = nextBefore
+  let pages = 0
 
-    if (!node) {
-      setError('This message is not loaded yet')
-      return
-    }
+  if (!node && cursor && !loadingOlder) {
+    shouldScrollBottomRef.current = false
+    setLoadingOlder(true)
 
-    node.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    })
-    setHighlightedId(key)
+    try {
+      while (!node && cursor && pages < 20) {
+        const data = await getChatMessages(conversationId, {
+          before: cursor,
+          limit: 50,
+        })
 
-    window.setTimeout(() => {
-      setHighlightedId((current) =>
-        current === key ? '' : current
+        const older = Array.isArray(data.messages)
+          ? data.messages
+          : []
+
+        setMessages((current) =>
+          mergeMessages(older, current)
+        )
+
+        cursor = data.next_before || null
+        setNextBefore(cursor)
+        pages += 1
+
+        await new Promise((resolve) =>
+          window.requestAnimationFrame(() =>
+            window.requestAnimationFrame(resolve)
+          )
+        )
+
+        node = messageRefs.current.get(key)
+      }
+    } catch (jumpError) {
+      setError(
+        jumpError.message ||
+          'Failed to load this message'
       )
-    }, 1600)
-  }, [])
+      return
+    } finally {
+      setLoadingOlder(false)
+    }
+  }
+
+  node = node || messageRefs.current.get(key)
+
+  if (!node) {
+    setError(
+      'This message is older than the loaded history or is no longer available'
+    )
+    return
+  }
+
+  node.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center',
+  })
+  setHighlightedId(key)
+
+  window.setTimeout(() => {
+    setHighlightedId((current) =>
+      current === key ? '' : current
+    )
+  }, 1600)
+}
 
   const refreshPins = async () => {
     const data = await getPinnedChatMessages(
