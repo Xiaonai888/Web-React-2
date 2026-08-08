@@ -3058,6 +3058,7 @@ function ReaderSettingsDrawer({
   chatStoryAutoTapSpeed,
   setChatStoryAutoTapSpeed,
   themeName,
+  setThemeName,
   fontSizeIndex,
   setFontSizeIndex,
   fontKey,
