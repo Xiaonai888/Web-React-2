@@ -230,7 +230,6 @@ export default function AuthorReaderPageOptionsPage() {
             <h1 className="truncate text-[17px] font-bold text-[#111827]">
               {loading ? 'Loading...' : pageName}
             </h1>
-            <p className="mt-0.5 text-[12px] font-normal text-[#6b7280]">Page options</p>
           </div>
         </div>
       </header>
