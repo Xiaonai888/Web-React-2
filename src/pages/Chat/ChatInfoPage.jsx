@@ -838,8 +838,12 @@ export default function ChatInfoPage() {
                     key={message.id}
                     type="button"
                     onClick={() =>
-                      navigate(`/chat/${conversationId}`)
-                    }
+  navigate(`/chat/${conversationId}`, {
+    state: {
+      jumpToMessageId: message.id,
+    },
+  })
+}
                     className="block w-full px-2 py-4 text-left active:bg-[#f7f7f9]"
                   >
                     <div className="flex items-center justify-between gap-3">
