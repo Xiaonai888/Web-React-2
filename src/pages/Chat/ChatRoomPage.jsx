@@ -9,6 +9,7 @@ import {
   EllipsisVertical,
   Flag,
   Forward,
+  Image as ImageIcon,
   Info,
   LoaderCircle,
   Pencil,
@@ -2442,10 +2443,19 @@ export default function ChatRoomPage() {
                 >
                   <X size={17} />
                 </button>
-              </div>
-            ) : null}
+                          ) : null}
+
+            <button
+              type="button"
+              onClick={() => setNotice('Coming soon')}
+              className="mb-2 inline-flex h-9 items-center gap-2 rounded-full bg-[#f4f1fb] px-3 text-[10px] font-bold text-[#7c3aed]"
+            >
+              <ImageIcon size={17} />
+              Coming soon
+            </button>
 
             <div className="flex items-end gap-2">
+              <textarea
               <textarea
                 ref={textareaRef}
                 value={text}
