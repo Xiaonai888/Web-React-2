@@ -327,7 +327,7 @@ export default function EpisodeEchoesPage() {
           </button>
 
           <div className="min-w-0 text-center">
-            <h1 className="truncate text-[17px] font-black">Readers who echoed this</h1>
+            <h1 className="truncate text-[19px] font-bold">Readers who echoed this</h1>
           </div>
 
           <button
