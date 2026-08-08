@@ -9,6 +9,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const EMPTY_EPISODES = Object.freeze([])
+
 function getPointerY(event) {
   if (event.touches?.length) return event.touches[0].clientY
   return event.clientY
@@ -19,7 +21,7 @@ export default function CommentsModal({
   story,
   targetType = 'story',
   targetId,
-  episodes = [],
+  episodes = EMPTY_EPISODES,
   title,
   onClose,
   onCommentChanged,
@@ -36,13 +38,19 @@ export default function CommentsModal({
   const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
   const [episodeCommentTotals, setEpisodeCommentTotals] = useState({})
 
-  const episodeList = useMemo(
-    () =>
-      [...episodes]
-        .filter((item) => item?.id || item?.episode_id)
-        .sort((first, second) => Number(first.episode_number || 0) - Number(second.episode_number || 0)),
-    [episodes]
-  )
+  const episodeList = useMemo(() => {
+    const sourceEpisodes = Array.isArray(episodes)
+      ? episodes
+      : EMPTY_EPISODES
+
+    return [...sourceEpisodes]
+      .filter((item) => item?.id || item?.episode_id)
+      .sort(
+        (first, second) =>
+          Number(first.episode_number || 0) -
+          Number(second.episode_number || 0)
+      )
+  }, [episodes])
 
   const activeEpisodeId =
     targetType === 'episode'
@@ -51,6 +59,19 @@ export default function CommentsModal({
 
   const activeEpisode = episodeList.find(
     (item) => String(item.id || item.episode_id) === String(activeEpisodeId)
+  )
+
+  const commentEpisodeOptions = useMemo(
+    () =>
+      episodeList.map((item) => ({
+        id: item.id || item.episode_id,
+        episode_number: item.episode_number,
+        total_comments:
+          episodeCommentTotals[
+            String(item.id || item.episode_id)
+          ] || 0,
+      })),
+    [episodeCommentTotals, episodeList]
   )
 
   useEffect(() => {
@@ -74,7 +95,11 @@ export default function CommentsModal({
 
   useEffect(() => {
     if (!open || targetType !== 'episode' || !episodeList.length) {
-      setEpisodeCommentTotals({})
+      setEpisodeCommentTotals((current) =>
+        Object.keys(current).length
+          ? {}
+          : current
+      )
       return undefined
     }
 
@@ -145,13 +170,23 @@ export default function CommentsModal({
     async function loadEpisodeEchoTotal() {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/echoes/episode/${activeEpisodeId}?page=1&limit=1`
+          `${API_BASE_URL}/api/echo-v2/source/episode/${activeEpisodeId}?page=1&limit=1`,
+          { cache: 'no-store' }
         )
 
         const data = await response.json().catch(() => ({}))
 
         if (!ignore && response.ok && data.ok !== false) {
-          setEpisodeEchoTotal(Number(data.total || 0))
+          setEpisodeEchoTotal(
+            Math.max(
+              0,
+              Number(
+                data.echo_count ??
+                  data.total ??
+                  0
+              )
+            )
+          )
         }
       } catch {
         if (!ignore) setEpisodeEchoTotal(0)
@@ -424,11 +459,7 @@ export default function CommentsModal({
             story={story}
             variant="modal"
             onCommentsChange={onCommentChanged}
-            episodeOptions={episodeList.map((item) => ({
-              id: item.id || item.episode_id,
-              episode_number: item.episode_number,
-              total_comments: episodeCommentTotals[String(item.id || item.episode_id)] || 0,
-            }))}
+            episodeOptions={commentEpisodeOptions}
             selectedEpisodeId={activeEpisodeId}
             onEpisodeChange={setSelectedEpisodeId}
             onCommentTotalChange={handleEpisodeCommentTotalChange}
