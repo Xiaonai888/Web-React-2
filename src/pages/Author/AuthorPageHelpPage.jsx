@@ -92,19 +92,32 @@ function getAuthToken() {
 
 function PageHeader({ title, onBack }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white">
-      <div className="relative mx-auto flex min-h-[60px] w-full max-w-[720px] items-center justify-center px-14">
+    <header className="relative z-40 border-b border-[#e5e7eb] bg-white">
+      <div className="mx-auto flex min-h-[66px] w-full max-w-[720px] items-center px-3">
         <button
           type="button"
           onClick={onBack}
-          className="absolute left-2 flex h-11 w-11 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-[#111827] active:bg-[#f3f4f6]"
           aria-label="Back"
         >
-          <i className="fa-solid fa-chevron-left text-[19px]" />
+          <i className="fa-solid fa-chevron-left text-[20px]" />
         </button>
-        <h1 className="truncate text-[17px] font-bold text-[#111827]">{title}</h1>
+        <div className="min-w-0 flex-1 px-1">
+          <h1 className="truncate text-[17px] font-bold text-[#111827]">{title}</h1>
+        </div>
       </div>
     </header>
+  )
+}
+
+function SheetHeader({ title }) {
+  return (
+    <>
+      <div className="mx-auto h-1.5 w-11 rounded-full bg-[#9ca3af]" />
+      <div className="relative mt-1 flex h-12 items-center justify-center px-14">
+        <h2 className="truncate text-[18px] font-bold text-[#111827]">{title}</h2>
+      </div>
+    </>
   )
 }
 
@@ -299,10 +312,13 @@ export default function AuthorPageHelpPage() {
       : goBack
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8]">
-      <PageHeader title={headerTitle} onBack={headerBack} />
+    <div className="min-h-screen bg-white">
+      <PageHeader title={loading ? 'Loading...' : pageName} onBack={headerBack} />
 
-      <main className="mx-auto w-full max-w-[720px] px-4 pb-8">
+      <div className="fixed inset-x-0 bottom-0 top-[66px] z-30 bg-black/35">
+        <section className="absolute inset-0 mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[26px] bg-[#f5f6f8] px-4 pb-6 pt-3 shadow-2xl">
+          <SheetHeader title={headerTitle} />
+          <main>
         {loading ? (
           <div className="flex min-h-[420px] items-center justify-center">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d1d5db] border-t-[#111827]" />
@@ -463,7 +479,9 @@ export default function AuthorPageHelpPage() {
             </button>
           </div>
         )}
-      </main>
+          </main>
+        </section>
+      </div>
     </div>
   )
 }
