@@ -1,6 +1,7 @@
 import {
   Ban,
   Bell,
+  Check,
   ChevronLeft,
   Clock3,
   FileImage,
@@ -37,6 +38,10 @@ import {
   muteChatConversation,
   unmuteChatConversation,
 } from '../../services/chatMuteApi'
+import {
+  getChatAutoDeleteStatus,
+  setChatAutoDelete,
+} from '../../services/chatAutoDeleteApi'
 
 const REPORT_REASONS = [
   ['spam', 'Spam'],
@@ -59,6 +64,23 @@ const MUTE_OPTIONS = [
   ['7d', '7 days'],
   ['forever', 'Until I turn it back on'],
 ]
+
+const AUTO_DELETE_OPTIONS = [
+  [0, 'Off'],
+  [86400, '1 day'],
+  [604800, '7 days'],
+  [2592000, '30 days'],
+]
+
+function formatAutoDeleteDuration(value) {
+  const seconds = Number(value || 0)
+
+  if (seconds === 86400) return '1 day'
+  if (seconds === 604800) return '7 days'
+  if (seconds === 2592000) return '30 days'
+
+  return 'Off'
+}
 
 function normalizeMessageSearchValue(value) {
   return String(value || '')
@@ -216,6 +238,11 @@ export default function ChatInfoPage() {
     is_muted: false,
     muted_until: null,
   })
+  const [autoDeleteOpen, setAutoDeleteOpen] = useState(false)
+  const [autoDeleteStatus, setAutoDeleteStatus] = useState({
+    auto_delete_enabled: false,
+    auto_delete_seconds: 0,
+  })
 
   const person = conversation?.counterpart || {}
   const name =
@@ -297,12 +324,17 @@ export default function ChatInfoPage() {
 
     try {
       setLoading(true)
-      const [roomData, blockData, muteData] =
-        await Promise.all([
-          getChatMessages(conversationId, { limit: 50 }),
-          getChatBlockStatus(conversationId),
-          getChatMuteStatus(conversationId),
-        ])
+      const [
+        roomData,
+        blockData,
+        muteData,
+        autoDeleteData,
+      ] = await Promise.all([
+        getChatMessages(conversationId, { limit: 50 }),
+        getChatBlockStatus(conversationId),
+        getChatMuteStatus(conversationId),
+        getChatAutoDeleteStatus(conversationId),
+      ])
 
       setConversation(roomData.conversation || null)
       setMessages(
@@ -320,6 +352,14 @@ export default function ChatInfoPage() {
       setMuteStatus({
         is_muted: Boolean(muteData.is_muted),
         muted_until: muteData.muted_until || null,
+      })
+      setAutoDeleteStatus({
+        auto_delete_enabled: Boolean(
+          autoDeleteData.auto_delete_enabled
+        ),
+        auto_delete_seconds: Number(
+          autoDeleteData.auto_delete_seconds || 0
+        ),
       })
     } catch (error) {
       if (
@@ -476,6 +516,84 @@ export default function ChatInfoPage() {
     } catch (error) {
       showNotice(
         error.message || 'Failed to unmute chat'
+      )
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const handleToggleNotifications = async () => {
+    if (busy) return
+
+    const turningOn = muteStatus.is_muted
+    setBusy('notifications')
+
+    try {
+      if (turningOn) {
+        await unmuteChatConversation(conversationId)
+        setMuteStatus({
+          is_muted: false,
+          muted_until: null,
+        })
+      } else {
+        await muteChatConversation(
+          conversationId,
+          'forever'
+        )
+        setMuteStatus({
+          is_muted: true,
+          muted_until: null,
+        })
+      }
+
+      notifyUpdated()
+      showNotice(
+        turningOn
+          ? 'Notifications turned on'
+          : 'Notifications turned off'
+      )
+    } catch (error) {
+      showNotice(
+        error.message ||
+          'Failed to update notifications'
+      )
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const handleAutoDelete = async (seconds) => {
+    if (busy) return
+
+    setBusy('auto-delete')
+
+    try {
+      const data = await setChatAutoDelete(
+        conversationId,
+        seconds
+      )
+
+      setAutoDeleteStatus({
+        auto_delete_enabled: Boolean(
+          data.auto_delete_enabled
+        ),
+        auto_delete_seconds: Number(
+          data.auto_delete_seconds || 0
+        ),
+      })
+      setAutoDeleteOpen(false)
+      notifyUpdated()
+      showNotice(
+        Number(data.auto_delete_seconds || 0) > 0
+          ? `Auto-delete set to ${formatAutoDeleteDuration(
+              data.auto_delete_seconds
+            )}`
+          : 'Auto-delete turned off'
+      )
+    } catch (error) {
+      showNotice(
+        error.message ||
+          'Failed to update auto-delete'
       )
     } finally {
       setBusy('')
@@ -792,14 +910,18 @@ export default function ChatInfoPage() {
           <Row
             icon={Bell}
             title="Notifications"
-            onClick={() =>
-              showNotice('Chat notifications are coming soon.')
+            subtitle={
+              muteStatus.is_muted ? 'Off' : 'On'
             }
+            onClick={handleToggleNotifications}
           />
           <Row
             icon={Clock3}
             title="Auto-delete chat"
-            onClick={() => showNotice('Auto-delete chat is coming soon.')}
+            subtitle={formatAutoDeleteDuration(
+              autoDeleteStatus.auto_delete_seconds
+            )}
+            onClick={() => setAutoDeleteOpen(true)}
           />
         </section>
 
@@ -875,6 +997,67 @@ export default function ChatInfoPage() {
               </button>
             ))}
           </div>
+        </Sheet>
+      ) : null}
+
+      {autoDeleteOpen ? (
+        <Sheet
+          title="Auto-delete messages"
+          onClose={() => setAutoDeleteOpen(false)}
+        >
+          <p className="mb-3 text-[11px] font-normal leading-5 text-[#777781]">
+            This setting applies to new messages sent after it is enabled.
+            Existing messages keep their current lifetime.
+          </p>
+
+          <div className="overflow-hidden rounded-[14px] bg-[#f5f5f7]">
+            {AUTO_DELETE_OPTIONS.map(
+              ([seconds, label]) => {
+                const selected =
+                  Number(
+                    autoDeleteStatus.auto_delete_seconds || 0
+                  ) === Number(seconds)
+
+                return (
+                  <button
+                    key={seconds}
+                    type="button"
+                    onClick={() =>
+                      handleAutoDelete(seconds)
+                    }
+                    disabled={busy === 'auto-delete'}
+                    className="flex h-12 w-full items-center gap-3 border-b border-white px-4 text-left text-[13px] font-normal text-[#111827] last:border-b-0 active:bg-[#ececf0] disabled:opacity-50"
+                  >
+                    {busy === 'auto-delete' ? (
+                      <LoaderCircle
+                        size={18}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <Clock3 size={18} />
+                    )}
+
+                    <span className="flex-1">
+                      {label}
+                    </span>
+
+                    {selected ? (
+                      <Check
+                        size={18}
+                        strokeWidth={2.4}
+                        className="text-[#7c3aed]"
+                      />
+                    ) : null}
+                  </button>
+                )
+              }
+            )}
+          </div>
+
+          <p className="mt-3 text-[10px] font-normal leading-4 text-[#92929b]">
+            Expired messages disappear from the chat automatically. Shadow's
+            safety retention remains separate from what users can see.
+          </p>
         </Sheet>
       ) : null}
 
