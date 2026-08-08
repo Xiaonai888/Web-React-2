@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AuthorPageShareSheet from '../components/AuthorPageShareSheet'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -220,6 +221,7 @@ export default function EpisodeEchoesPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [message, setMessage] = useState('')
   const [notice, setNotice] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
 
   const episodeLink = `${window.location.origin}/story/${storyId}/episode/${episodeId}`
 
@@ -332,7 +334,7 @@ export default function EpisodeEchoesPage() {
 
           <button
             type="button"
-            onClick={shareEpisode}
+            onClick={() => setShareOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#7658a6] active:bg-[#f1edf9]"
             aria-label="Share episode"
           >
@@ -433,6 +435,13 @@ export default function EpisodeEchoesPage() {
           )}
         </section>
       </div>
+      <AuthorPageShareSheet
+  open={shareOpen}
+  pageName={episode?.title || story?.title || 'Shadow episode'}
+  pageLink={episodeLink}
+  onClose={() => setShareOpen(false)}
+  onCopied={() => setNotice('Episode link copied.')}
+/>
     </main>
   )
 }
