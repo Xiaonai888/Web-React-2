@@ -92,7 +92,7 @@ function getAuthToken() {
 
 function PageHeader({ title, onBack }) {
   return (
-    <header className="relative z-40 border-b border-[#e5e7eb] bg-white">
+    <header className="relative z-20 border-b border-[#e5e7eb] bg-white">
       <div className="mx-auto flex min-h-[66px] w-full max-w-[720px] items-center px-3">
         <button
           type="button"
@@ -315,8 +315,8 @@ export default function AuthorPageHelpPage() {
     <div className="min-h-screen bg-white">
       <PageHeader title={loading ? 'Loading...' : pageName} onBack={headerBack} />
 
-      <div className="fixed inset-x-0 bottom-0 top-[66px] z-30 bg-black/35">
-        <section className="absolute inset-0 mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[26px] bg-[#f5f6f8] px-4 pb-6 pt-3 shadow-2xl">
+      <div className="fixed inset-0 z-30 bg-black/40">
+        <section className="absolute bottom-0 left-0 right-0 top-[66px] mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[20px] bg-[#f0f2f5] px-4 pb-6 pt-3">
           <SheetHeader title={headerTitle} />
           <main>
         {loading ? (
