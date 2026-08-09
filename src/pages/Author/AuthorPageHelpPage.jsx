@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const [dragY, setDragY] = useState(0)
-const dragStartYRef = useRef(null)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -126,6 +124,8 @@ function SheetHeader({ title }) {
 export default function AuthorPageHelpPage() {
   const navigate = useNavigate()
   const { pageUsername } = useParams()
+  const [dragY, setDragY] = useState(0)
+  const dragStartYRef = useRef(null)
   const [page, setPage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -369,11 +369,6 @@ function handleDragEnd(event) {
     </div>
 
     <main>
-
-      <div className="fixed inset-0 z-30 bg-black/40">
-        <section className="absolute bottom-0 left-0 right-0 top-[66px] mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[20px] bg-[#f0f2f5] px-4 pb-6 pt-3">
-          <SheetHeader title={headerTitle} />
-          <main>
         {loading ? (
           <div className="flex min-h-[420px] items-center justify-center">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d1d5db] border-t-[#111827]" />
@@ -534,9 +529,9 @@ function handleDragEnd(event) {
             </button>
           </div>
         )}
-          </main>
-        </section>
-      </div>
-    </div>
+      </main>
+    </section>
+  </div>
+</div>
   )
 }
