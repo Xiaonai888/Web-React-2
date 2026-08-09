@@ -31,6 +31,21 @@ function getRealBadgeFromStoryStatus(status) {
   return 'new'
 }
 
+function isToday(value) {
+  if (!value) return false
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+
+  const now = new Date()
+
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  )
+}
+
 function getFirstDifferentTag(mainGenre, tags = []) {
   const genre = String(mainGenre || '').trim().toLowerCase()
   const normalizedTags = Array.isArray(tags) ? tags : []
@@ -159,7 +174,7 @@ export default function UpdateTodaySection({
 
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=7&sort=updated${storyTypeQuery}`
+            `${API_BASE_URL}/api/public/stories?limit=7&sort=episode_updated${storyTypeQuery}`
           )
         )
 
@@ -174,20 +189,24 @@ export default function UpdateTodaySection({
 
         if (ignore) return
 
-        const visibleStories = (
-          data.stories || []
-        ).filter(
-          (story) =>
-            !normalizedStoryType ||
-            String(story?.story_type || '')
-              .trim()
-              .toLowerCase() ===
-              normalizedStoryType
-        )
+        const visibleStories = (data.stories || [])
+  .filter(
+    (story) =>
+      !normalizedStoryType ||
+      String(story?.story_type || '')
+        .trim()
+        .toLowerCase() === normalizedStoryType
+  )
+  .filter((story) =>
+    isToday(story.last_episode_published_at)
+  )
+  .sort(
+    (a, b) =>
+      new Date(b.last_episode_published_at).getTime() -
+      new Date(a.last_episode_published_at).getTime()
+  )
 
-        setStories(
-          visibleStories.map(normalizeStory)
-        )
+setStories(visibleStories.map(normalizeStory))
       } catch (error) {
         console.error(
           'UpdateTodaySection fetch error:',
