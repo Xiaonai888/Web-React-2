@@ -71,9 +71,19 @@ function widthCandidates(sourceWidth) {
   ].filter((width, index, values) => width > 0 && values.indexOf(width) === index)
 }
 
+
+function isMangaImageFile(file) {
+  const type = String(file?.type || '').toLowerCase()
+  const name = String(file?.name || '').toLowerCase()
+  return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
+}
+
+function isMangaHeicFile(file) {
+  return /image\/hei[cf]/i.test(file?.type || '') || /\.hei[cf]$/i.test(file?.name || '')
+}
 export function validateMangaFile(file) {
   if (!file) return 'Image file is missing.'
-  if (!String(file.type || '').startsWith('image/')) return `${file.name || 'File'} is not an image.`
+  if (!isMangaImageFile(file)) return `${file.name || 'File'} is not an image.`
   if (file.size > MANGA_INPUT_MAX_BYTES) return `${file.name || 'Image'} is larger than 2 MB.`
   return ''
 }
@@ -138,7 +148,11 @@ export async function optimizeMangaImage(file) {
        if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
     throw new Error('Client compression unavailable.')
   } catch {
-    return {
+  if (isMangaHeicFile(file)) {
+    throw new Error('This HEIC/HEIF image could not be converted. Please use JPG, PNG, or WebP.')
+  }
+
+  return {
       file,
       width: loaded.width,
       height: loaded.height,
