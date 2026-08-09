@@ -521,32 +521,55 @@ async function optimizeNovelEpisodeImage(file) {
   }
 }
 
-async function uploadEpisodeInlineImage({ token, file, storyId }) {
+async function uploadEpisodeInlineImage({ token, file }) {
   if (!file) throw new Error('Choose an image first.')
   if (!isNovelImageFile(file)) {
-  throw new Error('Please choose an image file.')
-}
-if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
-  throw new Error('Image must be 5 MB or smaller.')
-}
-
-  const formData = new FormData()
-  formData.append('image', file)
-  formData.append('folder', 'episode_content')
-
-  const response = await fetch(`${API_BASE_URL}/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  })
-
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload image')
+    throw new Error('Please choose an image file.')
+  }
+  if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
+    throw new Error('Image must be 5 MB or smaller.')
   }
 
-  return data.image_url || data.imageUrl
+  let response
+
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/api/story-media/upload-novel-image`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      }
+    )
+  } catch {
+    throw new Error(
+      'Network error: the image could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
+    )
+  }
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    const stage = String(data.stage || 'upload')
+    const code = String(data.code || `HTTP_${response.status}`)
+    const message = data.message || 'Novel image upload failed.'
+    throw new Error(`${message} [${stage}: ${code}]`)
+  }
+
+  const imageUrl = data.image_url || data.imageUrl
+
+  if (!imageUrl) {
+    throw new Error(
+      'The upload finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
+    )
+  }
+
+  return imageUrl
 }
+
 
 
 function isDialogueOrSpecialLine(line) {
@@ -978,7 +1001,7 @@ function EpisodeDetailsSheet({
 
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.heic,.heif"
                         className="hidden"
                         onChange={(event) => {
                           onCoverChange(event.target.files?.[0] || null)
@@ -1012,7 +1035,7 @@ function EpisodeDetailsSheet({
 
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     className="hidden"
                     onChange={(event) => {
                       onCoverChange(event.target.files?.[0] || null)
@@ -2989,7 +3012,6 @@ const uploadFile = isHeic ? await optimizeNovelEpisodeImage(file) : file
 const imageUrl = await uploadEpisodeInlineImage({
   token,
   file: uploadFile,
-  storyId,
 })
 
     if (!imageUrl) throw new Error('Image URL was missing.')
@@ -4047,7 +4069,7 @@ releaseOption={releaseOption}
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   className="hidden"
                   onChange={(event) => handleInlineImagePick(event.target.files?.[0] || null)}
                 />
