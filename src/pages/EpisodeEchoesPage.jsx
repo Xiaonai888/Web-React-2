@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import AuthorPageShareSheet from '../components/AuthorPageShareSheet'
 
 const API_BASE_URL =
@@ -99,21 +99,22 @@ function SourceCard({ story, episode, author, total, onOpen }) {
   )
 }
 
-function EchoCard({ echo, onOpenProfile, onOpenEpisode, onShare, onCopy }) {
+function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
   const user = echo?.user || {}
   const name = user.name || user.username || 'Reader'
+  const profileLink = `/profile?username=${encodeURIComponent(user.username || '')}`
   const shareCount = Math.max(1, Number(echo?.share_count || 1))
 
   return (
     <article className="rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(45,35,64,0.06)] ring-1 ring-[#ebe6f2]">
       <div className="flex items-start gap-3">
-  <button type="button" onClick={onOpenProfile} className="shrink-0 active:opacity-70">
-    <Avatar user={user} />
-  </button>
+  <Link to={profileLink} className="shrink-0 cursor-pointer transition hover:opacity-80 active:opacity-70">
+  <Avatar user={user} />
+</Link>
 
   <div className="min-w-0 flex-1">
     <div className="flex items-start justify-between gap-3">
-      <button type="button" onClick={onOpenProfile} className="min-w-0 text-left active:opacity-70">
+      <Link to={profileLink} className="min-w-0 cursor-pointer text-left transition hover:opacity-80 active:opacity-70">
         <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">{name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-semibold text-[#9b93a5]">
                 <span>{formatDate(echo.updated_at || echo.created_at)}</span>
@@ -126,7 +127,7 @@ function EchoCard({ echo, onOpenProfile, onOpenEpisode, onShare, onCopy }) {
                   </>
                 ) : null}
               </div>
-            </button>
+            </Link>
 
 
             <button
@@ -227,11 +228,7 @@ export default function EpisodeEchoesPage() {
   const [shareOpen, setShareOpen] = useState(false)
 
   const episodeLink = `${window.location.origin}/story/${storyId}/episode/${episodeId}`
-  const openReaderProfile = (user) => {
-  const username = String(user?.username || '').trim()
-  if (!username) return
-  navigate(`/profile?username=${encodeURIComponent(username)}`)
-}
+  
 
   const copyEpisodeLink = async () => {
     try {
@@ -406,7 +403,6 @@ export default function EpisodeEchoesPage() {
                 <EchoCard
   key={echo.id}
   echo={echo}
-  onOpenProfile={() => openReaderProfile(echo.user)}
   onOpenEpisode={() => navigate(`/story/${storyId}/episode/${episodeId}`)}
                   onShare={shareEpisode}
                   onCopy={copyEpisodeLink}
