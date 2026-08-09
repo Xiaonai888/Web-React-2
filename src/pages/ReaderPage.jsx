@@ -641,6 +641,66 @@ function getInitialFontSizeIndex() {
   return DEFAULT_FONT_SIZE_INDEX
 }
 
+function YouTubeEpisodeCard({ videoId, title, theme }) {
+  const [expanded, setExpanded] = useState(false)
+  const safeVideoId = String(videoId || '').trim()
+
+  if (!/^[A-Za-z0-9_-]{11}$/.test(safeVideoId)) return null
+
+  const label = String(title || '').trim() || 'YouTube Video'
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className={`mt-7 flex w-full items-center gap-3 rounded-[12px] border px-4 py-3 text-left active:scale-[0.995] ${theme.border} ${theme.soft}`}
+        aria-label={`Open ${label}`}
+      >
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${theme.card}`}>
+          <i className={`fa-solid fa-play text-[11px] ${theme.text}`} />
+        </span>
+
+        <span className={`min-w-0 flex-1 truncate text-[13px] font-medium ${theme.text}`}>
+          {label}
+        </span>
+
+        <i className={`fa-solid fa-chevron-down shrink-0 text-[10px] ${theme.muted}`} />
+      </button>
+    )
+  }
+
+  return (
+    <div className={`mt-7 overflow-hidden rounded-[14px] border ${theme.border}`}>
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        className={`flex w-full items-center gap-3 px-4 py-3 text-left ${theme.soft}`}
+        aria-label={`Hide ${label}`}
+      >
+        <span className={`min-w-0 flex-1 truncate text-[13px] font-medium ${theme.text}`}>
+          {label}
+        </span>
+
+        <i className={`fa-solid fa-chevron-up shrink-0 text-[10px] ${theme.muted}`} />
+      </button>
+
+      <div className="aspect-video w-full bg-black">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${safeVideoId}`}
+          title={label}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          className="h-full w-full border-0"
+        />
+      </div>
+    </div>
+  )
+}
+
+
 function ReadingText({ content, fontSizePx, fontFamily, lineSpacing, theme }) {
   return (
     <RichEpisodeContent
@@ -3992,6 +4052,13 @@ function ContinuousEpisodeBlock({
         lineSpacing={lineSpacing}
         theme={theme}
       />
+
+      <YouTubeEpisodeCard
+  videoId={episode.youtube_video_id}
+  title={episode.youtube_title}
+  theme={theme}
+/>
+      
     </article>
   </>
 )}
@@ -6507,6 +6574,15 @@ adultAccepted &&
     theme={theme}
   />
 )}
+
+                  {isLastReadingPage ? (
+  <YouTubeEpisodeCard
+    videoId={episode.youtube_video_id}
+    title={episode.youtube_title}
+    theme={theme}
+  />
+) : null}
+                  
                 </article>
               </div>
             </section>
