@@ -11,7 +11,7 @@ function formatDate(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-function formatStatus(value) {
+
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -21,7 +21,7 @@ function formatStatus(value) {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
-  function isNewEpisode(episode) {
+function isNewEpisode(episode) {
   const value = episode?.published_at || episode?.created_at
   if (!value) return false
   const time = new Date(value).getTime()
