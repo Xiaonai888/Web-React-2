@@ -5,9 +5,11 @@ import App from './App.jsx'
 import AppErrorBoundary from './components/AppErrorBoundary.jsx'
 import { installApiAuthFetch } from './utils/installApiAuthFetch'
 import { installPaidContentRequirementFetch } from './utils/installPaidContentRequirementFetch'
+import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
+installReaderPresenceTracking()
 const APP_UPDATE_CHECK_INTERVAL_MS = 60000
 let appUpdateCheckRunning = false
 let lastAppUpdateCheckAt = 0
