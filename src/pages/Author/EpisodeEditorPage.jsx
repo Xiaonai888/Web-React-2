@@ -9,10 +9,12 @@ import {
   Bold,
   Image as ImageIcon,
   Italic,
+  Link,
   Search,
   WandSparkles,
 } from 'lucide-react'
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
+import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import {
@@ -2616,6 +2618,9 @@ export default function EpisodeEditorPage() {
   const [autoSaving, setAutoSaving] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
+  const [youtubeSheetOpen, setYoutubeSheetOpen] = useState(false)
+  const [youtubeVideo, setYoutubeVideo] = useState({ title: '', url: '' })
+  const [youtubeDraft, setYoutubeDraft] = useState({ title: '', url: '' })
   const [editorFocused, setEditorFocused] = useState(false)
   const [alignmentMode, setAlignmentMode] = useState('left')
   const [boldActive, setBoldActive] = useState(false)
@@ -2846,6 +2851,12 @@ export default function EpisodeEditorPage() {
         setEpisodeCover(episode.cover_url || '')
         setOriginalCover(episode.cover_url || '')
         setContent(normalizeEpisodeHtml(episode.content || ''))
+        setYoutubeVideo({
+  title: episode.youtube_title || '',
+  url: episode.youtube_video_id
+    ? `https://www.youtube.com/watch?v=${episode.youtube_video_id}`
+    : '',
+})
         setOldEpisodeStatus(episode.status || 'draft')
         setEpisodeAdult(Boolean(episode.is_adult))
         setEpisodeFree(
@@ -3041,6 +3052,38 @@ const imageUrl = await uploadEpisodeInlineImage({
     syncEditorContent(cleanedContent)
     showToast('Paragraphs cleaned. Please review before saving.')
   }
+
+  const openYouTubeSheet = () => {
+  setYoutubeDraft(youtubeVideo)
+  setYoutubeSheetOpen(true)
+}
+
+const saveYouTubeVideo = () => {
+  const nextVideo = {
+    title: String(youtubeDraft.title || '').trim(),
+    url: String(youtubeDraft.url || '').trim(),
+  }
+
+  if (
+    nextVideo.title !== youtubeVideo.title ||
+    nextVideo.url !== youtubeVideo.url
+  ) {
+    setYoutubeVideo(nextVideo)
+    markUnsaved()
+  }
+
+  setYoutubeSheetOpen(false)
+}
+
+const removeYouTubeVideo = () => {
+  if (youtubeVideo.title || youtubeVideo.url) {
+    markUnsaved()
+  }
+
+  setYoutubeVideo({ title: '', url: '' })
+  setYoutubeDraft({ title: '', url: '' })
+  setYoutubeSheetOpen(false)
+}
 
   const openEpisodeDetails = () => {
     setDraftEpisodeTitle(episodeTitle)
@@ -3307,6 +3350,8 @@ const imageUrl = await uploadEpisodeInlineImage({
           title: episodeTitle.trim(),
           cover_url: episodeCoverUrl,
           content: isManga ? '' : sanitizeEpisodeHtml(content),
+          youtube_url: isManga ? '' : youtubeVideo.url,
+          youtube_title: isManga ? '' : youtubeVideo.title,
           pages: isManga ? pagesPayload : undefined,
           is_adult: episodeAdult,
           is_free_published: episodeFree,
@@ -3777,6 +3822,17 @@ releaseOption={releaseOption}
 
       {!isManga ? (
         <>
+
+          <YouTubeVideoSheet
+  open={youtubeSheetOpen}
+  value={youtubeDraft}
+  onChange={setYoutubeDraft}
+  onClose={() => setYoutubeSheetOpen(false)}
+  onSave={saveYouTubeVideo}
+  onRemove={removeYouTubeVideo}
+  hasVideo={Boolean(youtubeVideo.url)}
+/>
+          
           <CleanParagraphsModal
             open={cleanModalOpen}
             onCancel={() => setCleanModalOpen(false)}
@@ -4030,13 +4086,19 @@ releaseOption={releaseOption}
   />
 
   <ToolButton
-    Icon={WandSparkles}
-    label="AI Space"
-    onClick={() => setCleanModalOpen(true)}
-  />
+  Icon={WandSparkles}
+  label="AI Space"
+  onClick={() => setCleanModalOpen(true)}
+/>
 
-  <ToolButton
-    Icon={Search}
+<ToolButton
+  Icon={Link}
+  label="YouTube video"
+  onClick={openYouTubeSheet}
+/>
+
+<ToolButton
+  Icon={Search}
     label="Find and Replace"
     onClick={() => setFindReplaceOpen(true)}
   />
@@ -4055,7 +4117,14 @@ releaseOption={releaseOption}
                   }}
                   onBlur={() => {
                     window.setTimeout(() => {
-                      if (findReplaceOpen || cleanModalOpen || inlineImageUploading) return
+                      if (
+  findReplaceOpen ||
+  cleanModalOpen ||
+  youtubeSheetOpen ||
+  inlineImageUploading
+) {
+  return
+}
                       setEditorFocused(false)
                       setSaveStatus('Saved')
                     }, 220)
@@ -4117,6 +4186,12 @@ releaseOption={releaseOption}
   Icon={WandSparkles}
   label="AI Space"
   onClick={() => setCleanModalOpen(true)}
+/>
+
+<ToolButton
+  Icon={Link}
+  label="YouTube video"
+  onClick={openYouTubeSheet}
 />
 
 <ToolButton
