@@ -38,13 +38,9 @@ function formatCompactNumber(value) {
 }
 
 function getStoryDate(story) {
-  const value =
-    story.updated_at ||
-    story.last_episode_updated_at ||
-    story.last_updated_at ||
-    story.created_at
-
+  const value = story.last_episode_published_at
   const date = value ? new Date(value) : null
+
   return date && !Number.isNaN(date.getTime()) ? date : null
 }
 
@@ -52,10 +48,16 @@ function isWithinLastSevenDays(date) {
   if (!date) return false
 
   const now = new Date()
-  const sevenDaysAgo = new Date(now)
-  sevenDaysAgo.setDate(now.getDate() - 7)
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  )
+  const oldestAllowed = new Date(startOfToday)
 
-  return date >= sevenDaysAgo && date <= now
+  oldestAllowed.setDate(startOfToday.getDate() - 6)
+
+  return date >= oldestAllowed && date <= now
 }
 
 function normalizeStory(story, index = 0) {
@@ -75,11 +77,11 @@ function normalizeStory(story, index = 0) {
     views: formatCompactNumber(story.total_views),
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
     badge:
-      story.status === 'completed'
-        ? 'end'
-        : index % 3 === 0
-          ? 'new'
-          : 'up',
+  String(story.story_status || '').trim().toLowerCase() === 'completed'
+    ? 'end'
+    : String(story.story_status || '').trim().toLowerCase() === 'ongoing'
+      ? 'up'
+      : 'new',
     updateDate,
     dayKey: updateDate ? updateDate.getDay() : null,
   }
@@ -191,7 +193,7 @@ export default function UpdateTodayPage() {
         try {
           const response = await fetch(
             addStoryLanguageParam(
-              `${API_BASE_URL}/api/public/stories?limit=60&sort=updated`
+              `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
             ),
             {
               signal: controller.signal,
