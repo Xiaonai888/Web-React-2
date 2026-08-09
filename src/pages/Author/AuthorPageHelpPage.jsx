@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+const [dragY, setDragY] = useState(0)
+const dragStartYRef = useRef(null)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -305,6 +307,34 @@ export default function AuthorPageHelpPage() {
     }
   }
 
+  function closeHelpSheet() {
+  navigate(-1)
+}
+
+function handleDragStart(event) {
+  dragStartYRef.current = event.clientY
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function handleDragMove(event) {
+  if (dragStartYRef.current === null) return
+  setDragY(Math.max(0, event.clientY - dragStartYRef.current))
+}
+
+function handleDragEnd(event) {
+  if (dragStartYRef.current === null) return
+
+  const distance = Math.max(0, event.clientY - dragStartYRef.current)
+  dragStartYRef.current = null
+
+  if (distance >= 70) {
+    closeHelpSheet()
+    return
+  }
+
+  setDragY(0)
+}
+
   const headerTitle = step === 'review' ? 'Review report' : 'Help Page'
   const headerBack =
     step === 'success'
@@ -314,6 +344,31 @@ export default function AuthorPageHelpPage() {
   return (
     <div className="min-h-screen bg-white">
       <PageHeader title={loading ? 'Loading...' : pageName} onBack={headerBack} />
+
+      <div
+  className="fixed inset-0 z-30 bg-black/40"
+  onClick={closeHelpSheet}
+>
+  <section
+    className="absolute bottom-0 left-0 right-0 top-[66px] mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[20px] bg-[#f0f2f5] px-4 pb-6"
+    style={{
+      transform: `translateY(${dragY}px)`,
+      transition: dragStartYRef.current === null ? 'transform 180ms ease-out' : 'none',
+    }}
+    onClick={(event) => event.stopPropagation()}
+  >
+    <div
+      className="touch-none select-none pt-3"
+      style={{ touchAction: 'none' }}
+      onPointerDown={handleDragStart}
+      onPointerMove={handleDragMove}
+      onPointerUp={handleDragEnd}
+      onPointerCancel={handleDragEnd}
+    >
+      <SheetHeader title={headerTitle} />
+    </div>
+
+    <main>
 
       <div className="fixed inset-0 z-30 bg-black/40">
         <section className="absolute bottom-0 left-0 right-0 top-[66px] mx-auto w-full max-w-[720px] overflow-y-auto rounded-t-[20px] bg-[#f0f2f5] px-4 pb-6 pt-3">
