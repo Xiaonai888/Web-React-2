@@ -68,6 +68,12 @@ export default function EpisodeReactionsPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
+  const openReaderProfile = (user) => {
+    const username = String(user?.username || '').trim()
+    if (!username) return
+    navigate(`/profile?username=${encodeURIComponent(username)}`)
+  }
+
   useEffect(() => {
     let ignore = false
 
@@ -208,7 +214,12 @@ export default function EpisodeReactionsPage() {
               const meta = REACTION_META[type] || REACTION_META.love
 
               return (
-                <div key={reaction.id} className="flex items-center gap-4 py-3">
+                <button
+                  key={reaction.id}
+                  type="button"
+                  onClick={() => openReaderProfile(reaction.user)}
+                  className="flex w-full items-center gap-4 py-3 text-left active:opacity-70"
+                >
                   <div className="relative shrink-0">
                     <Avatar user={reaction.user} />
                     <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
@@ -221,7 +232,7 @@ export default function EpisodeReactionsPage() {
                       {reaction.user?.name || 'Reader'}
                     </div>
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
