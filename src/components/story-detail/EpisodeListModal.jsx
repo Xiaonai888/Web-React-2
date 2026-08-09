@@ -11,7 +11,7 @@ function formatDate(value) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-
+function formatStatus(value) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -19,6 +19,15 @@ function formatDate(value) {
   const minute = String(date.getMinutes()).padStart(2, '0')
 
   return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
+  function isNewEpisode(episode) {
+  const value = episode?.published_at || episode?.created_at
+  if (!value) return false
+  const time = new Date(value).getTime()
+  if (!Number.isFinite(time)) return false
+  const age = Date.now() - time
+  return age >= 0 && age < 7 * 24 * 60 * 60 * 1000
 }
 
 function formatStatus(value) {
@@ -66,6 +75,7 @@ function EpisodeListItem({ episode, story, onOpenEpisode }) {
   Boolean(episode.is_locked)
   const date = formatDate(episode.published_at || episode.created_at || episode.updated_at)
   const comments = formatShortNumber(episode.total_comments || episode.comments_count || episode.comments || 0)
+  const newEpisode = isNewEpisode(episode)
 
   const lastReadKey = `shadow_last_read_episode_${story?.id || 'story'}`
 
@@ -100,8 +110,17 @@ const handleClick = () => {
           </div>
         )}
 
-        {episode.is_adult ? (
-  <span className="absolute left-2 top-2 z-10 rounded-full bg-[#FE526E] px-2 py-1 text-[10px] font-bold leading-none text-white shadow-sm">
+        {newEpisode ? (
+  <span
+    className="absolute right-1.5 top-0 z-10 flex h-[28px] min-w-[32px] items-center justify-center bg-[#FF3B30] px-1.5 pb-[3px] text-[9px] font-bold text-white shadow-[0_3px_7px_rgba(0,0,0,0.14)]"
+    style={{ clipPath: 'polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)' }}
+  >
+    New
+  </span>
+) : null}
+
+{episode.is_adult ? (
+  <span className="absolute bottom-2 left-2 z-10 rounded-full bg-[#FE526E] px-2 py-1 text-[10px] font-bold leading-none text-white shadow-sm">
     18+
   </span>
 ) : null}
