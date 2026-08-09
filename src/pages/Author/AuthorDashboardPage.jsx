@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -847,7 +848,15 @@ return {
   value={stats.likes}
   label="Likes"
 />
-        </div>
+                </div>
+
+        <Author49DayDashboardCard
+          onStartWriting={() =>
+            latestStory
+              ? handleAddEpisode(latestStory)
+              : handleCreateStory('novel')
+          }
+        />
 
         {latestStory ? (
           <section className="mt-5">
