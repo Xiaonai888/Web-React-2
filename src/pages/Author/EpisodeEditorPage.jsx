@@ -2977,9 +2977,12 @@ export default function EpisodeEditorPage() {
     }
 
     setInlineImageUploading(true)
+const isHeic = /image\/hei[cf]/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '')
+const uploadFile = isHeic ? await optimizeNovelEpisodeImage(file) : file
+
 const imageUrl = await uploadEpisodeInlineImage({
   token,
-  file,
+  file: uploadFile,
   storyId,
 })
 
