@@ -2,13 +2,13 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "^/(?!assets/|sw\\.js$|app-version\\.json$).*$",
+      "source": "/((?!assets/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "^/(?!assets/|sw\\.js$|app-version\\.json$).*$",
+      "source": "/((?!assets/|sw\\.js$|app-version\\.json$|manifest\\.webmanifest$).*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -31,6 +31,15 @@
         {
           "key": "Cache-Control",
           "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
         }
       ]
     }
