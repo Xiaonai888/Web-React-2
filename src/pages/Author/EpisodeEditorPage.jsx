@@ -2549,7 +2549,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
             <i className="fa-solid fa-rotate text-[11px]" />
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*,.heic,.heif"
               className="hidden"
               disabled={disabled}
               onChange={(event) => {
@@ -3943,10 +3943,10 @@ releaseOption={releaseOption}
                     <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
                       {mangaUploadPending ? 'Uploading pages...' : 'Drop or Add Manga Pages'}
                     </div>
-                    <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, or WebP · Up to 10 each time</div>
+                    <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, WebP, HEIC or HEIF · Up to 10 each time</div>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/*,.heic,.heif"
                       multiple
                       className="hidden"
                       disabled={mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES}
