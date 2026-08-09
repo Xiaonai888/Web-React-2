@@ -99,7 +99,7 @@ function SourceCard({ story, episode, author, total, onOpen }) {
   )
 }
 
-function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
+function EchoCard({ echo, onOpenProfile, onOpenEpisode, onShare, onCopy }) {
   const user = echo?.user || {}
   const name = user.name || user.username || 'Reader'
   const shareCount = Math.max(1, Number(echo?.share_count || 1))
@@ -107,12 +107,14 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
   return (
     <article className="rounded-[22px] bg-white p-4 shadow-[0_8px_24px_rgba(45,35,64,0.06)] ring-1 ring-[#ebe6f2]">
       <div className="flex items-start gap-3">
-        <Avatar user={user} />
+  <button type="button" onClick={onOpenProfile} className="shrink-0 active:opacity-70">
+    <Avatar user={user} />
+  </button>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">{name}</div>
+  <div className="min-w-0 flex-1">
+    <div className="flex items-start justify-between gap-3">
+      <button type="button" onClick={onOpenProfile} className="min-w-0 text-left active:opacity-70">
+        <div className="line-clamp-1 text-[15px] font-black text-[#17131f]">{name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px] font-semibold text-[#9b93a5]">
                 <span>{formatDate(echo.updated_at || echo.created_at)}</span>
                 <span className="h-1 w-1 rounded-full bg-[#cbc4d4]" />
@@ -124,7 +126,8 @@ function EchoCard({ echo, onOpenEpisode, onShare, onCopy }) {
                   </>
                 ) : null}
               </div>
-            </div>
+            </button>
+
 
             <button
               type="button"
@@ -224,6 +227,11 @@ export default function EpisodeEchoesPage() {
   const [shareOpen, setShareOpen] = useState(false)
 
   const episodeLink = `${window.location.origin}/story/${storyId}/episode/${episodeId}`
+  const openReaderProfile = (user) => {
+  const username = String(user?.username || '').trim()
+  if (!username) return
+  navigate(`/profile?username=${encodeURIComponent(username)}`)
+}
 
   const copyEpisodeLink = async () => {
     try {
@@ -396,9 +404,10 @@ export default function EpisodeEchoesPage() {
             <div className="space-y-3">
               {echoes.map((echo) => (
                 <EchoCard
-                  key={echo.id}
-                  echo={echo}
-                  onOpenEpisode={() => navigate(`/story/${storyId}/episode/${episodeId}`)}
+  key={echo.id}
+  echo={echo}
+  onOpenProfile={() => openReaderProfile(echo.user)}
+  onOpenEpisode={() => navigate(`/story/${storyId}/episode/${episodeId}`)}
                   onShare={shareEpisode}
                   onCopy={copyEpisodeLink}
                 />
