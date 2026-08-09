@@ -18,12 +18,17 @@ function loadImageFile(file) {
     const image = new Image()
 
     image.onload = () => {
-      resolve({ image, url, width: image.naturalWidth, height: image.naturalHeight })
+      resolve({
+        image,
+        url,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      })
     }
 
     image.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(new Error('Could not read this image.'))
+      reject(new Error('Could not read this image on this device.'))
     }
 
     image.src = url
@@ -48,13 +53,19 @@ function canvasToWebp(canvas, quality) {
 }
 
 function safeWebpName(name = 'manga-page') {
-  const base = String(name).replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/^-+|-+$/g, '')
+  const base = String(name)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
   return `${base || 'manga-page'}.webp`
 }
 
 function scaledDimensions(width, height, maxWidth) {
   if (width <= maxWidth) return { width, height }
+
   const ratio = maxWidth / width
+
   return {
     width: Math.max(1, Math.round(width * ratio)),
     height: Math.max(1, Math.round(height * ratio)),
@@ -68,150 +79,266 @@ function widthCandidates(sourceWidth) {
     Math.min(1280, sourceWidth),
     Math.min(1120, sourceWidth),
     Math.min(960, sourceWidth),
-  ].filter((width, index, values) => width > 0 && values.indexOf(width) === index)
+  ].filter(
+    (width, index, values) =>
+      width > 0 && values.indexOf(width) === index
+  )
 }
-
 
 function isMangaImageFile(file) {
   const type = String(file?.type || '').toLowerCase()
   const name = String(file?.name || '').toLowerCase()
-  return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
+
+  return (
+    type.startsWith('image/') ||
+    /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
+  )
 }
 
 function isMangaHeicFile(file) {
-  return /image\/hei[cf]/i.test(file?.type || '') || /\.hei[cf]$/i.test(file?.name || '')
+  return (
+    /image\/hei[cf]/i.test(file?.type || '') ||
+    /\.hei[cf]$/i.test(file?.name || '')
+  )
 }
+
 export function validateMangaFile(file) {
   if (!file) return 'Image file is missing.'
-  if (!isMangaImageFile(file)) return `${file.name || 'File'} is not an image.`
-  if (file.size > MANGA_INPUT_MAX_BYTES) return `${file.name || 'Image'} is larger than 2 MB.`
+
+  if (!isMangaImageFile(file)) {
+    return `${file.name || 'File'} is not an image.`
+  }
+
+  if (file.size > MANGA_INPUT_MAX_BYTES) {
+    return `${file.name || 'Image'} is larger than 2 MB.`
+  }
+
   return ''
+}
+
+async function convertMangaHeicToWebp(file, loaded) {
+  let smallest = null
+
+  for (const maxWidth of widthCandidates(loaded.width)) {
+    const dimensions = scaledDimensions(
+      loaded.width,
+      loaded.height,
+      maxWidth
+    )
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error(
+        'Image processing is unavailable in this browser.'
+      )
+    }
+
+    canvas.width = dimensions.width
+    canvas.height = dimensions.height
+
+    context.drawImage(
+      loaded.image,
+      0,
+      0,
+      dimensions.width,
+      dimensions.height
+    )
+
+    for (const quality of QUALITIES) {
+      const blob = await canvasToWebp(canvas, quality)
+      const candidate = {
+        file: new File(
+          [blob],
+          safeWebpName(file.name),
+          {
+            type: 'image/webp',
+            lastModified: Date.now(),
+          }
+        ),
+        width: dimensions.width,
+        height: dimensions.height,
+        fileSize: blob.size,
+        mimeType: 'image/webp',
+        compressed: true,
+      }
+
+      if (!smallest || candidate.fileSize < smallest.fileSize) {
+        smallest = candidate
+      }
+
+      if (candidate.fileSize <= TARGET_MAX_BYTES) {
+        return candidate
+      }
+    }
+
+    canvas.width = 0
+    canvas.height = 0
+
+    if (smallest?.fileSize <= HARD_MAX_BYTES) {
+      return smallest
+    }
+  }
+
+  if (smallest?.fileSize <= HARD_MAX_BYTES) {
+    return smallest
+  }
+
+  throw new Error(
+    'This HEIC/HEIF image could not be converted below the required size.'
+  )
 }
 
 export async function optimizeMangaImage(file) {
   const validationError = validateMangaFile(file)
-  if (validationError) throw new Error(validationError)
 
-  const loaded = await loadImageFile(file)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+
+  let loaded
 
   try {
-    const alreadyOptimized =
-      file.type === 'image/webp' &&
-      loaded.width <= MAX_WIDTH &&
-      file.size <= HARD_MAX_BYTES
+    loaded = await loadImageFile(file)
+  } catch {
+    if (isMangaHeicFile(file)) {
+      throw new Error(
+        'This HEIC/HEIF image could not be read on this device. Please use JPG, PNG, or WebP.'
+      )
+    }
 
-    if (alreadyOptimized) {
+    throw new Error(
+      'This image could not be read on this device. Please choose another JPG, PNG, or WebP image.'
+    )
+  }
+
+  try {
+    if (!isMangaHeicFile(file)) {
       return {
         file,
         width: loaded.width,
         height: loaded.height,
         fileSize: file.size,
-        mimeType: 'image/webp',
+        mimeType: file.type || 'application/octet-stream',
         compressed: false,
       }
     }
 
-    let smallest = null
-
-    for (const maxWidth of widthCandidates(loaded.width)) {
-      const dimensions = scaledDimensions(loaded.width, loaded.height, maxWidth)
-      const canvas = document.createElement('canvas')
-      const context = canvas.getContext('2d')
-
-      if (!context) throw new Error('Image processing is unavailable in this browser.')
-
-      canvas.width = dimensions.width
-      canvas.height = dimensions.height
-      context.drawImage(loaded.image, 0, 0, dimensions.width, dimensions.height)
-
-      for (const quality of QUALITIES) {
-        const blob = await canvasToWebp(canvas, quality)
-        const candidate = {
-          file: new File([blob], safeWebpName(file.name), {
-            type: 'image/webp',
-            lastModified: Date.now(),
-          }),
-          width: dimensions.width,
-          height: dimensions.height,
-          fileSize: blob.size,
-          mimeType: 'image/webp',
-          compressed: true,
-        }
-
-        if (!smallest || candidate.fileSize < smallest.fileSize) smallest = candidate
-        if (candidate.fileSize <= TARGET_MAX_BYTES) return candidate
-      }
-
-      if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
+    return await convertMangaHeicToWebp(file, loaded)
+  } catch (error) {
+    if (isMangaHeicFile(file)) {
+      throw new Error(
+        error?.message ||
+        'This HEIC/HEIF image could not be converted. Please use JPG, PNG, or WebP.'
+      )
     }
 
-       if (smallest?.fileSize <= HARD_MAX_BYTES) return smallest
-    throw new Error('Client compression unavailable.')
-  } catch {
-  if (isMangaHeicFile(file)) {
-    throw new Error('This HEIC/HEIF image could not be converted. Please use JPG, PNG, or WebP.')
-  }
-
-  return {
-      file,
-      width: loaded.width,
-      height: loaded.height,
-      fileSize: file.size,
-      mimeType: file.type || 'image/jpeg',
-      compressed: false,
-    }
+    throw error
   } finally {
     URL.revokeObjectURL(loaded.url)
   }
 }
 
 export async function uploadMangaPageFile({ token, file }) {
-  const formData = new FormData()
-  const uploadFile = file
+  if (!file) {
+    throw new Error('Choose a manga page first.')
+  }
 
-  formData.append('image', uploadFile)
-  formData.append('folder', 'episode_content')
+  const validationError = validateMangaFile(file)
 
-  const response = await fetch(`${
+  if (validationError) {
+    throw new Error(validationError)
+  }
+
+  const apiBaseUrl =
     import.meta.env.VITE_API_URL ||
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:5000'
-      : 'https://shadow-backend-kucw.onrender.com')
-  }/api/story-media/upload-image`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
+    (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : 'https://shadow-backend-kucw.onrender.com'
+    )
+
+  let response
+
+  try {
+    response = await fetch(
+      `${apiBaseUrl}/api/story-media/upload-manga-page`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type':
+            file.type || 'application/octet-stream',
+        },
+        body: file,
+      }
+    )
+  } catch {
+    throw new Error(
+      'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
+    )
+  }
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to upload manga page.')
+    const stage = String(data.stage || 'upload')
+    const code = String(
+      data.code || `HTTP_${response.status}`
+    )
+    const message =
+      data.message || 'Manga page upload failed.'
+
+    throw new Error(`${message} [${stage}: ${code}]`)
+  }
+
+  const imageUrl = data.image_url || data.imageUrl
+
+  if (!imageUrl) {
+    throw new Error(
+      'The upload finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
+    )
   }
 
   return {
-    imageUrl: data.image_url || data.imageUrl,
+    imageUrl,
     storagePath: data.path || null,
   }
 }
 
-export async function runWithConcurrency(items, concurrency, worker) {
+export async function runWithConcurrency(
+  items,
+  concurrency,
+  worker
+) {
   const queue = [...items]
-  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
-    while (queue.length) {
-      const item = queue.shift()
-      if (item) await worker(item)
+  const workers = Array.from(
+    { length: Math.min(concurrency, queue.length) },
+    async () => {
+      while (queue.length) {
+        const item = queue.shift()
+
+        if (item) {
+          await worker(item)
+        }
+      }
     }
-  })
+  )
 
   await Promise.all(workers)
 }
 
 export function formatFileSize(bytes) {
   const value = Number(bytes || 0)
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`
+
+  if (value < 1024) {
+    return `${value} B`
+  }
+
+  if (value < 1024 * 1024) {
+    return `${Math.round(value / 1024)} KB`
+  }
+
   return `${(value / (1024 * 1024)).toFixed(1)} MB`
 }
