@@ -401,6 +401,12 @@ function countEpisodeImages(value) {
   return parsed.body.querySelectorAll('img').length
 }
 
+function isNovelImageFile(file) {
+  const type = String(file?.type || '').toLowerCase()
+  const name = String(file?.name || '').toLowerCase()
+  return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
+}
+
 function loadNovelImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
@@ -451,7 +457,7 @@ function chooseBestNovelImage(candidates) {
 
 async function optimizeNovelEpisodeImage(file) {
   if (!file) throw new Error('Choose an image first.')
-  if (!file.type?.startsWith('image/')) {
+  if (!isNovelImageFile(file)) {
     throw new Error('Please choose an image file.')
   }
   if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
@@ -517,7 +523,7 @@ async function optimizeNovelEpisodeImage(file) {
 
 async function uploadEpisodeInlineImage({ token, file, storyId }) {
   if (!file) throw new Error('Choose an image first.')
-  if (!file.type?.startsWith('image/')) {
+  if (!isNovelImageFile(file)) {
   throw new Error('Please choose an image file.')
 }
 if (file.size > NOVEL_IMAGE_INPUT_MAX_BYTES) {
