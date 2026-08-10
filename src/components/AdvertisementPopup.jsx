@@ -53,6 +53,7 @@ function markShown(advertisement) {
 
 function AdBadge({ badge, compact = false }) {
   const value = String(badge || '').trim().toUpperCase()
+
   if (!value) return null
 
   const tone =
@@ -60,14 +61,14 @@ function AdBadge({ badge, compact = false }) {
       ? 'bg-[#FF4F64] text-white'
       : value === 'TOP'
         ? 'bg-[#8B5CF6] text-white'
-        : 'bg-[#FACC15] text-[#111827]'
+        : 'bg-[#FFD400] text-[#111111]'
 
   return (
     <span
-      className={`absolute left-4 top-6 z-30 inline-flex items-center justify-center rounded-[11px] font-black shadow-[0_8px_24px_rgba(0,0,0,0.24)] ${tone} ${
+      className={`absolute left-[18px] top-[18px] z-30 inline-flex items-center justify-center rounded-[8px] font-black shadow-[0_5px_16px_rgba(0,0,0,0.22)] ${tone} ${
         compact
-          ? 'min-w-[54px] px-3 py-1.5 text-[12px]'
-          : 'min-w-[62px] px-3.5 py-2 text-[13px]'
+          ? 'min-w-[42px] px-2.5 py-1 text-[10px]'
+          : 'min-w-[48px] px-2.5 py-1.5 text-[11px]'
       }`}
     >
       {value}
@@ -75,21 +76,21 @@ function AdBadge({ badge, compact = false }) {
   )
 }
 
-function BrandLockup({ compact = false }) {
+function BrandFooter({ compact = false }) {
   return (
     <div
-      className={`absolute bottom-5 left-4 z-30 flex max-w-[calc(100%-32px)] flex-col items-start rounded-[14px] bg-white/95 shadow-[0_12px_34px_rgba(0,0,0,0.28)] backdrop-blur-[4px] ${
-        compact ? 'right-4 gap-1.5 px-3 py-2.5' : 'gap-2 px-4 py-3'
+      className={`flex shrink-0 flex-col items-center justify-center bg-white px-5 ${
+        compact ? 'h-[82px] gap-1' : 'h-[clamp(96px,12.5vh,128px)] gap-1.5'
       }`}
     >
       <img
         src={SHADOW_LOGO_URL}
         alt="Shadow"
-        className={`${compact ? 'h-[34px]' : 'h-[42px]'} max-w-full object-contain object-left`}
+        className={`${compact ? 'w-[145px]' : 'w-[min(52vw,230px)]'} h-auto object-contain`}
       />
       <div
-        className={`font-black tracking-[0.13em] text-[#111827] ${
-          compact ? 'text-[8px]' : 'text-[9px]'
+        className={`font-black tracking-[0.14em] text-[#111111] ${
+          compact ? 'text-[7px]' : 'text-[9px]'
         }`}
       >
         {BRAND_TEXT}
@@ -317,7 +318,7 @@ export default function AdvertisementPopup({
     return null
   }
 
-  const adImage = (
+  const image = (
     <img
       src={advertisement.image_url}
       alt="Advertisement"
@@ -332,72 +333,74 @@ export default function AdvertisementPopup({
     />
   )
 
-  const linkedAdImage = advertisement.link_url ? (
+  const linkedImage = advertisement.link_url ? (
     <a
       href={advertisement.link_url}
       target="_blank"
       rel="noreferrer"
       className="block h-full w-full"
     >
-      {adImage}
+      {image}
     </a>
   ) : (
-    adImage
+    image
   )
 
   if (placement === 'me') {
     return (
       <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-[2px]">
-        <div
-          className="relative"
-          style={{ width: 'min(88vw, 45vh, 410px)' }}
-        >
+        <div className="relative w-[min(88vw,390px)] overflow-hidden rounded-[22px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
           <button
             type="button"
             aria-label="Close advertisement"
             onClick={finishAd}
-            className="absolute -top-10 right-0 z-40 text-[30px] font-light leading-none text-white drop-shadow-lg active:scale-95"
+            className="absolute right-3 top-3 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-[20px] font-light leading-none text-white backdrop-blur-[2px] active:scale-95"
           >
             ×
           </button>
 
-          <div className="relative aspect-[9/16] overflow-hidden rounded-[24px] bg-black shadow-[0_24px_80px_rgba(0,0,0,0.6)] ring-1 ring-white/15">
-            {linkedAdImage}
-            <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-28 bg-gradient-to-b from-black/55 via-black/20 to-transparent" />
+          <div className="relative aspect-[9/14] overflow-hidden bg-black">
+            {linkedImage}
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black/55 via-black/20 to-transparent" />
             <AdBadge badge={advertisement.badge} compact />
-            <BrandLockup compact />
           </div>
+
+          <BrandFooter compact />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-[2147483647] overflow-hidden bg-black">
-      <div className="absolute inset-0">{linkedAdImage}</div>
+    <div className="fixed inset-0 z-[2147483647] flex flex-col overflow-hidden bg-black">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
+        <div className="absolute inset-0">{linkedImage}</div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-32 bg-gradient-to-b from-black/60 via-black/25 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-28 bg-gradient-to-b from-black/55 via-black/20 to-transparent" />
 
-      <AdBadge badge={advertisement.badge} />
+        <AdBadge badge={advertisement.badge} />
 
-      <div className="absolute right-4 top-6 z-40 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[14px] font-semibold shadow-lg backdrop-blur-[3px]">
-        {!canSkip ? <span className="text-[#FFB020]">{skipCountdown}s</span> : null}
+        <div className="absolute right-[18px] top-[18px] z-40 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-[12px] font-semibold shadow-lg backdrop-blur-[3px]">
+          {!canSkip ? (
+            <span className="font-bold text-[#FFB020]">{skipCountdown}S</span>
+          ) : null}
 
-        <button
-          type="button"
-          onClick={closeAd}
-          disabled={placement !== 'opening' && !canSkip}
-          className={`text-white ${
-            placement === 'opening' || canSkip
-              ? 'cursor-pointer opacity-100 active:scale-95'
-              : 'cursor-not-allowed opacity-80'
-          }`}
-        >
-          Skip
-        </button>
+          <button
+            type="button"
+            onClick={closeAd}
+            disabled={placement !== 'opening' && !canSkip}
+            className={`text-white ${
+              placement === 'opening' || canSkip
+                ? 'cursor-pointer opacity-100 active:scale-95'
+                : 'cursor-not-allowed opacity-80'
+            }`}
+          >
+            Skip
+          </button>
+        </div>
       </div>
 
-      <BrandLockup />
+      <BrandFooter />
     </div>
   )
 }
