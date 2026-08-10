@@ -74,7 +74,7 @@ function normalizeStory(story, index = 0, tab = 'Fresh') {
   return {
     id: story.id,
     title: story.title || 'Untitled Story',
-    author: story.author_name || 'Shadow Author',
+    author: story.author_page?.page_name || story.author_name || 'Shadow Author',
     badge,
     badgeColor,
     likes: formatCompactNumber(story.total_likes),
