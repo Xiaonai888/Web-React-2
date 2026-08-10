@@ -2591,6 +2591,7 @@ export default function EpisodeEditorPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
   const [searchParams] = useSearchParams()
+  const returnTo = searchParams.get('returnTo') || `/author/story/${storyId}/manage`
   const requestedType = searchParams.get('type') === 'manga' ? 'manga' : 'novel'
   const editEpisodeId = searchParams.get('editEpisodeId')
   const isEditMode = Boolean(editEpisodeId)
@@ -3481,7 +3482,7 @@ useEffect(() => {
       return
     }
 
-    navigate(`/author/story/${storyId}/manage`, { replace: true })
+    navigate(returnTo, { replace: true })
   }
 
   const handleDiscard = () => {
@@ -3492,7 +3493,7 @@ useEffect(() => {
       return
     }
 
-    navigate(`/author/story/${storyId}/manage`, { replace: true })
+    navigate(returnTo, { replace: true })
   }
 
   const handleSaveDraftAndLeave = async () => {
