@@ -1106,12 +1106,16 @@ const handleOpenProfileSwitcher = (event) => {
   divider
 />
             <MenuRow to="/comments" icon="far fa-comment-dots" title={tx('myComments')} divider />
-            <MenuRow
-  to="/echoes/received"
-  icon="fa-solid fa-wave-square"
-  title="Received Echoes"
-  divider
-/>
+            <div className="mt-3 px-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">
+  Game
+</div>
+<section className="mt-2 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+  <MenuRow
+    icon="fa-solid fa-dharmachakra"
+    title="Spin"
+    subtitle="Coming soon"
+  />
+</section>
             <MenuRow to="/library" customIcon={<img src="/assets/Icons/Library.svg" alt="" className="h-[16px] w-[16px] object-contain" />} title="Library" divider />
             <MenuRow to="/saved-posts" icon="far fa-bookmark" title="Saved Posts" divider />
             <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} divider />
