@@ -294,7 +294,10 @@ function HowItWorksCard() {
   )
 }
 
-export default function BlackSundayEventTab() {
+export default function BlackSundayEventTab({
+  mode = 'full',
+  showNoEventToday = true,
+}) {
   const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
 
@@ -307,49 +310,96 @@ export default function BlackSundayEventTab() {
   }, [])
 
   const isLive =
-  getCambodiaDate(now).getUTCDay() === 0
+    getCambodiaDate(now).getUTCDay() === 0
 
   const upcomingEvent = useMemo(
     () => getNextSunday(now, isLive),
     [isLive, now]
   )
 
-  const upcomingCountdown = getTimeParts(upcomingEvent, now)
+  const upcomingCountdown = getTimeParts(
+    upcomingEvent,
+    now
+  )
+
+  if (mode === 'active-only' && !isLive) {
+    return null
+  }
+
+  const showHero = mode !== 'upcoming-only'
+  const showUpcoming = mode !== 'active-only'
+
+  const shouldShowNoEventToday =
+    !isLive &&
+    (
+      mode === 'full' ||
+      (
+        mode === 'upcoming-only' &&
+        showNoEventToday
+      )
+    )
+
+  const hasTopCard =
+    (showHero && isLive) ||
+    shouldShowNoEventToday
 
   return (
-    <div className="pb-8 pt-6">
-      {isLive ? (
+    <div
+      className={
+        mode === 'active-only'
+          ? 'pt-4'
+          : 'pb-8 pt-6'
+      }
+    >
+      {showHero && isLive ? (
         <LiveEventCard
           now={now}
           onExplore={() => navigate('/discover')}
         />
-      ) : (
+      ) : null}
+
+      {shouldShowNoEventToday ? (
         <NoEventTodayCard
           nextEvent={upcomingEvent}
           countdown={upcomingCountdown}
         />
-      )}
+      ) : null}
 
-      <div className="mt-7 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
-          <i className="fa-regular fa-calendar-days text-[14px]" />
-        </span>
-        <h2 className="text-[21px] font-black text-[#17182A]">Upcoming</h2>
-        <span className="text-[14px] text-[#F6B800]">✦</span>
-      </div>
+      {showUpcoming ? (
+        <>
+          <div
+            className={`flex items-center gap-2 ${
+              hasTopCard ? 'mt-7' : ''
+            }`}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
+              <i className="fa-regular fa-calendar-days text-[14px]" />
+            </span>
 
-      <div className="mt-4">
-        <UpcomingEventCard
-          eventDate={upcomingEvent}
-          countdown={upcomingCountdown}
-        />
-        <HowItWorksCard />
-      </div>
+            <h2 className="text-[21px] font-black text-[#17182A]">
+              Upcoming
+            </h2>
 
-      <div className="mt-4 flex items-center gap-2 px-2 text-[10px] font-semibold text-[#8B909B]">
-        <i className="fa-solid fa-shield-halved text-[#22C55E]" />
-        Discount is applied automatically when an eligible episode is unlocked.
-      </div>
+            <span className="text-[14px] text-[#F6B800]">
+              ✦
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <UpcomingEventCard
+              eventDate={upcomingEvent}
+              countdown={upcomingCountdown}
+            />
+
+            <HowItWorksCard />
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 px-2 text-[10px] font-semibold text-[#8B909B]">
+            <i className="fa-solid fa-shield-halved text-[#22C55E]" />
+            Discount is applied automatically when an eligible episode is unlocked.
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }
