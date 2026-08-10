@@ -58,13 +58,17 @@ function renderPostTextWithLinks(text) {
     }
 
     if (POST_HASHTAG_ONLY_PATTERN.test(part)) {
+      const tagUrl = `/discover/search?q=${encodeURIComponent(part)}&type=posts`
+
       return (
-        <span
+        <a
           key={`${part}-${index}`}
+          href={tagUrl}
+          onClick={(event) => event.stopPropagation()}
           className="text-[#1877f2]"
         >
           {part}
-        </span>
+        </a>
       )
     }
 
