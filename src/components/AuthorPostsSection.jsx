@@ -619,25 +619,6 @@ function cancelReactionPress() {
   )
 }
 
-function ToastBubble({ text, author }) {
-  if (!text) return null
-
-  const avatarUrl = author?.avatar_url || ''
-
-  return (
-    <div className="pointer-events-none fixed left-1/2 top-20 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#111827] px-4 py-2 text-[12px] font-semibold text-white shadow-2xl">
-      <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <i className="fa-solid fa-feather-pointed text-[11px] text-[#111827]" />
-        )}
-      </span>
-      <span>{text}</span>
-    </div>
-  )
-}
-
 function SheetOption({
   icon,
   title,
@@ -692,16 +673,11 @@ function PostOptionsSheet({
 }) {
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
-  const toastTimerRef = useRef(null)
-
   const [sheetOffset, setSheetOffset] =
     useState(0)
 
   const [dragging, setDragging] =
     useState(false)
-
-  const [toast, setToast] =
-    useState('')
 
   useEffect(() => {
     if (!post) return undefined
@@ -728,36 +704,11 @@ function PostOptionsSheet({
     }
   }, [post])
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) {
-        window.clearTimeout(
-          toastTimerRef.current
-        )
-      }
-    }
-  }, [])
-
   if (!post) return null
 
   const isPinned = Boolean(
     post.is_pinned || post.pinned
   )
-
-  function showToast(text) {
-    setToast(text)
-
-    if (toastTimerRef.current) {
-      window.clearTimeout(
-        toastTimerRef.current
-      )
-    }
-
-    toastTimerRef.current =
-      window.setTimeout(() => {
-        setToast('')
-      }, 1600)
-  }
 
   function handleTouchStart(event) {
     const point = event.touches?.[0]
@@ -825,8 +776,8 @@ function PostOptionsSheet({
           link
         )
 
-        showToast(
-          'Post link copied'
+        onMessage?.(
+          'Post link copied.'
         )
 
         return
@@ -840,7 +791,6 @@ function PostOptionsSheet({
   }
 
   function handleComingSoon(message) {
-    showToast(message)
     onMessage?.(message)
   }
 
@@ -1050,10 +1000,6 @@ function PostOptionsSheet({
         </div>
       </section>
 
-      <ToastBubble
-        text={toast}
-        author={author}
-      />
     </div>
   )
 }
@@ -1124,6 +1070,16 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
     setSelectedPostNotificationsEnabled,
   ] = useState(true)
   const [reactionBusyId, setReactionBusyId] = useState('')
+
+  useEffect(() => {
+    if (!localError) return undefined
+
+    const timer = window.setTimeout(() => {
+      setLocalError('')
+    }, 3000)
+
+    return () => window.clearTimeout(timer)
+  }, [localError])
 
   useEffect(() => {
     if (!selectedPost?.id) {
@@ -1545,7 +1501,7 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         <button
           type="button"
           onClick={() => setLocalError('')}
-          className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-[#fff7ed] px-3 py-2 text-left text-[12px] font-normal leading-5 text-[#9a3412]"
+          className="m-4 w-[calc(100%-2rem)] rounded-[14px] bg-white px-3 py-2 text-left text-[12px] font-medium leading-5 text-[#111827] shadow-sm ring-1 ring-black/10"
         >
           {localError}
         </button>
