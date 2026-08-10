@@ -138,8 +138,8 @@ export default function DiscoverTrendingStoriesSection() {
 
       <div
   className="no-scrollbar flex cursor-grab select-none gap-3 overflow-x-auto px-4 pb-1 active:cursor-grabbing"
-  onPointerDown={(e) => { if (e.pointerType === 'mouse') { e.currentTarget.dataset.x = e.clientX; e.currentTarget.dataset.left = e.currentTarget.scrollLeft; e.currentTarget.dataset.drag = '0'; e.currentTarget.setPointerCapture(e.pointerId) } }}
-  onPointerMove={(e) => { if (e.pointerType !== 'mouse' || !e.currentTarget.hasPointerCapture(e.pointerId)) return; const dx = e.clientX - Number(e.currentTarget.dataset.x); if (Math.abs(dx) > 5) e.currentTarget.dataset.drag = '1'; e.currentTarget.scrollLeft = Number(e.currentTarget.dataset.left) - dx }}
+  onPointerDown={(e) => { if (e.pointerType === 'mouse') { e.currentTarget.dataset.x = e.clientX; e.currentTarget.dataset.left = e.currentTarget.scrollLeft; e.currentTarget.dataset.drag = '0' } }}
+onPointerMove={(e) => { if (e.pointerType !== 'mouse' || e.buttons !== 1) return; const dx = e.clientX - Number(e.currentTarget.dataset.x); if (Math.abs(dx) > 5) { e.currentTarget.dataset.drag = '1'; if (!e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.setPointerCapture(e.pointerId) } e.currentTarget.scrollLeft = Number(e.currentTarget.dataset.left) - dx }}
   onPointerUp={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId) }}
   onClickCapture={(e) => { if (e.currentTarget.dataset.drag === '1') { e.preventDefault(); e.stopPropagation(); e.currentTarget.dataset.drag = '0' } }}
   onDragStart={(e) => e.preventDefault()}
