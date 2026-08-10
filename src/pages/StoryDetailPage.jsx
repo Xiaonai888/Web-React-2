@@ -734,7 +734,7 @@ setSubscribed(isSubscribed)
     <div className="min-h-screen bg-white pb-[95px] sm:bg-[#f5f3fa] sm:pb-[120px]">
       <StoryHeroSection
         story={story}
-        onBack={() => navigate(location.state?.returnTo || '/', { replace: true })}
+        onBack={() => navigate(-1)}
         bookmarked={bookmarked}
         onToggleBookmark={handleToggleBookmark}
         onEcho={() => setEchoShareOpen(true)}
