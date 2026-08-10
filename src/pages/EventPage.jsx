@@ -674,6 +674,111 @@ function AuthorCenterBannerSlider() {
   )
 }
 
+function isBlackSundayLive(value = new Date()) {
+  const cambodiaTime = new Date(
+    value.getTime() + 7 * 60 * 60 * 1000
+  )
+
+  return cambodiaTime.getUTCDay() === 0
+}
+
+function ActiveEventPicker({
+  events,
+  selectedId,
+  onSelect,
+}) {
+  if (events.length <= 1) return null
+
+  const activeIndex = Math.max(
+    0,
+    events.findIndex(
+      (event) => event.id === selectedId
+    )
+  )
+
+  return (
+    <div className="mt-4">
+      <div className="no-scrollbar -mr-4 flex snap-x gap-3 overflow-x-auto pb-2 pr-4">
+        {events.map((event) => {
+          const selected =
+            event.id === selectedId
+
+          return (
+            <button
+              key={event.id}
+              type="button"
+              onClick={() => onSelect(event.id)}
+              className={`w-[68%] shrink-0 snap-start overflow-hidden rounded-[18px] border bg-white p-3 text-left shadow-sm transition active:scale-[0.98] ${
+                selected
+                  ? 'border-[#F6B800] ring-2 ring-[#F6B800]/20'
+                  : 'border-[#E8EAF0]'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-[68px] w-[68px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] ${event.iconBg}`}
+                >
+                  {event.image ? (
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <i
+                      className={`fa-solid ${event.icon} text-[25px] ${event.iconColor}`}
+                    />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`text-[9px] font-black uppercase tracking-[0.12em] ${event.labelColor}`}
+                  >
+                    {event.label}
+                  </div>
+
+                  <div className="mt-1 line-clamp-2 text-[15px] font-black leading-5 text-[#111827]">
+                    {event.title}
+                  </div>
+
+                  <div className="mt-1 text-[10px] font-semibold text-[#8B909B]">
+                    {selected
+                      ? 'Showing now'
+                      : 'Tap to view'}
+                  </div>
+                </div>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {events.length <= 4 ? (
+        <div className="mt-2 flex justify-center gap-1.5">
+          {events.map((event) => (
+            <button
+              key={event.id}
+              type="button"
+              onClick={() => onSelect(event.id)}
+              aria-label={`View ${event.title}`}
+              className={`h-1.5 rounded-full transition-all ${
+                event.id === selectedId
+                  ? 'w-5 bg-[#111827]'
+                  : 'w-1.5 bg-[#D8DBE2]'
+              }`}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-2 text-center text-[11px] font-bold text-[#8B909B]">
+          {activeIndex + 1} / {events.length}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function EventPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('author')
@@ -682,6 +787,14 @@ export default function EventPage() {
   const [message, setMessage] = useState('')
   const [topAuthors, setTopAuthors] = useState([])
   const [followLoadingId, setFollowLoadingId] = useState('')
+  const [author49Available, setAuthor49Available] =
+    useState(() => !getReaderToken())
+  const [writerWednesdayLive, setWriterWednesdayLive] =
+    useState(false)
+  const [eventNow, setEventNow] =
+    useState(() => new Date())
+  const [selectedActiveEvent, setSelectedActiveEvent] =
+    useState('')
   const topAuthorsScrollRef = useRef(null)
   const topAuthorsDraggingRef = useRef(false)
   const topAuthorsDragMovedRef = useRef(false)
@@ -726,6 +839,152 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
       ignore = true
     }
   }, [])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadActiveEventStatus() {
+    const token = getReaderToken()
+
+    try {
+      const writerResponse = await fetch(
+        `${API_BASE_URL}/api/unlocks/events/writer-wednesday`
+      )
+
+      const writerData = await writerResponse
+        .json()
+        .catch(() => ({}))
+
+      if (!ignore) {
+        setWriterWednesdayLive(
+          Boolean(
+            writerResponse.ok &&
+            writerData.ok !== false &&
+            writerData.event?.active
+          )
+        )
+      }
+    } catch {
+      if (!ignore) {
+        setWriterWednesdayLive(false)
+      }
+    }
+
+    if (!token) {
+      if (!ignore) {
+        setAuthor49Available(true)
+      }
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me/49-day-event`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      const event = data.event
+
+      if (!ignore) {
+        setAuthor49Available(
+          Boolean(
+            response.ok &&
+            data.ok !== false &&
+            event?.visible &&
+            event?.enabled &&
+            event.status !== 'finished'
+          )
+        )
+      }
+    } catch {
+      if (!ignore) {
+        setAuthor49Available(false)
+      }
+    }
+  }
+
+    loadActiveEventStatus()
+
+    const timer = window.setInterval(() => {
+      setEventNow(new Date())
+      loadActiveEventStatus()
+    }, 60000)
+
+    return () => {
+      ignore = true
+      window.clearInterval(timer)
+    }
+  }, [])
+
+  const blackSundayLive =
+    isBlackSundayLive(eventNow)
+
+  const activeEvents = [
+    writerWednesdayLive
+      ? {
+          id: 'writer-wednesday',
+          title: 'Writer Wednesday',
+          label: 'Weekly Event',
+          icon: 'fa-gem',
+          iconBg: 'bg-[#F3EDFF]',
+          iconColor: 'text-[#7C3AED]',
+          labelColor: 'text-[#7C3AED]',
+        }
+      : null,
+
+    blackSundayLive
+      ? {
+          id: 'black-sunday',
+          title: 'Black Sunday',
+          label: 'Weekly Event',
+          icon: 'fa-bolt',
+          iconBg: 'bg-[#1A1730]',
+          iconColor: 'text-[#C084FC]',
+          labelColor: 'text-[#7C3AED]',
+        }
+      : null,
+
+    author49Available
+      ? {
+          id: 'author-49-day',
+          title: '80% for 49 Days',
+          label: 'Author Event',
+          image: '/assets/Icons/Event/Event 2.webp',
+          iconBg: 'bg-[#FFF5D8]',
+          iconColor: 'text-[#E3AB00]',
+          labelColor: 'text-[#C99300]',
+        }
+      : null,
+  ].filter(Boolean)
+
+  const activeEventIds = activeEvents
+    .map((event) => event.id)
+    .join('|')
+
+  useEffect(() => {
+    const eventIds = activeEventIds
+      ? activeEventIds.split('|')
+      : []
+
+    if (!eventIds.length) {
+      if (selectedActiveEvent) {
+        setSelectedActiveEvent('')
+      }
+      return
+    }
+
+    if (!eventIds.includes(selectedActiveEvent)) {
+      setSelectedActiveEvent(eventIds[0])
+    }
+  }, [activeEventIds, selectedActiveEvent])
 
   const handleStartYourWork = async () => {
     if (loading) return
@@ -1140,13 +1399,32 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
             </section>
           </>
                ) : (
-  <>
-  <Author49DayEventCard
-    onStartWriting={handleStartYourWork}
-    startWritingLoading={loading}
+ <>
+  {selectedActiveEvent === 'writer-wednesday' ? (
+    <WriterWednesdayEventCard />
+  ) : null}
+
+  {selectedActiveEvent === 'black-sunday' ? (
+    <BlackSundayEventTab mode="active-only" />
+  ) : null}
+
+  {selectedActiveEvent === 'author-49-day' ? (
+    <Author49DayEventCard
+      onStartWriting={handleStartYourWork}
+      startWritingLoading={loading}
+    />
+  ) : null}
+
+  <ActiveEventPicker
+    events={activeEvents}
+    selectedId={selectedActiveEvent}
+    onSelect={setSelectedActiveEvent}
   />
-  <WriterWednesdayEventCard />
-  <BlackSundayEventTab />
+
+  <BlackSundayEventTab
+    mode="upcoming-only"
+    showNoEventToday={false}
+  />
 </>
 )}
       </main>
