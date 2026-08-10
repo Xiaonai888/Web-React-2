@@ -84,9 +84,13 @@ function formatPostDate(value) {
 
 function sortAuthorPosts(posts) {
   return [...posts].sort((a, b) => {
-    const pinnedScore = Number(Boolean(b.is_pinned || b.pinned)) - Number(Boolean(a.is_pinned || a.pinned))
+    const aPinned = Boolean(a.is_pinned || a.pinned)
+    const bPinned = Boolean(b.is_pinned || b.pinned)
+    if (aPinned !== bPinned) return Number(bPinned) - Number(aPinned)
 
-    if (pinnedScore !== 0) return pinnedScore
+    if (aPinned && bPinned) {
+      return new Date(b.pinned_at || 0).getTime() - new Date(a.pinned_at || 0).getTime()
+    }
 
     return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
   })
@@ -1427,21 +1431,18 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
 
     try {
       setPinBusy(true)
+      setLocalError('')
 
-      const updatedPost = await setAuthorPostPinned(post.id, isPinned)
+      await setAuthorPostPinned(post.id, isPinned)
 
-      setPosts((current) => {
-        const nextPosts = current.map((item) => {
-          if (isPinned) {
-            return item.id === post.id ? { ...item, ...updatedPost, is_pinned: true } : { ...item, is_pinned: false }
-          }
+      const nextPosts = await fetchAuthorPosts(
+        author?.page_username || '',
+        postFilterDate
+      )
+      const sortedPosts = sortAuthorPosts(nextPosts)
 
-          return item.id === post.id ? { ...item, ...updatedPost, is_pinned: false } : item
-        })
-
-        return sortAuthorPosts(nextPosts)
-      })
-
+      setPosts(sortedPosts)
+      onCountChange?.(sortedPosts.length)
       setSelectedPost(null)
       onMessage?.(isPinned ? 'Post pinned to top.' : 'Post removed from top.')
     } catch (error) {
