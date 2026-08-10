@@ -185,7 +185,7 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
             <img
   src="/assets/Icons/Event/Event 1.webp"
   alt="80% Event"
-  className="h-9 w-[72px] rounded-[8px] object-cover"
+  className="h-[52px] w-[82px] shrink-0 object-contain"
 />
           </div>
 
