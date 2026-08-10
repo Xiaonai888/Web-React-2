@@ -6195,15 +6195,22 @@ autoScrollEnabled ? (
       icon="fa-solid fa-chevron-left"
       label="Back to story"
       onClick={() => {
-        const returnSource = location.state?.returnSource
+  const returnTo = location.state?.returnTo
 
-        navigate(`/story/${storyId}`, {
-          replace: true,
-          state: {
-            reopenEpisodeList: returnSource === 'modal',
-          },
-        })
-      }}
+  if (returnTo) {
+    navigate(returnTo, { replace: true })
+    return
+  }
+
+  const returnSource = location.state?.returnSource
+
+  navigate(`/story/${storyId}`, {
+    replace: true,
+    state: {
+      reopenEpisodeList: returnSource === 'modal',
+    },
+  })
+}}
       className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
     />
 
