@@ -10,6 +10,15 @@ import { installReaderPresenceTracking } from './utils/installReaderPresenceTrac
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installReaderPresenceTracking()
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault()
+  window.__shadowInstallPrompt = event
+  window.dispatchEvent(new Event('shadow-install-ready'))
+})
+window.addEventListener('appinstalled', () => {
+  window.__shadowInstallPrompt = null
+  window.dispatchEvent(new Event('shadow-app-installed'))
+})
 const APP_UPDATE_CHECK_INTERVAL_MS = 60000
 let appUpdateCheckRunning = false
 let lastAppUpdateCheckAt = 0
