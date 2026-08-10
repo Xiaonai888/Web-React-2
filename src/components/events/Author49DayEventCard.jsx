@@ -264,7 +264,7 @@ export default function Author49DayEventCard({
   <img
     src="/assets/Icons/Event/Event 2.webp"
     alt="80% for 49 Days Event"
-    className="relative z-10 aspect-square w-[86%] rounded-[20px] object-cover shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+    className="relative z-10 aspect-square w-[96%] rounded-[20px] object-contain shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
   />
 </div>
         </div>
@@ -367,7 +367,7 @@ export default function Author49DayEventCard({
           )}
         </div>
 
-        <div className="relative z-10 mt-2.5">
+        <div className="relative z-10 mt-1">
           <button
             type="button"
             onClick={onStartWriting}
