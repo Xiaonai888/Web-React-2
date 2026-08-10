@@ -696,6 +696,16 @@ function YouTubeEpisodeCard({ videoId, title, theme }) {
           className="h-full w-full border-0"
         />
       </div>
+
+      <a
+  href={`https://www.youtube.com/watch?v=${safeVideoId}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className={`block px-4 py-3 text-center text-[12px] font-medium ${theme.muted}`}
+>
+  Watch on YouTube
+</a>
+      
     </div>
   )
 }
