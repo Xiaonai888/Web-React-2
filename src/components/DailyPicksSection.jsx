@@ -72,13 +72,21 @@ function getStoryEpisodes(story) {
   return Number(story.total_episodes || 0)
 }
 
-function getStoryActivityTime(story) {
-  const value =
-    story.last_episode_published_at ||
-    story.updated_at ||
-    story.created_at
-
+function getStoryEpisodeTime(story) {
+  const value = story.last_episode_published_at
   const time = value ? new Date(value).getTime() : 0
+
+  return Number.isFinite(time) ? time : 0
+}
+
+function getStoryActivityTime(story) {
+  const episodeTime = getStoryEpisodeTime(story)
+
+  if (episodeTime) return episodeTime
+
+  const value = story.updated_at || story.created_at
+  const time = value ? new Date(value).getTime() : 0
+
   return Number.isFinite(time) ? time : 0
 }
 
@@ -107,7 +115,7 @@ function isCompletedStory(story) {
 }
 
 function isRecentlyUpdatedStory(story) {
-  const time = getStoryActivityTime(story)
+  const time = getStoryEpisodeTime(story)
   const now = Date.now()
 
   return (
@@ -398,11 +406,19 @@ export default function DailyPicksSection({
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [rotationSeed, setRotationSeed] =
-  useState(createRotationSeed())
+    useState(createRotationSeed())
 
   const normalizedStoryType = String(storyType || '')
     .trim()
     .toLowerCase()
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRotationSeed(createRotationSeed())
+    }, 60000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -417,33 +433,33 @@ export default function DailyPicksSection({
             )}`
           : ''
 
-        const [popularResponse, updatedResponse] =
+        const [discoverResponse, updatedResponse] =
           await Promise.all([
             fetch(
               addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=36&sort=likes${storyTypeQuery}`
+                `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more${storyTypeQuery}`
               )
             ),
             fetch(
               addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=60&sort=updated${storyTypeQuery}`
+                `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated${storyTypeQuery}`
               )
             ),
           ])
 
-        const [popularData, updatedData] =
+        const [discoverData, updatedData] =
           await Promise.all([
-            popularResponse.json().catch(() => ({})),
+            discoverResponse.json().catch(() => ({})),
             updatedResponse.json().catch(() => ({})),
           ])
 
         if (
-          !popularResponse.ok ||
-          popularData.ok === false
+          !discoverResponse.ok ||
+          discoverData.ok === false
         ) {
           throw new Error(
-            popularData.message ||
-            'Failed to load popular daily picks'
+            discoverData.message ||
+            'Failed to load discover daily picks'
           )
         }
 
@@ -459,7 +475,7 @@ export default function DailyPicksSection({
 
         if (!ignore) {
           const sourceStories = [
-            ...(popularData.stories || []),
+            ...(discoverData.stories || []),
             ...(updatedData.stories || []),
           ].filter(
             (story) =>
@@ -472,7 +488,8 @@ export default function DailyPicksSection({
 
           const dailyStories = selectDailyStories(
             sourceStories,
-            6
+            6,
+            rotationSeed
           )
 
           setStories(
@@ -500,7 +517,7 @@ export default function DailyPicksSection({
     return () => {
       ignore = true
     }
-  }, [normalizedStoryType])
+  }, [normalizedStoryType, rotationSeed])
 
   if (loading) {
     return <LoadingGrid />
