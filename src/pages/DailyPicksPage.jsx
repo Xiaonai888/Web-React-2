@@ -165,6 +165,8 @@ export default function DailyPicksPage() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
+  const [rotationSeed, setRotationSeed] =
+  useState(createRotationSeed())
 
   useEffect(() => {
     let ignore = false
@@ -187,22 +189,56 @@ export default function DailyPicksPage() {
         }
 
         if (!ignore) {
-          const dailyStories = selectDailyStories(data.stories || [])
-          setStories(dailyStories.map(normalizeStory))
-        }
-      } catch (error) {
-        console.error('DailyPicksPage fetch error:', error)
+          const dailyStories = selectDailyStoriconst [discoverResponse, updatedResponse] =
+  await Promise.all([
+    fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more`
+      )
+    ),
+    fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
+      )
+    ),
+  ])
 
-        if (!ignore) {
-          setLoadFailed(true)
-          setStories([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
-      }
-    }
+const [discoverData, updatedData] =
+  await Promise.all([
+    discoverResponse.json().catch(() => ({})),
+    updatedResponse.json().catch(() => ({})),
+  ])
+
+if (
+  !discoverResponse.ok ||
+  discoverData.ok === false ||
+  !updatedResponse.ok ||
+  updatedData.ok === false
+) {
+  throw new Error('Failed to load daily picks')
+}
+
+if (!ignore) {
+  const sourceStories = [
+    ...(discoverData.stories || []),
+    ...(updatedData.stories || []),
+  ]
+
+  const dailyStories = selectDailyStories(
+    sourceStories,
+    12,
+    rotationSeed
+  )
+
+  setStories(dailyStories.map(normalizeStory))
+}
+    useEffect(() => {
+  const timer = window.setInterval(() => {
+    setRotationSeed(createRotationSeed())
+  }, 60000)
+
+  return () => window.clearInterval(timer)
+}, [])
 
     fetchDailyPicks()
 
