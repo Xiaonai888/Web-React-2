@@ -23,22 +23,21 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function createDailySeed() {
-  const today = new Date()
+const FOUR_HOUR_MS = 4 * 60 * 60 * 1000
+const SEVEN_DAY_MS = 7 * 24 * 60 * 60 * 1000
 
-  return (
-    today.getFullYear() * 10000 +
-    (today.getMonth() + 1) * 100 +
-    today.getDate()
-  )
+function createRotationSeed() {
+  const now = new Date()
+  const localTime =
+    now.getTime() - now.getTimezoneOffset() * 60 * 1000
+
+  return Math.floor(localTime / FOUR_HOUR_MS)
 }
 
 function createSeededRandom(seed) {
   let value = seed % 2147483647
 
-  if (value <= 0) {
-    value += 2147483646
-  }
+  if (value <= 0) value += 2147483646
 
   return () => {
     value = (value * 16807) % 2147483647
@@ -46,11 +45,15 @@ function createSeededRandom(seed) {
   }
 }
 
-function seededShuffle(items, seed = createDailySeed()) {
+function seededShuffle(items, seed) {
   const selectedItems = [...items]
   const random = createSeededRandom(seed)
 
-  for (let index = selectedItems.length - 1; index > 0; index -= 1) {
+  for (
+    let index = selectedItems.length - 1;
+    index > 0;
+    index -= 1
+  ) {
     const randomIndex = Math.floor(random() * (index + 1))
     ;[selectedItems[index], selectedItems[randomIndex]] = [
       selectedItems[randomIndex],
@@ -65,28 +68,75 @@ function getStoryViews(story) {
   return Number(story.total_views || 0)
 }
 
-function getStoryLikes(story) {
-  return Number(story.total_likes || 0)
-}
-
 function getStoryEpisodes(story) {
   return Number(story.total_episodes || 0)
 }
 
+function getStoryActivityTime(story) {
+  const value =
+    story.last_episode_published_at ||
+    story.updated_at ||
+    story.created_at
+
+  const time = value ? new Date(value).getTime() : 0
+  return Number.isFinite(time) ? time : 0
+}
+
+function getStoryCreatedTime(story) {
+  const time = new Date(story.created_at || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
 function hasStoryCover(story) {
-  return Boolean(story.cover_url || story.landscape_thumbnail_url)
+  return Boolean(
+    story.cover_url || story.landscape_thumbnail_url
+  )
+}
+
+function isCompletedStory(story) {
+  const status = String(story.story_status || '')
+    .trim()
+    .toLowerCase()
+
+  return (
+    story.is_completed === true ||
+    ['completed', 'complete', 'end', 'ended', 'finished'].includes(
+      status
+    )
+  )
+}
+
+function isRecentlyUpdatedStory(story) {
+  const time = getStoryActivityTime(story)
+  const now = Date.now()
+
+  return (
+    time > 0 &&
+    time <= now &&
+    now - time <= SEVEN_DAY_MS
+  )
 }
 
 function isEligibleStory(story) {
-  return getStoryEpisodes(story) >= 1 && hasStoryCover(story)
+  return (
+    getStoryEpisodes(story) >= 1 &&
+    hasStoryCover(story) &&
+    (
+      isCompletedStory(story) ||
+      isRecentlyUpdatedStory(story)
+    )
+  )
 }
 
 function uniqueStories(stories) {
   const seenIds = new Set()
 
   return stories.filter((story) => {
-    if (!story?.id || seenIds.has(story.id)) return false
-    seenIds.add(story.id)
+    const id = String(story?.id || '')
+
+    if (!id || seenIds.has(id)) return false
+
+    seenIds.add(id)
     return true
   })
 }
@@ -95,9 +145,11 @@ function pickUnique(source, count, usedIds) {
   const picked = []
 
   for (const story of source) {
-    if (!story?.id || usedIds.has(story.id)) continue
+    const id = String(story?.id || '')
 
-    usedIds.add(story.id)
+    if (!id || usedIds.has(id)) continue
+
+    usedIds.add(id)
     picked.push(story)
 
     if (picked.length >= count) break
@@ -106,45 +158,80 @@ function pickUnique(source, count, usedIds) {
   return picked
 }
 
-function selectDailyStories(allStories, limit = 6) {
-  const eligibleStories = uniqueStories(allStories).filter(isEligibleStory)
+function buildSelection(
+  allStories,
+  limit,
+  seed,
+  blockedIds = new Set()
+) {
+  const eligibleStories = uniqueStories(allStories)
+    .filter(isEligibleStory)
+    .filter(
+      (story) =>
+        !blockedIds.has(String(story.id))
+    )
+
+  const scale = Math.max(1, Math.ceil(limit / 6))
   const usedIds = new Set()
 
-  const popularStories = seededShuffle(
-    [...eligibleStories].sort((a, b) => getStoryLikes(b) - getStoryLikes(a)),
-    createDailySeed() + 11
+  const freshStories = seededShuffle(
+    [...eligibleStories]
+      .sort(
+        (a, b) =>
+          getStoryCreatedTime(b) -
+          getStoryCreatedTime(a)
+      )
+      .slice(0, 24),
+    seed + 11
   )
 
   const hiddenGemStories = seededShuffle(
     [...eligibleStories]
-      .filter((story) => getStoryViews(story) <= 250 || getStoryLikes(story) <= 5)
-      .sort((a, b) => {
-        const viewDiff = getStoryViews(a) - getStoryViews(b)
-        if (viewDiff !== 0) return viewDiff
-        return getStoryLikes(b) - getStoryLikes(a)
-      }),
-    createDailySeed() + 22
+      .filter((story) => getStoryViews(story) <= 250)
+      .sort(
+        (a, b) =>
+          getStoryViews(a) - getStoryViews(b) ||
+          getStoryActivityTime(b) -
+            getStoryActivityTime(a)
+      )
+      .slice(0, 24),
+    seed + 22
   )
 
-  const freshStories = seededShuffle(
-    [...eligibleStories].sort((a, b) => {
-      const dateA = new Date(a.updated_at || a.created_at || 0).getTime()
-      const dateB = new Date(b.updated_at || b.created_at || 0).getTime()
-      return dateB - dateA
-    }),
-    createDailySeed() + 33
+  const recentStories = seededShuffle(
+    [...eligibleStories]
+      .filter((story) => !isCompletedStory(story))
+      .sort(
+        (a, b) =>
+          getStoryActivityTime(b) -
+          getStoryActivityTime(a)
+      )
+      .slice(0, 24),
+    seed + 33
+  )
+
+  const completedStories = seededShuffle(
+    [...eligibleStories]
+      .filter(isCompletedStory)
+      .sort(
+        (a, b) =>
+          getStoryViews(a) - getStoryViews(b)
+      )
+      .slice(0, 24),
+    seed + 44
   )
 
   const pickedStories = [
-    ...pickUnique(popularStories, 3, usedIds),
-    ...pickUnique(hiddenGemStories, 2, usedIds),
-    ...pickUnique(freshStories, 1, usedIds),
+    ...pickUnique(freshStories, 2 * scale, usedIds),
+    ...pickUnique(hiddenGemStories, 2 * scale, usedIds),
+    ...pickUnique(recentStories, scale, usedIds),
+    ...pickUnique(completedStories, scale, usedIds),
   ]
 
   if (pickedStories.length < limit) {
     pickedStories.push(
       ...pickUnique(
-        seededShuffle(eligibleStories, createDailySeed() + 44),
+        seededShuffle(eligibleStories, seed + 55),
         limit - pickedStories.length,
         usedIds
       )
@@ -152,6 +239,60 @@ function selectDailyStories(allStories, limit = 6) {
   }
 
   return pickedStories.slice(0, limit)
+}
+
+function selectDailyStories(
+  allStories,
+  limit = 6,
+  seed = createRotationSeed()
+) {
+  const previousStories = buildSelection(
+    allStories,
+    limit,
+    seed - 1
+  )
+
+  const previousIds = new Set(
+    previousStories.map((story) => String(story.id))
+  )
+
+  const selectedStories = buildSelection(
+    allStories,
+    limit,
+    seed,
+    previousIds
+  )
+
+  const usedIds = new Set(
+    selectedStories.map((story) => String(story.id))
+  )
+
+  if (selectedStories.length < limit) {
+    const fallbackStories = buildSelection(
+      allStories,
+      limit,
+      seed
+    )
+
+    selectedStories.push(
+      ...pickUnique(
+        fallbackStories,
+        limit - selectedStories.length,
+        usedIds
+      )
+    )
+  }
+
+  if (selectedStories.length > 1) {
+    const shift = Math.abs(seed) % selectedStories.length
+
+    return [
+      ...selectedStories.slice(shift),
+      ...selectedStories.slice(0, shift),
+    ].slice(0, limit)
+  }
+
+  return selectedStories.slice(0, limit)
 }
 
 function normalizeStory(story, index = 0) {
@@ -256,6 +397,8 @@ export default function DailyPicksSection({
 }) {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [rotationSeed, setRotationSeed] =
+  useState(createRotationSeed())
 
   const normalizedStoryType = String(storyType || '')
     .trim()
