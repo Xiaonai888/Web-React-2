@@ -421,9 +421,15 @@ function EmptyState({ searched, message }) {
 
 export default function DiscoverSearchPage() {
   const navigate = useNavigate()
-  const [searchText, setSearchText] = useState('')
-  const [activeQuery, setActiveQuery] = useState('')
-  const [activeType, setActiveType] = useState('all')
+  const initialParams = new URLSearchParams(window.location.search)
+  const initialQuery = String(initialParams.get('q') || '').trim()
+  const requestedType = String(initialParams.get('type') || 'all').trim().toLowerCase()
+  const initialType = SEARCH_TYPES.some((item) => item.key === requestedType)
+    ? requestedType
+    : 'all'
+  const [searchText, setSearchText] = useState(initialQuery)
+  const [activeQuery, setActiveQuery] = useState(initialQuery)
+  const [activeType, setActiveType] = useState(initialType)
   const [sections, setSections] = useState(EMPTY_SECTIONS)
   const [shownCounts, setShownCounts] = useState({})
   const [loading, setLoading] = useState(false)
