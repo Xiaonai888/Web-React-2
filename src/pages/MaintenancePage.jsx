@@ -533,6 +533,7 @@ export default function MaintenancePage() {
 
       <div className="maintenance-shell">
         <div className="maintenance-topbar">
+          
           <div className="language-wrap" ref={languageRef}>
             <button
               type="button"
