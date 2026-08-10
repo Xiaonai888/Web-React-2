@@ -261,16 +261,12 @@ export default function Author49DayEventCard({
           </div>
 
           <div className="relative flex min-h-[126px] items-center justify-center sm:min-h-[150px]">
-            <div className="absolute inset-0 rotate-3 rounded-[24px] border-2 border-dashed border-[#DFA900] bg-[#FFF7D6]" />
-            <div className="relative z-10 flex h-[86%] w-[86%] flex-col items-center justify-center rounded-[20px] border border-[#E9C85B] bg-white/85 text-center shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFC400] text-black">
-                <i className="fa-solid fa-image text-[18px]" />
-              </div>
-              <div className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#5A4B16]">
-                Author Image
-              </div>
-            </div>
-          </div>
+  <img
+    src="/assets/Icons/Event/Event 2.webp"
+    alt="80% for 49 Days Event"
+    className="relative z-10 aspect-square w-[86%] rounded-[20px] object-cover shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+  />
+</div>
         </div>
 
         <div className="relative z-10 mt-3 grid grid-cols-3 divide-x divide-[#E8CF71] rounded-[16px] border border-[#E8CF71] bg-white/90 px-2 py-2">
