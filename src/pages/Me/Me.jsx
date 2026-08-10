@@ -1123,10 +1123,6 @@ const handleOpenProfileSwitcher = (event) => {
           </div>
         </section>
 
-        />
-</div>
-</section>
-
 <div className="mt-3 px-1 text-[12px] font-semibold text-[#8d94a1] dark:text-white/50">
   Game
 </div>
