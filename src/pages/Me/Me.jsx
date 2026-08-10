@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getDisplayText, setDisplayLanguageId } from '../../utils/displayLanguage'
+import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const THEME_STORAGE_KEY = 'shadow_theme'
@@ -1137,7 +1138,9 @@ const handleOpenProfileSwitcher = (event) => {
               danger
             />
           </section>
-        ) : null}
+                ) : null}
+
+        <ShadowInstallCard />
       </main>
 
       <button
