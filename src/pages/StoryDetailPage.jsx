@@ -174,6 +174,7 @@ function StoryAuthorMiniCard({
   isOwnerPage = false,
   onManagePage,
   onViewPage,
+  onOpenTopFans,
   onFollow,
 }) {
   if (!authorPage) return null
