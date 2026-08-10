@@ -121,7 +121,7 @@ export default function DiscoverYouMightLikeSection() {
       moved: false,
     }
 
-    element.setPointerCapture?.(event.pointerId)
+    
   }
 
   function moveDrag(event) {
@@ -133,8 +133,9 @@ export default function DiscoverYouMightLikeSection() {
     const distance = event.clientX - state.startX
 
     if (Math.abs(distance) > 4) {
-      state.moved = true
-    }
+  state.moved = true
+  element.setPointerCapture?.(event.pointerId)
+}
 
     element.scrollLeft = state.scrollLeft - distance
   }
