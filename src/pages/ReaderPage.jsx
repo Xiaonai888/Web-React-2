@@ -6214,13 +6214,12 @@ autoScrollEnabled ? (
 
   const returnSource = location.state?.returnSource
 
-  navigate(`/story/${storyId}`, {
-    replace: true,
-    state: {
-      reopenEpisodeList: returnSource === 'modal',
-    },
-  })
-}}
+  if (window.history.length > 1) {
+  navigate(-1)
+  return
+}
+
+navigate(`/story/${storyId}`, { replace: true })
       className={lockedHeaderActive ? '!text-white' : 'text-[#111827]'}
     />
 
