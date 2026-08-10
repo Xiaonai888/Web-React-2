@@ -76,7 +76,8 @@ function normalizeStory(story, index = 0) {
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     views: formatCompactNumber(story.total_views),
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
-    badge:
+updateCount: Math.max(1, Number(story.daily_update_count || 1)),
+badge:
   String(story.story_status || '').trim().toLowerCase() === 'completed'
     ? 'end'
     : String(story.story_status || '').trim().toLowerCase() === 'ongoing'
@@ -117,45 +118,89 @@ function wait(milliseconds) {
   })
 }
 
+const updateMarkerUI = {
+  width: 48,
+  right: -8,
+  bottom: -7,
+  rotate: 0,
+  numberX: 0,
+  numberY: 0,
+  numberRotate: 0,
+  numberSize: 13,
+}
+
 function BookCard({ book }) {
   const badgeText =
     book.badge === 'end' ? 'END' : book.badge === 'up' ? 'UP' : 'NEW'
+  const updateCount = Math.max(0, Number(book.updateCount || 0))
+  const updateCountText = updateCount >= 10 ? '9+' : `+${updateCount}`
 
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
-        <img
-          src={book.cover}
-          alt={book.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-          loading="lazy"
-          onError={(event) => {
-            event.currentTarget.src =
-              '/assets/Update Today/Update Today 1.jpg'
-          }}
-        />
+      <div className="relative aspect-[2/3]">
+        <div className="h-full overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src =
+                '/assets/Update Today/Update Today 1.jpg'
+            }}
+          />
 
-        <div
-          className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge] || badgeConfig.new}`}
-        >
-          {badgeText}
+          <div
+            className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge] || badgeConfig.new}`}
+          >
+            {badgeText}
+          </div>
         </div>
+
+        {updateCount > 0 ? (
+          <div
+            className="pointer-events-none absolute z-20"
+            style={{
+              width: `${updateMarkerUI.width}px`,
+              right: `${updateMarkerUI.right}px`,
+              bottom: `${updateMarkerUI.bottom}px`,
+              transform: `rotate(${updateMarkerUI.rotate}deg)`,
+            }}
+          >
+            <img
+              src="/assets/Icons/Arrow.webp"
+              alt=""
+              className="block h-auto w-full"
+            />
+
+            <span
+              className="absolute whitespace-nowrap font-black leading-none text-[#ff3b30]"
+              style={{
+                left: '68%',
+                top: '43%',
+                fontSize: `${updateMarkerUI.numberSize}px`,
+                transform: `translate(-50%, -50%) translate(${updateMarkerUI.numberX}px, ${updateMarkerUI.numberY}px) rotate(${updateMarkerUI.numberRotate}deg)`,
+              }}
+            >
+              {updateCountText}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-2.5 min-w-0">
         <h3 className="block w-full max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-[14px] font-[640] leading-[20px] text-neutral-900">
-  {book.title}
-</h3>
+          {book.title}
+        </h3>
 
-<p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
-  {book.author}
-</p>
-
-        
+        <p className="mt-1 line-clamp-1 text-[11.5px] font-medium text-gray-500">
+          {book.author}
+        </p>
       </div>
     </Link>
   )
 }
+
 
 function LoadingGrid() {
   return (
