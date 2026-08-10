@@ -469,6 +469,7 @@ function CropImageModal({
   croppedAreaPixels,
   saving,
   message,
+  messageVisible,
   onCropChange,
   onZoomChange,
   onCropComplete,
@@ -504,7 +505,11 @@ function CropImageModal({
           </div>
 
           {message ? (
-            <div className="mb-3 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d]">
+            <div
+              className={`mb-3 rounded-[14px] bg-white px-4 py-3 text-[12px] font-medium text-[#111827] shadow-sm ring-1 ring-black/10 transition-all duration-300 ${
+                messageVisible ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+              }`}
+            >
               {message}
             </div>
           ) : null}
@@ -1003,6 +1008,7 @@ const { pageUsername } = useParams()
   const [ownerResolved, setOwnerResolved] = useState(false)
   const [pageError, setPageError] = useState('')
   const [message, setMessage] = useState('')
+  const [messageVisible, setMessageVisible] = useState(false)
   const [reviewSummary, setReviewSummary] = useState({
   total_count: 0,
   recommend_count: 0,
@@ -1060,6 +1066,28 @@ const { pageUsername } = useParams()
   : databaseProfileDetails
   
 
+
+  useEffect(() => {
+    if (!message) {
+      setMessageVisible(false)
+      return undefined
+    }
+
+    setMessageVisible(true)
+
+    const fadeTimer = window.setTimeout(() => {
+      setMessageVisible(false)
+    }, 2200)
+
+    const clearTimer = window.setTimeout(() => {
+      setMessage('')
+    }, 2500)
+
+    return () => {
+      window.clearTimeout(fadeTimer)
+      window.clearTimeout(clearTimer)
+    }
+  }, [message])
 
   function handleSwitchToReaderAccount() {
   setPageSwitcherOpen(false)
@@ -1796,6 +1824,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
         croppedAreaPixels={croppedAreaPixels}
         saving={savingImage}
         message={message}
+        messageVisible={messageVisible}
         onCropChange={setCrop}
         onZoomChange={setZoom}
         onCropComplete={handleCropComplete}
@@ -2465,13 +2494,15 @@ onOpenStoreSetting={() => {
       
       <main className="mx-auto max-w-[980px]">
         {message && !cropModalOpen ? (
-          <button
-            type="button"
-            onClick={() => setMessage('')}
-            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[16px] bg-[#fff1f1] px-4 py-3 text-left text-[12px] font-bold leading-5 text-[#e5484d]"
+          <div
+            className={`pointer-events-none fixed left-1/2 top-5 z-[400] w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 transition-all duration-300 ${
+              messageVisible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+            }`}
           >
-            {message}
-          </button>
+            <div className="rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium leading-5 text-[#111827] shadow-[0_8px_30px_rgba(15,23,42,0.18)] ring-1 ring-black/5">
+              {message}
+            </div>
+          </div>
         ) : null}
 
         <section className="overflow-hidden bg-white">
