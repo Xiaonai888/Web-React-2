@@ -182,9 +182,11 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
               {isActive ? 'Active' : 'Not Started'}
             </span>
 
-            <div className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-dashed border-[#D9BD55] bg-[#FFF7D1] text-[#C99500]">
-              <i className="fa-solid fa-image text-[10px]" />
-            </div>
+            <img
+  src="/assets/Icons/Event/Event 1.webp"
+  alt="80% Event"
+  className="h-9 w-[72px] rounded-[8px] object-cover"
+/>
           </div>
 
           {isActive ? (
