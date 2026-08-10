@@ -2,7 +2,17 @@
 <html lang="km">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta id="shadow-viewport" name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<script>
+  const setShadowViewport = () => {
+    const phone = Math.min(screen.width, screen.height) <= 600
+    const landscape = matchMedia('(orientation: landscape)').matches
+    document.getElementById('shadow-viewport').content =
+      phone && landscape ? 'width=1024, viewport-fit=cover' : 'width=device-width, initial-scale=1.0, viewport-fit=cover'
+  }
+  setShadowViewport()
+  addEventListener('orientationchange', () => setTimeout(setShadowViewport, 100))
+</script>
   <title>Shadow</title>
 
 
