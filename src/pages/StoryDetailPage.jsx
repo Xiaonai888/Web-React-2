@@ -248,7 +248,10 @@ function StoryAuthorMiniCard({
       </div>
 
      {displayTopFans.length ? (
-  <div className="mt-5 -mx-1 flex min-h-[112px] items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4">
+  <div
+  onClick={onOpenTopFans}
+  className="mt-5 -mx-1 flex min-h-[112px] cursor-pointer items-start gap-3 rounded-[13px] bg-[#f8fafc] px-4 py-4 active:scale-[0.995]"
+>
     <div className="min-w-0 flex-1 pt-1">
       <div className="flex items-center gap-1.5 text-[14px] font-normal text-[#111827]">
         <span>Top Fans</span>
@@ -775,6 +778,7 @@ setSubscribed(isSubscribed)
           isOwnerPage={authorIsOwnerPage}
           onManagePage={() => navigate('/author/dashboard')}
           onViewPage={() => navigate(`/author/page/${story.author_page?.page_username}`)}
+          onOpenTopFans={() => navigate(`/story/${realStoryId}/top-fans`, { state: { storyPreview: story } })}
           onFollow={handleToggleAuthorFollow}
         />
 
