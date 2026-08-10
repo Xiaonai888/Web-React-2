@@ -894,9 +894,11 @@ export default function StoryNotificationsPage() {
     }
 
     if (notification.targetUrl) {
-      navigate(notification.targetUrl)
-      return
-    }
+  navigate(notification.targetUrl, {
+    state: { returnTo: '/author/notifications' },
+  })
+  return
+}
 
     showToast(
       'This notification does not have a target page yet.'
