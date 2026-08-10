@@ -271,32 +271,22 @@ export default function NewArrivalsPage() {
   return (
     <div className="min-h-screen bg-white pb-32">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            aria-label="Go back"
-          >
-            <i className="fas fa-chevron-left text-[18px] text-gray-700" />
-          </button>
+        <div className="grid h-14 grid-cols-[36px_1fr_36px] items-center px-4">
+  <button
+    type="button"
+    onClick={() => navigate(-1)}
+    className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+    aria-label="Go back"
+  >
+    <i className="fas fa-chevron-left text-[18px] text-gray-700" />
+  </button>
 
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="text-[20px]">🚀</span>
-            <h1 className="line-clamp-1 text-[18px] font-extrabold tracking-tight text-neutral-900">
-              New Arrivals
-            </h1>
-          </div>
+  <h1 className="text-center text-[18px] font-extrabold tracking-tight text-neutral-900">
+    New Arrivals
+  </h1>
 
-          <button
-            type="button"
-            onClick={fetchNewArrivalsPageData}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
-            aria-label="Refresh"
-          >
-            <i className="fa-solid fa-rotate-right text-[15px]" />
-          </button>
-        </div>
+  <div className="h-9 w-9" />
+</div>
       </header>
 
       <main className="px-4 pt-4">
