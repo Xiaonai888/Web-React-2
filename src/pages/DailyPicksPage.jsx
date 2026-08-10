@@ -23,22 +23,21 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function createDailySeed() {
-  const today = new Date()
+const FOUR_HOUR_MS = 4 * 60 * 60 * 1000
+const SEVEN_DAY_MS = 7 * 24 * 60 * 60 * 1000
 
-  return (
-    today.getFullYear() * 10000 +
-    (today.getMonth() + 1) * 100 +
-    today.getDate()
-  )
+function createRotationSeed() {
+  const now = new Date()
+  const localTime =
+    now.getTime() - now.getTimezoneOffset() * 60 * 1000
+
+  return Math.floor(localTime / FOUR_HOUR_MS)
 }
 
 function createSeededRandom(seed) {
   let value = seed % 2147483647
 
-  if (value <= 0) {
-    value += 2147483646
-  }
+  if (value <= 0) value += 2147483646
 
   return () => {
     value = (value * 16807) % 2147483647
@@ -46,24 +45,262 @@ function createSeededRandom(seed) {
   }
 }
 
-function selectDailyStories(stories) {
-  const eligibleStories = stories.filter(
-    (story) => Number(story.total_episodes || 0) >= 1
-  )
+function seededShuffle(items, seed) {
+  const selectedItems = [...items]
+  const random = createSeededRandom(seed)
 
-  const selectedStories = [...eligibleStories]
-  const random = createSeededRandom(createDailySeed())
-
-  for (let index = selectedStories.length - 1; index > 0; index -= 1) {
+  for (
+    let index = selectedItems.length - 1;
+    index > 0;
+    index -= 1
+  ) {
     const randomIndex = Math.floor(random() * (index + 1))
-
-    ;[selectedStories[index], selectedStories[randomIndex]] = [
-      selectedStories[randomIndex],
-      selectedStories[index],
+    ;[selectedItems[index], selectedItems[randomIndex]] = [
+      selectedItems[randomIndex],
+      selectedItems[index],
     ]
   }
 
-  return selectedStories
+  return selectedItems
+}
+
+function getStoryViews(story) {
+  return Number(story.total_views || 0)
+}
+
+function getStoryEpisodes(story) {
+  return Number(story.total_episodes || 0)
+}
+
+function getStoryEpisodeTime(story) {
+  const value = story.last_episode_published_at
+  const time = value ? new Date(value).getTime() : 0
+
+  return Number.isFinite(time) ? time : 0
+}
+
+function getStoryActivityTime(story) {
+  const episodeTime = getStoryEpisodeTime(story)
+
+  if (episodeTime) return episodeTime
+
+  const value = story.updated_at || story.created_at
+  const time = value ? new Date(value).getTime() : 0
+
+  return Number.isFinite(time) ? time : 0
+}
+
+function getStoryCreatedTime(story) {
+  const time = new Date(story.created_at || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+function hasStoryCover(story) {
+  return Boolean(
+    story.cover_url || story.landscape_thumbnail_url
+  )
+}
+
+function isCompletedStory(story) {
+  const status = String(story.story_status || '')
+    .trim()
+    .toLowerCase()
+
+  return (
+    story.is_completed === true ||
+    ['completed', 'complete', 'end', 'ended', 'finished'].includes(
+      status
+    )
+  )
+}
+
+function isRecentlyUpdatedStory(story) {
+  const time = getStoryEpisodeTime(story)
+  const now = Date.now()
+
+  return (
+    time > 0 &&
+    time <= now &&
+    now - time <= SEVEN_DAY_MS
+  )
+}
+
+function isEligibleStory(story) {
+  return (
+    getStoryEpisodes(story) >= 1 &&
+    hasStoryCover(story) &&
+    (
+      isCompletedStory(story) ||
+      isRecentlyUpdatedStory(story)
+    )
+  )
+}
+
+function uniqueStories(stories) {
+  const seenIds = new Set()
+
+  return stories.filter((story) => {
+    const id = String(story?.id || '')
+
+    if (!id || seenIds.has(id)) return false
+
+    seenIds.add(id)
+    return true
+  })
+}
+
+function pickUnique(source, count, usedIds) {
+  const picked = []
+
+  for (const story of source) {
+    const id = String(story?.id || '')
+
+    if (!id || usedIds.has(id)) continue
+
+    usedIds.add(id)
+    picked.push(story)
+
+    if (picked.length >= count) break
+  }
+
+  return picked
+}
+
+function buildSelection(
+  allStories,
+  limit,
+  seed,
+  blockedIds = new Set()
+) {
+  const eligibleStories = uniqueStories(allStories)
+    .filter(isEligibleStory)
+    .filter(
+      (story) =>
+        !blockedIds.has(String(story.id))
+    )
+
+  const scale = Math.max(1, Math.ceil(limit / 6))
+  const usedIds = new Set()
+
+  const freshStories = seededShuffle(
+    [...eligibleStories]
+      .sort(
+        (a, b) =>
+          getStoryCreatedTime(b) -
+          getStoryCreatedTime(a)
+      )
+      .slice(0, 24),
+    seed + 11
+  )
+
+  const hiddenGemStories = seededShuffle(
+    [...eligibleStories]
+      .filter((story) => getStoryViews(story) <= 250)
+      .sort(
+        (a, b) =>
+          getStoryViews(a) - getStoryViews(b) ||
+          getStoryActivityTime(b) -
+            getStoryActivityTime(a)
+      )
+      .slice(0, 24),
+    seed + 22
+  )
+
+  const recentStories = seededShuffle(
+    [...eligibleStories]
+      .filter((story) => !isCompletedStory(story))
+      .sort(
+        (a, b) =>
+          getStoryActivityTime(b) -
+          getStoryActivityTime(a)
+      )
+      .slice(0, 24),
+    seed + 33
+  )
+
+  const completedStories = seededShuffle(
+    [...eligibleStories]
+      .filter(isCompletedStory)
+      .sort(
+        (a, b) =>
+          getStoryViews(a) - getStoryViews(b)
+      )
+      .slice(0, 24),
+    seed + 44
+  )
+
+  const pickedStories = [
+    ...pickUnique(freshStories, 2 * scale, usedIds),
+    ...pickUnique(hiddenGemStories, 2 * scale, usedIds),
+    ...pickUnique(recentStories, scale, usedIds),
+    ...pickUnique(completedStories, scale, usedIds),
+  ]
+
+  if (pickedStories.length < limit) {
+    pickedStories.push(
+      ...pickUnique(
+        seededShuffle(eligibleStories, seed + 55),
+        limit - pickedStories.length,
+        usedIds
+      )
+    )
+  }
+
+  return pickedStories.slice(0, limit)
+}
+
+function selectDailyStories(
+  allStories,
+  limit = 6,
+  seed = createRotationSeed()
+) {
+  const previousStories = buildSelection(
+    allStories,
+    limit,
+    seed - 1
+  )
+
+  const previousIds = new Set(
+    previousStories.map((story) => String(story.id))
+  )
+
+  const selectedStories = buildSelection(
+    allStories,
+    limit,
+    seed,
+    previousIds
+  )
+
+  const usedIds = new Set(
+    selectedStories.map((story) => String(story.id))
+  )
+
+  if (selectedStories.length < limit) {
+    const fallbackStories = buildSelection(
+      allStories,
+      limit,
+      seed
+    )
+
+    selectedStories.push(
+      ...pickUnique(
+        fallbackStories,
+        limit - selectedStories.length,
+        usedIds
+      )
+    )
+  }
+
+  if (selectedStories.length > 1) {
+    const shift = Math.abs(seed) % selectedStories.length
+
+    return [
+      ...selectedStories.slice(shift),
+      ...selectedStories.slice(0, shift),
+    ].slice(0, limit)
+  }
+
+  return selectedStories.slice(0, limit)
 }
 
 function normalizeStory(story, index = 0) {
@@ -166,7 +403,15 @@ export default function DailyPicksPage() {
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
   const [rotationSeed, setRotationSeed] =
-  useState(createRotationSeed())
+    useState(createRotationSeed())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRotationSeed(createRotationSeed())
+    }, 60000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -176,76 +421,69 @@ export default function DailyPicksPage() {
         setLoading(true)
         setLoadFailed(false)
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=24&sort=likes`
-          )
-        )
+        const [discoverResponse, updatedResponse] =
+          await Promise.all([
+            fetch(
+              addStoryLanguageParam(
+                `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more`
+              )
+            ),
+            fetch(
+              addStoryLanguageParam(
+                `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
+              )
+            ),
+          ])
 
-        const data = await response.json().catch(() => ({}))
+        const [discoverData, updatedData] =
+          await Promise.all([
+            discoverResponse.json().catch(() => ({})),
+            updatedResponse.json().catch(() => ({})),
+          ])
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load daily picks')
+        if (
+          !discoverResponse.ok ||
+          discoverData.ok === false ||
+          !updatedResponse.ok ||
+          updatedData.ok === false
+        ) {
+          throw new Error('Failed to load daily picks')
         }
 
         if (!ignore) {
-          const dailyStories = selectDailyStoriconst [discoverResponse, updatedResponse] =
-  await Promise.all([
-    fetch(
-      addStoryLanguageParam(
-        `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more`
-      )
-    ),
-    fetch(
-      addStoryLanguageParam(
-        `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated`
-      )
-    ),
-  ])
+          const sourceStories = [
+            ...(discoverData.stories || []),
+            ...(updatedData.stories || []),
+          ]
 
-const [discoverData, updatedData] =
-  await Promise.all([
-    discoverResponse.json().catch(() => ({})),
-    updatedResponse.json().catch(() => ({})),
-  ])
+          const dailyStories = selectDailyStories(
+            sourceStories,
+            12,
+            rotationSeed
+          )
 
-if (
-  !discoverResponse.ok ||
-  discoverData.ok === false ||
-  !updatedResponse.ok ||
-  updatedData.ok === false
-) {
-  throw new Error('Failed to load daily picks')
-}
+          setStories(dailyStories.map(normalizeStory))
+        }
+      } catch (error) {
+        console.error('DailyPicksPage fetch error:', error)
 
-if (!ignore) {
-  const sourceStories = [
-    ...(discoverData.stories || []),
-    ...(updatedData.stories || []),
-  ]
-
-  const dailyStories = selectDailyStories(
-    sourceStories,
-    12,
-    rotationSeed
-  )
-
-  setStories(dailyStories.map(normalizeStory))
-}
-    useEffect(() => {
-  const timer = window.setInterval(() => {
-    setRotationSeed(createRotationSeed())
-  }, 60000)
-
-  return () => window.clearInterval(timer)
-}, [])
+        if (!ignore) {
+          setLoadFailed(true)
+          setStories([])
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
 
     fetchDailyPicks()
 
     return () => {
       ignore = true
     }
-  }, [])
+  }, [rotationSeed])
 
   const todayLabel = new Intl.DateTimeFormat('en-US', {
     month: 'long',
