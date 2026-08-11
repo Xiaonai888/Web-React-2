@@ -404,6 +404,37 @@ function countEpisodeImages(value) {
 }
 
 function isNovelImageFile(file) {
+
+  function isNovelHeicFile(file) {
+  return /image\/hei[cf]/i.test(file?.type || '') || /\.hei[cf]$/i.test(file?.name || '')
+}
+
+async function convertNovelHeicForUpload(file) {
+  try {
+    const { heicTo } = await import('heic-to')
+    const blob = await heicTo({
+      blob: file,
+      type: 'image/jpeg',
+      quality: 0.9,
+    })
+
+    if (!(blob instanceof Blob) || !blob.size) {
+      throw new Error('HEIC conversion returned an empty image.')
+    }
+
+    const base = String(file.name || 'episode-image').replace(/\.[^.]+$/, '')
+    const jpegFile = new File([blob], `${base}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    })
+
+    return await optimizeNovelEpisodeImage(jpegFile)
+  } catch {
+    throw new Error(
+      'This HEIC/HEIF image could not be converted on this device. [convert: HEIC_CONVERSION_FAILED]'
+    )
+  }
+}
   const type = String(file?.type || '').toLowerCase()
   const name = String(file?.name || '').toLowerCase()
   return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
@@ -3029,8 +3060,9 @@ export default function EpisodeEditorPage() {
     }
 
     setInlineImageUploading(true)
-const isHeic = /image\/hei[cf]/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '')
-const uploadFile = isHeic ? await optimizeNovelEpisodeImage(file) : file
+const uploadFile = isNovelHeicFile(file)
+  ? await convertNovelHeicForUpload(file)
+  : file
 
 const imageUrl = await uploadEpisodeInlineImage({
   token,
