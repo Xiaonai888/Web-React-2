@@ -1568,6 +1568,12 @@ const activeEvents = [
   />
 ) : null}
 
+{activeEvents.length === 0 ? (
+  <div className="mt-4 flex aspect-square w-full items-center justify-center rounded-[24px] border border-[#ECE8F3] bg-[#F8F8FA] text-[14px] font-bold text-[#8B909B]">
+    No event right now
+  </div>
+) : null}
+
 <ActiveEventPicker
   events={activeEvents}
   selectedId={selectedActiveEvent}
