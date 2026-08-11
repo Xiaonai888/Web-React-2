@@ -214,7 +214,7 @@ export default function NewArrivalsPage() {
       const [freshResponse, popularResponse, recentResponse, romanceResponse, fantasyResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest`),
         fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=popular`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=updated`),
+        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=updated&story_status=Completed`),
         fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest&genre=Romance`),
         fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest&genre=Fantasy`),
       ])
