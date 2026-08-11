@@ -4,11 +4,13 @@ import {
   Check,
   ChevronLeft,
   Clock3,
+  EyeOff,
   FileImage,
   FileText,
   Flag,
   Link2,
   LoaderCircle,
+  MoreHorizontal,
   Pin,
   Search,
   ShieldAlert,
@@ -206,12 +208,14 @@ function Shortcut({ icon: Icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex min-w-[96px] flex-col items-center gap-2 text-[#111827] active:opacity-60"
+      className="flex min-w-0 flex-1 flex-col items-center gap-2 text-[#111827] active:opacity-60"
     >
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f0f1f4]">
-        <Icon size={22} strokeWidth={2} />
+      <span className="flex h-10 w-10 items-center justify-center">
+        <Icon size={27} strokeWidth={1.9} />
       </span>
-      <span className="text-[12px] font-normal">{label}</span>
+      <span className="text-[12px] font-normal">
+        {label}
+      </span>
     </button>
   )
 }
@@ -311,6 +315,7 @@ export default function ChatInfoPage() {
   const [pinnedBusyId, setPinnedBusyId] = useState('')
   const [sharedOpen, setSharedOpen] = useState(false)
   const [sharedTab, setSharedTab] = useState('media')
+  const [optionsOpen, setOptionsOpen] = useState(false)
 
   const person = conversation?.counterpart || {}
   const name =
@@ -1041,7 +1046,102 @@ const activeSharedItems =
             </p>
           ) : null}
 
-          <div className="mt-6 flex items-start justify-center gap-10">
+          <div className="relative mt-7 w-full">
+  <div className="mx-auto flex max-w-[360px] items-start justify-between">
+    <Shortcut
+      icon={UserRound}
+      label="Profile"
+      onClick={openProfile}
+    />
+
+    <Shortcut
+      icon={Search}
+      label="Search"
+      onClick={openSearch}
+    />
+
+    <Shortcut
+      icon={Bell}
+      label="Mute"
+      onClick={() => {
+        if (muteStatus.is_muted) {
+          handleUnmute()
+          return
+        }
+
+        setMuteOpen(true)
+      }}
+    />
+
+    <Shortcut
+      icon={MoreHorizontal}
+      label="Options"
+      onClick={() =>
+        setOptionsOpen((current) => !current)
+      }
+    />
+  </div>
+
+  {optionsOpen ? (
+    <>
+      <button
+        type="button"
+        aria-label="Close options"
+        onClick={() => setOptionsOpen(false)}
+        className="fixed inset-0 z-[55]"
+      />
+
+      <div className="absolute right-0 top-[68px] z-[60] w-[220px] overflow-hidden rounded-[20px] border border-[#e8e8ec] bg-white p-1.5 shadow-[0_18px_45px_rgba(17,24,39,0.18)]">
+        <button
+          type="button"
+          onClick={() => {
+            setOptionsOpen(false)
+            showNotice('Restrict is coming soon.')
+          }}
+          className="flex h-12 w-full items-center gap-3 rounded-[14px] px-4 text-left text-[14px] text-[#111827] active:bg-[#f4f4f6]"
+        >
+          <EyeOff size={21} />
+          Restrict
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOptionsOpen(false)
+            handleBlock()
+          }}
+          disabled={Boolean(busy)}
+          className="flex h-12 w-full items-center gap-3 rounded-[14px] px-4 text-left text-[14px] text-[#111827] active:bg-[#f4f4f6] disabled:opacity-50"
+        >
+          <Ban size={21} />
+          {blockStatus.viewer_has_blocked
+            ? 'Unblock'
+            : 'Block'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOptionsOpen(false)
+
+            if (!reportMessage) {
+              showNotice(
+                'No received message is available to report.'
+              )
+              return
+            }
+
+            setReportOpen(true)
+          }}
+          className="flex h-12 w-full items-center gap-3 rounded-[14px] px-4 text-left text-[14px] text-[#d13a42] active:bg-[#fff1f2]"
+        >
+          <Flag size={21} />
+          Report
+        </button>
+      </div>
+    </>
+  ) : null}
+</div>
             <Shortcut icon={UserRound} label="Profile" onClick={openProfile} />
             <Shortcut
               icon={Search}
