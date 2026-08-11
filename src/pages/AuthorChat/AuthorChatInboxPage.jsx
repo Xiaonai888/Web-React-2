@@ -28,6 +28,34 @@ const QUICK_FILTERS = [
   { key: 'messages', label: 'Messages' },
 ]
 
+const FILTER_GROUPS = [
+  {
+    title: 'Frequently used',
+    subtitle: 'You may select multiple filters.',
+    items: [
+      { key: 'unread', label: 'Unread' },
+      { key: 'read', label: 'Read' },
+      { key: 'muted', label: 'Muted' },
+      { key: 'active', label: 'Active' },
+    ],
+  },
+  {
+    title: 'Activity',
+    items: [
+      { key: 'today', label: 'Today' },
+      { key: 'last_7_days', label: 'Last 7 days' },
+      { key: 'last_30_days', label: 'Last 30 days' },
+    ],
+  },
+  {
+    title: 'Content',
+    items: [
+      { key: 'has_link', label: 'Contains link' },
+      { key: 'long_message', label: 'Long message' },
+    ],
+  },
+]
+
 function normalizeSearch(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -244,6 +272,30 @@ function CommentRow({ notification, onOpen }) {
   )
 }
 
+function matchesConversationFilters(conversation, filters) {
+  if (!filters.size) return true
+
+  const unread = Number(conversation.unread_count || 0)
+  const latest = conversation.latest_message || {}
+  const body = String(latest.body || '')
+  const time = new Date(
+    conversation.last_message_at || latest.created_at || 0
+  ).getTime()
+  const age = Date.now() - time
+
+  if (filters.has('unread') && unread <= 0) return false
+  if (filters.has('read') && unread > 0) return false
+  if (filters.has('muted') && !conversation.is_muted) return false
+  if (filters.has('active') && conversation.is_muted) return false
+  if (filters.has('today') && age > 86400000) return false
+  if (filters.has('last_7_days') && age > 604800000) return false
+  if (filters.has('last_30_days') && age > 2592000000) return false
+  if (filters.has('has_link') && !/https?:\/\/|www\./i.test(body)) return false
+  if (filters.has('long_message') && body.length < 120) return false
+
+  return true
+}
+
 function FilterSheet({
   open,
   value,
@@ -253,9 +305,7 @@ function FilterSheet({
   const [draft, setDraft] = useState(value)
 
   useEffect(() => {
-    if (open) {
-      setDraft(value)
-    }
+    if (open) setDraft(new Set(value))
   }, [open, value])
 
   if (!open) return null
@@ -283,57 +333,67 @@ function FilterSheet({
         aria-label="Close filters"
       />
 
-      <section className="relative z-10 w-full max-w-[620px] rounded-t-[24px] bg-white px-5 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
-        <div className="mx-auto h-1 w-10 rounded-full bg-[#d3d4d6]" />
+      <section className="relative z-10 flex max-h-[68dvh] w-full max-w-[620px] flex-col overflow-hidden rounded-t-[20px] bg-white shadow-2xl">
+        <div className="shrink-0 px-4 pt-2">
+          <div className="mx-auto h-1 w-9 rounded-full bg-[#d3d4d6]" />
 
-        <div className="mt-5 flex items-center justify-between">
-          <h2 className="text-[20px] font-bold text-[#111827]">
-            Filter messages
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f1f2] text-[#111827]"
-          >
-            <X size={19} />
-          </button>
-        </div>
+          <div className="mt-3 flex items-center justify-between">
+            <h2 className="text-[17px] font-bold text-[#111827]">
+              Filter messages
+            </h2>
 
-        <div className="mt-7">
-          <h3 className="text-[16px] font-bold text-[#23252a]">
-            Frequently used
-          </h3>
-          <p className="mt-1 text-[12px] text-[#8b8e94]">
-            You may select multiple filters.
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {QUICK_FILTERS.map((item) => {
-              const active = draft.has(item.key)
-
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => toggle(item.key)}
-                  className={`rounded-[8px] px-4 py-2.5 text-[14px] font-medium ${
-                    active
-                      ? 'bg-[#e7f1ff] text-[#1877f2]'
-                      : 'bg-[#f4f4f5] text-[#303238]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f1f1f2]"
+            >
+              <X size={17} />
+            </button>
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-3">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+          {FILTER_GROUPS.map((group) => (
+            <div key={group.title} className="mt-5">
+              <h3 className="text-[14px] font-bold text-[#23252a]">
+                {group.title}
+              </h3>
+
+              {group.subtitle ? (
+                <p className="mt-0.5 text-[10px] text-[#8b8e94]">
+                  {group.subtitle}
+                </p>
+              ) : null}
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {group.items.map((item) => {
+                  const active = draft.has(item.key)
+
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => toggle(item.key)}
+                      className={`h-8 rounded-[7px] px-3 text-[12px] font-medium ${
+                        active
+                          ? 'bg-[#e5e5e7] text-[#111827] ring-1 ring-[#111827]'
+                          : 'bg-[#f4f4f5] text-[#303238]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[#eeeeef] bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
           <button
             type="button"
             onClick={() => setDraft(new Set())}
-            className="h-12 rounded-[8px] border border-[#d8dadd] bg-white text-[15px] font-semibold text-[#24262b]"
+            className="h-10 rounded-[7px] border border-[#d8dadd] bg-white text-[13px] font-semibold text-[#24262b]"
           >
             Clear all
           </button>
@@ -341,7 +401,7 @@ function FilterSheet({
           <button
             type="button"
             onClick={() => onApply(draft)}
-            className="h-12 rounded-[8px] bg-[#1877f2] text-[15px] font-semibold text-white"
+            className="h-10 rounded-[7px] bg-[#111827] text-[13px] font-semibold text-white"
           >
             Apply
           </button>
@@ -446,12 +506,9 @@ export default function AuthorChatInboxPage() {
       const person = conversation.counterpart || {}
       const latest = conversation.latest_message || {}
 
-      if (
-        filters.has('unread') &&
-        Number(conversation.unread_count || 0) <= 0
-      ) {
-        return false
-      }
+      if (!matchesConversationFilters(conversation, filters)) {
+  return false
+}
 
       if (!normalizedQuery) return true
 
