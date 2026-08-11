@@ -116,6 +116,32 @@ export function validateMangaFile(file) {
   return ''
 }
 
+async function decodeMangaHeicToJpeg(file) {
+  try {
+    const { heicTo } = await import('heic-to')
+    const blob = await heicTo({
+      blob: file,
+      type: 'image/jpeg',
+      quality: 0.9,
+    })
+
+    if (!(blob instanceof Blob) || !blob.size) {
+      throw new Error('HEIC conversion returned an empty image.')
+    }
+
+    const base = String(file.name || 'manga-page').replace(/\.[^.]+$/, '')
+
+    return new File([blob], `${base}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    })
+  } catch {
+    throw new Error(
+      'This HEIC/HEIF image could not be converted on this device. [convert: HEIC_CONVERSION_FAILED]'
+    )
+  }
+}
+
 async function convertMangaHeicToWebp(file, loaded) {
   let smallest = null
 
@@ -196,24 +222,25 @@ export async function optimizeMangaImage(file) {
     throw new Error(validationError)
   }
 
+  const heic = isMangaHeicFile(file)
+  const sourceFile = heic
+    ? await decodeMangaHeicToJpeg(file)
+    : file
+
   let loaded
 
   try {
-    loaded = await loadImageFile(file)
+    loaded = await loadImageFile(sourceFile)
   } catch {
-    if (isMangaHeicFile(file)) {
-      throw new Error(
-        'This HEIC/HEIF image could not be read on this device. Please use JPG, PNG, or WebP.'
-      )
-    }
-
     throw new Error(
-      'This image could not be read on this device. Please choose another JPG, PNG, or WebP image.'
+      heic
+        ? 'The converted HEIC image could not be read. [read: HEIC_PREVIEW_FAILED]'
+        : 'This image could not be read on this device. Please choose another image.'
     )
   }
 
   try {
-    if (!isMangaHeicFile(file)) {
+    if (!heic) {
       return {
         file,
         width: loaded.width,
@@ -225,15 +252,6 @@ export async function optimizeMangaImage(file) {
     }
 
     return await convertMangaHeicToWebp(file, loaded)
-  } catch (error) {
-    if (isMangaHeicFile(file)) {
-      throw new Error(
-        error?.message ||
-        'This HEIC/HEIF image could not be converted. Please use JPG, PNG, or WebP.'
-      )
-    }
-
-    throw error
   } finally {
     URL.revokeObjectURL(loaded.url)
   }
