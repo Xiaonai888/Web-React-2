@@ -1142,13 +1142,6 @@ const activeSharedItems =
     </>
   ) : null}
 </div>
-            <Shortcut icon={UserRound} label="Profile" onClick={openProfile} />
-            <Shortcut
-              icon={Search}
-              label="Search"
-              onClick={openSearch}
-            />
-          </div>
         </section>
 
         <section className="mt-9">
