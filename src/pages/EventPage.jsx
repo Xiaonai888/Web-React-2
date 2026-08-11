@@ -779,6 +779,126 @@ function ActiveEventPicker({
   )
 }
 
+function getNextWeeklyStart(value, weekday) {
+  const offset = 7 * 60 * 60 * 1000
+  const now = new Date(value)
+  const cambodia = new Date(now.getTime() + offset)
+  const days = (weekday - cambodia.getUTCDay() + 7) % 7
+
+  let start = new Date(
+    Date.UTC(
+      cambodia.getUTCFullYear(),
+      cambodia.getUTCMonth(),
+      cambodia.getUTCDate() + days
+    ) - offset
+  )
+
+  if (start.getTime() <= now.getTime()) {
+    start = new Date(start.getTime() + 7 * 86400000)
+  }
+
+  return start
+}
+
+function getUpcomingCountdown(target, now) {
+  const totalMinutes = Math.max(
+    0,
+    Math.floor((target.getTime() - now.getTime()) / 60000)
+  )
+
+  return {
+    days: Math.floor(totalMinutes / 1440),
+    hours: Math.floor((totalMinutes % 1440) / 60),
+    minutes: totalMinutes % 60,
+  }
+}
+
+function formatUpcomingDate(date) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Phnom_Penh',
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
+function UpcomingEventsSection({ events, now }) {
+  return (
+    <section className="pb-8 pt-6">
+      <div className="flex items-center gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-[#F1EAFE] text-[#7C3AED]">
+          <i className="fa-regular fa-calendar-days text-[14px]" />
+        </span>
+
+        <h2 className="text-[21px] font-black text-[#17182A]">
+          Upcoming
+        </h2>
+
+        <span className="text-[14px] text-[#F6B800]">
+          ✦
+        </span>
+      </div>
+
+      {events.length ? (
+        <div className="mt-4 space-y-4">
+          {events.map((event) => {
+            const countdown = getUpcomingCountdown(
+              event.startsAt,
+              now
+            )
+
+            return (
+              <section
+                key={event.id}
+                className="rounded-[22px] border border-[#ECE8F3] bg-white p-4 shadow-[0_10px_26px_rgba(31,24,55,0.08)]"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-[22px] ${event.iconBg}`}
+                  >
+                    <i
+                      className={`fa-solid ${event.icon} text-[30px] ${event.iconColor}`}
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] ${event.badgeClass}`}
+                    >
+                      Next Event
+                    </div>
+
+                    <h3 className="mt-2 text-[18px] font-black text-[#17182A]">
+                      {event.title}
+                    </h3>
+
+                    <div className="mt-2 text-[11px] font-semibold text-[#7D8290]">
+                      {formatUpcomingDate(event.startsAt)}
+                    </div>
+
+                    <div
+                      className={`mt-2 text-[12px] font-black ${event.accentClass}`}
+                    >
+                      Starts in {countdown.days}d{' '}
+                      {countdown.hours}h{' '}
+                      {countdown.minutes}m
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-[22px] border border-[#ECE8F3] bg-white px-4 py-8 text-center text-[13px] font-bold text-[#8B909B]">
+          No upcoming events
+        </div>
+      )}
+    </section>
+  )
+}
+
 export default function EventPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('author')
@@ -924,9 +1044,43 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   }, [])
 
   const blackSundayLive =
-    isBlackSundayLive(eventNow)
+  isBlackSundayLive(eventNow)
 
-  const activeEvents = [
+const upcomingEvents = [
+  !writerWednesdayLive
+    ? {
+        id: 'writer-wednesday',
+        title: 'Writer Wednesday — 70% for Authors',
+        startsAt: getNextWeeklyStart(eventNow, 3),
+        icon: 'fa-gem',
+        iconBg: 'bg-[#F3EDFF]',
+        iconColor: 'text-[#7C3AED]',
+        badgeClass: 'bg-[#F1EAFE] text-[#7C3AED]',
+        accentClass: 'text-[#7C3AED]',
+      }
+    : null,
+
+  !blackSundayLive
+    ? {
+        id: 'black-sunday',
+        title: 'Black Sunday',
+        startsAt: getNextWeeklyStart(eventNow, 0),
+        icon: 'fa-star',
+        iconBg: 'bg-[#F5EFFF]',
+        iconColor: 'text-[#8B5CF6]',
+        badgeClass: 'bg-[#F1EAFE] text-[#7C3AED]',
+        accentClass: 'text-[#7C3AED]',
+      }
+    : null,
+]
+  .filter(Boolean)
+  .sort(
+    (a, b) =>
+      a.startsAt.getTime() -
+      b.startsAt.getTime()
+  )
+
+const activeEvents = [
     writerWednesdayLive
       ? {
           id: 'writer-wednesday',
@@ -1404,7 +1558,10 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   ) : null}
 
   {selectedActiveEvent === 'black-sunday' ? (
-    <BlackSundayEventTab mode="active-only" />
+    <UpcomingEventsSection
+  events={upcomingEvents}
+  now={eventNow}
+/>
   ) : null}
 
   {selectedActiveEvent === 'author-49-day' ? (
