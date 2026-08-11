@@ -260,9 +260,20 @@ export async function uploadMangaPageFile({ token, file }) {
     )
 
   let response
+let bytes
 
-  try {
-    response = await fetch(
+try {
+  bytes = await file.arrayBuffer()
+} catch {
+  throw new Error('This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]')
+}
+
+if (!bytes.byteLength) {
+  throw new Error('The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]')
+}
+
+try {
+  response = await fetch(
       `${apiBaseUrl}/api/story-media/upload-manga-page`,
       {
         method: 'POST',
@@ -271,7 +282,7 @@ export async function uploadMangaPageFile({ token, file }) {
           'Content-Type':
             file.type || 'application/octet-stream',
         },
-        body: file,
+        body: bytes,
       }
     )
   } catch {
