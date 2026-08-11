@@ -1421,17 +1421,30 @@ export default function AuthorPageNotificationsPage() {
             Page Notifications
           </div>
 
-          <button
-            type="button"
-            onClick={
-              handleMarkAllRead
-            }
-            disabled={!unreadCount}
-            className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
-            aria-label="Mark all as read"
-          >
-            <i className="fa-solid fa-broom text-[17px]" />
-          </button>
+          <div className="flex items-center gap-1">
+  <button
+    type="button"
+    onClick={() =>
+      navigate('/author/page/chat')
+    }
+    className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] active:scale-95"
+    aria-label="Open Page messages"
+  >
+    <i className="fa-regular fa-paper-plane text-[18px]" />
+  </button>
+
+  <button
+    type="button"
+    onClick={
+      handleMarkAllRead
+    }
+    disabled={!unreadCount}
+    className="flex h-10 w-10 items-center justify-center text-[#111827] active:scale-95 disabled:opacity-30"
+    aria-label="Mark all as read"
+  >
+    <i className="fa-solid fa-broom text-[17px]" />
+  </button>
+</div>
         </div>
       </div>
 
