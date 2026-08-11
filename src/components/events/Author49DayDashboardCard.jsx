@@ -156,3 +156,4 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
     </div>
   </section>
 )
+}
