@@ -1,4 +1,5 @@
 import {
+  Archive,
   Ellipsis,
   ListFilter,
   LoaderCircle,
@@ -374,6 +375,7 @@ export default function AuthorChatInboxPage() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [conversations, setConversations] = useState([])
+  const [archivedCount, setArchivedCount] = useState(0)
   const [comments, setComments] = useState([])
   const [tab, setTab] = useState('messages')
   const [query, setQuery] = useState('')
@@ -389,16 +391,16 @@ export default function AuthorChatInboxPage() {
       if (!silent) setLoading(true)
 
       try {
-        const [chatData, profileData, commentData] =
-          await Promise.all([
-            getAuthorChatConversations({
-              view: 'active',
-            }),
-            getAuthorInboxProfile(),
-            getAuthorInboxComments(50),
-          ])
+        const [chatData, archivedData, profileData, commentData] =
+  await Promise.all([
+    getAuthorChatConversations({ view: 'active' }),
+    getAuthorChatConversations({ view: 'archived' }),
+    getAuthorInboxProfile(),
+    getAuthorInboxComments(50),
+  ])
 
         setConversations(chatData.conversations || [])
+        setArchivedCount((archivedData.conversations || []).length)
         setProfile(profileData || null)
         setComments(commentData || [])
         setError('')
@@ -698,6 +700,27 @@ export default function AuthorChatInboxPage() {
             {error}
           </button>
         ) : null}
+
+        {tab === 'messages' ? (
+  <button
+    type="button"
+    onClick={() => navigate('/author/page/chat/archived')}
+    className="flex w-full items-center gap-3 border-b border-[#f0f0f2] px-5 py-3 text-left active:bg-[#f4f4f5]"
+  >
+    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e5e5e7] text-[#666970]">
+      <Archive size={20} />
+    </span>
+
+    <span className="min-w-0 flex-1">
+      <strong className="block text-[14px] font-semibold text-[#111827]">
+        Archived chats
+      </strong>
+      <span className="mt-0.5 block text-[11px] text-[#85888e]">
+        {archivedCount} archived
+      </span>
+    </span>
+  </button>
+) : null}
 
         {loading ? (
           <div className="flex min-h-[320px] items-center justify-center text-[#1877f2]">
