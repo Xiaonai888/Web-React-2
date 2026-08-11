@@ -66,7 +66,8 @@ export default function ReaderAuthorMessageRequestModal({
     document.body.style.touchAction = 'none'
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.style.overflow =
+        previousOverflow
       document.body.style.touchAction =
         previousTouchAction
     }
@@ -93,7 +94,8 @@ export default function ReaderAuthorMessageRequestModal({
         const existing = conversations.find(
           (item) =>
             String(item.author_page_id || '') ===
-            String(author.id)
+            String(author.id) &&
+            item.viewer_role !== 'author'
         )
 
         if (!ignore && existing?.id) {
@@ -120,7 +122,7 @@ export default function ReaderAuthorMessageRequestModal({
     return () => {
       ignore = true
     }
-  }, [author?.id, navigate, open])
+  }, [author?.id, navigate, open, onClose])
 
   if (!open) return null
 
@@ -165,7 +167,7 @@ export default function ReaderAuthorMessageRequestModal({
     } catch (sendError) {
       setError(
         sendError.message ||
-          'Failed to send message request'
+          'Failed to send message'
       )
     } finally {
       setSending(false)
@@ -176,7 +178,7 @@ export default function ReaderAuthorMessageRequestModal({
     <div className="fixed inset-0 z-[320] flex items-end justify-center md:items-center md:px-4">
       <button
         type="button"
-        aria-label="Close message request"
+        aria-label="Close message"
         onClick={onClose}
         className="absolute inset-0 bg-black/40"
       />
@@ -190,7 +192,7 @@ export default function ReaderAuthorMessageRequestModal({
 
             <div className="min-w-0">
               <div className="text-[11px] font-bold text-[#8a8792]">
-                Message request
+                Message
               </div>
               <h2 className="mt-0.5 truncate text-[17px] font-extrabold text-[#111827]">
                 {authorName}
@@ -214,7 +216,7 @@ export default function ReaderAuthorMessageRequestModal({
         </div>
 
         {checking ? (
-          <div className="flex min-h-[190px] items-center justify-center text-[#7c3aed]">
+          <div className="flex min-h-[190px] items-center justify-center text-[#1877f2]">
             <LoaderCircle
               size={27}
               className="animate-spin"
@@ -222,12 +224,8 @@ export default function ReaderAuthorMessageRequestModal({
           </div>
         ) : (
           <>
-            <div className="mt-5 rounded-[16px] bg-[#f6f2ff] px-4 py-3 text-[11px] font-semibold leading-5 text-[#6d5a91]">
-              You can send one message request. More messages become available after the author accepts it.
-            </div>
-
             {error ? (
-              <div className="mt-3 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
+              <div className="mt-4 rounded-[14px] bg-[#fff0f1] px-4 py-3 text-[11px] font-bold text-[#c7353d]">
                 {error}
               </div>
             ) : null}
@@ -246,7 +244,7 @@ export default function ReaderAuthorMessageRequestModal({
                 rows={5}
                 autoFocus
                 placeholder={`Write a message to ${authorName}...`}
-                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#ddd9e6] bg-[#faf9fc] px-4 py-3 text-[13px] leading-6 text-[#111827] outline-none transition placeholder:text-[#9a96a2] focus:border-[#9b7be8] focus:bg-white"
+                className="min-h-[130px] w-full resize-none rounded-[18px] border border-[#ddd9e6] bg-[#faf9fc] px-4 py-3 text-[13px] leading-6 text-[#111827] outline-none transition placeholder:text-[#9a96a2] focus:border-[#1877f2] focus:bg-white"
               />
 
               <div className="mt-1 text-right text-[10px] font-semibold text-[#9a96a2]">
@@ -258,7 +256,7 @@ export default function ReaderAuthorMessageRequestModal({
               type="button"
               onClick={handleSubmit}
               disabled={!message.trim() || sending}
-              className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-[13px] font-extrabold text-white shadow-[0_8px_20px_rgba(124,58,237,0.22)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#1877f2] text-[13px] font-extrabold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {sending ? (
                 <LoaderCircle
@@ -271,7 +269,7 @@ export default function ReaderAuthorMessageRequestModal({
                   strokeWidth={2.2}
                 />
               )}
-              Send request
+              Send message
             </button>
           </>
         )}
