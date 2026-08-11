@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
+import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -33,8 +34,7 @@ function isCompletedStory(story) {
 }
 
 function normalizeStory(story, index = 0) {
-  const totalEpisodes = Number(story.total_episodes || 0)
-  const isNew = totalEpisodes === 1
+  const badge = getStoryBadge(story)
 
   return {
     id: story.id,
@@ -44,8 +44,8 @@ function normalizeStory(story, index = 0) {
       story.author_page?.page_username ||
       story.author_name ||
       'Shadow Author',
-    badge: isNew ? 'NEW' : 'UP',
-    badgeColor: isNew ? 'new' : 'up',
+    badge: badge ? badge.toUpperCase() : '',
+    badgeColor: badge,
     likes: formatCompactNumber(story.total_likes),
     views: formatCompactNumber(story.total_views),
     cover:
