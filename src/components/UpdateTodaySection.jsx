@@ -64,7 +64,8 @@ function normalizeStory(story, index = 0) {
 }
 
 function StatusBadge({ type }) {
-  const badge = badgeConfig[type] || badgeConfig.new
+  const badge = badgeConfig[type]
+  if (!badge) return null
 
   return (
     <div
