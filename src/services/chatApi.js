@@ -263,6 +263,42 @@ export function unarchiveChatConversation(
   )
 }
 
+export function getChatFolders(conversationId = '') {
+  const query = conversationId
+    ? `?conversation_id=${encodeURIComponent(conversationId)}`
+    : ''
+
+  return chatRequest(`/folders${query}`)
+}
+
+export function createChatFolder(name) {
+  return chatRequest('/folders', {
+    method: 'POST',
+    body: { name },
+  })
+}
+
+export function addChatConversationToFolder(
+  folderId,
+  conversationId
+) {
+  return chatRequest(
+    `/folders/${encodeURIComponent(folderId)}/conversations/${encodeURIComponent(conversationId)}`,
+    { method: 'PATCH' }
+  )
+}
+
+export function removeChatConversationFromFolder(
+  folderId,
+  conversationId
+) {
+  return chatRequest(
+    `/folders/${encodeURIComponent(folderId)}/conversations/${encodeURIComponent(conversationId)}`,
+    { method: 'DELETE' }
+  )
+}
+
+
 export function pinChatConversation(conversationId) {
   return chatRequest(
     `/conversations/${encodeURIComponent(conversationId)}/pin`,
