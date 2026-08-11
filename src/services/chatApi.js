@@ -381,6 +381,12 @@ export function decideChatRequest(
     }
   )
 }
+export function markChatUnread(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/unread`,
+    { method: 'PATCH' }
+  )
+}
 
 export function markChatRead(conversationId) {
   return chatRequest(
