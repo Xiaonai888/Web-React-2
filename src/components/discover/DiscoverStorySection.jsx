@@ -164,7 +164,7 @@ function StoryCard({
             src={
               latestStory.media_url
             }
-            alt=""
+            alt={story.alt_text || ''}
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -617,7 +617,7 @@ function StoryViewer({
               <img
                 key={story.id}
                 src={story.media_url}
-                alt=""
+                alt={story.alt_text || ''}
                 className="relative h-full w-full object-contain"
               />
             </>
@@ -728,9 +728,9 @@ function StoryViewer({
           {group.is_owner ? (
             <div
               className={`absolute inset-x-5 z-20 ${
-                story.caption
-                  ? 'bottom-[104px]'
-                  : 'bottom-[max(32px,env(safe-area-inset-bottom))]'
+                story.text_overlay || story.caption || story.mention_username || story.link_url
+  ? 'bottom-[164px]'
+  : 'bottom-[max(32px,env(safe-area-inset-bottom))]'
               }`}
             >
               <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-4 py-2 text-[12px] font-black text-white backdrop-blur-xl">
@@ -747,13 +747,36 @@ function StoryViewer({
             </div>
           ) : null}
 
-          {story.caption ? (
-            <div className="absolute inset-x-5 bottom-[max(32px,env(safe-area-inset-bottom))] z-20">
-              <div className="rounded-[18px] bg-black/40 px-4 py-3 text-center text-[14px] font-semibold leading-6 text-white backdrop-blur-xl">
-                {story.caption}
-              </div>
-            </div>
-          ) : null}
+          {story.text_overlay || story.caption ? (
+  <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
+    <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
+      {story.text_overlay || story.caption}
+    </span>
+  </div>
+) : null}
+
+{story.mention_username ? (
+  <div className="pointer-events-none absolute inset-x-0 bottom-[112px] z-20 flex justify-center px-5">
+    <span className="max-w-full truncate rounded-full bg-white px-4 py-2 text-[15px] font-black text-[#111827] shadow-lg">
+      @{story.mention_username}
+    </span>
+  </div>
+) : null}
+
+{story.link_url ? (
+  <div className="absolute inset-x-0 bottom-[60px] z-30 flex justify-center px-5">
+    <a
+      href={story.link_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(event) => event.stopPropagation()}
+      className="max-w-[85%] truncate rounded-full bg-white/95 px-4 py-2 text-[13px] font-black text-[#111827] shadow-lg"
+    >
+      <i className="fa-solid fa-link mr-2" />
+      {story.link_url.replace(/^https?:\/\//i, '')}
+    </a>
+  </div>
+) : null}
         </div>
       </div>
 
