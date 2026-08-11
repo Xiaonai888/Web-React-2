@@ -120,9 +120,9 @@ function wait(milliseconds) {
 
 const updateMarkerUI = {
   width: 48,
-  right: 2,
-  bottom: 0,
-  rotate: 0,
+  right: 6,
+  bottom: -2,
+  rotate: 7,
   numberX: 0,
   numberY: 0,
   numberRotate: 0,
