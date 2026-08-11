@@ -263,6 +263,20 @@ export function unarchiveChatConversation(
   )
 }
 
+export function pinChatConversation(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/pin`,
+    { method: 'PATCH' }
+  )
+}
+
+export function unpinChatConversation(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/pin`,
+    { method: 'DELETE' }
+  )
+}
+
 function normalizeConversationDeleteScope(scope) {
   const normalized = String(scope || 'for_me')
     .trim()
