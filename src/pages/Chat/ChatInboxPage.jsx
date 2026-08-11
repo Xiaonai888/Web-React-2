@@ -42,12 +42,14 @@ import {
   getChatQuickContacts,
   getManagedChatConversations,
   getChatFolders,
+  getChatSoundSettings,
   hasReaderSession,
   markChatUnread,
   pinChatConversation,
   removeChatConversationFromFolder,
   searchChatUsers,
   unpinChatConversation,
+  updateChatSoundSettings,
 } from '../../services/chatApi'
 import {
   muteChatConversation,
@@ -122,6 +124,13 @@ function getSmartSearchScore(query, values) {
 
   return matchedTerms > 0 || score > 0 ? score : 0
 }
+
+const CHAT_TONE_OPTIONS = [
+  ['default', 'Default'],
+  ['chime', 'Chime'],
+  ['pop', 'Pop'],
+  ['bell', 'Bell'],
+]
 
 const MUTE_OPTIONS = [
   ['1h', '1 hour'],
@@ -681,6 +690,14 @@ export default function ChatInboxPage() {
   const [chatFolders, setChatFolders] = useState([])
 const [folderLoading, setFolderLoading] =
   useState(false)
+
+  const [soundLoading, setSoundLoading] =
+  useState(false)
+const [soundSettings, setSoundSettings] =
+  useState({
+    sound_enabled: true,
+    tone: 'default',
+  })
 
   const loadQuickContacts = useCallback(async () => {
     try {
@@ -1274,6 +1291,108 @@ setArchivedCount(
     closeConversationMenu()
     showSelectionNotice(message)
   }
+
+    const handleOpenMuteSettings = async () => {
+    if (
+      conversationMenu?.conversation?.is_muted
+    ) {
+      handleMenuUnmute()
+      return
+    }
+
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id) return
+
+    setConversationMenuView('mute')
+    setSoundLoading(true)
+
+    try {
+      const data = await getChatSoundSettings(id)
+      setSoundSettings({
+        sound_enabled:
+          data.sound_enabled !== false,
+        tone: data.tone || 'default',
+      })
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to load sound settings'
+      )
+    } finally {
+      setSoundLoading(false)
+    }
+  }
+
+  const handleToggleChatSound = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    const nextEnabled =
+      !soundSettings.sound_enabled
+
+    setSelectionBusy('menu-sound')
+
+    try {
+      const data =
+        await updateChatSoundSettings(id, {
+          sound_enabled: nextEnabled,
+        })
+
+      setSoundSettings((current) => ({
+        ...current,
+        sound_enabled:
+          data.sound_enabled !== false,
+      }))
+
+      await loadConversations({
+        silent: true,
+      })
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to update sound'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleSelectChatTone = async (tone) => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    setSelectionBusy('menu-tone')
+
+    try {
+      const data =
+        await updateChatSoundSettings(id, {
+          tone,
+        })
+
+      setSoundSettings((current) => ({
+        ...current,
+        tone: data.tone || tone,
+      }))
+
+      await loadConversations({
+        silent: true,
+      })
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to update tone'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
 
     const handleOpenFolderMenu = async () => {
     const id =
