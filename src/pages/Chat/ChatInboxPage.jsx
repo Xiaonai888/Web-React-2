@@ -2307,6 +2307,47 @@ setArchivedCount(
               </>
             ) : null}
 
+                        {conversationMenuView ===
+            'tone' ? (
+              <>
+                <ConversationMenuRow
+                  icon={ChevronLeft}
+                  label="Select tone"
+                  onClick={() =>
+                    setConversationMenuView(
+                      'mute'
+                    )
+                  }
+                />
+
+                <div className="my-1 h-px bg-[#ececef]" />
+
+                {CHAT_TONE_OPTIONS.map(
+                  ([value, label]) => (
+                    <ConversationMenuRow
+                      key={value}
+                      icon={
+                        soundSettings.tone ===
+                        value
+                          ? Check
+                          : Circle
+                      }
+                      label={label}
+                      disabled={Boolean(
+                        selectionBusy
+                      )}
+                      onClick={() =>
+                        handleSelectChatTone(
+                          value
+                        )
+                      }
+                    />
+                  )
+                )}
+              </>
+            ) : null}
+
+
             {conversationMenuView ===
             'mute' ? (
               <>
