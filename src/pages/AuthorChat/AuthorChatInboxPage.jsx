@@ -520,7 +520,7 @@ export default function AuthorChatInboxPage() {
     >
       <header className="sticky top-0 z-50 border-b border-[#ececef] bg-white">
         <div className="mx-auto max-w-[680px]">
-          <div className="flex h-[66px] items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
+          <div className="flex h-[52px] items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
             {searchOpen ? (
               <>
                 <button
@@ -554,7 +554,7 @@ export default function AuthorChatInboxPage() {
               </>
             ) : (
               <>
-                <h1 className="min-w-0 flex-1 text-[28px] font-bold tracking-[-0.035em]">
+                <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none">
                   Inbox
                 </h1>
 
@@ -578,11 +578,11 @@ export default function AuthorChatInboxPage() {
                   aria-label="Profile page"
                 >
                   <CircleAvatar
-                    imageUrl={profileImage}
-                    name={pageName}
-                    size="h-9 w-9"
-                    textSize="text-[11px]"
-                  />
+  imageUrl={profileImage}
+  name={pageName}
+  size="h-7 w-7"
+  textSize="text-[10px]"
+/>
                 </button>
 
                 <div className="relative">
