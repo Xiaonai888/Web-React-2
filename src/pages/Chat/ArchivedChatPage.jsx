@@ -196,10 +196,13 @@ export default function ArchivedChatPage() {
           })
 
         setConversations(
-          Array.isArray(data.conversations)
-            ? data.conversations
-            : []
-        )
+  Array.isArray(data.conversations)
+    ? data.conversations.filter(
+        (item) =>
+          item.viewer_role !== 'author'
+      )
+    : []
+)
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
