@@ -2067,14 +2067,11 @@ setArchivedCount(
                 />
 
                 <ConversationMenuRow
-                  icon={X}
-                  label="Clear history"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Clear history is coming soon.'
-                    )
-                  }
-                />
+  icon={X}
+  label="Clear history"
+  disabled={Boolean(selectionBusy)}
+  onClick={handleMenuClearHistory}
+/>
 
                 <div className="my-1 h-px bg-[#ececef]" />
 
