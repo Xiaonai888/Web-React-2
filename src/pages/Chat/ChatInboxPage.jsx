@@ -632,15 +632,21 @@ export default function ChatInboxPage() {
           ])
 
         setConversations(
-          Array.isArray(data.conversations)
-            ? data.conversations
-            : []
-        )
-        setArchivedCount(
-          Array.isArray(archivedData.conversations)
-            ? archivedData.conversations.length
-            : 0
-        )
+  Array.isArray(data.conversations)
+    ? data.conversations.filter(
+        (item) =>
+          item.viewer_role !== 'author'
+      )
+    : []
+)
+setArchivedCount(
+  Array.isArray(archivedData.conversations)
+    ? archivedData.conversations.filter(
+        (item) =>
+          item.viewer_role !== 'author'
+      ).length
+    : 0
+)
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
