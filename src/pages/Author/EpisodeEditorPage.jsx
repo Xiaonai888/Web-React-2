@@ -533,9 +533,20 @@ async function uploadEpisodeInlineImage({ token, file }) {
   }
 
   let response
+let bytes
 
-  try {
-    response = await fetch(
+try {
+  bytes = await file.arrayBuffer()
+} catch {
+  throw new Error('This device could not read the selected image. [read: IMAGE_FILE_READ_FAILED]')
+}
+
+if (!bytes.byteLength) {
+  throw new Error('The selected image contains 0 bytes. [read: IMAGE_FILE_EMPTY]')
+}
+
+try {
+  response = await fetch(
       `${API_BASE_URL}/api/story-media/upload-novel-image`,
       {
         method: 'POST',
@@ -543,7 +554,7 @@ async function uploadEpisodeInlineImage({ token, file }) {
           Authorization: `Bearer ${token}`,
           'Content-Type': file.type || 'application/octet-stream',
         },
-        body: file,
+        body: bytes,
       }
     )
   } catch {
