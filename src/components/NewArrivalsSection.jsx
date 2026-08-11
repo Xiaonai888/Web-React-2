@@ -27,11 +27,6 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function isCompletedStory(story) {
-  return String(story.story_status || '')
-    .trim()
-    .toLowerCase() === 'completed'
-}
 
 function normalizeStory(story, index = 0) {
   const badge = getStoryBadge(story)
@@ -182,8 +177,8 @@ export default function NewArrivalsSection({
               Number(story.total_episodes || 0) >= 1
           )
           .filter(
-            (story) => !isCompletedStory(story)
-          )
+  (story) => getStoryBadge(story) !== 'end'
+)
           .map(normalizeStory)
           .slice(0, 12)
 
