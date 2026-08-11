@@ -1558,29 +1558,26 @@ const activeEvents = [
   ) : null}
 
   {selectedActiveEvent === 'black-sunday' ? (
-    <UpcomingEventsSection
+  <BlackSundayEventTab mode="active-only" />
+) : null}
+
+{selectedActiveEvent === 'author-49-day' ? (
+  <Author49DayEventCard
+    onStartWriting={handleStartYourWork}
+    startWritingLoading={loading}
+  />
+) : null}
+
+<ActiveEventPicker
+  events={activeEvents}
+  selectedId={selectedActiveEvent}
+  onSelect={setSelectedActiveEvent}
+/>
+
+<UpcomingEventsSection
   events={upcomingEvents}
   now={eventNow}
 />
-  ) : null}
-
-  {selectedActiveEvent === 'author-49-day' ? (
-    <Author49DayEventCard
-      onStartWriting={handleStartYourWork}
-      startWritingLoading={loading}
-    />
-  ) : null}
-
-  <ActiveEventPicker
-    events={activeEvents}
-    selectedId={selectedActiveEvent}
-    onSelect={setSelectedActiveEvent}
-  />
-
-  <BlackSundayEventTab
-    mode="upcoming-only"
-    showNoEventToday={false}
-  />
 </>
 )}
       </main>
