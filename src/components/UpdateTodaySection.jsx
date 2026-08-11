@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -22,14 +23,6 @@ const badgeConfig = {
   },
 }
 
-function getRealBadgeFromStoryStatus(status) {
-  const value = String(status || '').trim().toLowerCase()
-
-  if (value === 'completed') return 'end'
-  if (value === 'ongoing') return 'up'
-
-  return 'new'
-}
 
 function isToday(value) {
   if (!value) return false
@@ -66,7 +59,7 @@ function normalizeStory(story, index = 0) {
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     genre: String(story.main_genre || '').trim(),
     firstTag: getFirstDifferentTag(story.main_genre, story.tags),
-    badge: getRealBadgeFromStoryStatus(story.story_status),
+    badge: getStoryBadge(story),
   }
 }
 
@@ -97,7 +90,7 @@ function SmallBookCard({ book }) {
               event.currentTarget.src = '/assets/Update Today/Update Today 2.jpg'
             }}
           />
-          <StatusBadge type={book.badge} />
+          {book.badge ? <StatusBadge type={book.badge} /> : null}
         </div>
       </div>
 
