@@ -298,6 +298,25 @@ export function removeChatConversationFromFolder(
   )
 }
 
+export function getChatSoundSettings(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/sound`
+  )
+}
+
+export function updateChatSoundSettings(
+  conversationId,
+  settings
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/sound`,
+    {
+      method: 'PATCH',
+      body: settings,
+    }
+  )
+}
+
 
 export function pinChatConversation(conversationId) {
   return chatRequest(
