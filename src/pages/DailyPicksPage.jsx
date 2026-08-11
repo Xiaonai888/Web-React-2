@@ -23,7 +23,7 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-const FOUR_HOUR_MS = 4 * 60 * 60 * 1000
+const TWO_HOUR_MS = 2 * 60 * 60 * 1000
 const SEVEN_DAY_MS = 7 * 24 * 60 * 60 * 1000
 
 function createRotationSeed() {
@@ -31,7 +31,7 @@ function createRotationSeed() {
   const localTime =
     now.getTime() - now.getTimezoneOffset() * 60 * 1000
 
-  return Math.floor(localTime / FOUR_HOUR_MS)
+  return Math.floor(localTime / TWO_HOUR_MS)
 }
 
 function createSeededRandom(seed) {
