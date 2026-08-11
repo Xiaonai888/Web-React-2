@@ -76,7 +76,7 @@ function normalizeStory(story, index = 0) {
       `/assets/Update Today/Update Today ${Math.min(index + 1, 7)}.jpg`,
     views: formatCompactNumber(story.total_views),
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
-updateCount: Math.max(1, Number(story.daily_update_count || 1)),
+updateCount: Math.max(0, Number(story.daily_update_count || 0)),
 badge:
   String(story.story_status || '').trim().toLowerCase() === 'completed'
     ? 'end'
@@ -120,8 +120,8 @@ function wait(milliseconds) {
 
 const updateMarkerUI = {
   width: 48,
-  right: -8,
-  bottom: -7,
+  right: 2,
+  bottom: 0,
   rotate: 0,
   numberX: 0,
   numberY: 0,
@@ -157,7 +157,7 @@ function BookCard({ book }) {
           </div>
         </div>
 
-        {updateCount > 0 ? (
+        {updateCount >= 2 ? (
           <div
             className="pointer-events-none absolute z-20"
             style={{
