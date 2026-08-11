@@ -33,6 +33,7 @@ import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorM
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import {
   archiveChatConversation,
+  clearChatHistory,
   decideChatRequest,
   deleteChatConversation,
   getChatConversations,
@@ -1265,6 +1266,43 @@ setArchivedCount(
   ) => {
     closeConversationMenu()
     showSelectionNotice(message)
+  }
+
+    const handleMenuClearHistory = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    if (
+      !window.confirm(
+        'Clear all message history for this chat?'
+      )
+    ) {
+      return
+    }
+
+    setSelectionBusy('menu-clear-history')
+
+    try {
+      await clearChatHistory(id)
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice('Chat history cleared')
+    } catch (actionError) {
+      closeConversationMenu()
+      showSelectionNotice(
+        actionError.message ||
+          'Failed to clear chat history'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
   }
 
     const handleMenuMarkUnread = async () => {
