@@ -899,7 +899,6 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
             response.ok &&
             data.ok !== false &&
             event?.visible &&
-            event?.enabled &&
             event.status !== 'finished'
           )
         )
