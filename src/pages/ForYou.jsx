@@ -10,6 +10,7 @@ import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
 import TopNovelSection from '../components/TopNovelSection'
 import YouMightLikeSection from '../components/YouMightLikeSection'
 import EventPerksHubSection from '../components/EventPerksHubSection'
+import WeeklyUpdateSection from '../components/WeeklyUpdateSection'
 import NewArrivalsSection from '../components/NewArrivalsSection'
 import CompletedSection from '../components/CompletedSection'
 import FanPicksSection from '../components/FanPicksSection'
@@ -883,6 +884,10 @@ useEffect(() => {
 
 <div className="my-6">
   <EditorWeeklyPicksSection />
+</div>
+
+    <div className="my-6">
+  <WeeklyUpdateSection />
 </div>
 
             <div className="my-6">
