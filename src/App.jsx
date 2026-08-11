@@ -192,6 +192,10 @@ const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 const ChatInfoPage = lazy(() => import('./pages/Chat/ChatInfoPage'))
 const AuthorPageInviteFriendsPage = lazy(() => import('./pages/Author/AuthorPageInviteFriendsPage'))
 const AuthorPageHelpPage = lazy(() => import('./pages/Author/AuthorPageHelpPage'))
+const AuthorChatInboxPage = lazy(() => import('./pages/AuthorChat/AuthorChatInboxPage'))
+const AuthorArchivedChatPage = lazy(() => import('./pages/AuthorChat/AuthorArchivedChatPage'))
+const AuthorChatRoomPage = lazy(() => import('./pages/AuthorChat/AuthorChatRoomPage'))
+const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoPage'))
 
 
 function ComingSoon({ title }) {
@@ -875,6 +879,26 @@ const shouldShowOpeningAds =
       <AuthorPageNotificationsPage />
     </LazyPage>
   }
+/>
+
+        <Route
+  path="/author/page/chat"
+  element={<LazyPage><AuthorChatInboxPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/chat/archived"
+  element={<LazyPage><AuthorArchivedChatPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/chat/:conversationId/info"
+  element={<LazyPage><AuthorChatInfoPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/chat/:conversationId"
+  element={<LazyPage><AuthorChatRoomPage /></LazyPage>}
 />
 
         <Route
