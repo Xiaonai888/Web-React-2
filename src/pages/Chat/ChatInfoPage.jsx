@@ -1144,7 +1144,7 @@ const activeSharedItems =
 </div>
         </section>
 
-        <section className="mt-9">
+        <section className="hidden">
           <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
             Chat info
           </h2>
@@ -1160,7 +1160,7 @@ const activeSharedItems =
           />
         </section>
 
-        <section className="mt-7">
+        <section className="hidden">
           <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
             Actions
           </h2>
@@ -1207,7 +1207,7 @@ const activeSharedItems =
           />
         </section>
 
-        <section className="mt-7">
+        <section className="hidden">
           <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
             Privacy and report
           </h2>
