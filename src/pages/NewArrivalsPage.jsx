@@ -34,8 +34,6 @@ function createFallbackBook(id, imageNumber, tab = 'Fresh') {
     Fantasy: ['UP', 'yellow'],
   }
 
-  const [badge, badgeColor] = badgeByTab[tab] || badgeByTab.Fresh
-
   return {
     id,
     title: 'Name Book',
