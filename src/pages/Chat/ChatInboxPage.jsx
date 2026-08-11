@@ -479,6 +479,7 @@ function ConversationRow({
       onOpenContextMenu(point.x, point.y)
       longPressRef.current = null
     }, 500)
+  }
 
   const handlePointerMove = (event) => {
     const startPoint = pointerStartRef.current
