@@ -404,8 +404,12 @@ function countEpisodeImages(value) {
 }
 
 function isNovelImageFile(file) {
+  const type = String(file?.type || '').toLowerCase()
+  const name = String(file?.name || '').toLowerCase()
+  return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
+}
 
-  function isNovelHeicFile(file) {
+function isNovelHeicFile(file) {
   return /image\/hei[cf]/i.test(file?.type || '') || /\.hei[cf]$/i.test(file?.name || '')
 }
 
@@ -435,10 +439,7 @@ async function convertNovelHeicForUpload(file) {
     )
   }
 }
-  const type = String(file?.type || '').toLowerCase()
-  const name = String(file?.name || '').toLowerCase()
-  return type.startsWith('image/') || /\.(jpe?g|png|webp|gif|avif|hei[cf])$/i.test(name)
-}
+
 
 function loadNovelImage(file) {
   return new Promise((resolve, reject) => {
