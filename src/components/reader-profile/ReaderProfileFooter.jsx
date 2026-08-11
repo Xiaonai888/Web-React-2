@@ -166,7 +166,7 @@ export default function ReaderProfileFooter({
     setStoredUser(getStoredUser())
   }, [])
 
-    const loadChatBadge = useCallback(async () => {
+  const loadChatBadge = useCallback(async () => {
     if (!hasReaderSession()) {
       setChatBadgeCount(0)
       chatSnapshotRef.current = new Map()
@@ -263,10 +263,6 @@ export default function ReaderProfileFooter({
 
 
   useEffect(() => {
-    loadChatBadge()
-    refreshStoredUser()
-
-      useEffect(() => {
     const primeSound = () => {
       primeChatNotificationSound()
     }
@@ -294,6 +290,9 @@ export default function ReaderProfileFooter({
     }
   }, [])
 
+  useEffect(() => {
+    loadChatBadge()
+    refreshStoredUser()
 
     const intervalId = window.setInterval(
       () => {
