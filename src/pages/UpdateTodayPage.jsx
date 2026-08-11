@@ -119,14 +119,14 @@ function wait(milliseconds) {
 }
 
 const updateMarkerUI = {
-  width: 48,
-  right: 6,
-  bottom: -4,
+  width: 42,
+  right: 5,
+  bottom: -5,
   rotate: 7,
   numberX: 0,
   numberY: 0,
   numberRotate: 0,
-  numberSize: 13,
+  numberSize: 12,
 }
 
 function BookCard({ book }) {
