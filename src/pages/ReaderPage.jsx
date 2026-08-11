@@ -2725,6 +2725,14 @@ function AdultWarningModal({ open, onCancel, onContinue }) {
 
 function EpisodeListDrawer({ open, onClose, story, episodes, currentEpisodeId, storyId, navigate, theme }) {
   const [newestFirst, setNewestFirst] = useState(false)
+  useEffect(() => {
+  document.body.style.overflow = open ? 'hidden' : ''
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  return () => {
+    document.body.style.overflow = ''
+    document.documentElement.style.overflow = ''
+  }
+}, [open])
 
   if (!open) return null
 
