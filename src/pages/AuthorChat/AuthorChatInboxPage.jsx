@@ -1,14 +1,9 @@
 import {
-  Archive,
-  Check,
-  ChevronRight,
-  EllipsisVertical,
+  Ellipsis,
+  ListFilter,
   LoaderCircle,
   MessageCircle,
   Search,
-  Send,
-  Trash2,
-  VolumeX,
   X,
 } from 'lucide-react'
 import {
@@ -19,16 +14,27 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  archiveAuthorChatConversation,
-  decideAuthorChatRequest,
-  deleteAuthorChatConversation,
   getAuthorChatConversations,
+  getAuthorInboxComments,
+  getAuthorInboxProfile,
   hasAuthorChatSession,
-  muteAuthorChatConversation,
-  unmuteAuthorChatConversation,
 } from '../../services/authorChatApi'
 
-function formatTime(value) {
+const QUICK_FILTERS = [
+  { key: 'unread', label: 'Unread' },
+  { key: 'ad_replies', label: 'Ad replies' },
+  { key: 'follow_up', label: 'Follow up' },
+  { key: 'messages', label: 'Messages' },
+]
+
+function normalizeSearch(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .trim()
+}
+
+function formatConversationTime(value) {
   if (!value) return ''
 
   const date = new Date(value)
@@ -48,26 +54,63 @@ function formatTime(value) {
     }).format(date)
   }
 
+  const diffDays = Math.floor(
+    (Date.now() - date.getTime()) / 86400000
+  )
+
+  if (diffDays < 7) {
+    return `${Math.max(1, diffDays)}d`
+  }
+
   return new Intl.DateTimeFormat(undefined, {
     month: 'short',
     day: 'numeric',
   }).format(date)
 }
 
-function Avatar({ person }) {
+function formatNotificationTime(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  const minutes = Math.floor(
+    (Date.now() - date.getTime()) / 60000
+  )
+
+  if (minutes < 1) return 'Now'
+  if (minutes < 60) return `${minutes}m`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d`
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
+}
+
+function CircleAvatar({
+  imageUrl,
+  name,
+  size = 'h-14 w-14',
+  textSize = 'text-[16px]',
+}) {
   const [failed, setFailed] = useState(false)
-  const name = String(
-    person?.name ||
-      person?.username ||
-      'Shadow Reader'
-  ).trim()
-  const letter = name.charAt(0).toUpperCase() || 'S'
+  const letter =
+    String(name || 'S').trim().charAt(0).toUpperCase() || 'S'
 
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[16px] font-bold text-white">
-      {person?.avatar_url && !failed ? (
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e8e8eb] ${textSize} font-bold text-[#111827]`}
+    >
+      {imageUrl && !failed ? (
         <img
-          src={person.avatar_url}
+          src={imageUrl}
           alt=""
           className="h-full w-full object-cover"
           onError={() => setFailed(true)}
@@ -79,210 +122,285 @@ function Avatar({ person }) {
   )
 }
 
-function EmptyInbox() {
+function ConversationRow({ conversation, onOpen }) {
+  const person = conversation.counterpart || {}
+  const latest = conversation.latest_message || {}
+  const unread = Math.max(
+    0,
+    Number(conversation.unread_count || 0)
+  )
+
   return (
-    <div className="px-6 py-20 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
-        <MessageCircle size={30} strokeWidth={1.9} />
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-[#f4f4f5]"
+    >
+      <div className="relative">
+        <CircleAvatar
+          imageUrl={person.avatar_url}
+          name={person.name || person.username}
+          size="h-[58px] w-[58px]"
+          textSize="text-[17px]"
+        />
+        {unread > 0 ? (
+          <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-[3px] border-white bg-[#1877f2]" />
+        ) : null}
       </div>
-      <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
-        No Page messages yet
-      </h2>
-      <p className="mx-auto mt-2 max-w-[300px] text-[13px] font-semibold leading-6 text-[#8a8a95]">
-        Messages sent to your Author Page will appear here.
-      </p>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start gap-2">
+          <strong
+            className={`min-w-0 flex-1 truncate text-[15px] text-[#111827] ${
+              unread > 0 ? 'font-extrabold' : 'font-semibold'
+            }`}
+          >
+            {person.name || 'Shadow Reader'}
+          </strong>
+
+          <span className="shrink-0 text-[12px] font-normal text-[#74777d]">
+            {formatConversationTime(
+              conversation.last_message_at ||
+                latest.created_at
+            )}
+          </span>
+        </span>
+
+        <span
+          className={`mt-1 block truncate text-[13px] ${
+            unread > 0
+              ? 'font-semibold text-[#111827]'
+              : 'font-normal text-[#62656b]'
+          }`}
+        >
+          {latest.body || 'Open this conversation'}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function getCommentActor(notification) {
+  const metadata =
+    notification?.metadata &&
+    typeof notification.metadata === 'object'
+      ? notification.metadata
+      : {}
+
+  return {
+    name:
+      metadata.reader_name ||
+      metadata.actor_name ||
+      metadata.reviewer_name ||
+      'Shadow Reader',
+    username:
+      metadata.reader_username ||
+      metadata.actor_username ||
+      metadata.reviewer_username ||
+      '',
+    avatar:
+      metadata.reader_avatar_url ||
+      metadata.actor_avatar_url ||
+      metadata.reviewer_avatar_url ||
+      '',
+  }
+}
+
+function CommentRow({ notification, onOpen }) {
+  const actor = getCommentActor(notification)
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-[#f4f4f5]"
+    >
+      <CircleAvatar
+        imageUrl={actor.avatar}
+        name={actor.name}
+        size="h-[54px] w-[54px]"
+        textSize="text-[15px]"
+      />
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start gap-2">
+          <strong className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#111827]">
+            {actor.name}
+          </strong>
+          <span className="shrink-0 text-[12px] text-[#74777d]">
+            {formatNotificationTime(
+              notification.created_at
+            )}
+          </span>
+        </span>
+        <span className="mt-1 block line-clamp-2 text-[13px] font-normal leading-5 text-[#62656b]">
+          {notification.message ||
+            notification.title ||
+            'Commented on your Page'}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function FilterSheet({
+  open,
+  value,
+  onClose,
+  onApply,
+}) {
+  const [draft, setDraft] = useState(value)
+
+  useEffect(() => {
+    if (open) {
+      setDraft(value)
+    }
+  }, [open, value])
+
+  if (!open) return null
+
+  function toggle(key) {
+    setDraft((current) => {
+      const next = new Set(current)
+
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+
+      return next
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35">
+      <button
+        type="button"
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-label="Close filters"
+      />
+
+      <section className="relative z-10 w-full max-w-[620px] rounded-t-[24px] bg-white px-5 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+        <div className="mx-auto h-1 w-10 rounded-full bg-[#d3d4d6]" />
+
+        <div className="mt-5 flex items-center justify-between">
+          <h2 className="text-[20px] font-bold text-[#111827]">
+            Filter messages
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f1f2] text-[#111827]"
+          >
+            <X size={19} />
+          </button>
+        </div>
+
+        <div className="mt-7">
+          <h3 className="text-[16px] font-bold text-[#23252a]">
+            Frequently used
+          </h3>
+          <p className="mt-1 text-[12px] text-[#8b8e94]">
+            You may select multiple filters.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {QUICK_FILTERS.map((item) => {
+              const active = draft.has(item.key)
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => toggle(item.key)}
+                  className={`rounded-[8px] px-4 py-2.5 text-[14px] font-medium ${
+                    active
+                      ? 'bg-[#e7f1ff] text-[#1877f2]'
+                      : 'bg-[#f4f4f5] text-[#303238]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="mt-10 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setDraft(new Set())}
+            className="h-12 rounded-[8px] border border-[#d8dadd] bg-white text-[15px] font-semibold text-[#24262b]"
+          >
+            Clear all
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onApply(draft)}
+            className="h-12 rounded-[8px] bg-[#1877f2] text-[15px] font-semibold text-white"
+          >
+            Apply
+          </button>
+        </div>
+      </section>
     </div>
   )
 }
 
-function RequestCard({
-  conversation,
-  busy,
-  onOpen,
-  onDecision,
-}) {
-  const person = conversation.counterpart || {}
-
+function EmptyState({ tab }) {
   return (
-    <section className="mx-4 mt-4 rounded-[20px] border border-[#e6def8] bg-[#faf8ff] p-4">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex w-full items-center gap-3 text-left"
-      >
-        <Avatar person={person} />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[10px] font-bold uppercase tracking-wide text-[#8b8793]">
-            Message request
-          </span>
-          <strong className="mt-1 block truncate text-[15px] font-bold text-[#111827]">
-            {person.name || 'Shadow Reader'}
-          </strong>
-          <span className="mt-1 block truncate text-[12px] font-semibold text-[#76727f]">
-            {conversation.latest_message?.body ||
-              'Sent a message to your Page'}
-          </span>
-        </span>
-      </button>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          disabled={Boolean(busy)}
-          onClick={() => onDecision('decline')}
-          className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#efeff3] text-[12px] font-bold text-[#44444d] disabled:opacity-50"
-        >
-          {busy === 'decline' ? (
-            <LoaderCircle size={16} className="animate-spin" />
-          ) : (
-            <X size={16} />
-          )}
-          Decline
-        </button>
-
-        <button
-          type="button"
-          disabled={Boolean(busy)}
-          onClick={() => onDecision('accept')}
-          className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#7c3aed] text-[12px] font-bold text-white disabled:opacity-50"
-        >
-          {busy === 'accept' ? (
-            <LoaderCircle size={16} className="animate-spin" />
-          ) : (
-            <Check size={16} />
-          )}
-          Accept
-        </button>
+    <div className="px-6 py-24 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f0e8ff] text-[#7c3aed]">
+        <MessageCircle size={26} />
       </div>
-    </section>
-  )
-}
-
-function ConversationRow({
-  conversation,
-  menuOpen,
-  busy,
-  onOpen,
-  onMenu,
-  onArchive,
-  onMute,
-  onUnmute,
-  onDelete,
-}) {
-  const person = conversation.counterpart || {}
-  const latest = conversation.latest_message
-  const unread = Number(conversation.unread_count || 0)
-
-  return (
-    <div className="relative">
-      <div className="flex items-center gap-2 rounded-[18px] px-3 py-3 active:bg-[#f6f4f9]">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        >
-          <Avatar person={person} />
-
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2">
-              <strong className="truncate text-[15px] font-bold text-[#111827]">
-                {person.name || 'Shadow Reader'}
-              </strong>
-              {unread > 0 ? (
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#7c3aed]" />
-              ) : null}
-            </span>
-
-            <span className="mt-1 block truncate text-[12px] font-semibold text-[#87838f]">
-              {latest?.body || 'Open this conversation'}
-            </span>
-          </span>
-
-          <span className="shrink-0 text-[10px] font-semibold text-[#96929d]">
-            {formatTime(
-              conversation.last_message_at ||
-                latest?.created_at
-            )}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onMenu}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#55545d] active:bg-[#efeff3]"
-          aria-label="Chat options"
-        >
-          <EllipsisVertical size={20} />
-        </button>
-      </div>
-
-      {menuOpen ? (
-        <div className="absolute right-3 top-[58px] z-30 w-[190px] overflow-hidden rounded-[16px] bg-white py-1 shadow-[0_14px_38px_rgba(17,24,39,0.18)] ring-1 ring-black/5">
-          <button
-            type="button"
-            disabled={Boolean(busy)}
-            onClick={conversation.is_muted ? onUnmute : onMute}
-            className="flex h-11 w-full items-center gap-3 px-4 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f5f5f7] disabled:opacity-50"
-          >
-            <VolumeX size={18} />
-            {conversation.is_muted ? 'Unmute' : 'Mute'}
-          </button>
-
-          <button
-            type="button"
-            disabled={Boolean(busy)}
-            onClick={onArchive}
-            className="flex h-11 w-full items-center gap-3 px-4 text-left text-[13px] font-semibold text-[#111827] active:bg-[#f5f5f7] disabled:opacity-50"
-          >
-            <Archive size={18} />
-            Archive
-          </button>
-
-          <button
-            type="button"
-            disabled={Boolean(busy)}
-            onClick={onDelete}
-            className="flex h-11 w-full items-center gap-3 px-4 text-left text-[13px] font-semibold text-[#c7353d] active:bg-[#fff4f4] disabled:opacity-50"
-          >
-            <Trash2 size={18} />
-            Delete
-          </button>
-        </div>
-      ) : null}
+      <h2 className="mt-5 text-[16px] font-bold text-[#111827]">
+        {tab === 'comments'
+          ? 'No comments yet'
+          : 'No Page messages yet'}
+      </h2>
+      <p className="mx-auto mt-2 max-w-[290px] text-[12px] leading-5 text-[#8a8d93]">
+        {tab === 'comments'
+          ? 'Comments and mentions for your Author Page will appear here.'
+          : 'Messages sent to your Author Page will appear here.'}
+      </p>
     </div>
   )
 }
 
 export default function AuthorChatInboxPage() {
   const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
   const [conversations, setConversations] = useState([])
-  const [archivedCount, setArchivedCount] = useState(0)
+  const [comments, setComments] = useState([])
+  const [tab, setTab] = useState('messages')
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filters, setFilters] = useState(() => new Set())
+  const [moreOpen, setMoreOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [menuId, setMenuId] = useState('')
-  const [busy, setBusy] = useState(null)
 
-  const loadConversations = useCallback(
+  const loadInbox = useCallback(
     async ({ silent = false } = {}) => {
       if (!silent) setLoading(true)
 
       try {
-        const [activeData, archivedData] =
+        const [chatData, profileData, commentData] =
           await Promise.all([
             getAuthorChatConversations({
               view: 'active',
             }),
-            getAuthorChatConversations({
-              view: 'archived',
-            }),
+            getAuthorInboxProfile(),
+            getAuthorInboxComments(50),
           ])
 
-        setConversations(activeData.conversations || [])
-        setArchivedCount(
-          (archivedData.conversations || []).length
-        )
+        setConversations(chatData.conversations || [])
+        setProfile(profileData || null)
+        setComments(commentData || [])
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
@@ -291,8 +409,7 @@ export default function AuthorChatInboxPage() {
         }
 
         setError(
-          loadError.message ||
-            'Failed to load Page messages'
+          loadError.message || 'Failed to load Page Inbox'
         )
       } finally {
         if (!silent) setLoading(false)
@@ -307,343 +424,334 @@ export default function AuthorChatInboxPage() {
       return undefined
     }
 
-    loadConversations()
+    loadInbox()
 
     const intervalId = window.setInterval(
-      () => loadConversations({ silent: true }),
-      6000
+      () => loadInbox({ silent: true }),
+      7000
     )
 
     return () => window.clearInterval(intervalId)
-  }, [loadConversations, navigate])
+  }, [loadInbox, navigate])
 
-  const incomingRequests = useMemo(
-    () =>
-      conversations.filter(
-        (item) =>
-          item.request_status === 'pending' &&
-          item.can_decide === true
-      ),
-    [conversations]
+  const normalizedQuery = useMemo(
+    () => normalizeSearch(query),
+    [query]
   )
 
-  const unreadTotal = useMemo(
-    () =>
-      conversations.reduce(
-        (total, item) =>
-          total +
-          Math.max(0, Number(item.unread_count || 0)),
-        0
-      ),
-    [conversations]
-  )
+  const visibleConversations = useMemo(() => {
+    return conversations.filter((conversation) => {
+      const person = conversation.counterpart || {}
+      const latest = conversation.latest_message || {}
 
-  const visible = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-
-    return conversations.filter((item) => {
       if (
-        filter === 'requests' &&
-        !(
-          item.request_status === 'pending' &&
-          item.can_decide === true
-        )
+        filters.has('unread') &&
+        Number(conversation.unread_count || 0) <= 0
       ) {
         return false
       }
 
-      if (!normalized) return true
+      if (!normalizedQuery) return true
 
-      const person = item.counterpart || {}
-      const text = [
-        person.name,
-        person.username,
-        item.latest_message?.body,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
+      const haystack = normalizeSearch(
+        [
+          person.name,
+          person.username,
+          latest.body,
+        ]
+          .filter(Boolean)
+          .join(' ')
+      )
 
-      return text.includes(normalized)
+      return haystack.includes(normalizedQuery)
     })
-  }, [conversations, filter, query])
+  }, [conversations, filters, normalizedQuery])
 
-  async function handleDecision(conversation, action) {
-    if (busy) return
+  const visibleComments = useMemo(() => {
+    if (!normalizedQuery) return comments
 
-    try {
-      setBusy({
-        id: conversation.id,
-        action,
-      })
-
-      await decideAuthorChatRequest(
-        conversation.id,
-        action
+    return comments.filter((notification) => {
+      const actor = getCommentActor(notification)
+      const haystack = normalizeSearch(
+        [
+          actor.name,
+          actor.username,
+          notification.title,
+          notification.message,
+        ]
+          .filter(Boolean)
+          .join(' ')
       )
 
-      await loadConversations({ silent: true })
-    } catch (decisionError) {
-      setError(
-        decisionError.message ||
-          'Failed to update request'
-      )
-    } finally {
-      setBusy(null)
+      return haystack.includes(normalizedQuery)
+    })
+  }, [comments, normalizedQuery])
+
+  const pageName =
+    profile?.page_name ||
+    profile?.name ||
+    profile?.page_username ||
+    'Author Page'
+  const profileImage =
+    profile?.avatar_url ||
+    profile?.profile_image_url ||
+    ''
+
+  function openComment(notification) {
+    const target =
+      notification?.target_url ||
+      notification?.targetUrl ||
+      ''
+
+    if (target && target.startsWith('/')) {
+      navigate(target)
+      return
     }
-  }
 
-  async function handleAction(conversation, action) {
-    if (busy) return
-
-    try {
-      setBusy({
-        id: conversation.id,
-        action,
-      })
-      setMenuId('')
-
-      if (action === 'archive') {
-        await archiveAuthorChatConversation(
-          conversation.id
-        )
-      }
-
-      if (action === 'mute') {
-        await muteAuthorChatConversation(
-          conversation.id,
-          'forever'
-        )
-      }
-
-      if (action === 'unmute') {
-        await unmuteAuthorChatConversation(
-          conversation.id
-        )
-      }
-
-      if (action === 'delete') {
-        const confirmed = window.confirm(
-          'Delete this Page conversation from your inbox?'
-        )
-
-        if (!confirmed) return
-
-        await deleteAuthorChatConversation(
-          conversation.id
-        )
-      }
-
-      await loadConversations({ silent: true })
-    } catch (actionError) {
-      setError(
-        actionError.message ||
-          'Failed to update conversation'
-      )
-    } finally {
-      setBusy(null)
-    }
+    navigate('/author/page')
   }
 
   return (
     <div
-      className="min-h-screen bg-white"
+      className="min-h-[100dvh] bg-white text-[#111827]"
       onClick={() => {
-        if (menuId) setMenuId('')
+        if (moreOpen) setMoreOpen(false)
       }}
     >
-      <header className="sticky top-0 z-40 border-b border-[#eeeeF2] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto max-w-[620px] px-4 pb-4 pt-[max(12px,env(safe-area-inset-top))]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-[25px] font-bold tracking-[-0.03em] text-[#111827]">
-                Messages
-              </h1>
-              <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-[#8a8792]">
-                <span className="h-2 w-2 rounded-full bg-[#7c3aed]" />
-                {unreadTotal} unread
-              </div>
-            </div>
+      <header className="sticky top-0 z-50 border-b border-[#ececef] bg-white">
+        <div className="mx-auto max-w-[680px]">
+          <div className="flex h-[66px] items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
+            {searchOpen ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchOpen(false)
+                    setQuery('')
+                  }}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+                >
+                  <X size={23} />
+                </button>
 
-            <button
-              type="button"
-              onClick={() => navigate('/author/page')}
-              className="rounded-full bg-[#f2edff] px-4 py-2.5 text-[12px] font-bold text-[#6d46bf]"
-            >
-              Profile page
-            </button>
+                <div className="relative min-w-0 flex-1">
+                  <Search
+                    size={18}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777a80]"
+                  />
+                  <input
+                    autoFocus
+                    value={query}
+                    onChange={(event) =>
+                      setQuery(
+                        event.target.value.slice(0, 80)
+                      )
+                    }
+                    placeholder="Search"
+                    className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] outline-none"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="min-w-0 flex-1 text-[28px] font-bold tracking-[-0.035em]">
+                  Inbox
+                </h1>
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setSearchOpen(true)
+                    setMoreOpen(false)
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+                  aria-label="Search inbox"
+                >
+                  <Search size={24} strokeWidth={2.2} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/author/page')}
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  aria-label="Profile page"
+                >
+                  <CircleAvatar
+                    imageUrl={profileImage}
+                    name={pageName}
+                    size="h-9 w-9"
+                    textSize="text-[11px]"
+                  />
+                </button>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setMoreOpen((current) => !current)
+                    }}
+                    className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+                    aria-label="More"
+                  >
+                    <Ellipsis size={25} />
+                  </button>
+
+                  {moreOpen ? (
+                    <div className="absolute right-0 top-[44px] z-30 w-[190px] rounded-[14px] bg-white p-2 text-[12px] font-semibold text-[#73767c] shadow-[0_12px_36px_rgba(0,0,0,0.16)] ring-1 ring-black/5">
+                      More Inbox tools will be added later.
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="relative mt-4">
-            <Search
-              size={19}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777480]"
-            />
-            <input
-              value={query}
-              onChange={(event) =>
-                setQuery(event.target.value.slice(0, 60))
-              }
-              placeholder="Search Page messages"
-              className="h-[46px] w-full rounded-full bg-[#f4f4f7] pl-11 pr-4 text-[14px] text-[#111827] outline-none focus:bg-white focus:ring-1 focus:ring-[#d9cdf8]"
-            />
-          </div>
-
-          <div className="mt-3 flex gap-2">
+          <div className="flex h-[52px] items-end px-5">
             <button
               type="button"
-              onClick={() => setFilter('all')}
-              className={`rounded-full px-4 py-2 text-[12px] font-bold ${
-                filter === 'all'
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-[#f2f2f5] text-[#66636d]'
+              onClick={() => setTab('messages')}
+              className={`relative mr-8 h-full px-1 text-[17px] ${
+                tab === 'messages'
+                  ? 'font-semibold text-[#111827]'
+                  : 'font-normal text-[#73767c]'
               }`}
             >
-              All
+              Messages
+              {tab === 'messages' ? (
+                <span className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-[#111827]" />
+              ) : null}
             </button>
 
             <button
               type="button"
-              onClick={() => setFilter('requests')}
-              className={`rounded-full px-4 py-2 text-[12px] font-bold ${
-                filter === 'requests'
-                  ? 'bg-[#111827] text-white'
-                  : 'bg-[#f2f2f5] text-[#66636d]'
+              onClick={() => setTab('comments')}
+              className={`relative h-full px-1 text-[17px] ${
+                tab === 'comments'
+                  ? 'font-semibold text-[#111827]'
+                  : 'font-normal text-[#73767c]'
               }`}
             >
-              Requests
-              {incomingRequests.length
-                ? ` ${incomingRequests.length}`
-                : ''}
+              Comments
+              {tab === 'comments' ? (
+                <span className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-[#111827]" />
+              ) : null}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[620px] pb-[max(32px,env(safe-area-inset-bottom))]">
+      {tab === 'messages' ? (
+        <section className="border-b border-[#f0f0f2] bg-white">
+          <div className="mx-auto flex max-w-[680px] gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[#282a2f] active:bg-[#f1f1f2]"
+              aria-label="Filter messages"
+            >
+              <ListFilter size={20} />
+            </button>
+
+            {QUICK_FILTERS.map((item) => {
+              const active = filters.has(item.key)
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() =>
+                    setFilters((current) => {
+                      const next = new Set(current)
+
+                      if (next.has(item.key)) {
+                        next.delete(item.key)
+                      } else {
+                        next.add(item.key)
+                      }
+
+                      return next
+                    })
+                  }
+                  className={`h-9 shrink-0 rounded-[8px] px-4 text-[13px] font-medium ${
+                    active
+                      ? 'bg-[#e7f1ff] text-[#1877f2]'
+                      : 'bg-[#f4f4f5] text-[#37393f]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      <main className="mx-auto max-w-[680px] pb-[max(28px,env(safe-area-inset-bottom))]">
         {error ? (
           <button
             type="button"
             onClick={() => setError('')}
-            className="mx-4 mt-4 w-[calc(100%-2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[12px] font-semibold text-[#c7353d]"
+            className="mx-4 mt-3 w-[calc(100%-2rem)] rounded-[12px] bg-[#fff1f2] px-4 py-3 text-left text-[12px] text-[#be3139]"
           >
             {error}
           </button>
         ) : null}
 
-        {archivedCount > 0 &&
-        filter === 'all' &&
-        !query.trim() ? (
-          <button
-            type="button"
-            onClick={() =>
-              navigate('/author/page/chat/archived')
-            }
-            className="mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-[18px] px-3 py-3 text-left active:bg-[#f5f4f8]"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
-              <Archive size={22} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <strong className="block text-[14px] font-bold text-[#111827]">
-                Archived chats
-              </strong>
-              <span className="mt-1 block text-[12px] text-[#898691]">
-                {archivedCount} conversation
-                {archivedCount === 1 ? '' : 's'}
-              </span>
-            </span>
-            <ChevronRight
-              size={20}
-              className="text-[#aaa7b0]"
-            />
-          </button>
-        ) : null}
-
-        {filter === 'all' &&
-        !query.trim() &&
-        incomingRequests[0] ? (
-          <RequestCard
-            conversation={incomingRequests[0]}
-            busy={
-              busy?.id === incomingRequests[0].id
-                ? busy.action
-                : ''
-            }
-            onOpen={() =>
-              navigate(
-                `/author/page/chat/${incomingRequests[0].id}`
-              )
-            }
-            onDecision={(action) =>
-              handleDecision(
-                incomingRequests[0],
-                action
-              )
-            }
-          />
-        ) : null}
-
         {loading ? (
-          <div className="flex min-h-[260px] items-center justify-center text-[#7c3aed]">
+          <div className="flex min-h-[320px] items-center justify-center text-[#1877f2]">
             <LoaderCircle
-              size={28}
+              size={27}
               className="animate-spin"
             />
           </div>
-        ) : visible.length ? (
-          <div className="px-2 py-3">
-            {visible.map((conversation) => (
-              <ConversationRow
-                key={conversation.id}
-                conversation={conversation}
-                menuOpen={menuId === conversation.id}
-                busy={
-                  busy?.id === conversation.id
-                    ? busy.action
-                    : ''
-                }
+        ) : tab === 'messages' ? (
+          visibleConversations.length ? (
+            <div className="py-2">
+              {visibleConversations.map(
+                (conversation) => (
+                  <ConversationRow
+                    key={conversation.id}
+                    conversation={conversation}
+                    onOpen={() =>
+                      navigate(
+                        `/author/page/chat/${conversation.id}`
+                      )
+                    }
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <EmptyState tab="messages" />
+          )
+        ) : visibleComments.length ? (
+          <div className="py-2">
+            {visibleComments.map((notification) => (
+              <CommentRow
+                key={notification.id}
+                notification={notification}
                 onOpen={() =>
-                  navigate(
-                    `/author/page/chat/${conversation.id}`
-                  )
-                }
-                onMenu={(event) => {
-                  event.stopPropagation()
-                  setMenuId((current) =>
-                    current === conversation.id
-                      ? ''
-                      : conversation.id
-                  )
-                }}
-                onArchive={() =>
-                  handleAction(
-                    conversation,
-                    'archive'
-                  )
-                }
-                onMute={() =>
-                  handleAction(conversation, 'mute')
-                }
-                onUnmute={() =>
-                  handleAction(
-                    conversation,
-                    'unmute'
-                  )
-                }
-                onDelete={() =>
-                  handleAction(
-                    conversation,
-                    'delete'
-                  )
+                  openComment(notification)
                 }
               />
             ))}
           </div>
         ) : (
-          <EmptyInbox />
+          <EmptyState tab="comments" />
         )}
       </main>
+
+      <FilterSheet
+        open={filterOpen}
+        value={filters}
+        onClose={() => setFilterOpen(false)}
+        onApply={(next) => {
+          setFilters(new Set(next))
+          setFilterOpen(false)
+        }}
+      />
     </div>
   )
 }
