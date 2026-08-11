@@ -3,9 +3,14 @@ import {
   BookOpen,
   Bookmark,
   Check,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
   EllipsisVertical,
+  Folder,
   LoaderCircle,
   MessageCircle,
+  Pin,
   Search,
   SquarePen,
   Trash2,
@@ -117,6 +122,56 @@ const MUTE_OPTIONS = [
   ['7d', '7 days'],
   ['forever', 'Until I turn it back on'],
 ]
+
+function clampConversationMenuPosition(x, y) {
+  const width = 224
+  const height = 340
+  const margin = 10
+
+  return {
+    left: Math.max(
+      margin,
+      Math.min(x, window.innerWidth - width - margin)
+    ),
+    top: Math.max(
+      margin,
+      Math.min(y, window.innerHeight - height - margin)
+    ),
+  }
+}
+
+function ConversationMenuRow({
+  icon: Icon,
+  label,
+  danger = false,
+  arrow = false,
+  disabled = false,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex h-11 w-full items-center gap-3 px-3 text-left text-[13px] font-normal transition active:bg-[#f2f2f4] disabled:opacity-45 ${
+        danger
+          ? 'text-[#ef4444]'
+          : 'text-[#111827]'
+      }`}
+    >
+      <Icon size={19} strokeWidth={1.9} />
+      <span className="min-w-0 flex-1">
+        {label}
+      </span>
+      {arrow ? (
+        <ChevronRight
+          size={17}
+          className="text-[#8b8b94]"
+        />
+      ) : null}
+    </button>
+  )
+}
 
 function formatConversationTime(value) {
   if (!value) return ''
@@ -386,7 +441,7 @@ function ConversationRow({
   selected,
   selectionMode,
   onOpen,
-  onStartSelection,
+  onOpenContextMenu,
   onToggleSelection,
 }) {
   const longPressRef = useRef(null)
@@ -416,11 +471,14 @@ function ConversationRow({
     }
 
     longPressRef.current = window.setTimeout(() => {
+      const point = pointerStartRef.current
+
+      if (!point) return
+
       suppressClickRef.current = true
-      onStartSelection()
+      onOpenContextMenu(point.x, point.y)
       longPressRef.current = null
     }, 500)
-  }
 
   const handlePointerMove = (event) => {
     const startPoint = pointerStartRef.current
@@ -459,7 +517,10 @@ function ConversationRow({
       return
     }
 
-    onStartSelection()
+        onOpenContextMenu(
+      event.clientX,
+      event.clientY
+    )
   }
 
   return (
@@ -604,6 +665,10 @@ export default function ChatInboxPage() {
   const [selectionBusy, setSelectionBusy] = useState('')
   const [selectionNotice, setSelectionNotice] = useState('')
   const [muteSheetOpen, setMuteSheetOpen] = useState(false)
+    const [conversationMenu, setConversationMenu] =
+    useState(null)
+  const [conversationMenuView, setConversationMenuView] =
+    useState('main')
 
   const loadQuickContacts = useCallback(async () => {
     try {
@@ -1166,6 +1231,166 @@ setArchivedCount(
     }, 2200)
   }
 
+    const closeConversationMenu = () => {
+    setConversationMenu(null)
+    setConversationMenuView('main')
+  }
+
+  const openConversationMenu = (
+    conversation,
+    x,
+    y
+  ) => {
+    const position =
+      clampConversationMenuPosition(x, y)
+
+    setConversationMenu({
+      conversation,
+      ...position,
+    })
+    setConversationMenuView('main')
+  }
+
+  const showConversationMenuNotice = (
+    message
+  ) => {
+    closeConversationMenu()
+    showSelectionNotice(message)
+  }
+
+  const handleMenuArchive = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    setSelectionBusy('menu-archive')
+
+    try {
+      await archiveChatConversation(id)
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice('Chat archived')
+    } catch (actionError) {
+      setError(
+        actionError.message ||
+          'Failed to archive chat'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleMenuMute = async (
+    duration
+  ) => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    setSelectionBusy('menu-mute')
+
+    try {
+      await muteChatConversation(
+        id,
+        duration
+      )
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice(
+        'Notifications muted'
+      )
+    } catch (actionError) {
+      setError(
+        actionError.message ||
+          'Failed to mute chat'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleMenuUnmute = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    setSelectionBusy('menu-unmute')
+
+    try {
+      await unmuteChatConversation(id)
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice(
+        'Notifications unmuted'
+      )
+    } catch (actionError) {
+      setError(
+        actionError.message ||
+          'Failed to unmute chat'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleMenuDelete = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    if (
+      !window.confirm(
+        'Delete this chat from your inbox?'
+      )
+    ) {
+      return
+    }
+
+    setSelectionBusy('menu-delete')
+
+    try {
+      await deleteChatConversation(
+        id,
+        'for_me'
+      )
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      await loadQuickContacts()
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+    } catch (actionError) {
+      setError(
+        actionError.message ||
+          'Failed to delete chat'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
   const handleMuteSelected = async (duration) => {
     if (
       selectionBusy ||
@@ -1640,6 +1865,253 @@ setArchivedCount(
         </>
       ) : null}
 
+            {conversationMenu ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close chat menu"
+            onClick={closeConversationMenu}
+            className="fixed inset-0 z-[124]"
+          />
+
+          <div
+            className="fixed z-[125] w-[224px] overflow-hidden rounded-[12px] border border-[#e4e4e8] bg-white py-1 shadow-[0_12px_35px_rgba(17,24,39,0.2)]"
+            style={{
+              left: conversationMenu.left,
+              top: conversationMenu.top,
+            }}
+          >
+            {conversationMenuView ===
+            'main' ? (
+              <>
+                <ConversationMenuRow
+                  icon={Archive}
+                  label="Archive"
+                  disabled={Boolean(
+                    selectionBusy
+                  )}
+                  onClick={handleMenuArchive}
+                />
+
+                <ConversationMenuRow
+                  icon={Pin}
+                  label="Pin"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Pin is coming soon.'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={VolumeX}
+                  label={
+                    conversationMenu
+                      .conversation
+                      ?.is_muted
+                      ? 'Unmute notifications'
+                      : 'Mute notifications'
+                  }
+                  arrow={
+                    !conversationMenu
+                      .conversation
+                      ?.is_muted
+                  }
+                  onClick={() => {
+                    if (
+                      conversationMenu
+                        .conversation
+                        ?.is_muted
+                    ) {
+                      handleMenuUnmute()
+                      return
+                    }
+
+                    setConversationMenuView(
+                      'mute'
+                    )
+                  }}
+                />
+
+                <ConversationMenuRow
+                  icon={Circle}
+                  label="Mark as unread"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Mark as unread is coming soon.'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={Folder}
+                  label="Add to folder"
+                  arrow
+                  onClick={() =>
+                    setConversationMenuView(
+                      'folder'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={X}
+                  label="Clear history"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Clear history is coming soon.'
+                    )
+                  }
+                />
+
+                <div className="my-1 h-px bg-[#ececef]" />
+
+                <ConversationMenuRow
+                  icon={Trash2}
+                  label="Delete chat"
+                  danger
+                  disabled={Boolean(
+                    selectionBusy
+                  )}
+                  onClick={handleMenuDelete}
+                />
+              </>
+            ) : null}
+
+            {conversationMenuView ===
+            'mute' ? (
+              <>
+                <ConversationMenuRow
+                  icon={ChevronLeft}
+                  label="Mute notifications"
+                  onClick={() =>
+                    setConversationMenuView(
+                      'main'
+                    )
+                  }
+                />
+
+                <div className="my-1 h-px bg-[#ececef]" />
+
+                <ConversationMenuRow
+                  icon={Circle}
+                  label="Select tone"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Select tone is coming soon.'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={VolumeX}
+                  label="Disable sound"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Disable sound is coming soon.'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={VolumeX}
+                  label="Mute for..."
+                  arrow
+                  onClick={() =>
+                    setConversationMenuView(
+                      'mute-duration'
+                    )
+                  }
+                />
+
+                <ConversationMenuRow
+                  icon={VolumeX}
+                  label="Mute forever"
+                  danger
+                  disabled={Boolean(
+                    selectionBusy
+                  )}
+                  onClick={() =>
+                    handleMenuMute(
+                      'forever'
+                    )
+                  }
+                />
+              </>
+            ) : null}
+
+            {conversationMenuView ===
+            'mute-duration' ? (
+              <>
+                <ConversationMenuRow
+                  icon={ChevronLeft}
+                  label="Mute for..."
+                  onClick={() =>
+                    setConversationMenuView(
+                      'mute'
+                    )
+                  }
+                />
+
+                <div className="my-1 h-px bg-[#ececef]" />
+
+                {MUTE_OPTIONS.filter(
+                  ([value]) =>
+                    value !== 'forever'
+                ).map(
+                  ([value, label]) => (
+                    <ConversationMenuRow
+                      key={value}
+                      icon={VolumeX}
+                      label={label}
+                      disabled={Boolean(
+                        selectionBusy
+                      )}
+                      onClick={() =>
+                        handleMenuMute(
+                          value
+                        )
+                      }
+                    />
+                  )
+                )}
+              </>
+            ) : null}
+
+            {conversationMenuView ===
+            'folder' ? (
+              <>
+                <ConversationMenuRow
+                  icon={ChevronLeft}
+                  label="Add to folder"
+                  onClick={() =>
+                    setConversationMenuView(
+                      'main'
+                    )
+                  }
+                />
+
+                <div className="my-1 h-px bg-[#ececef]" />
+
+                <div className="px-4 py-3 text-[11px] text-[#92929b]">
+                  No folders yet
+                </div>
+
+                <ConversationMenuRow
+                  icon={Folder}
+                  label="Create new folder"
+                  onClick={() =>
+                    showConversationMenuNotice(
+                      'Chat folders are coming soon.'
+                    )
+                  }
+                />
+              </>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
       <main className="mx-auto max-w-[620px]">
         {error ? (
           <button
@@ -1727,11 +2199,13 @@ setArchivedCount(
                       String(conversation.id)
                     )}
                     selectionMode={selectionMode}
-                    onStartSelection={() =>
-                      startConversationSelection(
-                        conversation.id
-                      )
-                    }
+                    onOpenContextMenu={(x, y) =>
+  openConversationMenu(
+    conversation,
+    x,
+    y
+  )
+}
                     onToggleSelection={() =>
                       toggleConversationSelection(
                         conversation.id
@@ -1784,11 +2258,13 @@ setArchivedCount(
                   String(conversation.id)
                 )}
                 selectionMode={selectionMode}
-                onStartSelection={() =>
-                  startConversationSelection(
-                    conversation.id
-                  )
-                }
+                onOpenContextMenu={(x, y) =>
+  openConversationMenu(
+    conversation,
+    x,
+    y
+  )
+}
                 onToggleSelection={() =>
                   toggleConversationSelection(
                     conversation.id
