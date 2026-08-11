@@ -39,6 +39,7 @@ import {
   getChatQuickContacts,
   getManagedChatConversations,
   hasReaderSession,
+  markChatUnread,
   pinChatConversation,
   searchChatUsers,
   unpinChatConversation,
@@ -1266,6 +1267,35 @@ setArchivedCount(
     showSelectionNotice(message)
   }
 
+    const handleMenuMarkUnread = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || selectionBusy) return
+
+    setSelectionBusy('menu-unread')
+
+    try {
+      await markChatUnread(id)
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice('Marked as unread')
+    } catch (actionError) {
+      closeConversationMenu()
+      showSelectionNotice(
+        actionError.message ||
+          'Failed to mark as unread'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
     const handleMenuPinToggle = async () => {
     const target =
       conversationMenu?.conversation
@@ -1982,15 +2012,11 @@ setArchivedCount(
                 />
 
                 <ConversationMenuRow
-                  icon={Circle}
-                  label="Mark as unread"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Mark as unread is coming soon.'
-                    )
-                  }
-                />
-
+  icon={Circle}
+  label="Mark as unread"
+  disabled={Boolean(selectionBusy)}
+  onClick={handleMenuMarkUnread}
+/>
                 <ConversationMenuRow
                   icon={Folder}
                   label="Add to folder"
