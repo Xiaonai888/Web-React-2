@@ -632,7 +632,7 @@ function RealFollowedPostCard({
       {post.content ? (
   <div className="px-4 pb-3">
     <CollapsiblePostText
-      text={renderPostTextWithLinks(post.content)}
+      text={post.content}
       lines={3}
       className="text-[13px] font-normal leading-5 text-[#111827]"
     >
