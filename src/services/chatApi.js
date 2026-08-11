@@ -381,6 +381,14 @@ export function decideChatRequest(
     }
   )
 }
+
+export function clearChatHistory(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/clear-history`,
+    { method: 'PATCH' }
+  )
+}
+
 export function markChatUnread(conversationId) {
   return chatRequest(
     `/conversations/${encodeURIComponent(conversationId)}/unread`,
