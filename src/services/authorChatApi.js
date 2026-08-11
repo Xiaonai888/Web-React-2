@@ -26,18 +26,18 @@ export function hasAuthorChatSession() {
   return Boolean(getAuthorChatToken())
 }
 
-async function authorChatRequest(path, options = {}) {
+async function apiRequest(path, options = {}) {
   const token = getAuthorChatToken()
 
   if (!token) {
     throw new AuthorChatApiError(
       401,
       'LOGIN_REQUIRED',
-      'Please log in to use Page Messages'
+      'Please log in to use Page Inbox'
     )
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/chat${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method || 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -51,12 +51,16 @@ async function authorChatRequest(path, options = {}) {
   if (!response.ok || data.ok === false) {
     throw new AuthorChatApiError(
       response.status,
-      data.code || 'AUTHOR_CHAT_REQUEST_FAILED',
-      data.message || 'Page Messages request failed'
+      data.code || 'AUTHOR_INBOX_REQUEST_FAILED',
+      data.message || 'Page Inbox request failed'
     )
   }
 
   return data
+}
+
+function authorChatRequest(path, options = {}) {
+  return apiRequest(`/api/chat${path}`, options)
 }
 
 function ensureAuthorConversation(conversation) {
@@ -69,6 +73,37 @@ function ensureAuthorConversation(conversation) {
   }
 
   return conversation
+}
+
+export async function getAuthorInboxProfile() {
+  const data = await apiRequest('/api/authors/me')
+  return data.authorPage || data.page || data.author_page || data
+}
+
+export async function getAuthorInboxComments(limit = 50) {
+  const params = new URLSearchParams({
+    limit: String(Math.min(50, Math.max(1, Number(limit) || 30))),
+  })
+
+  const data = await apiRequest(
+    `/api/authors/me/page-notifications?${params.toString()}`
+  )
+
+  const notifications = Array.isArray(data.notifications)
+    ? data.notifications
+    : []
+
+  return notifications.filter((item) => {
+    const metadata =
+      item?.metadata && typeof item.metadata === 'object'
+        ? item.metadata
+        : {}
+    const type = String(
+      metadata.notification_type || item?.type || ''
+    ).toLowerCase()
+
+    return ['comment', 'comments', 'mention', 'mentions'].includes(type)
+  })
 }
 
 export async function getAuthorChatConversations({
