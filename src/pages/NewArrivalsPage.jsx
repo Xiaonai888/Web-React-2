@@ -34,6 +34,8 @@ function createFallbackBook(id, imageNumber, tab = 'Fresh') {
     Fantasy: ['UP', 'yellow'],
   }
 
+  const [badge, badgeColor] = badgeByTab[tab] || badgeByTab.Fresh
+
   return {
     id,
     title: 'Name Book',
@@ -66,7 +68,6 @@ function normalizeStory(story, index = 0) {
     badge === 'up' ? 'yellow' :
     badge === 'end' ? 'green' : ''
 
-  const [badge, badgeColor] = badgeByTab[tab] || badgeByTab.Fresh
 
   return {
     id: story.id,
@@ -231,13 +232,13 @@ export default function NewArrivalsPage() {
       if (!fantasyResponse.ok || fantasyData.ok === false) throw new Error(fantasyData.message || 'Failed to load fantasy stories')
 
       setRealBooks({
-        Fresh: (freshData.stories || []).map((story, index) => normalizeStory(story, index, 'Fresh')),
-        Popular: (popularData.stories || []).map((story, index) => normalizeStory(story, index, 'Popular')),
+        Fresh: (freshData.stories || []).map((story, index) => normalizeStory(story, index)),
+        Popular: (popularData.stories || []).map((story, index) => normalizeStory(story, index)),
         'Recent Complete': (recentData.stories || [])
         .filter((story) => getStoryBadge(story) === 'end')
         .map((story, index) => normalizeStory(story, index)),
-        Romance: (romanceData.stories || []).map((story, index) => normalizeStory(story, index, 'Romance')),
-        Fantasy: (fantasyData.stories || []).map((story, index) => normalizeStory(story, index, 'Fantasy')),
+        Romance: (romanceData.stories || []).map((story, index) => normalizeStory(story, index)),
+        Fantasy: (fantasyData.stories || []).map((story, index) => normalizeStory(story, index)),
       })
     } catch (error) {
       console.error('NewArrivalsPage fetch error:', error)
