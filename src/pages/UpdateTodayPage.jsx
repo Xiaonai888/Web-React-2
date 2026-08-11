@@ -155,37 +155,37 @@ function BookCard({ book }) {
           >
             {badgeText}
           </div>
-        </div>
 
-        {updateCount >= 2 ? (
-          <div
-            className="pointer-events-none absolute z-20"
-            style={{
-              width: `${updateMarkerUI.width}px`,
-              right: `${updateMarkerUI.right}px`,
-              bottom: `${updateMarkerUI.bottom}px`,
-              transform: `rotate(${updateMarkerUI.rotate}deg)`,
-            }}
-          >
-            <img
-              src="/assets/Icons/Arrow.webp"
-              alt=""
-              className="block h-auto w-full"
-            />
-
-            <span
-              className="absolute whitespace-nowrap font-black leading-none text-[#ff3b30]"
+          {updateCount >= 2 ? (
+            <div
+              className="pointer-events-none absolute z-20"
               style={{
-                left: '68%',
-                top: '43%',
-                fontSize: `${updateMarkerUI.numberSize}px`,
-                transform: `translate(-50%, -50%) translate(${updateMarkerUI.numberX}px, ${updateMarkerUI.numberY}px) rotate(${updateMarkerUI.numberRotate}deg)`,
+                width: `${updateMarkerUI.width}px`,
+                right: `${updateMarkerUI.right}px`,
+                bottom: `${updateMarkerUI.bottom}px`,
+                transform: `rotate(${updateMarkerUI.rotate}deg)`,
               }}
             >
-              {updateCountText}
-            </span>
-          </div>
-        ) : null}
+              <img
+                src="/assets/Icons/Arrow.webp"
+                alt=""
+                className="block h-auto w-full"
+              />
+
+              <span
+                className="absolute whitespace-nowrap font-black leading-none text-[#ff3b30]"
+                style={{
+                  left: '68%',
+                  top: '43%',
+                  fontSize: `${updateMarkerUI.numberSize}px`,
+                  transform: `translate(-50%, -50%) translate(${updateMarkerUI.numberX}px, ${updateMarkerUI.numberY}px) rotate(${updateMarkerUI.numberRotate}deg)`,
+                }}
+              >
+                {updateCountText}
+              </span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-2.5 min-w-0">
