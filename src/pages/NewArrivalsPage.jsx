@@ -25,42 +25,6 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-function createFallbackBook(id, imageNumber, tab = 'Fresh') {
-  const badgeByTab = {
-    Fresh: ['NEW', 'red'],
-    Popular: ['UP', 'yellow'],
-    'Recent Complete': ['END', 'green'],
-    Romance: ['NEW', 'red'],
-    Fantasy: ['UP', 'yellow'],
-  }
-
-  const [badge, badgeColor] = badgeByTab[tab] || badgeByTab.Fresh
-
-  return {
-    id,
-    title: 'Name Book',
-    author: 'Author Name',
-    badge,
-    badgeColor,
-    likes: '1000',
-    views: '100k',
-    episodes: 'Ep 17',
-    cover: `/assets/New Arrival/New Arrival ${imageNumber}.jpg`,
-    link: `/story/${id}`,
-    genre: tab === 'Fantasy' ? 'Fantasy' : tab === 'Romance' ? 'Romance' : '',
-    isAdult: false,
-    isFallback: true,
-  }
-}
-
-const fallbackBooks = {
-  Fresh: Array.from({ length: 18 }).map((_, index) => createFallbackBook(401 + index, (index % 18) + 1, 'Fresh')),
-  Popular: Array.from({ length: 18 }).map((_, index) => createFallbackBook(501 + index, (index % 18) + 1, 'Popular')),
-  'Recent Complete': Array.from({ length: 18 }).map((_, index) => createFallbackBook(601 + index, (index % 18) + 1, 'Recent Complete')),
-  Romance: Array.from({ length: 18 }).map((_, index) => createFallbackBook(701 + index, (index % 18) + 1, 'Romance')),
-  Fantasy: Array.from({ length: 18 }).map((_, index) => createFallbackBook(801 + index, (index % 18) + 1, 'Fantasy')),
-}
-
 function normalizeStory(story, index = 0) {
   const badge = getStoryBadge(story)
   const badgeColor =
@@ -265,10 +229,10 @@ export default function NewArrivalsPage() {
     fetchNewArrivalsPageData()
   }, [])
 
-  const books = useMemo(() => {
-    const realList = realBooks[activeTab]
-    return realList?.length ? realList : message ? [] : fallbackBooks[activeTab] || []
-  }, [activeTab, realBooks, message])
+  const books = useMemo(
+  () => realBooks[activeTab] || [],
+  [activeTab, realBooks]
+)
 
   return (
     <div className="min-h-screen bg-white pb-32">
