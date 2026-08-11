@@ -2257,34 +2257,21 @@ setArchivedCount(
 />
 
                 <ConversationMenuRow
-                  icon={VolumeX}
-                  label={
-                    conversationMenu
-                      .conversation
-                      ?.is_muted
-                      ? 'Unmute notifications'
-                      : 'Mute notifications'
-                  }
-                  arrow={
-                    !conversationMenu
-                      .conversation
-                      ?.is_muted
-                  }
-                  onClick={() => {
-                    if (
-                      conversationMenu
-                        .conversation
-                        ?.is_muted
-                    ) {
-                      handleMenuUnmute()
-                      return
-                    }
-
-                    setConversationMenuView(
-                      'mute'
-                    )
-                  }}
-                />
+  icon={VolumeX}
+  label={
+    conversationMenu
+      .conversation
+      ?.is_muted
+      ? 'Unmute notifications'
+      : 'Mute notifications'
+  }
+  arrow={
+    !conversationMenu
+      .conversation
+      ?.is_muted
+  }
+  onClick={handleOpenMuteSettings}
+/>
 
                 <ConversationMenuRow
   icon={Circle}
@@ -2365,20 +2352,69 @@ setArchivedCount(
                     )
                   }
                 />
+                {soundLoading ? (
+                  <div className="flex h-12 items-center justify-center text-[#7c3aed]">
+                    <LoaderCircle
+                      size={18}
+                      className="animate-spin"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <ConversationMenuRow
+                      icon={Circle}
+                      label="Select tone"
+                      arrow
+                      onClick={() =>
+                        setConversationMenuView(
+                          'tone'
+                        )
+                      }
+                    />
 
-                <ConversationMenuRow
-                  icon={VolumeX}
-                  label="Mute forever"
-                  danger
-                  disabled={Boolean(
-                    selectionBusy
-                  )}
-                  onClick={() =>
-                    handleMenuMute(
-                      'forever'
-                    )
-                  }
-                />
+                    <ConversationMenuRow
+                      icon={VolumeX}
+                      label={
+                        soundSettings.sound_enabled
+                          ? 'Disable sound'
+                          : 'Enable sound'
+                      }
+                      disabled={Boolean(
+                        selectionBusy
+                      )}
+                      onClick={
+                        handleToggleChatSound
+                      }
+                    />
+
+                    <ConversationMenuRow
+                      icon={VolumeX}
+                      label="Mute for..."
+                      arrow
+                      onClick={() =>
+                        setConversationMenuView(
+                          'mute-duration'
+                        )
+                      }
+                    />
+
+                    <ConversationMenuRow
+                      icon={VolumeX}
+                      label="Mute forever"
+                      danger
+                      disabled={Boolean(
+                        selectionBusy
+                      )}
+                      onClick={() =>
+                        handleMenuMute(
+                          'forever'
+                        )
+                      }
+                    />
+                  </>
+                )}
+
+                
               </>
             ) : null}
 
