@@ -19,6 +19,11 @@ import {
   hasReaderSession,
 } from '../../services/chatApi'
 
+import {
+  playChatNotificationTone,
+  primeChatNotificationSound,
+} from '../../services/chatNotificationSound'
+
 function getStoredUser() {
   try {
     return JSON.parse(
@@ -123,6 +128,8 @@ export default function ReaderProfileFooter({
   const navigate = useNavigate()
   const location = useLocation()
   const messageTimerRef = useRef(null)
+  const chatSnapshotRef = useRef(new Map())
+  const chatSnapshotReadyRef = useRef(false)
   const [storedUser, setStoredUser] = useState(
     () => getStoredUser()
   )
@@ -159,9 +166,11 @@ export default function ReaderProfileFooter({
     setStoredUser(getStoredUser())
   }, [])
 
-  const loadChatBadge = useCallback(async () => {
+    const loadChatBadge = useCallback(async () => {
     if (!hasReaderSession()) {
       setChatBadgeCount(0)
+      chatSnapshotRef.current = new Map()
+      chatSnapshotReadyRef.current = false
       return
     }
 
@@ -172,6 +181,8 @@ export default function ReaderProfileFooter({
         Array.isArray(data.conversations)
           ? data.conversations
           : []
+      const nextSnapshot = new Map()
+      let toneToPlay = ''
 
       const total = conversations.reduce(
         (sum, item) => {
@@ -189,16 +200,60 @@ export default function ReaderProfileFooter({
           const incomingRequest =
             item.can_decide === true &&
             item.request_status === 'pending'
-
-          return (
-            sum +
-            (incomingRequest
+          const effectiveUnread =
+            incomingRequest
               ? Math.max(1, unread)
-              : unread)
+              : unread
+          const conversationId =
+            String(item.id || '')
+          const latestKey = String(
+            item.latest_message?.id ||
+              item.latest_message?.created_at ||
+              item.last_message_at ||
+              ''
           )
+          const previous =
+            chatSnapshotRef.current.get(
+              conversationId
+            )
+
+          nextSnapshot.set(
+            conversationId,
+            {
+              latestKey,
+              unread: effectiveUnread,
+            }
+          )
+
+          if (
+            chatSnapshotReadyRef.current &&
+            !toneToPlay &&
+            latestKey &&
+            effectiveUnread > 0 &&
+            (!previous ||
+              (latestKey !==
+                previous.latestKey &&
+                effectiveUnread >
+                  previous.unread)) &&
+            !item.is_muted &&
+            item.notification_sound_enabled !== false
+          ) {
+            toneToPlay =
+              item.notification_tone || 'default'
+          }
+
+          return sum + effectiveUnread
         },
         0
       )
+
+      chatSnapshotRef.current = nextSnapshot
+
+      if (!chatSnapshotReadyRef.current) {
+        chatSnapshotReadyRef.current = true
+      } else if (toneToPlay) {
+        playChatNotificationTone(toneToPlay)
+      }
 
       setChatBadgeCount(total)
     } catch {
@@ -206,9 +261,39 @@ export default function ReaderProfileFooter({
     }
   }, [])
 
+
   useEffect(() => {
     loadChatBadge()
     refreshStoredUser()
+
+      useEffect(() => {
+    const primeSound = () => {
+      primeChatNotificationSound()
+    }
+
+    window.addEventListener(
+      'pointerdown',
+      primeSound,
+      { once: true }
+    )
+    window.addEventListener(
+      'keydown',
+      primeSound,
+      { once: true }
+    )
+
+    return () => {
+      window.removeEventListener(
+        'pointerdown',
+        primeSound
+      )
+      window.removeEventListener(
+        'keydown',
+        primeSound
+      )
+    }
+  }, [])
+
 
     const intervalId = window.setInterval(
       () => {
