@@ -39,7 +39,9 @@ import {
   getChatQuickContacts,
   getManagedChatConversations,
   hasReaderSession,
+  pinChatConversation,
   searchChatUsers,
+  unpinChatConversation,
 } from '../../services/chatApi'
 import {
   muteChatConversation,
@@ -950,8 +952,13 @@ setArchivedCount(
         (first, second) =>
           second.score - first.score
       )
+    } else {
+      ranked.sort(
+        (first, second) =>
+          Number(Boolean(second.conversation.is_pinned)) -
+          Number(Boolean(first.conversation.is_pinned))
+      )
     }
-
     return ranked.map(
       (item) => item.conversation
     )
@@ -1257,6 +1264,45 @@ setArchivedCount(
   ) => {
     closeConversationMenu()
     showSelectionNotice(message)
+  }
+
+    const handleMenuPinToggle = async () => {
+    const target =
+      conversationMenu?.conversation
+
+    if (!target?.id || selectionBusy) return
+
+    const unpinning = Boolean(target.is_pinned)
+    setSelectionBusy(
+      unpinning ? 'menu-unpin' : 'menu-pin'
+    )
+
+    try {
+      if (unpinning) {
+        await unpinChatConversation(target.id)
+      } else {
+        await pinChatConversation(target.id)
+      }
+
+      closeConversationMenu()
+      await loadConversations({
+        silent: true,
+      })
+      window.dispatchEvent(
+        new CustomEvent('shadow-chat-updated')
+      )
+      showSelectionNotice(
+        unpinning ? 'Chat unpinned' : 'Chat pinned'
+      )
+    } catch (actionError) {
+      closeConversationMenu()
+      showSelectionNotice(
+        actionError.message ||
+          'Failed to update pin'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
   }
 
   const handleMenuArchive = async () => {
@@ -1895,14 +1941,15 @@ setArchivedCount(
                 />
 
                 <ConversationMenuRow
-                  icon={Pin}
-                  label="Pin"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Pin is coming soon.'
-                    )
-                  }
-                />
+  icon={Pin}
+  label={
+    conversationMenu.conversation?.is_pinned
+      ? 'Unpin'
+      : 'Pin'
+  }
+  disabled={Boolean(selectionBusy)}
+  onClick={handleMenuPinToggle}
+/>
 
                 <ConversationMenuRow
                   icon={VolumeX}
