@@ -32,16 +32,20 @@ import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import {
+  addChatConversationToFolder,
   archiveChatConversation,
   clearChatHistory,
+  createChatFolder,
   decideChatRequest,
   deleteChatConversation,
   getChatConversations,
   getChatQuickContacts,
   getManagedChatConversations,
+  getChatFolders,
   hasReaderSession,
   markChatUnread,
   pinChatConversation,
+  removeChatConversationFromFolder,
   searchChatUsers,
   unpinChatConversation,
 } from '../../services/chatApi'
@@ -674,6 +678,9 @@ export default function ChatInboxPage() {
     useState(null)
   const [conversationMenuView, setConversationMenuView] =
     useState('main')
+  const [chatFolders, setChatFolders] = useState([])
+const [folderLoading, setFolderLoading] =
+  useState(false)
 
   const loadQuickContacts = useCallback(async () => {
     try {
@@ -1266,6 +1273,117 @@ setArchivedCount(
   ) => {
     closeConversationMenu()
     showSelectionNotice(message)
+  }
+
+    const handleOpenFolderMenu = async () => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id) return
+
+    setConversationMenuView('folder')
+    setFolderLoading(true)
+
+    try {
+      const data = await getChatFolders(id)
+      setChatFolders(
+        Array.isArray(data.folders)
+          ? data.folders
+          : []
+      )
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to load folders'
+      )
+    } finally {
+      setFolderLoading(false)
+    }
+  }
+
+  const handleFolderToggle = async (folder) => {
+    const id =
+      conversationMenu?.conversation?.id
+
+    if (!id || !folder?.id || selectionBusy) {
+      return
+    }
+
+    setSelectionBusy('menu-folder')
+
+    try {
+      if (folder.is_added) {
+        await removeChatConversationFromFolder(
+          folder.id,
+          id
+        )
+      } else {
+        await addChatConversationToFolder(
+          folder.id,
+          id
+        )
+      }
+
+      setChatFolders((current) =>
+        current.map((item) =>
+          item.id === folder.id
+            ? {
+                ...item,
+                is_added: !folder.is_added,
+              }
+            : item
+        )
+      )
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to update folder'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
+  }
+
+  const handleCreateFolder = async () => {
+    if (selectionBusy) return
+
+    const name = window.prompt(
+      'New folder name'
+    )
+
+    if (name === null) return
+
+    const safeName = name.trim()
+
+    if (!safeName) {
+      showConversationMenuNotice(
+        'Folder name is required'
+      )
+      return
+    }
+
+    setSelectionBusy('menu-folder-create')
+
+    try {
+      await createChatFolder(safeName)
+
+      const id =
+        conversationMenu?.conversation?.id
+      const data = await getChatFolders(id)
+
+      setChatFolders(
+        Array.isArray(data.folders)
+          ? data.folders
+          : []
+      )
+    } catch (actionError) {
+      showConversationMenuNotice(
+        actionError.message ||
+          'Failed to create folder'
+      )
+    } finally {
+      setSelectionBusy('')
+    }
   }
 
     const handleMenuClearHistory = async () => {
@@ -2056,15 +2174,11 @@ setArchivedCount(
   onClick={handleMenuMarkUnread}
 />
                 <ConversationMenuRow
-                  icon={Folder}
-                  label="Add to folder"
-                  arrow
-                  onClick={() =>
-                    setConversationMenuView(
-                      'folder'
-                    )
-                  }
-                />
+  icon={Folder}
+  label="Add to folder"
+  arrow
+  onClick={handleOpenFolderMenu}
+/>
 
                 <ConversationMenuRow
   icon={X}
@@ -2201,20 +2315,45 @@ setArchivedCount(
                 />
 
                 <div className="my-1 h-px bg-[#ececef]" />
-
-                <div className="px-4 py-3 text-[11px] text-[#92929b]">
-                  No folders yet
-                </div>
+                {folderLoading ? (
+                  <div className="flex h-12 items-center justify-center text-[#7c3aed]">
+                    <LoaderCircle
+                      size={18}
+                      className="animate-spin"
+                    />
+                  </div>
+                ) : chatFolders.length ? (
+                  chatFolders.map((folder) => (
+                    <ConversationMenuRow
+                      key={folder.id}
+                      icon={
+                        folder.is_added
+                          ? Check
+                          : Folder
+                      }
+                      label={folder.name}
+                      disabled={Boolean(
+                        selectionBusy
+                      )}
+                      onClick={() =>
+                        handleFolderToggle(folder)
+                      }
+                    />
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-[11px] text-[#92929b]">
+                    No folders yet
+                  </div>
+                )}
 
                 <ConversationMenuRow
                   icon={Folder}
                   label="Create new folder"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Chat folders are coming soon.'
-                    )
-                  }
+                  disabled={Boolean(selectionBusy)}
+                  onClick={handleCreateFolder}
                 />
+
+                
               </>
             ) : null}
           </div>
