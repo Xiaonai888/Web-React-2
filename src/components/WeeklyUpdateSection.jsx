@@ -220,7 +220,7 @@ export default function WeeklyUpdateSection() {
         {books.map((book) => (
           <div
             key={book.id}
-            className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)] sm:w-[220px] sm:min-w-[220px] lg:w-[calc(16.6667%_-_10px)] lg:min-w-[150px]"
+            className="w-[calc((100vw-56px)/2.5)] min-w-[calc((100vw-56px)/2.5)] sm:w-[220px] sm:min-w-[220px] lg:w-[160px] lg:min-w-[160px]"
           >
             <WeeklyCard
               book={book}
