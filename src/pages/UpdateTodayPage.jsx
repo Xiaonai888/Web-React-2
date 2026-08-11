@@ -138,7 +138,7 @@ function BookCard({ book }) {
   return (
     <Link to={`/story/${book.id}`} className="group block min-w-0">
       <div className="relative aspect-[2/3]">
-        <div className="h-full overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
+        <div className="relative h-full overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
           <img
             src={book.cover}
             alt={book.title}
