@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -60,14 +61,12 @@ const fallbackBooks = {
   Fantasy: Array.from({ length: 18 }).map((_, index) => createFallbackBook(801 + index, (index % 18) + 1, 'Fantasy')),
 }
 
-function normalizeStory(story, index = 0, tab = 'Fresh') {
-  const badgeByTab = {
-    Fresh: ['NEW', 'red'],
-    Popular: ['UP', 'yellow'],
-    'Recent Complete': ['END', 'green'],
-    Romance: ['NEW', 'red'],
-    Fantasy: ['UP', 'yellow'],
-  }
+function normalizeStory(story, index = 0) {
+  const badge = getStoryBadge(story)
+  const badgeColor =
+    badge === 'new' ? 'red' :
+    badge === 'up' ? 'yellow' :
+    badge === 'end' ? 'green' : ''
 
   const [badge, badgeColor] = badgeByTab[tab] || badgeByTab.Fresh
 
@@ -75,7 +74,7 @@ function normalizeStory(story, index = 0, tab = 'Fresh') {
     id: story.id,
     title: story.title || 'Untitled Story',
     author: story.author_page?.page_name || story.author_name || 'Shadow Author',
-    badge,
+    badge: badge ? badge.toUpperCase() : '',
     badgeColor,
     likes: formatCompactNumber(story.total_likes),
     views: formatCompactNumber(story.total_views),
@@ -103,9 +102,11 @@ function BookCard({ book }) {
             }}
           />
 
-          <div className={`absolute right-2 top-2 rounded-full px-3 py-1 text-[10px] font-extrabold sm:text-[11px] ${badgeStyles[book.badgeColor] || 'bg-black text-white'}`}>
-            {book.badge}
-          </div>
+          {book.badge ? (
+  <div className={`absolute right-2 top-2 rounded-full px-3 py-1 text-[10px] font-extrabold sm:text-[11px] ${badgeStyles[book.badgeColor]}`}>
+    {book.badge}
+  </div>
+) : null}
 
           {book.isAdult ? (
             <div className="absolute bottom-2 left-2 rounded-full bg-[#fff1f1] px-2.5 py-1 text-[10px] font-extrabold text-[#e5484d]">
@@ -234,7 +235,9 @@ export default function NewArrivalsPage() {
       setRealBooks({
         Fresh: (freshData.stories || []).map((story, index) => normalizeStory(story, index, 'Fresh')),
         Popular: (popularData.stories || []).map((story, index) => normalizeStory(story, index, 'Popular')),
-        'Recent Complete': (recentData.stories || []).map((story, index) => normalizeStory(story, index, 'Recent Complete')),
+        'Recent Complete': (recentData.stories || [])
+        .filter((story) => getStoryBadge(story) === 'end')
+        .map((story, index) => normalizeStory(story, index)),
         Romance: (romanceData.stories || []).map((story, index) => normalizeStory(story, index, 'Romance')),
         Fantasy: (fantasyData.stories || []).map((story, index) => normalizeStory(story, index, 'Fantasy')),
       })
