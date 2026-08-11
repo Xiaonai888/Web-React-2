@@ -2322,36 +2322,7 @@ setArchivedCount(
 
                 <div className="my-1 h-px bg-[#ececef]" />
 
-                <ConversationMenuRow
-                  icon={Circle}
-                  label="Select tone"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Select tone is coming soon.'
-                    )
-                  }
-                />
-
-                <ConversationMenuRow
-                  icon={VolumeX}
-                  label="Disable sound"
-                  onClick={() =>
-                    showConversationMenuNotice(
-                      'Disable sound is coming soon.'
-                    )
-                  }
-                />
-
-                <ConversationMenuRow
-                  icon={VolumeX}
-                  label="Mute for..."
-                  arrow
-                  onClick={() =>
-                    setConversationMenuView(
-                      'mute-duration'
-                    )
-                  }
-                />
+                
                 {soundLoading ? (
                   <div className="flex h-12 items-center justify-center text-[#7c3aed]">
                     <LoaderCircle
