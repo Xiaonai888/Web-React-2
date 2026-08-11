@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../../utils/storyLanguage'
+import { getStoryBadge } from '../../utils/storyBadge'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -35,23 +36,6 @@ function formatUpdateTime(value) {
   }).format(date)
 }
 
-function isNewStory(story) {
-  const createdAt = getValidDate(story.created_at)
-
-  if (!createdAt) {
-    return Number(story.total_episodes || 0) <= 1
-  }
-
-  const age = Date.now() - createdAt.getTime()
-  const twoDays = 2 * 24 * 60 * 60 * 1000
-
-  return (
-    age >= 0 &&
-    age <= twoDays &&
-    Number(story.total_episodes || 0) <= 1
-  )
-}
-
 function normalizeStory(story) {
   return {
     id: story.id,
@@ -63,7 +47,7 @@ function normalizeStory(story) {
       'Shadow Author',
     totalEpisodes: Number(story.total_episodes || 0),
     isAdult: Boolean(story.is_adult),
-    isNew: isNewStory(story),
+    badge: getStoryBadge(story),
     updatedAt:
       story.updated_at ||
       story.created_at ||
@@ -269,15 +253,17 @@ export default function DiscoverNewUpdatedStoriesSection() {
                     </div>
                   )}
 
-                  <div
-                    className={`absolute left-0 top-0 rounded-br-[6px] px-2 py-1 text-[9px] font-semibold ${
-                      story.isNew
-                        ? 'bg-[#ff3b5c] text-white'
-                        : 'bg-[#f6b800] text-[#111827]'
-                    }`}
-                  >
-                    {story.isNew ? 'NEW' : 'UPDATED'}
-                  </div>
+                  {story.badge ? (
+  <div className={`absolute left-0 top-0 rounded-br-[6px] px-2 py-1 text-[9px] font-semibold ${
+    story.badge === 'new'
+      ? 'bg-[#ff3b5c] text-white'
+      : story.badge === 'end'
+        ? 'bg-[#16A34A] text-white'
+        : 'bg-[#f6b800] text-[#111827]'
+  }`}>
+    {story.badge.toUpperCase()}
+  </div>
+) : null}
 
                   {story.isAdult ? (
                     <div className="absolute bottom-2 left-2 rounded-[5px] bg-white/90 px-1.5 py-1 text-[9px] font-semibold text-red-500">
