@@ -2448,16 +2448,7 @@ export default function ChatRoomPage() {
               </div>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => setNotice('Coming soon')}
-              className="mb-2 inline-flex h-9 items-center gap-2 rounded-full bg-[#f4f1fb] px-3 text-[10px] font-bold text-[#7c3aed]"
-            >
-              <ImageIcon size={17} />
-              Coming soon
-            </button>
-
-            <div className="flex items-end gap-2">
+            <div className="relative">
               <textarea
                 ref={textareaRef}
                 value={text}
@@ -2481,36 +2472,61 @@ export default function ChatRoomPage() {
                       ? 'Waiting for request approval'
                       : 'Messages are unavailable'
                 }
-                className="max-h-28 min-h-[44px] flex-1 resize-none rounded-[22px] border border-[#dedee4] bg-[#f7f7f9] px-4 py-3 text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="max-h-28 min-h-[46px] w-full resize-none rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <button
                 type="button"
-                onClick={handleSend}
-                disabled={
-                  !canSend ||
-                  !text.trim() ||
-                  sending
-                }
+                onClick={() => setNotice('Coming soon')}
+                disabled={!canSend || sending}
                 aria-label={
-                  editTarget
-                    ? 'Save edit'
-                    : 'Send message'
+                  text.trim()
+                    ? 'Search messages'
+                    : 'Camera'
                 }
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white shadow-[0_6px_16px_rgba(124,58,237,0.22)] transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-45"
+                className="absolute bottom-[5px] left-[5px] flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
+              >
+                {text.trim() ? (
+                  <Search size={19} />
+                ) : (
+                  <Camera size={20} />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  text.trim()
+                    ? handleSend
+                    : () =>
+                        setNotice('Coming soon')
+                }
+                disabled={!canSend || sending}
+                aria-label={
+                  text.trim()
+                    ? editTarget
+                      ? 'Save edit'
+                      : 'Send message'
+                    : 'Emoji'
+                }
+                className="absolute bottom-[5px] right-[5px] flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white transition active:scale-90 disabled:opacity-45"
               >
                 {sending ? (
                   <LoaderCircle
                     size={19}
                     className="animate-spin"
                   />
-                ) : editTarget ? (
-                  <Check size={20} />
+                ) : text.trim() ? (
+                  editTarget ? (
+                    <Check size={20} />
+                  ) : (
+                    <Send
+                      size={19}
+                      strokeWidth={2.2}
+                    />
+                  )
                 ) : (
-                  <Send
-                    size={19}
-                    strokeWidth={2.2}
-                  />
+                  <Smile size={20} />
                 )}
               </button>
             </div>
