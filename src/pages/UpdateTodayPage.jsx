@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -77,12 +78,7 @@ function normalizeStory(story, index = 0) {
     views: formatCompactNumber(story.total_views),
     episodes: `Ep ${Number(story.total_episodes || 0)}`,
 updateCount: Math.max(0, Number(story.daily_update_count || 0)),
-badge:
-  String(story.story_status || '').trim().toLowerCase() === 'completed'
-    ? 'end'
-    : String(story.story_status || '').trim().toLowerCase() === 'ongoing'
-      ? 'up'
-      : 'new',
+badge: getStoryBadge(story),
     updateDate,
     dayKey: updateDate ? updateDate.getDay() : null,
   }
@@ -150,11 +146,11 @@ function BookCard({ book }) {
             }}
           />
 
-          <div
-            className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge] || badgeConfig.new}`}
-          >
-            {badgeText}
-          </div>
+         {book.badge ? (
+  <div className={`absolute left-0 top-0 rounded-br-[7px] px-2 py-1 text-[10px] font-extrabold leading-none ${badgeConfig[book.badge]}`}>
+    {badgeText}
+  </div>
+) : null}
 
           {updateCount >= 2 ? (
             <div
