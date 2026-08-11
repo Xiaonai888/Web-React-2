@@ -10,14 +10,14 @@ const API_BASE_URL =
 const REFRESH_MS = 60 * 60 * 1000
 
 const updateMarkerUI = {
-  width: 48,
-  right: 6,
-  bottom: -4,
+  width: 42,
+  right: 5,
+  bottom: -5,
   rotate: 7,
   numberX: 0,
   numberY: 0,
   numberRotate: 0,
-  numberSize: 13,
+  numberSize: 12,
 }
 
 function normalizeStory(story) {
@@ -205,7 +205,7 @@ export default function WeeklyUpdateSection() {
     <section className="px-4 sm:px-5 lg:px-6">
       <div className="mb-4">
         <h2 className="text-[18px] font-extrabold tracking-tight text-neutral-900 lg:text-[19px]">
-          🤪Weekly Update
+          🤪 Weekly Update
         </h2>
       </div>
 
