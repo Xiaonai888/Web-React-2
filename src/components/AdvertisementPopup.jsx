@@ -65,10 +65,10 @@ function AdBadge({ badge, compact = false }) {
 
   return (
     <span
-      className={`absolute left-[18px] top-[18px] z-30 inline-flex items-center justify-center rounded-[8px] font-black shadow-[0_5px_16px_rgba(0,0,0,0.22)] ${tone} ${
+      className={`absolute left-[18px] top-[48px] z-30 inline-flex items-center justify-center rounded-[8px] font-black shadow-[0_5px_16px_rgba(0,0,0,0.22)] ${tone} ${
         compact
-          ? 'min-w-[42px] px-2.5 py-1 text-[10px]'
-          : 'min-w-[48px] px-2.5 py-1.5 text-[11px]'
+  ? 'h-[21px] min-w-[54px] px-2.5 py-0 text-[9px]'
+  : 'h-[21px] min-w-[54px] px-2.5 py-0 text-[9px]'
       }`}
     >
       {value}
@@ -80,13 +80,13 @@ function BrandFooter({ compact = false }) {
   return (
     <div
       className={`flex shrink-0 flex-col items-center justify-center bg-white px-5 ${
-        compact ? 'h-[82px] gap-1' : 'h-[clamp(96px,12.5vh,128px)] gap-1.5'
+        compact ? 'h-[100px] gap-1' : 'h-[clamp(108px,14vh,140px)] gap-1.5'
       }`}
     >
       <img
         src={SHADOW_LOGO_URL}
         alt="Shadow"
-        className={`${compact ? 'w-[145px]' : 'w-[min(52vw,230px)]'} h-auto object-contain`}
+        className={`${compact ? 'w-[130px]' : 'w-[min(46vw,205px)]'} h-auto object-contain`}
       />
       <div
         className={`font-black tracking-[0.14em] text-[#111111] ${
