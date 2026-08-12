@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Trash2,
   UserRound,
+  UsersRound,
   VolumeX,
   X,
 } from 'lucide-react'
@@ -50,6 +51,7 @@ import {
   getChatAutoDeleteStatus,
   setChatAutoDelete,
 } from '../../services/chatAutoDeleteApi'
+import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 
 const REPORT_REASONS = [
   ['spam', 'Spam'],
@@ -324,6 +326,7 @@ export default function ChatInfoPage() {
   const [nicknameEditor, setNicknameEditor] = useState(null)
   const [nicknameDraft, setNicknameDraft] = useState('')
   const [nicknameBusy, setNicknameBusy] = useState(false)
+  const [groupCreateOpen, setGroupCreateOpen] = useState(false)
 
   const person = conversation?.counterpart || {}
   const name =
@@ -335,9 +338,13 @@ export default function ChatInfoPage() {
     person.username ||
     person.page_username ||
     ''
-  const canDeleteForBoth =
-    conversation?.conversation_type === 'reader_reader' ||
-    conversation?.delete_permissions?.can_delete_for_both === true
+  const isGroup =
+  conversation?.is_group === true
+
+const canDeleteForBoth =
+  !isGroup &&
+  (conversation?.conversation_type === 'reader_reader' ||
+    conversation?.delete_permissions?.can_delete_for_both === true)
 
   const reportMessage = useMemo(
     () =>
@@ -492,43 +499,69 @@ export default function ChatInfoPage() {
 
     try {
       setLoading(true)
-      const [
-        roomData,
-        blockData,
-        muteData,
-        autoDeleteData,
-      ] = await Promise.all([
-        getChatMessages(conversationId, { limit: 50 }),
-        getChatBlockStatus(conversationId),
-        getChatMuteStatus(conversationId),
-        getChatAutoDeleteStatus(conversationId),
-      ])
 
-      setConversation(roomData.conversation || null)
-      setMessages(
-        Array.isArray(roomData.messages) ? roomData.messages : []
-      )
-      setBlockStatus({
-        is_blocked: Boolean(blockData.block_status?.is_blocked),
-        viewer_has_blocked: Boolean(
-          blockData.block_status?.viewer_has_blocked
-        ),
-        viewer_is_blocked: Boolean(
-          blockData.block_status?.viewer_is_blocked
-        ),
+const roomData = await getChatMessages(
+  conversationId,
+  { limit: 50 }
+)
+
+const roomConversation =
+  roomData.conversation || null
+
+const roomIsGroup =
+  roomConversation?.is_group === true
+
+const [
+  blockData,
+  muteData,
+  autoDeleteData,
+] = await Promise.all([
+  roomIsGroup
+    ? Promise.resolve({
+        block_status: {
+          is_blocked: false,
+          viewer_has_blocked: false,
+          viewer_is_blocked: false,
+        },
       })
-      setMuteStatus({
-        is_muted: Boolean(muteData.is_muted),
-        muted_until: muteData.muted_until || null,
-      })
-      setAutoDeleteStatus({
-        auto_delete_enabled: Boolean(
-          autoDeleteData.auto_delete_enabled
-        ),
-        auto_delete_seconds: Number(
-          autoDeleteData.auto_delete_seconds || 0
-        ),
-      })
+    : getChatBlockStatus(conversationId),
+  getChatMuteStatus(conversationId),
+  getChatAutoDeleteStatus(conversationId),
+])
+
+setConversation(roomConversation)
+
+setMessages(
+  Array.isArray(roomData.messages)
+    ? roomData.messages
+    : []
+)
+
+setBlockStatus({
+  is_blocked: Boolean(
+    blockData.block_status?.is_blocked
+  ),
+  viewer_has_blocked: Boolean(
+    blockData.block_status?.viewer_has_blocked
+  ),
+  viewer_is_blocked: Boolean(
+    blockData.block_status?.viewer_is_blocked
+  ),
+})
+
+setMuteStatus({
+  is_muted: Boolean(muteData.is_muted),
+  muted_until: muteData.muted_until || null,
+})
+
+setAutoDeleteStatus({
+  auto_delete_enabled: Boolean(
+    autoDeleteData.auto_delete_enabled
+  ),
+  auto_delete_seconds: Number(
+    autoDeleteData.auto_delete_seconds || 0
+  ),
+})
     } catch (error) {
       if (
         error.status === 401 ||
@@ -1179,19 +1212,25 @@ export default function ChatInfoPage() {
           <h1 className="mt-4 max-w-full truncate text-[22px] font-semibold">
             {name}
           </h1>
-          {username ? (
-            <p className="mt-1 text-[12px] font-normal text-[#7b7b85]">
-              @{username}
-            </p>
-          ) : null}
+          {isGroup ? (
+  <p className="mt-1 text-[12px] font-normal text-[#7b7b85]">
+    {Number(conversation?.member_count || 0)} people
+  </p>
+) : username ? (
+  <p className="mt-1 text-[12px] font-normal text-[#7b7b85]">
+    @{username}
+  </p>
+) : null}
 
           <div className="relative mt-7 w-full">
   <div className="mx-auto flex max-w-[360px] items-start justify-between">
-    <Shortcut
-      icon={UserRound}
-      label="Profile"
-      onClick={openProfile}
-    />
+    {!isGroup ? (
+  <Shortcut
+    icon={UserRound}
+    label="Profile"
+    onClick={openProfile}
+  />
+) : null}
 
     <Shortcut
       icon={Search}
@@ -1212,16 +1251,18 @@ export default function ChatInfoPage() {
       }}
     />
 
-    <Shortcut
-      icon={MoreHorizontal}
-      label="Options"
-      onClick={() =>
-        setOptionsOpen((current) => !current)
-      }
-    />
+    {!isGroup ? (
+  <Shortcut
+    icon={MoreHorizontal}
+    label="Options"
+    onClick={() =>
+      setOptionsOpen((current) => !current)
+    }
+  />
+) : null}
   </div>
 
-  {optionsOpen ? (
+  {optionsOpen && !isGroup ? (
     <>
       <button
         type="button"
@@ -1295,19 +1336,30 @@ export default function ChatInfoPage() {
             }
           />
 
-          <Row
-            icon={ShieldAlert}
-            title="Privacy & safety"
-            onClick={() =>
-              setOptionsOpen(true)
-            }
-          />
+          {!isGroup ? (
+  <Row
+    icon={ShieldAlert}
+    title="Privacy & safety"
+    onClick={() =>
+      setOptionsOpen(true)
+    }
+  />
+) : null}
 
           <Row
             icon={UserRound}
             title="Nicknames"
             onClick={openNicknames}
           />
+          {!isGroup ? (
+  <Row
+    icon={UsersRound}
+    title="Create a group chat"
+    onClick={() =>
+      setGroupCreateOpen(true)
+    }
+  />
+) : null}
         </section>
 
         <section className="mt-7">
@@ -1369,6 +1421,16 @@ export default function ChatInfoPage() {
         </section>
         </section>
       </main>
+<ChatGroupCreateSheet
+  open={groupCreateOpen}
+  onClose={() =>
+    setGroupCreateOpen(false)
+  }
+  onCreated={() => {
+    notifyUpdated()
+  }}
+/>
+
 
       {muteOpen ? (
         <Sheet
