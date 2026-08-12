@@ -49,15 +49,12 @@ function AuthorPageFooter({ active = 'Page' }) {
                   : 'text-[#9aa1ad] dark:text-white/45'
               }`}
             >
-              {isActive ? (
-                <i className={`${item.activeIcon} text-[16px]`} />
-              ) : (
-                <OutlineIcon
-                  aria-hidden="true"
-                  size={17}
-                  strokeWidth={2.1}
-                />
-              )}
+              <OutlineIcon
+  aria-hidden="true"
+  size={18}
+  strokeWidth={2}
+  fill={isActive ? 'currentColor' : 'none'}
+/>
               <span>{item.label}</span>
             </button>
           )
