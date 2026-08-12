@@ -45,15 +45,15 @@ function getTimeParts(target, now) {
     difference / 1000
   )
 
-  return {
-    days: Math.floor(totalSeconds / 86400),
-    hours: Math.floor(
-      (totalSeconds % 86400) / 3600
-    ),
-    minutes: Math.floor(
-      (totalSeconds % 3600) / 60
-    ),
-  }
+ return {
+  days: Math.floor(totalSeconds / 86400),
+  hours: Math.floor(
+    (totalSeconds % 86400) / 3600
+  ),
+  minutes: Math.floor(
+    (totalSeconds % 3600) / 60
+  ),
+  seconds: totalSeconds % 60,
 }
 
 function formatEventDate(date) {
@@ -105,18 +105,40 @@ const [serverEvent, setServerEvent] =
     window.clearInterval(timer)
   }
 }, [])
+  useEffect(() => {
+  const timer = window.setInterval(() => {
+    setNow(new Date())
+  }, 1000)
+
+  return () => window.clearInterval(timer)
+}, [])
 
   const isLive = serverEvent
   ? Boolean(serverEvent.active)
   : getCambodiaDate(now).getUTCDay() === 3
 
-  const eventDate = useMemo(
-    () =>
-  serverEvent?.starts_at
+  const eventDate = useMemo(() => {
+  if (isLive) {
+    if (serverEvent?.ends_at) {
+      return new Date(serverEvent.ends_at)
+    }
+
+    const cambodiaNow = getCambodiaDate(now)
+    const localSeconds =
+      cambodiaNow.getUTCHours() * 3600 +
+      cambodiaNow.getUTCMinutes() * 60 +
+      cambodiaNow.getUTCSeconds()
+
+    return new Date(
+      now.getTime() +
+        Math.max(0, 86400 - localSeconds) * 1000
+    )
+  }
+
+  return serverEvent?.starts_at
     ? new Date(serverEvent.starts_at)
-    : getNextWednesday(now, isLive),
-[serverEvent, isLive, now]
-  )
+    : getNextWednesday(now)
+}, [serverEvent, isLive, now])
 
   const countdown = getTimeParts(
     eventDate,
