@@ -96,11 +96,11 @@ export function createGroupChat({
     )
   }
 
-  if (safeMemberUserIds.length > 49) {
+  if (safeMemberUserIds.length > 99) {
     throw new ChatApiError(
       400,
       'GROUP_MAX_MEMBERS',
-      'A group can have up to 50 people'
+      'A group can have up to 100 people'
     )
   }
 
