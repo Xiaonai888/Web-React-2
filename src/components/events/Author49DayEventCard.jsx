@@ -93,14 +93,13 @@ export default function Author49DayEventCard({
     )
   }
 
-  if (
-    !event ||
-    !event.visible ||
-    !event.enabled ||
-    event.status === 'finished'
-  ) {
-    return null
-  }
+ if (
+  !event ||
+  !event.visible ||
+  event.status === 'finished'
+) {
+  return null
+}
 
   return (
     <section className="mt-4 overflow-hidden rounded-[24px] border border-[#F2B705] bg-black shadow-[0_16px_38px_rgba(246,184,0,0.16)]">
