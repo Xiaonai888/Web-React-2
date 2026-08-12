@@ -305,6 +305,14 @@ export default function AuthorPostComposerSheet({
   onMessage,
 }) {
   const fileInputRef = useRef(null)
+  const textareaRef = useRef(null)
+
+useEffect(() => {
+  const element = textareaRef.current
+  if (!element || screen !== 'compose') return
+  element.style.height = 'auto'
+  element.style.height = `${element.scrollHeight}px`
+}, [draft, screen, open])
   const selectedImagesRef = useRef([])
   const initialDraftRef = useRef('')
   const initialImageUrlsRef = useRef([])
@@ -531,7 +539,7 @@ export default function AuthorPostComposerSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-[240] bg-white">
+      <div className="fixed inset-0 z-[240] overflow-y-auto bg-white">
         <input
           ref={fileInputRef}
           type="file"
@@ -602,6 +610,7 @@ export default function AuthorPostComposerSheet({
                 </div>
 
                 <textarea
+                  ref={textareaRef}
                   value={draft}
                   onChange={(event) =>
                     setDraft(
@@ -613,7 +622,7 @@ export default function AuthorPostComposerSheet({
                   }
                   placeholder="Share an update..."
                   maxLength={MAX_POST_LENGTH}
-                  className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
+                  className="min-h-[calc(100dvh-270px)] w-full resize-none overflow-hidden border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
                 />
 
                 <SelectedImagePreview images={selectedImages} onRemove={removeImage} />
