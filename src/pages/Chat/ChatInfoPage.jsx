@@ -377,52 +377,92 @@ export default function ChatInfoPage() {
           new Date(first.created_at).getTime()
       )
   }, [normalizedSearchQuery, searchMessages])
-  const sharedContent = useMemo(() => {
-  const source = searchLoaded
-    ? searchMessages
-    : messages
-  const items = []
-  const seen = new Set()
+    const sharedContent = useMemo(() => {
+    const source = searchLoaded
+      ? searchMessages
+      : messages
+    const items = []
+    const seen = new Set()
 
-  source.forEach((message) => {
-    if (message.is_deleted) return
+    source.forEach((message) => {
+      if (message.is_deleted) return
 
-    extractSharedUrls(message.body).forEach(
-      (url) => {
-        if (seen.has(url)) return
+      const addItem = ({
+        url,
+        kind,
+        image = false,
+        name = '',
+      }) => {
+        if (!url || seen.has(url)) return
+
         seen.add(url)
-
         items.push({
           id: `${message.id}:${url}`,
           url,
-          kind: classifySharedUrl(url),
-          image: isImageUrl(url),
-          name: getSharedUrlLabel(url),
+          kind,
+          image,
+          name:
+            name ||
+            getSharedUrlLabel(url),
           created_at: message.created_at,
         })
       }
-    )
-  })
 
-  return {
-    media: items.filter(
-      (item) => item.kind === 'media'
-    ),
-    files: items.filter(
-      (item) => item.kind === 'files'
-    ),
-    links: items.filter(
-      (item) => item.kind === 'links'
-    ),
-  }
-}, [
-  messages,
-  searchLoaded,
-  searchMessages,
-])
+      if (message.attachment_url) {
+        const attachmentKind =
+          message.attachment_kind === 'file'
+            ? 'files'
+            : ['image', 'video'].includes(
+                  message.attachment_kind
+                )
+              ? 'media'
+              : classifySharedUrl(
+                  message.attachment_url
+                )
 
-const activeSharedItems =
-  sharedContent[sharedTab] || []
+        addItem({
+          url: message.attachment_url,
+          kind: attachmentKind,
+          image:
+            message.attachment_kind === 'image' ||
+            isImageUrl(
+              message.attachment_url
+            ),
+          name:
+            message.attachment_name || '',
+        })
+      }
+
+      extractSharedUrls(message.body).forEach(
+        (url) => {
+          addItem({
+            url,
+            kind: classifySharedUrl(url),
+            image: isImageUrl(url),
+          })
+        }
+      )
+    })
+
+    return {
+      media: items.filter(
+        (item) => item.kind === 'media'
+      ),
+      files: items.filter(
+        (item) => item.kind === 'files'
+      ),
+      links: items.filter(
+        (item) => item.kind === 'links'
+      ),
+    }
+  }, [
+    messages,
+    searchLoaded,
+    searchMessages,
+  ])
+
+  const activeSharedItems =
+    sharedContent[sharedTab] || []
 
   const notifyUpdated = () => {
     window.dispatchEvent(new CustomEvent('shadow-chat-updated'))
