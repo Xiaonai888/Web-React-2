@@ -29,6 +29,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import ReaderProfileFooter from '../../components/reader-profile/ReaderProfileFooter'
 import ChatSuggestedPeople from '../../components/chat/ChatSuggestedPeople'
 import ChatNewMessageSheet from '../../components/chat/ChatNewMessageSheet'
+import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import {
@@ -667,6 +668,7 @@ export default function ChatInboxPage() {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [newMessageOpen, setNewMessageOpen] = useState(false)
+  const [groupCreateOpen, setGroupCreateOpen] = useState(false)
   const [busyRequest, setBusyRequest] = useState(null)
   const [error, setError] = useState('')
   const [searchUsers, setSearchUsers] = useState([])
@@ -2040,17 +2042,17 @@ setArchivedCount(
                     </button>
 
                     <button
-                      type="button"
-                      onClick={() =>
-                        showSelectionNotice(
-                          'New Group is coming soon.'
-                        )
-                      }
-                      className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
-                    >
-                      <UsersRound size={20} />
-                      New Group
-                    </button>
+  type="button"
+  onClick={() => {
+    setSelectionMenuOpen(false)
+    setSelectedConversationIds(new Set())
+    setGroupCreateOpen(true)
+  }}
+  className="flex h-12 w-full items-center gap-3 px-4 text-left text-[14px] font-normal text-[#111827] active:bg-[#f5f5f7]"
+>
+  <UsersRound size={20} />
+  New Group
+</button>
                   </div>
                 </>
               ) : null}
@@ -2708,6 +2710,15 @@ setArchivedCount(
         open={newMessageOpen}
         onClose={() => setNewMessageOpen(false)}
       />
+
+      <ChatGroupCreateSheet
+  open={groupCreateOpen}
+  onClose={() => setGroupCreateOpen(false)}
+  onCreated={() => {
+    loadConversations({ silent: true })
+    loadQuickContacts()
+  }}
+/>
 
       <ReaderReaderMessageRequestModal
         open={Boolean(selectedSearchReader)}
