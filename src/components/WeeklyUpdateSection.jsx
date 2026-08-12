@@ -176,7 +176,7 @@ export default function WeeklyUpdateSection() {
     dragRef.current.startX = event.clientX
     dragRef.current.scrollLeft = element.scrollLeft
     dragRef.current.moved = false
-    element.setPointerCapture?.(event.pointerId)
+    
   }
 
   function handlePointerMove(event) {
@@ -185,7 +185,10 @@ export default function WeeklyUpdateSection() {
     if (!element) return
 
     const deltaX = event.clientX - dragRef.current.startX
-    if (Math.abs(deltaX) > 4) dragRef.current.moved = true
+    if (Math.abs(deltaX) > 4) {
+  dragRef.current.moved = true
+  element.setPointerCapture?.(event.pointerId)
+}
     element.scrollLeft = dragRef.current.scrollLeft - deltaX
   }
 
