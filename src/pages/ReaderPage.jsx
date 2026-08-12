@@ -1481,7 +1481,7 @@ function LockedEpisodeCard({
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
           <button
             type="button"
-            onClick={goPurchase}
+            onClick={() => window.alert('Coming soon')}
             className="relative mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center overflow-visible rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 pl-5 pr-[150px] text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px] active:scale-[0.99]"
           >
             <div className="min-w-0 flex-1">
@@ -1820,7 +1820,7 @@ const [showAutoHint, setShowAutoHint] = useState(false)
         <div className="w-full pb-[env(safe-area-inset-bottom)] md:max-w-[520px] md:pb-0">
         <button
           type="button"
-          onClick={goPurchase}
+          onClick={() => window.alert('Coming soon')}
           className="mx-auto mb-5 flex h-[56px] w-[calc(100%-24px)] items-center gap-3 rounded-[16px] bg-gradient-to-r from-[#343842]/70 via-[#565C68]/70 to-[#343842]/70 px-3 py-1 text-left shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-[1px]"
         >
           <span className="-mb-0 -mt-3 -ml-1 flex h-[78px] w-[78px] shrink-0 items-end justify-center overflow-visible">
