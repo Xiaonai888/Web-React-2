@@ -317,6 +317,26 @@ export function updateChatSoundSettings(
   )
 }
 
+export function getChatNicknames(conversationId) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/nicknames`
+  )
+}
+
+export function updateChatNickname(
+  conversationId,
+  targetUserId,
+  nickname
+) {
+  return chatRequest(
+    `/conversations/${encodeURIComponent(conversationId)}/nicknames/${encodeURIComponent(targetUserId)}`,
+    {
+      method: 'PATCH',
+      body: { nickname },
+    }
+  )
+}
+
 
 export function pinChatConversation(conversationId) {
   return chatRequest(
