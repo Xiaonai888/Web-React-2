@@ -552,7 +552,7 @@ export default function PurchaseSection() {
       <div className="px-4 pb-4 pt-3">
   <button
   type="button"
-  onClick={() => navigate('/shop', { state: { activeTab: 'Plans' } })}
+  onClick={() => window.alert('Coming soon')}
   className="flex w-full items-center justify-center rounded-full bg-gradient-to-b from-[#FEE550] via-[#FEE14B] to-[#FECC35] px-5 py-2.5 text-[#111111] transition-all duration-200 hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.99]"
 >
   <span className="text-[19px] font-bold">$5/month</span>
