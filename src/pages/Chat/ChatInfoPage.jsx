@@ -377,7 +377,8 @@ export default function ChatInfoPage() {
           new Date(first.created_at).getTime()
       )
   }, [normalizedSearchQuery, searchMessages])
-    const sharedContent = useMemo(() => {
+
+  const sharedContent = useMemo(() => {
     const source = searchLoaded
       ? searchMessages
       : messages
@@ -1184,108 +1185,84 @@ export default function ChatInfoPage() {
 </div>
         </section>
 
-        <section className="hidden">
-          <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
-            Chat info
-          </h2>
-          <Row
-  icon={FileImage}
-  title="View media, files & links"
-  onClick={openSharedContent}
-/>
-          <Row
-            icon={Pin}
-            title="Pinned messages"
-            onClick={openPinnedMessages}
-          />
-        </section>
-
-        <section className="hidden">
-          <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
-            Actions
-          </h2>
-          <Row
-            icon={VolumeX}
-            title={
-              muteStatus.is_muted
-                ? `Unmute ${name}`
-                : `Mute ${name}`
-            }
-            subtitle={
-              muteStatus.is_muted
-                ? muteStatus.muted_until
-                  ? `Muted until ${formatSearchMessageDate(
-                      muteStatus.muted_until
-                    )}`
-                  : 'Muted until you turn it back on'
-                : ''
-            }
-            onClick={() => {
-              if (muteStatus.is_muted) {
-                handleUnmute()
-                return
-              }
-
-              setMuteOpen(true)
-            }}
-          />
-          <Row
-            icon={Bell}
-            title="Notifications"
-            subtitle={
-              muteStatus.is_muted ? 'Off' : 'On'
-            }
-            onClick={handleToggleNotifications}
-          />
+        <section className="mt-8 border-t border-[#ececf0] pt-2">
           <Row
             icon={Clock3}
-            title="Auto-delete chat"
+            title="Disappearing messages"
             subtitle={formatAutoDeleteDuration(
               autoDeleteStatus.auto_delete_seconds
             )}
-            onClick={() => setAutoDeleteOpen(true)}
+            onClick={() =>
+              setAutoDeleteOpen(true)
+            }
+          />
+
+          <Row
+            icon={ShieldAlert}
+            title="Privacy & safety"
+            onClick={() =>
+              setOptionsOpen(true)
+            }
           />
         </section>
 
-        <section className="hidden">
-          <h2 className="mb-2 text-[13px] font-normal text-[#777781]">
-            Privacy and report
-          </h2>
-          <Row
-            icon={Ban}
-            title={blockStatus.viewer_has_blocked ? 'Unblock' : 'Block'}
-            subtitle={
-              blockStatus.viewer_is_blocked &&
-              !blockStatus.viewer_has_blocked
-                ? 'This account has blocked messaging with you'
-                : ''
-            }
-            danger={!blockStatus.viewer_has_blocked}
-            onClick={handleBlock}
-          />
-          <Row
-            icon={ShieldAlert}
-            title="Restrict"
-            onClick={() => showNotice('Restrict is coming soon.')}
-          />
-          <Row
-            icon={Flag}
-            title="Report"
-            danger
-            onClick={() => {
-              if (!reportMessage) {
-                showNotice('No received message is available to report.')
-                return
-              }
-              setReportOpen(true)
-            }}
-          />
-          <Row
-            icon={Trash2}
-            title="Delete chat"
-            danger
-            onClick={() => setDeleteOpen(true)}
-          />
+        <section className="mt-7">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[16px] font-semibold text-[#111827]">
+              Shared media
+            </h2>
+
+            <button
+              type="button"
+              onClick={openSharedContent}
+              className="text-[12px] font-normal text-[#6b7280] active:opacity-60"
+            >
+              See all
+            </button>
+          </div>
+
+          {sharedContent.media.length ? (
+            <div className="grid grid-cols-3 gap-[2px] overflow-hidden rounded-[8px]">
+              {sharedContent.media
+                .slice(0, 9)
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={openSharedContent}
+                    className="flex aspect-square overflow-hidden bg-[#f1f1f4]"
+                  >
+                    {item.image ? (
+                      <img
+                        src={item.url}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-[#777781]">
+                        <FileImage size={24} />
+                      </span>
+                    )}
+                  </button>
+                ))}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={openSharedContent}
+              className="flex w-full items-center gap-3 rounded-[12px] bg-[#f7f7f9] px-4 py-4 text-left"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#777781]">
+                <FileImage size={21} />
+              </span>
+
+              <span className="text-[13px] font-normal text-[#777781]">
+                No shared media yet
+              </span>
+            </button>
+          )}
+        </section>
         </section>
       </main>
 
