@@ -33,11 +33,13 @@ import {
   deleteChatConversation,
   getChatBlockStatus,
   getChatMessages,
+  getChatNicknames,
   getPinnedChatMessages,
   hasReaderSession,
   reportChatMessage,
   unblockChatConversation,
   unpinChatMessage,
+  updateChatNickname,
 } from '../../services/chatApi'
 import {
   getChatMuteStatus,
@@ -316,6 +318,12 @@ export default function ChatInfoPage() {
   const [sharedOpen, setSharedOpen] = useState(false)
   const [sharedTab, setSharedTab] = useState('media')
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [nicknamesOpen, setNicknamesOpen] = useState(false)
+  const [nicknameLoading, setNicknameLoading] = useState(false)
+  const [nicknameParticipants, setNicknameParticipants] = useState([])
+  const [nicknameEditor, setNicknameEditor] = useState(null)
+  const [nicknameDraft, setNicknameDraft] = useState('')
+  const [nicknameBusy, setNicknameBusy] = useState(false)
 
   const person = conversation?.counterpart || {}
   const name =
@@ -621,13 +629,103 @@ export default function ChatInfoPage() {
   }
 
   const openSharedContent = () => {
-  setSharedTab('media')
-  setSharedOpen(true)
+    setSharedTab('media')
+    setSharedOpen(true)
 
-  if (!searchLoaded) {
-    loadSearchHistory()
+    if (!searchLoaded) {
+      loadSearchHistory()
+    }
   }
-}
+
+  const openNicknames = async () => {
+    if (!conversationId || nicknameLoading) return
+
+    setNicknamesOpen(true)
+    setNicknameEditor(null)
+    setNicknameDraft('')
+    setNicknameLoading(true)
+
+    try {
+      const data = await getChatNicknames(
+        conversationId
+      )
+
+      setNicknameParticipants(
+        Array.isArray(data.participants)
+          ? data.participants
+          : []
+      )
+    } catch (error) {
+      setNicknameParticipants([])
+      showNotice(
+        error.message ||
+          'Failed to load nicknames'
+      )
+    } finally {
+      setNicknameLoading(false)
+    }
+  }
+
+  const openNicknameEditor = (participant) => {
+    if (!participant?.user_id) return
+
+    setNicknameEditor(participant)
+    setNicknameDraft(
+      String(participant.nickname || '')
+    )
+  }
+
+  const saveNickname = async (
+    nickname = nicknameDraft
+  ) => {
+    if (
+      !conversationId ||
+      !nicknameEditor?.user_id ||
+      nicknameBusy
+    ) {
+      return
+    }
+
+    setNicknameBusy(true)
+
+    try {
+      const data = await updateChatNickname(
+        conversationId,
+        nicknameEditor.user_id,
+        String(nickname || '').trim()
+      )
+      const updated = data.participant
+
+      setNicknameParticipants((current) =>
+        current.map((participant) =>
+          String(participant.user_id) ===
+          String(updated?.user_id)
+            ? {
+                ...participant,
+                nickname:
+                  updated?.nickname || null,
+              }
+            : participant
+        )
+      )
+
+      setNicknameEditor(null)
+      setNicknameDraft('')
+      notifyUpdated()
+      showNotice(
+        updated?.nickname
+          ? 'Nickname updated'
+          : 'Nickname removed'
+      )
+    } catch (error) {
+      showNotice(
+        error.message ||
+          'Failed to update nickname'
+      )
+    } finally {
+      setNicknameBusy(false)
+    }
+  }
 
   const openProfile = () => {
     if (!username) return
@@ -1204,6 +1302,12 @@ export default function ChatInfoPage() {
               setOptionsOpen(true)
             }
           />
+
+          <Row
+            icon={UserRound}
+            title="Nicknames"
+            onClick={openNicknames}
+          />
         </section>
 
         <section className="mt-7">
@@ -1508,6 +1612,117 @@ export default function ChatInfoPage() {
                 Pin a message from the chat and it will appear here.
               </p>
             </div>
+          )}
+        </Sheet>
+      ) : null}
+
+      {nicknamesOpen ? (
+        <Sheet
+          title={
+            nicknameEditor
+              ? 'Edit nickname'
+              : 'Nicknames'
+          }
+          onClose={() => {
+            if (nicknameEditor) {
+              setNicknameEditor(null)
+              setNicknameDraft('')
+              return
+            }
+
+            setNicknamesOpen(false)
+          }}
+        >
+          {nicknameEditor ? (
+            <div>
+              <p className="mb-3 text-[11px] font-normal leading-5 text-[#777781]">
+                {nicknameEditor.is_self
+                  ? 'Set a nickname for yourself in this chat.'
+                  : `Set a nickname for ${name} in this chat.`}
+              </p>
+
+              <input
+                autoFocus
+                value={nicknameDraft}
+                onChange={(event) =>
+                  setNicknameDraft(
+                    event.target.value.slice(0, 32)
+                  )
+                }
+                placeholder="Nickname"
+                className="h-11 w-full rounded-[12px] border border-[#dedee4] bg-white px-3 text-[13px] font-normal text-[#111827] outline-none focus:border-[#7c3aed]"
+              />
+
+              <button
+                type="button"
+                onClick={() => saveNickname()}
+                disabled={nicknameBusy}
+                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#111827] text-[13px] font-medium text-white disabled:opacity-50"
+              >
+                {nicknameBusy ? (
+                  <LoaderCircle
+                    size={17}
+                    className="animate-spin"
+                  />
+                ) : null}
+                Save
+              </button>
+
+              {nicknameEditor.nickname ? (
+                <button
+                  type="button"
+                  onClick={() => saveNickname('')}
+                  disabled={nicknameBusy}
+                  className="mt-2 h-11 w-full rounded-[12px] bg-[#f5f5f7] text-[13px] font-normal text-[#d13a42] disabled:opacity-50"
+                >
+                  Remove nickname
+                </button>
+              ) : null}
+            </div>
+          ) : nicknameLoading ? (
+            <div className="flex min-h-[180px] items-center justify-center text-[#7c3aed]">
+              <LoaderCircle
+                size={25}
+                className="animate-spin"
+              />
+            </div>
+          ) : nicknameParticipants.length ? (
+            <div className="overflow-hidden rounded-[14px] bg-[#f6f6f8]">
+              {nicknameParticipants.map(
+                (participant) => (
+                  <button
+                    key={participant.user_id}
+                    type="button"
+                    onClick={() =>
+                      openNicknameEditor(
+                        participant
+                      )
+                    }
+                    className="flex min-h-[58px] w-full items-center gap-3 border-b border-white px-4 text-left last:border-b-0 active:bg-[#ececf0]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827]">
+                      <UserRound size={19} />
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-normal text-[#111827]">
+                        {participant.is_self
+                          ? 'You'
+                          : name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[11px] font-normal text-[#8a8a95]">
+                        {participant.nickname ||
+                          'Add nickname'}
+                      </span>
+                    </span>
+                  </button>
+                )
+              )}
+            </div>
+          ) : (
+            <p className="py-10 text-center text-[12px] font-normal text-[#8a8a95]">
+              No chat participants found
+            </p>
           )}
         </Sheet>
       ) : null}
