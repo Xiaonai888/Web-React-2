@@ -307,12 +307,7 @@ export default function AuthorPostComposerSheet({
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
 
-useEffect(() => {
-  const element = textareaRef.current
-  if (!element || screen !== 'compose') return
-  element.style.height = 'auto'
-  element.style.height = `${element.scrollHeight}px`
-}, [draft, screen, open])
+
   const selectedImagesRef = useRef([])
   const initialDraftRef = useRef('')
   const initialImageUrlsRef = useRef([])
@@ -323,6 +318,12 @@ useEffect(() => {
   const [imageError, setImageError] = useState('')
   const [leaveSheetOpen, setLeaveSheetOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  useEffect(() => {
+  const element = textareaRef.current
+  if (!element || screen !== 'compose') return
+  element.style.height = 'auto'
+  element.style.height = `${element.scrollHeight}px`
+}, [draft, screen, open])
 
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
