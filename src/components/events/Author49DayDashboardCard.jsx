@@ -136,9 +136,9 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
 
   return (
   <section className="mt-5 overflow-hidden rounded-[16px] border border-[#F2C230] bg-black shadow-[0_10px_26px_rgba(216,164,0,0.12)]">
-    <div className="relative aspect-square w-full overflow-hidden">
-      <img
-        src="/assets/Icons/Event/Event 2.webp"
+    <div className="relative aspect-[16/9] w-full overflow-hidden">
+  <img
+    src="/assets/Icons/Event/Event 1.webp"
         alt="80% for 49 Days Event"
         className="absolute inset-0 h-full w-full object-cover"
       />
