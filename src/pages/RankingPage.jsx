@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam } from '../utils/storyLanguage'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -7,7 +8,7 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const hiddenTimeFilters = ['Today', 'Weekly', 'Monthly']
+const RANKING_LIMIT = 24
 
 const rankingTabs = [
   { key: 'bestseller', label: 'Bestseller', icon: 'fa-solid fa-trophy', sort: 'views' },
@@ -16,6 +17,40 @@ const rankingTabs = [
   { key: 'rising', label: 'Rising', icon: 'fa-solid fa-arrow-trend-up', sort: 'weekly_updates' },
   { key: 'must_read', label: 'Must-read', icon: 'fa-solid fa-book-open', sort: 'comments' },
   { key: 'completed', label: 'Completed', icon: 'fa-solid fa-circle-check', sort: 'popular' },
+]
+
+const rankingGenres = [
+  'All',
+  'Romance',
+  'Fantasy',
+  'Action',
+  'Adventure',
+  'Comedy',
+  'Drama',
+  'School Life',
+  'Historical',
+  'Mystery',
+  'Horror',
+  'Thriller',
+  'Sci-Fi',
+  'System',
+  'Isekai',
+  'Supernatural',
+  'Martial Arts',
+  'Revenge',
+  'CEO',
+  'Slow Burn',
+  'Enemies to Lovers',
+  'Time Travel',
+  'Strong Female Lead',
+  'Hidden Identity',
+  'Royalty',
+  'Magic',
+  'Second Chance',
+  'Cold Male Lead',
+  'BL',
+  'GL',
+  'LGBTQ+',
 ]
 
 function getReaderToken() {
@@ -73,8 +108,50 @@ function normalizeStory(story) {
     comments: Number(story.total_comments || 0),
     weeklyUpdates: Number(story.weekly_update_count || 0),
     createdAt: new Date(story.created_at || 0).getTime(),
-    updatedAt: new Date(story.last_episode_published_at || story.updated_at || story.created_at || 0).getTime(),
+    updatedAt: new Date(
+      story.last_episode_published_at ||
+        story.updated_at ||
+        story.created_at ||
+        0
+    ).getTime(),
   }
+}
+
+function sortRankingStories(stories, activeTab) {
+  return [...stories].sort((first, second) => {
+    if (activeTab === 'rising') {
+      return (
+        second.weeklyUpdates - first.weeklyUpdates ||
+        second.updatedAt - first.updatedAt
+      )
+    }
+
+    if (activeTab === 'new') {
+      return second.createdAt - first.createdAt
+    }
+
+    if (activeTab === 'bestseller') {
+      return (
+        second.views - first.views ||
+        second.likes - first.likes ||
+        second.updatedAt - first.updatedAt
+      )
+    }
+
+    if (activeTab === 'must_read') {
+      return (
+        second.comments - first.comments ||
+        second.likes - first.likes ||
+        second.updatedAt - first.updatedAt
+      )
+    }
+
+    return (
+      second.likes - first.likes ||
+      second.views - first.views ||
+      second.updatedAt - first.updatedAt
+    )
+  })
 }
 
 function getInitial(value) {
@@ -103,7 +180,9 @@ function AuthorRankItem({ author, rank, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(author)}
-      className={`relative min-w-0 flex-1 text-center active:scale-[0.98] ${isFirst ? '-mt-3' : 'mt-2'}`}
+      className={`relative min-w-0 flex-1 text-center active:scale-[0.98] ${
+        isFirst ? '-mt-3' : 'mt-2'
+      }`}
     >
       <div className="relative mx-auto w-fit">
         {isFirst ? (
@@ -133,9 +212,12 @@ function AuthorRankItem({ author, rank, onOpen }) {
         </div>
       </div>
 
-      <div className={`${isFirst ? 'mt-6' : 'mt-5'} truncate px-1 text-[12px] font-bold text-[#111827]`}>
+      <div
+        className={`${isFirst ? 'mt-6' : 'mt-5'} truncate px-1 text-[12px] font-bold text-[#111827]`}
+      >
         {author.page_name || 'Author'}
       </div>
+
       <div className="mt-0.5 truncate px-1 text-[10px] font-medium text-[#9ca3af]">
         {formatNumber(author.total_followers)} Followers
       </div>
@@ -152,6 +234,7 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
     <section className="border-b border-[#f1f1f1] bg-white px-4 pb-5 pt-4">
       <div className="mb-7 flex items-center justify-between">
         <h2 className="text-[16px] font-bold text-[#111827]">Top Authors</h2>
+
         <button
           type="button"
           onClick={onViewAll}
@@ -165,7 +248,11 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
         <div className="flex items-end justify-between gap-2 px-2">
           {[0, 1, 2].map((item) => (
             <div key={item} className="flex flex-1 flex-col items-center">
-              <div className={`${item === 1 ? 'h-[82px] w-[82px]' : 'h-[68px] w-[68px]'} animate-pulse rounded-full bg-[#eef0f4]`} />
+              <div
+                className={`${
+                  item === 1 ? 'h-[82px] w-[82px]' : 'h-[68px] w-[68px]'
+                } animate-pulse rounded-full bg-[#eef0f4]`}
+              />
               <div className="mt-4 h-3 w-16 animate-pulse rounded-full bg-[#eef0f4]" />
               <div className="mt-2 h-2.5 w-12 animate-pulse rounded-full bg-[#eef0f4]" />
             </div>
@@ -202,9 +289,17 @@ function SideRankingTabs({ activeTab, onChange }) {
                 active ? 'bg-[#fffaf0] text-[#d99a00]' : 'text-[#b8bcc4]'
               }`}
             >
-              {active ? <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#f4b400]" /> : null}
+              {active ? (
+                <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full bg-[#f4b400]" />
+              ) : null}
+
               <i className={`${tab.icon} text-[18px]`} />
-              <span className={`text-[9.5px] leading-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+
+              <span
+                className={`text-[9.5px] leading-tight ${
+                  active ? 'font-bold' : 'font-semibold'
+                }`}
+              >
                 {tab.label}
               </span>
             </button>
@@ -220,6 +315,7 @@ function LoadingStoryRow() {
     <div className="flex min-h-[118px] items-center gap-2.5 border-b border-[#f1f1f1] py-3">
       <div className="h-5 w-5 shrink-0 animate-pulse rounded bg-[#eef0f4]" />
       <div className="h-[96px] w-[68px] shrink-0 animate-pulse rounded-[10px] bg-[#eef0f4]" />
+
       <div className="min-w-0 flex-1">
         <div className="h-4 w-4/5 animate-pulse rounded-full bg-[#eef0f4]" />
         <div className="mt-3 h-3 w-2/3 animate-pulse rounded-full bg-[#eef0f4]" />
@@ -275,7 +371,10 @@ function RankedStoryRow({ story, rank, onOpen }) {
         </h3>
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-medium text-[#7b8190]">{story.genre}</span>
+          <span className="text-[11px] font-medium text-[#7b8190]">
+            {story.genre}
+          </span>
+
           {tag ? (
             <>
               <span className="text-[10px] text-[#c0c4cc]">•</span>
@@ -312,7 +411,11 @@ function MyAuthorRankCard({ author, rank, onOpen }) {
     >
       <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eeeaf7] text-[15px] font-bold text-[#111827]">
         {author.avatar_url ? (
-          <img src={author.avatar_url} alt={author.page_name || 'Author'} className="h-full w-full object-cover" />
+          <img
+            src={author.avatar_url}
+            alt={author.page_name || 'Author'}
+            className="h-full w-full object-cover"
+          />
         ) : (
           getInitial(author.page_name)
         )}
@@ -327,7 +430,7 @@ function MyAuthorRankCard({ author, rank, onOpen }) {
 
       <div className="shrink-0 text-right">
         <div className="text-[22px] font-black text-[#7c3aed]">
-          {rank ? `#${rank}` : '20+'}
+          {rank ? `#${rank}` : '—'}
         </div>
         <div className="text-[9px] font-medium text-[#9ca3af]">Author</div>
       </div>
@@ -339,14 +442,14 @@ export default function RankingPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('bestseller')
   const [activeGenre, setActiveGenre] = useState('All')
-  const [activeTime, setActiveTime] = useState('Weekly')
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [authors, setAuthors] = useState([])
   const [authorsLoading, setAuthorsLoading] = useState(true)
   const [myAuthor, setMyAuthor] = useState(null)
 
-  const activeConfig = rankingTabs.find((tab) => tab.key === activeTab) || rankingTabs[0]
+  const activeConfig =
+    rankingTabs.find((tab) => tab.key === activeTab) || rankingTabs[0]
 
   useEffect(() => {
     let ignore = false
@@ -360,7 +463,9 @@ export default function RankingPage() {
 
         const requests = [
           fetch(`${API_URL}/api/authors/top?limit=20`, { headers }),
-          token ? fetch(`${API_URL}/api/authors/me`, { headers }) : Promise.resolve(null),
+          token
+            ? fetch(`${API_URL}/api/authors/me`, { headers })
+            : Promise.resolve(null),
         ]
 
         const [topResult, meResult] = await Promise.allSettled(requests)
@@ -370,7 +475,9 @@ export default function RankingPage() {
           const data = await response.json().catch(() => ({}))
 
           if (!ignore && response.ok && data.ok !== false) {
-            setAuthors(Array.isArray(data.author_pages) ? data.author_pages : [])
+            setAuthors(
+              Array.isArray(data.author_pages) ? data.author_pages : []
+            )
           }
         }
 
@@ -378,7 +485,12 @@ export default function RankingPage() {
           const response = meResult.value
           const data = await response.json().catch(() => ({}))
 
-          if (!ignore && response.ok && data.ok !== false && data.has_author_page) {
+          if (
+            !ignore &&
+            response.ok &&
+            data.ok !== false &&
+            data.has_author_page
+          ) {
             setMyAuthor(data.author_page || null)
           }
         }
@@ -406,9 +518,27 @@ export default function RankingPage() {
       try {
         setLoading(true)
 
-        const statusQuery = activeTab === 'completed' ? '&story_status=Completed' : ''
-        const publicUrl = `${API_URL}/api/public/stories?limit=24&ranking=1&sort=${activeConfig.sort}${statusQuery}`
-        const exclusiveUrl = `${API_URL}/api/public/shadow-exclusive/stories?limit=24&ranking=1&sort=${activeConfig.sort}${statusQuery}`
+        const params = new URLSearchParams({
+          limit: String(RANKING_LIMIT),
+          ranking: '1',
+          sort: activeConfig.sort,
+        })
+
+        if (activeTab === 'completed') {
+          params.set('story_status', 'Completed')
+        }
+
+        if (activeGenre !== 'All') {
+          params.set('genre', activeGenre)
+        }
+
+        const publicUrl = addStoryLanguageParam(
+          `${API_URL}/api/public/stories?${params.toString()}`
+        )
+
+        const exclusiveUrl = addStoryLanguageParam(
+          `${API_URL}/api/public/shadow-exclusive/stories?${params.toString()}`
+        )
 
         const [publicResult, exclusiveResult] = await Promise.allSettled([
           fetch(publicUrl),
@@ -430,33 +560,29 @@ export default function RankingPage() {
         const exclusiveStories = await readStories(exclusiveResult)
         const storyMap = new Map()
 
-        ;[...publicStories, ...exclusiveStories].forEach((story) => {
+        for (const story of [...publicStories, ...exclusiveStories]) {
           if (story?.id && !storyMap.has(story.id)) {
             storyMap.set(story.id, story)
           }
-        })
+        }
 
         let nextStories = Array.from(storyMap.values()).map(normalizeStory)
-        nextStories.sort((a, b) => {
-  if (activeTab === 'rising') return b.weeklyUpdates - a.weeklyUpdates || b.updatedAt - a.updatedAt
-  if (activeTab === 'new') return b.createdAt - a.createdAt
-  if (activeTab === 'bestseller') return b.views - a.views
-  if (activeTab === 'must_read') return b.comments - a.comments
-  return b.likes - a.likes || b.views - a.views
-})
 
-
-        
         if (activeTab === 'rising') {
-  nextStories = nextStories.filter((story) => story.weeklyUpdates > 0)
-}
+          nextStories = nextStories.filter((story) => story.weeklyUpdates > 0)
+        }
+
         if (activeTab === 'completed') {
           nextStories = nextStories.filter((story) => story.status === 'Completed')
         }
 
+        nextStories = sortRankingStories(nextStories, activeTab).slice(
+          0,
+          RANKING_LIMIT
+        )
+
         if (!ignore) {
           setStories(nextStories)
-          setActiveGenre('All')
         }
       } catch {
         if (!ignore) setStories([])
@@ -470,20 +596,7 @@ export default function RankingPage() {
     return () => {
       ignore = true
     }
-  }, [activeTab, activeConfig.sort])
-
-  const genres = useMemo(() => {
-    const values = [...new Set(stories.map((story) => story.genre).filter(Boolean))]
-    return ['All', ...values]
-  }, [stories])
-
-  const visibleStories = useMemo(() => {
-    if (activeGenre === 'All') return stories
-
-    return stories.filter(
-      (story) => String(story.genre).toLowerCase() === String(activeGenre).toLowerCase()
-    )
-  }, [stories, activeGenre])
+  }, [activeTab, activeGenre, activeConfig.sort])
 
   const myAuthorRank = useMemo(() => {
     if (!myAuthor) return null
@@ -492,7 +605,8 @@ export default function RankingPage() {
     const index = authors.findIndex(
       (author) =>
         String(author.id || '') === String(myAuthor.id || '') ||
-        String(author.page_username || '') === String(myAuthor.page_username || '')
+        String(author.page_username || '') ===
+          String(myAuthor.page_username || '')
     )
 
     return index >= 0 ? index + 1 : null
@@ -535,14 +649,6 @@ export default function RankingPage() {
       </header>
 
       <main className="mx-auto max-w-[640px] bg-white">
-        <div className="hidden">
-          {hiddenTimeFilters.map((filter) => (
-            <button key={filter} type="button" onClick={() => setActiveTime(filter)}>
-              {activeTime === filter ? filter : filter}
-            </button>
-          ))}
-        </div>
-
         <TopAuthorsSection
           authors={authors.slice(0, 3)}
           loading={authorsLoading}
@@ -552,7 +658,7 @@ export default function RankingPage() {
 
         <section className="border-b border-[#f1f1f1] bg-white px-3 py-3">
           <div className="no-scrollbar flex gap-2 overflow-x-auto">
-            {genres.map((genre) => {
+            {rankingGenres.map((genre) => {
               const active = activeGenre === genre
 
               return (
@@ -585,8 +691,8 @@ export default function RankingPage() {
                 <LoadingStoryRow />
                 <LoadingStoryRow />
               </>
-            ) : visibleStories.length ? (
-              visibleStories.map((story, index) => (
+            ) : stories.length ? (
+              stories.map((story, index) => (
                 <RankedStoryRow
                   key={story.id}
                   story={story}
