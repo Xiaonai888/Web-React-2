@@ -557,6 +557,26 @@ export default function AuthorChatInboxPage() {
     ''
 
   function openComment(notification) {
+  const metadata =
+    notification?.metadata &&
+    typeof notification.metadata === 'object'
+      ? notification.metadata
+      : {}
+
+  const postId = String(metadata.post_id || '').trim()
+  const commentId = String(metadata.comment_id || '').trim()
+
+  if (!postId || !commentId) {
+    setError('This Page comment cannot be opened.')
+    return
+  }
+
+  navigate(
+    `/author/page/chat/comments/${encodeURIComponent(postId)}/${encodeURIComponent(commentId)}`
+  )
+}
+
+  function openComment(notification) {
     const target =
       notification?.target_url ||
       notification?.targetUrl ||
