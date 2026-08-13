@@ -17,6 +17,16 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
+const REACTION_ICON_BY_TYPE = {
+  love: '/assets/React/Love.svg',
+  haha: '/assets/React/Haha.svg',
+  wow: '/assets/React/Wow.svg',
+  sad: '/assets/React/Sad.svg',
+  angry: '/assets/React/Angry.svg',
+  support: '/assets/React/Support.svg',
+  touched: '/assets/React/Touched.svg',
+}
+
 function formatDate(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -210,6 +220,10 @@ export default function AuthorPostCommentFocusPage() {
     [pageUsername]
   )
 
+  const reactionSummary = Array.isArray(post?.reaction_summary)
+    ? post.reaction_summary.slice(0, 3)
+    : []
+
   return (
     <div className="min-h-[100dvh] bg-[#f0f2f5] text-[#111827]">
       <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white">
@@ -277,7 +291,7 @@ export default function AuthorPostCommentFocusPage() {
           </div>
         ) : post && comment ? (
           <>
-            <article className="bg-white py-4">
+            <article className="bg-white pt-4">
               <div className="flex items-start gap-3 px-4">
                 <button
                   type="button"
@@ -353,45 +367,80 @@ export default function AuthorPostCommentFocusPage() {
 </div>
 
 
-              <div className="px-4 pb-3">
-  <div className="grid grid-cols-3 items-center py-2 text-[14px] font-medium text-[#65676b]">
-    <button type="button" className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]">
-      <i className="fa-regular fa-heart text-[18px]" />
-      <span>Like</span>
-    </button>
+              <div className="px-4 pb-1">
+                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-semibold text-[#65676b]">
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+                  >
+                    <i className="fa-solid fa-heart text-[18px]" />
+                    <span>Like</span>
+                  </button>
 
-    <button
-      type="button"
-      onClick={() =>
-        document
-          .getElementById(`comment-${comment.id}`)
-          ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-      }
-      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
-    >
-      <i className="fa-regular fa-comment text-[18px]" />
-      <span>Comment</span>
-    </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document
+                        .getElementById(`comment-${comment.id}`)
+                        ?.scrollIntoView({
+                          block: 'center',
+                          behavior: 'smooth',
+                        })
+                    }
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+                  >
+                    <i className="fa-solid fa-comment text-[18px]" />
+                    <span>Comment</span>
+                  </button>
 
-    <button type="button" className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]">
-      <i className="fa-solid fa-rotate text-[17px]" />
-      <span>Echo</span>
-    </button>
-  </div>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+                  >
+                    <i className="fa-solid fa-rotate text-[18px]" />
+                    <span>Echo</span>
+                  </button>
+                </div>
 
-  <div className="flex items-center justify-between text-[12px] text-[#65676b]">
-    <span>{Number(post.like_count || 0)} reactions</span>
+                <div className="flex items-center justify-between pb-1 text-[12px] text-[#65676b]">
+                  <div className="flex min-w-0 items-center">
+                    {Number(post.like_count || 0) > 0 ? (
+                      <>
+                        <span className="flex items-center -space-x-1">
+                          {(reactionSummary.length
+                            ? reactionSummary
+                            : [{ type: 'love' }]
+                          ).map((reaction, index) => (
+                            <img
+                              key={`${reaction.type || 'love'}-${index}`}
+                              src={
+                                REACTION_ICON_BY_TYPE[reaction.type] ||
+                                REACTION_ICON_BY_TYPE.love
+                              }
+                              alt=""
+                              className="h-[17px] w-[17px] rounded-full bg-white ring-1 ring-white"
+                            />
+                          ))}
+                        </span>
+                        <span className="ml-1.5">
+                          {Number(post.like_count || 0)}
+                        </span>
+                      </>
+                    ) : (
+                      <span>0</span>
+                    )}
+                  </div>
 
-    <div className="flex items-center gap-4">
-      <span>{Number(post.comment_count || 0)} comments</span>
-      <span>{Number(post.echo_count || 0)} echoes</span>
-    </div>
-  </div>
-</div>
+                  <div className="flex items-center gap-4">
+                    <span>{Number(post.comment_count || 0)} comments</span>
+                    <span>{Number(post.echo_count || 0)} echoes</span>
+                  </div>
+                </div>
+              </div>
 
             </article>
 
-            <section className="mt-2 bg-white">
+            <section className="bg-white">
               <CommentSection
                 targetType="author_post"
                 targetId={post.id}
