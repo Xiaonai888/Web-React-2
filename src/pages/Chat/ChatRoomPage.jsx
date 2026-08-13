@@ -11,6 +11,7 @@ import {
   Camera,
   Forward,
   Info,
+  Image,
   LoaderCircle,
   Pencil,
   Pin,
@@ -2624,6 +2625,18 @@ export default function ChatRoomPage() {
                   <Camera size={20} />
                 )}
               </button>
+
+              {!text.trim() ? (
+  <button
+    type="button"
+    onClick={() => setNotice('Coming soon')}
+    disabled={!canSend || sending}
+    aria-label="Image"
+    className="absolute inset-y-0 right-[39px] my-auto flex h-8 w-8 items-center justify-center bg-transparent text-[#111827] transition active:scale-90 disabled:opacity-45"
+  >
+    <Image size={20} />
+  </button>
+) : null}
 
               <button
                 type="button"
