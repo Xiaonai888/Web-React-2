@@ -8,6 +8,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getAuthorChatToken } from '../../services/authorChatApi'
+import CommentSection from '../../components/comments/CommentSection'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
