@@ -47,6 +47,7 @@ export default function AuthorArchivedChatPage() {
   const navigate = useNavigate()
   const [conversations, setConversations] = useState([])
   const [query, setQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
@@ -161,52 +162,58 @@ export default function AuthorArchivedChatPage() {
   return (
     <div className="min-h-screen bg-[#f7f7f9]">
       <header className="sticky top-0 z-40 border-b border-[#eceaf0] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto max-w-[620px] px-4 pb-4 pt-[max(10px,env(safe-area-inset-top))]">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                navigate('/author/page/chat')
-              }
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
-            >
-              <ChevronLeft size={27} />
-            </button>
+  <div className="mx-auto max-w-[620px] px-4 pt-[max(10px,env(safe-area-inset-top))]">
+    <div className="flex h-[52px] items-center gap-3">
+      <button
+        type="button"
+        onClick={() => {
+          if (searchOpen) {
+            setSearchOpen(false)
+            setQuery('')
+            return
+          }
+          navigate('/author/page/chat')
+        }}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
+      >
+        <ChevronLeft size={27} />
+      </button>
 
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[20px] font-bold text-[#111827]">
-                Archived chats
-              </h1>
-              <p className="text-[11px] font-semibold text-[#8a8792]">
-                Page Messages
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigate('/author/page')}
-              className="rounded-full bg-[#f2edff] px-3 py-2 text-[11px] font-bold text-[#6d46bf]"
-            >
-              Profile page
-            </button>
-          </div>
-
-          <div className="relative mt-4">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#85818b]"
-            />
-            <input
-              value={query}
-              onChange={(event) =>
-                setQuery(event.target.value.slice(0, 60))
-              }
-              placeholder="Search archived chats"
-              className="h-11 w-full rounded-full bg-[#efeff3] pl-11 pr-4 text-[13px] outline-none"
-            />
-          </div>
+      {searchOpen ? (
+        <div className="relative min-w-0 flex-1">
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777a80]"
+          />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) =>
+              setQuery(event.target.value.slice(0, 60))
+            }
+            placeholder="Search archived chats"
+            className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] outline-none"
+          />
         </div>
-      </header>
+      ) : (
+        <>
+          <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none text-[#111827]">
+            Archived chats
+          </h1>
+
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+            aria-label="Search archived chats"
+          >
+            <Search size={24} strokeWidth={2.2} />
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+</header>
 
       <main className="mx-auto max-w-[620px] px-3 pb-[max(28px,env(safe-area-inset-bottom))] pt-3">
         {error ? (
