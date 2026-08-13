@@ -196,6 +196,7 @@ const AuthorChatInboxPage = lazy(() => import('./pages/AuthorChat/AuthorChatInbo
 const AuthorArchivedChatPage = lazy(() => import('./pages/AuthorChat/AuthorArchivedChatPage'))
 const AuthorChatRoomPage = lazy(() => import('./pages/AuthorChat/AuthorChatRoomPage'))
 const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoPage'))
+const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorPostCommentFocusPage'))
 
 
 function ComingSoon({ title }) {
@@ -899,6 +900,10 @@ const shouldShowOpeningAds =
 <Route
   path="/author/page/chat/:conversationId"
   element={<LazyPage><AuthorChatRoomPage /></LazyPage>}
+/>
+        <Route
+  path="/author/page/chat/comments/:postId/:commentId"
+  element={<LazyPage><AuthorPostCommentFocusPage /></LazyPage>}
 />
 
         <Route
