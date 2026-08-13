@@ -224,6 +224,14 @@ export default function AuthorPostCommentFocusPage() {
     }
   }, [commentId, postId])
 
+  useEffect(() => {
+    if (!comment?.id) return
+
+    document
+      .getElementById(`comment-${comment.id}`)
+      ?.scrollIntoView({ block: 'center', behavior: 'auto' })
+  }, [comment?.id])
+
   const page = post?.author_page || {}
   const pageName =
     page.page_name ||
