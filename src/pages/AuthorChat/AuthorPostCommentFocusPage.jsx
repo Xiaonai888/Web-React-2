@@ -379,17 +379,42 @@ export default function AuthorPostCommentFocusPage() {
 </div>
 
 
-              <div className="mt-3 flex items-center gap-5 border-t border-[#eef0f2] px-4 pt-3 text-[13px] text-[#65676b]">
-                <span>
-                  {Number(post.like_count || 0)} reactions
-                </span>
-                <span>
-                  {Number(post.comment_count || 0)} comments
-                </span>
-                <span>
-                  {Number(post.echo_count || 0)} echoes
-                </span>
-              </div>
+              <div className="px-4 pb-3">
+  <div className="grid grid-cols-3 items-center py-2 text-[14px] font-medium text-[#65676b]">
+    <button type="button" className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]">
+      <i className="fa-regular fa-heart text-[18px]" />
+      <span>Like</span>
+    </button>
+
+    <button
+      type="button"
+      onClick={() =>
+        document
+          .getElementById(`comment-${comment.id}`)
+          ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+    >
+      <i className="fa-regular fa-comment text-[18px]" />
+      <span>Comment</span>
+    </button>
+
+    <button type="button" className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]">
+      <i className="fa-solid fa-rotate text-[17px]" />
+      <span>Echo</span>
+    </button>
+  </div>
+
+  <div className="flex items-center justify-between text-[12px] text-[#65676b]">
+    <span>{Number(post.like_count || 0)} reactions</span>
+
+    <div className="flex items-center gap-4">
+      <span>{Number(post.comment_count || 0)} comments</span>
+      <span>{Number(post.echo_count || 0)} echoes</span>
+    </div>
+  </div>
+</div>
+
             </article>
 
             <section className="mt-2 bg-white">
