@@ -368,39 +368,44 @@ export default function AuthorPostCommentFocusPage() {
 
 
               <div className="px-4 pb-1">
-                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-semibold text-[#65676b]">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
-                  >
-                    <i className="fa-solid fa-heart text-[18px]" />
-                    <span>Like</span>
-                  </button>
+                <div className<div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+  <button
+    type="button"
+    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+  >
+    <i className="fa-regular fa-heart text-[18px]" />
+    <span>Like</span>
+  </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document
-                        .getElementById(`comment-${comment.id}`)
-                        ?.scrollIntoView({
-                          block: 'center',
-                          behavior: 'smooth',
-                        })
-                    }
-                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
-                  >
-                    <i className="fa-solid fa-comment text-[18px]" />
-                    <span>Comment</span>
-                  </button>
+  <button
+    type="button"
+    onClick={() =>
+      document
+        .getElementById(`comment-${comment.id}`)
+        ?.scrollIntoView({
+          block: 'center',
+          behavior: 'smooth',
+        })
+    }
+    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+  >
+    <i className="fa-regular fa-comment text-[18px]" />
+    <span>Comment</span>
+  </button>
 
-                  <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
-                  >
-                    <i className="fa-solid fa-rotate text-[18px]" />
-                    <span>Echo</span>
-                  </button>
-                </div>
+  <button
+    type="button"
+    className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+  >
+    <img
+      src="/assets/Icons/echo.svg"
+      alt=""
+      aria-hidden="true"
+      className="h-[18px] w-[18px] object-contain opacity-70"
+    />
+    <span>Echo</span>
+  </button>
+</div>
 
                 <div className="flex items-center justify-between pb-1 text-[12px] text-[#65676b]">
                   <div className="flex min-w-0 items-center">
