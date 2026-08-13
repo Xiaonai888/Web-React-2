@@ -360,6 +360,25 @@ export default function AuthorPostCommentFocusPage() {
 
               <PostImages images={post.image_urls} />
 
+              <div className="mt-3 flex items-center justify-between gap-3 px-4 py-3">
+  <button
+    type="button"
+    onClick={() => window.alert('Insights and Ads coming soon.')}
+    className="text-left text-[14px] font-medium text-[#1877f2] active:opacity-70"
+  >
+    See insights and ads
+  </button>
+
+  <button
+    type="button"
+    onClick={() => window.alert('Boost Post coming soon.')}
+    className="h-10 rounded-[8px] bg-[#1877f2] px-4 text-[14px] font-semibold text-white active:opacity-90"
+  >
+    Boost Post
+  </button>
+</div>
+
+
               <div className="mt-3 flex items-center gap-5 border-t border-[#eef0f2] px-4 pt-3 text-[13px] text-[#65676b]">
                 <span>
                   {Number(post.like_count || 0)} reactions
