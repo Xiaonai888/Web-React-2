@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -105,6 +106,7 @@ export default function AdvertisementPopup({
   blocking = false,
   advertisementOverride = null,
 }) {
+  const navigate = useNavigate()
   const [advertisement, setAdvertisement] = useState(null)
   const [visible, setVisible] = useState(false)
   const [loadingAd, setLoadingAd] = useState(Boolean(blocking))
@@ -333,11 +335,37 @@ export default function AdvertisementPopup({
     />
   )
 
+  function handleAdLink(event) {
+    event.preventDefault()
+
+    const link = String(advertisement.link_url || '').trim()
+    if (!link) return
+
+    try {
+      const url = new URL(link, window.location.origin)
+      const hostname = url.hostname.toLowerCase()
+
+      const isShadowLink =
+        url.origin === window.location.origin ||
+        hostname === 'shadowerabook.site' ||
+        hostname === 'www.shadowerabook.site'
+
+      if (isShadowLink) {
+        finishAd()
+        navigate(`${url.pathname}${url.search}${url.hash}`)
+        return
+      }
+
+      window.open(url.href, '_blank', 'noopener,noreferrer')
+    } catch {
+      return
+    }
+  }
+
   const linkedImage = advertisement.link_url ? (
     <a
       href={advertisement.link_url}
-      target="_blank"
-      rel="noreferrer"
+      onClick={handleAdLink}
       className="block h-full w-full"
     >
       {image}
