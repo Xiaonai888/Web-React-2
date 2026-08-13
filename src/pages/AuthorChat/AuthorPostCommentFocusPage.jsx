@@ -94,56 +94,11 @@ function PostImages({ images }) {
   )
 }
 
-function FocusComment({ comment, label }) {
-  if (!comment) return null
-
-  const user = comment.user || {}
-
-  return (
-    <article
-      id={`comment-${comment.id}`}
-      className="flex gap-3 px-4 py-4"
-    >
-      <Avatar
-        src={user.avatar_url}
-        name={user.name || user.username}
-        size="h-11 w-11"
-      />
-
-      <div className="min-w-0 flex-1">
-        {label ? (
-          <div className="mb-1 text-[11px] font-semibold text-[#7c3aed]">
-            {label}
-          </div>
-        ) : null}
-
-        <div className="inline-block max-w-full rounded-[18px] bg-[#f0f2f5] px-3.5 py-2.5">
-          <div className="text-[14px] font-semibold text-[#111827]">
-            {user.name || user.username || 'Shadow Reader'}
-          </div>
-
-          <div className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-[#111827]">
-            {comment.text || ''}
-          </div>
-        </div>
-
-        <div className="mt-1.5 flex items-center gap-3 pl-2 text-[11px] font-medium text-[#65676b]">
-          <span>{formatDate(comment.created_at)}</span>
-          {Number(comment.likes || 0) > 0 ? (
-            <span>{Number(comment.likes || 0)} likes</span>
-          ) : null}
-        </div>
-      </div>
-    </article>
-  )
-}
-
 export default function AuthorPostCommentFocusPage() {
   const navigate = useNavigate()
   const { postId, commentId } = useParams()
   const [post, setPost] = useState(null)
   const [comment, setComment] = useState(null)
-  const [parentComment, setParentComment] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -203,7 +158,6 @@ export default function AuthorPostCommentFocusPage() {
 
         setPost(postData.post || null)
         setComment(commentData.comment || null)
-        setParentComment(commentData.parent_comment || null)
 
         
       } catch (loadError) {
@@ -337,18 +291,37 @@ export default function AuthorPostCommentFocusPage() {
                 </button>
 
                 <div className="min-w-0 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => navigate(profilePath)}
-                    className="block max-w-full truncate text-left text-[15px] font-bold"
-                  >
-                    {pageName}
-                  </button>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => navigate(profilePath)}
+                        className="block max-w-full truncate text-left text-[15px] font-bold"
+                      >
+                        {pageName}
+                      </button>
 
-                  <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[#65676b]">
-                    <span>{formatDate(post.created_at)}</span>
-                    <span>·</span>
-                    <Globe2 size={13} />
+                      <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[#65676b]">
+                        {post.is_pinned ? (
+                          <>
+                            <i className="fa-solid fa-thumbtack text-[10px]" />
+                            <span>Pinned</span>
+                            <span>·</span>
+                          </>
+                        ) : null}
+                        <span>{formatDate(post.created_at)}</span>
+                        <span>·</span>
+                        <Globe2 size={13} />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center text-[#65676b] active:bg-[#f2f2f2]"
+                      aria-label="Post options"
+                    >
+                      <i className="fa-solid fa-ellipsis text-[15px]" />
+                    </button>
                   </div>
                 </div>
               </div>
