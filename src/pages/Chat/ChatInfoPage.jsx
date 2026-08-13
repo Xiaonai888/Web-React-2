@@ -1419,7 +1419,6 @@ setAutoDeleteStatus({
             </button>
           )}
         </section>
-        </section>
       </main>
 <ChatGroupCreateSheet
   open={groupCreateOpen}
