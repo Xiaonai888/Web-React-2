@@ -68,6 +68,12 @@ function normalizeStory(story) {
     tags: normalizeTags(story.tags),
     cover: story.cover_url || '',
     status: getStoryStatus(story),
+    views: Number(story.total_views || 0),
+    likes: Number(story.total_likes || 0),
+    comments: Number(story.total_comments || 0),
+    weeklyUpdates: Number(story.weekly_update_count || 0),
+    createdAt: new Date(story.created_at || 0).getTime(),
+    updatedAt: new Date(story.last_episode_published_at || story.updated_at || story.created_at || 0).getTime(),
   }
 }
 
@@ -431,7 +437,19 @@ export default function RankingPage() {
         })
 
         let nextStories = Array.from(storyMap.values()).map(normalizeStory)
+        nextStories.sort((a, b) => {
+  if (activeTab === 'rising') return b.weeklyUpdates - a.weeklyUpdates || b.updatedAt - a.updatedAt
+  if (activeTab === 'new') return b.createdAt - a.createdAt
+  if (activeTab === 'bestseller') return b.views - a.views
+  if (activeTab === 'must_read') return b.comments - a.comments
+  return b.likes - a.likes || b.views - a.views
+})
 
+
+        
+        if (activeTab === 'rising') {
+  nextStories = nextStories.filter((story) => story.weeklyUpdates > 0)
+}
         if (activeTab === 'completed') {
           nextStories = nextStories.filter((story) => story.status === 'Completed')
         }
