@@ -418,11 +418,12 @@ export default function AuthorPostCommentFocusPage() {
             </article>
 
             <section className="mt-2 bg-white">
-              <div className="border-b border-[#eef0f2] px-4 py-3">
-                <h2 className="text-[15px] font-bold">
-                  Comment
-                </h2>
-              </div>
+              <div className="px-4 py-3">
+  <button type="button" className="flex items-center gap-2 text-[14px] font-semibold text-[#111827]">
+    <span>Hot comments</span>
+    <i className="fa-solid fa-chevron-down text-[11px]" />
+  </button>
+</div>
 
               {parentComment ? (
                 <FocusComment
