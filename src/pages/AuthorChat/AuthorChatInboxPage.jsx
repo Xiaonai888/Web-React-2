@@ -576,19 +576,7 @@ export default function AuthorChatInboxPage() {
   )
 }
 
-  function openComment(notification) {
-    const target =
-      notification?.target_url ||
-      notification?.targetUrl ||
-      ''
 
-    if (target && target.startsWith('/')) {
-      navigate(target)
-      return
-    }
-
-    navigate('/author/page')
-  }
 
   return (
     <div
