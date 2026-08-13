@@ -368,7 +368,7 @@ export default function AuthorPostCommentFocusPage() {
 
 
               <div className="px-4 pb-1">
-                <div className<div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
+                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
   <button
     type="button"
     className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
