@@ -11,6 +11,7 @@ const hiddenTimeFilters = ['Today', 'Weekly', 'Monthly']
 
 const rankingTabs = [
   { key: 'bestseller', label: 'Bestseller', icon: 'fa-solid fa-trophy', sort: 'popular' },
+  { key: 'bestseller', label: 'Bestseller', icon: 'fa-solid fa-trophy', sort: 'views' },
   { key: 'new', label: 'New', icon: 'fa-solid fa-star', sort: 'newest' },
   { key: 'popular', label: 'Popular', icon: 'fa-solid fa-fire', sort: 'popular' },
   { key: 'rising', label: 'Rising', icon: 'fa-solid fa-arrow-trend-up', sort: 'weekly_top' },
