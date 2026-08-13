@@ -22,9 +22,8 @@ function formatDate(value) {
 }
 
 function isNewEpisode(episode) {
-  const value = episode?.published_at || episode?.created_at
-  if (!value) return false
-  const time = new Date(value).getTime()
+  if (!episode?.published_at) return false
+  const time = new Date(episode.published_at).getTime()
   if (!Number.isFinite(time)) return false
   const age = Date.now() - time
   return age >= 0 && age < 7 * 24 * 60 * 60 * 1000
