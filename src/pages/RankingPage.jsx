@@ -400,8 +400,9 @@ export default function RankingPage() {
       try {
         setLoading(true)
 
-        const publicUrl = `${API_URL}/api/public/stories?limit=24&sort=${activeConfig.sort}`
-        const exclusiveUrl = `${API_URL}/api/public/shadow-exclusive/stories?limit=24&sort=${activeConfig.sort}`
+        const statusQuery = activeTab === 'completed' ? '&story_status=Completed' : ''
+        const publicUrl = `${API_URL}/api/public/stories?limit=24&sort=${activeConfig.sort}${statusQuery}`
+        const exclusiveUrl = `${API_URL}/api/public/shadow-exclusive/stories?limit=24&sort=${activeConfig.sort}${statusQuery}`
 
         const [publicResult, exclusiveResult] = await Promise.allSettled([
           fetch(publicUrl),
