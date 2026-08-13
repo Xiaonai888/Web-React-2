@@ -348,6 +348,7 @@ function RequestPanel({
 
 function ConversationMenu({
   open,
+  isGroup,
   canOpenProfile,
   canBlock,
   canUnblock,
@@ -382,6 +383,24 @@ function ConversationMenu({
           View profile
         </button>
 
+        {!isGroup ? (
+  <button
+    type="button"
+    onClick={onOpenProfile}
+    disabled={
+      !canOpenProfile ||
+      Boolean(busyAction)
+    }
+    className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
+  >
+    <UserRound size={17} />
+    View profile
+  </button>
+) : null}
+
+        className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f5f5f7] active:bg-[#ededf0] disabled:opacity-45"
+        className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+
         <button
           type="button"
           onClick={onArchive}
@@ -409,7 +428,9 @@ function ConversationMenu({
           Delete chat
         </button>
 
-        <div className="my-1 h-px bg-[#efedf3]" />
+        {!isGroup ? (
+  <div className="my-1 h-px bg-[#efedf3]" />
+) : null}
 
         {canUnblock ? (
           <button
@@ -910,11 +931,15 @@ function DeleteConversationModal({
   onClose,
   onDelete,
 }) {
-  const canDeleteForBoth =
-    conversation?.conversation_type ===
-      'reader_reader' ||
+  const isGroup =
+  conversation?.is_group === true
+
+const canDeleteForBoth =
+  !isGroup &&
+  (conversation?.conversation_type ===
+    'reader_reader' ||
     conversation?.delete_permissions
-      ?.can_delete_for_both === true
+      ?.can_delete_for_both === true)
 
   return (
     <ModalShell
@@ -982,7 +1007,9 @@ function DeleteConversationModal({
           </button>
         ) : (
           <p className="mt-3 rounded-[14px] bg-[#f7f3ff] px-3 py-2.5 text-[10px] font-bold leading-4 text-[#705b9d]">
-            Author Page conversations can only be deleted from your own side.
+            {isGroup
+  ? 'Group chats can only be deleted from your own inbox.'
+  : 'Author Page conversations can only be deleted from your own side.'}
           </p>
         )}
       </div>
@@ -996,6 +1023,7 @@ function MessageBubble({
   selectionMode,
   highlighted,
   isPinned,
+  isRead,
   setMessageRef,
   onOpenMenu,
   onToggleSelection,
@@ -1227,6 +1255,16 @@ function MessageBubble({
                 message.created_at
               )}
             </span>
+            {message.is_mine &&
+!message.is_deleted ? (
+  <span
+    aria-label={
+      isRead ? 'Read' : 'Sent'
+    }
+  >
+    {isRead ? '✓✓' : '✓'}
+  </span>
+) : null}
           </div>
         </div>
 
@@ -1299,34 +1337,54 @@ export default function ChatRoomPage() {
       if (!silent) setLoading(true)
 
       try {
-        const [data, blockData, pinData] =
-          await Promise.all([
-            getChatMessages(conversationId, {
-              limit: 50,
-            }),
-            getChatBlockStatus(conversationId),
-            getPinnedChatMessages(conversationId),
-          ])
+        const data = await getChatMessages(
+  conversationId,
+  {
+    limit: 50,
+  }
+)
 
-        const incomingMessages =
-          Array.isArray(data.messages)
-            ? data.messages
-            : []
+const roomConversation =
+  data.conversation || null
 
-        setBlockStatus({
-          is_blocked: Boolean(
-            blockData.block_status?.is_blocked
-          ),
-          viewer_has_blocked: Boolean(
-            blockData.block_status
-              ?.viewer_has_blocked
-          ),
-          viewer_is_blocked: Boolean(
-            blockData.block_status
-              ?.viewer_is_blocked
-          ),
+const [blockData, pinData] =
+  await Promise.all([
+    roomConversation?.is_group === true
+      ? Promise.resolve({
+          block_status: {
+            is_blocked: false,
+            viewer_has_blocked: false,
+            viewer_is_blocked: false,
+          },
         })
-        setConversation(data.conversation || null)
+      : getChatBlockStatus(
+          conversationId
+        ),
+    getPinnedChatMessages(
+      conversationId
+    ),
+  ])
+
+const incomingMessages =
+  Array.isArray(data.messages)
+    ? data.messages
+    : []
+
+setBlockStatus({
+  is_blocked: Boolean(
+    blockData.block_status?.is_blocked
+  ),
+  viewer_has_blocked: Boolean(
+    blockData.block_status
+      ?.viewer_has_blocked
+  ),
+  viewer_is_blocked: Boolean(
+    blockData.block_status
+      ?.viewer_is_blocked
+  ),
+})
+
+setConversation(roomConversation)
         setPins(
           Array.isArray(pinData.pins)
             ? pinData.pins
@@ -2117,21 +2175,85 @@ export default function ChatRoomPage() {
     }
   }
 
-  const person = conversation?.counterpart || {}
-  const canSend = Boolean(conversation?.can_send)
-  const canOpenProfile = Boolean(person.username)
-  const canBlock = Boolean(
-    conversation && !blockStatus.is_blocked
+  useEffect(() => {
+  const textarea =
+    textareaRef.current
+
+  if (!textarea) return
+
+  const minHeight = 46
+  const maxHeight = 124
+
+  textarea.style.height =
+    `${minHeight}px`
+  textarea.style.overflowY =
+    'hidden'
+
+  const contentHeight =
+    textarea.scrollHeight
+
+  textarea.style.height =
+    `${Math.min(
+      Math.max(
+        contentHeight,
+        minHeight
+      ),
+      maxHeight
+    )}px`
+
+  textarea.style.overflowY =
+    contentHeight > maxHeight
+      ? 'auto'
+      : 'hidden'
+}, [text])
+
+  const person =
+  conversation?.counterpart || {}
+
+const isGroup =
+  conversation?.is_group === true
+
+const canSend =
+  Boolean(conversation?.can_send)
+
+const canOpenProfile =
+  !isGroup &&
+  Boolean(person.username)
+
+const canBlock =
+  !isGroup &&
+  Boolean(
+    conversation &&
+      !blockStatus.is_blocked
   )
-  const canUnblock = Boolean(
+
+const canUnblock =
+  !isGroup &&
+  Boolean(
     conversation &&
       blockStatus.viewer_has_blocked
   )
-  const blockedByOther = Boolean(
+
+const blockedByOther =
+  !isGroup &&
+  Boolean(
     conversation &&
       blockStatus.viewer_is_blocked &&
       !blockStatus.viewer_has_blocked
   )
+
+const readTimeValue =
+  !isGroup &&
+  conversation?.counterpart_last_read_at
+    ? new Date(
+        conversation.counterpart_last_read_at
+      ).getTime()
+    : 0
+
+const counterpartReadAt =
+  Number.isFinite(readTimeValue)
+    ? readTimeValue
+    : 0
 
   const handleOpenChatInfo = () => {
   setMenuOpen(false)
@@ -2268,12 +2390,16 @@ export default function ChatRoomPage() {
                   {person.name || 'Conversation'}
                 </h1>
                 <p className="truncate text-[10px] font-semibold text-[#92929c]">
-                  {person.username
-                    ? `@${person.username}`
-                    : conversation?.request_status ===
-                        'accepted'
-                      ? 'Messages'
-                      : 'Message request'}
+                  {isGroup
+  ? `${Number(
+      conversation?.member_count || 0
+    )} people`
+  : person.username
+    ? `@${person.username}`
+    : conversation?.request_status ===
+        'accepted'
+      ? 'Messages'
+      : 'Message request'}
                 </p>
               </button>
 
@@ -2291,6 +2417,7 @@ export default function ChatRoomPage() {
               </button>
 
               <ConversationMenu
+                isGroup={isGroup}
                 open={menuOpen}
                 canOpenProfile={canOpenProfile}
                 canBlock={canBlock}
@@ -2394,6 +2521,15 @@ export default function ChatRoomPage() {
                     isPinned={pinIds.has(
                       String(message.id)
                     )}
+                    isRead={
+  !isGroup &&
+  message.is_mine &&
+  counterpartReadAt > 0 &&
+  new Date(
+    message.created_at
+  ).getTime() <=
+    counterpartReadAt
+}
                     setMessageRef={setMessageRef}
                     onOpenMenu={openMessageMenu}
                     onToggleSelection={toggleSelection}
@@ -2472,7 +2608,7 @@ export default function ChatRoomPage() {
                       ? 'Waiting for request approval'
                       : 'Messages are unavailable'
                 }
-                className="max-h-28 min-h-[46px] w-full resize-none rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="max-h-[124px] min-h-[46px] overflow-y-hidden w-full resize-none rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <button
