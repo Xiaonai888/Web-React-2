@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addStoryLanguageParam } from '../utils/storyLanguage'
 
@@ -231,7 +231,7 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
   const third = authors[2]
 
   return (
-    <section className="border-b border-[#f1f1f1] bg-white px-4 pb-5 pt-4">
+    <section className="bg-white px-4 pb-5 pt-4">
       <div className="mb-7 flex items-center justify-between">
         <h2 className="text-[16px] font-bold text-[#111827]">Top Authors</h2>
 
@@ -269,6 +269,83 @@ function TopAuthorsSection({ authors, loading, onOpen, onViewAll }) {
           No author ranking yet
         </div>
       )}
+    </section>
+  )
+}
+
+function GenreScroller({ genres, activeGenre, onChange }) {
+  const scrollRef = useRef(null)
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startScrollLeft: 0,
+    moved: false,
+  })
+
+  function startDrag(event) {
+    if (event.button !== 0 || !scrollRef.current) return
+
+    dragRef.current.active = true
+    dragRef.current.startX = event.clientX
+    dragRef.current.startScrollLeft = scrollRef.current.scrollLeft
+    dragRef.current.moved = false
+  }
+
+  function moveDrag(event) {
+    if (!dragRef.current.active || !scrollRef.current) return
+
+    const distance = event.clientX - dragRef.current.startX
+
+    if (Math.abs(distance) > 4) {
+      dragRef.current.moved = true
+    }
+
+    scrollRef.current.scrollLeft =
+      dragRef.current.startScrollLeft - distance
+  }
+
+  function stopDrag() {
+    if (!dragRef.current.active) return
+
+    dragRef.current.active = false
+
+    window.setTimeout(() => {
+      dragRef.current.moved = false
+    }, 0)
+  }
+
+  return (
+    <section className="bg-white px-3 py-3">
+      <div
+        ref={scrollRef}
+        onMouseDown={startDrag}
+        onMouseMove={moveDrag}
+        onMouseUp={stopDrag}
+        onMouseLeave={stopDrag}
+        className="no-scrollbar flex cursor-grab select-none gap-2 overflow-x-auto active:cursor-grabbing"
+      >
+        {genres.map((genre) => {
+          const active = activeGenre === genre
+
+          return (
+            <button
+              key={genre}
+              type="button"
+              onClick={() => {
+                if (dragRef.current.moved) return
+                onChange(genre)
+              }}
+              className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] leading-[18px] transition-colors active:scale-[0.98] ${
+                active
+                  ? 'bg-[#facc15] font-semibold text-[#111827]'
+                  : 'bg-white font-medium text-[#111827] ring-1 ring-[#e4e7ec] hover:bg-[#facc15] hover:text-[#111827]'
+              }`}
+            >
+              {genre}
+            </button>
+          )
+        })}
+      </div>
     </section>
   )
 }
@@ -329,6 +406,8 @@ function RankedStoryRow({ story, rank, onOpen }) {
     (item) => item.toLowerCase() !== String(story.genre || '').toLowerCase()
   )
 
+  const genreText = [story.genre, tag].filter(Boolean).join('/')
+
   return (
     <button
       type="button"
@@ -370,19 +449,8 @@ function RankedStoryRow({ story, rank, onOpen }) {
           {story.title}
         </h3>
 
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-medium text-[#7b8190]">
-            {story.genre}
-          </span>
-
-          {tag ? (
-            <>
-              <span className="text-[10px] text-[#c0c4cc]">•</span>
-              <span className="rounded-full bg-[#f4f5f7] px-2 py-0.5 text-[10px] font-semibold text-[#737987]">
-                {tag}
-              </span>
-            </>
-          ) : null}
+        <div className="mt-2 truncate text-[11px] font-normal text-[#7b8190]">
+          {genreText}
         </div>
       </div>
     </button>
@@ -656,28 +724,11 @@ export default function RankingPage() {
           onViewAll={() => navigate('/authors/top')}
         />
 
-        <section className="border-b border-[#f1f1f1] bg-white px-3 py-3">
-          <div className="no-scrollbar flex gap-2 overflow-x-auto">
-            {rankingGenres.map((genre) => {
-              const active = activeGenre === genre
-
-              return (
-                <button
-                  key={genre}
-                  type="button"
-                  onClick={() => setActiveGenre(genre)}
-                  className={`shrink-0 rounded-full border px-4 py-2 text-[11px] font-bold transition ${
-                    active
-                      ? 'border-[#f4b400] bg-[#111827] text-[#ffd21c]'
-                      : 'border-[#111827] bg-[#111827] text-white'
-                  }`}
-                >
-                  {genre}
-                </button>
-              )
-            })}
-          </div>
-        </section>
+        <GenreScroller
+  genres={rankingGenres}
+  activeGenre={activeGenre}
+  onChange={setActiveGenre}
+/>
 
         <div className="flex items-stretch">
           <SideRankingTabs activeTab={activeTab} onChange={setActiveTab} />
