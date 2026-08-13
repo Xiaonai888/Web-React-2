@@ -185,9 +185,15 @@ function AuthorRankItem({ author, rank, onOpen }) {
       }`}
     >
       <div className="relative mx-auto w-fit">
-        {isFirst ? (
-          <i className="fa-solid fa-crown absolute -top-7 left-1/2 -translate-x-1/2 text-[24px] text-[#f5b600]" />
-        ) : null}
+        <i
+  className={`fa-solid fa-crown absolute -top-7 left-1/2 -translate-x-1/2 text-[24px] ${
+    rank === 1
+      ? 'text-[#f5b600]'
+      : rank === 2
+        ? 'text-[#aeb8c7]'
+        : 'text-[#d88b45]'
+  }`}
+/>
 
         <div
           className={`flex ${avatarSize} items-center justify-center overflow-hidden rounded-full bg-[#f3f4f6] text-[20px] font-bold text-[#111827] ring-[3px] ${ring} ring-offset-2 ring-offset-white`}
@@ -352,7 +358,7 @@ function GenreScroller({ genres, activeGenre, onChange }) {
 
 function SideRankingTabs({ activeTab, onChange }) {
   return (
-    <aside className="w-[74px] shrink-0 border-r border-[#f0f0f0] bg-white">
+    <aside className="w-[74px] shrink-0 bg-white">
       <div className="sticky top-[57px] py-2">
         {rankingTabs.map((tab) => {
           const active = activeTab === tab.key
@@ -362,21 +368,15 @@ function SideRankingTabs({ activeTab, onChange }) {
               key={tab.key}
               type="button"
               onClick={() => onChange(tab.key)}
-              className={`relative flex min-h-[72px] w-full flex-col items-center justify-center gap-1.5 px-1 text-center transition ${
-                active ? 'bg-[#fffaf0] text-[#d99a00]' : 'text-[#b8bcc4]'
-              }`}
+              className="flex min-h-[72px] w-full flex-col items-center justify-center gap-1.5 px-1 text-center"
             >
-              {active ? (
-                <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full bg-[#f4b400]" />
-              ) : null}
-
-              <i className={`${tab.icon} text-[18px]`} />
-
-              <span
-                className={`text-[9.5px] leading-tight ${
-                  active ? 'font-bold' : 'font-semibold'
+              <i
+                className={`${tab.icon} text-[18px] transition-colors ${
+                  active ? 'text-[#facc15]' : 'text-[#cfd2d8]'
                 }`}
-              >
+              />
+
+              <span className="text-[9.5px] font-medium leading-tight text-[#111827]">
                 {tab.label}
               </span>
             </button>
