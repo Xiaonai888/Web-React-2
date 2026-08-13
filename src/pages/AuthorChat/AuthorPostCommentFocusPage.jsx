@@ -346,9 +346,9 @@ export default function AuthorPostCommentFocusPage() {
   <button
     type="button"
     onClick={() => window.alert('Boost Post coming soon.')}
-    className="h-10 rounded-[8px] bg-[#1877f2] px-4 text-[14px] font-semibold text-white active:opacity-90"
+    className="h-10 rounded-[8px] bg-[#111827] px-4 text-[14px] font-semibold text-white active:opacity-90"
   >
-    Boost Post
+    Boost post
   </button>
 </div>
 
