@@ -204,14 +204,7 @@ export default function AuthorPostCommentFocusPage() {
         setComment(commentData.comment || null)
         setParentComment(commentData.parent_comment || null)
 
-        window.requestAnimationFrame(() => {
-          document
-            .getElementById(`comment-${commentId}`)
-            ?.scrollIntoView({
-              block: 'center',
-              behavior: 'auto',
-            })
-        })
+        
       } catch (loadError) {
         if (!ignore) {
           setError(
