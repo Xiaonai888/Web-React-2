@@ -468,6 +468,7 @@ export default function RankingPage() {
 
   const myAuthorRank = useMemo(() => {
     if (!myAuthor) return null
+    if (Number(myAuthor.rank) > 0) return Number(myAuthor.rank)
 
     const index = authors.findIndex(
       (author) =>
