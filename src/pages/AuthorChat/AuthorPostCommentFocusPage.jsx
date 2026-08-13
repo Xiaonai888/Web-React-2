@@ -419,27 +419,21 @@ export default function AuthorPostCommentFocusPage() {
             </article>
 
             <section className="mt-2 bg-white">
-              <div className="px-4 py-3">
-  <button type="button" className="flex items-center gap-2 text-[14px] font-semibold text-[#111827]">
-    <span>Hot comments</span>
-    <i className="fa-solid fa-chevron-down text-[11px]" />
-  </button>
-</div>
-
-              {parentComment ? (
-                <FocusComment
-                  comment={parentComment}
-                  label="Original comment"
-                />
-              ) : null}
-
-              <FocusComment
-                comment={comment}
-                label={
-                  parentComment
-                    ? 'Selected reply'
-                    : 'Selected comment'
-                }
+              <CommentSection
+                targetType="author_post"
+                targetId={post.id}
+                variant="page"
+                story={{ ...post, author_page: page }}
+                onCommentsChange={() => {
+                  window.requestAnimationFrame(() => {
+                    document
+                      .getElementById(`comment-${comment.id}`)
+                      ?.scrollIntoView({
+                        block: 'center',
+                        behavior: 'auto',
+                      })
+                  })
+                }}
               />
             </section>
           </>
