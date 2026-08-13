@@ -2616,7 +2616,7 @@ export default function ChatRoomPage() {
                     ? 'Search messages'
                     : 'Camera'
                 }
-                className="absolute left-[5px] top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
+                className="absolute inset-y-0 left-[7px] my-auto flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
               >
                 {text.trim() ? (
                   <Search size={19} />
@@ -2641,7 +2641,11 @@ export default function ChatRoomPage() {
                       : 'Send message'
                     : 'Emoji'
                 }
-                className="absolute right-[5px] top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white transition active:scale-90 disabled:opacity-45"
+                className={`absolute inset-y-0 right-[7px] my-auto flex h-8 w-8 items-center justify-center transition active:scale-90 disabled:opacity-45 ${
+  text.trim()
+    ? 'rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white'
+    : 'bg-transparent text-[#111827]'
+}`}
               >
                 {sending ? (
                   <LoaderCircle
