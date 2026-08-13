@@ -14,7 +14,7 @@ const rankingTabs = [
   { key: 'new', label: 'New', icon: 'fa-solid fa-star', sort: 'newest' },
   { key: 'popular', label: 'Popular', icon: 'fa-solid fa-fire', sort: 'popular' },
   { key: 'rising', label: 'Rising', icon: 'fa-solid fa-arrow-trend-up', sort: 'weekly_top' },
-  { key: 'must_read', label: 'Must-read', icon: 'fa-solid fa-book-open', sort: 'popular' },
+  { key: 'must_read', label: 'Must-read', icon: 'fa-solid fa-book-open', sort: 'comments' },
   { key: 'completed', label: 'Completed', icon: 'fa-solid fa-circle-check', sort: 'popular' },
 ]
 
