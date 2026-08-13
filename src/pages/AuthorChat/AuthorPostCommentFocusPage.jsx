@@ -445,7 +445,7 @@ export default function AuthorPostCommentFocusPage() {
 
             </article>
 
-            <section className="bg-white">
+            <section className="bg-white pt-3">
               <CommentSection
                 targetType="author_post"
                 targetId={post.id}
