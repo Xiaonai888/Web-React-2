@@ -373,39 +373,23 @@ function ConversationMenu({
       />
 
       <div className="absolute right-3 top-[56px] z-[85] w-[220px] overflow-hidden rounded-[18px] border border-[#eceaf2] bg-white p-1.5 shadow-[0_18px_45px_rgba(17,24,39,0.17)]">
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          disabled={!canOpenProfile || Boolean(busyAction)}
-          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
-        >
-          <UserRound size={17} />
-          View profile
-        </button>
-
         {!isGroup ? (
-  <button
-    type="button"
-    onClick={onOpenProfile}
-    disabled={
-      !canOpenProfile ||
-      Boolean(busyAction)
-    }
-    className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
-  >
-    <UserRound size={17} />
-    View profile
-  </button>
-) : null}
-
-        className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f5f5f7] active:bg-[#ededf0] disabled:opacity-45"
-        className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            disabled={!canOpenProfile || Boolean(busyAction)}
+            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f7f5fb] active:bg-[#f1edf8] disabled:opacity-45"
+          >
+            <UserRound size={17} />
+            View profile
+          </button>
+        ) : null}
 
         <button
           type="button"
           onClick={onArchive}
           disabled={Boolean(busyAction)}
-          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#6f52b5] transition hover:bg-[#f6f2ff] active:bg-[#eee7ff] disabled:opacity-45"
+          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f5f5f7] active:bg-[#ededf0] disabled:opacity-45"
         >
           {busyAction === 'archive' ? (
             <LoaderCircle
@@ -422,22 +406,22 @@ function ConversationMenu({
           type="button"
           onClick={onDelete}
           disabled={Boolean(busyAction)}
-          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+          className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
         >
           <Trash2 size={17} />
           Delete chat
         </button>
 
         {!isGroup ? (
-  <div className="my-1 h-px bg-[#efedf3]" />
-) : null}
+          <div className="my-1 h-px bg-[#efedf3]" />
+        ) : null}
 
-        {canUnblock ? (
+        {!isGroup && canUnblock ? (
           <button
             type="button"
             onClick={onUnblock}
             disabled={Boolean(busyAction)}
-            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#6f52b5] transition hover:bg-[#f6f2ff] active:bg-[#eee7ff] disabled:opacity-45"
+            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#111827] transition hover:bg-[#f5f5f7] active:bg-[#ededf0] disabled:opacity-45"
           >
             {busyAction === 'unblock' ? (
               <LoaderCircle
@@ -449,12 +433,12 @@ function ConversationMenu({
             )}
             Unblock account
           </button>
-        ) : canBlock ? (
+        ) : !isGroup && canBlock ? (
           <button
             type="button"
             onClick={onBlock}
             disabled={Boolean(busyAction)}
-            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-extrabold text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
+            className="flex h-11 w-full items-center gap-3 rounded-[13px] px-3 text-left text-[12px] font-normal text-[#c7353d] transition hover:bg-[#fff1f1] active:bg-[#ffe8e9] disabled:opacity-45"
           >
             {busyAction === 'block' ? (
               <LoaderCircle
@@ -466,8 +450,8 @@ function ConversationMenu({
             )}
             Block account
           </button>
-        ) : blockedByOther ? (
-          <div className="flex min-h-11 w-full items-center gap-3 rounded-[13px] px-3 py-2 text-left text-[11px] font-bold leading-5 text-[#a64a50]">
+        ) : !isGroup && blockedByOther ? (
+          <div className="flex min-h-11 w-full items-center gap-3 rounded-[13px] px-3 py-2 text-left text-[11px] font-normal leading-5 text-[#a64a50]">
             <Ban size={17} className="shrink-0" />
             This account blocked messaging
           </div>
@@ -932,14 +916,14 @@ function DeleteConversationModal({
   onDelete,
 }) {
   const isGroup =
-  conversation?.is_group === true
+    conversation?.is_group === true
 
-const canDeleteForBoth =
-  !isGroup &&
-  (conversation?.conversation_type ===
-    'reader_reader' ||
-    conversation?.delete_permissions
-      ?.can_delete_for_both === true)
+  const canDeleteForBoth =
+    !isGroup &&
+    (conversation?.conversation_type ===
+      'reader_reader' ||
+      conversation?.delete_permissions
+        ?.can_delete_for_both === true)
 
   return (
     <ModalShell
@@ -1008,8 +992,8 @@ const canDeleteForBoth =
         ) : (
           <p className="mt-3 rounded-[14px] bg-[#f7f3ff] px-3 py-2.5 text-[10px] font-bold leading-4 text-[#705b9d]">
             {isGroup
-  ? 'Group chats can only be deleted from your own inbox.'
-  : 'Author Page conversations can only be deleted from your own side.'}
+              ? 'Group chats can only be deleted from your own inbox.'
+              : 'Author Page conversations can only be deleted from your own side.'}
           </p>
         )}
       </div>
@@ -1256,15 +1240,17 @@ function MessageBubble({
               )}
             </span>
             {message.is_mine &&
-!message.is_deleted ? (
-  <span
-    aria-label={
-      isRead ? 'Read' : 'Sent'
-    }
-  >
-    {isRead ? '✓✓' : '✓'}
-  </span>
-) : null}
+            !message.is_deleted ? (
+              <span
+                aria-label={
+                  isRead
+                    ? 'Read'
+                    : 'Sent'
+                }
+              >
+                {isRead ? '✓✓' : '✓'}
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -1338,53 +1324,53 @@ export default function ChatRoomPage() {
 
       try {
         const data = await getChatMessages(
-  conversationId,
-  {
-    limit: 50,
-  }
-)
+          conversationId,
+          {
+            limit: 50,
+          }
+        )
 
-const roomConversation =
-  data.conversation || null
+        const roomConversation =
+          data.conversation || null
 
-const [blockData, pinData] =
-  await Promise.all([
-    roomConversation?.is_group === true
-      ? Promise.resolve({
-          block_status: {
-            is_blocked: false,
-            viewer_has_blocked: false,
-            viewer_is_blocked: false,
-          },
+        const [blockData, pinData] =
+          await Promise.all([
+            roomConversation?.is_group === true
+              ? Promise.resolve({
+                  block_status: {
+                    is_blocked: false,
+                    viewer_has_blocked: false,
+                    viewer_is_blocked: false,
+                  },
+                })
+              : getChatBlockStatus(
+                  conversationId
+                ),
+            getPinnedChatMessages(
+              conversationId
+            ),
+          ])
+
+        const incomingMessages =
+          Array.isArray(data.messages)
+            ? data.messages
+            : []
+
+        setBlockStatus({
+          is_blocked: Boolean(
+            blockData.block_status?.is_blocked
+          ),
+          viewer_has_blocked: Boolean(
+            blockData.block_status
+              ?.viewer_has_blocked
+          ),
+          viewer_is_blocked: Boolean(
+            blockData.block_status
+              ?.viewer_is_blocked
+          ),
         })
-      : getChatBlockStatus(
-          conversationId
-        ),
-    getPinnedChatMessages(
-      conversationId
-    ),
-  ])
 
-const incomingMessages =
-  Array.isArray(data.messages)
-    ? data.messages
-    : []
-
-setBlockStatus({
-  is_blocked: Boolean(
-    blockData.block_status?.is_blocked
-  ),
-  viewer_has_blocked: Boolean(
-    blockData.block_status
-      ?.viewer_has_blocked
-  ),
-  viewer_is_blocked: Boolean(
-    blockData.block_status
-      ?.viewer_is_blocked
-  ),
-})
-
-setConversation(roomConversation)
+        setConversation(roomConversation)
         setPins(
           Array.isArray(pinData.pins)
             ? pinData.pins
@@ -1403,7 +1389,9 @@ setConversation(roomConversation)
         } else {
           shouldScrollBottomRef.current = true
           setMessages(incomingMessages)
-          setNextBefore(data.next_before || null)
+          setNextBefore(
+            data.next_before || null
+          )
         }
 
         setError('')
@@ -1418,7 +1406,9 @@ setConversation(roomConversation)
         }
       } catch (loadError) {
         if (loadError.status === 401) {
-          navigate('/login', { replace: true })
+          navigate('/login', {
+            replace: true,
+          })
           return
         }
 
@@ -1427,7 +1417,9 @@ setConversation(roomConversation)
           loadError.status === 404
         ) {
           if (silent) {
-            navigate('/chat', { replace: true })
+            navigate('/chat', {
+              replace: true,
+            })
           } else {
             setError(loadError.message)
           }
@@ -2176,89 +2168,91 @@ setConversation(roomConversation)
   }
 
   useEffect(() => {
-  const textarea =
-    textareaRef.current
+    const textarea =
+      textareaRef.current
 
-  if (!textarea) return
+    if (!textarea) return
 
-  const minHeight = 46
-  const maxHeight = 124
+    const minHeight = 46
+    const maxHeight = 124
 
-  textarea.style.height =
-    `${minHeight}px`
-  textarea.style.overflowY =
-    'hidden'
+    textarea.style.height =
+      `${minHeight}px`
+    textarea.style.overflowY =
+      'hidden'
 
-  const contentHeight =
-    textarea.scrollHeight
+    const contentHeight =
+      textarea.scrollHeight
 
-  textarea.style.height =
-    `${Math.min(
-      Math.max(
-        contentHeight,
-        minHeight
-      ),
-      maxHeight
-    )}px`
+    textarea.style.height =
+      `${Math.min(
+        Math.max(
+          contentHeight,
+          minHeight
+        ),
+        maxHeight
+      )}px`
 
-  textarea.style.overflowY =
-    contentHeight > maxHeight
-      ? 'auto'
-      : 'hidden'
-}, [text])
+    textarea.style.overflowY =
+      contentHeight > maxHeight
+        ? 'auto'
+        : 'hidden'
+  }, [text])
 
   const person =
-  conversation?.counterpart || {}
+    conversation?.counterpart || {}
 
-const isGroup =
-  conversation?.is_group === true
+  const isGroup =
+    conversation?.is_group === true
 
-const canSend =
-  Boolean(conversation?.can_send)
+  const canSend =
+    Boolean(conversation?.can_send)
 
-const canOpenProfile =
-  !isGroup &&
-  Boolean(person.username)
+  const canOpenProfile =
+    !isGroup &&
+    Boolean(person.username)
 
-const canBlock =
-  !isGroup &&
-  Boolean(
-    conversation &&
-      !blockStatus.is_blocked
-  )
+  const canBlock =
+    !isGroup &&
+    Boolean(
+      conversation &&
+        !blockStatus.is_blocked
+    )
 
-const canUnblock =
-  !isGroup &&
-  Boolean(
-    conversation &&
-      blockStatus.viewer_has_blocked
-  )
+  const canUnblock =
+    !isGroup &&
+    Boolean(
+      conversation &&
+        blockStatus.viewer_has_blocked
+    )
 
-const blockedByOther =
-  !isGroup &&
-  Boolean(
-    conversation &&
-      blockStatus.viewer_is_blocked &&
-      !blockStatus.viewer_has_blocked
-  )
+  const blockedByOther =
+    !isGroup &&
+    Boolean(
+      conversation &&
+        blockStatus.viewer_is_blocked &&
+        !blockStatus.viewer_has_blocked
+    )
 
-const readTimeValue =
-  !isGroup &&
-  conversation?.counterpart_last_read_at
-    ? new Date(
-        conversation.counterpart_last_read_at
-      ).getTime()
-    : 0
+  const readTimeValue =
+    !isGroup &&
+    conversation?.counterpart_last_read_at
+      ? new Date(
+          conversation.counterpart_last_read_at
+        ).getTime()
+      : 0
 
-const counterpartReadAt =
-  Number.isFinite(readTimeValue)
-    ? readTimeValue
-    : 0
+  const counterpartReadAt =
+    Number.isFinite(readTimeValue)
+      ? readTimeValue
+      : 0
 
   const handleOpenChatInfo = () => {
-  setMenuOpen(false)
-  navigate(`/chat/${conversationId}/info`)
-}
+    setMenuOpen(false)
+    navigate(
+      `/chat/${conversationId}/info`
+    )
+  }
   const handleOpenProfile = () => {
     if (!person.username) return
 
@@ -2391,15 +2385,17 @@ const counterpartReadAt =
                 </h1>
                 <p className="truncate text-[10px] font-semibold text-[#92929c]">
                   {isGroup
-  ? `${Number(
-      conversation?.member_count || 0
-    )} people`
-  : person.username
-    ? `@${person.username}`
-    : conversation?.request_status ===
-        'accepted'
-      ? 'Messages'
-      : 'Message request'}
+                    ? `${Number(
+                        conversation
+                          ?.member_count || 0
+                      )} people`
+                    : person.username
+                      ? `@${person.username}`
+                      : conversation
+                            ?.request_status ===
+                          'accepted'
+                        ? 'Messages'
+                        : 'Message request'}
                 </p>
               </button>
 
@@ -2522,14 +2518,14 @@ const counterpartReadAt =
                       String(message.id)
                     )}
                     isRead={
-  !isGroup &&
-  message.is_mine &&
-  counterpartReadAt > 0 &&
-  new Date(
-    message.created_at
-  ).getTime() <=
-    counterpartReadAt
-}
+                      !isGroup &&
+                      message.is_mine &&
+                      counterpartReadAt > 0 &&
+                      new Date(
+                        message.created_at
+                      ).getTime() <=
+                        counterpartReadAt
+                    }
                     setMessageRef={setMessageRef}
                     onOpenMenu={openMessageMenu}
                     onToggleSelection={toggleSelection}
@@ -2608,7 +2604,7 @@ const counterpartReadAt =
                       ? 'Waiting for request approval'
                       : 'Messages are unavailable'
                 }
-                className="max-h-[124px] min-h-[46px] overflow-y-hidden w-full resize-none rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <button
@@ -2620,7 +2616,7 @@ const counterpartReadAt =
                     ? 'Search messages'
                     : 'Camera'
                 }
-                className="absolute bottom-[5px] left-[5px] flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
+                className="absolute left-[5px] top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
               >
                 {text.trim() ? (
                   <Search size={19} />
@@ -2645,7 +2641,7 @@ const counterpartReadAt =
                       : 'Send message'
                     : 'Emoji'
                 }
-                className="absolute bottom-[5px] right-[5px] flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white transition active:scale-90 disabled:opacity-45"
+                className="absolute right-[5px] top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white transition active:scale-90 disabled:opacity-45"
               >
                 {sending ? (
                   <LoaderCircle
