@@ -684,27 +684,148 @@ function CommentMenu({
 }
 
 
+function getCommentDisplayUser(comment, story) {
+  const pageOwnerId = getStoryOwnerId(story)
+  const isPageOwner = Boolean(
+    pageOwnerId &&
+      comment?.user_id &&
+      String(pageOwnerId) ===
+        String(comment.user_id)
+  )
+
+  if (isPageOwner) {
+    return {
+      name:
+        story?.author_page?.page_name ||
+        comment?.name ||
+        'Author',
+      avatar_url:
+        story?.author_page?.avatar_url ||
+        comment?.avatar_url ||
+        '',
+    }
+  }
+
+  return {
+    name: comment?.name || 'Reader',
+    avatar_url:
+      comment?.avatar_url || '',
+  }
+}
+
+function getReplyComposerUser(story) {
+  const currentUser = getCurrentUser()
+  const pageOwnerId = getStoryOwnerId(story)
+  const isPageOwner = Boolean(
+    currentUser?.id &&
+      pageOwnerId &&
+      String(currentUser.id) ===
+        String(pageOwnerId)
+  )
+
+  if (!isPageOwner) {
+    return currentUser
+  }
+
+  return {
+    ...currentUser,
+    name:
+      story?.author_page?.page_name ||
+      currentUser.name ||
+      'Author',
+    avatar_url:
+      story?.author_page?.avatar_url ||
+      currentUser.avatar_url ||
+      '',
+  }
+}
+
+function renderReplyTextWithMention(
+  text,
+  mentionCandidates = []
+) {
+  const value = String(text || '')
+  const names = [
+    ...new Set(
+      mentionCandidates
+        .map((name) =>
+          String(name || '').trim()
+        )
+        .filter(Boolean)
+    ),
+  ].sort(
+    (first, second) =>
+      second.length - first.length
+  )
+
+  for (const name of names) {
+    const prefix = `@${name}`
+
+    if (
+      value === prefix ||
+      value.startsWith(`${prefix} `)
+    ) {
+      const rest = value
+        .slice(prefix.length)
+        .trimStart()
+
+      return (
+        <>
+          <span className="font-semibold text-[#1877f2]">
+            {name}
+          </span>
+          {rest ? <> {rest}</> : null}
+        </>
+      )
+    }
+  }
+
+  return value
+}
+
 function ReplyComposer({
   value,
   onChange,
   onCancel,
   onSend,
   sending,
+  story,
+  mentionName,
 }) {
-  const currentUser = getCurrentUser()
+  const composerUser =
+    getReplyComposerUser(story)
+  const cleanMentionName = String(
+    mentionName || ''
+  ).trim()
+  const replyMaxLength = Math.max(
+    1,
+    COMMENT_LIMIT -
+      (cleanMentionName
+        ? cleanMentionName.length + 2
+        : 0)
+  )
 
   return (
     <div className="mt-3 flex gap-2">
       <Avatar
-        user={currentUser}
+        user={composerUser}
         size="h-8 w-8"
         textSize="text-[12px]"
       />
 
-      <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[20px] bg-[#f3f4f6] px-3 py-2">
+      <div className="flex min-w-0 flex-1 items-center gap-1 rounded-[20px] bg-[#f3f4f6] px-3 py-2">
+        {cleanMentionName ? (
+          <span
+            title={cleanMentionName}
+            className="max-w-[42%] shrink-0 truncate text-[13px] font-semibold text-[#1877f2]"
+          >
+            @{cleanMentionName}
+          </span>
+        ) : null}
+
         <input
           value={value}
-          maxLength={COMMENT_LIMIT}
+          maxLength={replyMaxLength}
           onChange={(event) =>
             onChange(event.target.value)
           }
@@ -726,7 +847,7 @@ function ReplyComposer({
           disabled={
             sending || !value.trim()
           }
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white disabled:bg-[#d0d5dd]"
           aria-label="Send reply"
         >
           <i
@@ -746,6 +867,9 @@ function ReplyItem({
   reply,
   story,
   targetType,
+  mentionCandidates,
+  onLike,
+  onStartReply,
   onCopy,
   onEdit,
   onDelete,
@@ -761,6 +885,8 @@ function ReplyItem({
   const [menuOpen, setMenuOpen] =
     useState(false)
   const currentUser = getCurrentUser()
+  const displayUser =
+    getCommentDisplayUser(reply, story)
   const ownsReply = Boolean(
     reply.user_id &&
       currentUser.id &&
@@ -781,14 +907,14 @@ function ReplyItem({
     isAdmin: admin,
   }
 
+  const startReply = () => {
+    onStartReply?.(displayUser.name)
+  }
+
   return (
     <div className="flex gap-2">
       <Avatar
-        user={{
-          name: reply.name || 'Reader',
-          avatar_url:
-            reply.avatar_url || '',
-        }}
+        user={displayUser}
         size="h-8 w-8"
         textSize="text-[11px]"
       />
@@ -796,47 +922,90 @@ function ReplyItem({
       <div className="relative min-w-0 flex-1 pr-8">
         <button
           type="button"
-          onClick={() => setMenuOpen(true)}
+          onClick={() =>
+            setMenuOpen(true)
+          }
           className="inline-block max-w-full rounded-[16px] bg-[#f3f4f6] px-3 py-2 text-left active:bg-[#ebeef2]"
         >
           <div className="flex items-center gap-2">
             <span className="text-[12px] font-semibold text-[#111827]">
-              {reply.name || 'Reader'}
+              {displayUser.name}
             </span>
 
             <span className="text-[10px] font-normal text-[#98a2b3]">
-              {formatTime(reply.created_at)}
+              {formatTime(
+                reply.created_at
+              )}
             </span>
           </div>
 
           <p className="mt-1 whitespace-pre-wrap break-words text-[12.5px] font-normal leading-5 text-[#4b5563]">
-            {reply.text}
+            {renderReplyTextWithMention(
+              reply.text,
+              mentionCandidates
+            )}
           </p>
         </button>
 
         <button
           type="button"
-          onClick={() => setMenuOpen(true)}
+          onClick={() =>
+            setMenuOpen(true)
+          }
           className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-[#98a2b3] active:scale-95"
           aria-label="Reply options"
         >
           <i className="fa-solid fa-ellipsis text-[13px]" />
         </button>
 
+        <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[#98a2b3]">
+          <button
+            type="button"
+            onClick={() =>
+              onLike(reply.id)
+            }
+            className={
+              reply.liked
+                ? 'text-[#e5484d]'
+                : ''
+            }
+          >
+            {reply.liked
+              ? 'Liked'
+              : 'Like'}
+            {reply.likes
+              ? ` · ${reply.likes}`
+              : ''}
+          </button>
+
+          <button
+            type="button"
+            onClick={startReply}
+          >
+            Reply
+          </button>
+        </div>
+
         <CommentMenu
           isOpen={menuOpen}
-          allowReply={false}
+          allowReply
           targetType={targetType}
           permissions={permissions}
           comment={reply}
-          onReply={null}
+          onReply={startReply}
           onCopy={() => onCopy(reply)}
           onEdit={() => onEdit(reply)}
-          onDelete={() => onDelete(reply)}
+          onDelete={() =>
+            onDelete(reply)
+          }
           onHide={() => onHide(reply)}
-          onUnhide={() => onUnhide(reply)}
+          onUnhide={() =>
+            onUnhide(reply)
+          }
           onPin={() => onPin(reply)}
-          onUnpin={() => onUnpin(reply)}
+          onUnpin={() =>
+            onUnpin(reply)
+          }
           onSpoiler={() =>
             onSpoiler(reply)
           }
@@ -880,12 +1049,18 @@ function CommentItem({
     useState(false)
   const [replyText, setReplyText] =
     useState('')
+  const [
+    replyTargetName,
+    setReplyTargetName,
+  ] = useState('')
   const [repliesShown, setRepliesShown] =
     useState(false)
   const [spoilerOpen, setSpoilerOpen] =
     useState(false)
-  const [replySending, setReplySending] =
-    useState(false)
+  const [
+    replySending,
+    setReplySending,
+  ] = useState(false)
   const menuPressTimerRef = useRef(null)
   const ignoreNextTapRef = useRef(false)
 
@@ -895,30 +1070,24 @@ function CommentItem({
     ? comment.replies
     : []
   const currentUser = getCurrentUser()
-
-  const pageOwnerId =
-    story?.author_page?.user_id ||
-    story?.author_user_id ||
-    story?.user_id ||
-    null
-
-  const isPageOwnerComment =
-    pageOwnerId &&
-    comment.user_id &&
-    String(pageOwnerId) ===
-      String(comment.user_id)
-
-  const displayName =
-    isPageOwnerComment &&
-    story?.author_page?.page_name
-      ? story.author_page.page_name
-      : comment.name || 'Reader'
-
+  const displayUser =
+    getCommentDisplayUser(
+      comment,
+      story
+    )
+  const displayName = displayUser.name
   const displayAvatar =
-    isPageOwnerComment &&
-    story?.author_page?.avatar_url
-      ? story.author_page.avatar_url
-      : comment.avatar_url || ''
+    displayUser.avatar_url
+  const mentionCandidates = [
+    displayName,
+    ...replies.map(
+      (reply) =>
+        getCommentDisplayUser(
+          reply,
+          story
+        ).name
+    ),
+  ]
 
   const isOwner =
     comment.user_id &&
@@ -986,6 +1155,23 @@ function CommentItem({
     setMenuOpen(true)
   }
 
+  const openReplyComposer = (
+    name
+  ) => {
+    setReplyTargetName(
+      String(name || '').trim()
+    )
+    setReplyText('')
+    setReplyOpen(true)
+    setRepliesShown(true)
+  }
+
+  const closeReplyComposer = () => {
+    setReplyOpen(false)
+    setReplyText('')
+    setReplyTargetName('')
+  }
+
   const handleSendReply = async () => {
     if (
       !replyText.trim() ||
@@ -998,12 +1184,12 @@ function CommentItem({
       setReplySending(true)
       const success = await onReply(
         comment.id,
-        replyText.trim()
+        replyText.trim(),
+        replyTargetName
       )
 
       if (success !== false) {
-        setReplyText('')
-        setReplyOpen(false)
+        closeReplyComposer()
         setRepliesShown(true)
       }
     } finally {
@@ -1049,6 +1235,24 @@ function CommentItem({
               </button>
             ) : null}
 
+            {replyOpen ? (
+              <ReplyComposer
+                value={replyText}
+                onChange={setReplyText}
+                onCancel={
+                  closeReplyComposer
+                }
+                onSend={
+                  handleSendReply
+                }
+                sending={replySending}
+                story={story}
+                mentionName={
+                  replyTargetName
+                }
+              />
+            ) : null}
+
             {repliesShown &&
             replies.length ? (
               <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
@@ -1057,16 +1261,31 @@ function CommentItem({
                     key={reply.id}
                     reply={reply}
                     story={story}
-                    targetType={targetType}
+                    targetType={
+                      targetType
+                    }
+                    mentionCandidates={
+                      mentionCandidates
+                    }
+                    onLike={onLike}
+                    onStartReply={
+                      openReplyComposer
+                    }
                     onCopy={onCopy}
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onHide={onHide}
-                    onUnhide={onUnhide}
+                    onUnhide={
+                      onUnhide
+                    }
                     onPin={onPin}
                     onUnpin={onUnpin}
-                    onSpoiler={onSpoiler}
-                    onUnspoiler={onUnspoiler}
+                    onSpoiler={
+                      onSpoiler
+                    }
+                    onUnspoiler={
+                      onUnspoiler
+                    }
                     onBan={onBan}
                     onReport={onReport}
                   />
@@ -1128,7 +1347,8 @@ function CommentItem({
               }}
               className="inline-block max-w-full cursor-pointer select-none rounded-[18px] bg-[#f3f4f6] px-4 py-3 outline-none active:bg-[#ebeef2]"
               style={{
-                touchAction: 'manipulation',
+                touchAction:
+                  'manipulation',
               }}
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -1196,7 +1416,9 @@ function CommentItem({
               permissions={permissions}
               comment={comment}
               onReply={() =>
-                setReplyOpen(true)
+                openReplyComposer(
+                  displayName
+                )
               }
               onCopy={() =>
                 onCopy(comment)
@@ -1260,7 +1482,9 @@ function CommentItem({
             <button
               type="button"
               onClick={() =>
-                setReplyOpen(true)
+                openReplyComposer(
+                  displayName
+                )
               }
             >
               Reply
@@ -1292,14 +1516,15 @@ function CommentItem({
             <ReplyComposer
               value={replyText}
               onChange={setReplyText}
-              onCancel={() => {
-                setReplyOpen(false)
-                setReplyText('')
-              }}
-              onSend={
-                handleSendReply
+              onCancel={
+                closeReplyComposer
               }
+              onSend={handleSendReply}
               sending={replySending}
+              story={story}
+              mentionName={
+                replyTargetName
+              }
             />
           ) : null}
 
@@ -1311,7 +1536,16 @@ function CommentItem({
                   key={reply.id}
                   reply={reply}
                   story={story}
-                  targetType={targetType}
+                  targetType={
+                    targetType
+                  }
+                  mentionCandidates={
+                    mentionCandidates
+                  }
+                  onLike={onLike}
+                  onStartReply={
+                    openReplyComposer
+                  }
                   onCopy={onCopy}
                   onEdit={onEdit}
                   onDelete={onDelete}
@@ -1320,7 +1554,9 @@ function CommentItem({
                   onPin={onPin}
                   onUnpin={onUnpin}
                   onSpoiler={onSpoiler}
-                  onUnspoiler={onUnspoiler}
+                  onUnspoiler={
+                    onUnspoiler
+                  }
                   onBan={onBan}
                   onReport={onReport}
                 />
@@ -1332,6 +1568,7 @@ function CommentItem({
     </article>
   )
 }
+
 
 function CommentComposer({
   value,
@@ -2183,12 +2420,28 @@ export default function CommentSection({
 
   const handleReply = async (
     commentId,
-    replyText
+    replyText,
+    mentionName = ''
   ) => {
     if (!token) {
       showToast(
         'Please login to reply.'
       )
+      return false
+    }
+
+    const cleanReplyText = String(
+      replyText || ''
+    ).trim()
+    const cleanMentionName = String(
+      mentionName || ''
+    ).trim()
+    const finalReplyText =
+      cleanMentionName
+        ? `@${cleanMentionName} ${cleanReplyText}`
+        : cleanReplyText
+
+    if (!finalReplyText) {
       return false
     }
 
@@ -2207,7 +2460,7 @@ export default function CommentSection({
               `Bearer ${token}`,
           },
           body: JSON.stringify({
-            text: replyText,
+            text: finalReplyText,
             parent_id: commentId,
           }),
         }
@@ -2269,6 +2522,7 @@ export default function CommentSection({
       return false
     }
   }
+
 
   const handleEdit = (comment) => {
     setEditComment(comment)
