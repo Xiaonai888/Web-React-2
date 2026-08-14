@@ -8,7 +8,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const COMMENT_PAGE_SIZE = 20
+const COMMENT_PAGE_SIZE = 10
+const REPLY_PAGE_SIZE = 10
 const COMMENT_LIMIT = 1000
 
 const COMMENT_SORT_OPTIONS = [
@@ -129,12 +130,27 @@ function buildCommentListUrl(
   if (targetType === 'author_post') {
     return `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
       targetId
-    )}/comments?limit=${COMMENT_PAGE_SIZE}`
+    )}/comments?page=${page}&limit=${COMMENT_PAGE_SIZE}&reply_limit=${REPLY_PAGE_SIZE}`
   }
 
   return `${API_BASE_URL}/api/comments/story/${encodeURIComponent(
     targetId
   )}?page=${page}&limit=${COMMENT_PAGE_SIZE}&sort=${sortValue}`
+}
+
+function buildReplyListUrl(
+  targetType,
+  targetId,
+  commentId,
+  page
+) {
+  if (targetType !== 'author_post') return ''
+
+  return `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
+    targetId
+  )}/comments/${encodeURIComponent(
+    commentId
+  )}/replies?page=${page}&limit=${REPLY_PAGE_SIZE}`
 }
 
 function buildCommentCreateUrl(
@@ -259,6 +275,18 @@ function normalizeApiComment(comment) {
       user.avatar_url ||
       comment?.avatar_url ||
       '',
+    reply_total: Number(
+      comment?.reply_total ??
+        comment?.replies?.length ??
+        0
+    ),
+    reply_page: Math.max(
+      1,
+      Number(comment?.reply_page || 1)
+    ),
+    reply_has_more: Boolean(
+      comment?.reply_has_more
+    ),
     replies: Array.isArray(
       comment?.replies
     )
@@ -1031,6 +1059,8 @@ function CommentItem({
   targetType,
   onLike,
   onReply,
+  onLoadMoreReplies,
+  loadingReplies,
   onCopy,
   onEdit,
   onDelete,
@@ -1069,6 +1099,10 @@ function CommentItem({
   )
     ? comment.replies
     : []
+  const replyTotal = Math.max(
+    replies.length,
+    Number(comment.reply_total || 0)
+  )
   const currentUser = getCurrentUser()
   const displayUser =
     getCommentDisplayUser(
@@ -1227,8 +1261,8 @@ function CommentItem({
               >
                 {repliesShown
                   ? 'Hide replies'
-                  : `View ${replies.length} ${
-                      replies.length > 1
+                  : `View ${replyTotal} ${
+                      replyTotal > 1
                         ? 'replies'
                         : 'reply'
                     }`}
@@ -1290,6 +1324,23 @@ function CommentItem({
                     onReport={onReport}
                   />
                 ))}
+
+                {comment.reply_has_more ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onLoadMoreReplies?.(
+                        comment.id
+                      )
+                    }
+                    disabled={loadingReplies}
+                    className="ml-1 text-[12px] font-medium text-[#667085] disabled:text-[#98a2b3]"
+                  >
+                    {loadingReplies
+                      ? 'Loading...'
+                      : 'View more replies'}
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -1502,9 +1553,9 @@ function CommentItem({
                 {repliesShown
                   ? 'Hide replies'
                   : `View ${
-                      replies.length
+                      replyTotal
                     } ${
-                      replies.length > 1
+                      replyTotal > 1
                         ? 'replies'
                         : 'reply'
                     }`}
@@ -1561,6 +1612,23 @@ function CommentItem({
                   onReport={onReport}
                 />
               ))}
+
+              {comment.reply_has_more ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onLoadMoreReplies?.(
+                      comment.id
+                    )
+                  }
+                  disabled={loadingReplies}
+                  className="ml-1 text-[12px] font-medium text-[#667085] disabled:text-[#98a2b3]"
+                >
+                  {loadingReplies
+                    ? 'Loading...'
+                    : 'View more replies'}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -1568,7 +1636,6 @@ function CommentItem({
     </article>
   )
 }
-
 
 function CommentComposer({
   value,
@@ -1954,6 +2021,8 @@ export default function CommentSection({
     useState(false)
   const [loadingMore, setLoadingMore] =
     useState(false)
+  const [loadingRepliesId, setLoadingRepliesId] =
+    useState(null)
   const [sending, setSending] =
     useState(false)
   const [saving, setSaving] =
@@ -2418,6 +2487,120 @@ export default function CommentSection({
     }
   }
 
+  const handleLoadMoreReplies = async (commentId) => {
+    if (
+      targetType !== 'author_post' ||
+      !commentId ||
+      loadingRepliesId
+    ) {
+      return
+    }
+
+    const parent = comments.find(
+      (comment) =>
+        String(comment.id) ===
+        String(commentId)
+    )
+
+    if (!parent) return
+
+    const nextPage = Math.max(
+      2,
+      Number(parent.reply_page || 1) + 1
+    )
+
+    try {
+      setLoadingRepliesId(commentId)
+
+      const response = await fetch(
+        buildReplyListUrl(
+          targetType,
+          targetId,
+          commentId,
+          nextPage
+        ),
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {},
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to load replies'
+        )
+      }
+
+      const incoming = Array.isArray(data.replies)
+        ? data.replies.map(normalizeApiComment)
+        : []
+
+      const nextComments = comments.map((comment) => {
+        if (
+          String(comment.id) !==
+          String(commentId)
+        ) {
+          return comment
+        }
+
+        const mergedById = new Map(
+          [
+            ...(comment.replies || []),
+            ...incoming,
+          ].map((reply) => [
+            String(reply.id),
+            reply,
+          ])
+        )
+
+        const mergedReplies = [
+          ...mergedById.values(),
+        ].sort(
+          (first, second) =>
+            new Date(first.created_at || 0).getTime() -
+            new Date(second.created_at || 0).getTime()
+        )
+
+        return {
+          ...comment,
+          replies: mergedReplies,
+          reply_total: Number(
+            data.total ??
+              comment.reply_total ??
+              mergedReplies.length
+          ),
+          reply_page: Number(
+            data.page || nextPage
+          ),
+          reply_has_more: Boolean(
+            data.has_more
+          ),
+        }
+      })
+
+      updateComments(nextComments)
+    } catch (error) {
+      showToast(
+        error.message ||
+          'Failed to load replies.'
+      )
+    } finally {
+      setLoadingRepliesId(null)
+    }
+  }
+
   const handleReply = async (
     commentId,
     replyText,
@@ -2494,19 +2677,31 @@ export default function CommentSection({
           data.comment
         )
       const nextComments =
-        comments.map((comment) =>
-          String(comment.id) ===
-          String(commentId)
-            ? {
-                ...comment,
-                replies: [
-                  ...(comment.replies ||
-                    []),
-                  newReply,
-                ],
-              }
-            : comment
-        )
+        comments.map((comment) => {
+          if (
+            String(comment.id) !==
+            String(commentId)
+          ) {
+            return comment
+          }
+
+          const currentReplies =
+            comment.replies || []
+          const currentReplyTotal = Math.max(
+            currentReplies.length,
+            Number(comment.reply_total || 0)
+          )
+
+          return {
+            ...comment,
+            replies: [
+              ...currentReplies,
+              newReply,
+            ],
+            reply_total:
+              currentReplyTotal + 1,
+          }
+        })
 
       updateComments(nextComments)
       updateTotal(
@@ -2522,7 +2717,6 @@ export default function CommentSection({
       return false
     }
   }
-
 
   const handleEdit = (comment) => {
     setEditComment(comment)
@@ -3031,6 +3225,13 @@ export default function CommentSection({
                     onLike={handleLike}
                     onReply={
                       handleReply
+                    }
+                    onLoadMoreReplies={
+                      handleLoadMoreReplies
+                    }
+                    loadingReplies={
+                      String(loadingRepliesId) ===
+                      String(comment.id)
                     }
                     onCopy={
                       handleCopyComment
