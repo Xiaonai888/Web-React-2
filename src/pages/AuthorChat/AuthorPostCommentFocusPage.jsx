@@ -226,7 +226,7 @@ export default function AuthorPostCommentFocusPage() {
 
   return (
     <div className="min-h-[100dvh] bg-[#f0f2f5] text-[#111827]">
-      <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white">
+      <header className="sticky top-0 z-50 bg-white">
         <div className="mx-auto flex h-[56px] max-w-[680px] items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
           <button
             type="button"
