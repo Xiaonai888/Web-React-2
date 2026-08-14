@@ -5,6 +5,7 @@ export function CollapsiblePostText({
   children,
   className = '',
   lines = 3,
+  discoverStyle = false,
 }) {
   const textRef = useRef(null)
   const [expanded, setExpanded] = useState(false)
@@ -45,7 +46,14 @@ export function CollapsiblePostText({
     <div className="relative">
       <p
         ref={textRef}
-        className={`whitespace-pre-wrap break-words ${className}`}
+        onClick={
+          discoverStyle && expanded
+            ? () => setExpanded(false)
+            : undefined
+        }
+        className={`whitespace-pre-wrap break-words ${className} ${
+          discoverStyle && expanded ? 'cursor-pointer' : ''
+        }`}
         style={
           expanded
             ? undefined
@@ -64,13 +72,17 @@ export function CollapsiblePostText({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-white/80 pl-5 text-[13px] font-semibold leading-[inherit] text-[#475569] active:opacity-70"
+          className={
+            discoverStyle
+              ? 'absolute bottom-0 right-0 bg-white pl-1 text-[13px] font-semibold leading-[inherit] text-[#65676b] active:opacity-70'
+              : 'absolute bottom-0 right-0 bg-gradient-to-l from-white via-white to-white/80 pl-5 text-[13px] font-semibold leading-[inherit] text-[#475569] active:opacity-70'
+          }
         >
-          … See more
+          {discoverStyle ? '... more' : '… See more'}
         </button>
       ) : null}
 
-      {expanded && overflowing ? (
+      {!discoverStyle && expanded && overflowing ? (
         <button
           type="button"
           onClick={() => setExpanded(false)}
@@ -82,7 +94,6 @@ export function CollapsiblePostText({
     </div>
   )
 }
-
 export function ProfessionalSinglePostImage({
   src,
   alt = '',
