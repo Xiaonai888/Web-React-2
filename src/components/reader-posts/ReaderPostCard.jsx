@@ -469,6 +469,9 @@ function ReaderAvatar({ user }) {
 
 function ReaderPostImages({
   imageUrls,
+  onImageClick,
+  photoPostView = false,
+  selectedPhotoIndex = 0,
 }) {
   const images = Array.isArray(
     imageUrls
@@ -486,14 +489,50 @@ function ReaderPostImages({
     return null
   }
 
-  if (images.length === 1) {
-  return (
-    <ProfessionalSinglePostImage
-      src={images[0]}
-      alt=""
-    />
+  const safeSelectedIndex = Math.min(
+    images.length - 1,
+    Math.max(
+      0,
+      Number.isFinite(
+        Number(selectedPhotoIndex)
+      )
+        ? Math.floor(
+            Number(selectedPhotoIndex)
+          )
+        : 0
+    )
   )
-}
+
+  if (photoPostView) {
+    const selectedImage =
+      images[safeSelectedIndex]
+
+    return (
+      <div className="bg-[#f3f4f6]">
+        <img
+          src={selectedImage}
+          alt=""
+          loading="eager"
+          decoding="async"
+          className="max-h-[72dvh] min-h-[260px] w-full object-contain"
+        />
+      </div>
+    )
+  }
+
+  if (images.length === 1) {
+    return (
+      <ProfessionalSinglePostImage
+        src={images[0]}
+        alt=""
+        onClick={
+          onImageClick
+            ? () => onImageClick(0)
+            : undefined
+        }
+      />
+    )
+  }
 
   return (
     <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white">
@@ -505,13 +544,20 @@ function ReaderPostImages({
               images.length - 1
 
           return (
-            <div
+            <button
+              type="button"
               key={`${imageUrl}-${index}`}
+              onClick={() =>
+                onImageClick?.(index)
+              }
               className={
                 isWideLastImage
                   ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6]'
                   : 'aspect-square bg-[#f3f4f6]'
               }
+              aria-label={`Open photo ${
+                index + 1
+              }`}
             >
               <img
                 src={imageUrl}
@@ -520,7 +566,7 @@ function ReaderPostImages({
                 decoding="async"
                 className="h-full w-full object-cover"
               />
-            </div>
+            </button>
           )
         }
       )}
@@ -1257,6 +1303,8 @@ function StandardReaderPostCard({
   onHidden,
   onFollowChanged,
   fullPostView = false,
+  photoPostView = false,
+  selectedPhotoIndex = 0,
 }) {
   const navigate = useNavigate()
   const reactionPressTimerRef =
@@ -2099,6 +2147,23 @@ function StandardReaderPostCard({
     )
   }
 
+  function openPhotoPost(index) {
+    if (!post?.id) return
+
+    const photoIndex = Math.max(
+      0,
+      Number.isFinite(Number(index))
+        ? Math.floor(Number(index))
+        : 0
+    )
+
+    navigate(
+      `/reader/post/${encodeURIComponent(
+        post.id
+      )}?photo=${photoIndex}`
+    )
+  }
+
   function viewReaderProfile(event) {
     event?.stopPropagation()
 
@@ -2341,7 +2406,15 @@ function StandardReaderPostCard({
 
         {postText ? (
           <div className="px-4 pb-4">
-            {fullPostView ? (
+            {photoPostView ? (
+              <ReaderDiscoverPostText
+                text={postText}
+                renderText={
+                  renderPostTextWithLinks
+                }
+                className="text-[14px] font-normal leading-6 text-[#111827]"
+              />
+            ) : fullPostView ? (
               <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
                 {renderPostTextWithLinks(
                   postText
@@ -2377,6 +2450,17 @@ function StandardReaderPostCard({
         {!isEchoPost ? (
           <ReaderPostImages
             imageUrls={imageUrls}
+            onImageClick={
+              photoPostView
+                ? undefined
+                : openPhotoPost
+            }
+            photoPostView={
+              photoPostView
+            }
+            selectedPhotoIndex={
+              selectedPhotoIndex
+            }
           />
         ) : null}
 
