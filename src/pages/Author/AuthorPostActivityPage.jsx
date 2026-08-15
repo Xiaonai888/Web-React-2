@@ -56,6 +56,7 @@ export default function AuthorPostActivityPage() {
 
   const [post, setPost] = useState(null)
   const [comment, setComment] = useState(null)
+  const [parentComment, setParentComment] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -73,6 +74,7 @@ export default function AuthorPostActivityPage() {
         setLoading(true)
         setError('')
         setComment(null)
+        setParentComment(null)
 
         const token = getAuthorChatToken()
         const headers = token
@@ -123,7 +125,10 @@ export default function AuthorPostActivityPage() {
         if (ignore) return
 
         setPost(postData.post || null)
-        setComment(commentData?.comment || null)
+setComment(commentData?.comment || null)
+setParentComment(
+  commentData?.parent_comment || null
+)
       } catch (loadError) {
         if (!ignore) {
           setError(
@@ -253,10 +258,13 @@ export default function AuthorPostActivityPage() {
 
             <section className="bg-white pt-3">
               <CommentSection
-                targetType="author_post"
-                targetId={post.id}
-                variant="page"
-                story={{ ...post, author_page: page }}
+  targetType="author_post"
+  targetId={post.id}
+  variant="page"
+  story={{ ...post, author_page: page }}
+  focusComment={comment}
+  focusParentComment={parentComment}
+  focusCommentId={focusCommentId}
                 onCommentsChange={() => {
                   if (!focusCommentId) return
 
