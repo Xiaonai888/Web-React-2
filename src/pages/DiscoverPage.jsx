@@ -137,23 +137,25 @@ async function fetchFollowedPosts(token, cursor = '') {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/api/authors/following/posts/feed?${params.toString()}`,
+    `${API_BASE_URL}/api/authors/discover/posts/feed?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      cache: 'no-store',
     }
   )
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok || data.ok === false) {
-    throw new Error(data.message || 'Failed to load followed posts')
+    throw new Error(
+      data.message || 'Failed to load author posts'
+    )
   }
 
   return data
 }
-
 
 async function fetchReaderPosts(token) {
   if (!token) {
@@ -497,6 +499,7 @@ function RealFollowedPostCard({
   post,
   token,
   onReactionUpdated,
+  onFollowChanged,
   onComment,
   onMore,
 }) {
@@ -511,10 +514,22 @@ function RealFollowedPostCard({
     authorName.trim().slice(0, 1).toUpperCase() || 'A'
 
   const [reactionPickerOpen, setReactionPickerOpen] =
-    useState(false)
-  const [reactionBusy, setReactionBusy] = useState(false)
-  const [reactionError, setReactionError] = useState('')
-  const pressTimerRef = useRef(null)
+  useState(false)
+const [reactionBusy, setReactionBusy] = useState(false)
+const [reactionError, setReactionError] = useState('')
+const [followBusy, setFollowBusy] = useState(false)
+const [followError, setFollowError] = useState('')
+const pressTimerRef = useRef(null)
+
+const isFollowing = Boolean(
+  post.is_following ??
+    author.is_following
+)
+
+const isOwner = Boolean(
+  post.is_owner ??
+    author.is_owner
+)
 
   const activeReaction =
     AUTHOR_POST_REACTIONS.find(
@@ -529,6 +544,61 @@ function RealFollowedPostCard({
     }
   }, [])
 
+
+  async function followAuthor(event) {
+  event?.stopPropagation()
+
+  if (
+    followBusy ||
+    isFollowing ||
+    isOwner ||
+    !pageUsername ||
+    !author.id
+  ) {
+    return
+  }
+
+  try {
+    setFollowBusy(true)
+    setFollowError('')
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
+        pageUsername
+      )}/follow`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message ||
+          'Failed to follow author'
+      )
+    }
+
+    onFollowChanged?.(
+      author.id,
+      true
+    )
+  } catch (error) {
+    setFollowError(
+      error.message ||
+        'Failed to follow author'
+    )
+  } finally {
+    setFollowBusy(false)
+  }
+}
+  
   async function chooseReaction(reactionType) {
     if (reactionBusy) return
 
@@ -604,19 +674,40 @@ function RealFollowedPostCard({
         <div className="-ml-1 min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Link
-                to={pageUrl}
-                className="block truncate text-[14px] font-semibold text-[#111827]"
-              >
-                {authorName}
-              </Link>
+  <div className="min-w-0 text-[14px] leading-5">
+    <Link
+      to={pageUrl}
+      className="break-words font-semibold text-[#111827]"
+    >
+      {authorName}
+    </Link>
 
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-                <span>{formatPostTime(post.created_at)}</span>
-                <span>·</span>
-                <i className="fa-solid fa-earth-americas text-[10px]" />
-              </div>
-            </div>
+    {!isFollowing && !isOwner ? (
+      <>
+        <span className="px-1 text-[#65676b]">
+          ·
+        </span>
+
+        <button
+          type="button"
+          disabled={followBusy}
+          onClick={followAuthor}
+          className="font-semibold text-[#1877f2] active:opacity-60 disabled:opacity-60"
+        >
+          {followBusy
+            ? 'Following...'
+            : 'Follow'}
+        </button>
+      </>
+    ) : null}
+  </div>
+
+  <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+    <span>{formatPostTime(post.created_at)}</span>
+    <span>·</span>
+    <i className="fa-solid fa-earth-americas text-[10px]" />
+  </div>
+</div>
 
             <button
               type="button"
@@ -2058,20 +2149,24 @@ function handleReaderFollowChanged(
   }
 
   function updateAuthorFollowState(authorId, isFollowing) {
-    setRealPosts((current) =>
-      current.map((post) =>
-        post.author_page?.id === authorId
-          ? {
-              ...post,
-              author_page: {
-                ...post.author_page,
-                is_following: isFollowing,
-              },
-            }
-          : post
-      )
+  setRealPosts((current) =>
+    current.map((post) =>
+      String(post.author_page?.id || '') ===
+      String(authorId)
+        ? {
+            ...post,
+            is_following:
+              Boolean(isFollowing),
+            author_page: {
+              ...post.author_page,
+              is_following:
+                Boolean(isFollowing),
+            },
+          }
+        : post
     )
-  }
+  )
+}
 
   useEffect(() => {
     function handleScroll() {
@@ -2194,14 +2289,17 @@ function handleReaderFollowChanged(
 />
                 ) : (
                   <RealFollowedPostCard
-                    post={entry.post}
-                    token={token}
-                    onReactionUpdated={
-                      handleRealPostReactionUpdated
-                    }
-                    onComment={openPostComments}
-                    onMore={setOptionsPost}
-                  />
+  post={entry.post}
+  token={token}
+  onReactionUpdated={
+    handleRealPostReactionUpdated
+  }
+  onFollowChanged={
+    updateAuthorFollowState
+  }
+  onComment={openPostComments}
+  onMore={setOptionsPost}
+/>
                 )}
 
                 
