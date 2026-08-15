@@ -76,7 +76,6 @@ function selectMatch(editor, match) {
   const selection = window.getSelection()
   selection.removeAllRanges()
   selection.addRange(range)
-  editor.focus()
 }
 
 function replaceMatch(editor, match, replacement) {
