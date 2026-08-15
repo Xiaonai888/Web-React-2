@@ -297,6 +297,161 @@ function normalizeApiComment(comment) {
   }
 }
 
+function mergeFocusedAuthorPostComment(
+  comments,
+  focusComment,
+  focusParentComment
+) {
+  if (!focusComment?.id) {
+    return comments
+  }
+
+  const target =
+    normalizeApiComment(focusComment)
+
+  const parent = focusParentComment?.id
+    ? normalizeApiComment(
+        focusParentComment
+      )
+    : null
+
+  const rootById = new Map()
+  const rootOrder = []
+
+  for (const item of comments) {
+    if (!item?.id) continue
+
+    const key = String(item.id)
+
+    if (!rootById.has(key)) {
+      rootOrder.push(key)
+      rootById.set(key, item)
+      continue
+    }
+
+    const previous = rootById.get(key)
+    const replyById = new Map()
+
+    for (const reply of [
+      ...(previous.replies || []),
+      ...(item.replies || []),
+    ]) {
+      if (!reply?.id) continue
+      replyById.set(
+        String(reply.id),
+        reply
+      )
+    }
+
+    const replies = [
+      ...replyById.values(),
+    ].sort(
+      (first, second) =>
+        new Date(
+          first.created_at || 0
+        ).getTime() -
+        new Date(
+          second.created_at || 0
+        ).getTime()
+    )
+
+    rootById.set(key, {
+      ...previous,
+      ...item,
+      replies,
+      reply_total: Math.max(
+        Number(
+          previous.reply_total || 0
+        ),
+        Number(item.reply_total || 0),
+        replies.length
+      ),
+      reply_page: Math.max(
+        Number(previous.reply_page || 1),
+        Number(item.reply_page || 1)
+      ),
+    })
+  }
+
+  let merged = rootOrder.map(
+    (key) => rootById.get(key)
+  )
+
+  if (parent && target.parent_id) {
+    const parentId = String(parent.id)
+    const parentIndex =
+      merged.findIndex(
+        (item) =>
+          String(item.id) === parentId
+      )
+
+    if (parentIndex >= 0) {
+      const current =
+        merged[parentIndex]
+      const replyById = new Map(
+        (current.replies || []).map(
+          (reply) => [
+            String(reply.id),
+            reply,
+          ]
+        )
+      )
+
+      replyById.set(
+        String(target.id),
+        target
+      )
+
+      const replies = [
+        ...replyById.values(),
+      ].sort(
+        (first, second) =>
+          new Date(
+            first.created_at || 0
+          ).getTime() -
+          new Date(
+            second.created_at || 0
+          ).getTime()
+      )
+
+      merged[parentIndex] = {
+        ...current,
+        replies,
+        reply_total: Math.max(
+          Number(
+            current.reply_total || 0
+          ),
+          replies.length
+        ),
+      }
+
+      return merged
+    }
+
+    return [
+      {
+        ...parent,
+        replies: [target],
+        reply_total: 1,
+      },
+      ...merged,
+    ]
+  }
+
+  const targetIndex =
+    merged.findIndex(
+      (item) =>
+        String(item.id) ===
+        String(target.id)
+    )
+
+  if (targetIndex >= 0) {
+    return merged
+  }
+
+  return [target, ...merged]
+}
+
 function countCommentTree(comments = []) {
   return comments.reduce(
     (total, comment) =>
@@ -1995,6 +2150,17 @@ export default function CommentSection({
   story,
   variant = 'page',
   onCommentsChange,
+  focusComment = null,
+  focusParentComment = null,
+  focusCommentId = '',
+  episodeOptions = [],
+
+export default function CommentSection({
+  targetType = 'story',
+  targetId,
+  story,
+  variant = 'page',
+  onCommentsChange,
   episodeOptions = [],
   selectedEpisodeId,
   onEpisodeChange,
@@ -2157,9 +2323,18 @@ export default function CommentSection({
             )
           : []
 
-      const nextComments = append
-        ? [...comments, ...normalized]
-        : normalized
+      const baseComments = append
+  ? [...comments, ...normalized]
+  : normalized
+
+const nextComments =
+  targetType === 'author_post'
+    ? mergeFocusedAuthorPostComment(
+        baseComments,
+        focusComment,
+        focusParentComment
+      )
+    : baseComments
 
       setComments(nextComments)
       setPage(
