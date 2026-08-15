@@ -2171,14 +2171,6 @@ export default function CommentSection({
   focusParentComment = null,
   focusCommentId = '',
   episodeOptions = [],
-
-export default function CommentSection({
-  targetType = 'story',
-  targetId,
-  story,
-  variant = 'page',
-  onCommentsChange,
-  episodeOptions = [],
   selectedEpisodeId,
   onEpisodeChange,
   onCommentTotalChange,
