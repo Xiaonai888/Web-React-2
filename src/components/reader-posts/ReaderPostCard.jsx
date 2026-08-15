@@ -15,6 +15,7 @@ import {
   CollapsiblePostText,
   ProfessionalSinglePostImage,
 } from '../common/ProfessionalPostContent'
+import ReaderDiscoverPostText from './ReaderDiscoverPostText'
 import {
   deleteSavedPostBySource,
   fetchSavedPostStatus,
@@ -2346,15 +2347,18 @@ function StandardReaderPostCard({
                   postText
                 )}
               </p>
+            ) : isDiscoverView ? (
+              <ReaderDiscoverPostText
+                text={postText}
+                renderText={
+                  renderPostTextWithLinks
+                }
+                className="text-[14px] font-normal leading-6 text-[#111827]"
+              />
             ) : (
               <CollapsiblePostText
                 text={postText}
-                lines={
-                  isDiscoverView ? 2 : 3
-                }
-                discoverStyle={
-                  isDiscoverView
-                }
+                lines={3}
                 className="text-[14px] font-normal leading-6 text-[#111827]"
               >
                 {renderPostTextWithLinks(
