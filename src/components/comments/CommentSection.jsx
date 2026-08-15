@@ -1095,7 +1095,10 @@ function ReplyItem({
   }
 
   return (
-    <div className="flex gap-2">
+  <div
+    id={`comment-${reply.id}`}
+    className="flex gap-2"
+  >
       <Avatar
         user={displayUser}
         size="h-8 w-8"
@@ -1212,6 +1215,7 @@ function CommentItem({
   comment,
   story,
   targetType,
+  focusCommentId = '',
   onLike,
   onReply,
   onLoadMoreReplies,
@@ -1238,8 +1242,21 @@ function CommentItem({
     replyTargetName,
     setReplyTargetName,
   ] = useState('')
-  const [repliesShown, setRepliesShown] =
-    useState(false)
+  const focusedReplyPresent =
+  Array.isArray(comment?.replies) &&
+  comment.replies.some(
+    (reply) =>
+      String(reply.id) ===
+      String(focusCommentId)
+  )
+
+const [repliesShown, setRepliesShown] =
+  useState(focusedReplyPresent)
+  useEffect(() => {
+  if (focusedReplyPresent) {
+    setRepliesShown(true)
+  }
+}, [focusedReplyPresent])
   const [spoilerOpen, setSpoilerOpen] =
     useState(false)
   const [
@@ -3391,13 +3408,14 @@ const nextComments =
               {sortedComments.map(
                 (comment) => (
                   <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    story={story}
-                    targetType={
-                      targetType
-                    }
-                    onLike={handleLike}
+  key={comment.id}
+  comment={comment}
+  story={story}
+  targetType={
+    targetType
+  }
+  focusCommentId={focusCommentId}
+  onLike={handleLike}
                     onReply={
                       handleReply
                     }
