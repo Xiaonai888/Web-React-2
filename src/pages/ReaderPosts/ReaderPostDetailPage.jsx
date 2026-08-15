@@ -5,6 +5,7 @@ import {
 import {
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 import ReaderPostCard from '../../components/reader-posts/ReaderPostCard'
 
@@ -30,6 +31,22 @@ function getAuthToken() {
 export default function ReaderPostDetailPage() {
   const navigate = useNavigate()
   const { postId } = useParams()
+  const [searchParams] = useSearchParams()
+  const rawPhotoIndex =
+    searchParams.get('photo')
+  const photoPostView =
+    rawPhotoIndex !== null
+  const selectedPhotoIndex =
+    Math.max(
+      0,
+      Number.isFinite(
+        Number(rawPhotoIndex)
+      )
+        ? Math.floor(
+            Number(rawPhotoIndex)
+          )
+        : 0
+    )
   const [post, setPost] = useState(null)
   const [loading, setLoading] =
     useState(true)
@@ -168,7 +185,9 @@ export default function ReaderPostDetailPage() {
           </button>
 
           <div className="ml-1 text-[17px] font-semibold text-[#111827]">
-            Post
+            {photoPostView
+              ? 'Photo'
+              : 'Post'}
           </div>
         </div>
       </header>
@@ -199,7 +218,15 @@ export default function ReaderPostDetailPage() {
         {!loading && !error && post ? (
           <ReaderPostCard
             post={post}
-            fullPostView
+            fullPostView={
+              !photoPostView
+            }
+            photoPostView={
+              photoPostView
+            }
+            selectedPhotoIndex={
+              selectedPhotoIndex
+            }
             onUpdated={setPost}
             onDeleted={handleDeleted}
             onHidden={handleDeleted}
