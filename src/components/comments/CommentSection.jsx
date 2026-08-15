@@ -3601,9 +3601,25 @@ onUnhide={(
     'unhide'
   )
 }}
-                    onSpoiler={(
-                      selectedComment
-                    ) =>
+onPin={(
+  selectedComment
+) =>
+  handleModerate(
+    selectedComment,
+    'pin'
+  )
+}
+onUnpin={(
+  selectedComment
+) =>
+  handleModerate(
+    selectedComment,
+    'unpin'
+  )
+}
+onSpoiler={(
+  selectedComment
+) =>
                       handleModerate(
                         selectedComment,
                         'spoiler'
