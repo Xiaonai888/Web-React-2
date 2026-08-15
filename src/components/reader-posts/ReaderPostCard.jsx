@@ -1401,6 +1401,14 @@ function StandardReaderPostCard({
     fullscreenControlsVisible,
     setFullscreenControlsVisible,
   ] = useState(true)
+  const [
+    fullscreenPhotoMenuOpen,
+    setFullscreenPhotoMenuOpen,
+  ] = useState(false)
+  const [
+    photoActionMessage,
+    setPhotoActionMessage,
+  ] = useState('')
 
   const user = post?.user || {}
   const isOwner =
@@ -1437,6 +1445,26 @@ function StandardReaderPostCard({
           )
           .slice(0, 5)
       : []
+  const safeSelectedPhotoIndex =
+    imageUrls.length
+      ? Math.min(
+          imageUrls.length - 1,
+          Math.max(
+            0,
+            Number.isFinite(
+              Number(selectedPhotoIndex)
+            )
+              ? Math.floor(
+                  Number(selectedPhotoIndex)
+                )
+              : 0
+          )
+        )
+      : 0
+  const selectedPhotoUrl =
+    imageUrls[
+      safeSelectedPhotoIndex
+    ] || ''
 
   const echoShareSource = useMemo(
     () =>
@@ -1758,10 +1786,18 @@ function StandardReaderPostCard({
       'hidden'
 
     function handleKeyDown(event) {
-      if (event.key === 'Escape') {
-        setFullscreenPhotoOpen(false)
-        setFullscreenControlsVisible(true)
+      if (event.key !== 'Escape') {
+        return
       }
+
+      if (fullscreenPhotoMenuOpen) {
+        setFullscreenPhotoMenuOpen(false)
+        return
+      }
+
+      setFullscreenPhotoOpen(false)
+      setFullscreenControlsVisible(true)
+      setPhotoActionMessage('')
     }
 
     window.addEventListener(
@@ -1777,7 +1813,24 @@ function StandardReaderPostCard({
         handleKeyDown
       )
     }
-  }, [fullscreenPhotoOpen])
+  }, [
+    fullscreenPhotoOpen,
+    fullscreenPhotoMenuOpen,
+  ])
+
+  useEffect(() => {
+    if (!photoActionMessage) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(
+      () => setPhotoActionMessage(''),
+      1800
+    )
+
+    return () =>
+      window.clearTimeout(timer)
+  }, [photoActionMessage])
 
   function showReactionMessage(text) {
     setReactionMessage(text)
@@ -2217,11 +2270,132 @@ function StandardReaderPostCard({
   function handlePostImageClick(index) {
     if (photoPostView) {
       setFullscreenControlsVisible(true)
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoActionMessage('')
       setFullscreenPhotoOpen(true)
       return
     }
 
     openPhotoPost(index)
+  }
+
+  async function saveSelectedPhoto(event) {
+    event?.stopPropagation()
+
+    if (!selectedPhotoUrl) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        selectedPhotoUrl,
+        {
+          cache: 'no-store',
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(
+          'Could not download photo'
+        )
+      }
+
+      const blob = await response.blob()
+      const objectUrl =
+        URL.createObjectURL(blob)
+      const extension =
+        String(blob.type || '')
+          .split('/')[1]
+          ?.split(';')[0]
+          ?.replace('jpeg', 'jpg') ||
+        'jpg'
+      const link =
+        document.createElement('a')
+
+      link.href = objectUrl
+      link.download =
+        `shadow-reader-photo-${post.id}-${safeSelectedPhotoIndex + 1}.${extension}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      window.setTimeout(
+        () => URL.revokeObjectURL(objectUrl),
+        1000
+      )
+
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoActionMessage(
+        'Photo saved.'
+      )
+    } catch {
+      const link =
+        document.createElement('a')
+
+      link.href = selectedPhotoUrl
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.download =
+        `shadow-reader-photo-${post.id}-${safeSelectedPhotoIndex + 1}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoActionMessage(
+        'Photo opened for saving.'
+      )
+    }
+  }
+
+  async function shareSelectedPhoto(event) {
+    event?.stopPropagation()
+
+    if (!selectedPhotoUrl) {
+      return
+    }
+
+    const shareData = {
+      title:
+        `${user?.name || 'Reader'} photo`,
+      url: selectedPhotoUrl,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+        setFullscreenPhotoMenuOpen(false)
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return
+        }
+      }
+    }
+
+    if (
+      navigator.clipboard?.writeText
+    ) {
+      try {
+        await navigator.clipboard.writeText(
+          selectedPhotoUrl
+        )
+        setFullscreenPhotoMenuOpen(false)
+        setPhotoActionMessage(
+          'Photo link copied.'
+        )
+        return
+      } catch {
+        return
+      }
+    }
+
+    window.open(
+      selectedPhotoUrl,
+      '_blank',
+      'noopener,noreferrer'
+    )
+    setFullscreenPhotoMenuOpen(false)
   }
 
   function viewReaderProfile(event) {
@@ -2672,50 +2846,53 @@ function StandardReaderPostCard({
       imageUrls.length ? (
         <div
           className="fixed inset-0 z-[1000000] bg-black"
-          onClick={() =>
+          onClick={() => {
+            if (fullscreenPhotoMenuOpen) {
+              setFullscreenPhotoMenuOpen(false)
+              return
+            }
+
             setFullscreenControlsVisible(
               (current) => !current
             )
-          }
+          }}
         >
           {fullscreenControlsVisible ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                setFullscreenPhotoOpen(false)
-                setFullscreenControlsVisible(true)
-              }}
-              className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
-              aria-label="Close fullscreen photo"
-            >
-              <i className="fa-solid fa-xmark text-[20px]" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setFullscreenPhotoOpen(false)
+                  setFullscreenControlsVisible(true)
+                  setFullscreenPhotoMenuOpen(false)
+                  setPhotoActionMessage('')
+                }}
+                className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
+                aria-label="Close fullscreen photo"
+              >
+                <i className="fa-solid fa-xmark text-[20px]" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setFullscreenPhotoMenuOpen(
+                    true
+                  )
+                }}
+                className="absolute right-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
+                aria-label="Photo options"
+              >
+                <i className="fa-solid fa-ellipsis text-[18px]" />
+              </button>
+            </>
           ) : null}
 
           <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
             <img
-              src={
-                imageUrls[
-                  Math.min(
-                    imageUrls.length - 1,
-                    Math.max(
-                      0,
-                      Number.isFinite(
-                        Number(
-                          selectedPhotoIndex
-                        )
-                      )
-                        ? Math.floor(
-                            Number(
-                              selectedPhotoIndex
-                            )
-                          )
-                        : 0
-                    )
-                  )
-                ]
-              }
+              src={selectedPhotoUrl}
               alt=""
               loading="eager"
               decoding="async"
@@ -2723,6 +2900,59 @@ function StandardReaderPostCard({
               draggable="false"
             />
           </div>
+
+          {photoActionMessage ? (
+            <div className="absolute bottom-[max(24px,env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
+              {photoActionMessage}
+            </div>
+          ) : null}
+
+          {fullscreenPhotoMenuOpen ? (
+            <div
+              className="absolute inset-0 z-40 flex items-end bg-black/35"
+              onClick={(event) => {
+                event.stopPropagation()
+                setFullscreenPhotoMenuOpen(
+                  false
+                )
+              }}
+            >
+              <div
+                className="w-full rounded-t-[22px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
+                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
+
+                <button
+                  type="button"
+                  onClick={saveSelectedPhoto}
+                  className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+                    <i className="fa-solid fa-download text-[17px]" />
+                  </span>
+                  <span className="text-[14px] font-medium text-[#111827]">
+                    Save photo
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={shareSelectedPhoto}
+                  className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+                    <i className="fa-solid fa-share-nodes text-[17px]" />
+                  </span>
+                  <span className="text-[14px] font-medium text-[#111827]">
+                    Share photo
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
