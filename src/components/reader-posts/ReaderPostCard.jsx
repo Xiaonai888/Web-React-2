@@ -1254,6 +1254,7 @@ function StandardReaderPostCard({
   onUpdated,
   onDeleted,
   onHidden,
+  onFollowChanged,
 }) {
   const navigate = useNavigate()
   const reactionPressTimerRef =
@@ -1331,12 +1332,23 @@ function StandardReaderPostCard({
     useState(false)
   const [saveBusy, setSaveBusy] =
     useState(false)
+  const [followBusy, setFollowBusy] =
+    useState(false)
 
   const user = post?.user || {}
   const isOwner =
     Boolean(post?.is_owner) ||
     String(storedUser?.id || '') ===
       String(post?.user_id || '')
+  const isDiscoverView =
+    window.location.pathname === '/discover'
+  const isFollowing =
+    Boolean(user?.is_following)
+  const showFollow =
+    isDiscoverView &&
+    !isOwner &&
+    !isFollowing &&
+    Boolean(user?.username)
   const isEchoPost =
     Boolean(post?.is_echo)
   const isLegacyEcho =
@@ -2084,6 +2096,67 @@ function StandardReaderPostCard({
     }
   }
 
+  async function followReaderFromPost() {
+    if (
+      followBusy ||
+      isOwner ||
+      isFollowing ||
+      !user?.username
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setFollowBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${encodeURIComponent(
+          user.username
+        )}/follow`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to follow reader'
+        )
+      }
+
+      onFollowChanged?.(
+        post.user_id,
+        true
+      )
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to follow reader.'
+      )
+    } finally {
+      setFollowBusy(false)
+    }
+  }
+
   async function toggleSavedPost() {
     if (!post?.id || saveBusy) return
 
@@ -2159,16 +2232,49 @@ function StandardReaderPostCard({
   <div className="min-w-0 flex-1">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <button
-          type="button"
-          onClick={viewReaderProfile}
-          className="block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70"
+        <div
+          className={
+            isDiscoverView
+              ? 'flex flex-wrap items-baseline gap-x-1'
+              : ''
+          }
         >
-          {user.name || 'Reader'}
-        </button>
+          <button
+            type="button"
+            onClick={viewReaderProfile}
+            className={
+              isDiscoverView
+                ? 'max-w-full whitespace-normal break-words text-left text-[14px] font-semibold leading-5 text-[#111827] active:opacity-70'
+                : 'block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70'
+            }
+          >
+            {user.name || 'Reader'}
+          </button>
+
+          {showFollow ? (
+            <>
+              <span className="text-[14px] font-normal text-[#65676b]">
+                ·
+              </span>
+
+              <button
+                type="button"
+                disabled={followBusy}
+                onClick={followReaderFromPost}
+                className="text-[14px] font-semibold text-[#0866ff] active:opacity-70 disabled:opacity-50"
+              >
+                Follow
+              </button>
+            </>
+          ) : null}
+        </div>
 
         <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-          <span>{formatPostTime(post.created_at)}</span>
+          <span>
+            {formatPostTime(
+              post.created_at
+            )}
+          </span>
 
           {post.is_edited ? (
             <>
@@ -2180,14 +2286,18 @@ function StandardReaderPostCard({
           <span>·</span>
 
           <i
-            className={`${getVisibilityIcon(post.visibility)} text-[10px]`}
+            className={`${getVisibilityIcon(
+              post.visibility
+            )} text-[10px]`}
           />
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => setMenuOpen(true)}
+        onClick={() =>
+          setMenuOpen(true)
+        }
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
         aria-label="Post options"
       >
