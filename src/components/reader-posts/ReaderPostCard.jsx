@@ -508,7 +508,16 @@ function ReaderPostImages({
       images[safeSelectedIndex]
 
     return (
-      <div className="bg-[#f3f4f6]">
+      <button
+        type="button"
+        onClick={() =>
+          onImageClick?.(
+            safeSelectedIndex
+          )
+        }
+        className="block w-full bg-[#f3f4f6]"
+        aria-label="Open photo fullscreen"
+      >
         <img
           src={selectedImage}
           alt=""
@@ -516,7 +525,7 @@ function ReaderPostImages({
           decoding="async"
           className="max-h-[72dvh] min-h-[260px] w-full object-contain"
         />
-      </div>
+      </button>
     )
   }
 
@@ -1384,6 +1393,10 @@ function StandardReaderPostCard({
     useState(false)
   const [followBusy, setFollowBusy] =
     useState(false)
+  const [
+    fullscreenPhotoOpen,
+    setFullscreenPhotoOpen,
+  ] = useState(false)
 
   const user = post?.user || {}
   const isOwner =
@@ -1728,6 +1741,38 @@ function StandardReaderPostCard({
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!fullscreenPhotoOpen) {
+      return undefined
+    }
+
+    const previousOverflow =
+      document.body.style.overflow
+
+    document.body.style.overflow =
+      'hidden'
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setFullscreenPhotoOpen(false)
+      }
+    }
+
+    window.addEventListener(
+      'keydown',
+      handleKeyDown
+    )
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown
+      )
+    }
+  }, [fullscreenPhotoOpen])
 
   function showReactionMessage(text) {
     setReactionMessage(text)
@@ -2164,6 +2209,15 @@ function StandardReaderPostCard({
     )
   }
 
+  function handlePostImageClick(index) {
+    if (photoPostView) {
+      setFullscreenPhotoOpen(true)
+      return
+    }
+
+    openPhotoPost(index)
+  }
+
   function viewReaderProfile(event) {
     event?.stopPropagation()
 
@@ -2451,9 +2505,7 @@ function StandardReaderPostCard({
           <ReaderPostImages
             imageUrls={imageUrls}
             onImageClick={
-              photoPostView
-                ? undefined
-                : openPhotoPost
+              handlePostImageClick
             }
             photoPostView={
               photoPostView
@@ -2609,6 +2661,52 @@ function StandardReaderPostCard({
           </button>
         </div>
       </article>
+
+      {fullscreenPhotoOpen &&
+      imageUrls.length ? (
+        <div className="fixed inset-0 z-[1000000] bg-black">
+          <button
+            type="button"
+            onClick={() =>
+              setFullscreenPhotoOpen(false)
+            }
+            className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
+            aria-label="Close fullscreen photo"
+          >
+            <i className="fa-solid fa-xmark text-[20px]" />
+          </button>
+
+          <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
+            <img
+              src={
+                imageUrls[
+                  Math.min(
+                    imageUrls.length - 1,
+                    Math.max(
+                      0,
+                      Number.isFinite(
+                        Number(
+                          selectedPhotoIndex
+                        )
+                      )
+                        ? Math.floor(
+                            Number(
+                              selectedPhotoIndex
+                            )
+                          )
+                        : 0
+                    )
+                  )
+                ]
+              }
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="max-h-[100dvh] max-w-full object-contain"
+            />
+          </div>
+        </div>
+      ) : null}
 
       {reactionMessage ? (
         <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
