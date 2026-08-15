@@ -20,6 +20,7 @@ import {
   getAuthorInboxProfile,
   hasAuthorChatSession,
 } from '../../services/authorChatApi'
+import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
 
 const QUICK_FILTERS = [
   { key: 'unread', label: 'Unread' },
@@ -557,23 +558,15 @@ export default function AuthorChatInboxPage() {
     ''
 
   function openComment(notification) {
-  const metadata =
-    notification?.metadata &&
-    typeof notification.metadata === 'object'
-      ? notification.metadata
-      : {}
+  const activityRoute =
+    resolveAuthorPostActivityRoute(notification)
 
-  const postId = String(metadata.post_id || '').trim()
-  const commentId = String(metadata.comment_id || '').trim()
-
-  if (!postId || !commentId) {
+  if (!activityRoute) {
     setError('This Page comment cannot be opened.')
     return
   }
 
-  navigate(
-    `/author/page/chat/comments/${encodeURIComponent(postId)}/${encodeURIComponent(commentId)}`
-  )
+  navigate(activityRoute)
 }
 
 
