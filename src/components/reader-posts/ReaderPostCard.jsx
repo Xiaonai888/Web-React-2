@@ -2200,10 +2200,15 @@ function StandardReaderPostCard({
        {postText ? (
   <div className="px-4 pb-4">
     <CollapsiblePostText
-      text={postText}
-      lines={3}
-      className="text-[14px] font-normal leading-6 text-[#111827]"
-    >
+  text={postText}
+  lines={window.location.pathname === '/discover' ? 2 : 3}
+  discoverStyle={window.location.pathname === '/discover'}
+  className="text-[14px] font-normal leading-6 text-[#111827]"
+>
+  {renderPostTextWithLinks(
+    postText
+  )}
+</CollapsiblePostText>
       {renderPostTextWithLinks(
         postText
       )}
