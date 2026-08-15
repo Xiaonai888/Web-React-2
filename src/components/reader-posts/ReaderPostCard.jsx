@@ -31,6 +31,7 @@ const API_BASE_URL =
 
 const MAX_POST_LENGTH = 10000
 const MAX_POST_PHOTOS = 5
+const MAX_PHOTO_CAPTION_LENGTH = 2000
 const MAX_POST_IMAGE_BYTES = 800 * 1024
 const HARD_MAX_IMAGE_BYTES = 220 * 1024
 const MAX_IMAGE_WIDTH = 1080
@@ -1417,6 +1418,18 @@ function StandardReaderPostCard({
     photoDeleteBusy,
     setPhotoDeleteBusy,
   ] = useState(false)
+  const [
+    photoCaptionEditorOpen,
+    setPhotoCaptionEditorOpen,
+  ] = useState(false)
+  const [
+    photoCaption,
+    setPhotoCaption,
+  ] = useState('')
+  const [
+    photoCaptionSaving,
+    setPhotoCaptionSaving,
+  ] = useState(false)
 
   const user = post?.user || {}
   const isOwner =
@@ -1473,6 +1486,27 @@ function StandardReaderPostCard({
     imageUrls[
       safeSelectedPhotoIndex
     ] || ''
+  const photoMetadata =
+    Array.isArray(
+      post?.photo_metadata
+    )
+      ? post.photo_metadata
+      : []
+  const selectedPhotoMetadata =
+    photoMetadata.find(
+      (item) =>
+        String(item?.url || '') ===
+        String(selectedPhotoUrl || '')
+    ) ||
+    photoMetadata[
+      safeSelectedPhotoIndex
+    ] ||
+    {}
+  const selectedPhotoCaption =
+    String(
+      selectedPhotoMetadata?.caption ||
+        ''
+    )
 
   const echoShareSource = useMemo(
     () =>
@@ -1798,6 +1832,13 @@ function StandardReaderPostCard({
         return
       }
 
+      if (photoCaptionEditorOpen) {
+        if (!photoCaptionSaving) {
+          setPhotoCaptionEditorOpen(false)
+        }
+        return
+      }
+
       if (photoDeleteConfirmOpen) {
         if (!photoDeleteBusy) {
           setPhotoDeleteConfirmOpen(false)
@@ -1833,6 +1874,8 @@ function StandardReaderPostCard({
   }, [
     fullscreenPhotoOpen,
     fullscreenPhotoMenuOpen,
+    photoCaptionEditorOpen,
+    photoCaptionSaving,
     photoDeleteConfirmOpen,
     photoDeleteBusy,
   ])
@@ -2291,12 +2334,157 @@ function StandardReaderPostCard({
       setFullscreenControlsVisible(true)
       setFullscreenPhotoMenuOpen(false)
       setPhotoDeleteConfirmOpen(false)
+      setPhotoCaptionEditorOpen(false)
       setPhotoActionMessage('')
       setFullscreenPhotoOpen(true)
       return
     }
 
     openPhotoPost(index)
+  }
+
+  function openPhotoCaptionEditor(event) {
+    event?.stopPropagation()
+
+    if (!isOwner || !selectedPhotoUrl) {
+      return
+    }
+
+    setPhotoCaption(
+      selectedPhotoCaption
+    )
+    setFullscreenPhotoMenuOpen(false)
+    setPhotoCaptionEditorOpen(true)
+  }
+
+  async function savePhotoCaption(event) {
+    event?.stopPropagation()
+
+    if (
+      !isOwner ||
+      !selectedPhotoUrl ||
+      photoCaptionSaving
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      setPhotoCaptionEditorOpen(false)
+      setFullscreenPhotoOpen(false)
+      navigate('/login')
+      return
+    }
+
+    const nextCaption =
+      photoCaption
+        .slice(
+          0,
+          MAX_PHOTO_CAPTION_LENGTH
+        )
+        .trim()
+
+    const metadataByUrl = new Map(
+      photoMetadata
+        .filter(
+          (item) =>
+            item &&
+            typeof item === 'object'
+        )
+        .map((item) => [
+          String(item.url || ''),
+          item,
+        ])
+    )
+
+    const nextPhotoMetadata =
+      imageUrls.map((url, index) => {
+        const existing =
+          metadataByUrl.get(
+            String(url)
+          ) ||
+          photoMetadata[index] ||
+          {}
+
+        return {
+          url,
+          caption:
+            index ===
+            safeSelectedPhotoIndex
+              ? nextCaption
+              : String(
+                  existing.caption ||
+                    ''
+                ),
+          alt_text: String(
+            existing.alt_text ??
+              existing.alt ??
+              ''
+          ),
+        }
+      })
+
+    try {
+      setPhotoCaptionSaving(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(
+          post.id
+        )}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            photo_metadata:
+              nextPhotoMetadata,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to save caption'
+        )
+      }
+
+      if (data.post) {
+        onUpdated?.(data.post)
+      } else {
+        onUpdated?.({
+          ...post,
+          photo_metadata:
+            nextPhotoMetadata,
+        })
+      }
+
+      setPhotoCaptionEditorOpen(false)
+      setPhotoActionMessage(
+        nextCaption
+          ? 'Caption saved.'
+          : 'Caption removed.'
+      )
+    } catch (error) {
+      setPhotoActionMessage(
+        error.message ||
+          'Failed to save caption.'
+      )
+    } finally {
+      setPhotoCaptionSaving(false)
+    }
   }
 
   async function deleteSelectedPhoto(event) {
@@ -3002,6 +3190,10 @@ function StandardReaderPostCard({
         <div
           className="fixed inset-0 z-[1000000] bg-black"
           onClick={() => {
+            if (photoCaptionEditorOpen) {
+              return
+            }
+
             if (photoDeleteConfirmOpen) {
               if (!photoDeleteBusy) {
                 setPhotoDeleteConfirmOpen(
@@ -3031,6 +3223,7 @@ function StandardReaderPostCard({
                   setFullscreenControlsVisible(true)
                   setFullscreenPhotoMenuOpen(false)
                   setPhotoDeleteConfirmOpen(false)
+                  setPhotoCaptionEditorOpen(false)
                   setPhotoActionMessage('')
                 }}
                 className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
@@ -3066,6 +3259,18 @@ function StandardReaderPostCard({
             />
           </div>
 
+          {fullscreenControlsVisible &&
+          selectedPhotoCaption &&
+          !fullscreenPhotoMenuOpen &&
+          !photoCaptionEditorOpen &&
+          !photoDeleteConfirmOpen ? (
+            <div className="absolute bottom-[max(28px,env(safe-area-inset-bottom))] left-0 right-0 z-20 px-5 text-center">
+              <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                {selectedPhotoCaption}
+              </p>
+            </div>
+          ) : null}
+
           {photoActionMessage ? (
             <div className="absolute bottom-[max(24px,env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
               {photoActionMessage}
@@ -3091,26 +3296,43 @@ function StandardReaderPostCard({
                 <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
                 {isOwner ? (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setFullscreenPhotoMenuOpen(
-                        false
-                      )
-                      setPhotoDeleteConfirmOpen(
-                        true
-                      )
-                    }}
-                    className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#fff1f2]"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center text-[#e5484d]">
-                      <i className="fa-regular fa-trash-can text-[17px]" />
-                    </span>
-                    <span className="text-[14px] font-medium text-[#e5484d]">
-                      Delete photo
-                    </span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={
+                        openPhotoCaptionEditor
+                      }
+                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+                        <i className="fa-regular fa-pen-to-square text-[17px]" />
+                      </span>
+                      <span className="text-[14px] font-medium text-[#111827]">
+                        Edit caption
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setFullscreenPhotoMenuOpen(
+                          false
+                        )
+                        setPhotoDeleteConfirmOpen(
+                          true
+                        )
+                      }}
+                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#fff1f2]"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center text-[#e5484d]">
+                        <i className="fa-regular fa-trash-can text-[17px]" />
+                      </span>
+                      <span className="text-[14px] font-medium text-[#e5484d]">
+                        Delete photo
+                      </span>
+                    </button>
+                  </>
                 ) : null}
 
                 <button
@@ -3138,6 +3360,93 @@ function StandardReaderPostCard({
                     Share photo
                   </span>
                 </button>
+              </div>
+            </div>
+          ) : null}
+
+          {photoCaptionEditorOpen ? (
+            <div
+              className="absolute inset-0 z-50 flex items-end bg-black/45"
+              onClick={(event) => {
+                event.stopPropagation()
+
+                if (!photoCaptionSaving) {
+                  setPhotoCaptionEditorOpen(
+                    false
+                  )
+                }
+              }}
+            >
+              <div
+                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[16px] font-semibold text-[#111827]">
+                      Edit caption
+                    </div>
+                    <div className="mt-1 text-[12px] font-normal text-[#98a2b3]">
+                      Photo {safeSelectedPhotoIndex + 1}
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] font-normal text-[#98a2b3]">
+                    {photoCaption.length} / {MAX_PHOTO_CAPTION_LENGTH}
+                  </span>
+                </div>
+
+                <textarea
+                  autoFocus
+                  value={photoCaption}
+                  maxLength={
+                    MAX_PHOTO_CAPTION_LENGTH
+                  }
+                  onChange={(event) =>
+                    setPhotoCaption(
+                      event.target.value.slice(
+                        0,
+                        MAX_PHOTO_CAPTION_LENGTH
+                      )
+                    )
+                  }
+                  placeholder="Write a caption for this photo..."
+                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                />
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    disabled={
+                      photoCaptionSaving
+                    }
+                    onClick={() =>
+                      setPhotoCaptionEditorOpen(
+                        false
+                      )
+                    }
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={
+                      photoCaptionSaving
+                    }
+                    onClick={savePhotoCaption}
+                    className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {photoCaptionSaving
+                      ? 'Saving...'
+                      : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
