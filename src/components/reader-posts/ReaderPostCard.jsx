@@ -1397,6 +1397,10 @@ function StandardReaderPostCard({
     fullscreenPhotoOpen,
     setFullscreenPhotoOpen,
   ] = useState(false)
+  const [
+    fullscreenControlsVisible,
+    setFullscreenControlsVisible,
+  ] = useState(true)
 
   const user = post?.user || {}
   const isOwner =
@@ -1756,6 +1760,7 @@ function StandardReaderPostCard({
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         setFullscreenPhotoOpen(false)
+        setFullscreenControlsVisible(true)
       }
     }
 
@@ -2211,6 +2216,7 @@ function StandardReaderPostCard({
 
   function handlePostImageClick(index) {
     if (photoPostView) {
+      setFullscreenControlsVisible(true)
       setFullscreenPhotoOpen(true)
       return
     }
@@ -2664,17 +2670,28 @@ function StandardReaderPostCard({
 
       {fullscreenPhotoOpen &&
       imageUrls.length ? (
-        <div className="fixed inset-0 z-[1000000] bg-black">
-          <button
-            type="button"
-            onClick={() =>
-              setFullscreenPhotoOpen(false)
-            }
-            className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
-            aria-label="Close fullscreen photo"
-          >
-            <i className="fa-solid fa-xmark text-[20px]" />
-          </button>
+        <div
+          className="fixed inset-0 z-[1000000] bg-black"
+          onClick={() =>
+            setFullscreenControlsVisible(
+              (current) => !current
+            )
+          }
+        >
+          {fullscreenControlsVisible ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                setFullscreenPhotoOpen(false)
+                setFullscreenControlsVisible(true)
+              }}
+              className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
+              aria-label="Close fullscreen photo"
+            >
+              <i className="fa-solid fa-xmark text-[20px]" />
+            </button>
+          ) : null}
 
           <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
             <img
@@ -2702,7 +2719,8 @@ function StandardReaderPostCard({
               alt=""
               loading="eager"
               decoding="async"
-              className="max-h-[100dvh] max-w-full object-contain"
+              className="max-h-[100dvh] max-w-full select-none object-contain"
+              draggable="false"
             />
           </div>
         </div>
