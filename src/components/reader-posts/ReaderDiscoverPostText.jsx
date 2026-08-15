@@ -1,0 +1,2897 @@
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+import ImageDropZone from '../common/ImageDropZone'
+import ReaderPostOptionsSheet, {
+  ReaderPostDeleteConfirmSheet,
+} from './ReaderPostOptionsSheet'
+import ReaderPostCommentsModal from './ReaderPostCommentsModal'
+import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
+import {
+  CollapsiblePostText,
+  ProfessionalSinglePostImage,
+} from '../common/ProfessionalPostContent'
+import ReaderDiscoverPostText from './ReaderDiscoverPostText'
+import {
+  deleteSavedPostBySource,
+  fetchSavedPostStatus,
+  saveSavedPost,
+} from '../../services/savedPostsApi'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const MAX_POST_LENGTH = 10000
+const MAX_POST_PHOTOS = 5
+const MAX_POST_IMAGE_BYTES = 800 * 1024
+const HARD_MAX_IMAGE_BYTES = 220 * 1024
+const MAX_IMAGE_WIDTH = 1080
+const MAX_IMAGE_HEIGHT = 1350
+const TARGET_IMAGE_BYTES = 150 * 1024
+
+const READER_POST_REACTIONS = [
+  {
+    type: 'love',
+    label: 'Love',
+    src: '/assets/React/Love.svg',
+    text: '#ff2f5f',
+  },
+  {
+    type: 'haha',
+    label: 'Haha',
+    src: '/assets/React/Haha.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'wow',
+    label: 'Wow',
+    src: '/assets/React/Wow.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'sad',
+    label: 'Sad',
+    src: '/assets/React/Sad.svg',
+    text: '#3b82f6',
+  },
+  {
+    type: 'angry',
+    label: 'Angry',
+    src: '/assets/React/Angry.svg',
+    text: '#ef4444',
+  },
+  {
+    type: 'support',
+    label: 'Support',
+    src: '/assets/React/Support.svg',
+    text: '#16a34a',
+  },
+  {
+    type: 'touched',
+    label: 'Touched',
+    src: '/assets/React/Touched.svg',
+    text: '#8b5cf6',
+  },
+]
+
+function getAuthToken() {
+  return (
+    localStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    sessionStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    ''
+  )
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes || 0)
+
+  if (
+    !Number.isFinite(value) ||
+    value <= 0
+  ) {
+    return '0KB'
+  }
+
+  if (value >= 1024 * 1024) {
+    return `${(
+      value /
+      1024 /
+      1024
+    ).toFixed(1)}MB`
+  }
+
+  return `${Math.max(
+    1,
+    Math.round(value / 1024)
+  )}KB`
+}
+
+function loadImageFromFile(file) {
+  return new Promise(
+    (resolve, reject) => {
+      const image = new Image()
+      const url =
+        URL.createObjectURL(file)
+
+      image.onload = () => {
+        URL.revokeObjectURL(url)
+        resolve(image)
+      }
+
+      image.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(
+          new Error(
+            'Failed to load image'
+          )
+        )
+      }
+
+      image.src = url
+    }
+  )
+}
+
+function canvasToBlob(
+  canvas,
+  type,
+  quality
+) {
+  return new Promise((resolve) =>
+    canvas.toBlob(
+      resolve,
+      type,
+      quality
+    )
+  )
+}
+
+async function compressImageFile(file) {
+  if (
+    !file?.type?.startsWith(
+      'image/'
+    )
+  ) {
+    return null
+  }
+
+  const image =
+    await loadImageFromFile(file)
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_WIDTH / image.width,
+    MAX_IMAGE_HEIGHT / image.height
+  )
+  let width = Math.max(
+    1,
+    Math.round(image.width * scale)
+  )
+  let height = Math.max(
+    1,
+    Math.round(image.height * scale)
+  )
+  let quality = 0.82
+  let blob = null
+
+  for (
+    let attempt = 0;
+    attempt < 10;
+    attempt += 1
+  ) {
+    const canvas =
+      document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context =
+      canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error(
+        'Could not prepare this image'
+      )
+    }
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      width,
+      height
+    )
+
+    blob = await canvasToBlob(
+      canvas,
+      'image/webp',
+      quality
+    )
+
+    if (
+      blob &&
+      blob.size <=
+        TARGET_IMAGE_BYTES
+    ) {
+      break
+    }
+
+    if (
+      blob &&
+      blob.size <=
+        HARD_MAX_IMAGE_BYTES &&
+      quality <= 0.68
+    ) {
+      break
+    }
+
+    if (quality > 0.62) {
+      quality = Math.max(
+        0.62,
+        quality - 0.07
+      )
+    } else {
+      width = Math.max(
+        1,
+        Math.round(width * 0.9)
+      )
+      height = Math.max(
+        1,
+        Math.round(height * 0.9)
+      )
+    }
+  }
+
+  if (!blob) return file
+
+  if (
+    blob.size >
+    HARD_MAX_IMAGE_BYTES
+  ) {
+    throw new Error(
+      `Photo is still too large after compression. Selected: ${formatBytes(
+        blob.size
+      )} / Limit: ${formatBytes(
+        HARD_MAX_IMAGE_BYTES
+      )}.`
+    )
+  }
+
+  return new File(
+    [blob],
+    file.name.replace(
+      /\.[^.]+$/,
+      '.webp'
+    ),
+    {
+      type: 'image/webp',
+      lastModified: Date.now(),
+    }
+  )
+}
+
+async function uploadReaderPostImage(
+  file
+) {
+  const token = getAuthToken()
+
+  if (!token) {
+    throw new Error(
+      'Please login first'
+    )
+  }
+
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append(
+    'folder',
+    'reader_post_image'
+  )
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/story-media/upload-image`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (
+    !response.ok ||
+    data.ok === false
+  ) {
+    throw new Error(
+      data.message ||
+        'Failed to upload photo'
+    )
+  }
+
+  const imageUrl =
+    data.image_url ||
+    data.imageUrl ||
+    ''
+
+  if (!imageUrl) {
+    throw new Error(
+      'Upload completed without an image URL'
+    )
+  }
+
+  return imageUrl
+}
+
+const POST_TOKEN_PATTERN = /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
+const POST_URL_ONLY_PATTERN = /^https?:\/\/[^\s]+$/i
+const POST_HASHTAG_ONLY_PATTERN = /^#[\p{L}\p{N}\p{M}_]+$/u
+function renderPostTextWithLinks(text) {
+  return String(text || '').split(POST_TOKEN_PATTERN).map((part, index) => {
+    if (POST_URL_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={part} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="break-all text-[#1877f2]">{part}</a>
+    if (POST_HASHTAG_ONLY_PATTERN.test(part)) return <a key={`${part}-${index}`} href={`/discover/search?q=${encodeURIComponent(part)}&type=posts`} onClick={(e) => e.stopPropagation()} className="text-[#1877f2]">{part}</a>
+    return part
+  })
+}
+
+function getStoredUser() {
+  try {
+    return JSON.parse(
+      localStorage.getItem(
+        'shadow_reader_user'
+      ) ||
+        sessionStorage.getItem(
+          'shadow_reader_user'
+        ) ||
+        'null'
+    )
+  } catch {
+    return null
+  }
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0)
+
+  if (!Number.isFinite(number)) {
+    return '0'
+  }
+
+  if (number >= 1000000) {
+    return `${(
+      number / 1000000
+    ).toFixed(
+      number >= 10000000 ? 0 : 1
+    )}M`
+  }
+
+  if (number >= 1000) {
+    return `${(
+      number / 1000
+    ).toFixed(
+      number >= 10000 ? 0 : 1
+    )}k`
+  }
+
+  return String(number)
+}
+
+function formatPostTime(value) {
+  const timestamp =
+    new Date(value || 0).getTime()
+
+  if (!timestamp) return 'Just now'
+
+  const difference = Math.max(
+    0,
+    Date.now() - timestamp
+  )
+  const minutes = Math.floor(
+    difference / 60000
+  )
+  const hours = Math.floor(
+    minutes / 60
+  )
+  const days = Math.floor(
+    hours / 24
+  )
+
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m`
+  if (hours < 24) return `${hours}h`
+  if (days < 7) return `${days}d`
+
+  return new Intl.DateTimeFormat(
+    undefined,
+    {
+      month: 'short',
+      day: 'numeric',
+      year:
+        new Date().getFullYear() !==
+        new Date(timestamp).getFullYear()
+          ? 'numeric'
+          : undefined,
+    }
+  ).format(new Date(timestamp))
+}
+
+function getVisibilityIcon(value) {
+  if (
+    value === 'only_me' ||
+    value === 'private'
+  ) {
+    return 'fa-solid fa-lock'
+  }
+
+  if (value === 'friends') {
+    return 'fa-solid fa-user-group'
+  }
+
+  if (value === 'followers') {
+    return 'fa-solid fa-users'
+  }
+
+  return 'fa-solid fa-earth-americas'
+}
+
+function ReaderAvatar({ user }) {
+  const name = user?.name || 'Reader'
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-semibold text-white">
+      {user?.avatar_url ? (
+        <img
+          src={user.avatar_url}
+          alt={name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        name.slice(0, 1).toUpperCase()
+      )}
+    </div>
+  )
+}
+
+function ReaderPostImages({
+  imageUrls,
+}) {
+  const images = Array.isArray(
+    imageUrls
+  )
+    ? imageUrls
+        .filter(
+          (url) =>
+            typeof url === 'string' &&
+            url.trim()
+        )
+        .slice(0, 5)
+    : []
+
+  if (!images.length) {
+    return null
+  }
+
+  if (images.length === 1) {
+  return (
+    <ProfessionalSinglePostImage
+      src={images[0]}
+      alt=""
+    />
+  )
+}
+
+  return (
+    <div className="grid grid-cols-2 gap-1 overflow-hidden bg-white">
+      {images.map(
+        (imageUrl, index) => {
+          const isWideLastImage =
+            images.length % 2 === 1 &&
+            index ===
+              images.length - 1
+
+          return (
+            <div
+              key={`${imageUrl}-${index}`}
+              className={
+                isWideLastImage
+                  ? 'col-span-2 aspect-[2/1] bg-[#f3f4f6]'
+                  : 'aspect-square bg-[#f3f4f6]'
+              }
+            >
+              <img
+                src={imageUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )
+        }
+      )}
+    </div>
+  )
+}
+
+function EchoPostPreviewImages({
+  imageUrls,
+  alt = '',
+}) {
+  const images = Array.isArray(
+    imageUrls
+  )
+    ? imageUrls
+        .filter(
+          (url) =>
+            typeof url === 'string' &&
+            url.trim()
+        )
+        .slice(0, 5)
+    : []
+
+  if (!images.length) {
+    return (
+      <div className="flex min-h-0 items-center justify-center bg-[#f3f4f6] text-[#98a2b3]">
+        <i className="fa-regular fa-image text-[28px]" />
+      </div>
+    )
+  }
+
+  if (images.length === 1) {
+    return (
+      <div className="min-h-0 overflow-hidden bg-[#f3f4f6]">
+        <img
+          src={images[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  if (images.length === 2) {
+    return (
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+        {images.map((imageUrl) => (
+          <img
+            key={imageUrl}
+            src={imageUrl}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="h-full min-h-0 w-full object-cover"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (images.length === 3) {
+    return (
+      <div className="grid min-h-0 grid-cols-2 gap-[2px] bg-white">
+        <img
+          src={images[0]}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full min-h-0 w-full object-cover"
+        />
+
+        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
+          {images.slice(1).map(
+            (imageUrl) => (
+              <img
+                key={imageUrl}
+                src={imageUrl}
+                alt={alt}
+                loading="lazy"
+                decoding="async"
+                className="h-full min-h-0 w-full object-cover"
+              />
+            )
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const visibleImages = images.slice(0, 4)
+  const hiddenCount = Math.max(
+    0,
+    images.length - 4
+  )
+
+  return (
+    <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-[2px] bg-white">
+      {visibleImages.map(
+        (imageUrl, index) => (
+          <div
+            key={imageUrl}
+            className="relative min-h-0 overflow-hidden"
+          >
+            <img
+              src={imageUrl}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              className="h-full min-h-0 w-full object-cover"
+            />
+
+            {index === 3 &&
+            hiddenCount > 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[22px] font-semibold text-white">
+                +{hiddenCount}
+              </div>
+            ) : null}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+
+
+
+function ReaderEchoMenuItem({
+  icon,
+  title,
+  danger = false,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left active:bg-black/[0.04]"
+    >
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center ${
+          danger
+            ? 'text-[#e5484d]'
+            : 'text-[#111827]'
+        }`}
+      >
+        <i className={`${icon} text-[17px]`} />
+      </span>
+
+      <span
+        className={`text-[14px] font-normal ${
+          danger
+            ? 'text-[#e5484d]'
+            : 'text-[#111827]'
+        }`}
+      >
+        {title}
+      </span>
+    </button>
+  )
+}
+
+function resolveReaderPostEchoSource(
+  post,
+  user
+) {
+  const source = post?.source || {}
+  const sourceType = String(
+  post?.source_type || post?.echo_type || source?.type ||
+  (post?.source_episode?.id ? 'episode' :
+    post?.source_story?.id ? 'story' : '')
+)
+  .trim().toLowerCase()
+  .replaceAll('-', '_')
+  const sourceId = String(
+    post?.source_id ||
+      source?.id ||
+      ''
+  ).trim()
+
+  const useOriginalSource =
+    Boolean(post?.is_echo) &&
+    Boolean(sourceType) &&
+    Boolean(sourceId)
+
+  if (!useOriginalSource) {
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    return {
+      type: 'reader_post',
+      id: post?.id,
+      name:
+        user?.name ||
+        username ||
+        'Reader',
+      avatarUrl:
+        user?.avatar_url || '',
+      content:
+        post?.content ||
+        'Reader post',
+      imageUrl:
+        Array.isArray(
+          post?.image_urls
+        )
+          ? post.image_urls[0] || ''
+          : '',
+      label: 'reader post',
+      shareUrl:
+        `${window.location.origin}${
+          username
+            ? `/profile?username=${encodeURIComponent(
+                username
+              )}`
+            : '/profile'
+        }#reader-post-${post?.id || ''}`,
+    }
+  }
+
+  const owner =
+    source?.owner ||
+    post?.source_author_post
+      ?.author_page ||
+    post?.source_reader_post?.user ||
+    post?.source_story?.author_page ||
+    {}
+
+  const sourceName =
+    source?.name ||
+    post?.source_story?.title ||
+    post?.source_episode?.title ||
+    owner?.page_name ||
+    owner?.name ||
+    'Shared content'
+
+  const sourcePath = String(
+    post?.source_url ||
+      source?.url ||
+      ''
+  ).trim()
+
+  const shareUrl = sourcePath
+    ? /^https?:\/\//i.test(sourcePath)
+      ? sourcePath
+      : `${window.location.origin}${sourcePath}`
+    : window.location.href
+
+  return {
+    type: sourceType,
+    id: sourceId,
+    name: sourceName,
+    avatarUrl:
+      owner?.avatar_url ||
+      owner?.profile_image_url ||
+      '',
+    content:
+      source?.content ||
+      post?.source_episode?.title ||
+      post?.source_author_post
+        ?.content ||
+      post?.source_reader_post
+        ?.content ||
+      sourceName,
+    imageUrl:
+      source?.image_url ||
+      source?.image_urls?.[0] ||
+      post?.source_story
+        ?.landscape_thumbnail_url ||
+      post?.source_story?.cover_url ||
+      post?.source_episode?.cover_url ||
+      post?.source_author_post
+        ?.image_urls?.[0] ||
+      post?.source_reader_post
+        ?.image_urls?.[0] ||
+      '',
+    label:
+      source?.label ||
+      sourceType.replaceAll('_', ' '),
+    shareUrl,
+  }
+}
+
+function ReaderEchoSourceBlock({ post }) {
+  const navigate = useNavigate()
+  const source = post?.source || {}
+  const story = post?.source_story || {}
+  const episode = post?.source_episode || {}
+  const readerPost =
+    post?.source_reader_post || {}
+  const authorPost =
+    post?.source_author_post || {}
+  const sourceType = String(
+  post?.source_type || post?.echo_type || source?.type ||
+  (post?.source_episode?.id ? 'episode' :
+    post?.source_story?.id ? 'story' : '')
+)
+  .trim().toLowerCase()
+  .replaceAll('-', '_')
+  const sourceOwner =
+    source?.owner ||
+    readerPost?.user ||
+    authorPost?.author_page ||
+    story?.author_page ||
+    {}
+  const sourceUrl =
+    post?.source_url ||
+    source?.url ||
+    (sourceType === 'episode' &&
+    story?.id &&
+    episode?.id
+      ? `/story/${story.id}/episode/${episode.id}`
+      : sourceType === 'story' && story?.id
+        ? `/story/${story.id}`
+        : sourceType === 'reader_post' &&
+            readerPost?.id
+          ? readerPost?.user?.username
+            ? `/profile?username=${encodeURIComponent(
+                readerPost.user.username
+              )}#reader-post-${readerPost.id}`
+            : `/profile#reader-post-${readerPost.id}`
+          : sourceType === 'author_post' &&
+              authorPost?.author_page?.page_username
+            ? `/author/page/${encodeURIComponent(
+                authorPost.author_page
+                  .page_username
+              )}?post=${encodeURIComponent(
+                authorPost.id || ''
+              )}`
+            : '')
+
+  function openSource() {
+    if (sourceUrl) {
+      navigate(sourceUrl)
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' '
+    ) {
+      event.preventDefault()
+      openSource()
+    }
+  }
+
+  if (
+    sourceType === 'story' ||
+    sourceType === 'episode'
+  ) {
+    const imageCandidates = [
+      ...(Array.isArray(source?.image_urls)
+        ? source.image_urls
+        : []),
+      source?.image_url,
+      story?.landscape_thumbnail_url,
+      story?.cover_url,
+      episode?.cover_url,
+    ].filter(Boolean)
+    const coverUrl = imageCandidates[0] || ''
+    const sourceLabel =
+      sourceType === 'episode'
+        ? 'episode'
+        : 'story'
+    const placeholderIcon =
+      sourceType === 'episode'
+        ? 'fa-solid fa-book-open-reader'
+        : 'fa-solid fa-book-open'
+    const sourceTitle =
+      story?.title ||
+      source?.name ||
+      'Story'
+    const sourceSummary =
+      sourceType === 'episode'
+        ? episode?.title ||
+          source?.content ||
+          `Episode ${Number(
+            episode?.episode_number || 0
+          )}`
+        : sourceOwner?.page_name ||
+          sourceOwner?.name ||
+          story?.main_genre ||
+          'Story'
+    const sourceDetail =
+      sourceType === 'episode'
+        ? sourceOwner?.page_name ||
+          story?.main_genre ||
+          ''
+        : story?.main_genre || ''
+
+    return (
+      <button
+        type="button"
+        onClick={openSource}
+        disabled={!sourceUrl}
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] bg-[#f7f7fa] text-left ring-1 ring-black/10 active:scale-[0.995] disabled:cursor-default"
+      >
+        {coverUrl ? (
+          <div className="aspect-video w-full overflow-hidden bg-[#eceef2]">
+            <img
+              src={coverUrl}
+              alt={sourceTitle}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-28 w-full items-center justify-center bg-gradient-to-br from-[#111827] via-[#312e81] to-[#7c3aed]">
+            <i
+              className={`${placeholderIcon} text-[30px] text-white/90`}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+              {sourceLabel}
+            </div>
+
+            <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+              {sourceTitle}
+            </div>
+
+            {sourceSummary ? (
+              <div className="mt-1 line-clamp-2 text-[12px] font-normal leading-5 text-[#667085]">
+                {sourceSummary}
+              </div>
+            ) : null}
+
+            {sourceDetail &&
+            sourceDetail !== sourceSummary ? (
+              <div className="mt-1 text-[11px] font-normal text-[#98a2b3]">
+                {sourceDetail}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5">
+            <i className="fa-solid fa-chevron-right text-[12px]" />
+          </div>
+        </div>
+      </button>
+    )
+  }
+
+  if (
+    sourceType ===
+    'shadow_mall_promotion'
+  ) {
+    const promotion =
+      source?.promotion || {}
+    const imageUrl =
+      promotion.image_url ||
+      source?.image_url ||
+      source?.image_urls?.[0] ||
+      ''
+    const sponsor =
+      promotion.sponsor ||
+      source?.owner?.name ||
+      source?.name ||
+      'Shadow Mall'
+    const title =
+      promotion.title ||
+      source?.name ||
+      'Promotion'
+    const description =
+      promotion.description ||
+      source?.content ||
+      ''
+
+    return (
+      <button
+        type="button"
+        onClick={openSource}
+        disabled={!sourceUrl}
+        className="mx-4 mb-4 block w-[calc(100%-2rem)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995] disabled:cursor-default"
+      >
+        {imageUrl ? (
+          <div className="aspect-video w-full overflow-hidden bg-[#f3f4f6]">
+            <img
+              src={imageUrl}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+
+        <div className="px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b5cf6]">
+            Shadow Mall promotion
+          </div>
+
+          <div className="mt-1 line-clamp-1 text-[13px] font-semibold text-[#667085]">
+            {sponsor}
+          </div>
+
+          <div className="mt-1 line-clamp-2 text-[15px] font-semibold leading-5 text-[#111827]">
+            {title}
+          </div>
+
+          {description ? (
+            <p className="mt-2 line-clamp-3 text-[12px] font-normal leading-5 text-[#667085]">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      </button>
+    )
+  }
+
+  const previewUser =
+    sourceType === 'author_post'
+      ? {
+          name:
+            authorPost?.author_page
+              ?.page_name ||
+            source?.name ||
+            'Author Page',
+          avatar_url:
+            authorPost?.author_page
+              ?.avatar_url ||
+            authorPost?.author_page
+              ?.profile_image_url ||
+            authorPost?.author_page
+              ?.profile_picture_url ||
+            authorPost?.author_page
+              ?.page_avatar_url ||
+            '',
+        }
+      : {
+          name:
+            readerPost?.user?.name ||
+            readerPost?.user?.username ||
+            source?.name ||
+            'Reader',
+          avatar_url:
+            readerPost?.user
+              ?.avatar_url || '',
+        }
+
+  const previewTime =
+    sourceType === 'author_post'
+      ? authorPost?.created_at ||
+        source?.created_at ||
+        ''
+      : readerPost?.created_at ||
+        readerPost?.publish_at ||
+        source?.created_at ||
+        ''
+
+  const previewVisibility =
+    sourceType === 'author_post'
+      ? 'public'
+      : readerPost?.visibility || 'public'
+
+  const previewText = String(
+    sourceType === 'author_post'
+      ? authorPost?.content ||
+          source?.content ||
+          ''
+      : readerPost?.content ||
+          source?.content ||
+          ''
+  ).trim()
+
+  const previewImages =
+    sourceType === 'author_post'
+      ? Array.isArray(
+          authorPost?.image_urls
+        )
+        ? authorPost.image_urls
+        : Array.isArray(source?.image_urls)
+          ? source.image_urls
+          : source?.image_url
+            ? [source.image_url]
+            : []
+      : Array.isArray(
+          readerPost?.image_urls
+        )
+        ? readerPost.image_urls
+        : Array.isArray(source?.image_urls)
+          ? source.image_urls
+          : source?.image_url
+            ? [source.image_url]
+            : []
+
+  return (
+    <div
+      role="button"
+      tabIndex={sourceUrl ? 0 : -1}
+      onClick={openSource}
+      onKeyDown={handleKeyDown}
+      className="mx-4 mb-4 grid aspect-square w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#e5e7eb] bg-white text-left active:scale-[0.995]"
+    >
+      <div className="min-w-0 bg-white">
+        <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
+          <ReaderAvatar user={previewUser} />
+
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 text-[14px] font-semibold text-[#111827]">
+              {previewUser.name || 'Post'}
+            </div>
+
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+              <span>
+                {formatPostTime(previewTime)}
+              </span>
+              <span>·</span>
+              <i
+                className={`${getVisibilityIcon(previewVisibility)} text-[10px]`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {previewText ? (
+          <div className="px-3.5 pb-3">
+            <p className="line-clamp-3 whitespace-pre-wrap break-words text-[14px] font-normal leading-5 text-[#111827]">
+              {renderPostTextWithLinks(
+                previewText
+              )}
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      <EchoPostPreviewImages
+        imageUrls={previewImages}
+        alt={previewUser.name || 'Post'}
+      />
+    </div>
+  )
+}
+
+
+
+function EditorAvatar({ user }) {
+  const name = user?.name || 'Reader'
+
+  return (
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eef0f4] ring-1 ring-black/5">
+      {user?.avatar_url ? (
+        <img
+          src={user.avatar_url}
+          alt={name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="text-[16px] font-semibold text-[#111827]">
+          {name
+            .slice(0, 1)
+            .toUpperCase()}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function EditImagePreview({
+  imageUrls,
+  onRemove,
+}) {
+  if (!imageUrls.length) {
+    return null
+  }
+
+  if (imageUrls.length === 1) {
+    return (
+      <div className="mx-[-16px] mt-4 bg-white">
+        <div className="relative flex min-h-[260px] items-center justify-center bg-white">
+          <img
+            src={imageUrls[0]}
+            alt=""
+            className="max-h-[560px] w-full object-contain"
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              onRemove(imageUrls[0])
+            }
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/65 text-white"
+            aria-label="Remove photo"
+          >
+            <i className="fa-solid fa-xmark text-[12px]" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-1 overflow-hidden rounded-[16px]">
+      {imageUrls.map(
+        (imageUrl, index) => (
+          <div
+            key={`${imageUrl}-${index}`}
+            className="relative aspect-square bg-[#f3f4f6]"
+          >
+            <img
+              src={imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                onRemove(imageUrl)
+              }
+              className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white"
+              aria-label="Remove photo"
+            >
+              <i className="fa-solid fa-xmark text-[11px]" />
+            </button>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+function StandardReaderPostCard({
+  post,
+  onUpdated,
+  onDeleted,
+  onHidden,
+  onFollowChanged,
+  fullPostView = false,
+}) {
+  const navigate = useNavigate()
+  const reactionPressTimerRef =
+    useRef(null)
+  const reactionMessageTimerRef =
+    useRef(null)
+  const longPressOpenedRef =
+    useRef(false)
+  const reactionPickerRef =
+    useRef(null)
+  const editFileInputRef =
+    useRef(null)
+
+  const storedUser = useMemo(
+    () => getStoredUser(),
+    []
+  )
+
+  const [menuOpen, setMenuOpen] =
+    useState(false)
+  const [deleteOpen, setDeleteOpen] =
+    useState(false)
+  const [editorOpen, setEditorOpen] =
+    useState(false)
+  const [commentOpen, setCommentOpen] =
+    useState(false)
+  const [echoOpen, setEchoOpen] =
+    useState(false)
+  const [content, setContent] =
+    useState(post?.content || '')
+  const [
+    editImageUrls,
+    setEditImageUrls,
+  ] = useState([])
+  const [
+    uploadingImages,
+    setUploadingImages,
+  ] = useState(false)
+  const [saving, setSaving] =
+    useState(false)
+  const [deleting, setDeleting] =
+    useState(false)
+  const [message, setMessage] =
+    useState('')
+  
+  const [
+    reactionPickerOpen,
+    setReactionPickerOpen,
+  ] = useState(false)
+  const [
+    reactionBusy,
+    setReactionBusy,
+  ] = useState(false)
+  const [
+    reactionType,
+    setReactionType,
+  ] = useState(
+    post?.my_reaction || null
+  )
+  const [
+    reactionCount,
+    setReactionCount,
+  ] = useState(
+    Number(post?.like_count || 0)
+  )
+  const [
+    reactionMessage,
+    setReactionMessage,
+  ] = useState('')
+  const [commentCount, setCommentCount] =
+    useState(Number(post?.comment_count || 0))
+  const [echoCount, setEchoCount] =
+    useState(Number(post?.echo_count || 0))
+  const [isSaved, setIsSaved] =
+    useState(false)
+  const [saveBusy, setSaveBusy] =
+    useState(false)
+  const [followBusy, setFollowBusy] =
+    useState(false)
+
+  const user = post?.user || {}
+  const isOwner =
+    Boolean(post?.is_owner) ||
+    String(storedUser?.id || '') ===
+      String(post?.user_id || '')
+  const isDiscoverView =
+    window.location.pathname === '/discover'
+  const isFollowing =
+    Boolean(user?.is_following)
+  const showFollow =
+    isDiscoverView &&
+    !isOwner &&
+    !isFollowing &&
+    Boolean(user?.username)
+  const isEchoPost =
+    Boolean(post?.is_echo)
+  const isLegacyEcho =
+    isEchoPost &&
+    !post?.reader_post_id
+
+  const postText = String(
+    post?.content || ''
+  )
+  const imageUrls =
+    Array.isArray(
+      post?.image_urls
+    )
+      ? post.image_urls
+          .filter(
+            (url) =>
+              typeof url === 'string' &&
+              url.trim()
+          )
+          .slice(0, 5)
+      : []
+
+  const echoShareSource = useMemo(
+    () =>
+      resolveReaderPostEchoSource(
+        post,
+        user
+      ),
+    [post, user]
+  )
+
+  const editRemainingPhotos =
+    MAX_POST_PHOTOS -
+    editImageUrls.length
+  const canSaveEdit = Boolean(
+    isEchoPost ||
+      content.trim() ||
+      editImageUrls.length
+  )
+
+  const activeReaction =
+    READER_POST_REACTIONS.find(
+      (reaction) =>
+        reaction.type === reactionType
+    ) || null
+
+  useEffect(() => {
+    setReactionCount(
+      Number(post?.like_count || 0)
+    )
+  }, [post?.like_count])
+
+  useEffect(() => {
+    setReactionType(
+      post?.my_reaction || null
+    )
+  }, [post?.my_reaction])
+
+  useEffect(() => {
+    setCommentCount(
+      Number(post?.comment_count || 0)
+    )
+  }, [post?.comment_count])
+
+  useEffect(() => {
+    if (
+      echoShareSource.type &&
+      echoShareSource.id
+    ) {
+      return
+    }
+
+    setEchoCount(
+      Number(post?.echo_count || 0)
+    )
+  }, [
+    echoShareSource.id,
+    echoShareSource.type,
+    post?.echo_count,
+  ])
+
+  useEffect(() => {
+    const sourceType = String(
+      echoShareSource.type || ''
+    )
+      .trim()
+      .toLowerCase()
+    const sourceId = String(
+      echoShareSource.id || ''
+    ).trim()
+
+    if (!sourceType || !sourceId) {
+      return undefined
+    }
+
+    const controller =
+      new AbortController()
+    const token = getAuthToken()
+    let ignore = false
+
+    async function loadSourceEchoCount() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/echo-v2/source/${encodeURIComponent(
+            sourceType
+          )}/${encodeURIComponent(
+            sourceId
+          )}?page=1&limit=1`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : {},
+            cache: 'no-store',
+            signal: controller.signal,
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          ignore ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setEchoCount(
+          Math.max(
+            0,
+            Number(
+              data.echo_count ??
+                data.total ??
+                0
+            )
+          )
+        )
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError'
+        ) {
+          return
+        }
+      }
+    }
+
+    function handleEchoV2Updated(event) {
+      const detail = event?.detail || {}
+
+      if (
+        String(
+          detail.sourceType || ''
+        )
+          .trim()
+          .toLowerCase() === sourceType &&
+        String(
+          detail.sourceId || ''
+        ).trim() === sourceId
+      ) {
+        setEchoCount(
+          Math.max(
+            0,
+            Number(
+              detail.echoCount || 0
+            )
+          )
+        )
+      }
+    }
+
+    window.addEventListener(
+      'shadow:echo-v2-updated',
+      handleEchoV2Updated
+    )
+
+    loadSourceEchoCount()
+
+    return () => {
+      ignore = true
+      controller.abort()
+      window.removeEventListener(
+        'shadow:echo-v2-updated',
+        handleEchoV2Updated
+      )
+    }
+  }, [
+    echoShareSource.id,
+    echoShareSource.type,
+  ])
+
+  useEffect(() => {
+    const token = getAuthToken()
+    const controller = new AbortController()
+    let ignore = false
+
+    if (!post?.id || !token) {
+      setIsSaved(false)
+      return undefined
+    }
+
+    fetchSavedPostStatus(
+      'reader_post',
+      post.id,
+      controller.signal
+    )
+      .then((data) => {
+        if (!ignore) {
+          setIsSaved(Boolean(data.saved))
+        }
+      })
+      .catch((error) => {
+        if (
+          !ignore &&
+          error?.name !== 'AbortError'
+        ) {
+          setIsSaved(false)
+        }
+      })
+
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [post?.id])
+
+  useEffect(() => {
+    if (!reactionPickerOpen) {
+      return undefined
+    }
+
+    function closeReactionPicker(event) {
+      if (
+        reactionPickerRef.current &&
+        !reactionPickerRef.current.contains(
+          event.target
+        )
+      ) {
+        setReactionPickerOpen(false)
+      }
+    }
+
+    document.addEventListener(
+      'pointerdown',
+      closeReactionPicker
+    )
+
+    return () => {
+      document.removeEventListener(
+        'pointerdown',
+        closeReactionPicker
+      )
+    }
+  }, [reactionPickerOpen])
+
+  useEffect(() => {
+    let ignore = false
+    const token = getAuthToken()
+
+    if (!post?.id || !token) {
+      return undefined
+    }
+
+    async function loadReactionStatus() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(post.id)}/reaction`,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+            cache: 'no-store',
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          ignore ||
+          !response.ok ||
+          data.ok === false
+        ) {
+          return
+        }
+
+        setReactionType(
+          data.my_reaction || null
+        )
+        setReactionCount(
+          Number(data.like_count || 0)
+        )
+      } catch {
+        return
+      }
+    }
+
+    loadReactionStatus()
+
+    return () => {
+      ignore = true
+    }
+  }, [post?.id])
+
+  useEffect(() => {
+    return () => {
+      if (
+        reactionPressTimerRef.current
+      ) {
+        window.clearTimeout(
+          reactionPressTimerRef.current
+        )
+      }
+
+      if (
+        reactionMessageTimerRef.current
+      ) {
+        window.clearTimeout(
+          reactionMessageTimerRef.current
+        )
+      }
+    }
+  }, [])
+
+  function showReactionMessage(text) {
+    setReactionMessage(text)
+
+    if (
+      reactionMessageTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionMessageTimerRef.current
+      )
+    }
+
+    reactionMessageTimerRef.current =
+      window.setTimeout(() => {
+        setReactionMessage('')
+      }, 1800)
+  }
+
+  async function updateReaction(
+    nextReactionType
+  ) {
+    if (!post?.id || reactionBusy) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      showReactionMessage(
+        'Please login first.'
+      )
+      return
+    }
+
+    try {
+      setReactionBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/${encodeURIComponent(post.id)}/reaction`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to update reaction'
+        )
+      }
+
+      const nextType = data.reacted
+        ? data.reaction_type ||
+          nextReactionType
+        : null
+      const nextCount = Number(
+        data.like_count || 0
+      )
+
+      setReactionType(nextType)
+      setReactionCount(nextCount)
+      setReactionPickerOpen(false)
+
+      onUpdated?.({
+        ...post,
+        like_count: nextCount,
+        my_reaction: nextType,
+        reaction_summary:
+          Array.isArray(
+            data.reaction_summary
+          )
+            ? data.reaction_summary
+            : [],
+      })
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to update reaction.'
+      )
+    } finally {
+      setReactionBusy(false)
+    }
+  }
+
+  function startReactionPress() {
+    if (reactionBusy) return
+
+    longPressOpenedRef.current = false
+
+    reactionPressTimerRef.current =
+      window.setTimeout(() => {
+        longPressOpenedRef.current =
+          true
+        reactionPressTimerRef.current =
+          null
+        setReactionPickerOpen(true)
+      }, 420)
+  }
+
+  function endReactionPress() {
+    if (
+      reactionPressTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionPressTimerRef.current
+      )
+      reactionPressTimerRef.current =
+        null
+    }
+
+    if (longPressOpenedRef.current) {
+      longPressOpenedRef.current = false
+      return
+    }
+
+    updateReaction('love')
+  }
+
+  function cancelReactionPress() {
+    if (
+      reactionPressTimerRef.current
+    ) {
+      window.clearTimeout(
+        reactionPressTimerRef.current
+      )
+      reactionPressTimerRef.current =
+        null
+    }
+
+    longPressOpenedRef.current = false
+  }
+
+  async function handlePickEditImages(
+    fileList
+  ) {
+    const files = Array.from(
+      fileList || []
+    )
+    const imageFiles =
+      files.filter((file) =>
+        file?.type?.startsWith(
+          'image/'
+        )
+      )
+
+    if (!imageFiles.length) {
+      setMessage(
+        'Only image files can be uploaded.'
+      )
+      return
+    }
+
+    if (
+      imageFiles.length >
+      editRemainingPhotos
+    ) {
+      setMessage(
+        `You can add up to ${MAX_POST_PHOTOS} photos per post.`
+      )
+      return
+    }
+
+    try {
+      setUploadingImages(true)
+      setMessage(
+        'Preparing photos...'
+      )
+
+      const compressedFiles =
+        await Promise.all(
+          imageFiles.map((file) =>
+            compressImageFile(file)
+          )
+        )
+
+      const validFiles =
+        compressedFiles.filter(Boolean)
+      const totalSize =
+        validFiles.reduce(
+          (sum, file) =>
+            sum +
+            Number(file.size || 0),
+          0
+        )
+
+      if (
+        totalSize >
+        MAX_POST_IMAGE_BYTES
+      ) {
+        throw new Error(
+          `Photos are too large. Selected: ${formatBytes(
+            totalSize
+          )} / Limit: ${formatBytes(
+            MAX_POST_IMAGE_BYTES
+          )}.`
+        )
+      }
+
+      const uploadedUrls = []
+
+      for (const file of validFiles) {
+        const imageUrl =
+          await uploadReaderPostImage(
+            file
+          )
+        uploadedUrls.push(
+          imageUrl
+        )
+      }
+
+      setEditImageUrls(
+        (current) => [
+          ...current,
+          ...uploadedUrls,
+        ].slice(0, MAX_POST_PHOTOS)
+      )
+      setMessage('')
+    } catch (error) {
+      setMessage(
+        error.message ||
+          'Could not upload these photos.'
+      )
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
+  function removeEditImage(imageUrl) {
+    setEditImageUrls((current) =>
+      current.filter(
+        (item) =>
+          item !== imageUrl
+      )
+    )
+    setMessage('')
+  }
+
+  async function updatePost() {
+    const text = content.trim()
+
+    if (!canSaveEdit) {
+      setMessage(
+        'Post text or image is required.'
+      )
+      return
+    }
+
+    try {
+      setSaving(true)
+      setMessage('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(post.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${getAuthToken()}`,
+          },
+          body: JSON.stringify({
+            content: text,
+            image_urls:
+              editImageUrls,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to update post'
+        )
+      }
+
+      if (data.post) {
+        onUpdated?.(data.post)
+      }
+
+      setEditorOpen(false)
+      setMenuOpen(false)
+    } catch (error) {
+      setMessage(
+        error.message ||
+          'Failed to update post'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deletePost() {
+    try {
+      setDeleting(true)
+
+      const endpoint =
+        isLegacyEcho && post?.echo_id
+          ? `${API_BASE_URL}/api/echoes/${encodeURIComponent(
+              post.echo_id
+            )}`
+          : `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(
+              post.id
+            )}`
+
+      const response = await fetch(
+        endpoint,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization:
+              `Bearer ${getAuthToken()}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to delete post'
+        )
+      }
+
+      onDeleted?.(post.id)
+      setDeleteOpen(false)
+    } catch (error) {
+      window.alert(
+        error.message ||
+          'Failed to delete post'
+      )
+    } finally {
+      setDeleting(false)
+      setMenuOpen(false)
+    }
+  }
+
+  function openEditor() {
+    if (isLegacyEcho) {
+      window.alert(
+        'Delete this old Echo and Echo it again to edit it as a normal post.'
+      )
+      setMenuOpen(false)
+      return
+    }
+
+    setContent(post.content || '')
+    setEditImageUrls(
+      Array.isArray(
+        post.image_urls
+      )
+        ? post.image_urls
+            .filter(
+              (url) =>
+                typeof url ===
+                  'string' &&
+                url.trim()
+            )
+            .slice(
+              0,
+              MAX_POST_PHOTOS
+            )
+        : []
+    )
+    setMessage('')
+    setMenuOpen(false)
+    setEditorOpen(true)
+  }
+
+  function hidePost() {
+    onHidden?.(post.id)
+    setMenuOpen(false)
+  }
+
+  function openFullPost() {
+    if (
+      !isDiscoverView ||
+      !post?.id
+    ) {
+      return
+    }
+
+    navigate(
+      `/reader/post/${encodeURIComponent(
+        post.id
+      )}`
+    )
+  }
+
+  function viewReaderProfile(event) {
+    event?.stopPropagation()
+
+    const username = String(
+      user?.username || ''
+    ).trim()
+
+    setMenuOpen(false)
+
+    if (username) {
+      navigate(
+        `/profile?username=${encodeURIComponent(username)}`
+      )
+    }
+  }
+
+  async function followReaderFromPost(event) {
+    event?.stopPropagation()
+    if (
+      followBusy ||
+      isOwner ||
+      isFollowing ||
+      !user?.username
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setFollowBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${encodeURIComponent(
+          user.username
+        )}/follow`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to follow reader'
+        )
+      }
+
+      onFollowChanged?.(
+        post.user_id,
+        true
+      )
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to follow reader.'
+      )
+    } finally {
+      setFollowBusy(false)
+    }
+  }
+
+  async function toggleSavedPost() {
+    if (!post?.id || saveBusy) return
+
+    if (!getAuthToken()) {
+      setMenuOpen(false)
+      navigate('/login')
+      return
+    }
+
+    try {
+      setSaveBusy(true)
+
+      if (isSaved) {
+        await deleteSavedPostBySource(
+          'reader_post',
+          post.id
+        )
+
+        setIsSaved(false)
+        showReactionMessage(
+          'Removed from saved.'
+        )
+      } else {
+        await saveSavedPost({
+          source_type: 'reader_post',
+          source_id: String(post.id),
+          source_url:
+            `${window.location.pathname}${window.location.search}` +
+            `#reader-post-${post.id}`,
+          snapshot_data: {
+            content: post.content || '',
+            author_name:
+              user?.name || 'Reader',
+            username:
+              user?.username || '',
+            avatar_url:
+              user?.avatar_url || '',
+          },
+          original_created_at:
+            post.created_at || null,
+        })
+
+        setIsSaved(true)
+        showReactionMessage('Post saved.')
+      }
+
+      setMenuOpen(false)
+    } catch (error) {
+      showReactionMessage(
+        error.message ||
+          'Failed to update saved post.'
+      )
+    } finally {
+      setSaveBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <article
+        id={`reader-post-${post.id}`}
+        className="bg-white sm:rounded-[12px]"
+      >
+        <div
+          onClick={
+            isDiscoverView
+              ? openFullPost
+              : undefined
+          }
+          className={`flex items-start gap-2 px-4 pb-3 pt-4 ${
+            isDiscoverView
+              ? 'cursor-pointer'
+              : ''
+          }`}
+        >
+  <button
+    type="button"
+    onClick={viewReaderProfile}
+    className="shrink-0 rounded-full active:opacity-70"
+  >
+    <ReaderAvatar user={user} />
+  </button>
+
+  <div className="min-w-0 flex-1">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <div
+          className={
+            isDiscoverView
+              ? 'flex flex-wrap items-baseline gap-x-1'
+              : ''
+          }
+        >
+          <button
+            type="button"
+            onClick={viewReaderProfile}
+            className={
+              isDiscoverView
+                ? 'max-w-full whitespace-normal break-words text-left text-[14px] font-semibold leading-5 text-[#111827] active:opacity-70'
+                : 'block max-w-full truncate text-left text-[14px] font-semibold text-[#111827] active:opacity-70'
+            }
+          >
+            {user.name || 'Reader'}
+          </button>
+
+          {showFollow ? (
+            <>
+              <span className="text-[14px] font-normal text-[#65676b]">
+                ·
+              </span>
+
+              <button
+                type="button"
+                disabled={followBusy}
+                onClick={followReaderFromPost}
+                className="text-[14px] font-semibold text-[#0866ff] active:opacity-70 disabled:opacity-50"
+              >
+                Follow
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+          <span>
+            {formatPostTime(
+              post.created_at
+            )}
+          </span>
+
+          {post.is_edited ? (
+            <>
+              <span>·</span>
+              <span>Edited</span>
+            </>
+          ) : null}
+
+          <span>·</span>
+
+          <i
+            className={`${getVisibilityIcon(
+              post.visibility
+            )} text-[10px]`}
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          setMenuOpen(true)
+        }}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
+        aria-label="Post options"
+      >
+        <i className="fa-solid fa-ellipsis text-[14px]" />
+      </button>
+    </div>
+  </div>
+</div>
+
+        {postText ? (
+          <div className="px-4 pb-4">
+            {fullPostView ? (
+              <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+                {renderPostTextWithLinks(
+                  postText
+                )}
+              </p>
+            ) : isDiscoverView ? (
+              <ReaderDiscoverPostText
+                text={postText}
+                renderText={
+                  renderPostTextWithLinks
+                }
+                className="text-[14px] font-normal leading-6 text-[#111827]"
+              />
+            ) : (
+              <CollapsiblePostText
+                text={postText}
+                lines={3}
+                className="text-[14px] font-normal leading-6 text-[#111827]"
+              >
+                {renderPostTextWithLinks(
+                  postText
+                )}
+              </CollapsiblePostText>
+            )}
+          </div>
+        ) : null}
+        {isEchoPost ? (
+          <ReaderEchoSourceBlock
+            post={post}
+          />
+        ) : null}
+
+        {!isEchoPost ? (
+          <ReaderPostImages
+            imageUrls={imageUrls}
+          />
+        ) : null}
+
+        <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
+          <div
+            ref={reactionPickerRef}
+            className="relative"
+          >
+            {reactionPickerOpen ? (
+              <div className="absolute bottom-8 left-0 z-40 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
+                {READER_POST_REACTIONS.map(
+                  (reaction) => (
+                    <button
+                      key={
+                        reaction.type
+                      }
+                      type="button"
+                      disabled={
+                        reactionBusy
+                      }
+                      onClick={() =>
+                        updateReaction(
+                          reaction.type
+                        )
+                      }
+                      className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
+                      aria-label={
+                        reaction.label
+                      }
+                    >
+                      <img
+                        src={
+                          reaction.src
+                        }
+                        alt={
+                          reaction.label
+                        }
+                        className="h-8 w-8 object-contain"
+                      />
+                    </button>
+                  )
+                )}
+              </div>
+            ) : null}
+
+            <div
+              className="inline-flex items-center gap-1.5"
+              style={{
+                color:
+                  activeReaction?.text ||
+                  undefined,
+              }}
+            >
+              <button
+                type="button"
+                disabled={reactionBusy}
+                onPointerDown={
+                  startReactionPress
+                }
+                onPointerUp={
+                  endReactionPress
+                }
+                onPointerLeave={
+                  cancelReactionPress
+                }
+                onPointerCancel={() => {
+                  cancelReactionPress()
+                  setReactionPickerOpen(false)
+                }}
+                onContextMenu={(event) =>
+                  event.preventDefault()
+                }
+                className="active:scale-95 disabled:opacity-60"
+                aria-label={
+                  activeReaction
+                    ? activeReaction.label
+                    : 'React'
+                }
+              >
+                {activeReaction ? (
+                  <img
+                    src={
+                      activeReaction.src
+                    }
+                    alt=""
+                    aria-hidden="true"
+                    className="h-[17px] w-[17px] object-contain"
+                  />
+                ) : (
+                  <i className="fa-regular fa-heart text-[15px]" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/interactions/reader_post/${post.id}/likes`,
+                    {
+                      state: {
+                        sourceName:
+                          user?.name ||
+                          'Reader Post',
+                      },
+                    }
+                  )
+                }
+                className="active:scale-95"
+                aria-label="View people who reacted"
+              >
+                {formatCompactNumber(
+                  reactionCount
+                )}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setCommentOpen(true)}
+            className="inline-flex items-center gap-1.5 active:scale-95"
+            aria-label="Open comments"
+          >
+            <i className="fa-regular fa-comment text-[15px]" />
+            {formatCompactNumber(commentCount)}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEchoOpen(true)}
+            className="inline-flex items-center gap-1.5 active:scale-95"
+            aria-label="Echo this post"
+          >
+            <img
+              src="/assets/Icons/echo.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-[15px] w-[15px] object-contain opacity-70"
+            />
+
+            <span>
+              {formatCompactNumber(
+                echoCount
+              )}
+            </span>
+          </button>
+        </div>
+      </article>
+
+      {reactionMessage ? (
+        <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
+          {reactionMessage}
+        </div>
+      ) : null}
+
+      <ReaderPostCommentsModal
+        open={commentOpen}
+        postId={post.id}
+        postName={
+          user?.name ||
+          user?.username ||
+          'Reader Post'
+        }
+        echoSourceType={
+          echoShareSource.type
+        }
+        echoSourceId={
+          echoShareSource.id
+        }
+        echoSourceName={
+          echoShareSource.name
+        }
+        postOwnerId={post.user_id}
+        commentsPermission={
+          post.comments_permission
+        }
+        reactionCount={reactionCount}
+        commentCount={commentCount}
+        echoCount={echoCount}
+        onClose={() => setCommentOpen(false)}
+        onTotalChange={(nextTotal) => {
+          setCommentCount(nextTotal)
+          onUpdated?.({
+            ...post,
+            comment_count: nextTotal,
+          })
+        }}
+      />
+
+      <EchoShareSheetV2Connected
+        open={echoOpen}
+        sourceType={
+          echoShareSource.type
+        }
+        sourceId={
+          echoShareSource.id
+        }
+        sourceName={
+          echoShareSource.name
+        }
+        sourceAvatarUrl={
+          echoShareSource.avatarUrl
+        }
+        sourceContent={
+          echoShareSource.content
+        }
+        sourceImageUrl={
+          echoShareSource.imageUrl
+        }
+        sourceLabel={
+          echoShareSource.label
+        }
+        shareUrl={
+          echoShareSource.shareUrl
+        }
+        onClose={() =>
+          setEchoOpen(false)
+        }
+        onEchoed={(
+          nextEcho,
+          nextTotal
+        ) => {
+          const total = Math.max(
+            0,
+            Number(
+              nextTotal ??
+                (nextEcho
+                  ? echoCount + 1
+                  : echoCount)
+            )
+          )
+
+          setEchoCount(total)
+
+          if (!isEchoPost) {
+            onUpdated?.({
+              ...post,
+              echo_count: total,
+            })
+          }
+        }}
+      />
+
+      <ReaderPostOptionsSheet
+        open={menuOpen}
+        post={post}
+        isOwner={isOwner}
+        onClose={() =>
+          setMenuOpen(false)
+        }
+        onEdit={openEditor}
+        onDelete={() => {
+          setMenuOpen(false)
+          setDeleteOpen(true)
+        }}
+        onHide={hidePost}
+        onViewProfile={
+          viewReaderProfile
+        }
+        isSaved={isSaved}
+        onSave={toggleSavedPost}
+        onMessage={(text) =>
+          window.alert(text)
+        }
+      />
+
+      <ReaderPostDeleteConfirmSheet
+        open={deleteOpen}
+        deleting={deleting}
+        onCancel={() =>
+          setDeleteOpen(false)
+        }
+        onConfirm={deletePost}
+      />
+
+      {editorOpen ? (
+        <>
+          <input
+            ref={editFileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={
+              saving ||
+              uploadingImages ||
+              editRemainingPhotos <= 0
+            }
+            className="hidden"
+            onChange={(event) => {
+              handlePickEditImages(
+                event.target.files
+              )
+              event.target.value = ''
+            }}
+          />
+
+          <ImageDropZone
+            onFiles={
+              handlePickEditImages
+            }
+            onRejectedFiles={() =>
+              setMessage(
+                `Only images are allowed, with a maximum of ${MAX_POST_PHOTOS} photos.`
+              )
+            }
+            disabled={
+              saving ||
+              uploadingImages ||
+              editRemainingPhotos <= 0
+            }
+            multiple
+            maxFiles={Math.max(
+              1,
+              editRemainingPhotos
+            )}
+            accept="image/*"
+            className="fixed inset-0 z-[200000] overflow-y-auto bg-white"
+            label="Drop photos here"
+          >
+            <header className="sticky top-0 z-20 border-b border-[#eef0f4] bg-white">
+              <div className="mx-auto flex h-14 max-w-[620px] items-center justify-between px-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      !saving &&
+                      !uploadingImages
+                    ) {
+                      setEditorOpen(false)
+                    }
+                  }}
+                  disabled={
+                    saving ||
+                    uploadingImages
+                  }
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-50"
+                  aria-label="Close editor"
+                >
+                  <i className="fa-solid fa-xmark text-[22px]" />
+                </button>
+
+                <div className="line-clamp-1 px-2 text-center text-[16px] font-semibold text-[#111827]">
+                  Edit Reader Post
+                </div>
+
+                <button
+                  type="button"
+                  onClick={updatePost}
+                  disabled={
+                    saving ||
+                    uploadingImages ||
+                    !canSaveEdit
+                  }
+                  className="h-9 rounded-full bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#e5e7eb] disabled:text-[#9ca3af]"
+                >
+                  {saving
+                    ? 'Saving'
+                    : uploadingImages
+                      ? 'Uploading'
+                      : 'Save'}
+                </button>
+              </div>
+            </header>
+
+            <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-[620px] flex-col bg-white">
+              <div className="flex-1 px-4 pt-5">
+                <div className="mb-5 flex items-center gap-3">
+                  <EditorAvatar
+                    user={user}
+                  />
+
+                  <div className="min-w-0">
+                    <div className="line-clamp-1 text-[15px] font-semibold text-[#111827]">
+                      {user?.name ||
+                        'Reader'}
+                    </div>
+
+                    <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#eef0f4] px-2.5 py-1 text-[11px] font-normal text-[#374151]">
+                      <i
+                        className={`${getVisibilityIcon(
+                          post.visibility
+                        )} text-[10px]`}
+                      />
+                      {post.visibility ===
+                      'only_me'
+                        ? 'Only me'
+                        : post.visibility ===
+                            'friends'
+                          ? 'Friends'
+                          : post.visibility ===
+                              'followers'
+                            ? 'Followers'
+                            : 'Public'}
+                    </div>
+                  </div>
+                </div>
+
+                <textarea
+                  autoFocus
+                  value={content}
+                  maxLength={
+                    MAX_POST_LENGTH
+                  }
+                  onChange={(event) =>
+                    setContent(
+                      event.target.value.slice(
+                        0,
+                        MAX_POST_LENGTH
+                      )
+                    )
+                  }
+                  placeholder="Share your thoughts..."
+                  className="min-h-[210px] w-full resize-none border-0 bg-white p-0 text-[16px] font-normal leading-6 text-[#111827] outline-none placeholder:text-[#9ca3af]"
+                />
+
+                <EditImagePreview
+                  imageUrls={
+                    editImageUrls
+                  }
+                  onRemove={
+                    removeEditImage
+                  }
+                />
+
+                {message ? (
+                  <div className="mt-3 rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[12px] font-normal leading-5 text-[#9a3412]">
+                    {message}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="border-t border-[#eef0f4] bg-white px-4 py-4">
+                <div
+                  className={`mb-3 text-right text-[11px] font-normal ${
+                    content.length >=
+                    MAX_POST_LENGTH
+                      ? 'text-[#dc2626]'
+                      : content.length >=
+                          MAX_POST_LENGTH -
+                            500
+                        ? 'text-[#d97706]'
+                        : 'text-[#9ca3af]'
+                  }`}
+                >
+                  {content.length.toLocaleString()}{' '}
+                  /{' '}
+                  {MAX_POST_LENGTH.toLocaleString()}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={
+                    saving ||
+                    uploadingImages ||
+                    editRemainingPhotos <= 0
+                  }
+                  onClick={() =>
+                    editFileInputRef.current?.click()
+                  }
+                  className="flex h-[82px] w-[112px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white text-[#111827] shadow-[0_4px_14px_rgba(17,24,39,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Open Gallery"
+                >
+                  <svg
+                    className="h-[27px] w-[27px]"
+                    viewBox="0 0 22 26"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      x="3"
+                      y="3"
+                      width="16"
+                      height="20"
+                      rx="3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx="7.5"
+                      cy="8.8"
+                      r="1.45"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M5 18.8l4-4.3 3 3.2 2.2-2.4 3 3.5H5z"
+                      fill="currentColor"
+                    />
+                  </svg>
+
+                  <span className="text-[14px] font-normal">
+                    {uploadingImages
+                      ? 'Uploading'
+                      : editRemainingPhotos <=
+                          0
+                        ? '5 photos'
+                        : 'Gallery'}
+                  </span>
+                </button>
+              </div>
+            </main>
+          </ImageDropZone>
+        </>
+      ) : null}
+    </>
+  )
+}
+
+
+export default function ReaderPostCard(
+  props
+) {
+  return (
+    <StandardReaderPostCard
+      {...props}
+    />
+  )
+}
+
