@@ -5,7 +5,11 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { getAuthorChatToken } from '../../services/authorChatApi'
 import CommentSection from '../../components/comments/CommentSection'
 import AuthorPostDetail from '../../components/author-posts/AuthorPostDetail'
@@ -16,6 +20,7 @@ const API_BASE_URL =
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
 function Avatar({ src, name, size = 'h-10 w-10' }) {
   const [failed, setFailed] = useState(false)
   const letter =
@@ -41,7 +46,14 @@ function Avatar({ src, name, size = 'h-10 w-10' }) {
 
 export default function AuthorPostActivityPage() {
   const navigate = useNavigate()
-  const { postId, commentId } = useParams()
+  const { postId, commentId: routeCommentId } = useParams()
+  const [searchParams] = useSearchParams()
+  const focusCommentId =
+    searchParams.get('commentId') || routeCommentId || ''
+  const activityType =
+    searchParams.get('type') ||
+    (focusCommentId ? 'comment' : 'post')
+
   const [post, setPost] = useState(null)
   const [comment, setComment] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -51,8 +63,8 @@ export default function AuthorPostActivityPage() {
     let ignore = false
 
     async function load() {
-      if (!postId || !commentId) {
-        setError('Post or comment is missing.')
+      if (!postId) {
+        setError('Post is missing.')
         setLoading(false)
         return
       }
@@ -60,29 +72,38 @@ export default function AuthorPostActivityPage() {
       try {
         setLoading(true)
         setError('')
+        setComment(null)
 
         const token = getAuthorChatToken()
         const headers = token
           ? { Authorization: `Bearer ${token}` }
           : {}
 
-        const [postResponse, commentResponse] =
-          await Promise.all([
-            fetch(
-              `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}`,
-              { headers }
-            ),
-            fetch(
-              `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,
-              { headers }
-            ),
-          ])
+        const requests = [
+          fetch(
+            `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}`,
+            { headers }
+          ),
+        ]
 
-        const [postData, commentData] =
-          await Promise.all([
-            postResponse.json().catch(() => ({})),
-            commentResponse.json().catch(() => ({})),
-          ])
+        if (focusCommentId) {
+          requests.push(
+            fetch(
+              `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(focusCommentId)}`,
+              { headers }
+            )
+          )
+        }
+
+        const [postResponse, commentResponse] =
+          await Promise.all(requests)
+
+        const postData =
+          await postResponse.json().catch(() => ({}))
+
+        const commentData = commentResponse
+          ? await commentResponse.json().catch(() => ({}))
+          : null
 
         if (!postResponse.ok || postData.ok === false) {
           throw new Error(
@@ -91,25 +112,23 @@ export default function AuthorPostActivityPage() {
         }
 
         if (
-          !commentResponse.ok ||
-          commentData.ok === false
+          commentResponse &&
+          (!commentResponse.ok || commentData?.ok === false)
         ) {
           throw new Error(
-            commentData.message || 'Failed to load comment'
+            commentData?.message || 'Failed to load comment'
           )
         }
 
         if (ignore) return
 
         setPost(postData.post || null)
-        setComment(commentData.comment || null)
-
-        
+        setComment(commentData?.comment || null)
       } catch (loadError) {
         if (!ignore) {
           setError(
             loadError.message ||
-              'Failed to open this comment'
+              'Failed to open this post'
           )
         }
       } finally {
@@ -122,7 +141,7 @@ export default function AuthorPostActivityPage() {
     return () => {
       ignore = true
     }
-  }, [commentId, postId])
+  }, [focusCommentId, postId])
 
   useEffect(() => {
     if (!comment?.id) return
@@ -156,7 +175,10 @@ export default function AuthorPostActivityPage() {
   )
 
   return (
-    <div className="min-h-[100dvh] bg-[#f0f2f5] text-[#111827]">
+    <div
+      data-activity-type={activityType}
+      className="min-h-[100dvh] bg-[#f0f2f5] text-[#111827]"
+    >
       <header className="sticky top-0 z-50 bg-white">
         <div className="mx-auto flex h-[56px] max-w-[680px] items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
           <button
@@ -214,17 +236,19 @@ export default function AuthorPostActivityPage() {
               <MessageCircle size={26} />
             </div>
             <h1 className="mt-4 text-[16px] font-bold">
-              Comment unavailable
+              {focusCommentId
+                ? 'Comment unavailable'
+                : 'Post unavailable'}
             </h1>
             <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-5 text-[#73767c]">
               {error}
             </p>
           </div>
-        ) : post && comment ? (
+        ) : post ? (
           <>
             <AuthorPostDetail
               post={post}
-              commentId={comment.id}
+              commentId={comment?.id || focusCommentId}
             />
 
             <section className="bg-white pt-3">
@@ -234,9 +258,13 @@ export default function AuthorPostActivityPage() {
                 variant="page"
                 story={{ ...post, author_page: page }}
                 onCommentsChange={() => {
+                  if (!focusCommentId) return
+
                   window.requestAnimationFrame(() => {
                     document
-                      .getElementById(`comment-${comment.id}`)
+                      .getElementById(
+                        `comment-${comment?.id || focusCommentId}`
+                      )
                       ?.scrollIntoView({
                         block: 'center',
                         behavior: 'auto',
