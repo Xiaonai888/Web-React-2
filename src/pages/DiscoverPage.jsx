@@ -20,6 +20,7 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
+import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPostText'
 import {
   CollapsiblePostText,
   ProfessionalSinglePostImage,
@@ -631,13 +632,11 @@ function RealFollowedPostCard({
 
       {post.content ? (
   <div className="px-4 pb-3">
-    <CollapsiblePostText
+    <AuthorDiscoverPostText
       text={post.content}
-      lines={3}
-      className="text-[13px] font-normal leading-5 text-[#111827]"
-    >
-      {renderPostTextWithLinks(post.content)}
-    </CollapsiblePostText>
+      renderText={renderPostTextWithLinks}
+      className="text-[14px] font-normal leading-6 text-[#111827]"
+    />
   </div>
 ) : null}
 
