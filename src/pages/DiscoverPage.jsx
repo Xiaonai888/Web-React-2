@@ -1894,7 +1894,18 @@ export default function DiscoverPage() {
   }
 
   function handleReaderPostUpdated(post) {
-    function handleReaderFollowChanged(
+  if (!post?.id) return
+
+  setReaderPosts((current) =>
+    current.map((item) =>
+      item.id === post.id
+        ? post
+        : item
+    )
+  )
+}
+
+function handleReaderFollowChanged(
   userId,
   isFollowing
 ) {
@@ -1916,16 +1927,7 @@ export default function DiscoverPage() {
     )
   )
 }
-    if (!post?.id) return
 
-    setReaderPosts((current) =>
-      current.map((item) =>
-        item.id === post.id
-          ? post
-          : item
-      )
-    )
-  }
 
   function removeReaderPost(postId) {
     setReaderPosts((current) =>
