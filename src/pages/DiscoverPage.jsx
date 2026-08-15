@@ -1894,6 +1894,28 @@ export default function DiscoverPage() {
   }
 
   function handleReaderPostUpdated(post) {
+    function handleReaderFollowChanged(
+  userId,
+  isFollowing
+) {
+  if (!userId) return
+
+  setReaderPosts((current) =>
+    current.map((post) =>
+      String(post?.user_id || '') ===
+      String(userId)
+        ? {
+            ...post,
+            user: {
+              ...(post.user || {}),
+              is_following:
+                Boolean(isFollowing),
+            },
+          }
+        : post
+    )
+  )
+}
     if (!post?.id) return
 
     setReaderPosts((current) =>
@@ -2163,11 +2185,12 @@ export default function DiscoverPage() {
               >
                 {entry.kind === 'reader_post' ? (
                   <ReaderPostCard
-                    post={entry.post}
-                    onUpdated={handleReaderPostUpdated}
-                    onDeleted={removeReaderPost}
-                    onHidden={removeReaderPost}
-                  />
+  post={entry.post}
+  onUpdated={handleReaderPostUpdated}
+  onFollowChanged={handleReaderFollowChanged}
+  onDeleted={removeReaderPost}
+  onHidden={removeReaderPost}
+/>
                 ) : (
                   <RealFollowedPostCard
                     post={entry.post}
