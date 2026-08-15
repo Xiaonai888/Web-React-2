@@ -328,7 +328,7 @@ function GenreScroller({ genres, activeGenre, onChange }) {
         onMouseMove={moveDrag}
         onMouseUp={stopDrag}
         onMouseLeave={stopDrag}
-        className="no-scrollbar flex cursor-grab select-none gap-2 overflow-x-auto active:cursor-grabbing"
+        className="no-scrollbar flex cursor-grab select-none gap-2 overflow-x-auto py-[1px] active:cursor-grabbing"
       >
         {genres.map((genre) => {
           const active = activeGenre === genre
