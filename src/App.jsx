@@ -145,6 +145,11 @@ const ReaderPostCreatePage = lazy(() =>
 const ReaderPostReviewPage = lazy(() =>
   import('./pages/ReaderPosts/ReaderPostReviewPage')
 )
+
+const ReaderPostDetailPage = lazy(() =>
+  import('./pages/ReaderPosts/ReaderPostDetailPage')
+)
+
 const ReaderDiscoverPeoplePage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderDiscoverPeoplePage')
 )
@@ -300,7 +305,8 @@ function AppShell() {
   hideFooterPaths.includes(location.pathname) ||
   location.pathname.startsWith('/story/') ||
 /^\/genre\/[^/]+\/(latest|updates|completed)$/.test(location.pathname) ||
-location.pathname.startsWith('/report/') ||
+  location.pathname.startsWith('/report/') ||
+  location.pathname.startsWith('/reader/post/') ||
   location.pathname.startsWith('/author/post/') ||
   location.pathname.startsWith('/author/story/') ||
   location.pathname === '/author/page' ||
@@ -990,7 +996,15 @@ const shouldShowOpeningAds =
   path="/reader/post/review"
   element={<LazyPage><ReaderPostReviewPage /></LazyPage>}
 />
-
+        
+<Route
+  path="/reader/post/:postId"
+  element={
+    <LazyPage>
+      <ReaderPostDetailPage />
+    </LazyPage>
+  }
+/>
 
         <Route
   path="/author/page-options"
