@@ -32,6 +32,7 @@ const API_BASE_URL =
 const MAX_POST_LENGTH = 10000
 const MAX_POST_PHOTOS = 5
 const MAX_PHOTO_CAPTION_LENGTH = 2000
+const MAX_PHOTO_ALT_TEXT_LENGTH = 500
 const MAX_POST_IMAGE_BYTES = 800 * 1024
 const HARD_MAX_IMAGE_BYTES = 220 * 1024
 const MAX_IMAGE_WIDTH = 1080
@@ -470,6 +471,7 @@ function ReaderAvatar({ user }) {
 
 function ReaderPostImages({
   imageUrls,
+  photoMetadata,
   onImageClick,
   photoPostView = false,
   selectedPhotoIndex = 0,
@@ -488,6 +490,32 @@ function ReaderPostImages({
 
   if (!images.length) {
     return null
+  }
+
+  const metadata = Array.isArray(
+    photoMetadata
+  )
+    ? photoMetadata
+    : []
+
+  function getPhotoAltText(
+    imageUrl,
+    index
+  ) {
+    const item =
+      metadata.find(
+        (entry) =>
+          String(entry?.url || '') ===
+          String(imageUrl || '')
+      ) ||
+      metadata[index] ||
+      {}
+
+    return String(
+      item?.alt_text ??
+        item?.alt ??
+        ''
+    )
   }
 
   const safeSelectedIndex = Math.min(
@@ -521,7 +549,10 @@ function ReaderPostImages({
       >
         <img
           src={selectedImage}
-          alt=""
+          alt={getPhotoAltText(
+            selectedImage,
+            safeSelectedIndex
+          )}
           loading="eager"
           decoding="async"
           className="max-h-[72dvh] min-h-[260px] w-full object-contain"
@@ -534,7 +565,10 @@ function ReaderPostImages({
     return (
       <ProfessionalSinglePostImage
         src={images[0]}
-        alt=""
+        alt={getPhotoAltText(
+          images[0],
+          0
+        )}
         onClick={
           onImageClick
             ? () => onImageClick(0)
@@ -571,7 +605,10 @@ function ReaderPostImages({
             >
               <img
                 src={imageUrl}
-                alt=""
+                alt={getPhotoAltText(
+                  imageUrl,
+                  index
+                )}
                 loading="lazy"
                 decoding="async"
                 className="h-full w-full object-cover"
@@ -1430,6 +1467,18 @@ function StandardReaderPostCard({
     photoCaptionSaving,
     setPhotoCaptionSaving,
   ] = useState(false)
+  const [
+    photoAltEditorOpen,
+    setPhotoAltEditorOpen,
+  ] = useState(false)
+  const [
+    photoAltText,
+    setPhotoAltText,
+  ] = useState('')
+  const [
+    photoAltSaving,
+    setPhotoAltSaving,
+  ] = useState(false)
 
   const user = post?.user || {}
   const isOwner =
@@ -1505,6 +1554,12 @@ function StandardReaderPostCard({
   const selectedPhotoCaption =
     String(
       selectedPhotoMetadata?.caption ||
+        ''
+    )
+  const selectedPhotoAltText =
+    String(
+      selectedPhotoMetadata?.alt_text ??
+        selectedPhotoMetadata?.alt ??
         ''
     )
 
@@ -1832,6 +1887,13 @@ function StandardReaderPostCard({
         return
       }
 
+      if (photoAltEditorOpen) {
+        if (!photoAltSaving) {
+          setPhotoAltEditorOpen(false)
+        }
+        return
+      }
+
       if (photoCaptionEditorOpen) {
         if (!photoCaptionSaving) {
           setPhotoCaptionEditorOpen(false)
@@ -1874,6 +1936,8 @@ function StandardReaderPostCard({
   }, [
     fullscreenPhotoOpen,
     fullscreenPhotoMenuOpen,
+    photoAltEditorOpen,
+    photoAltSaving,
     photoCaptionEditorOpen,
     photoCaptionSaving,
     photoDeleteConfirmOpen,
@@ -2335,6 +2399,7 @@ function StandardReaderPostCard({
       setFullscreenPhotoMenuOpen(false)
       setPhotoDeleteConfirmOpen(false)
       setPhotoCaptionEditorOpen(false)
+      setPhotoAltEditorOpen(false)
       setPhotoActionMessage('')
       setFullscreenPhotoOpen(true)
       return
@@ -2484,6 +2549,149 @@ function StandardReaderPostCard({
       )
     } finally {
       setPhotoCaptionSaving(false)
+    }
+  }
+
+  function openPhotoAltEditor(event) {
+    event?.stopPropagation()
+
+    if (!isOwner || !selectedPhotoUrl) {
+      return
+    }
+
+    setPhotoAltText(
+      selectedPhotoAltText
+    )
+    setFullscreenPhotoMenuOpen(false)
+    setPhotoAltEditorOpen(true)
+  }
+
+  async function savePhotoAltText(event) {
+    event?.stopPropagation()
+
+    if (
+      !isOwner ||
+      !selectedPhotoUrl ||
+      photoAltSaving
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      setPhotoAltEditorOpen(false)
+      setFullscreenPhotoOpen(false)
+      navigate('/login')
+      return
+    }
+
+    const nextAltText =
+      photoAltText
+        .slice(
+          0,
+          MAX_PHOTO_ALT_TEXT_LENGTH
+        )
+        .trim()
+
+    const metadataByUrl = new Map(
+      photoMetadata
+        .filter(
+          (item) =>
+            item &&
+            typeof item === 'object'
+        )
+        .map((item) => [
+          String(item.url || ''),
+          item,
+        ])
+    )
+
+    const nextPhotoMetadata =
+      imageUrls.map((url, index) => {
+        const existing =
+          metadataByUrl.get(
+            String(url)
+          ) ||
+          photoMetadata[index] ||
+          {}
+
+        return {
+          url,
+          caption: String(
+            existing.caption || ''
+          ),
+          alt_text:
+            index ===
+            safeSelectedPhotoIndex
+              ? nextAltText
+              : String(
+                  existing.alt_text ??
+                    existing.alt ??
+                    ''
+                ),
+        }
+      })
+
+    try {
+      setPhotoAltSaving(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(
+          post.id
+        )}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            photo_metadata:
+              nextPhotoMetadata,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to save alt text'
+        )
+      }
+
+      if (data.post) {
+        onUpdated?.(data.post)
+      } else {
+        onUpdated?.({
+          ...post,
+          photo_metadata:
+            nextPhotoMetadata,
+        })
+      }
+
+      setPhotoAltEditorOpen(false)
+      setPhotoActionMessage(
+        nextAltText
+          ? 'Alt text saved.'
+          : 'Alt text removed.'
+      )
+    } catch (error) {
+      setPhotoActionMessage(
+        error.message ||
+          'Failed to save alt text.'
+      )
+    } finally {
+      setPhotoAltSaving(false)
     }
   }
 
@@ -3027,6 +3235,9 @@ function StandardReaderPostCard({
         {!isEchoPost ? (
           <ReaderPostImages
             imageUrls={imageUrls}
+            photoMetadata={
+              photoMetadata
+            }
             onImageClick={
               handlePostImageClick
             }
@@ -3190,7 +3401,10 @@ function StandardReaderPostCard({
         <div
           className="fixed inset-0 z-[1000000] bg-black"
           onClick={() => {
-            if (photoCaptionEditorOpen) {
+            if (
+              photoAltEditorOpen ||
+              photoCaptionEditorOpen
+            ) {
               return
             }
 
@@ -3224,6 +3438,7 @@ function StandardReaderPostCard({
                   setFullscreenPhotoMenuOpen(false)
                   setPhotoDeleteConfirmOpen(false)
                   setPhotoCaptionEditorOpen(false)
+                  setPhotoAltEditorOpen(false)
                   setPhotoActionMessage('')
                 }}
                 className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
@@ -3251,7 +3466,7 @@ function StandardReaderPostCard({
           <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
             <img
               src={selectedPhotoUrl}
-              alt=""
+              alt={selectedPhotoAltText}
               loading="eager"
               decoding="async"
               className="max-h-[100dvh] max-w-full select-none object-contain"
@@ -3263,6 +3478,7 @@ function StandardReaderPostCard({
           selectedPhotoCaption &&
           !fullscreenPhotoMenuOpen &&
           !photoCaptionEditorOpen &&
+          !photoAltEditorOpen &&
           !photoDeleteConfirmOpen ? (
             <div className="absolute bottom-[max(28px,env(safe-area-inset-bottom))] left-0 right-0 z-20 px-5 text-center">
               <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
@@ -3314,6 +3530,21 @@ function StandardReaderPostCard({
 
                     <button
                       type="button"
+                      onClick={
+                        openPhotoAltEditor
+                      }
+                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+                        <i className="fa-solid fa-universal-access text-[17px]" />
+                      </span>
+                      <span className="text-[14px] font-medium text-[#111827]">
+                        Edit alt text
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={(event) => {
                         event.stopPropagation()
                         setFullscreenPhotoMenuOpen(
@@ -3360,6 +3591,89 @@ function StandardReaderPostCard({
                     Share photo
                   </span>
                 </button>
+              </div>
+            </div>
+          ) : null}
+
+          {photoAltEditorOpen ? (
+            <div
+              className="absolute inset-0 z-50 flex items-end bg-black/45"
+              onClick={(event) => {
+                event.stopPropagation()
+
+                if (!photoAltSaving) {
+                  setPhotoAltEditorOpen(
+                    false
+                  )
+                }
+              }}
+            >
+              <div
+                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[16px] font-semibold text-[#111827]">
+                      Edit alt text
+                    </div>
+                    <p className="mt-1 text-[12px] font-normal leading-5 text-[#667085]">
+                      Describe what is shown in this photo for accessibility.
+                    </p>
+                  </div>
+
+                  <span className="shrink-0 text-[11px] font-normal text-[#98a2b3]">
+                    {photoAltText.length} / {MAX_PHOTO_ALT_TEXT_LENGTH}
+                  </span>
+                </div>
+
+                <textarea
+                  autoFocus
+                  value={photoAltText}
+                  maxLength={
+                    MAX_PHOTO_ALT_TEXT_LENGTH
+                  }
+                  onChange={(event) =>
+                    setPhotoAltText(
+                      event.target.value.slice(
+                        0,
+                        MAX_PHOTO_ALT_TEXT_LENGTH
+                      )
+                    )
+                  }
+                  placeholder="Describe this photo..."
+                  className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] font-normal leading-5 text-[#111827] outline-none focus:border-[#111827]"
+                />
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    disabled={photoAltSaving}
+                    onClick={() =>
+                      setPhotoAltEditorOpen(
+                        false
+                      )
+                    }
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={photoAltSaving}
+                    onClick={savePhotoAltText}
+                    className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {photoAltSaving
+                      ? 'Saving...'
+                      : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
