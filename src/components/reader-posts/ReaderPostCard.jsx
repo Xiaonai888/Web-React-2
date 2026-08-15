@@ -1409,6 +1409,14 @@ function StandardReaderPostCard({
     photoActionMessage,
     setPhotoActionMessage,
   ] = useState('')
+  const [
+    photoDeleteConfirmOpen,
+    setPhotoDeleteConfirmOpen,
+  ] = useState(false)
+  const [
+    photoDeleteBusy,
+    setPhotoDeleteBusy,
+  ] = useState(false)
 
   const user = post?.user || {}
   const isOwner =
@@ -1790,6 +1798,13 @@ function StandardReaderPostCard({
         return
       }
 
+      if (photoDeleteConfirmOpen) {
+        if (!photoDeleteBusy) {
+          setPhotoDeleteConfirmOpen(false)
+        }
+        return
+      }
+
       if (fullscreenPhotoMenuOpen) {
         setFullscreenPhotoMenuOpen(false)
         return
@@ -1797,6 +1812,8 @@ function StandardReaderPostCard({
 
       setFullscreenPhotoOpen(false)
       setFullscreenControlsVisible(true)
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoDeleteConfirmOpen(false)
       setPhotoActionMessage('')
     }
 
@@ -1816,6 +1833,8 @@ function StandardReaderPostCard({
   }, [
     fullscreenPhotoOpen,
     fullscreenPhotoMenuOpen,
+    photoDeleteConfirmOpen,
+    photoDeleteBusy,
   ])
 
   useEffect(() => {
@@ -2271,12 +2290,148 @@ function StandardReaderPostCard({
     if (photoPostView) {
       setFullscreenControlsVisible(true)
       setFullscreenPhotoMenuOpen(false)
+      setPhotoDeleteConfirmOpen(false)
       setPhotoActionMessage('')
       setFullscreenPhotoOpen(true)
       return
     }
 
     openPhotoPost(index)
+  }
+
+  async function deleteSelectedPhoto(event) {
+    event?.stopPropagation()
+
+    if (
+      !isOwner ||
+      !selectedPhotoUrl ||
+      photoDeleteBusy
+    ) {
+      return
+    }
+
+    const remainingImageUrls =
+      imageUrls.filter(
+        (_, index) =>
+          index !== safeSelectedPhotoIndex
+      )
+    const currentContent = String(
+      post?.content || ''
+    ).trim()
+
+    if (
+      !remainingImageUrls.length &&
+      !currentContent
+    ) {
+      setPhotoDeleteConfirmOpen(false)
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoActionMessage(
+        'This post needs text or a photo. Delete the post instead.'
+      )
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      setPhotoDeleteConfirmOpen(false)
+      setFullscreenPhotoMenuOpen(false)
+      setFullscreenPhotoOpen(false)
+      navigate('/login')
+      return
+    }
+
+    try {
+      setPhotoDeleteBusy(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-posts/me/${encodeURIComponent(
+          post.id
+        )}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: currentContent,
+            image_urls:
+              remainingImageUrls,
+          }),
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to delete photo'
+        )
+      }
+
+      const updatedPost =
+        data.post || {
+          ...post,
+          content: currentContent,
+          image_urls:
+            remainingImageUrls,
+        }
+
+      onUpdated?.(updatedPost)
+      setPhotoDeleteConfirmOpen(false)
+      setFullscreenPhotoMenuOpen(false)
+
+      if (!remainingImageUrls.length) {
+        setFullscreenPhotoOpen(false)
+        setFullscreenControlsVisible(true)
+        setPhotoActionMessage('')
+        navigate(
+          `/reader/post/${encodeURIComponent(
+            post.id
+          )}`,
+          {
+            replace: true,
+          }
+        )
+        return
+      }
+
+      const nextPhotoIndex =
+        Math.min(
+          safeSelectedPhotoIndex,
+          remainingImageUrls.length - 1
+        )
+
+      setPhotoActionMessage(
+        'Photo deleted.'
+      )
+      navigate(
+        `/reader/post/${encodeURIComponent(
+          post.id
+        )}?photo=${nextPhotoIndex}`,
+        {
+          replace: true,
+        }
+      )
+    } catch (error) {
+      setPhotoDeleteConfirmOpen(false)
+      setFullscreenPhotoMenuOpen(false)
+      setPhotoActionMessage(
+        error.message ||
+          'Failed to delete photo.'
+      )
+    } finally {
+      setPhotoDeleteBusy(false)
+    }
   }
 
   async function saveSelectedPhoto(event) {
@@ -2847,6 +3002,15 @@ function StandardReaderPostCard({
         <div
           className="fixed inset-0 z-[1000000] bg-black"
           onClick={() => {
+            if (photoDeleteConfirmOpen) {
+              if (!photoDeleteBusy) {
+                setPhotoDeleteConfirmOpen(
+                  false
+                )
+              }
+              return
+            }
+
             if (fullscreenPhotoMenuOpen) {
               setFullscreenPhotoMenuOpen(false)
               return
@@ -2866,6 +3030,7 @@ function StandardReaderPostCard({
                   setFullscreenPhotoOpen(false)
                   setFullscreenControlsVisible(true)
                   setFullscreenPhotoMenuOpen(false)
+                  setPhotoDeleteConfirmOpen(false)
                   setPhotoActionMessage('')
                 }}
                 className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white transition-opacity active:bg-black/75"
@@ -2925,6 +3090,29 @@ function StandardReaderPostCard({
               >
                 <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
+                {isOwner ? (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setFullscreenPhotoMenuOpen(
+                        false
+                      )
+                      setPhotoDeleteConfirmOpen(
+                        true
+                      )
+                    }}
+                    className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#fff1f2]"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center text-[#e5484d]">
+                      <i className="fa-regular fa-trash-can text-[17px]" />
+                    </span>
+                    <span className="text-[14px] font-medium text-[#e5484d]">
+                      Delete photo
+                    </span>
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={saveSelectedPhoto}
@@ -2950,6 +3138,64 @@ function StandardReaderPostCard({
                     Share photo
                   </span>
                 </button>
+              </div>
+            </div>
+          ) : null}
+
+          {photoDeleteConfirmOpen ? (
+            <div
+              className="absolute inset-0 z-50 flex items-end bg-black/45"
+              onClick={(event) => {
+                event.stopPropagation()
+
+                if (!photoDeleteBusy) {
+                  setPhotoDeleteConfirmOpen(
+                    false
+                  )
+                }
+              }}
+            >
+              <div
+                className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+
+                <div className="text-[16px] font-semibold text-[#111827]">
+                  Delete this photo?
+                </div>
+
+                <p className="mt-1.5 text-[13px] font-normal leading-5 text-[#667085]">
+                  This photo will be removed from this Reader post.
+                </p>
+
+                <div className="mt-5 flex gap-3">
+                  <button
+                    type="button"
+                    disabled={photoDeleteBusy}
+                    onClick={() =>
+                      setPhotoDeleteConfirmOpen(
+                        false
+                      )
+                    }
+                    className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={photoDeleteBusy}
+                    onClick={deleteSelectedPhoto}
+                    className="h-11 flex-1 rounded-full bg-[#e5484d] text-[14px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {photoDeleteBusy
+                      ? 'Deleting...'
+                      : 'Delete'}
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
