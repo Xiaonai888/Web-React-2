@@ -747,76 +747,96 @@ function CommentMenu({
           </>
         ) : null}
 
-        {!ownsComment &&
-        permissions.isAuthor ? (
-          <>
-            <MenuButton
-              icon="fa-regular fa-trash-can"
-              label="Delete"
-              danger
-              onClick={() =>
-                runAction(onDelete)
-              }
-            />
+       {!ownsComment &&
+permissions.isAuthor ? (
+  <>
+    <MenuButton
+      icon="fa-regular fa-trash-can"
+      label="Delete"
+      danger
+      onClick={() =>
+        runAction(onDelete)
+      }
+    />
 
-            {!isAuthorPost ? (
-              <>
-                <MenuButton
-                  icon="fa-solid fa-thumbtack"
-                  label={
-                    comment.is_pinned
-                      ? 'Unpin comment'
-                      : 'Pin comment'
-                  }
-                  onClick={() =>
-                    runAction(
-                      comment.is_pinned
-                        ? onUnpin
-                        : onPin
-                    )
-                  }
-                />
+    {isAuthorPost ? (
+      <MenuButton
+        icon={
+          comment.is_hidden
+            ? 'fa-regular fa-eye'
+            : 'fa-regular fa-eye-slash'
+        }
+        label={
+          comment.is_hidden
+            ? 'Unhide'
+            : 'Hide comment'
+        }
+        onClick={() =>
+          runAction(
+            comment.is_hidden
+              ? onUnhide
+              : onHide
+          )
+        }
+      />
+    ) : (
+      <>
+        <MenuButton
+          icon="fa-solid fa-thumbtack"
+          label={
+            comment.is_pinned
+              ? 'Unpin comment'
+              : 'Pin comment'
+          }
+          onClick={() =>
+            runAction(
+              comment.is_pinned
+                ? onUnpin
+                : onPin
+            )
+          }
+        />
 
-                <MenuButton
-                  icon="fa-regular fa-eye-slash"
-                  label="Hide comment"
-                  onClick={() =>
-                    runAction(onHide)
-                  }
-                />
+        <MenuButton
+          icon="fa-regular fa-eye-slash"
+          label="Hide comment"
+          onClick={() =>
+            runAction(onHide)
+          }
+        />
 
-                <MenuButton
-                  icon="fa-solid fa-ban"
-                  label="Ban user"
-                  danger
-                  onClick={() =>
-                    runAction(onBan)
-                  }
-                />
+        <MenuButton
+          icon="fa-solid fa-ban"
+          label="Ban user"
+          danger
+          onClick={() =>
+            runAction(onBan)
+          }
+        />
 
-                <MenuButton
-                  icon={
-                    comment.is_spoiler
-                      ? 'fa-regular fa-eye'
-                      : 'fa-solid fa-triangle-exclamation'
-                  }
-                  label={
-                    comment.is_spoiler
-                      ? 'Remove spoiler mark'
-                      : 'Spoiler mark'
-                  }
-                  onClick={() =>
-                    runAction(
-                      comment.is_spoiler
-                        ? onUnspoiler
-                        : onSpoiler
-                    )
-                  }
-                />
-              </>
-            ) : null}
-          </>
-        ) : null}
+        <MenuButton
+          icon={
+            comment.is_spoiler
+              ? 'fa-regular fa-eye'
+              : 'fa-solid fa-triangle-exclamation'
+          }
+          label={
+            comment.is_spoiler
+              ? 'Remove spoiler mark'
+              : 'Spoiler mark'
+          }
+          onClick={() =>
+            runAction(
+              comment.is_spoiler
+                ? onUnspoiler
+                : onSpoiler
+            )
+          }
+        />
+      </>
+    )}
+  </>
+) : null}
 
         {!ownsComment &&
         !isAuthorPost &&
@@ -3126,6 +3146,98 @@ const nextComments =
       }
     }
 
+  const handleAuthorPostVisibility = async (
+  comment,
+  isHidden
+) => {
+  if (!token) {
+    showToast('Please login again.')
+    return
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/me/post-comments/${encodeURIComponent(
+        comment.id
+      )}/visibility`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type':
+            'application/json',
+          Authorization:
+            `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          is_hidden: Boolean(isHidden),
+        }),
+      }
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      throw new Error(
+        data.message ||
+          'Failed to update comment visibility'
+      )
+    }
+
+    const updatedComment =
+      normalizeApiComment(
+        data.comment
+      )
+
+    const preservedComment = {
+      ...updatedComment,
+      replies:
+        comment.replies || [],
+      reply_total: Number(
+        comment.reply_total ??
+          comment.replies?.length ??
+          0
+      ),
+      reply_page: Math.max(
+        1,
+        Number(
+          comment.reply_page || 1
+        )
+      ),
+      reply_has_more: Boolean(
+        comment.reply_has_more
+      ),
+    }
+
+    updateComments(
+      updateCommentTree(
+        comments,
+        comment.id,
+        preservedComment
+      )
+    )
+
+    updateTotal(
+      data.comment_count ??
+        totalComments
+    )
+
+    showToast(
+      isHidden
+        ? 'Comment hidden by this Page.'
+        : 'Comment unhidden by this Page.'
+    )
+  } catch (error) {
+    showToast(
+      error.message ||
+        'Failed to update comment visibility.'
+    )
+  }
+}
 
   const handleModerate = async (
     comment,
@@ -3426,61 +3538,69 @@ const nextComments =
                       handleDeleteComment
                     }
                     onHide={(
-                      selectedComment
-                    ) => {
-                      if (
-                        targetType ===
-                        'author_post'
-                      ) {
-                        handleHideForReader(
-                          selectedComment
-                        )
-                        return
-                      }
+  selectedComment
+) => {
+  if (
+    targetType ===
+    'author_post'
+  ) {
+    if (
+      isStoryAuthor(
+        currentUser,
+        story
+      )
+    ) {
+      handleAuthorPostVisibility(
+        selectedComment,
+        true
+      )
+    } else {
+      handleHideForReader(
+        selectedComment
+      )
+    }
 
-                      const canModerate =
-                        isStoryAuthor(
-                          currentUser,
-                          story
-                        ) ||
-                        currentUser.is_admin
+    return
+  }
 
-                      if (canModerate) {
-                        handleModerate(
-                          selectedComment,
-                          'hide'
-                        )
-                        return
-                      }
+  const canModerate =
+    isStoryAuthor(
+      currentUser,
+      story
+    ) ||
+    currentUser.is_admin
 
-                      handleHideForReader(
-                        selectedComment
-                      )
-                    }}
-                    onUnhide={(
-                      selectedComment
-                    ) =>
-                      handleModerate(
-                        selectedComment,
-                        'unhide'
-                      )
-                    }
-                    onPin={(
-                      selectedComment
-                    ) =>
-                      handleModerate(
-                        selectedComment,
-                        'pin'
-                      )
-                    }
-                    onUnpin={(
-                      selectedComment
-                    ) =>
-                      handleModerate(
-                        selectedComment,
-                        'unpin'
-                      )
-                    }
+  if (canModerate) {
+    handleModerate(
+      selectedComment,
+      'hide'
+    )
+    return
+  }
+
+  handleHideForReader(
+    selectedComment
+  )
+}}
+onUnhide={(
+  selectedComment
+) => {
+  if (
+    targetType ===
+    'author_post'
+  ) {
+    handleAuthorPostVisibility(
+      selectedComment,
+      false
+    )
+    return
+  }
+
+  handleModerate(
+    selectedComment,
+    'unhide'
+  )
+}}
                     onSpoiler={(
                       selectedComment
                     ) =>
