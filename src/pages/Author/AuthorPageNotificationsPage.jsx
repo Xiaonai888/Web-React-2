@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorPageFooter from '../../components/AuthorPageFooter'
+import { resolveAuthorPostActivityRoute } from '../../utils/authorPostActivityRoute'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -1093,41 +1094,68 @@ export default function AuthorPageNotificationsPage() {
         }
 
   async function handleOpen(
-    notification
-  ) {
-    if (notification.unread) {
-      setNotifications((current) =>
-        current.map((item) =>
-          item.id ===
-          notification.id
-            ? {
-                ...item,
-                unread: false,
-              }
-            : item
-        )
-      )
-
-      setUnreadCount((current) =>
-        Math.max(0, current - 1)
-      )
-
-      markNotificationRead(
+  notification
+) {
+  if (notification.unread) {
+    setNotifications((current) =>
+      current.map((item) =>
+        item.id ===
         notification.id
-      ).catch(() => null)
-    }
-
-    if (notification.targetUrl) {
-      navigate(
-        notification.targetUrl
+          ? {
+              ...item,
+              unread: false,
+            }
+          : item
       )
-      return
-    }
-
-    setMessage(
-      'This notification does not have a target page yet.'
     )
+
+    setUnreadCount((current) =>
+      Math.max(0, current - 1)
+    )
+
+    markNotificationRead(
+      notification.id
+    ).catch(() => null)
   }
+
+  const postActivityTypes = [
+    'comment',
+    'comments',
+    'mention',
+    'mentions',
+    'reaction',
+    'echo',
+    'post',
+    'posts',
+  ]
+
+  const notificationType = String(
+    notification.type || ''
+  ).toLowerCase()
+
+  const activityRoute =
+    postActivityTypes.includes(notificationType)
+      ? resolveAuthorPostActivityRoute(
+          notification
+        )
+      : ''
+
+  if (activityRoute) {
+    navigate(activityRoute)
+    return
+  }
+
+  if (notification.targetUrl) {
+    navigate(
+      notification.targetUrl
+    )
+    return
+  }
+
+  setMessage(
+    'This notification does not have a target page yet.'
+  )
+}
 
   function handleOptions(
     notification
