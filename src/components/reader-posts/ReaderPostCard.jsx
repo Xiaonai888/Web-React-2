@@ -1255,6 +1255,7 @@ function StandardReaderPostCard({
   onDeleted,
   onHidden,
   onFollowChanged,
+  fullPostView = false,
 }) {
   const navigate = useNavigate()
   const reactionPressTimerRef =
@@ -2082,7 +2083,24 @@ function StandardReaderPostCard({
     setMenuOpen(false)
   }
 
-  function viewReaderProfile() {
+  function openFullPost() {
+    if (
+      !isDiscoverView ||
+      !post?.id
+    ) {
+      return
+    }
+
+    navigate(
+      `/reader/post/${encodeURIComponent(
+        post.id
+      )}`
+    )
+  }
+
+  function viewReaderProfile(event) {
+    event?.stopPropagation()
+
     const username = String(
       user?.username || ''
     ).trim()
@@ -2096,7 +2114,8 @@ function StandardReaderPostCard({
     }
   }
 
-  async function followReaderFromPost() {
+  async function followReaderFromPost(event) {
+    event?.stopPropagation()
     if (
       followBusy ||
       isOwner ||
@@ -2220,7 +2239,18 @@ function StandardReaderPostCard({
         id={`reader-post-${post.id}`}
         className="bg-white sm:rounded-[12px]"
       >
-        <div className="flex items-start gap-2 px-4 pb-3 pt-4">
+        <div
+          onClick={
+            isDiscoverView
+              ? openFullPost
+              : undefined
+          }
+          className={`flex items-start gap-2 px-4 pb-3 pt-4 ${
+            isDiscoverView
+              ? 'cursor-pointer'
+              : ''
+          }`}
+        >
   <button
     type="button"
     onClick={viewReaderProfile}
@@ -2295,9 +2325,10 @@ function StandardReaderPostCard({
 
       <button
         type="button"
-        onClick={() =>
+        onClick={(event) => {
+          event.stopPropagation()
           setMenuOpen(true)
-        }
+        }}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
         aria-label="Post options"
       >
@@ -2307,18 +2338,32 @@ function StandardReaderPostCard({
   </div>
 </div>
 
-       {postText ? (
-  <div className="px-4 pb-4">
-    <CollapsiblePostText
-      text={postText}
-      lines={window.location.pathname === '/discover' ? 2 : 3}
-      discoverStyle={window.location.pathname === '/discover'}
-      className="text-[14px] font-normal leading-6 text-[#111827]"
-    >
-      {renderPostTextWithLinks(postText)}
-    </CollapsiblePostText>
-  </div>
-) : null}
+        {postText ? (
+          <div className="px-4 pb-4">
+            {fullPostView ? (
+              <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+                {renderPostTextWithLinks(
+                  postText
+                )}
+              </p>
+            ) : (
+              <CollapsiblePostText
+                text={postText}
+                lines={
+                  isDiscoverView ? 2 : 3
+                }
+                discoverStyle={
+                  isDiscoverView
+                }
+                className="text-[14px] font-normal leading-6 text-[#111827]"
+              >
+                {renderPostTextWithLinks(
+                  postText
+                )}
+              </CollapsiblePostText>
+            )}
+          </div>
+        ) : null}
         {isEchoPost ? (
           <ReaderEchoSourceBlock
             post={post}
