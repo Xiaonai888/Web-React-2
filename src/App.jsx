@@ -202,6 +202,7 @@ const AuthorArchivedChatPage = lazy(() => import('./pages/AuthorChat/AuthorArchi
 const AuthorChatRoomPage = lazy(() => import('./pages/AuthorChat/AuthorChatRoomPage'))
 const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoPage'))
 const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorPostCommentFocusPage'))
+const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
 
 
 function ComingSoon({ title }) {
@@ -793,6 +794,11 @@ const shouldShowOpeningAds =
       <MeCommentsPage />
     </LazyPage>
   }
+/>
+
+        <Route
+  path="/author/page/posts/:postId/activity"
+  element={<LazyPage><AuthorPostActivityPage /></LazyPage>}
 />
         <Route
   path="/echoes/received"
