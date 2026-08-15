@@ -572,6 +572,27 @@ function CommentMenu({
         ) : null}
 
         {!ownsComment &&
+        permissions.isOtherReader ? (
+          <>
+            <MenuButton
+              icon="fa-regular fa-flag"
+              label="Report Comment"
+              onClick={() =>
+                runAction(onReport)
+              }
+            />
+
+            <MenuButton
+              icon="fa-regular fa-eye-slash"
+              label="Hide this comment"
+              onClick={() =>
+                runAction(onHide)
+              }
+            />
+          </>
+        ) : null}
+
+        {!ownsComment &&
         permissions.isAuthor ? (
           <>
             <MenuButton
@@ -583,27 +604,7 @@ function CommentMenu({
               }
             />
 
-            {isAuthorPost ? (
-              <MenuButton
-                icon={
-                  comment.is_hidden
-                    ? 'fa-regular fa-eye'
-                    : 'fa-regular fa-eye-slash'
-                }
-                label={
-                  comment.is_hidden
-                    ? 'Unhide comment'
-                    : 'Hide comment'
-                }
-                onClick={() =>
-                  runAction(
-                    comment.is_hidden
-                      ? onUnhide
-                      : onHide
-                  )
-                }
-              />
-            ) : (
+            {!isAuthorPost ? (
               <>
                 <MenuButton
                   icon="fa-solid fa-thumbtack"
@@ -658,7 +659,7 @@ function CommentMenu({
                   }
                 />
               </>
-            )}
+            ) : null}
           </>
         ) : null}
 
@@ -939,9 +940,7 @@ function ReplyItem({
   }
 
   return (
-    <div className={`flex gap-2 ${
-  reply.is_hidden ? 'opacity-60' : ''
-}`}>
+    <div className="flex gap-2">
       <Avatar
         user={displayUser}
         size="h-8 w-8"
@@ -962,13 +961,8 @@ function ReplyItem({
             </span>
 
             <span className="text-[10px] font-normal text-[#98a2b3]">
-              {formatTime(reply.created_at)}
-
-          {reply.is_hidden ? (
-  <span className="text-[10px] text-[#4f46e5]">
-    Hidden by This Page
-  </span>
-) : null}
+              {formatTime(
+                reply.created_at
               )}
             </span>
           </div>
@@ -1427,9 +1421,7 @@ function CommentItem({
 
                 {comment.is_hidden ? (
                   <span className="rounded-full bg-[#eef2ff] px-2 py-0.5 text-[10px] font-normal text-[#4f46e5]">
-                    {targetType === 'author_post'
-  ? 'Hidden by This Page'
-  : 'Hidden'}
+                    Hidden
                   </span>
                 ) : null}
               </div>
@@ -2950,142 +2942,6 @@ export default function CommentSection({
       }
     }
 
-  const handleAuthorPostVisibility = async (
-    comment,
-    isHidden
-  ) => {
-    if (!token) {
-      showToast(
-        'Please login again.'
-      )
-      return
-    }
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/authors/me/post-comments/${encodeURIComponent(
-          comment.id
-        )}/visibility`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type':
-              'application/json',
-            Authorization:
-              `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            is_hidden: Boolean(isHidden),
-          }),
-        }
-      )
-
-      const data = await response
-        .json()
-        .catch(() => ({}))
-
-      if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        throw new Error(
-          data.message ||
-            'Failed to update comment visibility'
-        )
-      }
-
-      const updatedComment =
-        normalizeApiComment(
-          data.comment
-        )
-
-      updateComments(
-        updateCommentTree(
-          comments,
-          comment.id,
-          updatedComment
-        )
-      )
-
-      if (
-        data.comment_count !==
-        undefined
-      ) {
-        updateTotal(
-          data.comment_count
-        )
-      }
-
-      showToast(
-        isHidden
-          ? 'Comment hidden by this Page.'
-          : 'Comment unhidden by this Page.'
-      )
-    } catch (error) {
-      showToast(
-        error.message ||
-          'Failed to update comment visibility.'
-      )
-    }
-  }
-
-onHide={(selectedComment) => {
-  const pageOwner =
-    isStoryAuthor(currentUser, story)
-
-  if (
-    targetType === 'author_post' &&
-    pageOwner
-  ) {
-    handleAuthorPostVisibility(
-      selectedComment,
-      true
-    )
-    return
-  }
-
-  if (targetType === 'author_post') {
-    handleHideForReader(
-      selectedComment
-    )
-    return
-  }
-
-  const canModerate =
-    pageOwner || currentUser.is_admin
-
-  if (canModerate) {
-    handleModerate(
-      selectedComment,
-      'hide'
-    )
-    return
-  }
-
-  handleHideForReader(
-    selectedComment
-  )
-}}
-onUnhide={(selectedComment) => {
-  if (
-    targetType === 'author_post' &&
-    isStoryAuthor(
-      currentUser,
-      story
-    )
-  ) {
-    handleAuthorPostVisibility(
-      selectedComment,
-      false
-    )
-    return
-  }
-
-  handleModerate(
-    selectedComment,
-    'unhide'
-  )
-}}
 
   const handleModerate = async (
     comment,
