@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getAuthorChatToken } from '../../services/authorChatApi'
 import CommentSection from '../../components/comments/CommentSection'
+import AuthorPostDetail from '../../components/author-posts/AuthorPostDetail'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -16,6 +17,7 @@ const API_BASE_URL =
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+const USE_EXTRACTED_POST_DETAIL = true
 
 const REACTION_ICON_BY_TYPE = {
   love: '/assets/React/Love.svg',
@@ -291,6 +293,12 @@ export default function AuthorPostCommentFocusPage() {
           </div>
         ) : post && comment ? (
           <>
+            {USE_EXTRACTED_POST_DETAIL ? (
+  <AuthorPostDetail
+    post={post}
+    commentId={comment.id}
+  />
+) : (
             <article className="bg-white pt-4">
               <div className="flex items-start gap-3 px-4">
                 <button
@@ -446,6 +454,7 @@ export default function AuthorPostCommentFocusPage() {
             </article>
 
             <section className="bg-white pt-3">
+            )}
               <CommentSection
                 targetType="author_post"
                 targetId={post.id}
