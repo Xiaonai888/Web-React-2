@@ -2397,12 +2397,17 @@ const nextComments =
   }
 
   useEffect(() => {
-    setComments([])
-    setPage(1)
-    setHasMore(false)
-    setTotalComments(0)
-    fetchComments(1, false)
-  }, [targetId, sort])
+  setComments([])
+  setPage(1)
+  setHasMore(false)
+  setTotalComments(0)
+  fetchComments(1, false)
+}, [
+  targetId,
+  sort,
+  focusComment?.id,
+  focusParentComment?.id,
+])
 
   const isBanned = false
 
