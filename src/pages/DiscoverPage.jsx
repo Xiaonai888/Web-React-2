@@ -377,7 +377,11 @@ function Header({ hidden }) {
   )
 }
 
-function RealPostImageGrid({ images, authorName }) {
+function RealPostImageGrid({
+  images,
+  authorName,
+  onImageClick,
+}) {
   const urls = Array.isArray(images)
     ? images.filter(Boolean).slice(0, 5)
     : []
@@ -389,25 +393,38 @@ function RealPostImageGrid({ images, authorName }) {
   if (urls.length === 1) {
   return (
     <ProfessionalSinglePostImage
-      src={urls[0]}
-      alt={alt}
-    />
+  src={urls[0]}
+  alt={alt}
+  onClick={() =>
+    onImageClick?.(0)
+  }
+/>
   )
 }
 
   if (urls.length === 2) {
     return (
       <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
-        {urls.map((url) => (
-          <img
-            key={url}
-            src={url}
-            alt={alt}
-            loading="lazy"
-            decoding="async"
-            className="h-[260px] w-full object-cover sm:h-[310px]"
-          />
-        ))}
+        {urls.map(
+  (url, index) => (
+    <button
+      key={url}
+      type="button"
+      onClick={() =>
+        onImageClick?.(index)
+      }
+      className="block w-full"
+    >
+      <img
+        src={url}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className="h-[260px] w-full object-cover sm:h-[310px]"
+      />
+    </button>
+  )
+)}
       </div>
     )
   }
@@ -415,25 +432,47 @@ function RealPostImageGrid({ images, authorName }) {
   if (urls.length === 3) {
     return (
       <div className="grid h-[340px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[400px]">
+        <button
+  type="button"
+  onClick={() =>
+    onImageClick?.(0)
+  }
+  className="h-full w-full"
+>
+  <img
+    src={urls[0]}
+    alt={alt}
+    loading="lazy"
+    decoding="async"
+    className="h-full w-full object-cover"
+  />
+</button>
+
+        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
+          {urls
+  .slice(1)
+  .map(
+    (url, index) => (
+      <button
+        key={url}
+        type="button"
+        onClick={() =>
+          onImageClick?.(
+            index + 1
+          )
+        }
+        className="h-full min-h-0 w-full"
+      >
         <img
-          src={urls[0]}
+          src={url}
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full min-h-0 w-full object-cover"
         />
-
-        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
-          {urls.slice(1).map((url) => (
-            <img
-              key={url}
-              src={url}
-              alt={alt}
-              loading="lazy"
-              decoding="async"
-              className="h-full min-h-0 w-full object-cover"
-            />
-          ))}
+      </button>
+    )
+  )}
         </div>
       </div>
     )
@@ -445,7 +484,14 @@ function RealPostImageGrid({ images, authorName }) {
   return (
     <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
       {visibleUrls.map((url, index) => (
-        <div key={url} className="relative">
+        <button
+  key={url}
+  type="button"
+  onClick={() =>
+    onImageClick?.(index)
+  }
+  className="relative block w-full"
+>
           <img
             src={url}
             alt={alt}
@@ -461,7 +507,7 @@ function RealPostImageGrid({ images, authorName }) {
           ) : null}
         </div>
       ))}
-    </div>
+    </button>
   )
 }
 
@@ -523,6 +569,16 @@ function RealFollowedPostCard({
     `/author/post/${encodeURIComponent(
       post.id
     )}`
+  )
+}
+
+  function openPhotoPost(index) {
+  if (!post?.id) return
+
+  navigate(
+    `/author/post/${encodeURIComponent(
+      post.id
+    )}?photo=${index}`
   )
 }
 
@@ -757,9 +813,10 @@ const isOwner = Boolean(
 ) : null}
 
       <RealPostImageGrid
-        images={post.image_urls}
-        authorName={authorName}
-      />
+  images={post.image_urls}
+  authorName={authorName}
+  onImageClick={openPhotoPost}
+/>
 
       <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
         <div className="relative">
