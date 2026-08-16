@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AuthorPostComposerSheet from './AuthorPostComposerSheet'
 import CommentsModal from './story-detail/CommentsModal'
 import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
+import ReactionAction from './social/reactions/ReactionAction'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import {
@@ -20,15 +21,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
-const AUTHOR_POST_REACTIONS = [
-  { type: 'love', label: 'Love', src: '/assets/React/Love.svg', text: '#ff2f5f' },
-  { type: 'haha', label: 'Haha', src: '/assets/React/Haha.svg', text: '#f59e0b' },
-  { type: 'wow', label: 'Wow', src: '/assets/React/Wow.svg', text: '#f59e0b' },
-  { type: 'sad', label: 'Sad', src: '/assets/React/Sad.svg', text: '#3b82f6' },
-  { type: 'angry', label: 'Angry', src: '/assets/React/Angry.svg', text: '#ef4444' },
-  { type: 'support', label: 'Support', src: '/assets/React/Support.svg', text: '#16a34a' },
-  { type: 'touched', label: 'Touched', src: '/assets/React/Touched.svg', text: '#8b5cf6' },
-]
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -438,33 +431,7 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   
 
   
-  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
-const [pressTimer, setPressTimer] = useState(null)
-const activeReaction = AUTHOR_POST_REACTIONS.find((item) => item.type === post.my_reaction) || null
-
-function startReactionPress() {
-  const timer = window.setTimeout(() => {
-    setReactionPickerOpen(true)
-    setPressTimer(null)
-  }, 420)
-
-  setPressTimer(timer)
-}
-
-function endReactionPress() {
-  if (!pressTimer) return
-
-  window.clearTimeout(pressTimer)
-  setPressTimer(null)
-  onReact(post, 'love')
-}
-
-function cancelReactionPress() {
-  if (!pressTimer) return
-
-  window.clearTimeout(pressTimer)
-  setPressTimer(null)
-}
+  
 
   return (
     <article className="bg-white py-3">
