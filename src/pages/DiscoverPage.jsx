@@ -484,32 +484,30 @@ function RealPostImageGrid({
   return (
     <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
       {visibleUrls.map((url, index) => (
-        <button
-  key={url}
-  type="button"
-  onClick={() =>
-    onImageClick?.(index)
-  }
-  className="relative block w-full"
->
-          <img
-            src={url}
-            alt={alt}
-            loading="lazy"
-            decoding="async"
-            className="h-[210px] w-full object-cover sm:h-[250px]"
-          />
+  <button
+    key={url}
+    type="button"
+    onClick={() =>
+      onImageClick?.(index)
+    }
+    className="relative block w-full"
+  >
+    <img
+      src={url}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className="h-[210px] w-full object-cover sm:h-[250px]"
+    />
 
-          {index === 3 && hiddenCount > 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[28px] font-black text-white">
-              +{hiddenCount}
-            </div>
-          ) : null}
-        </div>
-      ))}
-    </button>
-  )
-}
+    {index === 3 &&
+    hiddenCount > 0 ? (
+      <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[28px] font-black text-white">
+        +{hiddenCount}
+      </div>
+    ) : null}
+  </button>
+))}
 
 function RealReactionSummary({ summary, likeCount }) {
   const icons = {
