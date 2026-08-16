@@ -256,6 +256,16 @@ function getCompactHoursText(details = {}) {
 function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) {
   const author = page || {}
 
+    const viewerOwnsPage = Boolean(
+    (myPage?.id &&
+      author.id &&
+      myPage.id === author.id) ||
+      (myPage?.page_username &&
+        author.page_username &&
+        myPage.page_username ===
+          author.page_username)
+  )
+
   return {
     id: author.id || '',
     user_id: author.user_id || '',
@@ -275,12 +285,10 @@ works_count: Number(author.total_stories || author.works_count || 0),
     works: Array.isArray(author.works) ? author.works : [],
     created_at: author.created_at || '',
     updated_at: author.updated_at || '',
-    is_owner:
-      forceOwner ||
-      Boolean(
-        (myPage?.id && author.id && myPage.id === author.id) ||
-          (myPage?.page_username && author.page_username && myPage.page_username === author.page_username)
-      ),
+        viewer_owns_page:
+      Boolean(forceOwner) ||
+      viewerOwnsPage,
+    is_owner: Boolean(forceOwner),
   }
 }
 
@@ -1309,7 +1317,10 @@ function handleReviewsOverviewPointerEnd() {
 function handleOpenReviewSheet(isRecommended = true) {
   const token = getAuthToken()
 
-  if (displayAuthor.is_owner) return
+    if (
+    displayAuthor.is_owner ||
+    displayAuthor.viewer_owns_page
+  ) return
 
   if (!token) {
     navigate('/login')
@@ -1355,7 +1366,12 @@ async function handleSaveReview() {
     return
   }
 
-  if (!username || displayAuthor.is_owner || savingReview) return
+   if (
+    !username ||
+    displayAuthor.is_owner ||
+    displayAuthor.viewer_owns_page ||
+    savingReview
+  ) return
 
   if (reviewText.length < 25) {
     setReviewDraftError('Review must be at least 25 characters.')
@@ -1407,7 +1423,12 @@ async function handleRemoveReview() {
     return
   }
 
-  if (!username || !myReview || savingReview) return
+    if (
+    !username ||
+    !myReview ||
+    displayAuthor.viewer_owns_page ||
+    savingReview
+  ) return
 
   try {
     setSavingReview(true)
@@ -1515,47 +1536,65 @@ function handleOpenMessage() {
     return
   }
 
-  if (!author?.id || author?.is_owner) return
+    if (
+    !author?.id ||
+    author?.is_owner ||
+    author?.viewer_owns_page
+  ) return
 
   setMessageRequestOpen(true)
 }
   
- const actionButtons = useMemo(() => {
-  if (!ownerResolved || !author) return []
-
-  if (author?.is_owner) {
-    return [
-      { label: 'Dashboard', icon: 'fa-chart-simple', type: 'primary', onClick: () => navigate('/author/page/dashboard') },
-      { label: 'Advertise', icon: 'fa-bullhorn', type: 'secondary', onClick: () => setMessage('Advertise is coming soon.') },
-    ]
+  const actionButtons = useMemo(() => {
+  if (!ownerResolved || !author) {
+    return []
   }
 
-  if (author?.is_following) {
+  if (author.is_owner) {
     return [
       {
-        label: 'Following',
-        icon: 'fa-user-check',
+        label: 'Dashboard',
+        icon: 'fa-chart-simple',
         type: 'primary',
-        onClick: handleOpenFollowSettings,
-        disabled: followLoading,
+        onClick: () =>
+          navigate('/author/page/dashboard'),
       },
       {
-        label: 'Message',
-        icon: 'fa-comment',
+        label: 'Advertise',
+        icon: 'fa-bullhorn',
         type: 'secondary',
-        onClick: handleOpenMessage,
+        onClick: () =>
+          setMessage(
+            'Advertise is coming soon.'
+          ),
       },
     ]
   }
 
-    return [
-    {
-      label: 'Follow',
-      icon: 'fa-user-plus',
-      type: 'primary',
-      onClick: handleToggleFollow,
-      disabled: followLoading,
-    },
+  const followButton =
+    author.is_following
+      ? {
+          label: 'Following',
+          icon: 'fa-user-check',
+          type: 'primary',
+          onClick:
+            handleOpenFollowSettings,
+          disabled: followLoading,
+        }
+      : {
+          label: 'Follow',
+          icon: 'fa-user-plus',
+          type: 'primary',
+          onClick: handleToggleFollow,
+          disabled: followLoading,
+        }
+
+  if (author.viewer_owns_page) {
+    return [followButton]
+  }
+
+  return [
+    followButton,
     {
       label: 'Message',
       icon: 'fa-comment',
@@ -1563,7 +1602,15 @@ function handleOpenMessage() {
       onClick: handleOpenMessage,
     },
   ]
-}, [ownerResolved, author?.id, author?.is_owner, author?.is_following, followLoading, navigate])
+}, [
+  ownerResolved,
+  author?.id,
+  author?.is_owner,
+  author?.viewer_owns_page,
+  author?.is_following,
+  followLoading,
+  navigate,
+])
 
   function openCropEditor(mode) {
     const input = document.createElement('input')
@@ -1779,6 +1826,7 @@ if (!loading && pageError) {
     followers_count: 0,
     fans_count: 0,
     likes_count: 0,
+    viewer_owns_page: false,
     is_owner: false,
   }
 
@@ -2229,7 +2277,8 @@ onOpenStoreSetting={() => {
           </div>
         </div>
 
-        {!displayAuthor.is_owner ? (
+        {!displayAuthor.is_owner &&
+!displayAuthor.viewer_owns_page ? (
           <button
             type="button"
             onClick={handleOpenMessage}
@@ -2253,7 +2302,8 @@ onOpenStoreSetting={() => {
   </button>
 </div>
 
-        {!displayAuthor.is_owner ? (
+        {!displayAuthor.is_owner &&
+!displayAuthor.viewer_owns_page ? (
           <div className="mb-4 rounded-[14px] bg-[#f8fafc] px-4 py-3">
             <div className="text-[16px] font-normal leading-6 text-[#111827]">
               Do you recommend {displayAuthor.page_name}?
