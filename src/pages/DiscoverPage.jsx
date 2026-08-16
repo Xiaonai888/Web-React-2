@@ -2486,8 +2486,6 @@ function handleReaderFollowChanged(
     )
   )}
 
-  <DiscoverAuthorsYouMayLikeSection />
-               <DiscoverReadersYouMayLikeSection />
 </>
             ) : null}
 
