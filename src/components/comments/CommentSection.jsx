@@ -3004,17 +3004,40 @@ const nextComments =
       }
 
       const updatedComment =
-        normalizeApiComment(
-          data.comment
-        )
+  normalizeApiComment(
+    data.comment
+  )
 
-      updateComments(
-        updateCommentTree(
-          comments,
-          editComment.id,
-          updatedComment
-        )
-      )
+const preservedComment =
+  targetType === 'author_post'
+    ? {
+        ...updatedComment,
+        replies:
+          editComment.replies || [],
+        reply_total: Number(
+          editComment.reply_total ??
+            editComment.replies?.length ??
+            0
+        ),
+        reply_page: Math.max(
+          1,
+          Number(
+            editComment.reply_page || 1
+          )
+        ),
+        reply_has_more: Boolean(
+          editComment.reply_has_more
+        ),
+      }
+    : updatedComment
+
+updateComments(
+  updateCommentTree(
+    comments,
+    editComment.id,
+    preservedComment
+  )
+)
       setEditComment(null)
       setEditText('')
       showToast(
