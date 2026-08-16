@@ -800,11 +800,7 @@ const shouldShowOpeningAds =
   }
 />
 
-        <Route
-  path="/author/page/posts/:postId/activity"
-  element={<LazyPage><AuthorPostActivityPage /></LazyPage>}
-/>
-        <Route
+<Route
   path="/echoes/received"
   element={<LazyPage><ReceivedEchoesPage /></LazyPage>}
 />
@@ -920,11 +916,7 @@ const shouldShowOpeningAds =
         <Route
   path="/author/page/chat/comments/:postId/:commentId"
   element={<LazyPage><AuthorPostCommentFocusPage /></LazyPage>}
-/>
-        <Route
-  path="/author/page/posts/:postId/activity"
-  element={<LazyPage><AuthorPostActivityPage /></LazyPage>}
-/>
+/> 
 
         <Route
   path="/author/page-settings"
