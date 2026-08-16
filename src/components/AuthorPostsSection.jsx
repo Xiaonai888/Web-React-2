@@ -423,7 +423,6 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
-  const hasReacted = Boolean(post.my_reaction)
   const reactionBusy = reactionBusyId === post.id
   const postText = String(
     post?.content || ''
@@ -513,60 +512,25 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
 ) : null}
 
 <div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
-  <div className="relative">
-    {reactionPickerOpen ? (
-      <div className="absolute bottom-8 left-0 z-30 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
-        {AUTHOR_POST_REACTIONS.map((reaction) => (
-          <button
-            key={reaction.type}
-            type="button"
-            disabled={reactionBusy}
-            onClick={() => {
-              setReactionPickerOpen(false)
-              onReact(post, reaction.type)
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90"
-            aria-label={reaction.label}
-          >
-            <img src={reaction.src} alt={reaction.label} className="h-8 w-8 object-contain" />
-          </button>
-        ))}
-      </div>
-    ) : null}
-
-   <div
-  className="inline-flex items-center gap-1.5"
-  style={{ color: activeReaction?.text || undefined }}
->
-  <button
-    type="button"
-    disabled={reactionBusy}
-    onPointerDown={startReactionPress}
-    onPointerUp={endReactionPress}
-    onPointerLeave={cancelReactionPress}
-    onContextMenu={(event) => event.preventDefault()}
-    className="active:scale-95 disabled:opacity-60"
-  >
-    {activeReaction ? (
-      <img src={activeReaction.src} alt={activeReaction.label} className="h-[17px] w-[17px] object-contain" />
-    ) : (
-      <i className="fa-regular fa-heart text-[15px]" />
-    )}
-  </button>
-
-  <button
-    type="button"
-    onClick={() =>
-      navigate(`/interactions/author_post/${post.id}/likes`, {
-        state: { sourceName: 'Author Post' },
-      })
+  <ReactionAction
+    reactionType={post.my_reaction}
+    count={post.like_count}
+    busy={reactionBusy}
+    onReact={(reactionType) =>
+      onReact(post, reactionType)
     }
-    className="active:scale-95"
-  >
-    {formatCompactNumber(post.like_count)}
-  </button>
-</div>
-  </div>
+    onCountClick={() =>
+      navigate(
+        `/interactions/author_post/${post.id}/likes`,
+        {
+          state: {
+            sourceName: 'Author Post',
+          },
+        }
+      )
+    }
+    formatCount={formatCompactNumber}
+  />
 
   <button
   type="button"
