@@ -150,6 +150,10 @@ const ReaderPostDetailPage = lazy(() =>
   import('./pages/ReaderPosts/ReaderPostDetailPage')
 )
 
+const AuthorPostDetailPage = lazy(() =>
+  import('./pages/AuthorPosts/AuthorPostDetailPage')
+)
+
 const ReaderDiscoverPeoplePage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderDiscoverPeoplePage')
 )
@@ -1012,6 +1016,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <ReaderPostDetailPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
+  path="/author/post/:postId"
+  element={
+    <LazyPage>
+      <AuthorPostDetailPage />
     </LazyPage>
   }
 />
