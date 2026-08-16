@@ -231,15 +231,15 @@ export default function DiscoverReadersYouMayLikeSection() {
           </p>
         </div>
 
-        <button
-  type="button"
-  onClick={() =>
-    navigate('/profile/discover-people')
-  }
-  className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
->
-  See all
-</button>
+       {!showAll ? (
+  <button
+    type="button"
+    onClick={showAllReaders}
+    className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
+  >
+    See all
+  </button>
+) : null}
       </div>
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
