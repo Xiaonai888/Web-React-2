@@ -1,15 +1,75 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-const TOKEN_REGEX = /[A-Za-z0-9_]+/g
-const BOUNDARY_REGEX = /[\s\n\r\t.,!?;:'"“”‘’()\[\]{}<>«»/\\|+=*_~`—–-]/
+const WORD_CHAR_REGEX = /[\p{L}\p{M}\p{N}_]/u
 
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function isBoundary(value) {
-  if (!value) return true
-  return BOUNDARY_REGEX.test(value)
+function isWordChar(value) {
+  return Boolean(value) && WORD_CHAR_REGEX.test(value)
+}
+
+function getTextNodes(root) {
+  if (!root || typeof document === 'undefined') return []
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes = []
+  let current = walker.nextNode()
+
+  while (current) {
+    nodes.push(current)
+    current = walker.nextNode()
+  }
+
+  return nodes
+}
+
+function buildTextMap(root) {
+  const nodes = getTextNodes(root)
+  let offset = 0
+  const map = nodes.map((node) => {
+    const start = offset
+    offset += node.data.length
+    return { node, start, end: offset }
+  })
+
+  return {
+    text: nodes.map((node) => node.data).join(''),
+    map,
+  }
+}
+
+function pointFromOffset(map, offset, preferEnd = false) {
+  if (!map.length) return null
+
+  const entry =
+    map.find((item) =>
+      preferEnd
+        ? offset > item.start && offset <= item.end
+        : offset >= item.start && offset < item.end
+    ) || map[map.length - 1]
+
+  return {
+    node: entry.node,
+    offset: Math.max(0, Math.min(entry.node.data.length, offset - entry.start)),
+  }
+}
+
+function replaceMatch(editor, match, replacement) {
+  if (!editor || !match) return false
+
+  const { map } = buildTextMap(editor)
+  const startPoint = pointFromOffset(map, match.start)
+  const endPoint = pointFromOffset(map, match.end, true)
+  if (!startPoint || !endPoint) return false
+
+  const range = document.createRange()
+  range.setStart(startPoint.node, startPoint.offset)
+  range.setEnd(endPoint.node, endPoint.offset)
+  range.deleteContents()
+  range.insertNode(document.createTextNode(String(replacement ?? '')))
+  editor.normalize()
+  return true
 }
 
 function getTokenAt(text, start, end) {
@@ -17,36 +77,34 @@ function getTokenAt(text, start, end) {
   let left = start
   let right = end
 
-  while (left > 0 && /[A-Za-z0-9_]/.test(source[left - 1])) left -= 1
-  while (right < source.length && /[A-Za-z0-9_]/.test(source[right])) right += 1
+  while (left > 0 && isWordChar(source[left - 1])) left -= 1
+  while (right < source.length && isWordChar(source[right])) right += 1
 
   return source.slice(left, right)
 }
 
 function getContext(text, start, end) {
   const source = String(text || '')
-  const before = source.slice(Math.max(0, start - 42), start)
-  const match = source.slice(start, end)
-  const after = source.slice(end, Math.min(source.length, end + 42))
-
-  return { before, match, after }
+  return {
+    before: source.slice(Math.max(0, start - 42), start),
+    match: source.slice(start, end),
+    after: source.slice(end, Math.min(source.length, end + 42)),
+  }
 }
 
-function buildMatches(content, findText, matchCase) {
-  const source = String(content || '')
+function buildMatches(text, findText, matchCase) {
+  const source = String(text || '')
   const keyword = String(findText || '')
+  if (!keyword) return { safe: [], risky: [], ignored: [] }
 
-  if (!keyword.trim()) return { safe: [], risky: [], ignored: [] }
-
-  const flags = matchCase ? 'g' : 'gi'
+  const flags = matchCase ? 'gu' : 'giu'
   const regex = new RegExp(escapeRegExp(keyword), flags)
   const safe = []
   const risky = []
   const ignoredMap = new Map()
-  const compareKeyword = matchCase ? keyword : keyword.toLowerCase()
 
   Array.from(source.matchAll(regex)).forEach((match, index) => {
-    const start = match.index
+    const start = match.index ?? 0
     const end = start + match[0].length
     const before = source[start - 1] || ''
     const after = source[end] || ''
@@ -58,7 +116,7 @@ function buildMatches(content, findText, matchCase) {
       context: getContext(source, start, end),
     }
 
-    if (isBoundary(before) && isBoundary(after)) {
+    if (!isWordChar(before) && !isWordChar(after)) {
       safe.push(item)
       return
     }
@@ -66,9 +124,7 @@ function buildMatches(content, findText, matchCase) {
     risky.push(item)
 
     const token = getTokenAt(source, start, end)
-    const compareToken = matchCase ? token : token.toLowerCase()
-
-    if (token && compareToken !== compareKeyword && compareToken.includes(compareKeyword)) {
+    if (token && token !== match[0]) {
       ignoredMap.set(token, (ignoredMap.get(token) || 0) + 1)
     }
   })
@@ -80,27 +136,38 @@ function buildMatches(content, findText, matchCase) {
   return { safe, risky, ignored }
 }
 
-function applyReplace(content, matches, replaceText) {
-  const selected = [...matches].sort((a, b) => b.start - a.start)
-  let nextContent = String(content || '')
-
-  selected.forEach((match) => {
-    nextContent = `${nextContent.slice(0, match.start)}${replaceText}${nextContent.slice(match.end)}`
-  })
-
-  return nextContent
-}
-
-export default function SmartFindReplacePanel({ open, content, textareaRef, onClose, onReplace }) {
+export default function SmartFindReplacePanel({
+  open,
+  editorRef,
+  onClose,
+  onChange,
+}) {
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
   const [matchCase, setMatchCase] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedIds, setSelectedIds] = useState([])
-  const [lastContent, setLastContent] = useState('')
+  const [lastHtml, setLastHtml] = useState('')
+  const [revision, setRevision] = useState(0)
+  const [isFindComposing, setIsFindComposing] = useState(false)
+  const [isReplaceComposing, setIsReplaceComposing] = useState(false)
+  const itemRefs = useRef(new Map())
 
-  const result = useMemo(() => buildMatches(content, findText, matchCase), [content, findText, matchCase])
-  const reviewItems = useMemo(() => [...result.safe, ...result.risky], [result.safe, result.risky])
+  const editorText = useMemo(() => {
+    if (!open || !editorRef?.current) return ''
+    return buildTextMap(editorRef.current).text
+  }, [editorRef, open, revision])
+
+  const result = useMemo(
+    () => buildMatches(editorText, findText, matchCase),
+    [editorText, findText, matchCase]
+  )
+
+  const reviewItems = useMemo(
+    () => [...result.safe, ...result.risky],
+    [result.safe, result.risky]
+  )
+
   const selectedMatches = useMemo(
     () => reviewItems.filter((item) => selectedIds.includes(item.id)),
     [reviewItems, selectedIds]
@@ -112,105 +179,156 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
   }, [findText, matchCase, result.safe])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return undefined
+
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = previousOverflow
     }
   }, [open])
 
-  const activeMatch = reviewItems[activeIndex] || null
+  if (!open) return null
 
-  const focusMatch = (match) => {
-    if (!match || !textareaRef?.current) return
+  const currentIndex = reviewItems.length
+    ? Math.min(activeIndex, reviewItems.length - 1)
+    : 0
 
+  const activeMatch = reviewItems[currentIndex] || null
+  const compositionActive = isFindComposing || isReplaceComposing
+
+  const refresh = () => {
+    onChange?.(editorRef.current?.innerHTML || '')
+    window.getSelection()?.removeAllRanges()
+    setRevision((value) => value + 1)
+  }
+
+  const scrollToItem = (index) => {
     window.setTimeout(() => {
-      textareaRef.current.focus()
-      textareaRef.current.setSelectionRange(match.start, match.end)
-    }, 80)
+      itemRefs.current.get(index)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
+    }, 0)
   }
 
   const goToMatch = (direction) => {
-    if (!reviewItems.length) return
+    if (!reviewItems.length || compositionActive) return
 
-    const nextIndex = direction === 'next'
-      ? (activeIndex + 1) % reviewItems.length
-      : (activeIndex - 1 + reviewItems.length) % reviewItems.length
+    const nextIndex =
+      direction === 'next'
+        ? (currentIndex + 1) % reviewItems.length
+        : (currentIndex - 1 + reviewItems.length) % reviewItems.length
 
     setActiveIndex(nextIndex)
-    focusMatch(reviewItems[nextIndex])
+    scrollToItem(nextIndex)
   }
 
   const replaceCurrent = () => {
-    if (!activeMatch) return
+    if (!activeMatch || compositionActive || !editorRef?.current) return
 
-    setLastContent(content)
-    onReplace(applyReplace(content, [activeMatch], replaceText))
+    setLastHtml(editorRef.current.innerHTML)
+
+    if (!replaceMatch(editorRef.current, activeMatch, replaceText)) return
+
+    setActiveIndex(0)
+    refresh()
   }
 
   const replaceSelected = () => {
-    if (!selectedMatches.length) return
+    if (!selectedMatches.length || compositionActive || !editorRef?.current) return
 
-    setLastContent(content)
-    onReplace(applyReplace(content, selectedMatches, replaceText))
+    setLastHtml(editorRef.current.innerHTML)
+
+    const ordered = [...selectedMatches].sort(
+      (first, second) => second.start - first.start
+    )
+
+    ordered.forEach((match) => replaceMatch(editorRef.current, match, replaceText))
+
+    setActiveIndex(0)
+    refresh()
   }
 
   const undoReplace = () => {
-    if (!lastContent) return
+    if (!lastHtml || !editorRef?.current) return
 
-    onReplace(lastContent)
-    setLastContent('')
+    editorRef.current.innerHTML = lastHtml
+    onChange?.(lastHtml)
+    window.getSelection()?.removeAllRanges()
+    setLastHtml('')
+    setActiveIndex(0)
+    setRevision((value) => value + 1)
   }
 
   const toggleSelected = (id) => {
-    setSelectedIds((current) => (
+    setSelectedIds((current) =>
       current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id]
-    ))
+    )
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-[170] bg-black/35 sm:flex sm:items-center sm:justify-center sm:px-4">
+    <div className="fixed inset-0 z-[190] bg-white sm:flex sm:items-center sm:justify-center sm:bg-black/35 sm:px-4">
       <div className="flex h-full w-full flex-col bg-white shadow-2xl sm:h-[86vh] sm:max-w-[760px] sm:rounded-[28px]">
-       <div className="flex items-center gap-3 border-b border-[#eceaf2] bg-white px-4 py-3">
-  <button
-    type="button"
-    onClick={onClose}
-    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-    aria-label="Back to editor"
-  >
-    <i className="fa-solid fa-chevron-left text-[13px]" />
-  </button>
+        <div className="flex items-center gap-3 border-b border-[#eceaf2] bg-white px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
+            aria-label="Back to editor"
+          >
+            <i className="fa-solid fa-chevron-left text-[13px]" />
+          </button>
 
-  <div className="min-w-0 flex-1">
-    <h2 className="text-[17px] font-extrabold leading-5 text-[#111827]">Find & Replace</h2>
-    <p className="mt-1 line-clamp-1 text-[11px] font-bold text-[#8d94a1]">
-      Review safe and risky matches before replacing.
-    </p>
-  </div>
-</div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[17px] font-extrabold leading-5 text-[#111827]">
+              Find & Replace
+            </h2>
+            <p className="mt-1 line-clamp-1 text-[11px] font-bold text-[#8d94a1]">
+              Review matches before replacing.
+            </p>
+          </div>
+        </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-[12px] font-extrabold text-[#111827]">Find</label>
+              <label className="mb-1.5 block text-[12px] font-extrabold text-[#111827]">
+                Find
+              </label>
               <input
                 value={findText}
-                onChange={(event) => setFindText(event.target.value)}
+                onChange={(event) => {
+                  setFindText(event.target.value)
+                  setActiveIndex(0)
+                }}
+                onCompositionStart={() => setIsFindComposing(true)}
+                onCompositionEnd={(event) => {
+                  setIsFindComposing(false)
+                  setFindText(event.currentTarget.value)
+                  setActiveIndex(0)
+                }}
                 placeholder="Search word"
+                autoFocus
                 className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-bold text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-[12px] font-extrabold text-[#111827]">Replace with</label>
+              <label className="mb-1.5 block text-[12px] font-extrabold text-[#111827]">
+                Replace with
+              </label>
               <input
                 value={replaceText}
                 onChange={(event) => setReplaceText(event.target.value)}
+                onCompositionStart={() => setIsReplaceComposing(true)}
+                onCompositionEnd={(event) => {
+                  setIsReplaceComposing(false)
+                  setReplaceText(event.currentTarget.value)
+                }}
                 placeholder="New word"
                 className="h-12 w-full rounded-[16px] border border-[#e5e7eb] bg-[#fafafe] px-4 text-[14px] font-bold text-[#111827] outline-none focus:border-[#111827] focus:bg-white"
               />
@@ -220,9 +338,14 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setMatchCase((value) => !value)}
+              onClick={() => {
+                setMatchCase((value) => !value)
+                setActiveIndex(0)
+              }}
               className={`rounded-full px-3 py-2 text-[11px] font-extrabold active:scale-95 ${
-                matchCase ? 'bg-[#111827] text-white' : 'bg-[#f5f3fa] text-[#555b66]'
+                matchCase
+                  ? 'bg-[#111827] text-white'
+                  : 'bg-[#f5f3fa] text-[#555b66]'
               }`}
             >
               Match case
@@ -237,16 +360,23 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
             </div>
 
             <div className="rounded-full bg-[#f5f3fa] px-3 py-2 text-[11px] font-extrabold text-[#555b66]">
-              {reviewItems.length ? `${activeIndex + 1} / ${reviewItems.length}` : '0 found'}
+              {reviewItems.length
+                ? `${currentIndex + 1} / ${reviewItems.length}`
+                : '0 found'}
             </div>
           </div>
 
           {result.ignored.length ? (
             <div className="mt-3 rounded-[18px] bg-[#fff7df] px-4 py-3">
-              <div className="text-[12px] font-extrabold text-[#111827]">Ignored similar words</div>
+              <div className="text-[12px] font-extrabold text-[#111827]">
+                Similar text to review
+              </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {result.ignored.slice(0, 12).map((item) => (
-                  <span key={item.word} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#a56a00] ring-1 ring-[#ffe0a3]">
+                  <span
+                    key={item.word}
+                    className="max-w-full truncate rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#a56a00] ring-1 ring-[#ffe0a3]"
+                  >
                     {item.word} × {item.count}
                   </span>
                 ))}
@@ -257,8 +387,8 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               type="button"
-              onClick={() => goToMatch('prev')}
-              disabled={!reviewItems.length}
+              onClick={() => goToMatch('previous')}
+              disabled={!reviewItems.length || compositionActive}
               className="h-11 rounded-full border border-[#e4e7ec] bg-white text-[12px] font-extrabold text-[#111827] active:scale-95 disabled:opacity-50"
             >
               Previous
@@ -267,7 +397,7 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
             <button
               type="button"
               onClick={() => goToMatch('next')}
-              disabled={!reviewItems.length}
+              disabled={!reviewItems.length || compositionActive}
               className="h-11 rounded-full border border-[#e4e7ec] bg-white text-[12px] font-extrabold text-[#111827] active:scale-95 disabled:opacity-50"
             >
               Next
@@ -276,7 +406,7 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
             <button
               type="button"
               onClick={replaceCurrent}
-              disabled={!activeMatch || !findText.trim()}
+              disabled={!activeMatch || !findText || compositionActive}
               className="h-11 rounded-full bg-[#111827] text-[12px] font-extrabold text-white active:scale-95 disabled:bg-[#9ca3af]"
             >
               Replace current
@@ -285,7 +415,7 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
             <button
               type="button"
               onClick={undoReplace}
-              disabled={!lastContent}
+              disabled={!lastHtml}
               className="h-11 rounded-full bg-[#f5f3fa] text-[12px] font-extrabold text-[#111827] active:scale-95 disabled:opacity-50"
             >
               Undo
@@ -293,49 +423,75 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
           </div>
 
           <div className="mt-4 rounded-[20px] border border-[#eceaf2] bg-[#fafafe]">
-            <div className="flex items-center justify-between border-b border-[#eceaf2] px-4 py-3">
-              <div>
-                <div className="text-[13px] font-extrabold text-[#111827]">Review matches</div>
+            <div className="flex items-center justify-between gap-3 border-b border-[#eceaf2] px-4 py-3">
+              <div className="min-w-0">
+                <div className="text-[13px] font-extrabold text-[#111827]">
+                  Review matches
+                </div>
                 <div className="mt-0.5 text-[11px] font-bold text-[#8d94a1]">
-                  Safe matches are checked by default. Risky matches need manual check.
+                  Exact boundary matches are selected automatically.
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-1">
- <div className="flex flex-col items-end gap-1">
-  <div className="text-[11px] font-extrabold text-[#555b66]">
-    {selectedMatches.length} selected
-  </div>
-</div>
-  <div className="flex gap-1">
-    <button type="button" onClick={() => setSelectedIds(result.safe.map((item) => item.id))} className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-extrabold text-[#027a48]">Select safe</button>
-    <button type="button" onClick={() => setSelectedIds([])} className="rounded-full bg-white px-2 py-1 text-[10px] font-extrabold text-[#667085] ring-1 ring-[#e4e7ec]">Clear</button>
-  </div>
-</div>
+              <div className="shrink-0 text-right">
+                <div className="text-[11px] font-extrabold text-[#555b66]">
+                  {selectedMatches.length} selected
+                </div>
+                <div className="mt-1 flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedIds(result.safe.map((item) => item.id))
+                    }
+                    className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-extrabold text-[#027a48]"
+                  >
+                    Select safe
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="rounded-full bg-white px-2 py-1 text-[10px] font-extrabold text-[#667085] ring-1 ring-[#e4e7ec]"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="max-h-[300px] overflow-y-auto p-2">
-              {!findText.trim() ? (
-                <div className="px-3 py-8 text-center text-[12px] font-bold text-[#8d94a1]">Type a word to search.</div>
+            <div className="max-h-[320px] overflow-y-auto p-2">
+              {!findText ? (
+                <div className="px-3 py-8 text-center text-[12px] font-bold text-[#8d94a1]">
+                  Type a word to search.
+                </div>
               ) : null}
 
-              {findText.trim() && !reviewItems.length ? (
-                <div className="px-3 py-8 text-center text-[12px] font-bold text-[#8d94a1]">No matches found.</div>
+              {findText && !reviewItems.length ? (
+                <div className="px-3 py-8 text-center text-[12px] font-bold text-[#8d94a1]">
+                  No matches found.
+                </div>
               ) : null}
 
               {reviewItems.map((item, index) => {
-                const isSafe = result.safe.some((safeItem) => safeItem.id === item.id)
+                const isSafe = result.safe.some(
+                  (safeItem) => safeItem.id === item.id
+                )
                 const checked = selectedIds.includes(item.id)
+                const active = index === currentIndex
 
                 return (
                   <button
                     key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveIndex(index)
-                      focusMatch(item)
+                    ref={(node) => {
+                      if (node) itemRefs.current.set(index, node)
+                      else itemRefs.current.delete(index)
                     }}
-                    className="mb-2 w-full rounded-[16px] bg-white p-3 text-left ring-1 ring-[#eceaf2] active:scale-[0.99]"
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className={`mb-2 w-full rounded-[16px] bg-white p-3 text-left active:scale-[0.99] ${
+                      active
+                        ? 'ring-2 ring-[#111827]'
+                        : 'ring-1 ring-[#eceaf2]'
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <input
@@ -348,15 +504,25 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
 
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center gap-2">
-                          <span className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${isSafe ? 'bg-[#ecfdf3] text-[#027a48]' : 'bg-[#fff7df] text-[#a56a00]'}`}>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${
+                              isSafe
+                                ? 'bg-[#ecfdf3] text-[#027a48]'
+                                : 'bg-[#fff7df] text-[#a56a00]'
+                            }`}
+                          >
                             {isSafe ? 'Safe' : 'Risky'}
                           </span>
-                          <span className="text-[11px] font-extrabold text-[#8d94a1]">Line item {index + 1}</span>
+                          <span className="text-[11px] font-extrabold text-[#8d94a1]">
+                            Match {index + 1}
+                          </span>
                         </div>
 
-                        <div className="text-[12px] font-semibold leading-6 text-[#555b66]">
+                        <div className="break-words text-[12px] font-semibold leading-6 text-[#555b66]">
                           {item.context.before}
-                          <span className="rounded bg-[#fff2a8] px-1 font-extrabold text-[#111827]">{item.context.match}</span>
+                          <span className="rounded bg-[#fff2a8] px-1 font-extrabold text-[#111827]">
+                            {item.context.match}
+                          </span>
                           {item.context.after}
                         </div>
                       </div>
@@ -368,14 +534,20 @@ export default function SmartFindReplacePanel({ open, content, textareaRef, onCl
           </div>
         </div>
 
-        <div className="border-t border-[#eceaf2] bg-white px-4 py-3">
+        <div className="border-t border-[#eceaf2] bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={replaceSelected}
-            disabled={!selectedMatches.length || !findText.trim()}
+            disabled={
+              !selectedMatches.length ||
+              !findText ||
+              compositionActive
+            }
             className="h-12 w-full rounded-full bg-[#111827] text-[13px] font-extrabold text-white shadow-[0_14px_30px_rgba(17,24,39,0.22)] active:scale-[0.99] disabled:bg-[#9ca3af]"
           >
-            {selectedMatches.length ? `Replace ${selectedMatches.length} selected` : 'No match selected'}
+            {selectedMatches.length
+              ? `Replace ${selectedMatches.length} selected`
+              : 'No match selected'}
           </button>
         </div>
       </div>
