@@ -215,18 +215,25 @@ export default function TopAuthorsPage() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('ranking')
-  const [visibleCount, setVisibleCount] = useState(LOAD_STEP)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [followLoadingId, setFollowLoadingId] = useState('')
 
-  const loadAuthors = useCallback(async () => {
+  const loadAuthors = useCallback(
+  async (pageNumber = 1, append = false) => {
     const token = getReaderToken()
 
     try {
-      setLoading(true)
-      setLoadError(false)
+      if (append) {
+        setLoadingMore(true)
+      } else {
+        setLoading(true)
+        setLoadError(false)
+      }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/authors/top?limit=${MAX_VISIBLE}`,
+        `${API_BASE_URL}/api/authors/top?page=${pageNumber}&limit=${LOAD_STEP}`,
         {
           headers: token
             ? {
@@ -236,32 +243,74 @@ export default function TopAuthorsPage() {
         }
       )
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load authors')
+        throw new Error(
+          data.message ||
+            'Failed to load authors'
+        )
       }
 
-      setAuthors(
-        Array.isArray(data.author_pages)
-          ? data.author_pages
-          : []
+      const incoming = Array.isArray(
+        data.author_pages
+      )
+        ? data.author_pages
+        : []
+
+      setAuthors((current) => {
+        const source = append
+          ? [...current, ...incoming]
+          : incoming
+
+        const seen = new Set()
+
+        return source
+          .filter((author) => {
+            if (
+              !author?.id ||
+              seen.has(author.id)
+            ) {
+              return false
+            }
+
+            seen.add(author.id)
+            return true
+          })
+          .slice(0, MAX_VISIBLE)
+      })
+
+      const resolvedPage = Number(
+        data.page || pageNumber
+      )
+
+      setPage(resolvedPage)
+      setHasMore(
+        Boolean(data.has_more) &&
+          resolvedPage * LOAD_STEP <
+            MAX_VISIBLE
       )
     } catch {
-      setAuthors([])
-      setLoadError(true)
+      if (!append) {
+        setAuthors([])
+        setLoadError(true)
+      }
     } finally {
-      setLoading(false)
+      if (append) {
+        setLoadingMore(false)
+      } else {
+        setLoading(false)
+      }
     }
-  }, [])
+  },
+  []
+)
 
   useEffect(() => {
-    loadAuthors()
-  }, [loadAuthors])
-
-  useEffect(() => {
-    setVisibleCount(LOAD_STEP)
-  }, [keyword, filter])
+  loadAuthors(1, false)
+}, [loadAuthors])
 
   const filteredAuthors = useMemo(() => {
     const value = keyword.trim().toLowerCase()
@@ -278,14 +327,17 @@ export default function TopAuthorsPage() {
     return sortAuthors(searchedAuthors, filter)
   }, [authors, keyword, filter])
 
-  const visibleAuthors = filteredAuthors.slice(
-    0,
-    Math.min(visibleCount, MAX_VISIBLE)
-  )
+  const visibleAuthors =
+  filteredAuthors.slice(0, MAX_VISIBLE)
 
-  const canLoadMore =
-    visibleCount <
-    Math.min(filteredAuthors.length, MAX_VISIBLE)
+const canLoadMore =
+  hasMore && authors.length < MAX_VISIBLE
+
+  async function handleLoadMore() {
+  if (loadingMore || !canLoadMore) return
+
+  await loadAuthors(page + 1, true)
+}
 
   function handleOpenAuthor(author) {
     if (!author?.page_username) return
@@ -333,7 +385,21 @@ export default function TopAuthorsPage() {
         return
       }
 
-      await loadAuthors()
+      setAuthors((current) =>
+  current.map((item) =>
+    item.id === author.id
+      ? {
+          ...item,
+          is_following: true,
+          total_followers: Number(
+            data.total_followers ??
+              item.total_followers ??
+              0
+          ),
+        }
+      : item
+  )
+)
     } catch {
     } finally {
       setFollowLoadingId('')
@@ -477,17 +543,11 @@ export default function TopAuthorsPage() {
         {!loading && !loadError && canLoadMore ? (
           <button
             type="button"
-            onClick={() =>
-              setVisibleCount((count) =>
-                Math.min(
-                  count + LOAD_STEP,
-                  MAX_VISIBLE
-                )
-              )
-            }
+            onClick={handleLoadMore}
+disabled={loadingMore}
             className="mx-auto mt-7 flex h-10 min-w-[150px] items-center justify-center rounded-full bg-[#111827] px-6 text-[13px] font-black text-white active:scale-95"
           >
-            Load More
+            {loadingMore ? 'Loading...' : 'Load More'}
           </button>
         ) : null}
       </main>
