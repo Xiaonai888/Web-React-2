@@ -1706,7 +1706,38 @@ selectedPhotoUrl ? (
   </button>
 ) : null}
 
-          {photoDeleteConfirmOpen ? (
+          
+          <button
+            type="button"
+            onClick={saveSelectedPhoto}
+            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+              <i className="fa-solid fa-download text-[17px]" />
+            </span>
+
+            <span className="text-[14px] font-medium text-[#111827]">
+              Save photo
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={shareSelectedPhoto}
+            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
+              <i className="fa-solid fa-share-nodes text-[17px]" />
+            </span>
+
+            <span className="text-[14px] font-medium text-[#111827]">
+              Share photo
+            </span>
+          </button>
+        </div>
+      </div>
+    ) : null}
+{photoDeleteConfirmOpen ? (
   <div
     className="absolute inset-0 z-50 flex items-end bg-black/45"
     onClick={(event) => {
@@ -1759,37 +1790,7 @@ selectedPhotoUrl ? (
     </div>
   </div>
 ) : null}
-          
-          <button
-            type="button"
-            onClick={saveSelectedPhoto}
-            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-              <i className="fa-solid fa-download text-[17px]" />
-            </span>
-
-            <span className="text-[14px] font-medium text-[#111827]">
-              Save photo
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={shareSelectedPhoto}
-            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-              <i className="fa-solid fa-share-nodes text-[17px]" />
-            </span>
-
-            <span className="text-[14px] font-medium text-[#111827]">
-              Share photo
-            </span>
-          </button>
-        </div>
-      </div>
-    ) : null}
+    
   </div>
 ) : null}
 
