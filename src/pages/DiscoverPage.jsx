@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
@@ -503,7 +506,7 @@ function RealFollowedPostCard({
   onComment,
   onMore,
 }) {
-
+  const navigate = useNavigate()
   const author = post.author_page || {}
   const authorName = author.page_name || 'Author'
   const pageUsername = author.page_username || ''
@@ -512,6 +515,16 @@ function RealFollowedPostCard({
     : '#'
   const firstLetter =
     authorName.trim().slice(0, 1).toUpperCase() || 'A'
+
+  function openFullPost() {
+  if (!post?.id) return
+
+  navigate(
+    `/author/post/${encodeURIComponent(
+      post.id
+    )}`
+  )
+}
 
   const [reactionPickerOpen, setReactionPickerOpen] =
   useState(false)
@@ -652,10 +665,16 @@ const isOwner = Boolean(
 
   return (
     <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-      <div className="flex items-start gap-2 px-4 pb-3 pt-4">
+      <div
+  onClick={openFullPost}
+  className="flex cursor-pointer items-start gap-2 px-4 pb-3 pt-4"
+>
         <Link
-          to={pageUrl}
-          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
+  to={pageUrl}
+  onClick={(event) =>
+    event.stopPropagation()
+  }
+  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
           aria-label={`Open ${authorName}`}
         >
           {author.avatar_url ? (
@@ -676,9 +695,12 @@ const isOwner = Boolean(
             <div className="min-w-0">
   <div className="min-w-0 text-[14px] leading-5">
     <Link
-      to={pageUrl}
-      className="break-words font-semibold text-[#111827]"
-    >
+  to={pageUrl}
+  onClick={(event) =>
+    event.stopPropagation()
+  }
+  className="break-words font-semibold text-[#111827]"
+>
       {authorName}
     </Link>
 
@@ -710,8 +732,11 @@ const isOwner = Boolean(
 </div>
 
             <button
-              type="button"
-              onClick={() => onMore?.(post)}
+  type="button"
+  onClick={(event) => {
+    event.stopPropagation()
+    onMore?.(post)
+  }}
               className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 active:bg-gray-100"
               aria-label="More"
             >
