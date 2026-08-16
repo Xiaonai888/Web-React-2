@@ -466,6 +466,11 @@ const selectedPhotoIndex = Math.max(
   setFullscreenPhotoOpen,
 ] = useState(false)
 
+  const [
+  fullscreenControlsVisible,
+  setFullscreenControlsVisible,
+] = useState(true)
+
   const pressTimerRef =
     useRef(null)
   const commentCountBaseRef =
@@ -567,8 +572,9 @@ const selectedPhotoIndex = Math.max(
 
   function handleKeyDown(event) {
     if (event.key === 'Escape') {
-      setFullscreenPhotoOpen(false)
-    }
+  setFullscreenPhotoOpen(false)
+  setFullscreenControlsVisible(true)
+}
   }
 
   window.addEventListener(
@@ -612,12 +618,15 @@ const selectedPhotoIndex = Math.max(
 
 function handlePostImageClick(index) {
   if (photoPostView) {
+    setFullscreenControlsVisible(true)
     setFullscreenPhotoOpen(true)
     return
   }
 
   openPhotoPost(index)
 }
+
+  
 
   async function followAuthor() {
     const token = getAuthToken()
@@ -1249,17 +1258,28 @@ const selectedPhotoUrl =
 
       {fullscreenPhotoOpen &&
 selectedPhotoUrl ? (
-  <div className="fixed inset-0 z-[1000000] bg-black">
-    <button
-      type="button"
-      onClick={() =>
-        setFullscreenPhotoOpen(false)
-      }
-      className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:opacity-70"
-      aria-label="Close fullscreen photo"
-    >
-      <i className="fa-solid fa-xmark text-[20px]" />
-    </button>
+  <div
+    className="fixed inset-0 z-[1000000] bg-black"
+    onClick={() =>
+      setFullscreenControlsVisible(
+        (current) => !current
+      )
+    }
+  >
+    {fullscreenControlsVisible ? (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          setFullscreenPhotoOpen(false)
+          setFullscreenControlsVisible(true)
+        }}
+        className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:opacity-70"
+        aria-label="Close fullscreen photo"
+      >
+        <i className="fa-solid fa-xmark text-[20px]" />
+      </button>
+    ) : null}
 
     <div className="flex h-full w-full items-center justify-center">
       <img
