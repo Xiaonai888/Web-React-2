@@ -11,6 +11,7 @@ import ReaderPostOptionsSheet, {
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
+import ReactionAction from '../social/reactions/ReactionAction'
 import {
   CollapsiblePostText,
   ProfessionalSinglePostImage,
@@ -38,51 +39,6 @@ const HARD_MAX_IMAGE_BYTES = 220 * 1024
 const MAX_IMAGE_WIDTH = 1080
 const MAX_IMAGE_HEIGHT = 1350
 const TARGET_IMAGE_BYTES = 150 * 1024
-
-const READER_POST_REACTIONS = [
-  {
-    type: 'love',
-    label: 'Love',
-    src: '/assets/React/Love.svg',
-    text: '#ff2f5f',
-  },
-  {
-    type: 'haha',
-    label: 'Haha',
-    src: '/assets/React/Haha.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'wow',
-    label: 'Wow',
-    src: '/assets/React/Wow.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'sad',
-    label: 'Sad',
-    src: '/assets/React/Sad.svg',
-    text: '#3b82f6',
-  },
-  {
-    type: 'angry',
-    label: 'Angry',
-    src: '/assets/React/Angry.svg',
-    text: '#ef4444',
-  },
-  {
-    type: 'support',
-    label: 'Support',
-    src: '/assets/React/Support.svg',
-    text: '#16a34a',
-  },
-  {
-    type: 'touched',
-    label: 'Touched',
-    src: '/assets/React/Touched.svg',
-    text: '#8b5cf6',
-  },
-]
 
 function getAuthToken() {
   return (
@@ -1354,13 +1310,7 @@ function StandardReaderPostCard({
   selectedPhotoIndex = 0,
 }) {
   const navigate = useNavigate()
-  const reactionPressTimerRef =
-    useRef(null)
   const reactionMessageTimerRef =
-    useRef(null)
-  const longPressOpenedRef =
-    useRef(false)
-  const reactionPickerRef =
     useRef(null)
   const editFileInputRef =
     useRef(null)
@@ -1397,10 +1347,6 @@ function StandardReaderPostCard({
   const [message, setMessage] =
     useState('')
   
-  const [
-    reactionPickerOpen,
-    setReactionPickerOpen,
-  ] = useState(false)
   const [
     reactionBusy,
     setReactionBusy,
@@ -1580,12 +1526,6 @@ function StandardReaderPostCard({
       content.trim() ||
       editImageUrls.length
   )
-
-  const activeReaction =
-    READER_POST_REACTIONS.find(
-      (reaction) =>
-        reaction.type === reactionType
-    ) || null
 
   useEffect(() => {
     setReactionCount(
@@ -1772,35 +1712,6 @@ function StandardReaderPostCard({
   }, [post?.id])
 
   useEffect(() => {
-    if (!reactionPickerOpen) {
-      return undefined
-    }
-
-    function closeReactionPicker(event) {
-      if (
-        reactionPickerRef.current &&
-        !reactionPickerRef.current.contains(
-          event.target
-        )
-      ) {
-        setReactionPickerOpen(false)
-      }
-    }
-
-    document.addEventListener(
-      'pointerdown',
-      closeReactionPicker
-    )
-
-    return () => {
-      document.removeEventListener(
-        'pointerdown',
-        closeReactionPicker
-      )
-    }
-  }, [reactionPickerOpen])
-
-  useEffect(() => {
     let ignore = false
     const token = getAuthToken()
 
@@ -1853,14 +1764,6 @@ function StandardReaderPostCard({
 
   useEffect(() => {
     return () => {
-      if (
-        reactionPressTimerRef.current
-      ) {
-        window.clearTimeout(
-          reactionPressTimerRef.current
-        )
-      }
-
       if (
         reactionMessageTimerRef.current
       ) {
@@ -2035,7 +1938,6 @@ function StandardReaderPostCard({
 
       setReactionType(nextType)
       setReactionCount(nextCount)
-      setReactionPickerOpen(false)
 
       onUpdated?.({
         ...post,
@@ -2056,54 +1958,6 @@ function StandardReaderPostCard({
     } finally {
       setReactionBusy(false)
     }
-  }
-
-  function startReactionPress() {
-    if (reactionBusy) return
-
-    longPressOpenedRef.current = false
-
-    reactionPressTimerRef.current =
-      window.setTimeout(() => {
-        longPressOpenedRef.current =
-          true
-        reactionPressTimerRef.current =
-          null
-        setReactionPickerOpen(true)
-      }, 420)
-  }
-
-  function endReactionPress() {
-    if (
-      reactionPressTimerRef.current
-    ) {
-      window.clearTimeout(
-        reactionPressTimerRef.current
-      )
-      reactionPressTimerRef.current =
-        null
-    }
-
-    if (longPressOpenedRef.current) {
-      longPressOpenedRef.current = false
-      return
-    }
-
-    updateReaction('love')
-  }
-
-  function cancelReactionPress() {
-    if (
-      reactionPressTimerRef.current
-    ) {
-      window.clearTimeout(
-        reactionPressTimerRef.current
-      )
-      reactionPressTimerRef.current =
-        null
-    }
-
-    longPressOpenedRef.current = false
   }
 
   async function handlePickEditImages(
@@ -3251,118 +3105,26 @@ function StandardReaderPostCard({
         ) : null}
 
         <div className="flex items-center gap-5 border-t border-gray-100 px-4 py-3 text-[11px] font-normal text-gray-500">
-          <div
-            ref={reactionPickerRef}
-            className="relative"
-          >
-            {reactionPickerOpen ? (
-              <div className="absolute bottom-8 left-0 z-40 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
-                {READER_POST_REACTIONS.map(
-                  (reaction) => (
-                    <button
-                      key={
-                        reaction.type
-                      }
-                      type="button"
-                      disabled={
-                        reactionBusy
-                      }
-                      onClick={() =>
-                        updateReaction(
-                          reaction.type
-                        )
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
-                      aria-label={
-                        reaction.label
-                      }
-                    >
-                      <img
-                        src={
-                          reaction.src
-                        }
-                        alt={
-                          reaction.label
-                        }
-                        className="h-8 w-8 object-contain"
-                      />
-                    </button>
-                  )
-                )}
-              </div>
-            ) : null}
-
-            <div
-              className="inline-flex items-center gap-1.5"
-              style={{
-                color:
-                  activeReaction?.text ||
-                  undefined,
-              }}
-            >
-              <button
-                type="button"
-                disabled={reactionBusy}
-                onPointerDown={
-                  startReactionPress
+          <ReactionAction
+            reactionType={reactionType}
+            count={reactionCount}
+            busy={reactionBusy}
+            onReact={updateReaction}
+            onCountClick={() =>
+              navigate(
+                `/interactions/reader_post/${post.id}/likes`,
+                {
+                  state: {
+                    sourceName:
+                      user?.name ||
+                      'Reader Post',
+                  },
                 }
-                onPointerUp={
-                  endReactionPress
-                }
-                onPointerLeave={
-                  cancelReactionPress
-                }
-                onPointerCancel={() => {
-                  cancelReactionPress()
-                  setReactionPickerOpen(false)
-                }}
-                onContextMenu={(event) =>
-                  event.preventDefault()
-                }
-                className="active:scale-95 disabled:opacity-60"
-                aria-label={
-                  activeReaction
-                    ? activeReaction.label
-                    : 'React'
-                }
-              >
-                {activeReaction ? (
-                  <img
-                    src={
-                      activeReaction.src
-                    }
-                    alt=""
-                    aria-hidden="true"
-                    className="h-[17px] w-[17px] object-contain"
-                  />
-                ) : (
-                  <i className="fa-regular fa-heart text-[15px]" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/interactions/reader_post/${post.id}/likes`,
-                    {
-                      state: {
-                        sourceName:
-                          user?.name ||
-                          'Reader Post',
-                      },
-                    }
-                  )
-                }
-                className="active:scale-95"
-                aria-label="View people who reacted"
-              >
-                {formatCompactNumber(
-                  reactionCount
-                )}
-              </button>
-            </div>
-          </div>
+              )
+            }
+            formatCount={formatCompactNumber}
+            idleLabel="React"
+          />
 
           <button
             type="button"
