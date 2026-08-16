@@ -121,6 +121,9 @@ export default function ReactionAction({
         activeType={
           activeReaction?.type || ''
         }
+        previewType={
+          interaction.previewReactionType
+        }
         busy={busy}
         disabled={disabled}
         align={pickerAlign}
@@ -153,7 +156,7 @@ export default function ReactionAction({
           event.stopPropagation()
         }}
         onKeyDown={handleKeyDown}
-        className={`inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${buttonClassName}`}
+        className={`touch-none inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60 ${buttonClassName}`}
         aria-label={
           activeReaction
             ? `${activeReaction.label} reaction`
