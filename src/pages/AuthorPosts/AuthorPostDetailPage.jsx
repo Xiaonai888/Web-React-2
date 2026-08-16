@@ -1,0 +1,1090 @@
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from 'react-router-dom'
+import CommentsModal from '../../components/story-detail/CommentsModal'
+import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
+import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const AUTHOR_POST_REACTIONS = [
+  {
+    type: 'love',
+    label: 'Love',
+    src: '/assets/React/Love.svg',
+    text: '#ff2f5f',
+  },
+  {
+    type: 'haha',
+    label: 'Haha',
+    src: '/assets/React/Haha.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'wow',
+    label: 'Wow',
+    src: '/assets/React/Wow.svg',
+    text: '#f59e0b',
+  },
+  {
+    type: 'sad',
+    label: 'Sad',
+    src: '/assets/React/Sad.svg',
+    text: '#3b82f6',
+  },
+  {
+    type: 'angry',
+    label: 'Angry',
+    src: '/assets/React/Angry.svg',
+    text: '#ef4444',
+  },
+  {
+    type: 'support',
+    label: 'Support',
+    src: '/assets/React/Support.svg',
+    text: '#16a34a',
+  },
+  {
+    type: 'touched',
+    label: 'Touched',
+    src: '/assets/React/Touched.svg',
+    text: '#8b5cf6',
+  },
+]
+
+const POST_TOKEN_PATTERN =
+  /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
+const POST_URL_ONLY_PATTERN =
+  /^https?:\/\/[^\s]+$/i
+const POST_HASHTAG_ONLY_PATTERN =
+  /^#[\p{L}\p{N}\p{M}_]+$/u
+
+function getAuthToken() {
+  return (
+    localStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    sessionStorage.getItem(
+      'shadow_reader_token'
+    ) ||
+    ''
+  )
+}
+
+function formatPostTime(value) {
+  const timestamp = new Date(
+    value || 0
+  ).getTime()
+
+  if (!timestamp) return 'Just now'
+
+  const difference = Math.max(
+    0,
+    Date.now() - timestamp
+  )
+  const minutes = Math.floor(
+    difference / 60000
+  )
+  const hours = Math.floor(
+    minutes / 60
+  )
+  const days = Math.floor(
+    hours / 24
+  )
+
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m`
+  if (hours < 24) return `${hours}h`
+  if (days < 7) return `${days}d`
+
+  return new Intl.DateTimeFormat(
+    undefined,
+    {
+      month: 'short',
+      day: 'numeric',
+    }
+  ).format(new Date(timestamp))
+}
+
+function renderPostTextWithLinks(text) {
+  return String(text || '')
+    .split(POST_TOKEN_PATTERN)
+    .map((part, index) => {
+      if (
+        POST_URL_ONLY_PATTERN.test(part)
+      ) {
+        return (
+          <a
+            key={`${part}-${index}`}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="break-all text-[#1877f2]"
+          >
+            {part}
+          </a>
+        )
+      }
+
+      if (
+        POST_HASHTAG_ONLY_PATTERN.test(
+          part
+        )
+      ) {
+        return (
+          <Link
+            key={`${part}-${index}`}
+            to={`/discover/search?q=${encodeURIComponent(
+              part
+            )}&type=posts`}
+            className="text-[#1877f2]"
+          >
+            {part}
+          </Link>
+        )
+      }
+
+      return part
+    })
+}
+
+function countAuthorPostComments(
+  comments = []
+) {
+  return comments.reduce(
+    (total, comment) =>
+      total +
+      1 +
+      countAuthorPostComments(
+        Array.isArray(comment?.replies)
+          ? comment.replies
+          : []
+      ),
+    0
+  )
+}
+
+function AuthorPostImages({
+  images,
+  authorName,
+}) {
+  const urls = Array.isArray(images)
+    ? images
+        .filter(Boolean)
+        .slice(0, 5)
+    : []
+
+  if (!urls.length) return null
+
+  const alt =
+    `${authorName || 'Author'} post`
+
+  if (urls.length === 1) {
+    return (
+      <ProfessionalSinglePostImage
+        src={urls[0]}
+        alt={alt}
+      />
+    )
+  }
+
+  if (urls.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+        {urls.map((url) => (
+          <img
+            key={url}
+            src={url}
+            alt={alt}
+            loading="eager"
+            decoding="async"
+            className="h-[280px] w-full object-cover sm:h-[330px]"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (urls.length === 3) {
+    return (
+      <div className="grid h-[360px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[420px]">
+        <img
+          src={urls[0]}
+          alt={alt}
+          loading="eager"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+
+        <div className="grid min-h-0 grid-rows-2 gap-[2px]">
+          {urls
+            .slice(1)
+            .map((url) => (
+              <img
+                key={url}
+                src={url}
+                alt={alt}
+                loading="eager"
+                decoding="async"
+                className="h-full min-h-0 w-full object-cover"
+              />
+            ))}
+        </div>
+      </div>
+    )
+  }
+
+  const visibleUrls =
+    urls.slice(0, 4)
+  const hiddenCount = Math.max(
+    0,
+    urls.length - 4
+  )
+
+  return (
+    <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
+      {visibleUrls.map(
+        (url, index) => (
+          <div
+            key={url}
+            className="relative"
+          >
+            <img
+              src={url}
+              alt={alt}
+              loading="eager"
+              decoding="async"
+              className="h-[220px] w-full object-cover sm:h-[270px]"
+            />
+
+            {index === 3 &&
+            hiddenCount > 0 ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-[28px] font-black text-white">
+                +{hiddenCount}
+              </div>
+            ) : null}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+async function setAuthorPostReaction(
+  token,
+  postId,
+  reactionType
+) {
+  if (!token) {
+    throw new Error(
+      'Please login first'
+    )
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(
+      postId
+    )}/react`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json',
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        reaction_type:
+          reactionType,
+      }),
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (
+    !response.ok ||
+    data.ok === false
+  ) {
+    throw new Error(
+      data.message ||
+        'Failed to update reaction'
+    )
+  }
+
+  return data
+}
+
+export default function AuthorPostDetailPage() {
+  const navigate = useNavigate()
+  const { postId } = useParams()
+  const [post, setPost] =
+    useState(null)
+  const [loading, setLoading] =
+    useState(true)
+  const [error, setError] =
+    useState('')
+  const [
+    reactionPickerOpen,
+    setReactionPickerOpen,
+  ] = useState(false)
+  const [
+    reactionBusy,
+    setReactionBusy,
+  ] = useState(false)
+  const [
+    actionError,
+    setActionError,
+  ] = useState('')
+  const [
+    followBusy,
+    setFollowBusy,
+  ] = useState(false)
+  const [
+    commentsOpen,
+    setCommentsOpen,
+  ] = useState(false)
+
+  const pressTimerRef =
+    useRef(null)
+  const commentCountBaseRef =
+    useRef({
+      loadedCount: null,
+      serverCount: 0,
+    })
+
+  useEffect(() => {
+    const controller =
+      new AbortController()
+    let ignore = false
+
+    async function loadPost() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const token =
+          getAuthToken()
+        const response = await fetch(
+          `${API_BASE_URL}/api/authors/page/posts/${encodeURIComponent(
+            postId || ''
+          )}`,
+          {
+            headers: token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : {},
+            cache: 'no-store',
+            signal:
+              controller.signal,
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false ||
+          !data.post
+        ) {
+          throw new Error(
+            data.message ||
+              'Post not found'
+          )
+        }
+
+        if (!ignore) {
+          setPost(data.post)
+        }
+      } catch (loadError) {
+        if (
+          !ignore &&
+          loadError?.name !==
+            'AbortError'
+        ) {
+          setError(
+            loadError.message ||
+              'Failed to load post'
+          )
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadPost()
+
+    return () => {
+      ignore = true
+      controller.abort()
+
+      if (
+        pressTimerRef.current
+      ) {
+        window.clearTimeout(
+          pressTimerRef.current
+        )
+      }
+    }
+  }, [postId])
+
+  function goBack() {
+    if (
+      window.history.length > 1
+    ) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/discover', {
+      replace: true,
+    })
+  }
+
+  async function followAuthor() {
+    const token = getAuthToken()
+    const author =
+      post?.author_page || {}
+    const pageUsername =
+      author.page_username || ''
+    const isFollowing = Boolean(
+      post?.is_following ??
+        author.is_following
+    )
+    const isOwner = Boolean(
+      post?.is_owner ??
+        author.is_owner
+    )
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    if (
+      followBusy ||
+      isFollowing ||
+      isOwner ||
+      !pageUsername
+    ) {
+      return
+    }
+
+    try {
+      setFollowBusy(true)
+      setActionError('')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
+          pageUsername
+        )}/follow`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response
+        .json()
+        .catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to follow author'
+        )
+      }
+
+      setPost((current) => {
+        if (!current) return current
+
+        const currentAuthor =
+          current.author_page || {}
+
+        return {
+          ...current,
+          is_following: true,
+          author_page: {
+            ...currentAuthor,
+            is_following: true,
+            total_followers:
+              Number(
+                currentAuthor
+                  .total_followers ||
+                  0
+              ) + 1,
+          },
+        }
+      })
+    } catch (followError) {
+      setActionError(
+        followError.message ||
+          'Failed to follow author'
+      )
+    } finally {
+      setFollowBusy(false)
+    }
+  }
+
+  async function chooseReaction(
+    reactionType
+  ) {
+    if (
+      reactionBusy ||
+      !post?.id
+    ) {
+      return
+    }
+
+    const token = getAuthToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setReactionBusy(true)
+      setActionError('')
+
+      const data =
+        await setAuthorPostReaction(
+          token,
+          post.id,
+          reactionType
+        )
+
+      setPost((current) => {
+        if (!current) {
+          return current
+        }
+
+        return {
+          ...current,
+          ...(data.post || {}),
+          author_page:
+            current.author_page,
+          is_following:
+            current.is_following,
+          is_owner:
+            current.is_owner,
+          my_reaction:
+            data.reaction_type ||
+            null,
+          like_count: Number(
+            data.like_count ??
+              data.post?.like_count ??
+              current.like_count ??
+              0
+          ),
+          reaction_summary:
+            Array.isArray(
+              data.reaction_summary
+            )
+              ? data.reaction_summary
+              : current.reaction_summary,
+        }
+      })
+    } catch (reactionError) {
+      setActionError(
+        reactionError.message ||
+          'Failed to update reaction'
+      )
+    } finally {
+      setReactionBusy(false)
+    }
+  }
+
+  function startReactionPress() {
+    if (reactionBusy) return
+
+    if (
+      pressTimerRef.current
+    ) {
+      window.clearTimeout(
+        pressTimerRef.current
+      )
+    }
+
+    pressTimerRef.current =
+      window.setTimeout(() => {
+        setReactionPickerOpen(true)
+        pressTimerRef.current =
+          null
+      }, 420)
+  }
+
+  function endReactionPress() {
+    if (
+      !pressTimerRef.current
+    ) {
+      return
+    }
+
+    window.clearTimeout(
+      pressTimerRef.current
+    )
+    pressTimerRef.current = null
+    chooseReaction('love')
+  }
+
+  function cancelReactionPress() {
+    if (
+      !pressTimerRef.current
+    ) {
+      return
+    }
+
+    window.clearTimeout(
+      pressTimerRef.current
+    )
+    pressTimerRef.current = null
+  }
+
+  function openComments() {
+    if (!post?.id) return
+
+    commentCountBaseRef.current = {
+      loadedCount: null,
+      serverCount: Number(
+        post.comment_count || 0
+      ),
+    }
+    setCommentsOpen(true)
+  }
+
+  function handleCommentsChanged(
+    nextComments = []
+  ) {
+    const loadedCount =
+      countAuthorPostComments(
+        nextComments
+      )
+    const base =
+      commentCountBaseRef.current
+
+    if (
+      base.loadedCount === null
+    ) {
+      commentCountBaseRef.current = {
+        ...base,
+        loadedCount,
+      }
+      return
+    }
+
+    const nextCount = Math.max(
+      0,
+      base.serverCount +
+        loadedCount -
+        base.loadedCount
+    )
+
+    commentCountBaseRef.current = {
+      loadedCount,
+      serverCount: nextCount,
+    }
+
+    setPost((current) =>
+      current
+        ? {
+            ...current,
+            comment_count:
+              nextCount,
+          }
+        : current
+    )
+  }
+
+  const author =
+    post?.author_page || {}
+  const authorName =
+    author.page_name || 'Author'
+  const pageUsername =
+    author.page_username || ''
+  const pageUrl = pageUsername
+    ? `/author/page/${encodeURIComponent(
+        pageUsername
+      )}`
+    : '#'
+  const firstLetter =
+    authorName
+      .trim()
+      .slice(0, 1)
+      .toUpperCase() || 'A'
+  const isFollowing = Boolean(
+    post?.is_following ??
+      author.is_following
+  )
+  const isOwner = Boolean(
+    post?.is_owner ??
+      author.is_owner
+  )
+  const activeReaction =
+    AUTHOR_POST_REACTIONS.find(
+      (item) =>
+        item.type ===
+        post?.my_reaction
+    ) || null
+
+  return (
+    <div className="min-h-screen bg-[#f5f3fa]">
+      <header className="sticky top-0 z-50 border-b border-[#eef0f4] bg-white">
+        <div className="mx-auto flex h-14 w-full max-w-[620px] items-center px-2">
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
+            aria-label="Back"
+          >
+            <i className="fa-solid fa-arrow-left text-[18px]" />
+          </button>
+
+          <div className="ml-1 text-[17px] font-semibold text-[#111827]">
+            Post
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-[620px] py-1 sm:px-3 sm:py-3">
+        {loading ? (
+          <div className="bg-white px-4 py-8 text-center text-[13px] text-[#8b93a1] sm:rounded-[12px]">
+            Loading...
+          </div>
+        ) : null}
+
+        {!loading && error ? (
+          <div className="bg-white px-4 py-8 text-center sm:rounded-[12px]">
+            <div className="text-[14px] font-semibold text-[#111827]">
+              {error}
+            </div>
+
+            <button
+              type="button"
+              onClick={goBack}
+              className="mt-4 text-[13px] font-semibold text-[#0866ff]"
+            >
+              Go back
+            </button>
+          </div>
+        ) : null}
+
+        {!loading &&
+        !error &&
+        post ? (
+          <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
+            <div className="flex items-start gap-2 px-4 pb-3 pt-4">
+              <Link
+                to={pageUrl}
+                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
+                aria-label={`Open ${authorName}`}
+              >
+                {author.avatar_url ? (
+                  <img
+                    src={
+                      author.avatar_url
+                    }
+                    alt={authorName}
+                    loading="eager"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  firstLetter
+                )}
+              </Link>
+
+              <div className="-ml-1 min-w-0 flex-1">
+                <div className="min-w-0 text-[14px] leading-5">
+                  <Link
+                    to={pageUrl}
+                    className="break-words font-semibold text-[#111827]"
+                  >
+                    {authorName}
+                  </Link>
+
+                  {!isFollowing &&
+                  !isOwner ? (
+                    <>
+                      <span className="px-1 text-[#65676b]">
+                        ·
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={
+                          followBusy
+                        }
+                        onClick={
+                          followAuthor
+                        }
+                        className="font-semibold text-[#1877f2] active:opacity-60 disabled:opacity-60"
+                      >
+                        {followBusy
+                          ? 'Following...'
+                          : 'Follow'}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
+                  <span>
+                    {formatPostTime(
+                      post.created_at
+                    )}
+                  </span>
+                  <span>·</span>
+                  <i className="fa-solid fa-earth-americas text-[10px]" />
+                </div>
+              </div>
+            </div>
+
+            {post.content ? (
+              <div className="px-4 pb-3">
+                <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
+                  {renderPostTextWithLinks(
+                    post.content
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            <AuthorPostImages
+              images={
+                post.image_urls
+              }
+              authorName={
+                authorName
+              }
+            />
+
+            <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
+              <div className="relative">
+                {reactionPickerOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close reactions"
+                      onClick={() =>
+                        setReactionPickerOpen(
+                          false
+                        )
+                      }
+                      className="fixed inset-0 z-20 cursor-default"
+                    />
+
+                    <div className="absolute bottom-8 left-0 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
+                      {AUTHOR_POST_REACTIONS.map(
+                        (
+                          reaction
+                        ) => (
+                          <button
+                            key={
+                              reaction.type
+                            }
+                            type="button"
+                            disabled={
+                              reactionBusy
+                            }
+                            onClick={() => {
+                              setReactionPickerOpen(
+                                false
+                              )
+                              chooseReaction(
+                                reaction.type
+                              )
+                            }}
+                            className="flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:-translate-y-1 hover:scale-110 active:scale-90 disabled:opacity-60"
+                            aria-label={
+                              reaction.label
+                            }
+                            title={
+                              reaction.label
+                            }
+                          >
+                            <img
+                              src={
+                                reaction.src
+                              }
+                              alt={
+                                reaction.label
+                              }
+                              className="h-8 w-8 object-contain"
+                            />
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </>
+                ) : null}
+
+                <div
+                  className="inline-flex items-center gap-1.5"
+                  style={{
+                    color:
+                      activeReaction
+                        ?.text ||
+                      undefined,
+                  }}
+                >
+                  <button
+                    type="button"
+                    disabled={
+                      reactionBusy
+                    }
+                    onPointerDown={
+                      startReactionPress
+                    }
+                    onPointerUp={
+                      endReactionPress
+                    }
+                    onPointerLeave={
+                      cancelReactionPress
+                    }
+                    onPointerCancel={
+                      cancelReactionPress
+                    }
+                    onContextMenu={(
+                      event
+                    ) =>
+                      event.preventDefault()
+                    }
+                    className="active:scale-95 disabled:opacity-60"
+                    aria-label={
+                      activeReaction
+                        ? `${activeReaction.label} reaction`
+                        : 'Like'
+                    }
+                  >
+                    {reactionBusy ? (
+                      <i className="fa-solid fa-circle-notch animate-spin" />
+                    ) : activeReaction ? (
+                      <img
+                        src={
+                          activeReaction.src
+                        }
+                        alt={
+                          activeReaction.label
+                        }
+                        className="h-[17px] w-[17px] object-contain"
+                      />
+                    ) : (
+                      <i className="fa-regular fa-heart text-[15px]" />
+                    )}
+                  </button>
+
+                  <Link
+                    to={`/interactions/author_post/${post.id}/likes`}
+                    state={{
+                      sourceName:
+                        authorName,
+                    }}
+                    onClick={() =>
+                      setReactionPickerOpen(
+                        false
+                      )
+                    }
+                    className="active:scale-95"
+                    aria-label="View people who reacted"
+                  >
+                    {Number(
+                      post.like_count ||
+                        0
+                    )}
+                  </Link>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  openComments
+                }
+                className="inline-flex items-center gap-1.5 active:scale-95"
+                aria-label="Comments"
+              >
+                <i className="fa-regular fa-comment text-[15px]" />
+                <span>
+                  {Number(
+                    post.comment_count ||
+                      0
+                  )}
+                </span>
+              </button>
+
+              <AuthorPostEchoAction
+                post={post}
+                author={author}
+              />
+            </div>
+
+            {actionError ? (
+              <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
+                {actionError}
+              </div>
+            ) : null}
+          </article>
+        ) : null}
+      </main>
+
+      <CommentsModal
+        open={
+          commentsOpen &&
+          Boolean(post?.id)
+        }
+        targetType="author_post"
+        targetId={post?.id}
+        title="Author post comments"
+        story={
+          post
+            ? {
+                ...post,
+                author_page: {
+                  ...(post.author_page ||
+                    {}),
+                  user_id:
+                    post.author_page
+                      ?.user_id ||
+                    post.user_id ||
+                    null,
+                },
+              }
+            : null
+        }
+        onClose={() =>
+          setCommentsOpen(false)
+        }
+        onCommentChanged={
+          handleCommentsChanged
+        }
+      />
+    </div>
+  )
+}
