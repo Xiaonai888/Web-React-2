@@ -23,6 +23,7 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderPostCard from '../components/reader-posts/ReaderPostCard'
 import ShadowMallPromotionSocial from '../components/discover/ShadowMallPromotionSocial'
 import AuthorPostEchoAction from '../components/author-posts/AuthorPostEchoAction'
+import ReactionAction from '../components/social/reactions/ReactionAction'
 import AuthorDiscoverPostText from '../components/author-posts/AuthorDiscoverPostText'
 import {
   CollapsiblePostText,
@@ -33,50 +34,7 @@ const API_BASE_URL =
   'https://shadow-backend-kucw.onrender.com'
 
 
-const AUTHOR_POST_REACTIONS = [
-  {
-    type: 'love',
-    label: 'Love',
-    src: '/assets/React/Love.svg',
-    text: '#ff2f5f',
-  },
-  {
-    type: 'haha',
-    label: 'Haha',
-    src: '/assets/React/Haha.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'wow',
-    label: 'Wow',
-    src: '/assets/React/Wow.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'sad',
-    label: 'Sad',
-    src: '/assets/React/Sad.svg',
-    text: '#3b82f6',
-  },
-  {
-    type: 'angry',
-    label: 'Angry',
-    src: '/assets/React/Angry.svg',
-    text: '#ef4444',
-  },
-  {
-    type: 'support',
-    label: 'Support',
-    src: '/assets/React/Support.svg',
-    text: '#16a34a',
-  },
-  {
-    type: 'touched',
-    label: 'Touched',
-    src: '/assets/React/Touched.svg',
-    text: '#8b5cf6',
-  },
-]
+
 
 function getAuthToken() {
   return (
@@ -710,13 +668,10 @@ function RealFollowedPostCard({
   )
 }
 
-  const [reactionPickerOpen, setReactionPickerOpen] =
-  useState(false)
-const [reactionBusy, setReactionBusy] = useState(false)
+  const [reactionBusy, setReactionBusy] = useState(false)
 const [reactionError, setReactionError] = useState('')
 const [followBusy, setFollowBusy] = useState(false)
 const [followError, setFollowError] = useState('')
-const pressTimerRef = useRef(null)
 
 const isFollowing = Boolean(
   post.is_following ??
@@ -728,18 +683,7 @@ const isOwner = Boolean(
     author.is_owner
 )
 
-  const activeReaction =
-    AUTHOR_POST_REACTIONS.find(
-      (item) => item.type === post.my_reaction
-    ) || null
-
-  useEffect(() => {
-    return () => {
-      if (pressTimerRef.current) {
-        window.clearTimeout(pressTimerRef.current)
-      }
-    }
-  }, [])
+  
 
 
   async function followAuthor(event) {
@@ -817,34 +761,6 @@ const isOwner = Boolean(
     } finally {
       setReactionBusy(false)
     }
-  }
-
-  function startReactionPress() {
-    if (reactionBusy) return
-
-    if (pressTimerRef.current) {
-      window.clearTimeout(pressTimerRef.current)
-    }
-
-    pressTimerRef.current = window.setTimeout(() => {
-      setReactionPickerOpen(true)
-      pressTimerRef.current = null
-    }, 420)
-  }
-
-  function endReactionPress() {
-    if (!pressTimerRef.current) return
-
-    window.clearTimeout(pressTimerRef.current)
-    pressTimerRef.current = null
-    chooseReaction('love')
-  }
-
-  function cancelReactionPress() {
-    if (!pressTimerRef.current) return
-
-    window.clearTimeout(pressTimerRef.current)
-    pressTimerRef.current = null
   }
 
   return (
@@ -947,86 +863,26 @@ const isOwner = Boolean(
 />
 
       <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
-        <div className="relative">
-          {reactionPickerOpen ? (
-            <>
-              <button
-                type="button"
-                aria-label="Close reactions"
-                onClick={() => setReactionPickerOpen(false)}
-                className="fixed inset-0 z-20 cursor-default"
-              />
-
-              <div className="absolute bottom-8 left-0 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
-                {AUTHOR_POST_REACTIONS.map((reaction) => (
-                  <button
-                    key={reaction.type}
-                    type="button"
-                    disabled={reactionBusy}
-                    onClick={() => {
-                      setReactionPickerOpen(false)
-                      chooseReaction(reaction.type)
-                    }}
-                    className="flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:-translate-y-1 hover:scale-110 active:scale-90 disabled:opacity-60"
-                    aria-label={reaction.label}
-                    title={reaction.label}
-                  >
-                    <img
-                      src={reaction.src}
-                      alt={reaction.label}
-                      className="h-8 w-8 object-contain"
-                    />
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          <div
-            className="inline-flex items-center gap-1.5"
-            style={{
-              color: activeReaction?.text || undefined,
-            }}
-          >
-            <button
-              type="button"
-              disabled={reactionBusy}
-              onPointerDown={startReactionPress}
-              onPointerUp={endReactionPress}
-              onPointerLeave={cancelReactionPress}
-              onPointerCancel={cancelReactionPress}
-              onContextMenu={(event) => event.preventDefault()}
-              className="active:scale-95 disabled:opacity-60"
-              aria-label={
-                activeReaction
-                  ? `${activeReaction.label} reaction`
-                  : 'Like'
-              }
-            >
-              {reactionBusy ? (
-                <i className="fa-solid fa-circle-notch animate-spin" />
-              ) : activeReaction ? (
-                <img
-                  src={activeReaction.src}
-                  alt={activeReaction.label}
-                  className="h-[17px] w-[17px] object-contain"
-                />
-              ) : (
-                <i className="fa-regular fa-heart text-[15px]" />
-              )}
-            </button>
-
-            <Link
-              to={`/interactions/author_post/${post.id}/likes`}
-              state={{ sourceName: authorName }}
-              onClick={() => setReactionPickerOpen(false)}
-              className="active:scale-95"
-              aria-label="View people who reacted"
-            >
-              {Number(post.like_count || 0)}
-            </Link>
-          </div>
-        </div>
+        <ReactionAction
+  reactionType={post.my_reaction}
+  count={post.like_count}
+  busy={reactionBusy}
+  showBusySpinner
+  onReact={chooseReaction}
+  onCountClick={() =>
+    navigate(
+      `/interactions/author_post/${post.id}/likes`,
+      {
+        state: {
+          sourceName: authorName,
+        },
+      }
+    )
+  }
+  formatCount={(value) =>
+    String(Number(value || 0))
+  }
+/>
 
         <button
           type="button"
