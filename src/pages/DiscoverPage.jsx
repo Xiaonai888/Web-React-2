@@ -506,10 +506,13 @@ function RealPostImageGrid({
         +{hiddenCount}
       </div>
     ) : null}
-  </button>
+    </button>
 ))}
+    </div>
+  )
+}
 
-function RealReactionSummary({ summary, likeCount }) {
+function RealReactionSummary({ summary, likeCount }) {function RealReactionSummary({ summary, likeCount }) {
   const icons = {
     love: '❤️',
     haha: '😂',
