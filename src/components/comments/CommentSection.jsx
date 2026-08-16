@@ -280,10 +280,15 @@ function normalizeApiComment(comment) {
         comment?.replies?.length ??
         0
     ),
-    reply_page: Math.max(
-      1,
-      Number(comment?.reply_page || 1)
-    ),
+    reply_page:
+  Number(comment?.reply_page) === 0
+    ? 0
+    : Math.max(
+        1,
+        Number(
+          comment?.reply_page || 1
+        )
+      ),
     reply_has_more: Boolean(
       comment?.reply_has_more
     ),
@@ -429,15 +434,16 @@ function mergeFocusedAuthorPostComment(
     }
 
     return [
-      {
-        ...parent,
-        replies: [target],
-        reply_total: 1,
-      },
-      ...merged,
-    ]
-  }
-
+  {
+    ...parent,
+    replies: [target],
+    reply_total: Math.max(
+      Number(parent.reply_total || 0),
+      1
+    ),
+  },
+  ...merged,
+]
   const targetIndex =
     merged.findIndex(
       (item) =>
@@ -2713,10 +2719,13 @@ const nextComments =
 
     if (!parent) return
 
-    const nextPage = Math.max(
-      2,
-      Number(parent.reply_page || 1) + 1
-    )
+    const currentReplyPage =
+  Number(parent.reply_page ?? 1)
+
+const nextPage =
+  currentReplyPage <= 0
+    ? 1
+    : currentReplyPage + 1
 
     try {
       setLoadingRepliesId(commentId)
