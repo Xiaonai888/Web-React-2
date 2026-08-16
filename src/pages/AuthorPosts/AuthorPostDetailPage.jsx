@@ -563,6 +563,24 @@ const selectedPhotoIndex = Math.max(
     })
   }
 
+  function openPhotoPost(index) {
+  if (!post?.id) return
+
+  navigate(
+    `/author/post/${encodeURIComponent(
+      post.id
+    )}?photo=${index}`
+  )
+}
+
+function handlePostImageClick(index) {
+  if (photoPostView) {
+    return
+  }
+
+  openPhotoPost(index)
+}
+
   async function followAuthor() {
     const token = getAuthToken()
     const author =
