@@ -2182,6 +2182,12 @@ export default function DiscoverPage() {
     [realPosts, readerPosts]
   )
 
+  const firstReaderPostIndex =
+  discoverTimeline.findIndex(
+    (entry) =>
+      entry.kind === 'reader_post'
+  )
+
   function handleReaderPostCreated(post) {
     if (!post?.id) return
 
