@@ -14,6 +14,7 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
+import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
 import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
@@ -2656,6 +2657,7 @@ export default function EpisodeEditorPage() {
   const imageInputRef = useRef(null)
   const savedSelectionRef = useRef(null)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
+  const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [autoSaveSeconds, setAutoSaveSeconds] = useState(60)
@@ -3884,14 +3886,28 @@ releaseOption={releaseOption}
             onClean={handleConfirmCleanParagraphs}
           />
           <RichFindReplacePanel
-            open={findReplaceOpen}
-            editorRef={editorRef}
-            onClose={() => {
-              setFindReplaceOpen(false)
-              window.setTimeout(() => editorRef.current?.focus(), 60)
-            }}
-            onChange={(nextHtml) => syncEditorContent(nextHtml)}
-          />
+  open={findReplaceOpen}
+  editorRef={editorRef}
+  onClose={() => {
+    setFindReplaceOpen(false)
+    window.setTimeout(() => editorRef.current?.focus(), 60)
+  }}
+  onChange={(nextHtml) => syncEditorContent(nextHtml)}
+  onMoreOptions={() => {
+    setFindReplaceOpen(false)
+    setSmartFindReplaceOpen(true)
+  }}
+/>
+
+<SmartFindReplacePanel
+  open={smartFindReplaceOpen}
+  editorRef={editorRef}
+  onClose={() => {
+    setSmartFindReplaceOpen(false)
+    window.setTimeout(() => editorRef.current?.focus(), 60)
+  }}
+  onChange={(nextHtml) => syncEditorContent(nextHtml)}
+/>
         </>
       ) : null}
 
