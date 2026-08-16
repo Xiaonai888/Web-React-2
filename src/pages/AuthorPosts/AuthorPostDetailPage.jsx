@@ -652,6 +652,7 @@ const [
   )
 }
 
+function handlePostImageClick(index) {
 if (photoPostView) {
   setFullscreenControlsVisible(true)
   setFullscreenPhotoMenuOpen(false)
