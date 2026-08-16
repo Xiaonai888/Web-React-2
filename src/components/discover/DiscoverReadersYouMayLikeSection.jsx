@@ -8,8 +8,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
-const INITIAL_LIMIT = 12
-const ALL_LIMIT = 20
+const INITIAL_LIMIT = 6
 
 function getReaderToken() {
   return (
@@ -61,8 +60,7 @@ export default function DiscoverReadersYouMayLikeSection() {
     followLoadingId,
     setFollowLoadingId,
   ] = useState('')
-  const [showAll, setShowAll] =
-    useState(false)
+  
 
   async function loadSuggestions(
     limit = INITIAL_LIMIT
@@ -202,12 +200,7 @@ export default function DiscoverReadersYouMayLikeSection() {
     }
   }
 
-  async function showAllReaders() {
-    if (showAll || loading) return
-
-    setShowAll(true)
-    await loadSuggestions(ALL_LIMIT)
-  }
+  
 
   if (
     !loading &&
@@ -229,15 +222,15 @@ export default function DiscoverReadersYouMayLikeSection() {
           </p>
         </div>
 
-        {!showAll ? (
-          <button
-            type="button"
-            onClick={showAllReaders}
-            className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
-          >
-            See all
-          </button>
-        ) : null}
+        <button
+  type="button"
+  onClick={() =>
+    navigate('/profile/discover-people')
+  }
+  className="shrink-0 text-[12px] font-semibold text-[#6d5dfc] active:opacity-70"
+>
+  See all
+</button>
       </div>
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
