@@ -1076,52 +1076,6 @@ async function shareSelectedPhoto(event) {
     }
   }
 
-  function startReactionPress() {
-    if (reactionBusy) return
-
-    if (
-      pressTimerRef.current
-    ) {
-      window.clearTimeout(
-        pressTimerRef.current
-      )
-    }
-
-    pressTimerRef.current =
-      window.setTimeout(() => {
-        setReactionPickerOpen(true)
-        pressTimerRef.current =
-          null
-      }, 420)
-  }
-
-  function endReactionPress() {
-    if (
-      !pressTimerRef.current
-    ) {
-      return
-    }
-
-    window.clearTimeout(
-      pressTimerRef.current
-    )
-    pressTimerRef.current = null
-    chooseReaction('love')
-  }
-
-  function cancelReactionPress() {
-    if (
-      !pressTimerRef.current
-    ) {
-      return
-    }
-
-    window.clearTimeout(
-      pressTimerRef.current
-    )
-    pressTimerRef.current = null
-  }
-
   function openComments() {
     if (!post?.id) return
 
@@ -1201,13 +1155,6 @@ async function shareSelectedPhoto(event) {
     post?.is_owner ??
       author.is_owner
   )
-  const activeReaction =
-    AUTHOR_POST_REACTIONS.find(
-      (item) =>
-        item.type ===
-        post?.my_reaction
-    ) || null
-
   const photoUrls = Array.isArray(
   post?.image_urls
 )
@@ -1376,141 +1323,29 @@ const selectedPhotoUrl =
 />
 
             <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
-              <div className="relative">
-                {reactionPickerOpen ? (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Close reactions"
-                      onClick={() =>
-                        setReactionPickerOpen(
-                          false
-                        )
-                      }
-                      className="fixed inset-0 z-20 cursor-default"
-                    />
-
-                    <div className="absolute bottom-8 left-0 z-30 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10">
-                      {AUTHOR_POST_REACTIONS.map(
-                        (
-                          reaction
-                        ) => (
-                          <button
-                            key={
-                              reaction.type
-                            }
-                            type="button"
-                            disabled={
-                              reactionBusy
-                            }
-                            onClick={() => {
-                              setReactionPickerOpen(
-                                false
-                              )
-                              chooseReaction(
-                                reaction.type
-                              )
-                            }}
-                            className="flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:-translate-y-1 hover:scale-110 active:scale-90 disabled:opacity-60"
-                            aria-label={
-                              reaction.label
-                            }
-                            title={
-                              reaction.label
-                            }
-                          >
-                            <img
-                              src={
-                                reaction.src
-                              }
-                              alt={
-                                reaction.label
-                              }
-                              className="h-8 w-8 object-contain"
-                            />
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </>
-                ) : null}
-
-                <div
-                  className="inline-flex items-center gap-1.5"
-                  style={{
-                    color:
-                      activeReaction
-                        ?.text ||
-                      undefined,
-                  }}
-                >
-                  <button
-                    type="button"
-                    disabled={
-                      reactionBusy
+              <ReactionAction
+                reactionType={post.my_reaction}
+                count={post.like_count}
+                busy={reactionBusy}
+                showBusySpinner
+                onReact={chooseReaction}
+                onCountClick={() =>
+                  navigate(
+                    `/interactions/author_post/${post.id}/likes`,
+                    {
+                      state: {
+                        sourceName:
+                          authorName,
+                      },
                     }
-                    onPointerDown={
-                      startReactionPress
-                    }
-                    onPointerUp={
-                      endReactionPress
-                    }
-                    onPointerLeave={
-                      cancelReactionPress
-                    }
-                    onPointerCancel={
-                      cancelReactionPress
-                    }
-                    onContextMenu={(
-                      event
-                    ) =>
-                      event.preventDefault()
-                    }
-                    className="active:scale-95 disabled:opacity-60"
-                    aria-label={
-                      activeReaction
-                        ? `${activeReaction.label} reaction`
-                        : 'Like'
-                    }
-                  >
-                    {reactionBusy ? (
-                      <i className="fa-solid fa-circle-notch animate-spin" />
-                    ) : activeReaction ? (
-                      <img
-                        src={
-                          activeReaction.src
-                        }
-                        alt={
-                          activeReaction.label
-                        }
-                        className="h-[17px] w-[17px] object-contain"
-                      />
-                    ) : (
-                      <i className="fa-regular fa-heart text-[15px]" />
-                    )}
-                  </button>
-
-                  <Link
-                    to={`/interactions/author_post/${post.id}/likes`}
-                    state={{
-                      sourceName:
-                        authorName,
-                    }}
-                    onClick={() =>
-                      setReactionPickerOpen(
-                        false
-                      )
-                    }
-                    className="active:scale-95"
-                    aria-label="View people who reacted"
-                  >
-                    {Number(
-                      post.like_count ||
-                        0
-                    )}
-                  </Link>
-                </div>
-              </div>
+                  )
+                }
+                formatCount={(value) =>
+                  String(
+                    Number(value || 0)
+                  )
+                }
+              />
 
               <button
                 type="button"
