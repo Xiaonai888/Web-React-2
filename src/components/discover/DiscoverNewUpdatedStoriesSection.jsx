@@ -133,57 +133,86 @@ export default function DiscoverNewUpdatedStoriesSection() {
   }, [])
 
   function startDrag(event) {
-    if (event.pointerType !== 'mouse' || event.button !== 0) {
-      return
-    }
-
-    const element = scrollRef.current
-
-    if (!element) return
-
-    dragRef.current = {
-      active: true,
-      startX: event.clientX,
-      scrollLeft: element.scrollLeft,
-      moved: false,
-    }
-
-    element.setPointerCapture?.(event.pointerId)
+  if (
+    event.pointerType !== 'mouse' ||
+    event.button !== 0
+  ) {
+    return
   }
 
-  function moveDrag(event) {
-    const element = scrollRef.current
-    const state = dragRef.current
+  const element = scrollRef.current
 
-    if (!element || !state.active) return
+  if (!element) return
 
-    const distance = event.clientX - state.startX
+  dragRef.current = {
+    active: true,
+    startX: event.clientX,
+    scrollLeft: element.scrollLeft,
+    moved: false,
+  }
+}
 
-    if (Math.abs(distance) > 4) {
-      state.moved = true
-    }
+function moveDrag(event) {
+  const element = scrollRef.current
+  const state = dragRef.current
 
-    element.scrollLeft = state.scrollLeft - distance
+  if (
+    !element ||
+    !state.active ||
+    event.pointerType !== 'mouse' ||
+    event.buttons !== 1
+  ) {
+    return
   }
 
-  function endDrag(event) {
-    const element = scrollRef.current
-    const wasMoved = dragRef.current.moved
+  const distance =
+    event.clientX - state.startX
 
-    dragRef.current.active = false
+  if (Math.abs(distance) > 5) {
+    state.moved = true
 
-    if (element?.hasPointerCapture?.(event.pointerId)) {
-      element.releasePointerCapture(event.pointerId)
-    }
-
-    if (wasMoved) {
-      suppressClickRef.current = true
-
-      window.setTimeout(() => {
-        suppressClickRef.current = false
-      }, 0)
+    if (
+      !element.hasPointerCapture?.(
+        event.pointerId
+      )
+    ) {
+      element.setPointerCapture?.(
+        event.pointerId
+      )
     }
   }
+
+  if (state.moved) {
+    element.scrollLeft =
+      state.scrollLeft - distance
+  }
+}
+
+function endDrag(event) {
+  const element = scrollRef.current
+  const wasMoved =
+    dragRef.current.moved
+
+  dragRef.current.active = false
+
+  if (
+    element?.hasPointerCapture?.(
+      event.pointerId
+    )
+  ) {
+    element.releasePointerCapture(
+      event.pointerId
+    )
+  }
+
+  if (wasMoved) {
+    suppressClickRef.current = true
+
+    window.setTimeout(() => {
+      suppressClickRef.current = false
+    }, 0)
+  }
+}
 
   function openStory(storyId) {
     if (suppressClickRef.current) return
