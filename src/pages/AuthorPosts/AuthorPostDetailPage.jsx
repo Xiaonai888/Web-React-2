@@ -11,6 +11,7 @@ import {
 } from 'react-router-dom'
 import CommentsModal from '../../components/story-detail/CommentsModal'
 import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
+import ReactionAction from '../../components/social/reactions/ReactionAction'
 import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
 
 const API_BASE_URL =
@@ -20,50 +21,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const AUTHOR_POST_REACTIONS = [
-  {
-    type: 'love',
-    label: 'Love',
-    src: '/assets/React/Love.svg',
-    text: '#ff2f5f',
-  },
-  {
-    type: 'haha',
-    label: 'Haha',
-    src: '/assets/React/Haha.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'wow',
-    label: 'Wow',
-    src: '/assets/React/Wow.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'sad',
-    label: 'Sad',
-    src: '/assets/React/Sad.svg',
-    text: '#3b82f6',
-  },
-  {
-    type: 'angry',
-    label: 'Angry',
-    src: '/assets/React/Angry.svg',
-    text: '#ef4444',
-  },
-  {
-    type: 'support',
-    label: 'Support',
-    src: '/assets/React/Support.svg',
-    text: '#16a34a',
-  },
-  {
-    type: 'touched',
-    label: 'Touched',
-    src: '/assets/React/Touched.svg',
-    text: '#8b5cf6',
-  },
-]
+
 
 const POST_TOKEN_PATTERN =
   /(https?:\/\/[^\s]+|#[\p{L}\p{N}\p{M}_]+)/giu
@@ -440,10 +398,7 @@ const selectedPhotoIndex = Math.max(
     useState(true)
   const [error, setError] =
     useState('')
-  const [
-    reactionPickerOpen,
-    setReactionPickerOpen,
-  ] = useState(false)
+  
   const [
     reactionBusy,
     setReactionBusy,
@@ -491,8 +446,7 @@ const [
   setPhotoDeleteBusy,
 ] = useState(false)
 
-  const pressTimerRef =
-    useRef(null)
+  
   const commentCountBaseRef =
     useRef({
       loadedCount: null,
@@ -566,18 +520,10 @@ const [
 
     loadPost()
 
-    return () => {
-      ignore = true
-      controller.abort()
-
-      if (
-        pressTimerRef.current
-      ) {
-        window.clearTimeout(
-          pressTimerRef.current
-        )
-      }
-    }
+   return () => {
+  ignore = true
+  controller.abort()
+}
   }, [postId])
   useEffect(() => {
   if (!fullscreenPhotoOpen) {
