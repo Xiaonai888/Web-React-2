@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CommentsModal from '../components/story-detail/CommentsModal'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import EchoV2Count from '../components/social/EchoV2Count'
+import ReactionAction from '../components/social/reactions/ReactionAction'
+import { getReactionMeta } from '../components/social/reactions/reactionConfig'
 import AdvertisementPopup from '../components/AdvertisementPopup'
 import GiftPopup from '../components/reader/GiftPopup'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
@@ -908,25 +910,6 @@ const handlePointerEnd = () => {
   )
 }
 
-function HeartLineIcon({ className = '', filled = false }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill={filled ? 'currentColor' : 'none'}
-      aria-hidden="true"
-    >
-      <path
-        d="M12 20.2C8.2 16.9 5.4 14.4 4.3 12.2 3.2 10 3.8 7.3 6.1 6.2 8 5.3 10.1 5.9 12 8c1.9-2.1 4-2.7 5.9-1.8 2.3 1.1 2.9 3.8 1.8 6-1.1 2.2-3.9 4.7-7.7 8Z"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function GiftLineIcon({ className = '' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
@@ -962,11 +945,16 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     0
   )
 
-  const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(initialLikeCount)
-  const [likeBusy, setLikeBusy] = useState(false)
-  const [hotComment, setHotComment] = useState(null)
-  const [hotCommentTotal, setHotCommentTotal] = useState(0)
+  const [reactionType, setReactionType] =
+    useState(null)
+  const [likeCount, setLikeCount] =
+    useState(initialLikeCount)
+  const [likeBusy, setLikeBusy] =
+    useState(false)
+  const [hotComment, setHotComment] =
+    useState(null)
+  const [hotCommentTotal, setHotCommentTotal] =
+    useState(0)
 
   const giftCount = Number(
     story?.total_gifts ||
@@ -986,91 +974,142 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
   )
 
   useEffect(() => {
-  let ignore = false
+    let ignore = false
 
-  setLiked(false)
-  setLikeCount(initialLikeCount)
+    setReactionType(null)
+    setLikeCount(initialLikeCount)
 
-  async function loadLikeStatus() {
-    if (!episodeId) return
+    async function loadReactionStatus() {
+      if (!episodeId) return
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/reactions/episode/${episodeId}/status`,
+          {
+            headers: readerAuthHeaders(),
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false ||
+          ignore
+        ) {
+          return
+        }
+
+        setReactionType(
+          data.reaction_type || null
+        )
+        setLikeCount(
+          Math.max(
+            0,
+            Number(data.total_likes || 0)
+          )
+        )
+      } catch {
+      }
+    }
+
+    loadReactionStatus()
+
+    return () => {
+      ignore = true
+    }
+  }, [episodeId, initialLikeCount])
+
+  async function handleEpisodeReaction(
+    nextReactionType
+  ) {
+    if (!episodeId || likeBusy) return
+
+    if (!getReaderToken()) {
+      navigate('/login', {
+        state: {
+          returnTo:
+            window.location.pathname,
+        },
+      })
+      return
+    }
+
+    const previousType = reactionType
+    const previousCount = likeCount
+    const sameReaction =
+      previousType === nextReactionType
+
+    setLikeBusy(true)
+    setReactionType(
+      sameReaction
+        ? null
+        : nextReactionType
+    )
+    setLikeCount(
+      Math.max(
+        0,
+        previousCount +
+          (sameReaction
+            ? -1
+            : previousType
+              ? 0
+              : 1)
+      )
+    )
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/reactions/episode/${episodeId}/status`,
+        `${API_BASE_URL}/api/reactions/episode/${episodeId}/toggle`,
         {
-          headers: readerAuthHeaders(),
+          method: 'POST',
+          headers: {
+            ...readerAuthHeaders(),
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
         }
       )
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-      if (!response.ok || data.ok === false || ignore) return
-
-      setLiked(Boolean(data.liked))
-      setLikeCount(Math.max(0, Number(data.total_likes || 0)))
-    } catch {
-    }
-  }
-
-  loadLikeStatus()
-
-  return () => {
-    ignore = true
-  }
-}, [episodeId, initialLikeCount])
-
-async function handleToggleLike() {
-  if (!episodeId || likeBusy) return
-
-  if (!getReaderToken()) {
-    navigate('/login', {
-      state: {
-        returnTo: window.location.pathname,
-      },
-    })
-    return
-  }
-
-  const previousLiked = liked
-  const previousCount = likeCount
-  const nextLiked = !previousLiked
-
-  setLikeBusy(true)
-  setLiked(nextLiked)
-  setLikeCount(
-    Math.max(0, previousCount + (nextLiked ? 1 : -1))
-  )
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/reactions/episode/${episodeId}/toggle`,
-      {
-        method: 'POST',
-        headers: {
-          ...readerAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reaction_type: 'love',
-        }),
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to update reaction'
+        )
       }
-    )
 
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.message || 'Failed to update like')
+      setReactionType(
+        data.liked
+          ? data.reaction_type ||
+              nextReactionType
+          : null
+      )
+      setLikeCount(
+        Math.max(
+          0,
+          Number(data.total_likes || 0)
+        )
+      )
+    } catch {
+      setReactionType(previousType)
+      setLikeCount(previousCount)
+    } finally {
+      setLikeBusy(false)
     }
-
-    setLiked(Boolean(data.liked))
-    setLikeCount(Math.max(0, Number(data.total_likes || 0)))
-  } catch {
-    setLiked(previousLiked)
-    setLikeCount(previousCount)
-  } finally {
-    setLikeBusy(false)
   }
-}
 
   useEffect(() => {
     let ignore = false
@@ -1121,47 +1160,59 @@ async function handleToggleLike() {
   const hotUser = hotComment?.user || {}
   const hotName = hotUser.name || hotComment?.name || 'Reader'
   const hotAvatar = hotUser.avatar_url || hotComment?.avatar_url || ''
+  const activeEpisodeReaction =
+    getReactionMeta(reactionType)
 
   return (
     <section className="mt-8 bg-white px-4 pb-8 pt-2">
       <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
        <div className="flex flex-col items-center justify-center gap-1">
-  <button
-    type="button"
-    onClick={handleToggleLike}
-    disabled={likeBusy || !episodeId}
-    aria-pressed={liked}
-    className="flex flex-col items-center justify-center gap-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    <HeartLineIcon
-      filled={liked}
-      className={`h-[26px] w-[26px] transition-all duration-200 ${
-        liked
-          ? 'scale-110 text-[#E5484D]'
-          : 'text-[#111827]'
-      }`}
-    />
+  <ReactionAction
+    reactionType={reactionType}
+    count={likeCount}
+    busy={likeBusy}
+    disabled={!episodeId}
+    onReact={handleEpisodeReaction}
+    showCount={false}
+    idleLabel="Like"
+  />
 
-    <span
-      className={`text-[13px] font-normal transition-colors duration-200 ${
-        liked ? 'text-[#E5484D]' : 'text-[#111827]'
-      }`}
-    >
-      Like
-    </span>
-  </button>
+  <span
+    className="text-[13px] font-normal"
+    style={{
+      color:
+        activeEpisodeReaction?.text ||
+        '#111827',
+    }}
+  >
+    {activeEpisodeReaction?.label ||
+      'Like'}
+  </span>
 
   <button
     type="button"
     onClick={() => {
-      const targetStoryId = story?.id || story?.story_id
-      if (!targetStoryId || !episodeId) return
-      navigate(`/story/${targetStoryId}/episode/${episodeId}/reactions`)
+      const targetStoryId =
+        story?.id || story?.story_id
+
+      if (
+        !targetStoryId ||
+        !episodeId
+      ) {
+        return
+      }
+
+      navigate(
+        `/story/${targetStoryId}/episode/${episodeId}/reactions`
+      )
     }}
     disabled={!episodeId}
-    className={`text-[11px] font-normal transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed ${
-      liked ? 'text-[#E5484D]' : 'text-[#98a2b3]'
-    }`}
+    className="text-[11px] font-normal text-[#98a2b3] transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed"
+    style={{
+      color:
+        activeEpisodeReaction?.text ||
+        '#98a2b3',
+    }}
   >
     {formatCompactNumber(likeCount)}
   </button>
