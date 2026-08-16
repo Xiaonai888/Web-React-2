@@ -433,7 +433,7 @@ function mergeFocusedAuthorPostComment(
       return merged
     }
 
-    return [
+   return [
   {
     ...parent,
     replies: [target],
@@ -444,8 +444,10 @@ function mergeFocusedAuthorPostComment(
   },
   ...merged,
 ]
-  const targetIndex =
-    merged.findIndex(
+}
+
+const targetIndex =
+  merged.findIndex(
       (item) =>
         String(item.id) ===
         String(target.id)
