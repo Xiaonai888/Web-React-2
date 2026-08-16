@@ -191,10 +191,99 @@ async function fetchReaderPosts(token) {
   return data
 }
 
+function getDiscoverRecommendationScore(
+  entry,
+  snapshotTime
+) {
+  const post = entry?.post || {}
+
+  const postTime = new Date(
+    entry?.kind === 'reader_post'
+      ? post.publish_at ||
+          post.updated_at ||
+          post.created_at ||
+          0
+      : post.created_at ||
+          post.updated_at ||
+          0
+  ).getTime()
+
+  const ageMs =
+    Number.isFinite(postTime)
+      ? Math.max(
+          0,
+          snapshotTime - postTime
+        )
+      : 30 *
+        24 *
+        60 *
+        60 *
+        1000
+
+  const ageDays =
+    ageMs /
+    (24 * 60 * 60 * 1000)
+
+  const likes = Math.max(
+    0,
+    Number(post.like_count || 0)
+  )
+
+  const comments = Math.max(
+    0,
+    Number(post.comment_count || 0)
+  )
+
+  const echoes = Math.max(
+    0,
+    Number(post.echo_count || 0)
+  )
+
+  const engagement =
+    likes +
+    comments * 2 +
+    echoes * 3
+
+  const engagementScore =
+    Math.log1p(engagement) * 12
+
+  const recencyScore =
+    Math.max(
+      0,
+      18 - ageDays * 0.6
+    )
+
+  const isFollowing =
+    entry?.kind === 'author_post'
+      ? Boolean(
+          post.is_following ??
+            post.author_page
+              ?.is_following
+        )
+      : Boolean(
+          post.user?.is_following
+        )
+
+  const discoveryBoost =
+    isFollowing ? 0 : 2
+
+  const ownerBoost =
+    post.is_owner ? 1 : 0
+
+  return (
+    engagementScore +
+    recencyScore +
+    discoveryBoost +
+    ownerBoost
+  )
+}
+
 function buildDiscoverTimeline(
   authorPosts,
   readerPosts
 ) {
+  const snapshotTime = Date.now()
+
   const items = [
     ...(Array.isArray(authorPosts)
       ? authorPosts.map((post) => ({
@@ -209,21 +298,59 @@ function buildDiscoverTimeline(
         }))
       : []),
   ].sort((left, right) => {
+    const leftScore =
+      getDiscoverRecommendationScore(
+        left,
+        snapshotTime
+      )
+
+    const rightScore =
+      getDiscoverRecommendationScore(
+        right,
+        snapshotTime
+      )
+
+    const scoreDifference =
+      rightScore - leftScore
+
+    if (
+      Math.abs(scoreDifference) >
+      0.000001
+    ) {
+      return scoreDifference
+    }
+
     const rightTime = new Date(
-      right.post?.created_at || 0
+      right.kind === 'reader_post'
+        ? right.post?.publish_at ||
+            right.post?.updated_at ||
+            right.post?.created_at ||
+            0
+        : right.post?.created_at ||
+            right.post?.updated_at ||
+            0
     ).getTime()
+
     const leftTime = new Date(
-      left.post?.created_at || 0
+      left.kind === 'reader_post'
+        ? left.post?.publish_at ||
+            left.post?.updated_at ||
+            left.post?.created_at ||
+            0
+        : left.post?.created_at ||
+            left.post?.updated_at ||
+            0
     ).getTime()
 
     if (rightTime !== leftTime) {
       return rightTime - leftTime
     }
 
-    return String(right.post?.id || '')
-      .localeCompare(
-        String(left.post?.id || '')
-      )
+    return String(
+      right.post?.id || ''
+    ).localeCompare(
+      String(left.post?.id || '')
+    )
   })
 
   let authorIndex = -1
