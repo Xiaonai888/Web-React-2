@@ -834,11 +834,11 @@ const isOwner = Boolean(
 />
       </div>
 
-      {reactionError ? (
-        <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
-          {reactionError}
-        </div>
-      ) : null}
+      {followError || reactionError ? (
+  <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
+    {followError || reactionError}
+  </div>
+) : null}
     </article>
   )
 }
