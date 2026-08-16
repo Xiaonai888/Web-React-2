@@ -7,6 +7,7 @@ import {
 import { createPortal } from 'react-dom'
 import ReportModal from '../ReportModal'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
+import ReactionAction from '../social/reactions/ReactionAction'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -15,50 +16,7 @@ const API_BASE_URL =
 const COMMENT_PAGE_SIZE = 20
 const COMMENT_LIMIT = 1000
 
-const REACTIONS = [
-  {
-    type: 'love',
-    label: 'Love',
-    src: '/assets/React/Love.svg',
-    text: '#ff2f5f',
-  },
-  {
-    type: 'haha',
-    label: 'Haha',
-    src: '/assets/React/Haha.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'wow',
-    label: 'Wow',
-    src: '/assets/React/Wow.svg',
-    text: '#f59e0b',
-  },
-  {
-    type: 'sad',
-    label: 'Sad',
-    src: '/assets/React/Sad.svg',
-    text: '#3b82f6',
-  },
-  {
-    type: 'angry',
-    label: 'Angry',
-    src: '/assets/React/Angry.svg',
-    text: '#ef4444',
-  },
-  {
-    type: 'support',
-    label: 'Support',
-    src: '/assets/React/Support.svg',
-    text: '#16a34a',
-  },
-  {
-    type: 'touched',
-    label: 'Touched',
-    src: '/assets/React/Touched.svg',
-    text: '#8b5cf6',
-  },
-]
+
 
 const SORT_OPTIONS = [
   {
@@ -1647,14 +1605,6 @@ function getPromotionLink(promotion) {
 export default function ShadowMallPromotionSocial({
   promotion,
 }) {
-  const reactionPressTimerRef =
-    useRef(null)
-  const longPressOpenedRef =
-    useRef(false)
-  const reactionPickerRef =
-    useRef(null)
-  const [reactionPickerOpen, setReactionPickerOpen] =
-    useState(false)
   const [reactionBusy, setReactionBusy] =
     useState(false)
   const [reactionType, setReactionType] =
@@ -1681,12 +1631,6 @@ export default function ShadowMallPromotionSocial({
     useState(false)
   const [message, setMessage] =
     useState('')
-
-  const activeReaction =
-    REACTIONS.find(
-      (reaction) =>
-        reaction.type === reactionType
-    ) || null
 
   useEffect(() => {
     setReactionCount(
@@ -1815,34 +1759,6 @@ export default function ShadowMallPromotionSocial({
     promotion?.id,
   ])
 
-  useEffect(() => {
-    if (!reactionPickerOpen) {
-      return undefined
-    }
-
-    function closeReactionPicker(event) {
-      if (
-        reactionPickerRef.current &&
-        !reactionPickerRef.current.contains(
-          event.target
-        )
-      ) {
-        setReactionPickerOpen(false)
-      }
-    }
-
-    document.addEventListener(
-      'pointerdown',
-      closeReactionPicker
-    )
-
-    return () => {
-      document.removeEventListener(
-        'pointerdown',
-        closeReactionPicker
-      )
-    }
-  }, [reactionPickerOpen])
 
   useEffect(() => {
     let ignore = false
@@ -1896,18 +1812,6 @@ export default function ShadowMallPromotionSocial({
       ignore = true
     }
   }, [promotion?.id])
-
-  useEffect(() => {
-    return () => {
-      if (
-        reactionPressTimerRef.current
-      ) {
-        window.clearTimeout(
-          reactionPressTimerRef.current
-        )
-      }
-    }
-  }, [])
 
   const showMessage = (value) => {
     setMessage(value)
@@ -1982,7 +1886,6 @@ export default function ShadowMallPromotionSocial({
       setReactionCount(
         Number(data.like_count || 0)
       )
-      setReactionPickerOpen(false)
     } catch (error) {
       showMessage(
         error.message ||
@@ -1991,50 +1894,6 @@ export default function ShadowMallPromotionSocial({
     } finally {
       setReactionBusy(false)
     }
-  }
-
-  function startReactionPress() {
-    if (reactionBusy) return
-
-    longPressOpenedRef.current = false
-    reactionPressTimerRef.current =
-      window.setTimeout(() => {
-        longPressOpenedRef.current = true
-        reactionPressTimerRef.current =
-          null
-        setReactionPickerOpen(true)
-      }, 420)
-  }
-
-  function endReactionPress() {
-    if (
-      reactionPressTimerRef.current
-    ) {
-      window.clearTimeout(
-        reactionPressTimerRef.current
-      )
-      reactionPressTimerRef.current = null
-    }
-
-    if (longPressOpenedRef.current) {
-      longPressOpenedRef.current = false
-      return
-    }
-
-    updateReaction('love')
-  }
-
-  function cancelReactionPress() {
-    if (
-      reactionPressTimerRef.current
-    ) {
-      window.clearTimeout(
-        reactionPressTimerRef.current
-      )
-      reactionPressTimerRef.current = null
-    }
-
-    longPressOpenedRef.current = false
   }
 
   return (
