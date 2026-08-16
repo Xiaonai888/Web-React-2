@@ -2822,6 +2822,45 @@ const nextPage =
   }
 
   const handleReply = async (
+      useEffect(() => {
+    if (
+      targetType !== 'author_post' ||
+      !focusCommentId ||
+      !focusParentComment?.id ||
+      loadingRepliesId
+    ) {
+      return
+    }
+
+    const focusedParent =
+      comments.find(
+        (comment) =>
+          String(comment.id) ===
+          String(
+            focusParentComment.id
+          )
+      )
+
+    if (
+      !focusedParent ||
+      Number(
+        focusedParent.reply_page ?? 1
+      ) !== 0 ||
+      !focusedParent.reply_has_more
+    ) {
+      return
+    }
+
+    handleLoadMoreReplies(
+      focusedParent.id
+    )
+  }, [
+    comments,
+    focusCommentId,
+    focusParentComment?.id,
+    targetType,
+    loadingRepliesId,
+  ])
     commentId,
     replyText,
     mentionName = ''
