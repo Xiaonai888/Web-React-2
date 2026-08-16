@@ -140,7 +140,7 @@ export default function DiscoverAuthorsYouMayLikeSection() {
             suggestions =
               await requestAuthors(
                 token,
-                '/api/authors/discover?limit=12'
+                '/api/authors/discover?limit=8'
               )
           } catch {
             suggestions = []
@@ -164,7 +164,7 @@ export default function DiscoverAuthorsYouMayLikeSection() {
                 !author.is_owner &&
                 !author.is_following
             )
-            .slice(0, 12)
+            .slice(0, 6)
 
         if (alive) {
           setAuthors(
