@@ -2518,7 +2518,16 @@ function handleReaderFollowChanged(
 />
                 )}
 
-                
+                {entry.kind === 'author_post' &&
+                entry.authorIndex === 0 ? (
+                  <DiscoverAuthorsYouMayLikeSection />
+                ) : null}
+
+                {entry.kind === 'reader_post' &&
+                entry.timelineIndex ===
+                  firstReaderPostIndex ? (
+                  <DiscoverReadersYouMayLikeSection />
+                ) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
@@ -2544,8 +2553,6 @@ function handleReaderFollowChanged(
       />
     ) : null}
 
-    <DiscoverAuthorsYouMayLikeSection />
-    <DiscoverReadersYouMayLikeSection />
   </>
 ) : null}
 
@@ -2569,8 +2576,6 @@ discoverTimeline.length < 4 ? (
       />
     ) : null}
 
-    <DiscoverAuthorsYouMayLikeSection />
-    <DiscoverReadersYouMayLikeSection />
   </>
 ) : null}
 
