@@ -919,6 +919,15 @@ const shouldShowOpeningAds =
 /> 
 
         <Route
+  path="/author/page/posts/:postId/activity"
+  element={
+    <LazyPage>
+      <AuthorPostActivityPage />
+    </LazyPage>
+  }
+/>
+
+        <Route
   path="/author/page-settings"
   element={
     <LazyPage>
