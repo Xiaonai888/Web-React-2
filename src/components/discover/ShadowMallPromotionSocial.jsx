@@ -1899,81 +1899,15 @@ export default function ShadowMallPromotionSocial({
   return (
     <>
       <div className="flex items-center gap-6 px-4 py-2 text-[13px] font-normal text-gray-500">
-        <div
-          ref={reactionPickerRef}
-          className="relative"
-        >
-          {reactionPickerOpen ? (
-            <div className="absolute bottom-8 left-0 z-40 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-2xl ring-1 ring-black/10">
-              {REACTIONS.map((reaction) => (
-                <button
-                  key={reaction.type}
-                  type="button"
-                  disabled={reactionBusy}
-                  onClick={() =>
-                    updateReaction(
-                      reaction.type
-                    )
-                  }
-                  className="flex h-9 w-9 items-center justify-center rounded-full active:scale-90 disabled:opacity-60"
-                  aria-label={reaction.label}
-                >
-                  <img
-                    src={reaction.src}
-                    alt={reaction.label}
-                    className="h-8 w-8 object-contain"
-                  />
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            disabled={reactionBusy}
-            onPointerDown={
-              startReactionPress
-            }
-            onPointerUp={endReactionPress}
-            onPointerLeave={
-              cancelReactionPress
-            }
-            onPointerCancel={() => {
-              cancelReactionPress()
-              setReactionPickerOpen(false)
-            }}
-            onContextMenu={(event) =>
-              event.preventDefault()
-            }
-            className="inline-flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
-            style={{
-              color:
-                activeReaction?.text ||
-                undefined,
-            }}
-            aria-label={
-              activeReaction
-                ? activeReaction.label
-                : 'React'
-            }
-          >
-            {activeReaction ? (
-              <img
-                src={activeReaction.src}
-                alt=""
-                aria-hidden="true"
-                className="h-[17px] w-[17px] object-contain"
-              />
-            ) : (
-              <i className="fa-regular fa-heart text-[15px]" />
-            )}
-            <span>
-              {formatCompactNumber(
-                reactionCount
-              )}
-            </span>
-          </button>
-        </div>
+        <ReactionAction
+          reactionType={reactionType}
+          count={reactionCount}
+          busy={reactionBusy}
+          onReact={updateReaction}
+          countInAction
+          formatCount={formatCompactNumber}
+          idleLabel="React"
+        />
 
         <button
           type="button"
