@@ -8,7 +8,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
-const INITIAL_LIMIT = 6
+const INITIAL_LIMIT = 12
+const ALL_LIMIT = 20
 
 function getReaderToken() {
   return (
@@ -60,6 +61,9 @@ export default function DiscoverReadersYouMayLikeSection() {
     followLoadingId,
     setFollowLoadingId,
   ] = useState('')
+
+  const [showAll, setShowAll] =
+  useState(false)
   
 
   async function loadSuggestions(
@@ -200,7 +204,12 @@ export default function DiscoverReadersYouMayLikeSection() {
     }
   }
 
-  
+  async function showAllReaders() {
+  if (showAll || loading) return
+
+  setShowAll(true)
+  await loadSuggestions(ALL_LIMIT)
+}
 
   if (
     !loading &&
