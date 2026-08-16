@@ -7,6 +7,7 @@ import {
   Link,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 import CommentsModal from '../../components/story-detail/CommentsModal'
 import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
@@ -179,6 +180,9 @@ function countAuthorPostComments(
 function AuthorPostImages({
   images,
   authorName,
+  onImageClick,
+  photoPostView = false,
+  selectedPhotoIndex = 0,
 }) {
   const urls = Array.isArray(images)
     ? images
@@ -191,11 +195,49 @@ function AuthorPostImages({
   const alt =
     `${authorName || 'Author'} post`
 
+  const safeSelectedIndex =
+    Math.min(
+      urls.length - 1,
+      Math.max(
+        0,
+        Number.isFinite(
+          Number(selectedPhotoIndex)
+        )
+          ? Math.floor(
+              Number(
+                selectedPhotoIndex
+              )
+            )
+          : 0
+      )
+    )
+
+  if (photoPostView) {
+    return (
+      <ProfessionalSinglePostImage
+        src={
+          urls[
+            safeSelectedIndex
+          ]
+        }
+        alt={alt}
+        onClick={() =>
+          onImageClick?.(
+            safeSelectedIndex
+          )
+        }
+      />
+    )
+  }
+
   if (urls.length === 1) {
     return (
       <ProfessionalSinglePostImage
         src={urls[0]}
         alt={alt}
+        onClick={() =>
+          onImageClick?.(0)
+        }
       />
     )
   }
@@ -203,16 +245,28 @@ function AuthorPostImages({
   if (urls.length === 2) {
     return (
       <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
-        {urls.map((url) => (
-          <img
-            key={url}
-            src={url}
-            alt={alt}
-            loading="eager"
-            decoding="async"
-            className="h-[280px] w-full object-cover sm:h-[330px]"
-          />
-        ))}
+        {urls.map(
+          (url, index) => (
+            <button
+              key={url}
+              type="button"
+              onClick={() =>
+                onImageClick?.(
+                  index
+                )
+              }
+              className="block w-full"
+            >
+              <img
+                src={url}
+                alt={alt}
+                loading="eager"
+                decoding="async"
+                className="h-[280px] w-full object-cover sm:h-[330px]"
+              />
+            </button>
+          )
+        )}
       </div>
     )
   }
@@ -220,27 +274,50 @@ function AuthorPostImages({
   if (urls.length === 3) {
     return (
       <div className="grid h-[360px] grid-cols-2 gap-[2px] bg-gray-100 sm:h-[420px]">
-        <img
-          src={urls[0]}
-          alt={alt}
-          loading="eager"
-          decoding="async"
-          className="h-full w-full object-cover"
-        />
+        <button
+          type="button"
+          onClick={() =>
+            onImageClick?.(0)
+          }
+          className="h-full w-full"
+        >
+          <img
+            src={urls[0]}
+            alt={alt}
+            loading="eager"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        </button>
 
         <div className="grid min-h-0 grid-rows-2 gap-[2px]">
           {urls
             .slice(1)
-            .map((url) => (
-              <img
-                key={url}
-                src={url}
-                alt={alt}
-                loading="eager"
-                decoding="async"
-                className="h-full min-h-0 w-full object-cover"
-              />
-            ))}
+            .map(
+              (
+                url,
+                index
+              ) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() =>
+                    onImageClick?.(
+                      index + 1
+                    )
+                  }
+                  className="h-full min-h-0 w-full"
+                >
+                  <img
+                    src={url}
+                    alt={alt}
+                    loading="eager"
+                    decoding="async"
+                    className="h-full min-h-0 w-full object-cover"
+                  />
+                </button>
+              )
+            )}
         </div>
       </div>
     )
@@ -248,18 +325,26 @@ function AuthorPostImages({
 
   const visibleUrls =
     urls.slice(0, 4)
-  const hiddenCount = Math.max(
-    0,
-    urls.length - 4
-  )
+
+  const hiddenCount =
+    Math.max(
+      0,
+      urls.length - 4
+    )
 
   return (
     <div className="grid grid-cols-2 gap-[2px] bg-gray-100">
       {visibleUrls.map(
         (url, index) => (
-          <div
+          <button
             key={url}
-            className="relative"
+            type="button"
+            onClick={() =>
+              onImageClick?.(
+                index
+              )
+            }
+            className="relative block w-full"
           >
             <img
               src={url}
@@ -275,13 +360,12 @@ function AuthorPostImages({
                 +{hiddenCount}
               </div>
             ) : null}
-          </div>
+          </button>
         )
       )}
     </div>
   )
 }
-
 async function setAuthorPostReaction(
   token,
   postId,
@@ -330,8 +414,26 @@ async function setAuthorPostReaction(
 }
 
 export default function AuthorPostDetailPage() {
-  const navigate = useNavigate()
-  const { postId } = useParams()
+const navigate = useNavigate()
+const { postId } = useParams()
+const [searchParams] = useSearchParams()
+
+const rawPhotoIndex =
+  searchParams.get('photo')
+
+const photoPostView =
+  rawPhotoIndex !== null
+
+const selectedPhotoIndex = Math.max(
+  0,
+  Number.isFinite(
+    Number(rawPhotoIndex)
+  )
+    ? Math.floor(
+        Number(rawPhotoIndex)
+      )
+    : 0
+)
   const [post, setPost] =
     useState(null)
   const [loading, setLoading] =
@@ -767,8 +869,10 @@ export default function AuthorPostDetailPage() {
           </button>
 
           <div className="ml-1 text-[17px] font-semibold text-[#111827]">
-            Post
-          </div>
+  {photoPostView
+    ? 'Photo'
+    : 'Post'}
+</div>
         </div>
       </header>
 
@@ -877,13 +981,22 @@ export default function AuthorPostDetailPage() {
             ) : null}
 
             <AuthorPostImages
-              images={
-                post.image_urls
-              }
-              authorName={
-                authorName
-              }
-            />
+  images={
+    post.image_urls
+  }
+  authorName={
+    authorName
+  }
+  photoPostView={
+    photoPostView
+  }
+  selectedPhotoIndex={
+    selectedPhotoIndex
+  }
+  onImageClick={
+    handlePostImageClick
+  }
+/>
 
             <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
               <div className="relative">
