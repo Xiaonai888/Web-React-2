@@ -461,6 +461,11 @@ const selectedPhotoIndex = Math.max(
     setCommentsOpen,
   ] = useState(false)
 
+  const [
+  fullscreenPhotoOpen,
+  setFullscreenPhotoOpen,
+] = useState(false)
+
   const pressTimerRef =
     useRef(null)
   const commentCountBaseRef =
@@ -549,6 +554,38 @@ const selectedPhotoIndex = Math.max(
       }
     }
   }, [postId])
+  useEffect(() => {
+  if (!fullscreenPhotoOpen) {
+    return undefined
+  }
+
+  const previousOverflow =
+    document.body.style.overflow
+
+  document.body.style.overflow =
+    'hidden'
+
+  function handleKeyDown(event) {
+    if (event.key === 'Escape') {
+      setFullscreenPhotoOpen(false)
+    }
+  }
+
+  window.addEventListener(
+    'keydown',
+    handleKeyDown
+  )
+
+  return () => {
+    document.body.style.overflow =
+      previousOverflow
+
+    window.removeEventListener(
+      'keydown',
+      handleKeyDown
+    )
+  }
+}, [fullscreenPhotoOpen])
 
   function goBack() {
     if (
@@ -575,6 +612,7 @@ const selectedPhotoIndex = Math.max(
 
 function handlePostImageClick(index) {
   if (photoPostView) {
+    setFullscreenPhotoOpen(true)
     return
   }
 
@@ -872,6 +910,30 @@ function handlePostImageClick(index) {
         item.type ===
         post?.my_reaction
     ) || null
+
+  const photoUrls = Array.isArray(
+  post?.image_urls
+)
+  ? post.image_urls
+      .filter(Boolean)
+      .slice(0, 5)
+  : []
+
+const safeSelectedPhotoIndex =
+  photoUrls.length
+    ? Math.min(
+        photoUrls.length - 1,
+        Math.max(
+          0,
+          selectedPhotoIndex
+        )
+      )
+    : 0
+
+const selectedPhotoUrl =
+  photoUrls[
+    safeSelectedPhotoIndex
+  ] || ''
 
   return (
     <div className="min-h-screen bg-[#f5f3fa]">
@@ -1184,6 +1246,32 @@ function handlePostImageClick(index) {
           </article>
         ) : null}
       </main>
+
+      {fullscreenPhotoOpen &&
+selectedPhotoUrl ? (
+  <div className="fixed inset-0 z-[1000000] bg-black">
+    <button
+      type="button"
+      onClick={() =>
+        setFullscreenPhotoOpen(false)
+      }
+      className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:opacity-70"
+      aria-label="Close fullscreen photo"
+    >
+      <i className="fa-solid fa-xmark text-[20px]" />
+    </button>
+
+    <div className="flex h-full w-full items-center justify-center">
+      <img
+        src={selectedPhotoUrl}
+        alt={`${authorName} photo`}
+        loading="eager"
+        decoding="async"
+        className="max-h-full max-w-full object-contain"
+      />
+    </div>
+  </div>
+) : null}
 
       <CommentsModal
         open={
