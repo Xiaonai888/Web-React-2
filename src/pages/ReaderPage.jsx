@@ -1168,14 +1168,15 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
       <div className="grid grid-cols-2 border-b border-[#eef1f5] pb-5">
        <div className="flex flex-col items-center justify-center gap-1">
   <ReactionAction
-    reactionType={reactionType}
-    count={likeCount}
-    busy={likeBusy}
-    disabled={!episodeId}
-    onReact={handleEpisodeReaction}
-    showCount={false}
-    idleLabel="Like"
-  />
+  reactionType={reactionType}
+  count={likeCount}
+  busy={likeBusy}
+  disabled={!episodeId}
+  onReact={handleEpisodeReaction}
+  showCount={false}
+  idleLabel="Like"
+  buttonClassName="h-[26px] w-[26px] justify-center [&>img]:!h-[26px] [&>img]:!w-[26px] [&>i]:!text-[26px]"
+/>
 
   <span
     className="text-[13px] font-normal"
