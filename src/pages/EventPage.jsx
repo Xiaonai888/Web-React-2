@@ -4,6 +4,7 @@ import { addStoryLanguageParam } from '../utils/storyLanguage'
 import BlackSundayEventTab from '../components/events/BlackSundayEventTab'
 import WriterWednesdayEventCard from '../components/events/WriterWednesdayEventCard'
 import Author49DayEventCard from '../components/events/Author49DayEventCard'
+import MonthlyVoteTab from './Event/MonthlyVoteTab'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
@@ -1424,6 +1425,18 @@ const activeEvents = [
               <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" />
             ) : null}
           </button>
+          <button
+  type="button"
+  onClick={() => setActiveTab('vote')}
+  className={`relative pb-3 text-[13px] font-extrabold ${
+    activeTab === 'vote' ? 'text-[#111827]' : 'text-[#9ca3af]'
+  }`}
+>
+  Vote
+  {activeTab === 'vote' ? (
+    <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#ff3f70]" />
+  ) : null}
+</button>
         </section>
 
         {activeTab === 'author' ? (
