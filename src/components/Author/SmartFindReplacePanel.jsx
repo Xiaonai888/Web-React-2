@@ -151,6 +151,7 @@ export default function SmartFindReplacePanel({
   const [revision, setRevision] = useState(0)
   const [isFindComposing, setIsFindComposing] = useState(false)
   const [isReplaceComposing, setIsReplaceComposing] = useState(false)
+  const [hintOpen, setHintOpen] = useState(false)
   const itemRefs = useRef(new Map())
 
   const editorText = useMemo(() => {
@@ -273,25 +274,35 @@ export default function SmartFindReplacePanel({
   return (
     <div className="fixed inset-0 z-[190] bg-white sm:flex sm:items-center sm:justify-center sm:bg-black/35 sm:px-4">
       <div className="flex h-full w-full flex-col bg-white shadow-2xl sm:h-[86vh] sm:max-w-[760px] sm:rounded-[28px]">
-        <div className="flex items-center gap-3 border-b border-[#eceaf2] bg-white px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95"
-            aria-label="Back to editor"
-          >
-            <i className="fa-solid fa-chevron-left text-[13px]" />
-          </button>
+        <div className="relative flex h-14 items-center gap-3 border-b border-[#eceaf2] bg-white px-4">
+  <button
+    type="button"
+    onClick={onClose}
+    className="flex h-9 w-9 shrink-0 items-center justify-center text-[#111827] active:scale-95"
+    aria-label="Back to editor"
+  >
+    <i className="fa-solid fa-chevron-left text-[14px]" />
+  </button>
 
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[17px] font-extrabold leading-5 text-[#111827]">
-              Find & Replace
-            </h2>
-            <p className="mt-1 line-clamp-1 text-[11px] font-bold text-[#8d94a1]">
-              Review matches before replacing.
-            </p>
-          </div>
-        </div>
+  <h2 className="min-w-0 flex-1 text-[16px] font-extrabold text-[#111827]">
+    Find & Replace
+  </h2>
+
+  <button
+    type="button"
+    onClick={() => setHintOpen((value) => !value)}
+    className="flex h-9 w-9 shrink-0 items-center justify-center text-[#555b66] active:scale-95"
+    aria-label="Find and replace help"
+  >
+    <i className="fa-regular fa-circle-question text-[17px]" />
+  </button>
+
+  {hintOpen ? (
+    <div className="absolute right-4 top-[50px] z-20 w-[240px] rounded-[12px] border border-[#e5e7eb] bg-white px-3 py-2.5 text-[11.5px] font-medium leading-5 text-[#667085] shadow-lg">
+      Review matches before replacing.
+    </div>
+  ) : null}
+</div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
