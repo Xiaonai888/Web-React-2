@@ -70,7 +70,7 @@ import AuthorBlockedReadersPage from './pages/Author/AuthorBlockedReadersPage'
 import AuthorModerationHistoryPage from './pages/Author/AuthorModerationHistoryPage'
 import UpdateTodayPage from './pages/UpdateTodayPage'
 
-
+const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const TopNovelPage = lazy(() => import('./pages/TopNovelPage'))
 const ShadowMallProductDetailPage = lazy(() => import('./pages/Shop/ShadowMallProductDetailPage'))
 const ShadowMallCartPage = lazy(() => import('./pages/Shop/ShadowMallCartPage'))
@@ -276,6 +276,7 @@ function AppShell() {
     '/author/trash',
     '/comments',
     '/saved-posts',
+    '/game',
     '/reader/post/create',
     '/reader/post/review',
     '/author/comment-protection',
@@ -347,6 +348,15 @@ const shouldShowOpeningAds =
         <Route path="/fast" element={<ComingSoon title="Fast / Reels" />} />
         <Route path="/library" element={<Library />} />
         <Route path="/me" element={<Me />} />
+
+        <Route
+  path="/game"
+  element={
+    <LazyPage>
+      <GamePage />
+    </LazyPage>
+  }
+/>
 
 
         <Route path="/shop" element={<ShopPage />} />
