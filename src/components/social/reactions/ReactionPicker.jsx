@@ -13,20 +13,23 @@ const ALIGN_CLASS = {
   right: 'right-0',
 }
 
-const EMOTION_CLASS = {
-  love: 'shadow-reaction-love',
-  haha: 'shadow-reaction-haha',
-  wow: 'shadow-reaction-wow',
-  sad: 'shadow-reaction-sad',
-  angry: 'shadow-reaction-angry',
-  support: 'shadow-reaction-support',
-  touched: 'shadow-reaction-touched',
+const FOCUS_CLASS = {
+  love: 'shadow-reaction-love-focus',
+  haha: 'shadow-reaction-haha-focus',
+  wow: 'shadow-reaction-wow-focus',
+  sad: 'shadow-reaction-sad-focus',
+  angry: 'shadow-reaction-angry-focus',
+  support:
+    'shadow-reaction-support-focus',
+  touched:
+    'shadow-reaction-touched-focus',
 }
 
 export default function ReactionPicker({
   open,
   activeType = '',
   previewType = '',
+  isSliding = false,
   busy = false,
   disabled = false,
   onSelect,
@@ -56,105 +59,122 @@ export default function ReactionPicker({
     ALIGN_CLASS[align] ||
     ALIGN_CLASS.left
 
+  const emphasizedType =
+    previewType ||
+    pressedType ||
+    hoverType
+
+  const hasEmphasis =
+    Boolean(emphasizedType)
+
   return (
     <>
       <style>{`
         @keyframes shadowReactionPickerIn {
           0% {
             opacity: 0;
-            scale: .96;
+            transform: scale(.96);
           }
           100% {
             opacity: 1;
-            scale: 1;
+            transform: scale(1);
           }
         }
 
-        @keyframes shadowReactionLove {
+        @keyframes shadowReactionIdle {
+          0%, 100% {
+            transform: translateY(0) rotate(-2deg);
+          }
+          50% {
+            transform: translateY(-3px) rotate(2deg);
+          }
+        }
+
+        @keyframes shadowReactionLoveFocus {
           0%, 100% {
             transform: scale(1);
             filter: saturate(1);
           }
-          45% {
-            transform: scale(1.1);
-            filter: saturate(1.18);
+          50% {
+            transform: scale(1.06);
+            filter: saturate(1.2);
           }
         }
 
-        @keyframes shadowReactionHaha {
+        @keyframes shadowReactionHahaFocus {
           0%, 100% {
-            transform: rotate(-3deg) scale(1.02);
+            transform: rotate(-4deg) scale(1);
           }
           25% {
-            transform: rotate(3deg) scale(1.08);
+            transform: rotate(4deg) scale(1.04);
           }
           50% {
-            transform: rotate(-2deg) scale(1.03);
+            transform: rotate(-3deg) scale(1);
           }
           75% {
-            transform: rotate(3deg) scale(1.08);
+            transform: rotate(4deg) scale(1.04);
           }
         }
 
-        @keyframes shadowReactionWow {
+        @keyframes shadowReactionWowFocus {
           0%, 100% {
             transform: scale(1);
             filter: brightness(1);
           }
           50% {
-            transform: scale(1.12);
+            transform: scale(1.08);
             filter: brightness(1.08);
           }
         }
 
-        @keyframes shadowReactionSad {
+        @keyframes shadowReactionSadFocus {
           0%, 100% {
             transform: rotate(0deg) scale(1);
             filter: saturate(1);
           }
           50% {
-            transform: rotate(-3deg) scale(1.04);
-            filter: saturate(.92) brightness(.97);
+            transform: rotate(-3deg) scale(1.03);
+            filter: saturate(.9);
           }
         }
 
-        @keyframes shadowReactionAngry {
+        @keyframes shadowReactionAngryFocus {
           0%, 100% {
             transform: scale(1);
             filter: saturate(1) brightness(1);
           }
           50% {
-            transform: scale(1.08);
-            filter: saturate(1.45) brightness(.93);
+            transform: scale(1.05);
+            filter: saturate(1.5) brightness(.92);
           }
         }
 
-        @keyframes shadowReactionSupport {
+        @keyframes shadowReactionSupportFocus {
           0%, 100% {
             transform: scale(1);
             filter: brightness(1);
           }
           50% {
-            transform: scale(1.08);
+            transform: scale(1.05);
             filter: brightness(1.08);
           }
         }
 
-        @keyframes shadowReactionTouched {
+        @keyframes shadowReactionTouchedFocus {
           0%, 100% {
-            transform: scale(1) rotate(0deg);
+            transform: rotate(-2deg) scale(1);
             filter: saturate(1);
           }
           50% {
-            transform: scale(1.07) rotate(2deg);
-            filter: saturate(1.12);
+            transform: rotate(2deg) scale(1.04);
+            filter: saturate(1.14);
           }
         }
 
         @keyframes shadowLoveHeart {
           0%, 100% {
             opacity: .35;
-            transform: scale(.72);
+            transform: scale(.7);
           }
           50% {
             opacity: 1;
@@ -164,8 +184,8 @@ export default function ReactionPicker({
 
         @keyframes shadowSadTear {
           0%, 100% {
-            opacity: .28;
-            transform: scale(.75);
+            opacity: .25;
+            transform: scale(.7);
           }
           55% {
             opacity: 1;
@@ -179,86 +199,87 @@ export default function ReactionPicker({
             150ms
             cubic-bezier(.22, 1, .36, 1)
             both;
-          transform-origin: center;
         }
 
-        .shadow-reaction-slot {
+        .shadow-reaction-item {
           transition:
-            scale 150ms cubic-bezier(.22, 1, .36, 1),
-            filter 150ms ease;
-          transform-origin: center;
-          will-change: scale;
+            width 150ms cubic-bezier(.22, 1, .36, 1),
+            height 150ms cubic-bezier(.22, 1, .36, 1),
+            opacity 150ms ease;
         }
 
-        .shadow-reaction-slot-active {
-          scale: 1.8;
-          filter:
-            drop-shadow(0 7px 8px rgba(0,0,0,.16));
-        }
-
-        .shadow-reaction-love {
+        .shadow-reaction-idle {
           animation:
-            shadowReactionLove
+            shadowReactionIdle
             1.05s
             ease-in-out
             infinite;
+          transform-origin: center;
         }
 
-        .shadow-reaction-haha {
+        .shadow-reaction-love-focus {
           animation:
-            shadowReactionHaha
-            .72s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-wow {
-          animation:
-            shadowReactionWow
-            1.15s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-sad {
-          animation:
-            shadowReactionSad
-            1.35s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-angry {
-          animation:
-            shadowReactionAngry
+            shadowReactionLoveFocus
             .9s
             ease-in-out
             infinite;
         }
 
-        .shadow-reaction-support {
+        .shadow-reaction-haha-focus {
           animation:
-            shadowReactionSupport
+            shadowReactionHahaFocus
+            .62s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-wow-focus {
+          animation:
+            shadowReactionWowFocus
+            1s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-sad-focus {
+          animation:
+            shadowReactionSadFocus
             1.2s
             ease-in-out
             infinite;
         }
 
-        .shadow-reaction-touched {
+        .shadow-reaction-angry-focus {
           animation:
-            shadowReactionTouched
-            1.25s
+            shadowReactionAngryFocus
+            .78s
             ease-in-out
             infinite;
         }
 
-        .shadow-reaction-slot-active[data-reaction-type="love"]::after {
+        .shadow-reaction-support-focus {
+          animation:
+            shadowReactionSupportFocus
+            1.05s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-touched-focus {
+          animation:
+            shadowReactionTouchedFocus
+            1.05s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-focused[data-reaction-type="love"]::after {
           content: "♥";
           position: absolute;
-          right: -2px;
-          top: -7px;
+          right: 1px;
+          top: 0;
           color: #ff2f5f;
-          font-size: 10px;
+          font-size: 12px;
           line-height: 1;
           pointer-events: none;
           animation:
@@ -268,19 +289,19 @@ export default function ReactionPicker({
             infinite;
         }
 
-        .shadow-reaction-slot-active[data-reaction-type="sad"]::after {
+        .shadow-reaction-focused[data-reaction-type="sad"]::after {
           content: "";
           position: absolute;
-          right: 4px;
-          bottom: 2px;
-          width: 4px;
-          height: 6px;
+          right: 7px;
+          bottom: 6px;
+          width: 5px;
+          height: 7px;
           border-radius: 60% 60% 70% 70%;
           background: #60a5fa;
           pointer-events: none;
           animation:
             shadowSadTear
-            .9s
+            .85s
             ease-in-out
             infinite;
         }
@@ -299,33 +320,41 @@ export default function ReactionPicker({
       <div
         role="menu"
         aria-label="Choose reaction"
+        className={`shadow-reaction-picker-in absolute bottom-9 ${alignClass} z-[80] flex min-h-[72px] max-w-[calc(100vw-16px)] touch-none items-center justify-between gap-1 overflow-visible rounded-full bg-white px-2 py-1 shadow-2xl ring-1 ring-black/10 ${className}`}
+        style={{
+          width:
+            'min(94vw, 380px)',
+        }}
         onPointerDown={(event) =>
           event.stopPropagation()
         }
-        className={`shadow-reaction-picker-in absolute bottom-9 ${alignClass} z-[80] flex max-w-[calc(100vw-16px)] touch-none items-center gap-0.5 overflow-visible rounded-full bg-white px-2 py-1.5 shadow-2xl ring-1 ring-black/10 ${className}`}
       >
         {REACTIONS.map(
-          (reaction) => {
+          (reaction, index) => {
             const active =
               reaction.type ===
               activeType
-            const pressed =
-              pressedType ===
-              reaction.type
-            const previewed =
-              previewType ===
-              reaction.type
-            const hovered =
-              hoverType ===
-              reaction.type
             const emphasized =
-              pressed ||
-              previewed ||
-              hovered
-            const emotionClass =
-              EMOTION_CLASS[
+              reaction.type ===
+              emphasizedType
+            const focusClass =
+              FOCUS_CLASS[
                 reaction.type
               ] || ''
+
+            const sizeClass =
+              emphasized
+                ? 'h-16 w-16'
+                : hasEmphasis
+                  ? 'h-8 w-8'
+                  : 'h-9 w-9'
+
+            const imageSizeClass =
+              emphasized
+                ? 'h-14 w-14'
+                : hasEmphasis
+                  ? 'h-6 w-6'
+                  : 'h-7 w-7'
 
             return (
               <button
@@ -339,8 +368,13 @@ export default function ReactionPicker({
                 disabled={
                   busy || disabled
                 }
-                onPointerEnter={() => {
+                onPointerEnter={(
+                  event
+                ) => {
                   if (
+                    event.pointerType !==
+                      'mouse' ||
+                    isSliding ||
                     busy ||
                     disabled
                   ) {
@@ -351,7 +385,17 @@ export default function ReactionPicker({
                     reaction.type
                   )
                 }}
-                onPointerLeave={() => {
+                onPointerLeave={(
+                  event
+                ) => {
+                  if (
+                    event.pointerType !==
+                      'mouse' ||
+                    isSliding
+                  ) {
+                    return
+                  }
+
                   setHoverType('')
                   setPressedType('')
                 }}
@@ -359,10 +403,12 @@ export default function ReactionPicker({
                   event
                 ) => {
                   event.stopPropagation()
+
+                  if (isSliding) {
+                    return
+                  }
+
                   setPressedType(
-                    reaction.type
-                  )
-                  setHoverType(
                     reaction.type
                   )
                 }}
@@ -370,27 +416,43 @@ export default function ReactionPicker({
                   event
                 ) => {
                   event.stopPropagation()
+
+                  if (isSliding) {
+                    return
+                  }
+
                   setPressedType('')
                 }}
                 onPointerCancel={() => {
+                  if (isSliding) {
+                    return
+                  }
+
                   setPressedType('')
                   setHoverType('')
                 }}
                 onClick={(event) => {
                   event.stopPropagation()
+
+                  if (isSliding) {
+                    return
+                  }
+
                   setPressedType('')
                   setHoverType('')
                   onSelect?.(
                     reaction.type
                   )
                 }}
-                className={`relative flex h-8 w-8 shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-55 ${
+                className={`shadow-reaction-item relative flex shrink-0 touch-none items-center justify-center overflow-visible rounded-full ${
+                  sizeClass
+                } ${
                   active
                     ? 'bg-[#f8f8fb] ring-1 ring-black/5'
                     : ''
                 } ${
                   emphasized
-                    ? 'z-[100]'
+                    ? 'shadow-reaction-focused z-[100]'
                     : 'z-0'
                 }`}
                 aria-label={
@@ -400,28 +462,38 @@ export default function ReactionPicker({
                   reaction.label
                 }
               >
-                <span
-                  data-reaction-type={
-                    reaction.type
-                  }
-                  className={`shadow-reaction-slot pointer-events-none relative flex h-7 w-7 items-center justify-center ${
+                <img
+                  src={reaction.src}
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                  className={`pointer-events-none select-none object-contain transition-[width,height] duration-150 ${
+                    imageSizeClass
+                  } ${
                     emphasized
-                      ? 'shadow-reaction-slot-active'
-                      : ''
+                      ? focusClass
+                      : 'shadow-reaction-idle'
                   }`}
-                >
-                  <img
-                    src={reaction.src}
-                    alt=""
-                    aria-hidden="true"
-                    draggable="false"
-                    className={`pointer-events-none h-7 w-7 select-none object-contain ${emotionClass}`}
-                  />
-                </span>
+                  style={{
+                    animationDelay:
+                      emphasized
+                        ? '0ms'
+                        : `${index * 80}ms`,
+                  }}
+                />
               </button>
             )
           }
         )}
+
+        <div
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium text-white shadow-sm"
+          aria-hidden="true"
+        >
+          {isSliding
+            ? 'Slide finger across'
+            : 'Tap to select'}
+        </div>
       </div>
     </>
   )
