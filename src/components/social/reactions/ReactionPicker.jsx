@@ -28,10 +28,15 @@ export default function ReactionPicker({
     pressedType,
     setPressedType,
   ] = useState('')
+  const [
+    hoverType,
+    setHoverType,
+  ] = useState('')
 
   useEffect(() => {
     if (!open) {
       setPressedType('')
+      setHoverType('')
     }
   }, [open])
 
@@ -47,7 +52,11 @@ export default function ReactionPicker({
         @keyframes shadowReactionPickerIn {
           0% {
             opacity: 0;
-            transform: translateY(8px) scale(.94);
+            transform: translateY(10px) scale(.92);
+          }
+          70% {
+            opacity: 1;
+            transform: translateY(-2px) scale(1.03);
           }
           100% {
             opacity: 1;
@@ -55,62 +64,61 @@ export default function ReactionPicker({
           }
         }
 
-        @keyframes shadowReactionItemIn {
-          0% {
-            opacity: .55;
-            transform: translateY(5px) scale(.84);
-          }
-          68% {
-            opacity: 1;
-            transform: translateY(-2px) scale(1.06);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        @keyframes shadowReactionHold {
+        @keyframes shadowReactionAlive {
           0%, 100% {
-            transform: translateY(-10px) rotate(-5deg) scale(1.42);
+            transform: translateY(0) rotate(-2deg) scale(1);
+          }
+          25% {
+            transform: translateY(-4px) rotate(2deg) scale(1.08);
           }
           50% {
-            transform: translateY(-12px) rotate(5deg) scale(1.5);
+            transform: translateY(-1px) rotate(-1deg) scale(1.03);
+          }
+          75% {
+            transform: translateY(-5px) rotate(2deg) scale(1.09);
+          }
+        }
+
+        @keyframes shadowReactionFocus {
+          0%, 100% {
+            transform: translateY(-58px) rotate(-4deg) scale(5.35);
+          }
+          35% {
+            transform: translateY(-66px) rotate(4deg) scale(5.7);
+          }
+          70% {
+            transform: translateY(-61px) rotate(-3deg) scale(5.5);
           }
         }
 
         .shadow-reaction-picker-in {
           animation:
             shadowReactionPickerIn
-            180ms
+            190ms
             cubic-bezier(.22, 1, .36, 1)
             both;
         }
 
-        .shadow-reaction-item-in {
+        .shadow-reaction-alive {
           animation:
-            shadowReactionItemIn
-            320ms
-            cubic-bezier(.22, 1, .36, 1)
-            both;
-        }
-
-        .shadow-reaction-hold {
-          animation:
-            shadowReactionHold
-            260ms
+            shadowReactionAlive
+            1.15s
             ease-in-out
             infinite;
           transform-origin: center bottom;
           will-change: transform;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-          .shadow-reaction-picker-in,
-          .shadow-reaction-item-in,
-          .shadow-reaction-hold {
-            animation: none !important;
-          }
+        .shadow-reaction-focus {
+          animation:
+            shadowReactionFocus
+            330ms
+            ease-in-out
+            infinite;
+          transform-origin: center bottom;
+          will-change: transform;
+          filter:
+            drop-shadow(0 16px 18px rgba(0,0,0,.18));
         }
       `}</style>
 
@@ -143,8 +151,13 @@ export default function ReactionPicker({
             const previewed =
               previewType ===
               reaction.type
+            const hovered =
+              hoverType ===
+              reaction.type
             const emphasized =
-              pressed || previewed
+              pressed ||
+              previewed ||
+              hovered
 
             return (
               <button
@@ -158,10 +171,29 @@ export default function ReactionPicker({
                 disabled={
                   busy || disabled
                 }
+                onPointerEnter={() => {
+                  if (
+                    busy ||
+                    disabled
+                  ) {
+                    return
+                  }
+
+                  setHoverType(
+                    reaction.type
+                  )
+                }}
+                onPointerLeave={() => {
+                  setHoverType('')
+                  setPressedType('')
+                }}
                 onPointerDown={(
                   event
                 ) => {
                   event.stopPropagation()
+                  setHoverType(
+                    reaction.type
+                  )
                   setPressedType(
                     reaction.type
                   )
@@ -172,32 +204,27 @@ export default function ReactionPicker({
                   event.stopPropagation()
                   setPressedType('')
                 }}
-                onPointerLeave={() =>
+                onPointerCancel={() => {
                   setPressedType('')
-                }
-                onPointerCancel={() =>
-                  setPressedType('')
-                }
+                  setHoverType('')
+                }}
                 onClick={(event) => {
                   event.stopPropagation()
                   setPressedType('')
+                  setHoverType('')
                   onSelect?.(
                     reaction.type
                   )
                 }}
-                className={`shadow-reaction-item-in relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-full transition disabled:opacity-55 ${
+                className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-full disabled:opacity-55 ${
                   active
                     ? 'bg-[#f8f8fb] ring-1 ring-black/5'
                     : ''
                 } ${
                   emphasized
-                    ? 'z-20'
+                    ? 'z-[100]'
                     : 'z-0'
                 }`}
-                style={{
-                  animationDelay:
-                    `${index * 35}ms`,
-                }}
                 aria-label={
                   reaction.label
                 }
@@ -212,9 +239,15 @@ export default function ReactionPicker({
                   draggable="false"
                   className={`h-8 w-8 select-none object-contain ${
                     emphasized
-                      ? 'shadow-reaction-hold'
-                      : ''
+                      ? 'shadow-reaction-focus'
+                      : 'shadow-reaction-alive'
                   }`}
+                  style={{
+                    animationDelay:
+                      emphasized
+                        ? '0ms'
+                        : `${index * 95}ms`,
+                  }}
                 />
               </button>
             )
