@@ -1564,8 +1564,10 @@ const activeEvents = [
               <MostReadThisWeekSection />
             </section>
           </>
-               ) : (
- <>
+        ) : activeTab === 'vote' ? (
+          <MonthlyVoteTab />
+        ) : (
+          <>
   {selectedActiveEvent === 'writer-wednesday' ? (
     <WriterWednesdayEventCard />
   ) : null}
