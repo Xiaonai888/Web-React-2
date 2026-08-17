@@ -1382,6 +1382,10 @@ function StandardReaderPostCard({
     setFullscreenPhotoOpen,
   ] = useState(false)
   const [
+  fullscreenPhotoIndex,
+  setFullscreenPhotoIndex,
+] = useState(0)
+  const [
     fullscreenControlsVisible,
     setFullscreenControlsVisible,
   ] = useState(true)
@@ -1461,22 +1465,27 @@ function StandardReaderPostCard({
           )
           .slice(0, 5)
       : []
-  const safeSelectedPhotoIndex =
-    imageUrls.length
-      ? Math.min(
-          imageUrls.length - 1,
-          Math.max(
-            0,
-            Number.isFinite(
-              Number(selectedPhotoIndex)
-            )
-              ? Math.floor(
-                  Number(selectedPhotoIndex)
-                )
-              : 0
+  const activePhotoIndex =
+  photoPostView
+    ? selectedPhotoIndex
+    : fullscreenPhotoIndex
+
+const safeSelectedPhotoIndex =
+  imageUrls.length
+    ? Math.min(
+        imageUrls.length - 1,
+        Math.max(
+          0,
+          Number.isFinite(
+            Number(activePhotoIndex)
           )
+            ? Math.floor(
+                Number(activePhotoIndex)
+              )
+            : 0
         )
-      : 0
+      )
+    : 0
   const selectedPhotoUrl =
     imageUrls[
       safeSelectedPhotoIndex
@@ -2230,37 +2239,25 @@ function StandardReaderPostCard({
     )
   }
 
-  function openPhotoPost(index) {
-    if (!post?.id) return
-
-    const photoIndex = Math.max(
-      0,
-      Number.isFinite(Number(index))
-        ? Math.floor(Number(index))
-        : 0
-    )
-
-    navigate(
-      `/reader/post/${encodeURIComponent(
-        post.id
-      )}?photo=${photoIndex}`
-    )
-  }
+  
 
   function handlePostImageClick(index) {
-    if (photoPostView) {
-      setFullscreenControlsVisible(true)
-      setFullscreenPhotoMenuOpen(false)
-      setPhotoDeleteConfirmOpen(false)
-      setPhotoCaptionEditorOpen(false)
-      setPhotoAltEditorOpen(false)
-      setPhotoActionMessage('')
-      setFullscreenPhotoOpen(true)
-      return
-    }
+  const photoIndex = Math.max(
+    0,
+    Number.isFinite(Number(index))
+      ? Math.floor(Number(index))
+      : 0
+  )
 
-    openPhotoPost(index)
-  }
+  setFullscreenPhotoIndex(photoIndex)
+  setFullscreenControlsVisible(true)
+  setFullscreenPhotoMenuOpen(false)
+  setPhotoDeleteConfirmOpen(false)
+  setPhotoCaptionEditorOpen(false)
+  setPhotoAltEditorOpen(false)
+  setPhotoActionMessage('')
+  setFullscreenPhotoOpen(true)
+}
 
   function openPhotoCaptionEditor(event) {
     event?.stopPropagation()
