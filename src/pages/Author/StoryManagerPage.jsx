@@ -904,7 +904,7 @@ const handleSavePublishSettings = async () => {
                 </div>
 
                 <div className="min-w-0 flex-1 pt-1">
-                  <h2 className="line-clamp-2 text-[19px] font-semibold leading-6 text-[#111827] sm:text-[22px]">
+                  <h2 className="line-clamp-2 text-[19px] font-semibold leading-[1.65] text-[#111827] sm:text-[22px]">
                     {story.title || 'Untitled Story'}
                   </h2>
 
