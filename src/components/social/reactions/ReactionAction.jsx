@@ -124,6 +124,9 @@ export default function ReactionAction({
         previewType={
           interaction.previewReactionType
         }
+        isSliding={
+          interaction.isSlidingReaction
+        }
         busy={busy}
         disabled={disabled}
         align={pickerAlign}
