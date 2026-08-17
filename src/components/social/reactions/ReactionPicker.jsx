@@ -13,6 +13,16 @@ const ALIGN_CLASS = {
   right: 'right-0',
 }
 
+const EMOTION_CLASS = {
+  love: 'shadow-reaction-love',
+  haha: 'shadow-reaction-haha',
+  wow: 'shadow-reaction-wow',
+  sad: 'shadow-reaction-sad',
+  angry: 'shadow-reaction-angry',
+  support: 'shadow-reaction-support',
+  touched: 'shadow-reaction-touched',
+}
+
 export default function ReactionPicker({
   open,
   activeType = '',
@@ -52,73 +62,227 @@ export default function ReactionPicker({
         @keyframes shadowReactionPickerIn {
           0% {
             opacity: 0;
-            transform: translateY(10px) scale(.92);
-          }
-          70% {
-            opacity: 1;
-            transform: translateY(-2px) scale(1.03);
+            scale: .96;
           }
           100% {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            scale: 1;
           }
         }
 
-        @keyframes shadowReactionAlive {
+        @keyframes shadowReactionLove {
           0%, 100% {
-            transform: translateY(0) rotate(-2deg) scale(1);
+            transform: scale(1);
+            filter: saturate(1);
+          }
+          45% {
+            transform: scale(1.1);
+            filter: saturate(1.18);
+          }
+        }
+
+        @keyframes shadowReactionHaha {
+          0%, 100% {
+            transform: rotate(-3deg) scale(1.02);
           }
           25% {
-            transform: translateY(-4px) rotate(2deg) scale(1.08);
+            transform: rotate(3deg) scale(1.08);
           }
           50% {
-            transform: translateY(-1px) rotate(-1deg) scale(1.03);
+            transform: rotate(-2deg) scale(1.03);
           }
           75% {
-            transform: translateY(-5px) rotate(2deg) scale(1.09);
+            transform: rotate(3deg) scale(1.08);
           }
         }
 
-        @keyframes shadowReactionFocus {
+        @keyframes shadowReactionWow {
           0%, 100% {
-            transform: translateY(-58px) rotate(-4deg) scale(5.35);
+            transform: scale(1);
+            filter: brightness(1);
           }
-          35% {
-            transform: translateY(-66px) rotate(4deg) scale(5.7);
+          50% {
+            transform: scale(1.12);
+            filter: brightness(1.08);
           }
-          70% {
-            transform: translateY(-61px) rotate(-3deg) scale(5.5);
+        }
+
+        @keyframes shadowReactionSad {
+          0%, 100% {
+            transform: rotate(0deg) scale(1);
+            filter: saturate(1);
+          }
+          50% {
+            transform: rotate(-3deg) scale(1.04);
+            filter: saturate(.92) brightness(.97);
+          }
+        }
+
+        @keyframes shadowReactionAngry {
+          0%, 100% {
+            transform: scale(1);
+            filter: saturate(1) brightness(1);
+          }
+          50% {
+            transform: scale(1.08);
+            filter: saturate(1.45) brightness(.93);
+          }
+        }
+
+        @keyframes shadowReactionSupport {
+          0%, 100% {
+            transform: scale(1);
+            filter: brightness(1);
+          }
+          50% {
+            transform: scale(1.08);
+            filter: brightness(1.08);
+          }
+        }
+
+        @keyframes shadowReactionTouched {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+            filter: saturate(1);
+          }
+          50% {
+            transform: scale(1.07) rotate(2deg);
+            filter: saturate(1.12);
+          }
+        }
+
+        @keyframes shadowLoveHeart {
+          0%, 100% {
+            opacity: .35;
+            transform: scale(.72);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.08);
+          }
+        }
+
+        @keyframes shadowSadTear {
+          0%, 100% {
+            opacity: .28;
+            transform: scale(.75);
+          }
+          55% {
+            opacity: 1;
+            transform: scale(1);
           }
         }
 
         .shadow-reaction-picker-in {
           animation:
             shadowReactionPickerIn
-            190ms
+            150ms
             cubic-bezier(.22, 1, .36, 1)
             both;
+          transform-origin: center;
         }
 
-        .shadow-reaction-alive {
+        .shadow-reaction-slot {
+          transition:
+            scale 150ms cubic-bezier(.22, 1, .36, 1),
+            filter 150ms ease;
+          transform-origin: center;
+          will-change: scale;
+        }
+
+        .shadow-reaction-slot-active {
+          scale: 1.8;
+          filter:
+            drop-shadow(0 7px 8px rgba(0,0,0,.16));
+        }
+
+        .shadow-reaction-love {
           animation:
-            shadowReactionAlive
+            shadowReactionLove
+            1.05s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-haha {
+          animation:
+            shadowReactionHaha
+            .72s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-wow {
+          animation:
+            shadowReactionWow
             1.15s
             ease-in-out
             infinite;
-          transform-origin: center bottom;
-          will-change: transform;
         }
 
-        .shadow-reaction-focus {
+        .shadow-reaction-sad {
           animation:
-            shadowReactionFocus
-            330ms
+            shadowReactionSad
+            1.35s
             ease-in-out
             infinite;
-          transform-origin: center bottom;
-          will-change: transform;
-          filter:
-            drop-shadow(0 16px 18px rgba(0,0,0,.18));
+        }
+
+        .shadow-reaction-angry {
+          animation:
+            shadowReactionAngry
+            .9s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-support {
+          animation:
+            shadowReactionSupport
+            1.2s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-touched {
+          animation:
+            shadowReactionTouched
+            1.25s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-slot-active[data-reaction-type="love"]::after {
+          content: "♥";
+          position: absolute;
+          right: -2px;
+          top: -7px;
+          color: #ff2f5f;
+          font-size: 10px;
+          line-height: 1;
+          pointer-events: none;
+          animation:
+            shadowLoveHeart
+            .72s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-slot-active[data-reaction-type="sad"]::after {
+          content: "";
+          position: absolute;
+          right: 4px;
+          bottom: 2px;
+          width: 4px;
+          height: 6px;
+          border-radius: 60% 60% 70% 70%;
+          background: #60a5fa;
+          pointer-events: none;
+          animation:
+            shadowSadTear
+            .9s
+            ease-in-out
+            infinite;
         }
       `}</style>
 
@@ -138,10 +302,10 @@ export default function ReactionPicker({
         onPointerDown={(event) =>
           event.stopPropagation()
         }
-        className={`shadow-reaction-picker-in absolute bottom-9 ${alignClass} z-[80] flex items-center gap-1.5 overflow-visible rounded-full bg-white px-2.5 py-2 shadow-2xl ring-1 ring-black/10 ${className}`}
+        className={`shadow-reaction-picker-in absolute bottom-9 ${alignClass} z-[80] flex max-w-[calc(100vw-16px)] touch-none items-center gap-0.5 overflow-visible rounded-full bg-white px-2 py-1.5 shadow-2xl ring-1 ring-black/10 ${className}`}
       >
         {REACTIONS.map(
-          (reaction, index) => {
+          (reaction) => {
             const active =
               reaction.type ===
               activeType
@@ -158,6 +322,10 @@ export default function ReactionPicker({
               pressed ||
               previewed ||
               hovered
+            const emotionClass =
+              EMOTION_CLASS[
+                reaction.type
+              ] || ''
 
             return (
               <button
@@ -191,10 +359,10 @@ export default function ReactionPicker({
                   event
                 ) => {
                   event.stopPropagation()
-                  setHoverType(
+                  setPressedType(
                     reaction.type
                   )
-                  setPressedType(
+                  setHoverType(
                     reaction.type
                   )
                 }}
@@ -216,7 +384,7 @@ export default function ReactionPicker({
                     reaction.type
                   )
                 }}
-                className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-full disabled:opacity-55 ${
+                className={`relative flex h-8 w-8 shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-55 ${
                   active
                     ? 'bg-[#f8f8fb] ring-1 ring-black/5'
                     : ''
@@ -232,23 +400,24 @@ export default function ReactionPicker({
                   reaction.label
                 }
               >
-                <img
-                  src={reaction.src}
-                  alt=""
-                  aria-hidden="true"
-                  draggable="false"
-                  className={`h-8 w-8 select-none object-contain ${
+                <span
+                  data-reaction-type={
+                    reaction.type
+                  }
+                  className={`shadow-reaction-slot pointer-events-none relative flex h-7 w-7 items-center justify-center ${
                     emphasized
-                      ? 'shadow-reaction-focus'
-                      : 'shadow-reaction-alive'
+                      ? 'shadow-reaction-slot-active'
+                      : ''
                   }`}
-                  style={{
-                    animationDelay:
-                      emphasized
-                        ? '0ms'
-                        : `${index * 95}ms`,
-                  }}
-                />
+                >
+                  <img
+                    src={reaction.src}
+                    alt=""
+                    aria-hidden="true"
+                    draggable="false"
+                    className={`pointer-events-none h-7 w-7 select-none object-contain ${emotionClass}`}
+                  />
+                </span>
               </button>
             )
           }
