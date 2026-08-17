@@ -25,6 +25,10 @@ export default function useReactionInteraction({
     previewReactionType,
     setPreviewReactionType,
   ] = useState('')
+  const [
+    isSlidingReaction,
+    setIsSlidingReaction,
+  ] = useState(false)
 
   const pressTimerRef = useRef(null)
   const longPressOpenedRef =
@@ -34,6 +38,12 @@ export default function useReactionInteraction({
     useRef(null)
   const previewReactionTypeRef =
     useRef('')
+  const slidingReactionRef =
+    useRef(false)
+  const pointerStartRef = useRef({
+    x: 0,
+    y: 0,
+  })
 
   const blocked =
     Boolean(busy) || Boolean(disabled)
@@ -68,6 +78,24 @@ export default function useReactionInteraction({
     []
   )
 
+  const setSliding = useCallback(
+    (value) => {
+      const nextValue = Boolean(value)
+
+      if (
+        slidingReactionRef.current ===
+        nextValue
+      ) {
+        return
+      }
+
+      slidingReactionRef.current =
+        nextValue
+      setIsSlidingReaction(nextValue)
+    },
+    []
+  )
+
   const clearPressTimer =
     useCallback(() => {
       if (!pressTimerRef.current) {
@@ -84,7 +112,11 @@ export default function useReactionInteraction({
     useCallback(() => {
       activePointerIdRef.current = null
       setPreviewType('')
-    }, [setPreviewType])
+      setSliding(false)
+    }, [
+      setPreviewType,
+      setSliding,
+    ])
 
   const closeReactionPicker =
     useCallback(() => {
@@ -180,6 +212,7 @@ export default function useReactionInteraction({
         longPressOpenedRef.current =
           false
         setPreviewType('')
+        setSliding(false)
 
         activePointerIdRef.current =
           Number.isFinite(
@@ -187,6 +220,15 @@ export default function useReactionInteraction({
           )
             ? event.pointerId
             : null
+
+        pointerStartRef.current = {
+          x: Number(
+            event?.clientX || 0
+          ),
+          y: Number(
+            event?.clientY || 0
+          ),
+        }
 
         pressTimerRef.current =
           window.setTimeout(() => {
@@ -202,6 +244,7 @@ export default function useReactionInteraction({
         longPressMs,
         setPickerOpen,
         setPreviewType,
+        setSliding,
       ]
     )
 
@@ -254,27 +297,120 @@ export default function useReactionInteraction({
       clientX,
       clientY
     ) {
-      const element =
+      const directElement =
         document.elementFromPoint(
           clientX,
           clientY
         )
 
-      const reactionElement =
-        element?.closest?.(
+      const directReaction =
+        directElement?.closest?.(
           '[data-shadow-reaction-type]'
         )
 
-      const reactionType =
-        reactionElement?.getAttribute?.(
+      const directType =
+        directReaction?.getAttribute?.(
           'data-shadow-reaction-type'
         ) || ''
 
-      return isReactionType(reactionType)
-        ? String(
-            reactionType
-          ).toLowerCase()
-        : ''
+      if (isReactionType(directType)) {
+        return String(
+          directType
+        ).toLowerCase()
+      }
+
+      const reactionElements =
+        Array.from(
+          document.querySelectorAll(
+            '[data-shadow-reaction-type]'
+          )
+        )
+
+      if (!reactionElements.length) {
+        return ''
+      }
+
+      const candidates =
+        reactionElements
+          .map((element) => {
+            const rect =
+              element.getBoundingClientRect()
+            const type =
+              element.getAttribute(
+                'data-shadow-reaction-type'
+              ) || ''
+
+            return {
+              type,
+              rect,
+              centerX:
+                rect.left +
+                rect.width / 2,
+            }
+          })
+          .filter((item) =>
+            isReactionType(item.type)
+          )
+
+      if (!candidates.length) {
+        return ''
+      }
+
+      const minLeft = Math.min(
+        ...candidates.map(
+          (item) => item.rect.left
+        )
+      )
+      const maxRight = Math.max(
+        ...candidates.map(
+          (item) => item.rect.right
+        )
+      )
+      const minTop = Math.min(
+        ...candidates.map(
+          (item) => item.rect.top
+        )
+      )
+      const maxBottom = Math.max(
+        ...candidates.map(
+          (item) => item.rect.bottom
+        )
+      )
+
+      if (
+        clientX < minLeft - 12 ||
+        clientX > maxRight + 12 ||
+        clientY < minTop - 52 ||
+        clientY > maxBottom + 52
+      ) {
+        return ''
+      }
+
+      const nearest =
+        candidates.reduce(
+          (best, item) => {
+            const distance =
+              Math.abs(
+                item.centerX - clientX
+              )
+
+            if (
+              !best ||
+              distance <
+                best.distance
+            ) {
+              return {
+                type: item.type,
+                distance,
+              }
+            }
+
+            return best
+          },
+          null
+        )
+
+      return nearest?.type || ''
     }
 
     function handlePointerMove(event) {
@@ -286,6 +422,22 @@ export default function useReactionInteraction({
         event.pointerId !== pointerId
       ) {
         return
+      }
+
+      const distanceX =
+        event.clientX -
+        pointerStartRef.current.x
+      const distanceY =
+        event.clientY -
+        pointerStartRef.current.y
+
+      if (
+        Math.hypot(
+          distanceX,
+          distanceY
+        ) > 4
+      ) {
+        setSliding(true)
       }
 
       setPreviewType(
@@ -311,17 +463,21 @@ export default function useReactionInteraction({
         getReactionTypeAtPoint(
           event.clientX,
           event.clientY
-        )
+        ) ||
+        previewReactionTypeRef.current
 
       activePointerIdRef.current = null
-      setPreviewType('')
       longPressOpenedRef.current = false
+      setSliding(false)
 
       if (reactionType) {
         void selectReaction(
           reactionType
         )
+        return
       }
+
+      setPreviewType('')
     }
 
     function handlePointerCancel(event) {
@@ -340,7 +496,10 @@ export default function useReactionInteraction({
 
     document.addEventListener(
       'pointermove',
-      handlePointerMove
+      handlePointerMove,
+      {
+        passive: false,
+      }
     )
     document.addEventListener(
       'pointerup',
@@ -370,6 +529,7 @@ export default function useReactionInteraction({
     reactionPickerOpen,
     selectReaction,
     setPreviewType,
+    setSliding,
   ])
 
   useEffect(() => {
@@ -390,6 +550,7 @@ export default function useReactionInteraction({
   return {
     reactionPickerOpen,
     previewReactionType,
+    isSlidingReaction,
     openReactionPicker,
     closeReactionPicker,
     selectReaction,
