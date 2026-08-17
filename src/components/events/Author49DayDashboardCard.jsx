@@ -29,19 +29,6 @@ function getCountdown(milliseconds) {
   }
 }
 
-function TimeItem({ value, label }) {
-  return (
-    <div className="min-w-0 text-center">
-      <div className="text-[14px] font-black leading-none text-[#17130A]">
-        {String(value).padStart(2, '0')}
-      </div>
-      <div className="mt-1 text-[7px] font-black uppercase tracking-[0.07em] text-[#8A7B54]">
-        {label}
-      </div>
-    </div>
-  )
-}
-
 export default function Author49DayDashboardCard({ onStartWriting }) {
   const [event, setEvent] = useState(null)
   const [serverOffsetMs, setServerOffsetMs] = useState(0)
@@ -134,26 +121,49 @@ export default function Author49DayDashboardCard({ onStartWriting }) {
     return null
   }
 
-  return (
-  <section className="mt-5 overflow-hidden rounded-[16px] border border-[#F2C230] bg-black shadow-[0_10px_26px_rgba(216,164,0,0.12)]">
-    <div className="relative aspect-[16/9] w-full overflow-hidden">
-  <img
-    src="/assets/Icons/Event/Event 1.webp"
-        alt="80% for 49 Days Event"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+  const isActive = event.status === 'active'
 
-      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/55 via-black/15 to-transparent px-4 pb-4 pt-14">
-        <button
-          type="button"
-          onClick={onStartWriting}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
-        >
-          <i className="fa-solid fa-pen-nib text-[10px]" />
-          Start Writing
-        </button>
+  return (
+    <section className="mt-5 overflow-hidden rounded-[16px] border border-[#F2C230] bg-black shadow-[0_10px_26px_rgba(216,164,0,0.12)]">
+      <div className="relative aspect-[16/9] w-full overflow-hidden">
+        <img
+          src="/assets/Icons/Event/Event 1.webp"
+          alt="80% for 49 Days Event"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
+        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/55 via-black/15 to-transparent px-4 pb-4 pt-14">
+          {isActive ? (
+            <div className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] px-3 text-black shadow-[0_4px_0_#111111]">
+              <i className="fa-regular fa-clock text-[11px]" />
+              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
+                {String(countdown.days).padStart(2, '0')}D
+              </span>
+              <span className="text-[12px] font-black">:</span>
+              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
+                {String(countdown.hours).padStart(2, '0')}
+              </span>
+              <span className="text-[12px] font-black">:</span>
+              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
+                {String(countdown.minutes).padStart(2, '0')}
+              </span>
+              <span className="text-[12px] font-black">:</span>
+              <span className="text-[13px] font-black tabular-nums tracking-[0.03em]">
+                {String(countdown.seconds).padStart(2, '0')}
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onStartWriting}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] border-2 border-black bg-[#FFC400] text-[12px] font-black text-black shadow-[0_4px_0_#111111] transition active:translate-y-[2px] active:shadow-[0_2px_0_#111111]"
+            >
+              <i className="fa-solid fa-pen-nib text-[10px]" />
+              Start Writing
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  </section>
-)
+    </section>
+  )
 }
