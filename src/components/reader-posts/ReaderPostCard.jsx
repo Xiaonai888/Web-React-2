@@ -2641,14 +2641,18 @@ const safeSelectedPhotoIndex =
         setFullscreenPhotoOpen(false)
         setFullscreenControlsVisible(true)
         setPhotoActionMessage('')
-        navigate(
-          `/reader/post/${encodeURIComponent(
-            post.id
-          )}`,
-          {
-            replace: true,
-          }
-        )
+
+        if (photoPostView) {
+          navigate(
+            `/reader/post/${encodeURIComponent(
+              post.id
+            )}`,
+            {
+              replace: true,
+            }
+          )
+        }
+
         return
       }
 
@@ -2661,14 +2665,21 @@ const safeSelectedPhotoIndex =
       setPhotoActionMessage(
         'Photo deleted.'
       )
-      navigate(
-        `/reader/post/${encodeURIComponent(
-          post.id
-        )}?photo=${nextPhotoIndex}`,
-        {
-          replace: true,
-        }
-      )
+
+      if (photoPostView) {
+        navigate(
+          `/reader/post/${encodeURIComponent(
+            post.id
+          )}?photo=${nextPhotoIndex}`,
+          {
+            replace: true,
+          }
+        )
+      } else {
+        setFullscreenPhotoIndex(
+          nextPhotoIndex
+        )
+      }
     } catch (error) {
       setPhotoDeleteConfirmOpen(false)
       setFullscreenPhotoMenuOpen(false)
@@ -3454,31 +3465,6 @@ const safeSelectedPhotoIndex =
   </button>
 ) : null}
 
-                <button
-                  type="button"
-                  onClick={saveSelectedPhoto}
-                  className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-                    <i className="fa-solid fa-download text-[17px]" />
-                  </span>
-                  <span className="text-[14px] font-medium text-[#111827]">
-                    Save photo
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={shareSelectedPhoto}
-                  className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-                    <i className="fa-solid fa-share-nodes text-[17px]" />
-                  </span>
-                  <span className="text-[14px] font-medium text-[#111827]">
-                    Share photo
-                  </span>
-                </button>
               </div>
             </div>
           ) : null}
