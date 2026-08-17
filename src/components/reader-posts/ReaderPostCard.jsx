@@ -3234,12 +3234,105 @@ const safeSelectedPhotoIndex =
           </div>
 
           {fullscreenControlsVisible &&
+!fullscreenPhotoMenuOpen &&
+!photoCaptionEditorOpen &&
+!photoAltEditorOpen &&
+!photoDeleteConfirmOpen ? (
+  <div
+    className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
+    onClick={(event) =>
+      event.stopPropagation()
+    }
+  >
+    <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] font-normal text-white/70">
+      <span>
+        {formatCompactNumber(
+          reactionCount
+        )}{' '}
+        reactions
+      </span>
+
+      <span>
+        {formatCompactNumber(
+          commentCount
+        )}{' '}
+        comments
+      </span>
+
+      <span>
+        {formatCompactNumber(
+          echoCount
+        )}{' '}
+        shares
+      </span>
+    </div>
+
+    <div className="mx-auto flex max-w-[620px] items-center border-t border-white/15 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
+      <ReactionAction
+        reactionType={reactionType}
+        count={reactionCount}
+        busy={reactionBusy}
+        onReact={updateReaction}
+        showCount={false}
+        idleLabel="Like"
+        className="flex-1 justify-center"
+        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+      />
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+
+          setFullscreenPhotoOpen(
+            false
+          )
+          setFullscreenControlsVisible(
+            true
+          )
+          setFullscreenPhotoMenuOpen(
+            false
+          )
+          setCommentOpen(true)
+        }}
+        className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
+      >
+        <i className="fa-regular fa-comment text-[20px]" />
+        <span>Comment</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+
+          setFullscreenPhotoOpen(
+            false
+          )
+          setFullscreenControlsVisible(
+            true
+          )
+          setFullscreenPhotoMenuOpen(
+            false
+          )
+          setEchoOpen(true)
+        }}
+        className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
+      >
+        <i className="fa-solid fa-share text-[19px]" />
+        <span>Share</span>
+      </button>
+    </div>
+  </div>
+) : null}
+
+          {fullscreenControlsVisible &&
           selectedPhotoCaption &&
           !fullscreenPhotoMenuOpen &&
           !photoCaptionEditorOpen &&
           !photoAltEditorOpen &&
           !photoDeleteConfirmOpen ? (
-            <div className="absolute bottom-[max(28px,env(safe-area-inset-bottom))] left-0 right-0 z-20 px-5 text-center">
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+92px)] left-0 right-0 z-20 px-5 text-center">
               <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] font-normal leading-5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                 {selectedPhotoCaption}
               </p>
@@ -3247,7 +3340,7 @@ const safeSelectedPhotoIndex =
           ) : null}
 
           {photoActionMessage ? (
-            <div className="absolute bottom-[max(24px,env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
               {photoActionMessage}
             </div>
           ) : null}
@@ -3271,59 +3364,95 @@ const safeSelectedPhotoIndex =
                 <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
                 {isOwner ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={
-                        openPhotoCaptionEditor
-                      }
-                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-                        <i className="fa-regular fa-pen-to-square text-[17px]" />
-                      </span>
-                      <span className="text-[14px] font-medium text-[#111827]">
-                        Edit caption
-                      </span>
-                    </button>
+  <button
+    type="button"
+    onClick={
+      openPhotoCaptionEditor
+    }
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+      <i className="fa-solid fa-pencil text-[19px]" />
+    </span>
 
-                    <button
-                      type="button"
-                      onClick={
-                        openPhotoAltEditor
-                      }
-                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-                        <i className="fa-solid fa-universal-access text-[17px]" />
-                      </span>
-                      <span className="text-[14px] font-medium text-[#111827]">
-                        Edit alt text
-                      </span>
-                    </button>
+    <span className="text-[15px] font-normal text-[#111827]">
+      Edit caption
+    </span>
+  </button>
+) : null}
 
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setFullscreenPhotoMenuOpen(
-                          false
-                        )
-                        setPhotoDeleteConfirmOpen(
-                          true
-                        )
-                      }}
-                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#fff1f2]"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center text-[#e5484d]">
-                        <i className="fa-regular fa-trash-can text-[17px]" />
-                      </span>
-                      <span className="text-[14px] font-medium text-[#e5484d]">
-                        Delete photo
-                      </span>
-                    </button>
-                  </>
-                ) : null}
+{isOwner ? (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+
+      setFullscreenPhotoMenuOpen(
+        false
+      )
+      setPhotoDeleteConfirmOpen(
+        true
+      )
+    }}
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+      <i className="fa-regular fa-trash-can text-[20px]" />
+    </span>
+
+    <span className="text-[15px] font-normal text-[#111827]">
+      Delete photo
+    </span>
+  </button>
+) : null}
+
+<button
+  type="button"
+  onClick={saveSelectedPhoto}
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+>
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <i className="fa-solid fa-arrow-down text-[19px]" />
+  </span>
+
+  <span className="text-[15px] font-normal text-[#111827]">
+    Save to phone
+  </span>
+</button>
+
+<button
+  type="button"
+  onClick={shareSelectedPhoto}
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+>
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <i className="fa-solid fa-share text-[19px]" />
+  </span>
+
+  <span className="text-[15px] font-normal text-[#111827]">
+    Share external
+  </span>
+</button>
+
+{isOwner ? (
+  <button
+    type="button"
+    onClick={
+      openPhotoAltEditor
+    }
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center">
+      <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] text-[14px] font-semibold leading-none text-[#4b5563]">
+        A
+      </span>
+    </span>
+
+    <span className="text-[15px] font-normal text-[#111827]">
+      Edit alt text
+    </span>
+  </button>
+) : null}
 
                 <button
                   type="button"
