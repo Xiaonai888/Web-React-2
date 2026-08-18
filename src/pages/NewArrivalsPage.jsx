@@ -79,7 +79,7 @@ function BookCard({ book }) {
         </div>
 
         <div className="mt-3 w-full">
-          <h3 className="line-clamp-2 text-[16px] font-extrabold leading-snug tracking-tight text-neutral-900">
+          <h3 className="line-clamp-2 min-h-[44px] text-[16px] font-extrabold leading-[22px] tracking-tight text-neutral-900">
             {book.title}
           </h3>
 
@@ -95,17 +95,14 @@ function BookCard({ book }) {
             </div>
           ) : null}
 
-          <div className="mt-2 flex items-center gap-4 text-[13px] text-gray-600">
-            <div className="flex items-center gap-1">
-              <i className="fas fa-heart text-[12px] text-red-500" />
-              <span>{book.likes}</span>
-            </div>
-          </div>
-
-          <div className="mt-1.5 flex items-center gap-1 text-[12px] text-gray-500">
-            <i className="fas fa-list text-[11px]" />
-            <span>{book.episodes}</span>
-          </div>
+          <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500">
+  <span className="flex items-center gap-1">
+    <i className="fas fa-heart text-[10px] text-red-500" /> {book.likes}
+  </span>
+  <span className="flex items-center gap-1">
+    <i className="fas fa-list text-[10px]" /> {book.episodes}
+  </span>
+</div>
         </div>
       </div>
     </Link>
