@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -9,6 +10,8 @@ import {
   useSearchParams,
 } from 'react-router-dom'
 import CommentSection from '../../components/comments/CommentSection'
+import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
+import ReactionAction from '../../components/social/reactions/ReactionAction'
 import PublicPostDetailView from '../../components/social/posts/PublicPostDetailView'
 import { getAuthorChatToken } from '../../services/authorChatApi'
 
@@ -18,6 +21,51 @@ const API_BASE_URL =
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+async function setAuthorPostReaction(
+  token,
+  postId,
+  reactionType
+) {
+  if (!token) {
+    throw new Error('Please login first')
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(
+      postId
+    )}/react`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json',
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        reaction_type:
+          reactionType,
+      }),
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (
+    !response.ok ||
+    data.ok === false
+  ) {
+    throw new Error(
+      data.message ||
+        'Failed to update reaction'
+    )
+  }
+
+  return data
+}
 
 function PostImages({
   images,
@@ -103,6 +151,14 @@ export default function AuthorPostActivityPage() {
     useState(true)
   const [error, setError] =
     useState('')
+  const [
+    reactionBusy,
+    setReactionBusy,
+  ] = useState(false)
+  const [
+    actionError,
+    setActionError,
+  ] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -238,6 +294,112 @@ export default function AuthorPostActivityPage() {
       })
   }, [comment?.id])
 
+  async function chooseReaction(
+    reactionType
+  ) {
+    if (
+      reactionBusy ||
+      !post?.id
+    ) {
+      return
+    }
+
+    const token =
+      getAuthorChatToken()
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      setReactionBusy(true)
+      setActionError('')
+
+      const data =
+        await setAuthorPostReaction(
+          token,
+          post.id,
+          reactionType
+        )
+
+      setPost((current) => {
+        if (!current) {
+          return current
+        }
+
+        return {
+          ...current,
+          ...(data.post || {}),
+          author_page:
+            current.author_page,
+          is_following:
+            current.is_following,
+          is_owner:
+            current.is_owner,
+          my_reaction:
+            data.reaction_type ||
+            null,
+          like_count: Number(
+            data.like_count ??
+              data.post?.like_count ??
+              current.like_count ??
+              0
+          ),
+          reaction_summary:
+            Array.isArray(
+              data.reaction_summary
+            )
+              ? data.reaction_summary
+              : current.reaction_summary,
+        }
+      })
+    } catch (reactionError) {
+      setActionError(
+        reactionError.message ||
+          'Failed to update reaction'
+      )
+    } finally {
+      setReactionBusy(false)
+    }
+  }
+
+  const handleEchoCountChange =
+    useCallback(
+      (_postId, total) => {
+        setPost((current) =>
+          current
+            ? {
+                ...current,
+                echo_count: Number(
+                  total || 0
+                ),
+              }
+            : current
+        )
+      },
+      []
+    )
+
+  const handleCommentTotalChange = (
+    nextTotal
+  ) => {
+    setPost((current) =>
+      current
+        ? {
+            ...current,
+            comment_count:
+              Math.max(
+                0,
+                Number(
+                  nextTotal || 0
+                )
+              ),
+          }
+        : current
+    )
+  }
+
   const page =
     post?.author_page || {}
 
@@ -334,6 +496,58 @@ export default function AuthorPostActivityPage() {
             />
           ) : null
         }
+        reactionControl={
+          post ? (
+            <div className="inline-flex items-center gap-2">
+              <ReactionAction
+                reactionType={
+                  post.my_reaction
+                }
+                count={
+                  post.like_count
+                }
+                busy={
+                  reactionBusy
+                }
+                showBusySpinner
+                showCount={false}
+                onReact={
+                  chooseReaction
+                }
+                idleLabel="Like"
+                buttonClassName="text-[#65676b]"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  chooseReaction(
+                    post.my_reaction ||
+                      'love'
+                  )
+                }
+                disabled={
+                  reactionBusy
+                }
+                className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+              >
+                Like
+              </button>
+            </div>
+          ) : null
+        }
+        echoControl={
+          post ? (
+            <AuthorPostEchoAction
+              post={post}
+              author={page}
+              className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+              onCountChange={
+                handleEchoCountChange
+              }
+            />
+          ) : null
+        }
         reactionSummary={
           Array.isArray(
             post?.reaction_summary
@@ -368,6 +582,9 @@ export default function AuthorPostActivityPage() {
               }
               focusCommentId={
                 focusCommentId
+              }
+              onCommentTotalChange={
+                handleCommentTotalChange
               }
               onCommentsChange={() => {
                 if (
@@ -412,10 +629,46 @@ export default function AuthorPostActivityPage() {
         onOpenComments={
           scrollToCommentArea
         }
+        onOpenReactions={() =>
+          post?.id
+            ? navigate(
+                `/interactions/author_post/${encodeURIComponent(
+                  post.id
+                )}/likes`,
+                {
+                  state: {
+                    sourceName:
+                      pageName,
+                  },
+                }
+              )
+            : null
+        }
+        onOpenEchoes={() =>
+          post?.id
+            ? navigate(
+                `/interactions/author_post/${encodeURIComponent(
+                  post.id
+                )}/echoes`,
+                {
+                  state: {
+                    sourceName:
+                      pageName,
+                  },
+                }
+              )
+            : null
+        }
         onErrorBack={() =>
           navigate(-1)
         }
       />
+
+      {actionError ? (
+        <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
+          {actionError}
+        </div>
+      ) : null}
     </div>
   )
 }
