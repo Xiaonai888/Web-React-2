@@ -1424,7 +1424,65 @@ const selectedPhotoUrl =
       {fullscreenPhotoOpen &&
 selectedPhotoUrl ? (
   <div
-    className="fixed inset-0 z-[1000000] bg-black"
+    <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
+  <img
+    src={selectedPhotoUrl}
+    alt={`${authorName} photo`}
+    loading="eager"
+    decoding="async"
+    draggable="false"
+    className="max-h-[100dvh] max-w-full select-none object-contain"
+  />
+</div>
+
+  {fullscreenControlsVisible &&
+!fullscreenPhotoMenuOpen &&
+!photoDeleteConfirmOpen ? (
+  <div
+    className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
+    onClick={(event) => event.stopPropagation()}
+  >
+    <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] text-white/70">
+      <span>{Number(post?.like_count || 0)} reactions</span>
+      <span>{Number(post?.comment_count || 0)} comments</span>
+      <span>{Number(post?.echo_count || 0)} shares</span>
+    </div>
+
+    <div className="mx-auto flex max-w-[620px] items-center border-t border-white/15 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
+      <ReactionAction
+        reactionType={post?.my_reaction}
+        count={post?.like_count}
+        busy={reactionBusy}
+        onReact={chooseReaction}
+        showCount={false}
+        idleLabel="Like"
+        className="flex-1 justify-center"
+        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+      />
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          setFullscreenPhotoOpen(false)
+          setFullscreenControlsVisible(true)
+          openComments()
+        }}
+        className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
+      >
+        <i className="fa-regular fa-comment text-[20px]" />
+        <span>Comment</span>
+      </button>
+
+      <AuthorPostEchoAction
+        post={post}
+        author={author}
+        onCountChange={handleEchoCountChange}
+        className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
+      />
+    </div>
+  </div>
+) : null}
     onClick={() => {
 
       if (photoDeleteConfirmOpen) {
