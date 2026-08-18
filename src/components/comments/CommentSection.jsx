@@ -1034,17 +1034,23 @@ function ReplyComposer({
           </span>
         ) : null}
 
-        <input
+        <textarea
           value={value}
           maxLength={replyMaxLength}
-          onChange={(event) => {
-  const textarea = event.currentTarget
-  onChange(textarea.value)
-  textarea.style.height = 'auto'
-  textarea.style.height = `${Math.min(textarea.scrollHeight, 118)}px`
-}}
+          rows={1}
+          onChange={(event) =>
+            onChange(event.target.value)
+          }
+          onInput={(event) => {
+            const textarea = event.currentTarget
+            textarea.style.height = 'auto'
+            textarea.style.height = `${Math.min(
+              textarea.scrollHeight,
+              118
+            )}px`
+          }}
           placeholder="Write a reply..."
-          className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
+          className="max-h-[118px] min-h-[24px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] font-normal leading-5 text-[#111827] outline-none placeholder:text-[#98a2b3]"
         />
 
         <button
@@ -1887,6 +1893,14 @@ function CommentComposer({
             onChange={(event) =>
               onChange(event.target.value)
             }
+            onInput={(event) => {
+              const textarea = event.currentTarget
+              textarea.style.height = 'auto'
+              textarea.style.height = `${Math.min(
+                textarea.scrollHeight,
+                118
+              )}px`
+            }}
             onFocus={() =>
               setFocused(true)
             }
