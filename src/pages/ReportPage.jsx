@@ -221,6 +221,56 @@ const REPORT_CONFIG = {
   },
 }
 
+const PHOTO_REPORT_CONFIG = {
+  title: 'Report this photo',
+  typeLabel: 'Photo',
+  subtitle: 'Choose the reason that best describes the problem with this photo.',
+  options: [
+    {
+      value: 'sexual_or_inappropriate',
+      label: 'Sexual or inappropriate photo',
+      description: 'Nudity, explicit sexual content, or other inappropriate imagery.',
+      icon: 'fa-solid fa-venus-mars',
+    },
+    {
+      value: 'violence_or_threat',
+      label: 'Graphic violence or harmful content',
+      description: 'Graphic violence, self-harm, threats, or dangerous imagery.',
+      icon: 'fa-solid fa-triangle-exclamation',
+    },
+    {
+      value: 'harassment_or_bullying',
+      label: 'Harassment or bullying',
+      description: 'This photo is being used to humiliate, threaten, or target someone.',
+      icon: 'fa-solid fa-user-shield',
+    },
+    {
+      value: 'hate_speech',
+      label: 'Hate or discriminatory content',
+      description: 'Hateful imagery targeting identity, religion, nationality, gender, or race.',
+      icon: 'fa-solid fa-ban',
+    },
+    {
+      value: 'copyright_or_stolen_content',
+      label: 'Copyright or stolen image',
+      description: 'Artwork, photography, or another protected image used without permission.',
+      icon: 'fa-regular fa-copyright',
+    },
+    {
+      value: 'spam_or_scam',
+      label: 'Spam, scam, or misleading image',
+      description: 'Suspicious promotion, fraud, misleading advertising, or scam content.',
+      icon: 'fa-solid fa-link',
+    },
+    {
+      value: 'other',
+      label: 'Private information or something else',
+      description: 'Personal information or another problem with this photo.',
+      icon: 'fa-solid fa-ellipsis',
+    },
+  ],
+}
+
 function getReaderToken() {
   return (
     sessionStorage.getItem('shadow_reader_token') ||
@@ -240,7 +290,13 @@ export default function ReportPage() {
   const location = useLocation()
   const { reportType = '', targetId = '' } = useParams()
 
-  const config = REPORT_CONFIG[reportType] || null
+  const isPhotoReport =
+  reportType === 'author_post' &&
+  location.state?.reportContext === 'photo'
+
+const config = isPhotoReport
+  ? PHOTO_REPORT_CONFIG
+  : REPORT_CONFIG[reportType] || null
   const targetTitle = String(location.state?.targetTitle || '').trim()
   const sourceUrl = String(
     location.state?.sourceUrl ||
