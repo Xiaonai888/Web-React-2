@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 import {
   Link,
+  useLocation,
   useNavigate,
 } from 'react-router-dom'
 import DiscoverStorySection from '../components/discover/DiscoverStorySection'
@@ -639,6 +640,7 @@ function RealFollowedPostCard({
   onMore,
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const author = post.author_page || {}
   const authorName = author.page_name || 'Author'
   const pageUsername = author.page_username || ''
@@ -654,17 +656,27 @@ function RealFollowedPostCard({
   navigate(
     `/author/post/${encodeURIComponent(
       post.id
-    )}`
+    )}`,
+    {
+      state: {
+        backgroundLocation: location,
+      },
+    }
   )
 }
 
-  function openPhotoPost(index) {
+function openPhotoPost(index) {
   if (!post?.id) return
 
   navigate(
     `/author/post/${encodeURIComponent(
       post.id
-    )}?photo=${index}`
+    )}?photo=${index}`,
+    {
+      state: {
+        backgroundLocation: location,
+      },
+    }
   )
 }
 
