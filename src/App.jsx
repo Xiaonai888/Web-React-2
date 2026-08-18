@@ -239,6 +239,10 @@ function LazyPage({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  const backgroundLocation =
+    location.state?.backgroundLocation?.pathname === '/discover'
+      ? location.state.backgroundLocation
+      : null
   const [adStep, setAdStep] = useState('splash')
   const [showShadowSplash, setShowShadowSplash] = useState(location.pathname === '/')
   const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
@@ -341,7 +345,7 @@ const shouldShowOpeningAds =
   return (
     <>
       <VisitorTracker />
-      <Routes>
+<Routes location={backgroundLocation || location}>
         <Route path="/" element={<ForYou onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
@@ -1322,9 +1326,33 @@ const shouldShowOpeningAds =
 
 
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+</Routes>
 
-      {showShadowSplash ? (
+{backgroundLocation ? (
+  <div className="fixed inset-0 z-[100001] overflow-y-auto overscroll-contain bg-[#f0f2f5]">
+    <Routes>
+      <Route
+        path="/reader/post/:postId"
+        element={
+          <LazyPage>
+            <ReaderPostDetailPage />
+          </LazyPage>
+        }
+      />
+
+      <Route
+        path="/author/post/:postId"
+        element={
+          <LazyPage>
+            <AuthorPostDetailPage />
+          </LazyPage>
+        }
+      />
+    </Routes>
+  </div>
+) : null}
+
+{showShadowSplash ? (
         <ShadowSplashScreen onFinish={finishShadowSplash} duration={3000} />
       ) : null}
 
