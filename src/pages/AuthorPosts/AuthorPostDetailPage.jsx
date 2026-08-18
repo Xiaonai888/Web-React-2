@@ -83,6 +83,22 @@ function formatPostTime(value) {
   ).format(new Date(timestamp))
 }
 
+
+function formatPhotoViewerDateTime(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
 function renderPostTextWithLinks(text) {
   return String(text || '')
     .split(POST_TOKEN_PATTERN)
@@ -1703,48 +1719,56 @@ const selectedPhotoAltText = String(
     }}
   >
     {fullscreenControlsVisible ? (
-      <>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
+  <div
+    className="absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/90 via-black/65 to-transparent pb-10 pt-[max(8px,env(safe-area-inset-top))]"
+    onClick={(event) => event.stopPropagation()}
+  >
+    <div className="relative flex h-12 items-center justify-between px-3">
+      <button
+        type="button"
+        onClick={() => {
+          if (
+            location.state
+              ?.backgroundLocation
+              ?.pathname === '/discover'
+          ) {
+            navigate(-1)
+            return
+          }
 
-            if (
-              location.state
-                ?.backgroundLocation
-                ?.pathname === '/discover'
-            ) {
-              navigate(-1)
-              return
-            }
+          setFullscreenPhotoOpen(false)
+          setFullscreenControlsVisible(true)
+          setFullscreenPhotoMenuOpen(false)
+          setPhotoDeleteConfirmOpen(false)
+          setPhotoCaptionEditorOpen(false)
+          setPhotoAltEditorOpen(false)
+          setPhotoActionMessage('')
+        }}
+        className="flex h-10 w-10 items-center justify-center text-white active:opacity-60"
+        aria-label="Close fullscreen photo"
+      >
+        <i className="fa-solid fa-xmark text-[22px]" />
+      </button>
 
-            setFullscreenPhotoOpen(false)
-            setFullscreenControlsVisible(true)
-            setFullscreenPhotoMenuOpen(false)
-            setPhotoDeleteConfirmOpen(false)
-            setPhotoCaptionEditorOpen(false)
-            setPhotoAltEditorOpen(false)
-            setPhotoActionMessage('')
-          }}
-          className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
-          aria-label="Close fullscreen photo"
-        >
-          <i className="fa-solid fa-xmark text-[20px]" />
-        </button>
+      {photoUrls.length > 1 ? (
+        <div className="absolute left-1/2 -translate-x-1/2 text-[14px] font-semibold text-white">
+          {safeSelectedPhotoIndex + 1} of {photoUrls.length}
+        </div>
+      ) : null}
 
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            setFullscreenPhotoMenuOpen(true)
-          }}
-          className="absolute right-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
-          aria-label="Photo options"
-        >
-          <i className="fa-solid fa-ellipsis text-[18px]" />
-        </button>
-      </>
-    ) : null}
+      <button
+        type="button"
+        onClick={() =>
+          setFullscreenPhotoMenuOpen(true)
+        }
+        className="flex h-10 w-10 items-center justify-center text-white active:opacity-60"
+        aria-label="Photo options"
+      >
+        <i className="fa-solid fa-ellipsis text-[19px]" />
+      </button>
+    </div>
+  </div>
+) : null}
 
     <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
       <img
@@ -1758,63 +1782,116 @@ const selectedPhotoAltText = String(
     </div>
 
     {fullscreenControlsVisible &&
-    !fullscreenPhotoMenuOpen &&
-    !photoCaptionEditorOpen &&
-    !photoAltEditorOpen &&
-    !photoDeleteConfirmOpen ? (
-      <div
-        className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
-        onClick={(event) =>
-          event.stopPropagation()
+!fullscreenPhotoMenuOpen &&
+!photoCaptionEditorOpen &&
+!photoAltEditorOpen &&
+!photoDeleteConfirmOpen ? (
+  <div
+    className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/85 to-transparent pt-14"
+    onClick={(event) => event.stopPropagation()}
+  >
+    <div className="mx-auto max-w-[620px]">
+      <button
+        type="button"
+        onClick={() =>
+          navigate(
+            pageUsername
+              ? `/author/page/${encodeURIComponent(
+                  pageUsername
+                )}`
+              : '/author/page'
+          )
         }
+        className="flex w-full items-center gap-3 px-4 pb-3 text-left active:opacity-70"
       >
-        <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] text-white/70">
-          <span>
-            {Number(post?.like_count || 0)} reactions
-          </span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 text-[15px] font-semibold text-white ring-1 ring-white/20">
+          {author.avatar_url ||
+          author.profile_image_url ||
+          author.profile_picture_url ? (
+            <img
+              src={
+                author.avatar_url ||
+                author.profile_image_url ||
+                author.profile_picture_url
+              }
+              alt={authorName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            firstLetter
+          )}
+        </span>
+
+        <div className="min-w-0">
+          <div className="truncate text-[14px] font-semibold text-white">
+            {authorName}
+          </div>
+
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/70">
+            <span>
+              {formatPhotoViewerDateTime(
+                post?.created_at
+              )}
+            </span>
+
+            <span>·</span>
+
+            <i className="fa-solid fa-earth-americas text-[10px]" />
+          </div>
+        </div>
+      </button>
+
+      <div className="flex items-center justify-between border-b border-white/15 px-4 pb-2 text-[11px] text-white/75">
+        <span>
+          {Number(post?.like_count || 0)} reactions
+        </span>
+
+        <div className="flex items-center gap-4">
           <span>
             {Number(post?.comment_count || 0)} comments
           </span>
+
           <span>
             {Number(post?.echo_count || 0)} shares
           </span>
         </div>
-
-        <div className="mx-auto flex max-w-[620px] items-center border-t border-white/15 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
-          <ReactionAction
-            reactionType={post?.my_reaction}
-            count={post?.like_count}
-            busy={reactionBusy}
-            onReact={chooseReaction}
-            showCount={false}
-            idleLabel="Like"
-            className="flex-1 justify-center"
-            buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
-          />
-
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              setFullscreenPhotoOpen(false)
-              setFullscreenControlsVisible(true)
-              openComments()
-            }}
-            className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
-          >
-            <i className="fa-regular fa-comment text-[20px]" />
-            <span>Comment</span>
-          </button>
-
-          <AuthorPostEchoAction
-            post={post}
-            author={author}
-            onCountChange={handleEchoCountChange}
-            className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
-          />
-        </div>
       </div>
-    ) : null}
+
+      <div className="flex items-center px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
+        <ReactionAction
+          reactionType={post?.my_reaction}
+          count={post?.like_count}
+          busy={reactionBusy}
+          onReact={chooseReaction}
+          showCount={false}
+          idleLabel="Like"
+          className="flex-1 justify-center"
+          buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+        />
+
+        <button
+          type="button"
+          onClick={() => {
+            setFullscreenPhotoOpen(false)
+            setFullscreenControlsVisible(true)
+            openComments()
+          }}
+          className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
+        >
+          <i className="fa-regular fa-comment text-[20px]" />
+          <span>Comment</span>
+        </button>
+
+        <AuthorPostEchoAction
+          post={post}
+          author={author}
+          onCountChange={handleEchoCountChange}
+          className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
+        />
+      </div>
+    </div>
+  </div>
+) : null}
 
     {fullscreenControlsVisible &&
     selectedPhotoCaption &&
@@ -1844,12 +1921,12 @@ const selectedPhotoAltText = String(
         }}
       >
         <div
-          className="w-full rounded-t-[22px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl"
+          className="w-full bg-white px-2 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
           onClick={(event) =>
             event.stopPropagation()
           }
         >
-          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
+        
 
           {isOwner ? (
             <button
