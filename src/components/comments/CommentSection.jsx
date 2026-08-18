@@ -1037,9 +1037,12 @@ function ReplyComposer({
         <input
           value={value}
           maxLength={replyMaxLength}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
+          onChange={(event) => {
+  const textarea = event.currentTarget
+  onChange(textarea.value)
+  textarea.style.height = 'auto'
+  textarea.style.height = `${Math.min(textarea.scrollHeight, 118)}px`
+}}
           placeholder="Write a reply..."
           className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[#111827] outline-none placeholder:text-[#98a2b3]"
         />
