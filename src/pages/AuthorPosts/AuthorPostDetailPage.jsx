@@ -1,6 +1,7 @@
 import CommentSection from '../../components/comments/CommentSection'
 import PublicPostDetailView from '../../components/social/posts/PublicPostDetailView'
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -1117,6 +1118,14 @@ async function shareSelectedPhoto(event) {
       }
       return
     }
+
+    const handleEchoCountChange = useCallback((_postId, total) => {
+  setPost((current) =>
+    current
+      ? { ...current, echo_count: Number(total || 0) }
+      : current
+  )
+}, [])
 
     const nextCount = Math.max(
       0,
