@@ -100,11 +100,6 @@ function BookCard({ book }) {
               <i className="fas fa-heart text-[12px] text-red-500" />
               <span>{book.likes}</span>
             </div>
-
-            <div className="flex items-center gap-1">
-              <i className="fas fa-eye text-[12px]" />
-              <span>{book.views}</span>
-            </div>
           </div>
 
           <div className="mt-1.5 flex items-center gap-1 text-[12px] text-gray-500">
