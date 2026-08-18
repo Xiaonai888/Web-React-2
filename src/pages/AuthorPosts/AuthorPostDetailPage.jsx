@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   Link,
+  useLocation,
   useNavigate,
   useParams,
   useSearchParams,
@@ -376,6 +377,7 @@ async function setAuthorPostReaction(
 
 export default function AuthorPostDetailPage() {
 const navigate = useNavigate()
+const location = useLocation()
 const { postId } = useParams()
 const [searchParams] = useSearchParams()
 
@@ -1446,13 +1448,21 @@ selectedPhotoUrl ? (
         <button
           type="button"
           onClick={(event) => {
-            event.stopPropagation()
-            setFullscreenPhotoOpen(false)
-            setFullscreenControlsVisible(true)
-            setFullscreenPhotoMenuOpen(false)
-            setPhotoDeleteConfirmOpen(false)
-            setPhotoActionMessage('')
-          }}
+  event.stopPropagation()
+
+  if (
+    location.state?.backgroundLocation?.pathname === '/discover'
+  ) {
+    navigate(-1)
+    return
+  }
+
+  setFullscreenPhotoOpen(false)
+  setFullscreenControlsVisible(true)
+  setFullscreenPhotoMenuOpen(false)
+  setPhotoDeleteConfirmOpen(false)
+  setPhotoActionMessage('')
+}}
           className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
           aria-label="Close fullscreen photo"
         >
