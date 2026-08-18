@@ -871,7 +871,7 @@ const handleOpenProfileSwitcher = (event) => {
   setSwitchingProfile(true)
 
   window.setTimeout(() => {
-    navigate(`/author/page/${encodeURIComponent(authorPage.page_username)}`)
+    navigate('/author/page')
   }, 800)
 }
   const handleOwnAccount = () => {
