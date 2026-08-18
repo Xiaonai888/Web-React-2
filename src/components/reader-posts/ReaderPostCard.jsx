@@ -11,6 +11,7 @@ import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
 } from './ReaderPostOptionsSheet'
 import ReaderPostCommentsModal from './ReaderPostCommentsModal'
+import ReaderPostCommentsSection from './ReaderPostCommentsSection'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
 import {
@@ -3059,6 +3060,23 @@ const safeSelectedPhotoIndex =
     likeCount={reactionCount}
     commentCount={commentCount}
     echoCount={echoCount}
+    comments={
+      <ReaderPostCommentsSection
+        postId={post.id}
+        postOwnerId={post.user_id}
+        commentsPermission={
+          post.comments_permission
+        }
+        commentCount={commentCount}
+        onTotalChange={(nextTotal) => {
+          setCommentCount(nextTotal)
+          onUpdated?.({
+            ...post,
+            comment_count: nextTotal,
+          })
+        }}
+      />
+    }
     onClose={
       onFullPostClose ||
       (() => {
@@ -3090,7 +3108,11 @@ const safeSelectedPhotoIndex =
       setMenuOpen(true)
     }
     onComment={() =>
-      setCommentOpen(true)
+      document
+        .getElementById(
+          'reader-post-comment-input'
+        )
+        ?.focus()
     }
     onOpenReactions={() =>
       navigate(
@@ -3108,7 +3130,14 @@ const safeSelectedPhotoIndex =
       )
     }
     onOpenComments={() =>
-      setCommentOpen(true)
+      document
+        .getElementById(
+          'reader-post-comment-input'
+        )
+        ?.scrollIntoView({
+          block: 'center',
+          behavior: 'smooth',
+        })
     }
     onOpenEchoes={() => {
       const sourceType =
