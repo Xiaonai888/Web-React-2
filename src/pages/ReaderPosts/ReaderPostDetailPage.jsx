@@ -173,26 +173,34 @@ export default function ReaderPostDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f3fa]">
-      <header className="sticky top-0 z-50 border-b border-[#eef0f4] bg-white">
-        <div className="mx-auto flex h-14 w-full max-w-[620px] items-center px-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
-            aria-label="Back"
-          >
-            <i className="fa-solid fa-arrow-left text-[18px]" />
-          </button>
+      {(photoPostView || loading || error) ? (
+        <header className="sticky top-0 z-50 border-b border-[#eef0f4] bg-white">
+          <div className="mx-auto flex h-14 w-full max-w-[620px] items-center px-2">
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
+              aria-label="Back"
+            >
+              <i className="fa-solid fa-arrow-left text-[18px]" />
+            </button>
 
-          <div className="ml-1 text-[17px] font-semibold text-[#111827]">
-            {photoPostView
-              ? 'Photo'
-              : 'Post'}
+            <div className="ml-1 text-[17px] font-semibold text-[#111827]">
+              {photoPostView
+                ? 'Photo'
+                : 'Post'}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : null}
 
-      <main className="mx-auto w-full max-w-[620px] py-1 sm:px-3 sm:py-3">
+      <main
+        className={
+          photoPostView || loading || error
+            ? 'mx-auto w-full max-w-[620px] py-1 sm:px-3 sm:py-3'
+            : 'w-full'
+        }
+      >
         {loading ? (
           <div className="bg-white px-4 py-8 text-center text-[13px] text-[#8b93a1] sm:rounded-[12px]">
             Loading...
@@ -233,6 +241,7 @@ export default function ReaderPostDetailPage() {
             onFollowChanged={
               handleFollowChanged
             }
+            onFullPostClose={goBack}
           />
         ) : null}
       </main>
