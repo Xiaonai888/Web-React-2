@@ -1204,6 +1204,16 @@ const selectedPhotoUrl =
     safeSelectedPhotoIndex
   ] || ''
 
+  useEffect(() => {
+  if (!photoPostView || !selectedPhotoUrl) return
+
+  setFullscreenControlsVisible(true)
+  setFullscreenPhotoMenuOpen(false)
+  setPhotoDeleteConfirmOpen(false)
+  setPhotoActionMessage('')
+  setFullscreenPhotoOpen(true)
+}, [photoPostView, selectedPhotoUrl])
+
   return (
     <div className="min-h-screen bg-[#f5f3fa]">
       <PublicPostDetailView
