@@ -1119,14 +1119,6 @@ async function shareSelectedPhoto(event) {
       return
     }
 
-    const handleEchoCountChange = useCallback((_postId, total) => {
-  setPost((current) =>
-    current
-      ? { ...current, echo_count: Number(total || 0) }
-      : current
-  )
-}, [])
-
     const nextCount = Math.max(
       0,
       base.serverCount +
@@ -1149,6 +1141,20 @@ async function shareSelectedPhoto(event) {
         : current
     )
   }
+
+  const handleEchoCountChange = useCallback(
+    (_postId, total) => {
+      setPost((current) =>
+        current
+          ? {
+              ...current,
+              echo_count: Number(total || 0),
+            }
+          : current
+      )
+    },
+    []
+  )
 
   const author =
     post?.author_page || {}
@@ -1282,22 +1288,7 @@ const selectedPhotoUrl =
         post={post}
         author={author}
         className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
-        onCountChange={(
-          _postId,
-          total
-        ) => {
-          setPost((current) =>
-            current
-              ? {
-                  ...current,
-                  echo_count:
-                    Number(
-                      total || 0
-                    ),
-                }
-              : current
-          )
-        }}
+        onCountChange={handleEchoCountChange}
       />
     ) : null
   }
