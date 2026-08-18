@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ImageDropZone from '../common/ImageDropZone'
 import ReaderPostOptionsSheet, {
   ReaderPostDeleteConfirmSheet,
@@ -859,6 +859,7 @@ function resolveReaderPostEchoSource(
 
 function ReaderEchoSourceBlock({ post }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const source = post?.source || {}
   const story = post?.source_story || {}
   const episode = post?.source_episode || {}
@@ -2228,19 +2229,24 @@ const safeSelectedPhotoIndex =
   }
 
   function openFullPost() {
-    if (
-      !isDiscoverView ||
-      !post?.id
-    ) {
-      return
-    }
-
-    navigate(
-      `/reader/post/${encodeURIComponent(
-        post.id
-      )}`
-    )
+  if (
+    !isDiscoverView ||
+    !post?.id
+  ) {
+    return
   }
+
+  navigate(
+    `/reader/post/${encodeURIComponent(
+      post.id
+    )}`,
+    {
+      state: {
+        backgroundLocation: location,
+      },
+    }
+  )
+}
 
   
 
