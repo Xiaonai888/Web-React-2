@@ -1,3 +1,5 @@
+import CommentSection from '../../components/comments/CommentSection'
+import PublicPostDetailView from '../../components/social/posts/PublicPostDetailView'
 import {
   useEffect,
   useRef,
@@ -452,6 +454,14 @@ const [
       loadedCount: null,
       serverCount: 0,
     })
+
+  useEffect(() => {
+  if (!post?.id) return
+  commentCountBaseRef.current = {
+    loadedCount: null,
+    serverCount: Number(post.comment_count || 0),
+  }
+}, [post?.id])
 
   useEffect(() => {
     const controller =
@@ -1181,203 +1191,223 @@ const selectedPhotoUrl =
 
   return (
     <div className="min-h-screen bg-[#f5f3fa]">
-      <header className="sticky top-0 z-50 border-b border-[#eef0f4] bg-white">
-        <div className="mx-auto flex h-14 w-full max-w-[620px] items-center px-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
-            aria-label="Back"
-          >
-            <i className="fa-solid fa-arrow-left text-[18px]" />
-          </button>
-
-          <div className="ml-1 text-[17px] font-semibold text-[#111827]">
-  {photoPostView
-    ? 'Photo'
-    : 'Post'}
-</div>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[620px] py-1 sm:px-3 sm:py-3">
-        {loading ? (
-          <div className="bg-white px-4 py-8 text-center text-[13px] text-[#8b93a1] sm:rounded-[12px]">
-            Loading...
-          </div>
-        ) : null}
-
-        {!loading && error ? (
-          <div className="bg-white px-4 py-8 text-center sm:rounded-[12px]">
-            <div className="text-[14px] font-semibold text-[#111827]">
-              {error}
-            </div>
-
-            <button
-              type="button"
-              onClick={goBack}
-              className="mt-4 text-[13px] font-semibold text-[#0866ff]"
-            >
-              Go back
-            </button>
-          </div>
-        ) : null}
-
-        {!loading &&
-        !error &&
-        post ? (
-          <article className="overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-[22px]">
-            <div className="flex items-start gap-2 px-4 pb-3 pt-4">
-              <Link
-                to={pageUrl}
-                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-black text-white"
-                aria-label={`Open ${authorName}`}
-              >
-                {author.avatar_url ? (
-                  <img
-                    src={
-                      author.avatar_url
-                    }
-                    alt={authorName}
-                    loading="eager"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  firstLetter
-                )}
-              </Link>
-
-              <div className="-ml-1 min-w-0 flex-1">
-                <div className="min-w-0 text-[14px] leading-5">
-                  <Link
-                    to={pageUrl}
-                    className="break-words font-semibold text-[#111827]"
-                  >
-                    {authorName}
-                  </Link>
-
-                  {!isFollowing &&
-                  !isOwner ? (
-                    <>
-                      <span className="px-1 text-[#65676b]">
-                        ·
-                      </span>
-
-                      <button
-                        type="button"
-                        disabled={
-                          followBusy
-                        }
-                        onClick={
-                          followAuthor
-                        }
-                        className="font-semibold text-[#1877f2] active:opacity-60 disabled:opacity-60"
-                      >
-                        {followBusy
-                          ? 'Following...'
-                          : 'Follow'}
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-
-                <div className="mt-0.5 flex items-center gap-1 text-[11px] font-normal text-gray-400">
-                  <span>
-                    {formatPostTime(
-                      post.created_at
-                    )}
-                  </span>
-                  <span>·</span>
-                  <i className="fa-solid fa-earth-americas text-[10px]" />
-                </div>
-              </div>
-            </div>
-
-            {post.content ? (
-              <div className="px-4 pb-3">
-                <p className="whitespace-pre-wrap break-words text-[14px] font-normal leading-6 text-[#111827]">
-                  {renderPostTextWithLinks(
-                    post.content
-                  )}
-                </p>
-              </div>
-            ) : null}
-
-            <AuthorPostImages
-  images={
-    post.image_urls
+      <PublicPostDetailView
+  pageName={authorName}
+  pageAvatarUrl={
+    author.avatar_url ||
+    author.profile_image_url ||
+    author.profile_picture_url ||
+    ''
   }
-  authorName={
-    authorName
+  authorName={authorName}
+  authorAvatarUrl={
+    author.avatar_url ||
+    author.profile_image_url ||
+    author.profile_picture_url ||
+    ''
   }
-  photoPostView={
-    photoPostView
+  createdAt={post?.created_at}
+  visibility="public"
+  isPinned={Boolean(post?.is_pinned)}
+  isEdited={Boolean(post?.is_edited)}
+  loading={loading}
+  error={error}
+  content={
+    post?.content ? (
+      <span>
+        {renderPostTextWithLinks(
+          post.content
+        )}
+      </span>
+    ) : null
   }
-  selectedPhotoIndex={
-    selectedPhotoIndex
+  media={
+    post ? (
+      <AuthorPostImages
+        images={post.image_urls}
+        authorName={authorName}
+        photoPostView={photoPostView}
+        selectedPhotoIndex={
+          selectedPhotoIndex
+        }
+        onImageClick={
+          handlePostImageClick
+        }
+      />
+    ) : null
   }
-  onImageClick={
-    handlePostImageClick
+  reactionControl={
+    post ? (
+      <div className="inline-flex items-center gap-2">
+        <ReactionAction
+          reactionType={
+            post.my_reaction
+          }
+          count={post.like_count}
+          busy={reactionBusy}
+          showBusySpinner
+          showCount={false}
+          onReact={chooseReaction}
+          idleLabel="Like"
+          buttonClassName="text-[#65676b]"
+        />
+        <button
+          type="button"
+          onClick={() =>
+            chooseReaction(
+              post.my_reaction ||
+                'love'
+            )
+          }
+          disabled={reactionBusy}
+          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+        >
+          Like
+        </button>
+      </div>
+    ) : null
+  }
+  echoControl={
+    post ? (
+      <AuthorPostEchoAction
+        post={post}
+        author={author}
+        className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+        onCountChange={(
+          _postId,
+          total
+        ) => {
+          setPost((current) =>
+            current
+              ? {
+                  ...current,
+                  echo_count:
+                    Number(
+                      total || 0
+                    ),
+                }
+              : current
+          )
+        }}
+      />
+    ) : null
+  }
+  reactionSummary={
+    Array.isArray(
+      post?.reaction_summary
+    )
+      ? post.reaction_summary
+      : []
+  }
+  likeCount={
+    Number(post?.like_count || 0)
+  }
+  commentCount={
+    Number(
+      post?.comment_count || 0
+    )
+  }
+  echoCount={
+    Number(post?.echo_count || 0)
+  }
+  comments={
+    post ? (
+      <CommentSection
+        targetType="author_post"
+        targetId={post.id}
+        variant="page"
+        story={{
+          ...post,
+          author_page: {
+            ...(post.author_page ||
+              {}),
+            user_id:
+              post.author_page
+                ?.user_id ||
+              post.user_id ||
+              null,
+          },
+        }}
+        onCommentsChange={
+          handleCommentsChanged
+        }
+      />
+    ) : null
+  }
+  onClose={goBack}
+  onErrorBack={goBack}
+  onSearch={() =>
+    navigate(
+      pageUsername
+        ? `/author/page/${encodeURIComponent(
+            pageUsername
+          )}/search`
+        : '/author/page'
+    )
+  }
+  onOpenProfile={() =>
+    navigate(
+      pageUsername
+        ? `/author/page/${encodeURIComponent(
+            pageUsername
+          )}`
+        : '/author/page'
+    )
+  }
+  onComment={() => {
+    document
+      .getElementById(
+        'shadow-comment-input'
+      )
+      ?.focus()
+  }}
+  onOpenReactions={() =>
+    post?.id
+      ? navigate(
+          `/interactions/author_post/${encodeURIComponent(
+            post.id
+          )}/likes`,
+          {
+            state: {
+              sourceName:
+                authorName,
+            },
+          }
+        )
+      : null
+  }
+  onOpenComments={() => {
+    document
+      .getElementById(
+        'shadow-comment-input'
+      )
+      ?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+  }}
+  onOpenEchoes={() =>
+    post?.id
+      ? navigate(
+          `/interactions/author_post/${encodeURIComponent(
+            post.id
+          )}/echoes`,
+          {
+            state: {
+              sourceName:
+                authorName,
+            },
+          }
+        )
+      : null
   }
 />
 
-            <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
-              <ReactionAction
-                reactionType={post.my_reaction}
-                count={post.like_count}
-                busy={reactionBusy}
-                showBusySpinner
-                onReact={chooseReaction}
-                onCountClick={() =>
-                  navigate(
-                    `/interactions/author_post/${post.id}/likes`,
-                    {
-                      state: {
-                        sourceName:
-                          authorName,
-                      },
-                    }
-                  )
-                }
-                formatCount={(value) =>
-                  String(
-                    Number(value || 0)
-                  )
-                }
-              />
-
-              <button
-                type="button"
-                onClick={
-                  openComments
-                }
-                className="inline-flex items-center gap-1.5 active:scale-95"
-                aria-label="Comments"
-              >
-                <i className="fa-regular fa-comment text-[15px]" />
-                <span>
-                  {Number(
-                    post.comment_count ||
-                      0
-                  )}
-                </span>
-              </button>
-
-              <AuthorPostEchoAction
-                post={post}
-                author={author}
-              />
-            </div>
-
-            {actionError ? (
-              <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
-                {actionError}
-              </div>
-            ) : null}
-          </article>
-        ) : null}
-      </main>
+{actionError ? (
+  <div className="fixed left-1/2 top-20 z-[300] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
+    {actionError}
+  </div>
+) : null}
 
       {fullscreenPhotoOpen &&
 selectedPhotoUrl ? (
