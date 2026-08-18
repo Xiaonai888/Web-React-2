@@ -3368,6 +3368,7 @@ const safeSelectedPhotoIndex =
           </button>
         </div>
       </article>
+      )}
 
       {fullscreenPhotoOpen &&
       imageUrls.length ? (
