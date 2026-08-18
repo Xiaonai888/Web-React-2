@@ -1988,6 +1988,39 @@ const selectedPhotoAltText = String(
             </span>
           </button>
 
+          {!isOwner ? (
+  <button
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation()
+      setFullscreenPhotoMenuOpen(false)
+
+      navigate(
+        `/report/author_post/${encodeURIComponent(post.id)}`,
+        {
+          state: {
+            reportContext: 'photo',
+            targetTitle: `${authorName} photo`,
+            sourceUrl: selectedPhotoUrl,
+            returnTo: `/author/post/${encodeURIComponent(
+              post.id
+            )}?photo=${safeSelectedPhotoIndex}`,
+          },
+        }
+      )
+    }}
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+  >
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+      <i className="fa-regular fa-message text-[19px]" />
+    </span>
+
+    <span className="text-[15px] font-normal text-[#111827]">
+      Report photo
+    </span>
+  </button>
+) : null}
+
           {isOwner ? (
             <button
               type="button"
