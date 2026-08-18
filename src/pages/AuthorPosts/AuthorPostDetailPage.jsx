@@ -33,6 +33,8 @@ const POST_URL_ONLY_PATTERN =
   /^https?:\/\/[^\s]+$/i
 const POST_HASHTAG_ONLY_PATTERN =
   /^#[\p{L}\p{N}\p{M}_]+$/u
+const MAX_PHOTO_CAPTION_LENGTH = 2000
+const MAX_PHOTO_ALT_TEXT_LENGTH = 500
 
 function getAuthToken() {
   return (
@@ -451,6 +453,13 @@ const [
   setPhotoDeleteBusy,
 ] = useState(false)
 
+const [photoCaptionEditorOpen, setPhotoCaptionEditorOpen] = useState(false)
+const [photoCaption, setPhotoCaption] = useState('')
+const [photoCaptionSaving, setPhotoCaptionSaving] = useState(false)
+
+const [photoAltEditorOpen, setPhotoAltEditorOpen] = useState(false)
+const [photoAltText, setPhotoAltText] = useState('')
+const [photoAltSaving, setPhotoAltSaving] = useState(false)
   
   const commentCountBaseRef =
     useRef({
@@ -640,6 +649,225 @@ if (photoPostView) {
 }
 
   openPhotoPost(index)
+}
+
+  function openPhotoCaptionEditor(event) {
+  event?.stopPropagation()
+
+  if (!isOwner || !selectedPhotoUrl) return
+
+  setPhotoCaption(selectedPhotoCaption)
+  setFullscreenPhotoMenuOpen(false)
+  setPhotoCaptionEditorOpen(true)
+}
+
+async function savePhotoCaption(event) {
+  event?.stopPropagation()
+
+  if (!isOwner || !selectedPhotoUrl || photoCaptionSaving) return
+
+  const token = getAuthToken()
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const nextCaption = photoCaption
+    .slice(0, MAX_PHOTO_CAPTION_LENGTH)
+    .trim()
+
+  const metadataByUrl = new Map(
+    photoMetadata
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => [String(item.url || ''), item])
+  )
+
+  const nextPhotoMetadata = photoUrls.map((url, index) => {
+    const existing =
+      metadataByUrl.get(String(url)) ||
+      photoMetadata[index] ||
+      {}
+
+    return {
+      url,
+      caption:
+        index === safeSelectedPhotoIndex
+          ? nextCaption
+          : String(existing.caption || ''),
+      alt_text: String(
+        existing.alt_text ??
+          existing.alt ??
+          ''
+      ),
+    }
+  })
+
+  try {
+    setPhotoCaptionSaving(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(post.id)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          photo_metadata: nextPhotoMetadata,
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          data.message ||
+          'Failed to save caption'
+      )
+    }
+
+    setPost((current) =>
+      current
+        ? {
+            ...current,
+            ...(data.post || {}),
+            photo_metadata:
+              data.post?.photo_metadata ||
+              nextPhotoMetadata,
+            author_page: current.author_page,
+            is_owner: current.is_owner,
+            is_following: current.is_following,
+            my_reaction: current.my_reaction,
+          }
+        : current
+    )
+
+    setPhotoCaptionEditorOpen(false)
+    setPhotoActionMessage(
+      nextCaption
+        ? 'Caption saved.'
+        : 'Caption removed.'
+    )
+  } catch (error) {
+    setPhotoActionMessage(
+      error.message || 'Failed to save caption.'
+    )
+  } finally {
+    setPhotoCaptionSaving(false)
+  }
+}
+
+function openPhotoAltEditor(event) {
+  event?.stopPropagation()
+
+  if (!isOwner || !selectedPhotoUrl) return
+
+  setPhotoAltText(selectedPhotoAltText)
+  setFullscreenPhotoMenuOpen(false)
+  setPhotoAltEditorOpen(true)
+}
+
+async function savePhotoAltText(event) {
+  event?.stopPropagation()
+
+  if (!isOwner || !selectedPhotoUrl || photoAltSaving) return
+
+  const token = getAuthToken()
+  if (!token) {
+    navigate('/login')
+    return
+  }
+
+  const nextAltText = photoAltText
+    .slice(0, MAX_PHOTO_ALT_TEXT_LENGTH)
+    .trim()
+
+  const metadataByUrl = new Map(
+    photoMetadata
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => [String(item.url || ''), item])
+  )
+
+  const nextPhotoMetadata = photoUrls.map((url, index) => {
+    const existing =
+      metadataByUrl.get(String(url)) ||
+      photoMetadata[index] ||
+      {}
+
+    return {
+      url,
+      caption: String(existing.caption || ''),
+      alt_text:
+        index === safeSelectedPhotoIndex
+          ? nextAltText
+          : String(
+              existing.alt_text ??
+                existing.alt ??
+                ''
+            ),
+    }
+  })
+
+  try {
+    setPhotoAltSaving(true)
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(post.id)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          photo_metadata: nextPhotoMetadata,
+        }),
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.error ||
+          data.message ||
+          'Failed to save alt text'
+      )
+    }
+
+    setPost((current) =>
+      current
+        ? {
+            ...current,
+            ...(data.post || {}),
+            photo_metadata:
+              data.post?.photo_metadata ||
+              nextPhotoMetadata,
+            author_page: current.author_page,
+            is_owner: current.is_owner,
+            is_following: current.is_following,
+            my_reaction: current.my_reaction,
+          }
+        : current
+    )
+
+    setPhotoAltEditorOpen(false)
+    setPhotoActionMessage(
+      nextAltText
+        ? 'Alt text saved.'
+        : 'Alt text removed.'
+    )
+  } catch (error) {
+    setPhotoActionMessage(
+      error.message ||
+        'Failed to save alt text.'
+    )
+  } finally {
+    setPhotoAltSaving(false)
+  }
 }
 
   async function deleteSelectedPhoto(event) {
@@ -1206,6 +1434,31 @@ const selectedPhotoUrl =
     safeSelectedPhotoIndex
   ] || ''
 
+  const photoMetadata = Array.isArray(
+  post?.photo_metadata
+)
+  ? post.photo_metadata
+  : []
+
+const selectedPhotoMetadata =
+  photoMetadata.find(
+    (item) =>
+      String(item?.url || '') ===
+      String(selectedPhotoUrl || '')
+  ) ||
+  photoMetadata[safeSelectedPhotoIndex] ||
+  {}
+
+const selectedPhotoCaption = String(
+  selectedPhotoMetadata?.caption || ''
+)
+
+const selectedPhotoAltText = String(
+  selectedPhotoMetadata?.alt_text ??
+    selectedPhotoMetadata?.alt ??
+    ''
+)
+
   useEffect(() => {
   if (!photoPostView || !selectedPhotoUrl) return
 
@@ -1421,76 +1674,24 @@ const selectedPhotoUrl =
   </div>
 ) : null}
 
-      {fullscreenPhotoOpen &&
-selectedPhotoUrl ? (
+      {fullscreenPhotoOpen && selectedPhotoUrl ? (
   <div
-    <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
-  <img
-    src={selectedPhotoUrl}
-    alt={`${authorName} photo`}
-    loading="eager"
-    decoding="async"
-    draggable="false"
-    className="max-h-[100dvh] max-w-full select-none object-contain"
-  />
-</div>
-
-  {fullscreenControlsVisible &&
-!fullscreenPhotoMenuOpen &&
-!photoDeleteConfirmOpen ? (
-  <div
-    className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
-    onClick={(event) => event.stopPropagation()}
-  >
-    <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] text-white/70">
-      <span>{Number(post?.like_count || 0)} reactions</span>
-      <span>{Number(post?.comment_count || 0)} comments</span>
-      <span>{Number(post?.echo_count || 0)} shares</span>
-    </div>
-
-    <div className="mx-auto flex max-w-[620px] items-center border-t border-white/15 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
-      <ReactionAction
-        reactionType={post?.my_reaction}
-        count={post?.like_count}
-        busy={reactionBusy}
-        onReact={chooseReaction}
-        showCount={false}
-        idleLabel="Like"
-        className="flex-1 justify-center"
-        buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
-      />
-
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation()
-          setFullscreenPhotoOpen(false)
-          setFullscreenControlsVisible(true)
-          openComments()
-        }}
-        className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
-      >
-        <i className="fa-regular fa-comment text-[20px]" />
-        <span>Comment</span>
-      </button>
-
-      <AuthorPostEchoAction
-        post={post}
-        author={author}
-        onCountChange={handleEchoCountChange}
-        className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
-      />
-    </div>
-  </div>
-) : null}
+    className="fixed inset-0 z-[150000] bg-black"
     onClick={() => {
+      if (
+        photoCaptionEditorOpen ||
+        photoAltEditorOpen
+      ) {
+        return
+      }
 
       if (photoDeleteConfirmOpen) {
-  if (!photoDeleteBusy) {
-    setPhotoDeleteConfirmOpen(false)
-  }
-  return
-}
+        if (!photoDeleteBusy) {
+          setPhotoDeleteConfirmOpen(false)
+        }
+        return
+      }
+
       if (fullscreenPhotoMenuOpen) {
         setFullscreenPhotoMenuOpen(false)
         return
@@ -1506,21 +1707,25 @@ selectedPhotoUrl ? (
         <button
           type="button"
           onClick={(event) => {
-  event.stopPropagation()
+            event.stopPropagation()
 
-  if (
-    location.state?.backgroundLocation?.pathname === '/discover'
-  ) {
-    navigate(-1)
-    return
-  }
+            if (
+              location.state
+                ?.backgroundLocation
+                ?.pathname === '/discover'
+            ) {
+              navigate(-1)
+              return
+            }
 
-  setFullscreenPhotoOpen(false)
-  setFullscreenControlsVisible(true)
-  setFullscreenPhotoMenuOpen(false)
-  setPhotoDeleteConfirmOpen(false)
-  setPhotoActionMessage('')
-}}
+            setFullscreenPhotoOpen(false)
+            setFullscreenControlsVisible(true)
+            setFullscreenPhotoMenuOpen(false)
+            setPhotoDeleteConfirmOpen(false)
+            setPhotoCaptionEditorOpen(false)
+            setPhotoAltEditorOpen(false)
+            setPhotoActionMessage('')
+          }}
           className="absolute left-4 top-[max(16px,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white active:bg-black/75"
           aria-label="Close fullscreen photo"
         >
@@ -1544,7 +1749,7 @@ selectedPhotoUrl ? (
     <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden">
       <img
         src={selectedPhotoUrl}
-        alt={`${authorName} photo`}
+        alt={selectedPhotoAltText}
         loading="eager"
         decoding="async"
         draggable="false"
@@ -1552,8 +1757,80 @@ selectedPhotoUrl ? (
       />
     </div>
 
+    {fullscreenControlsVisible &&
+    !fullscreenPhotoMenuOpen &&
+    !photoCaptionEditorOpen &&
+    !photoAltEditorOpen &&
+    !photoDeleteConfirmOpen ? (
+      <div
+        className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pt-8"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
+        <div className="mx-auto flex max-w-[620px] items-center justify-between px-5 pb-1 text-[11px] text-white/70">
+          <span>
+            {Number(post?.like_count || 0)} reactions
+          </span>
+          <span>
+            {Number(post?.comment_count || 0)} comments
+          </span>
+          <span>
+            {Number(post?.echo_count || 0)} shares
+          </span>
+        </div>
+
+        <div className="mx-auto flex max-w-[620px] items-center border-t border-white/15 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-1">
+          <ReactionAction
+            reactionType={post?.my_reaction}
+            count={post?.like_count}
+            busy={reactionBusy}
+            onReact={chooseReaction}
+            showCount={false}
+            idleLabel="Like"
+            className="flex-1 justify-center"
+            buttonClassName="h-12 min-w-[88px] justify-center gap-2 text-white after:content-['Like'] after:text-[14px] after:font-medium [&>i]:!text-[20px] [&>img]:!h-5 [&>img]:!w-5"
+          />
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setFullscreenPhotoOpen(false)
+              setFullscreenControlsVisible(true)
+              openComments()
+            }}
+            className="flex h-12 flex-1 items-center justify-center gap-2 text-[14px] font-medium text-white active:bg-white/10"
+          >
+            <i className="fa-regular fa-comment text-[20px]" />
+            <span>Comment</span>
+          </button>
+
+          <AuthorPostEchoAction
+            post={post}
+            author={author}
+            onCountChange={handleEchoCountChange}
+            className="h-12 flex-1 justify-center gap-2 text-white [&>img]:!h-5 [&>img]:!w-5 [&>img]:brightness-0 [&>img]:invert [&>span]:hidden after:content-['Share'] after:text-[14px] after:font-medium"
+          />
+        </div>
+      </div>
+    ) : null}
+
+    {fullscreenControlsVisible &&
+    selectedPhotoCaption &&
+    !fullscreenPhotoMenuOpen &&
+    !photoCaptionEditorOpen &&
+    !photoAltEditorOpen &&
+    !photoDeleteConfirmOpen ? (
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+92px)] left-0 right-0 z-20 px-5 text-center">
+        <p className="mx-auto max-w-[720px] whitespace-pre-wrap break-words text-[13px] leading-5 text-white">
+          {selectedPhotoCaption}
+        </p>
+      </div>
+    ) : null}
+
     {photoActionMessage ? (
-      <div className="absolute bottom-[max(24px,env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
+      <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+94px)] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-4 py-2 text-[12px] font-medium text-[#111827] shadow-xl">
         {photoActionMessage}
       </div>
     ) : null}
@@ -1574,113 +1851,293 @@ selectedPhotoUrl ? (
         >
           <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
-          
           {isOwner ? (
-  <button
-    type="button"
-    onClick={(event) => {
-      event.stopPropagation()
-      setFullscreenPhotoMenuOpen(false)
-      setPhotoDeleteConfirmOpen(true)
-    }}
-    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-  >
-    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-      <i className="fa-regular fa-trash-can text-[20px]" />
-    </span>
+            <button
+              type="button"
+              onClick={openPhotoCaptionEditor}
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                <i className="fa-solid fa-pencil text-[19px]" />
+              </span>
+              <span className="text-[15px] font-normal text-[#111827]">
+                Edit caption
+              </span>
+            </button>
+          ) : null}
 
-    <span className="text-[15px] font-normal text-[#111827]">
-      Delete photo
-    </span>
-  </button>
-) : null}
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                setFullscreenPhotoMenuOpen(false)
+                setPhotoDeleteConfirmOpen(true)
+              }}
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+                <i className="fa-regular fa-trash-can text-[20px]" />
+              </span>
+              <span className="text-[15px] font-normal text-[#111827]">
+                Delete photo
+              </span>
+            </button>
+          ) : null}
 
-<button
-  type="button"
-  onClick={saveSelectedPhoto}
-  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
->
-  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-    <i className="fa-solid fa-arrow-down text-[19px]" />
-  </span>
+          <button
+            type="button"
+            onClick={saveSelectedPhoto}
+            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+              <i className="fa-solid fa-arrow-down text-[19px]" />
+            </span>
+            <span className="text-[15px] font-normal text-[#111827]">
+              Save to phone
+            </span>
+          </button>
 
-  <span className="text-[15px] font-normal text-[#111827]">
-    Save to phone
-  </span>
-</button>
+          <button
+            type="button"
+            onClick={shareSelectedPhoto}
+            className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+              <i className="fa-solid fa-share text-[19px]" />
+            </span>
+            <span className="text-[15px] font-normal text-[#111827]">
+              Share external
+            </span>
+          </button>
 
-<button
-  type="button"
-  onClick={shareSelectedPhoto}
-  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
->
-  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-    <i className="fa-solid fa-share text-[19px]" />
-  </span>
-
-  <span className="text-[15px] font-normal text-[#111827]">
-    Share external
-  </span>
-</button>
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={openPhotoAltEditor}
+              className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center">
+                <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border-2 border-[#6b7280] text-[14px] font-semibold text-[#4b5563]">
+                  A
+                </span>
+              </span>
+              <span className="text-[15px] font-normal text-[#111827]">
+                Edit alt text
+              </span>
+            </button>
+          ) : null}
         </div>
       </div>
     ) : null}
-{photoDeleteConfirmOpen ? (
-  <div
-    className="absolute inset-0 z-50 flex items-end bg-black/45"
-    onClick={(event) => {
-      event.stopPropagation()
 
-      if (!photoDeleteBusy) {
-        setPhotoDeleteConfirmOpen(false)
-      }
-    }}
-  >
-    <div
-      className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
-      onClick={(event) =>
-        event.stopPropagation()
-      }
-    >
-      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
+    {photoCaptionEditorOpen ? (
+      <div
+        className="absolute inset-0 z-50 flex items-end bg-black/45"
+        onClick={(event) => {
+          event.stopPropagation()
+          if (!photoCaptionSaving) {
+            setPhotoCaptionEditorOpen(false)
+          }
+        }}
+      >
+        <div
+          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+          onClick={(event) =>
+            event.stopPropagation()
+          }
+        >
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
-      <div className="text-[16px] font-semibold text-[#111827]">
-        Delete photo?
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[16px] font-semibold text-[#111827]">
+                Edit caption
+              </div>
+              <div className="mt-1 text-[12px] text-[#98a2b3]">
+                Photo {safeSelectedPhotoIndex + 1}
+              </div>
+            </div>
+
+            <span className="text-[11px] text-[#98a2b3]">
+              {photoCaption.length} / {MAX_PHOTO_CAPTION_LENGTH}
+            </span>
+          </div>
+
+          <textarea
+            autoFocus
+            value={photoCaption}
+            maxLength={MAX_PHOTO_CAPTION_LENGTH}
+            onChange={(event) =>
+              setPhotoCaption(
+                event.target.value.slice(
+                  0,
+                  MAX_PHOTO_CAPTION_LENGTH
+                )
+              )
+            }
+            placeholder="Write a caption for this photo..."
+            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] leading-5 text-[#111827] outline-none"
+          />
+
+          <div className="mt-4 flex gap-3">
+            <button
+              type="button"
+              disabled={photoCaptionSaving}
+              onClick={() =>
+                setPhotoCaptionEditorOpen(false)
+              }
+              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              disabled={photoCaptionSaving}
+              onClick={savePhotoCaption}
+              className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white"
+            >
+              {photoCaptionSaving
+                ? 'Saving...'
+                : 'Save'}
+            </button>
+          </div>
+        </div>
       </div>
+    ) : null}
 
-      <p className="mt-1 text-[13px] font-normal leading-5 text-[#667085]">
-        This photo will be permanently removed from this post.
-      </p>
+    {photoAltEditorOpen ? (
+      <div
+        className="absolute inset-0 z-50 flex items-end bg-black/45"
+        onClick={(event) => {
+          event.stopPropagation()
+          if (!photoAltSaving) {
+            setPhotoAltEditorOpen(false)
+          }
+        }}
+      >
+        <div
+          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+          onClick={(event) =>
+            event.stopPropagation()
+          }
+        >
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
-      <div className="mt-5 flex gap-3">
-        <button
-          type="button"
-          disabled={photoDeleteBusy}
-          onClick={() =>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[16px] font-semibold text-[#111827]">
+                Edit alt text
+              </div>
+              <p className="mt-1 text-[12px] leading-5 text-[#667085]">
+                Describe what is shown in this photo for accessibility.
+              </p>
+            </div>
+
+            <span className="shrink-0 text-[11px] text-[#98a2b3]">
+              {photoAltText.length} / {MAX_PHOTO_ALT_TEXT_LENGTH}
+            </span>
+          </div>
+
+          <textarea
+            autoFocus
+            value={photoAltText}
+            maxLength={MAX_PHOTO_ALT_TEXT_LENGTH}
+            onChange={(event) =>
+              setPhotoAltText(
+                event.target.value.slice(
+                  0,
+                  MAX_PHOTO_ALT_TEXT_LENGTH
+                )
+              )
+            }
+            placeholder="Describe this photo..."
+            className="mt-4 min-h-[130px] w-full resize-none rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-3.5 py-3 text-[14px] leading-5 text-[#111827] outline-none"
+          />
+
+          <div className="mt-4 flex gap-3">
+            <button
+              type="button"
+              disabled={photoAltSaving}
+              onClick={() =>
+                setPhotoAltEditorOpen(false)
+              }
+              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              disabled={photoAltSaving}
+              onClick={savePhotoAltText}
+              className="h-11 flex-1 rounded-full bg-[#111827] text-[14px] font-semibold text-white"
+            >
+              {photoAltSaving
+                ? 'Saving...'
+                : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+
+    {photoDeleteConfirmOpen ? (
+      <div
+        className="absolute inset-0 z-50 flex items-end bg-black/45"
+        onClick={(event) => {
+          event.stopPropagation()
+          if (!photoDeleteBusy) {
             setPhotoDeleteConfirmOpen(false)
           }
-          className="flex-1 rounded-[12px] bg-[#f3f4f6] px-4 py-3 text-[14px] font-semibold text-[#111827] disabled:opacity-50"
+        }}
+      >
+        <div
+          className="w-full rounded-t-[22px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+          onClick={(event) =>
+            event.stopPropagation()
+          }
         >
-          Cancel
-        </button>
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#d1d5db]" />
 
-        <button
-          type="button"
-          disabled={photoDeleteBusy}
-          onClick={deleteSelectedPhoto}
-          className="flex-1 rounded-[12px] bg-[#e5484d] px-4 py-3 text-[14px] font-semibold text-white disabled:opacity-50"
-        >
-          {photoDeleteBusy
-            ? 'Deleting...'
-            : 'Delete photo'}
-        </button>
+          <div className="text-[16px] font-semibold text-[#111827]">
+            Delete photo?
+          </div>
+
+          <p className="mt-1 text-[13px] leading-5 text-[#667085]">
+            This photo will be permanently removed from this post.
+          </p>
+
+          <div className="mt-5 flex gap-3">
+            <button
+              type="button"
+              disabled={photoDeleteBusy}
+              onClick={() =>
+                setPhotoDeleteConfirmOpen(false)
+              }
+              className="h-11 flex-1 rounded-full bg-[#eef0f4] text-[14px] font-semibold text-[#111827]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              disabled={photoDeleteBusy}
+              onClick={deleteSelectedPhoto}
+              className="h-11 flex-1 rounded-full bg-[#e5484d] text-[14px] font-semibold text-white"
+            >
+              {photoDeleteBusy
+                ? 'Deleting...'
+                : 'Delete'}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    ) : null}
   </div>
 ) : null}
-    
-  </div>
-) : null}
+
 
       <CommentsModal
         open={
