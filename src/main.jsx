@@ -56,12 +56,25 @@ async function checkForAppUpdate({ force = false } = {}) {
   }
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-  })
-}
+const LEGACY_SW_RESET_VERSION = '20260818-1'
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then(async (registrations) => {
+      if (!registrations.length) return
+
+      const registration = await navigator.serviceWorker.register(
+        `/sw.js?v=${LEGACY_SW_RESET_VERSION}`,
+        {
+          scope: '/',
+          updateViaCache: 'none',
+        }
+      )
+
+      await registration.update()
+    })
+    .catch(() => {})
+}
 window.addEventListener('load', () => {
   window.setTimeout(() => checkForAppUpdate({ force: true }), 1200)
 })
