@@ -572,10 +572,10 @@ export default function PublicPostDetailView({
             </article>
 
             {comments ? (
-              <section className="mt-2 bg-white pt-3">
-                {comments}
-              </section>
-            ) : null}
+  <section className="bg-white">
+    {comments}
+  </section>
+) : null}
           </>
         ) : null}
       </main>
