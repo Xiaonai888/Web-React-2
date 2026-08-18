@@ -73,6 +73,7 @@ function normalizeCandidate(candidate) {
     image: candidate.image_url || '',
     username,
     votes: Number(candidate.vote_count || 0),
+    rank: Number(candidate.rank || candidate.final_rank || 0),
   }
 }
 
@@ -136,9 +137,9 @@ function CandidateRow({ candidate, rank, onOpen, onVote, voting }) {
   )
 }
 
-function QuickLink({ icon, title, subtitle }) {
+function QuickLink({ icon, title, subtitle, onClick }) {
   return (
-    <button type="button" className="min-w-0 rounded-[16px] border border-[#f0e8ed] bg-white p-3 text-left shadow-[0_6px_18px_rgba(31,41,55,0.04)] active:scale-[0.98]">
+    <button type="button" onClick={onClick} className="min-w-0 rounded-[16px] border border-[#f0e8ed] bg-white p-3 text-left shadow-[0_6px_18px_rgba(31,41,55,0.04)] active:scale-[0.98]">
       <div className="flex items-start gap-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70]">
           <i className={`fa-solid ${icon} text-[12px]`} />
@@ -149,6 +150,110 @@ function QuickLink({ icon, title, subtitle }) {
         </span>
       </div>
     </button>
+  )
+}
+
+function WinnerItem({ winner, onOpen }) {
+  const candidate = normalizeCandidate(winner)
+  const rankTone =
+    candidate.rank === 1
+      ? 'bg-[#fff8dc] text-[#c58b00]'
+      : candidate.rank === 2
+        ? 'bg-[#f3f5f8] text-[#7c8798]'
+        : 'bg-[#fff2e8] text-[#b96b2e]'
+
+  return (
+    <button type="button" onClick={() => onOpen(candidate)} className="flex w-full items-center gap-3 rounded-[14px] border border-[#f1e7eb] bg-white p-2.5 text-left active:scale-[0.99]">
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-black ${rankTone}`}>
+        {candidate.rank}
+      </span>
+      <span className={`shrink-0 overflow-hidden bg-[#f5f5f7] ${candidate.kind === 'author' ? 'h-11 w-11 rounded-full' : 'h-12 w-9 rounded-[8px]'}`}>
+        <CandidateImage candidate={candidate} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block line-clamp-1 text-[11px] font-black text-[#111827]">{candidate.name}</span>
+        <span className="mt-1 block line-clamp-1 text-[9px] font-semibold text-[#8b93a1]">{candidate.subtitle}</span>
+      </span>
+      <span className="shrink-0 text-[10px] font-black text-[#ff3f70]">{formatNumber(candidate.votes)}</span>
+    </button>
+  )
+}
+
+function PastWinnersModal({ campaigns, loading, error, onClose, onOpen }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
+      <div className="max-h-[82vh] w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-[#fffafb] shadow-2xl sm:rounded-[24px]" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[#f0e5ea] bg-white px-4 py-4">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#ff3f70]">Monthly Vote</div>
+            <h3 className="mt-1 text-[18px] font-black text-[#111827]">Past Winners</h3>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f7] text-[#667085] active:scale-95">
+            <i className="fa-solid fa-xmark" />
+          </button>
+        </div>
+
+        <div className="max-h-[calc(82vh-76px)] overflow-y-auto p-4">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="h-[190px] animate-pulse rounded-[18px] bg-[#f5f5f7]" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="rounded-[16px] bg-[#fff0f4] px-4 py-8 text-center text-[11px] font-bold text-[#d92d55]">{error}</div>
+          ) : campaigns.length ? (
+            <div className="space-y-4">
+              {campaigns.map((item) => (
+                <section key={item.id} className="rounded-[18px] border border-[#f1e4e9] bg-white p-3 shadow-[0_6px_18px_rgba(31,41,55,0.04)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[13px] font-black text-[#111827]">{item.title}</div>
+                      <div className="mt-1 text-[9px] font-bold text-[#9b6575]">{getCampaignMonthLabel(item)}</div>
+                    </div>
+                    <span className="rounded-full bg-[#fff0f5] px-2.5 py-1 text-[9px] font-black text-[#ff3f70]">Ended</span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[#475467]">
+                        <i className="fa-solid fa-book-open text-[#ff3f70]" /> Story
+                      </div>
+                      <div className="space-y-2">
+                        {(item.winners?.story || []).length ? (
+                          item.winners.story.map((winner) => (
+                            <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
+                          ))
+                        ) : (
+                          <div className="rounded-[12px] bg-[#f8f8fa] px-3 py-5 text-center text-[9px] font-bold text-[#98a2b3]">No Story winner</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-[10px] font-black text-[#475467]">
+                        <i className="fa-solid fa-user text-[#ff3f70]" /> Author
+                      </div>
+                      <div className="space-y-2">
+                        {(item.winners?.author || []).length ? (
+                          item.winners.author.map((winner) => (
+                            <WinnerItem key={winner.id} winner={winner} onOpen={onOpen} />
+                          ))
+                        ) : (
+                          <div className="rounded-[12px] bg-[#f8f8fa] px-3 py-5 text-center text-[9px] font-bold text-[#98a2b3]">No Author winner</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[16px] bg-[#f8f8fa] px-4 py-10 text-center text-[11px] font-bold text-[#8b93a1]">No previous winners yet</div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -164,6 +269,10 @@ export default function MonthlyVoteTab() {
   const [notice, setNotice] = useState('')
   const [votingId, setVotingId] = useState('')
   const [nowMs, setNowMs] = useState(Date.now())
+  const [showPastWinners, setShowPastWinners] = useState(false)
+  const [pastWinners, setPastWinners] = useState([])
+  const [pastWinnersLoading, setPastWinnersLoading] = useState(false)
+  const [pastWinnersError, setPastWinnersError] = useState('')
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000)
@@ -295,6 +404,31 @@ export default function MonthlyVoteTab() {
     }
   }
 
+  const openPastWinners = async () => {
+    setShowPastWinners(true)
+
+    if (pastWinners.length || pastWinnersLoading) return
+
+    try {
+      setPastWinnersLoading(true)
+      setPastWinnersError('')
+
+      const response = await fetch(`${API_BASE_URL}/api/monthly-vote/previous-winners?limit=6`)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load previous winners')
+      }
+
+      setPastWinners(Array.isArray(data.campaigns) ? data.campaigns : [])
+    } catch (error) {
+      setPastWinners([])
+      setPastWinnersError(error.message || 'Failed to load previous winners')
+    } finally {
+      setPastWinnersLoading(false)
+    }
+  }
+
   const scrollToCandidates = () => {
     candidatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -404,7 +538,7 @@ export default function MonthlyVoteTab() {
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <QuickLink icon="fa-shield" title="Rules" subtitle="Read the voting rules." />
-        <QuickLink icon="fa-trophy" title="Past Winners" subtitle="See previous winners." />
+        <QuickLink icon="fa-trophy" title="Past Winners" subtitle="See previous winners." onClick={openPastWinners} />
         <QuickLink icon="fa-circle-question" title="How it works" subtitle="Learn about voting." />
       </div>
 
@@ -418,6 +552,19 @@ export default function MonthlyVoteTab() {
           </button>
         </div>
       </div>
+
+      {showPastWinners ? (
+        <PastWinnersModal
+          campaigns={pastWinners}
+          loading={pastWinnersLoading}
+          error={pastWinnersError}
+          onClose={() => setShowPastWinners(false)}
+          onOpen={(candidate) => {
+            setShowPastWinners(false)
+            handleOpen(candidate)
+          }}
+        />
+      ) : null}
     </section>
   )
 }
