@@ -1,3 +1,4 @@
+import PublicPostDetailView from '../social/posts/PublicPostDetailView'
 import {
   useEffect,
   useMemo,
@@ -1300,6 +1301,7 @@ function EditImagePreview({
 }
 
 function StandardReaderPostCard({
+  onFullPostClose,
   post,
   onUpdated,
   onDeleted,
@@ -2948,6 +2950,207 @@ const safeSelectedPhotoIndex =
 
   return (
     <>
+
+
+      {fullPostView && !photoPostView ? (
+  <PublicPostDetailView
+    pageName={
+      user?.name ||
+      user?.username ||
+      'Reader'
+    }
+    pageAvatarUrl={
+      user?.avatar_url || ''
+    }
+    authorName={
+      user?.name ||
+      user?.username ||
+      'Reader'
+    }
+    authorAvatarUrl={
+      user?.avatar_url || ''
+    }
+    createdAt={post.created_at}
+    visibility={
+      post.visibility || 'public'
+    }
+    isEdited={Boolean(post.is_edited)}
+    content={
+      postText ? (
+        <span>
+          {renderPostTextWithLinks(
+            postText
+          )}
+        </span>
+      ) : null
+    }
+    sourcePreview={
+      isEchoPost ? (
+        <ReaderEchoSourceBlock
+          post={post}
+        />
+      ) : null
+    }
+    media={
+      !isEchoPost ? (
+        <ReaderPostImages
+          imageUrls={imageUrls}
+          photoMetadata={
+            photoMetadata
+          }
+          onImageClick={
+            handlePostImageClick
+          }
+        />
+      ) : null
+    }
+    reactionControl={
+      <div className="inline-flex items-center gap-2">
+        <ReactionAction
+          reactionType={
+            reactionType
+          }
+          count={reactionCount}
+          busy={reactionBusy}
+          onReact={updateReaction}
+          showCount={false}
+          idleLabel="Like"
+          buttonClassName="text-[#65676b]"
+        />
+
+        <button
+          type="button"
+          onClick={() =>
+            updateReaction(
+              reactionType || 'love'
+            )
+          }
+          disabled={reactionBusy}
+          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
+        >
+          Like
+        </button>
+      </div>
+    }
+    echoControl={
+      <button
+        type="button"
+        onClick={() =>
+          setEchoOpen(true)
+        }
+        className="inline-flex items-center gap-2 text-[14px] font-normal text-[#65676b] active:opacity-70"
+      >
+        <img
+          src="/assets/Icons/echo.svg"
+          alt=""
+          aria-hidden="true"
+          className="h-[18px] w-[18px] object-contain opacity-70"
+        />
+        <span>Echo</span>
+      </button>
+    }
+    reactionSummary={
+      Array.isArray(
+        post?.reaction_summary
+      )
+        ? post.reaction_summary
+        : []
+    }
+    likeCount={reactionCount}
+    commentCount={commentCount}
+    echoCount={echoCount}
+    onClose={
+      onFullPostClose ||
+      (() => {
+        if (
+          window.history.length > 1
+        ) {
+          navigate(-1)
+          return
+        }
+
+        navigate('/discover', {
+          replace: true,
+        })
+      })
+    }
+    onSearch={() =>
+      navigate(
+        `/discover/search?q=${encodeURIComponent(
+          user?.username ||
+            user?.name ||
+            ''
+        )}&type=posts`
+      )
+    }
+    onOpenProfile={
+      viewReaderProfile
+    }
+    onOptions={() =>
+      setMenuOpen(true)
+    }
+    onComment={() =>
+      setCommentOpen(true)
+    }
+    onOpenReactions={() =>
+      navigate(
+        `/interactions/reader_post/${encodeURIComponent(
+          post.id
+        )}/likes`,
+        {
+          state: {
+            sourceName:
+              user?.name ||
+              user?.username ||
+              'Reader Post',
+          },
+        }
+      )
+    }
+    onOpenComments={() =>
+      setCommentOpen(true)
+    }
+    onOpenEchoes={() => {
+      const sourceType =
+        String(
+          echoShareSource.type ||
+            'reader_post'
+        )
+          .trim()
+          .toLowerCase()
+      const sourceId =
+        String(
+          echoShareSource.id ||
+            post.id ||
+            ''
+        ).trim()
+
+      if (
+        !sourceType ||
+        !sourceId
+      ) {
+        return
+      }
+
+      navigate(
+        `/interactions/${encodeURIComponent(
+          sourceType
+        )}/${encodeURIComponent(
+          sourceId
+        )}/echoes`,
+        {
+          state: {
+            sourceName:
+              echoShareSource.name ||
+              user?.name ||
+              'Reader Post',
+          },
+        }
+      )
+    }}
+  />
+) : (
+
       <article
         id={`reader-post-${post.id}`}
         className="bg-white sm:rounded-[12px]"
