@@ -1583,46 +1583,45 @@ selectedPhotoUrl ? (
       setFullscreenPhotoMenuOpen(false)
       setPhotoDeleteConfirmOpen(true)
     }}
-    className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#fff1f2]"
+    className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
   >
-    <span className="flex h-9 w-9 items-center justify-center text-[#e5484d]">
-      <i className="fa-regular fa-trash-can text-[17px]" />
+    <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+      <i className="fa-regular fa-trash-can text-[20px]" />
     </span>
 
-    <span className="text-[14px] font-medium text-[#e5484d]">
+    <span className="text-[15px] font-normal text-[#111827]">
       Delete photo
     </span>
   </button>
 ) : null}
 
-          
-          <button
-            type="button"
-            onClick={saveSelectedPhoto}
-            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-              <i className="fa-solid fa-download text-[17px]" />
-            </span>
+<button
+  type="button"
+  onClick={saveSelectedPhoto}
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+>
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <i className="fa-solid fa-arrow-down text-[19px]" />
+  </span>
 
-            <span className="text-[14px] font-medium text-[#111827]">
-              Save photo
-            </span>
-          </button>
+  <span className="text-[15px] font-normal text-[#111827]">
+    Save to phone
+  </span>
+</button>
 
-          <button
-            type="button"
-            onClick={shareSelectedPhoto}
-            className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3.5 text-left active:bg-[#f3f4f6]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center text-[#111827]">
-              <i className="fa-solid fa-share-nodes text-[17px]" />
-            </span>
+<button
+  type="button"
+  onClick={shareSelectedPhoto}
+  className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
+>
+  <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
+    <i className="fa-solid fa-share text-[19px]" />
+  </span>
 
-            <span className="text-[14px] font-medium text-[#111827]">
-              Share photo
-            </span>
-          </button>
+  <span className="text-[15px] font-normal text-[#111827]">
+    Share external
+  </span>
+</button>
         </div>
       </div>
     ) : null}
