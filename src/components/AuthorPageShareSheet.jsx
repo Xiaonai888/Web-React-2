@@ -7,9 +7,19 @@ function ShareButton({ label, icon, iconClass = '', onClick }) {
   )
 }
 
-export default function AuthorPageShareSheet({ open, pageName, pageLink, onClose, onCopied }) {
+export default function AuthorPageShareSheet({
+  open,
+  pageName,
+  pageLink,
+  sheetTitle = 'Share Page',
+  shareText: customShareText = '',
+  zClassName = 'z-[280]',
+  onClose,
+  onCopied,
+}) {
   if (!open) return null
-  const shareText = `View ${pageName} on Shadow.`
+  const shareText =
+  customShareText || `View ${pageName} on Shadow.`
   const encodedText = encodeURIComponent(`${shareText} ${pageLink}`)
   const encodedUrl = encodeURIComponent(pageLink)
   const openShareUrl = (url) => window.open(url, '_blank', 'noopener,noreferrer')
@@ -38,11 +48,11 @@ export default function AuthorPageShareSheet({ open, pageName, pageLink, onClose
   }
 
   return (
-    <div className="fixed inset-0 z-[280] flex items-end justify-center bg-black/35" onClick={onClose}>
+    <div className={`fixed inset-0 ${zClassName} flex items-end justify-center bg-black/35`} onClick={onClose}>
       <section className="w-full rounded-t-[24px] bg-[#f7f7f8] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl md:max-w-[560px]" onClick={(event) => event.stopPropagation()}>
         <div className="mx-auto h-1.5 w-10 rounded-full bg-[#b9bec6]" />
         <div className="flex items-center justify-between px-5 pb-3 pt-4">
-          <h2 className="text-[17px] font-bold text-[#111827]">Share Page</h2>
+          <h2 className="text-[17px] font-bold text-[#111827]">{sheetTitle}</h2>
           
         </div>
         <div className="overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
