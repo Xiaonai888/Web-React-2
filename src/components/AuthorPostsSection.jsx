@@ -419,20 +419,8 @@ function PostImageGrid({ images, onView }) {
 
 function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
   const navigate = useNavigate()
-  function openAuthorPhoto(post, imageUrl) {
-  if (!post?.id) return
-
-  const images = Array.isArray(post.image_urls)
-    ? post.image_urls.filter(Boolean).slice(0, 5)
-    : []
-
-  const photoIndex = Math.max(0, images.indexOf(imageUrl))
-
-  navigate(
-    `/author/post/${encodeURIComponent(post.id)}?photo=${photoIndex}`,
-    { state: { fromAuthorPage: true } }
-  )
-}
+export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
+  const navigate = useNavigate()
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
   const isPinned = Boolean(post.is_pinned || post.pinned)
