@@ -77,6 +77,87 @@ function normalizeCandidate(candidate) {
   }
 }
 
+
+function getDefaultDesign() {
+  return {
+    badge_text: 'MONTHLY VOTE',
+    hero_title: '',
+    hero_description: 'Vote for your favorite story or author and help crown this month\'s winner.',
+    hero_image_url: '',
+    background_type: 'gradient',
+    background_value: 'linear-gradient(135deg,#fff8fb,#fff4f8,#ffeef4)',
+    text_color: '#111827',
+    accent_color: '#ff3f70',
+    cta_text: '',
+    cta_url: '',
+    show_hero_image: true,
+    show_countdown: true,
+    show_vote_balance: true,
+    show_top_three: true,
+    show_candidate_list: true,
+  }
+}
+
+function getHeroBackground(design) {
+  if (design?.background_type === 'image' && design?.background_value) {
+    return {
+      backgroundImage: `linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,.08)), url("${design.background_value}")`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+    }
+  }
+
+  if (design?.background_type === 'solid') {
+    return { background: design.background_value || '#fff4f8' }
+  }
+
+  return {
+    background: design?.background_value || 'linear-gradient(135deg,#fff8fb,#fff4f8,#ffeef4)',
+  }
+}
+
+function AnnouncementCard({ item, onOpen }) {
+  return (
+    <section
+      className="mt-4 overflow-hidden rounded-[20px] border border-black/5 p-4 shadow-[0_8px_24px_rgba(31,41,55,0.06)]"
+      style={{ background: item.background_color || '#ffffff', color: item.text_color || '#111827' }}
+    >
+      {item.image_url ? (
+        <img
+          src={item.image_url}
+          alt={item.title || 'Event announcement'}
+          className="mb-3 max-h-[260px] w-full rounded-[16px] object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : null}
+
+      {item.badge_text ? (
+        <div
+          className="text-[9px] font-black uppercase tracking-[0.14em]"
+          style={{ color: item.accent_color || '#ff3f70' }}
+        >
+          {item.badge_text}
+        </div>
+      ) : null}
+
+      {item.title ? <h3 className="mt-1 text-[17px] font-black leading-snug">{item.title}</h3> : null}
+      {item.description ? <p className="mt-2 text-[11px] font-semibold leading-5 opacity-75">{item.description}</p> : null}
+
+      {item.button_text && item.button_url ? (
+        <button
+          type="button"
+          onClick={() => onOpen(item.button_url)}
+          className="mt-3 min-h-9 rounded-full px-4 text-[11px] font-black text-white active:scale-[0.98]"
+          style={{ background: item.accent_color || '#ff3f70' }}
+        >
+          {item.button_text}
+        </button>
+      ) : null}
+    </section>
+  )
+}
+
 function CandidateImage({ candidate }) {
   if (candidate?.image) {
     return <img src={candidate.image} alt={candidate.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
@@ -264,6 +345,8 @@ export default function MonthlyVoteTab() {
   const [stories, setStories] = useState([])
   const [authors, setAuthors] = useState([])
   const [campaign, setCampaign] = useState(null)
+  const [design, setDesign] = useState(getDefaultDesign())
+  const [announcements, setAnnouncements] = useState([])
   const [voteBalance, setVoteBalance] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState('')
@@ -289,12 +372,16 @@ export default function MonthlyVoteTab() {
         if (!response.ok || data.ok === false) throw new Error(data.message || 'Failed to load Monthly Vote')
         if (!ignore) {
           setCampaign(data.campaign || null)
+          setDesign({ ...getDefaultDesign(), ...(data.design || {}) })
+          setAnnouncements(Array.isArray(data.announcements) ? data.announcements : [])
           setStories((Array.isArray(data.candidates?.story) ? data.candidates.story : []).map(normalizeCandidate))
           setAuthors((Array.isArray(data.candidates?.author) ? data.candidates.author : []).map(normalizeCandidate))
         }
       } catch (error) {
         if (!ignore) {
           setCampaign(null)
+          setDesign(getDefaultDesign())
+          setAnnouncements([])
           setStories([])
           setAuthors([])
           setNotice(error.message || 'Failed to load Monthly Vote')
@@ -344,6 +431,27 @@ export default function MonthlyVoteTab() {
   const monthLabel = getCampaignMonthLabel(campaign, new Date(nowMs))
   const winnerLabel = getWinnerLabel(campaign)
   const campaignEndsAt = campaign?.ends_at ? new Date(campaign.ends_at).getTime() : nowMs
+  const heroTitle = design.hero_title || campaign?.title || monthLabel
+  const heroDescription = design.hero_description || getDefaultDesign().hero_description
+  const heroStyle = {
+    ...getHeroBackground(design),
+    color: design.text_color || '#111827',
+  }
+
+
+  const handleActionLink = (url) => {
+    const target = String(url || '').trim()
+    if (!target) return
+
+    if (target.startsWith('/') && !target.startsWith('//')) {
+      navigate(target)
+      return
+    }
+
+    if (/^https?:\/\//i.test(target)) {
+      window.location.assign(target)
+    }
+  }
 
   const handleOpen = (candidate) => {
     if (!candidate) return
@@ -435,48 +543,95 @@ export default function MonthlyVoteTab() {
 
   return (
     <section className="pb-4 pt-5">
-      <div className="overflow-hidden rounded-[22px] border border-[#f6dce5] bg-gradient-to-br from-[#fff8fb] via-[#fff4f8] to-[#ffeef4] p-4 shadow-[0_10px_28px_rgba(255,63,112,0.10)]">
+      <div
+        className="overflow-hidden rounded-[22px] border border-black/5 p-4 shadow-[0_10px_28px_rgba(31,41,55,0.10)]"
+        style={heroStyle}
+      >
+        {design.show_hero_image && design.hero_image_url ? (
+          <img
+            src={design.hero_image_url}
+            alt={heroTitle}
+            className="mb-4 max-h-[300px] w-full rounded-[18px] object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        ) : null}
+
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[#ff3f70]">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2" style={{ color: design.accent_color || '#ff3f70' }}>
               <i className="fa-solid fa-crown text-[14px]" />
-              <span className="text-[10px] font-black uppercase tracking-[0.14em]">Monthly Vote</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.14em]">
+                {design.badge_text || 'MONTHLY VOTE'}
+              </span>
             </div>
-            <h2 className="mt-2 text-[24px] font-black leading-tight text-[#e91e58]">{campaign?.title || monthLabel}</h2>
-            <p className="mt-1 text-[10px] font-bold text-[#9b6575]">{monthLabel}</p>
-            <p className="mt-2 max-w-[360px] text-[12px] font-semibold leading-5 text-[#667085]">
-              Vote for your favorite story or author and help crown this month&apos;s winner.
-            </p>
+
+            <h2 className="mt-2 text-[24px] font-black leading-tight" style={{ color: design.accent_color || '#e91e58' }}>
+              {heroTitle}
+            </h2>
+
+            <p className="mt-1 text-[10px] font-bold opacity-60">{monthLabel}</p>
+
+            {heroDescription ? (
+              <p className="mt-2 max-w-[390px] text-[12px] font-semibold leading-5 opacity-75">
+                {heroDescription}
+              </p>
+            ) : null}
+
+            {design.cta_text && design.cta_url ? (
+              <button
+                type="button"
+                onClick={() => handleActionLink(design.cta_url)}
+                className="mt-3 min-h-10 rounded-full px-5 text-[11px] font-black text-white shadow-sm active:scale-[0.98]"
+                style={{ background: design.accent_color || '#ff3f70' }}
+              >
+                {design.cta_text}
+              </button>
+            ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#ffc7d7] bg-white/80 px-3 py-2 text-[#e91e58] shadow-sm">
-            <i className="fa-solid fa-ticket text-[11px]" />
-            <div>
-              <div className="text-[8px] font-bold leading-none text-[#9b6575]">Vote Balance</div>
-              <div className="mt-1 text-[14px] font-black leading-none">{formatNumber(voteBalance)}</div>
+
+          {design.show_vote_balance ? (
+            <div
+              className="flex shrink-0 items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-2 shadow-sm"
+              style={{ color: design.accent_color || '#e91e58' }}
+            >
+              <i className="fa-solid fa-ticket text-[11px]" />
+              <div>
+                <div className="text-[8px] font-bold leading-none opacity-60">Vote Balance</div>
+                <div className="mt-1 text-[14px] font-black leading-none">{formatNumber(voteBalance)}</div>
+              </div>
             </div>
+          ) : null}
+        </div>
+
+        {design.show_countdown ? (
+          <div className="mt-4 flex items-center gap-2 text-[11px] font-bold opacity-75">
+            <i className="fa-regular fa-clock" />
+            <span>
+              {campaign ? (
+                <>Ends in <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>{formatCountdown(campaignEndsAt, nowMs)}</span></>
+              ) : (
+                <span className="font-black" style={{ color: design.accent_color || '#ff3f70' }}>No active Monthly Vote</span>
+              )}
+            </span>
           </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2 text-[11px] font-bold text-[#667085]">
-          <i className="fa-regular fa-clock text-[#111827]" />
-          <span>
-            {campaign ? (
-              <>Ends in <span className="font-black text-[#ff3f70]">{formatCountdown(campaignEndsAt, nowMs)}</span></>
-            ) : (
-              <span className="font-black text-[#ff3f70]">No active Monthly Vote</span>
-            )}
-          </span>
-        </div>
+        ) : null}
       </div>
 
+      {announcements.map((item) => (
+        <AnnouncementCard key={item.id} item={item} onOpen={handleActionLink} />
+      ))}
+
       <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-full border border-[#f0e4e9] bg-white shadow-sm">
-        <button type="button" onClick={() => setActiveType('story')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'story' ? 'bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] text-white' : 'text-[#475467]'}`}>
+        <button type="button" onClick={() => setActiveType('story')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'story' ? 'text-white' : 'text-[#475467]'}`} style={activeType === 'story' ? { background: design.accent_color || '#ff3f70' } : undefined}>
           <i className="fa-solid fa-book-open text-[11px]" /> Story
         </button>
-        <button type="button" onClick={() => setActiveType('author')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'author' ? 'bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] text-white' : 'text-[#475467]'}`}>
+        <button type="button" onClick={() => setActiveType('author')} className={`flex h-11 items-center justify-center gap-2 text-[12px] font-black transition ${activeType === 'author' ? 'text-white' : 'text-[#475467]'}`} style={activeType === 'author' ? { background: design.accent_color || '#ff3f70' } : undefined}>
           <i className="fa-solid fa-user text-[11px]" /> Author
         </button>
       </div>
 
+      {design.show_top_three ? (
       <section className="mt-4 rounded-[22px] border border-[#f4e5eb] bg-white p-3 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
         <div className="flex items-center justify-between">
           <h3 className="text-[15px] font-black text-[#111827]">Top 3 Right Now</h3>
@@ -498,15 +653,18 @@ export default function MonthlyVoteTab() {
           <div className="mt-4 rounded-[16px] bg-[#f8f8fa] px-4 py-8 text-center text-[12px] font-bold text-[#8b93a1]">No candidates yet</div>
         )}
       </section>
+      ) : null}
 
       <section className="mt-4 rounded-[20px] border border-[#f4e5eb] bg-white p-4 shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
         <div className="text-[13px] font-black text-[#ff3f70]">My Vote Status</div>
-        <div className="mt-3 grid grid-cols-3 divide-x divide-[#f1e7eb]">
+        <div className="mt-3 grid divide-x divide-[#f1e7eb]" style={{ gridTemplateColumns: `repeat(${design.show_vote_balance ? 3 : 2}, minmax(0, 1fr))` }}>
+          {design.show_vote_balance ? (
           <div className="px-2 text-center">
             <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70]"><i className="fa-solid fa-ticket text-[12px]" /></span>
             <div className="mt-2 text-[9px] font-semibold text-[#8b93a1]">Vote Balance</div>
             <div className="mt-1 text-[14px] font-black text-[#e91e58]">{formatNumber(voteBalance)}</div>
           </div>
+          ) : null}
           <div className="px-2 text-center">
             <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-[#fff0f5] text-[#ff3f70]"><i className="fa-solid fa-list text-[12px]" /></span>
             <div className="mt-2 text-[9px] font-semibold text-[#8b93a1]">Candidates</div>
@@ -522,6 +680,7 @@ export default function MonthlyVoteTab() {
 
       {notice ? <div className="mt-3 rounded-[14px] bg-[#fff0f4] px-4 py-3 text-[11px] font-bold text-[#d92d55]">{notice}</div> : null}
 
+      {design.show_candidate_list ? (
       <section ref={candidatesRef} className="mt-4 scroll-mt-24 overflow-hidden rounded-[20px] border border-[#f0e6ea] bg-white shadow-[0_8px_24px_rgba(31,41,55,0.05)]">
         {loading ? (
           <div className="space-y-2 p-3">
@@ -535,6 +694,7 @@ export default function MonthlyVoteTab() {
           <div className="px-4 py-10 text-center text-[12px] font-bold text-[#8b93a1]">No candidates yet</div>
         )}
       </section>
+      ) : null}
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <QuickLink icon="fa-shield" title="Rules" subtitle="Read the voting rules." />
@@ -542,6 +702,7 @@ export default function MonthlyVoteTab() {
         <QuickLink icon="fa-circle-question" title="How it works" subtitle="Learn about voting." />
       </div>
 
+      {design.show_candidate_list ? (
       <div className="sticky bottom-3 z-30 mt-4 rounded-[20px] border border-[#f2e2e8] bg-white/95 p-2 shadow-[0_14px_34px_rgba(31,41,55,0.16)] backdrop-blur">
         <div className="grid grid-cols-[1.35fr_1fr] gap-2">
           <button type="button" onClick={scrollToCandidates} className="flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff4f7a] to-[#f52f68] px-4 text-[13px] font-black text-white shadow-[0_10px_20px_rgba(245,47,104,0.24)] active:scale-[0.98]">
@@ -552,6 +713,7 @@ export default function MonthlyVoteTab() {
           </button>
         </div>
       </div>
+      ) : null}
 
       {showPastWinners ? (
         <PastWinnersModal
