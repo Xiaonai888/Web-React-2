@@ -15,6 +15,7 @@ import {
 } from 'react-router-dom'
 import CommentsModal from '../../components/story-detail/CommentsModal'
 import AuthorPostEchoAction from '../../components/author-posts/AuthorPostEchoAction'
+import AuthorPageShareSheet from '../../components/AuthorPageShareSheet'
 import ReactionAction from '../../components/social/reactions/ReactionAction'
 import { ProfessionalSinglePostImage } from '../../components/common/ProfessionalPostContent'
 
@@ -458,6 +459,9 @@ const [
   photoActionMessage,
   setPhotoActionMessage,
 ] = useState('')
+
+  const [photoShareOpen, setPhotoShareOpen] =
+  useState(false)
 
   const [
   photoDeleteConfirmOpen,
@@ -1117,62 +1121,15 @@ async function savePhotoAltText(event) {
   }
 }
 
-async function shareSelectedPhoto(event) {
+function shareSelectedPhoto(event) {
   event?.stopPropagation()
 
-  if (!selectedPhotoUrl) {
-    return
-  }
-
-  const shareData = {
-    title: `${authorName} photo`,
-    url: selectedPhotoUrl,
-  }
-
-  if (navigator.share) {
-    try {
-      await navigator.share(
-        shareData
-      )
-
-      setFullscreenPhotoMenuOpen(false)
-      return
-    } catch (error) {
-      if (
-        error?.name === 'AbortError'
-      ) {
-        return
-      }
-    }
-  }
-
-  if (
-    navigator.clipboard?.writeText
-  ) {
-    try {
-      await navigator.clipboard.writeText(
-        selectedPhotoUrl
-      )
-
-      setFullscreenPhotoMenuOpen(false)
-      setPhotoActionMessage(
-        'Photo link copied.'
-      )
-      return
-    } catch {
-      return
-    }
-  }
-
-  window.open(
-    selectedPhotoUrl,
-    '_blank',
-    'noopener,noreferrer'
-  )
+  if (!selectedPhotoUrl) return
 
   setFullscreenPhotoMenuOpen(false)
+  setPhotoShareOpen(true)
 }
-
+  
   async function followAuthor() {
     const token = getAuthToken()
     const author =
@@ -1985,7 +1942,21 @@ const selectedPhotoAltText = String(
             className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
           >
             <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-              <i className="fa-solid fa-share text-[19px]" />
+              <svg
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.8"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  className="h-[21px] w-[21px]"
+  aria-hidden="true"
+>
+  <path d="M8 7h5a6 6 0 0 1 6 6v2" />
+  <path d="M8 7l4-4" />
+  <path d="M8 7l4 4" />
+  <path d="M5 21v-5a7 7 0 0 1 7-7" />
+</svg>
             </span>
             <span className="text-[15px] font-normal text-[#111827]">
               Share external
@@ -2252,8 +2223,20 @@ const selectedPhotoAltText = String(
   </div>
 ) : null}
 
+<AuthorPageShareSheet
+  open={photoShareOpen}
+  pageName={`${authorName} photo`}
+  pageLink={selectedPhotoUrl}
+  sheetTitle="Share Photo"
+  shareText={`View this photo from ${authorName} on Shadow.`}
+  zClassName="z-[200000]"
+  onClose={() => setPhotoShareOpen(false)}
+  onCopied={() =>
+    setPhotoActionMessage('Photo link copied.')
+  }
+/>
 
-      <CommentsModal
+<CommentsModal
         open={
           commentsOpen &&
           Boolean(post?.id)
