@@ -1968,7 +1968,11 @@ const selectedPhotoAltText = String(
             className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
           >
             <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-              <i className="fa-solid fa-arrow-down text-[19px]" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M12 3v11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+</svg>
             </span>
             <span className="text-[15px] font-normal text-[#111827]">
               Save to phone
