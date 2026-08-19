@@ -1952,10 +1952,8 @@ const selectedPhotoAltText = String(
   className="h-[21px] w-[21px]"
   aria-hidden="true"
 >
-  <path d="M8 7h5a6 6 0 0 1 6 6v2" />
-  <path d="M8 7l4-4" />
-  <path d="M8 7l4 4" />
-  <path d="M5 21v-5a7 7 0 0 1 7-7" />
+  <path d="M15 6l5 5-5 5" />
+  <path d="M20 11h-6.5C8.5 11 5 14 4 19c0-4.5 2.5-8 8.5-8H20" />
 </svg>
             </span>
             <span className="text-[15px] font-normal text-[#111827]">
