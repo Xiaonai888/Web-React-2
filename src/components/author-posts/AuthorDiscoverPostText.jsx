@@ -203,6 +203,12 @@ export default function AuthorDiscoverPostText({
       ? renderText(value)
       : value
 
+  const handleTextToggle = (event) => {
+  if (!overflowing) return
+  if (event.target instanceof Element && event.target.closest('a, button')) return
+  setExpanded((current) => !current)
+}
+
   return (
     <div
       ref={containerRef}
@@ -210,17 +216,16 @@ export default function AuthorDiscoverPostText({
     >
       {expanded ? (
         <p
-          onClick={() =>
-            setExpanded(false)
-          }
-          className={`cursor-pointer whitespace-pre-wrap break-words ${className}`}
-        >
+  onClick={handleTextToggle}
+  className={`cursor-pointer whitespace-pre-wrap break-words ${className}`}
+>
           {renderValue(text)}
         </p>
       ) : (
         <p
-          className={`whitespace-pre-wrap break-words ${className}`}
-        >
+  onClick={handleTextToggle}
+  className={`whitespace-pre-wrap break-words ${overflowing ? 'cursor-pointer' : ''} ${className}`}
+>
           {renderValue(
             overflowing
               ? collapsedText
