@@ -6,6 +6,7 @@ import AuthorPostEchoAction from './author-posts/AuthorPostEchoAction'
 import ReactionAction from './social/reactions/ReactionAction'
 import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
+import AuthorDiscoverPostText from './author-posts/AuthorDiscoverPostText'
 import {
   CollapsiblePostText,
   ProfessionalSinglePostImage,
@@ -483,16 +484,11 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
 
       {post.content ? (
         <div className="mt-2 px-4 pb-3">
-          <CollapsiblePostText
-            text={postText}
-            lines={3}
-            toggleOnTextClick
-            className="text-[16px] font-normal leading-7 text-[#111827]"
-          >
-            {renderPostTextWithLinks(
-              post.content
-            )}
-          </CollapsiblePostText>
+          <AuthorDiscoverPostText
+  text={postText}
+  renderText={renderPostTextWithLinks}
+  className="text-[16px] font-normal leading-7 text-[#111827]"
+/>
         </div>
       ) : null}
 
