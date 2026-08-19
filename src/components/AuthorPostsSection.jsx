@@ -933,26 +933,7 @@ function PostOptionsSheet({
 
 
 
-function ImageViewer({ imageUrl, onClose }) {
-  if (!imageUrl) return null
 
-  return (
-    <div className="fixed inset-0 z-[280] bg-black">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white"
-        aria-label="Close image"
-      >
-        <i className="fa-solid fa-xmark text-[18px]" />
-      </button>
-
-      <div className="flex h-full w-full items-center justify-center">
-        <img src={imageUrl} alt="" className="max-h-full max-w-full object-contain" />
-      </div>
-    </div>
-  )
-}
       
 function PostsEmpty({ title, text }) {
   return (
@@ -997,7 +978,6 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [selectedPost, setSelectedPost] = useState(null)
   const [reportPost, setReportPost] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
-  const [viewImageUrl, setViewImageUrl] = useState('')    
   const [pinBusy, setPinBusy] = useState(false)
   const [saveBusy, setSaveBusy] = useState(false)
   const [notificationBusy, setNotificationBusy] = useState(false)
@@ -1559,11 +1539,6 @@ function handleAuthorPostCommentChanged(nextComments = []) {
   }}
   onClose={() => setCommentPost(null)}
   onCommentChanged={handleAuthorPostCommentChanged}
-/>
-
-      <ImageViewer
-  imageUrl={viewImageUrl}
-  onClose={() => setViewImageUrl('')}
 />
       
     </div>
