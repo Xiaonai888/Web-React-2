@@ -387,8 +387,8 @@ useEffect(() => {
   setCurrentPage(1)
 }, [activeTab, pageSize])
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages)
-  }, [currentPage, totalPages])
+    if (!loading && currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages, loading])
 
   useEffect(() => {
     let ignore = false
@@ -448,7 +448,17 @@ useEffect(() => {
     }
   }, [navigate, storyId])
 
+  const clearManagerView = () => {
+    sessionStorage.removeItem(`story-manager-view:${storyId}`)
+  }
+
+  const handleLeaveStoryManager = () => {
+    clearManagerView()
+    navigate(-1)
+  }
+
   const handleEditStory = () => {
+    clearManagerView()
     navigate(`/author/create-story?editStoryId=${storyId}`)
   }
 
@@ -463,6 +473,7 @@ useEffect(() => {
 }
 
   const handlePerformance = () => {
+    clearManagerView()
     navigate(`/author/story/${storyId}/performance`)
   }
 
@@ -764,6 +775,7 @@ const handleSavePublishSettings = async () => {
       }
 
       setTrashStoryOpen(false)
+      clearManagerView()
       navigate('/author/dashboard', { replace: true })
     } catch (error) {
       setTrashStoryOpen(false)
@@ -865,7 +877,7 @@ const handleSavePublishSettings = async () => {
         <div className="mx-auto grid h-[58px] max-w-5xl grid-cols-[44px_1fr_44px] items-center px-2 sm:px-4">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={handleLeaveStoryManager}
             className="flex h-10 w-10 items-center justify-center text-[#111827] active:opacity-60"
             aria-label="Go back"
           >
