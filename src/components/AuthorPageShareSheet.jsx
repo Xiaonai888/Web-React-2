@@ -1,3 +1,7 @@
+import { useRef, useState } from 'react'
+function getPointerY(event) {
+  return event.clientY
+}
 function ShareButton({ label, icon, iconClass = '', onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex w-[74px] shrink-0 flex-col items-center gap-2 text-center">
@@ -17,6 +21,12 @@ export default function AuthorPageShareSheet({
   onClose,
   onCopied,
 }) {
+  const startYRef = useRef(0)
+  const currentYRef = useRef(0)
+  const draggingRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
+
   if (!open) return null
   const shareText =
   customShareText || `View ${pageName} on Shadow.`
@@ -47,10 +57,66 @@ export default function AuthorPageShareSheet({
     await copyLink()
   }
 
+  function handleDragStart(event) {
+  if (!event.isPrimary) return
+
+  draggingRef.current = true
+  setDragging(true)
+  startYRef.current = getPointerY(event)
+  currentYRef.current = getPointerY(event)
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+}
+
+function handleDragMove(event) {
+  if (!draggingRef.current) return
+
+  currentYRef.current = getPointerY(event)
+  setDragOffset(
+    Math.max(0, currentYRef.current - startYRef.current)
+  )
+}
+
+function handleDragEnd() {
+  if (!draggingRef.current) return
+
+  const distance = Math.max(
+    0,
+    currentYRef.current - startYRef.current
+  )
+
+  draggingRef.current = false
+  setDragging(false)
+
+  if (distance > 70) {
+    setDragOffset(0)
+    onClose?.()
+    return
+  }
+
+  setDragOffset(0)
+}
+  
   return (
     <div className={`fixed inset-0 ${zClassName} flex items-end justify-center bg-black/35`} onClick={onClose}>
-      <section className="w-full rounded-t-[24px] bg-[#f7f7f8] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl md:max-w-[560px]" onClick={(event) => event.stopPropagation()}>
-        <div className="mx-auto h-1.5 w-10 rounded-full bg-[#b9bec6]" />
+      <section
+  className="w-full rounded-t-[24px] bg-[#f7f7f8] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-3 shadow-2xl md:max-w-[560px]"
+  style={{
+    transform: `translateY(${dragOffset}px)`,
+    transition: dragging
+      ? 'none'
+      : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+  }}
+  onClick={(event) => event.stopPropagation()}
+>
+        <div
+  onPointerDown={handleDragStart}
+  onPointerMove={handleDragMove}
+  onPointerUp={handleDragEnd}
+  onPointerCancel={handleDragEnd}
+  className="touch-none cursor-grab py-1 active:cursor-grabbing"
+>
+  <div className="mx-auto h-1.5 w-10 rounded-full bg-[#b9bec6]" />
+</div>
         <div className="flex items-center justify-between px-5 pb-3 pt-4">
           <h2 className="text-[17px] font-bold text-[#111827]">{sheetTitle}</h2>
           
