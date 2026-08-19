@@ -263,6 +263,14 @@ function EpisodeRow({ episode, last, onOpen, onMore }) {
   )
 }
 
+function getSavedManagerView(storyId) {
+  try {
+    return JSON.parse(sessionStorage.getItem(`story-manager-view:${storyId}`) || '{}')
+  } catch {
+    return {}
+  }
+}
+
 export default function StoryManagerPage() {
   const navigate = useNavigate()
   const { storyId } = useParams()
@@ -270,9 +278,18 @@ export default function StoryManagerPage() {
   const [episodes, setEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState('published')
-  const [pageSize, setPageSize] = useState(20)
-  const [currentPage, setCurrentPage] = useState(1)
+  const initialView = getSavedManagerView(storyId)
+const [activeTab, setActiveTab] = useState(initialView.activeTab || 'published')
+const [pageSize, setPageSize] = useState(
+  [20, 30, 50].includes(Number(initialView.pageSize)) ? Number(initialView.pageSize) : 20
+)
+const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.currentPage) || 1))
+  const saveManagerView = () => {
+  sessionStorage.setItem(
+    `story-manager-view:${storyId}`,
+    JSON.stringify({ activeTab, pageSize, currentPage })
+  )
+}
   const [selectedEpisode, setSelectedEpisode] = useState(null)
   const [deleteEpisode, setDeleteEpisode] = useState(null)
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
@@ -361,10 +378,14 @@ const addEpisodeTheme =
       ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db]'
       : 'bg-[#111827]'
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [activeTab, pageSize])
-
+  const paginationMounted = useRef(false)
+useEffect(() => {
+  if (!paginationMounted.current) {
+    paginationMounted.current = true
+    return
+  }
+  setCurrentPage(1)
+}, [activeTab, pageSize])
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages)
   }, [currentPage, totalPages])
