@@ -1409,7 +1409,10 @@ function AdsCard({ item, onMore, onHide }) {
                   <span> · </span>
                 ) : null}
 
-                <span>
+                <span
+  onClick={() => hasMoreDescription && setCaptionExpanded((v) => !v)}
+  className={hasMoreDescription ? 'cursor-pointer' : ''}
+>
                   {captionExpanded ||
                   !hasMoreDescription
                     ? description
@@ -1418,7 +1421,7 @@ function AdsCard({ item, onMore, onHide }) {
                         .trim()}...`}
                 </span>
 
-                {hasMoreDescription ? (
+                {hasMoreDescription && !captionExpanded ? (
                   <button
                     type="button"
                     onClick={() =>
@@ -1428,9 +1431,7 @@ function AdsCard({ item, onMore, onHide }) {
                     }
                     className="ml-1 font-semibold text-gray-500"
                   >
-                    {captionExpanded
-                      ? 'less'
-                      : 'more'}
+                    more
                   </button>
                 ) : null}
               </>
