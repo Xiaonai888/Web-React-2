@@ -1942,19 +1942,10 @@ const selectedPhotoAltText = String(
             className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
           >
             <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-              <svg
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="1.8"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  className="h-[21px] w-[21px]"
-  aria-hidden="true"
->
-  <path d="M15 6l5 5-5 5" />
-  <path d="M20 11h-6.5C8.5 11 5 14 4 19c0-4.5 2.5-8 8.5-8H20" />
-</svg>
+              <i
+  className="fa-solid fa-share text-[19px] text-transparent"
+  style={{ WebkitTextStroke: '1.1px #4b5563' }}
+/>
             </span>
             <span className="text-[15px] font-normal text-[#111827]">
               Share external
