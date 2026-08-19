@@ -486,6 +486,7 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
           <CollapsiblePostText
             text={postText}
             lines={3}
+            toggleOnTextClick
             className="text-[16px] font-normal leading-7 text-[#111827]"
           >
             {renderPostTextWithLinks(
