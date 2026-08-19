@@ -1987,7 +1987,9 @@ const selectedPhotoAltText = String(
     className="flex w-full items-center gap-3 px-3 py-3.5 text-left active:bg-[#f3f4f6]"
   >
     <span className="flex h-9 w-9 items-center justify-center text-[#4b5563]">
-      <i className="fa-regular fa-message text-[19px]" />
+      <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-current">
+  <i className="fa-solid fa-question text-[10px]" />
+</span>
     </span>
 
     <span className="text-[15px] font-normal text-[#111827]">
