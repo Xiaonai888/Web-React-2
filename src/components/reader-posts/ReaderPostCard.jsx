@@ -3314,16 +3314,11 @@ const safeSelectedPhotoIndex =
                 className="text-[14px] font-normal leading-6 text-[#111827]"
               />
             ) : (
-              <CollapsiblePostText
-                text={postText}
-                lines={3}
-                toggleOnTextClick
-                className="text-[14px] font-normal leading-6 text-[#111827]"
-              >
-                {renderPostTextWithLinks(
-                  postText
-                )}
-              </CollapsiblePostText>
+              <ReaderDiscoverPostText
+  text={postText}
+  renderText={renderPostTextWithLinks}
+  className="text-[14px] font-normal leading-6 text-[#111827]"
+/>
             )}
           </div>
         ) : null}
