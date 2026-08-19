@@ -15,7 +15,6 @@ import ReaderPostCommentsSection from './ReaderPostCommentsSection'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
 import ReactionAction from '../social/reactions/ReactionAction'
 import {
-  CollapsiblePostText,
   ProfessionalSinglePostImage,
 } from '../common/ProfessionalPostContent'
 import ReaderDiscoverPostText from './ReaderDiscoverPostText'
