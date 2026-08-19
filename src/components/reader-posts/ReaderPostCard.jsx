@@ -3317,6 +3317,7 @@ const safeSelectedPhotoIndex =
               <CollapsiblePostText
                 text={postText}
                 lines={3}
+                toggleOnTextClick
                 className="text-[14px] font-normal leading-6 text-[#111827]"
               >
                 {renderPostTextWithLinks(
