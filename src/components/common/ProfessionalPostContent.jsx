@@ -6,6 +6,7 @@ export function CollapsiblePostText({
   className = '',
   lines = 3,
   discoverStyle = false,
+  toggleOnTextClick = false,
 }) {
   const textRef = useRef(null)
   const [expanded, setExpanded] = useState(false)
@@ -17,13 +18,10 @@ export function CollapsiblePostText({
 
   useEffect(() => {
     const element = textRef.current
-
     if (!element || expanded) return undefined
 
     const measure = () => {
-      setOverflowing(
-        element.scrollHeight > element.clientHeight + 1
-      )
+      setOverflowing(element.scrollHeight > element.clientHeight + 1)
     }
 
     measure()
@@ -42,17 +40,20 @@ export function CollapsiblePostText({
     }
   }, [text, expanded, lines])
 
+  const textCanToggle =
+    overflowing && (toggleOnTextClick || (discoverStyle && expanded))
+
   return (
     <div className="relative">
       <p
         ref={textRef}
         onClick={
-          discoverStyle && expanded
-            ? () => setExpanded(false)
+          textCanToggle
+            ? () => setExpanded((value) => !value)
             : undefined
         }
         className={`whitespace-pre-wrap break-words ${className} ${
-          discoverStyle && expanded ? 'cursor-pointer' : ''
+          textCanToggle ? 'cursor-pointer' : ''
         }`}
         style={
           expanded
@@ -94,6 +95,7 @@ export function CollapsiblePostText({
     </div>
   )
 }
+
 export function ProfessionalSinglePostImage({
   src,
   alt = '',
