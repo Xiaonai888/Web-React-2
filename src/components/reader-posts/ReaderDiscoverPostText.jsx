@@ -219,8 +219,9 @@ export default function ReaderDiscoverPostText({
         </p>
       ) : (
         <p
-          className={`whitespace-pre-wrap break-words ${className}`}
-        >
+  onClick={() => overflowing && setExpanded(true)}
+  className={`whitespace-pre-wrap break-words ${overflowing ? 'cursor-pointer' : ''} ${className}`}
+>
           {renderValue(
             overflowing
               ? collapsedText
