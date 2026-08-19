@@ -417,7 +417,7 @@ function PostImageGrid({ images, onView }) {
   )
 }
 
-function AuthorPostCard(...) {
+function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onReact, onComment, onViewImage, onMessage }) {
   const navigate = useNavigate()
   const avatarUrl = author?.avatar_url || ''
   const pageName = author?.page_name || 'Author'
