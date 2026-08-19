@@ -8,7 +8,6 @@ import ReportModal from './ReportModal'
 import AuthorPostFilterSheet from './author-posts/AuthorPostFilterSheet'
 import AuthorDiscoverPostText from './author-posts/AuthorDiscoverPostText'
 import {
-  CollapsiblePostText,
   ProfessionalSinglePostImage,
 } from './common/ProfessionalPostContent'
 import {
