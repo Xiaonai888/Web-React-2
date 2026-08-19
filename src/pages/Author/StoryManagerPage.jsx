@@ -453,6 +453,7 @@ useEffect(() => {
   }
 
   const handleAddEpisode = () => {
+  saveManagerView()
   const isChatStory = String(story?.story_type || '').toLowerCase() === 'chat_story'
   navigate(
     isChatStory
@@ -467,6 +468,7 @@ useEffect(() => {
 
   const handleEditEpisode = (episode) => {
   setSelectedEpisode(null)
+  saveManagerView()
   const isChatStory =
     String(story?.story_type || '').trim().toLowerCase() === 'chat_story'
 
@@ -479,6 +481,7 @@ useEffect(() => {
 
   const handlePreviewEpisode = (episode) => {
     setSelectedEpisode(null)
+    saveManagerView()
     navigate(`/author/story/${storyId}/episode/preview?episodeId=${episode.id}`)
   }
 
