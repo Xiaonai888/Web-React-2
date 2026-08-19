@@ -427,8 +427,11 @@ export default function CommentsModal({
   >
     <div className="grid grid-cols-3 items-center gap-2 text-center">
       <button
-        type="button"
-        onClick={handleOpenReactions}
+  type="button"
+  onPointerDown={(event) =>
+    event.stopPropagation()
+  }
+  onClick={handleOpenReactions}
         className="flex items-center justify-center gap-1 text-[14px] font-normal text-[#111827] active:scale-95"
         aria-label="View people who reacted"
       >
@@ -441,8 +444,11 @@ export default function CommentsModal({
       </div>
 
       <button
-        type="button"
-        onClick={handleOpenEchoes}
+  type="button"
+  onPointerDown={(event) =>
+    event.stopPropagation()
+  }
+  onClick={handleOpenEchoes}
         className="text-[14px] font-normal text-[#111827] active:scale-95"
         aria-label="View people who echoed"
       >
