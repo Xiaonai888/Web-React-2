@@ -8,9 +8,18 @@ import {
 
 const ALIGN_CLASS = {
   left: 'left-0',
-  center:
-    'left-1/2 -translate-x-1/2',
+  center: 'left-1/2 -translate-x-1/2',
   right: 'right-0',
+}
+
+const IDLE_CLASS = {
+  love: 'shadow-reaction-love-idle',
+  haha: 'shadow-reaction-haha-idle',
+  wow: 'shadow-reaction-wow-idle',
+  sad: 'shadow-reaction-sad-idle',
+  angry: 'shadow-reaction-angry-idle',
+  support: 'shadow-reaction-support-idle',
+  touched: 'shadow-reaction-touched-idle',
 }
 
 const FOCUS_CLASS = {
@@ -19,10 +28,8 @@ const FOCUS_CLASS = {
   wow: 'shadow-reaction-wow-focus',
   sad: 'shadow-reaction-sad-focus',
   angry: 'shadow-reaction-angry-focus',
-  support:
-    'shadow-reaction-support-focus',
-  touched:
-    'shadow-reaction-touched-focus',
+  support: 'shadow-reaction-support-focus',
+  touched: 'shadow-reaction-touched-focus',
 }
 
 export default function ReactionPicker({
@@ -37,14 +44,8 @@ export default function ReactionPicker({
   align = 'left',
   className = '',
 }) {
-  const [
-    pressedType,
-    setPressedType,
-  ] = useState('')
-  const [
-    hoverType,
-    setHoverType,
-  ] = useState('')
+  const [pressedType, setPressedType] = useState('')
+  const [hoverType, setHoverType] = useState('')
 
   useEffect(() => {
     if (!open) {
@@ -55,255 +56,164 @@ export default function ReactionPicker({
 
   if (!open) return null
 
-  const alignClass =
-    ALIGN_CLASS[align] ||
-    ALIGN_CLASS.left
-
-  const emphasizedType =
-    previewType ||
-    pressedType ||
-    hoverType
-
-  const hasEmphasis =
-    Boolean(emphasizedType)
+  const alignClass = ALIGN_CLASS[align] || ALIGN_CLASS.left
+  const emphasizedType = pressedType || previewType || hoverType
 
   return (
     <>
       <style>{`
         @keyframes shadowReactionPickerIn {
-          0% {
-            opacity: 0;
-            transform: scale(.96);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
+          0% { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes shadowReactionIdle {
-          0%, 100% {
-            transform: translateY(0) rotate(-2deg);
-          }
-          50% {
-            transform: translateY(-3px) rotate(2deg);
-          }
+        @keyframes shadowReactionLoveIdle {
+          0%, 100% { transform: translateY(0) scale(.96); }
+          50% { transform: translateY(-3px) scale(1.07); }
+        }
+
+        @keyframes shadowReactionHahaIdle {
+          0%, 100% { transform: translateY(0) rotate(-5deg); }
+          35% { transform: translateY(-4px) rotate(6deg); }
+          70% { transform: translateY(-1px) rotate(-3deg); }
+        }
+
+        @keyframes shadowReactionWowIdle {
+          0%, 100% { transform: translateY(0) scale(1); }
+          45% { transform: translateY(-5px) scale(1.08); }
+          70% { transform: translateY(-1px) scale(.98); }
+        }
+
+        @keyframes shadowReactionSadIdle {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          55% { transform: translateY(3px) rotate(-3deg); }
+        }
+
+        @keyframes shadowReactionAngryIdle {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          28% { transform: translateX(-2px) translateY(-2px); }
+          56% { transform: translateX(2px) translateY(-2px); }
+          78% { transform: translateX(-1px) translateY(0); }
+        }
+
+        @keyframes shadowReactionSupportIdle {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-3px) scale(1.04); }
+        }
+
+        @keyframes shadowReactionTouchedIdle {
+          0%, 100% { transform: translateY(0) rotate(-3deg) scale(.98); }
+          50% { transform: translateY(-4px) rotate(3deg) scale(1.05); }
         }
 
         @keyframes shadowReactionLoveFocus {
-          0%, 100% {
-            transform: scale(1);
-            filter: saturate(1);
-          }
-          50% {
-            transform: scale(1.06);
-            filter: saturate(1.2);
-          }
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
         }
 
         @keyframes shadowReactionHahaFocus {
-          0%, 100% {
-            transform: rotate(-4deg) scale(1);
-          }
-          25% {
-            transform: rotate(4deg) scale(1.04);
-          }
-          50% {
-            transform: rotate(-3deg) scale(1);
-          }
-          75% {
-            transform: rotate(4deg) scale(1.04);
-          }
+          0%, 100% { transform: rotate(-5deg); }
+          25% { transform: rotate(6deg); }
+          50% { transform: rotate(-4deg); }
+          75% { transform: rotate(5deg); }
         }
 
         @keyframes shadowReactionWowFocus {
-          0%, 100% {
-            transform: scale(1);
-            filter: brightness(1);
-          }
-          50% {
-            transform: scale(1.08);
-            filter: brightness(1.08);
-          }
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-2px) scale(1.08); }
         }
 
         @keyframes shadowReactionSadFocus {
-          0%, 100% {
-            transform: rotate(0deg) scale(1);
-            filter: saturate(1);
-          }
-          50% {
-            transform: rotate(-3deg) scale(1.03);
-            filter: saturate(.9);
-          }
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-4deg); }
         }
 
         @keyframes shadowReactionAngryFocus {
-          0%, 100% {
-            transform: scale(1);
-            filter: saturate(1) brightness(1);
-          }
-          50% {
-            transform: scale(1.05);
-            filter: saturate(1.5) brightness(.92);
-          }
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-2px); }
+          50% { transform: translateX(2px); }
+          75% { transform: translateX(-1px); }
         }
 
         @keyframes shadowReactionSupportFocus {
-          0%, 100% {
-            transform: scale(1);
-            filter: brightness(1);
-          }
-          50% {
-            transform: scale(1.05);
-            filter: brightness(1.08);
-          }
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-2px) scale(1.05); }
         }
 
         @keyframes shadowReactionTouchedFocus {
-          0%, 100% {
-            transform: rotate(-2deg) scale(1);
-            filter: saturate(1);
-          }
-          50% {
-            transform: rotate(2deg) scale(1.04);
-            filter: saturate(1.14);
-          }
-        }
-
-        @keyframes shadowLoveHeart {
-          0%, 100% {
-            opacity: .35;
-            transform: scale(.7);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.08);
-          }
-        }
-
-        @keyframes shadowSadTear {
-          0%, 100% {
-            opacity: .25;
-            transform: scale(.7);
-          }
-          55% {
-            opacity: 1;
-            transform: scale(1);
-          }
+          0%, 100% { transform: rotate(-3deg); }
+          50% { transform: rotate(3deg); }
         }
 
         .shadow-reaction-picker-in {
-          animation:
-            shadowReactionPickerIn
-            150ms
-            cubic-bezier(.22, 1, .36, 1)
-            both;
+          animation: shadowReactionPickerIn 160ms cubic-bezier(.22, 1, .36, 1) both;
         }
 
-        .shadow-reaction-item {
-          transition:
-            width 150ms cubic-bezier(.22, 1, .36, 1),
-            height 150ms cubic-bezier(.22, 1, .36, 1),
-            opacity 150ms ease;
+        .shadow-reaction-icon-wrap {
+          transition: transform 135ms cubic-bezier(.2, .9, .25, 1.2);
+          transform-origin: center bottom;
+          will-change: transform;
         }
 
-        .shadow-reaction-idle {
-          animation:
-            shadowReactionIdle
-            1.05s
-            ease-in-out
-            infinite;
+        .shadow-reaction-icon {
           transform-origin: center;
+          will-change: transform;
+        }
+
+        .shadow-reaction-love-idle {
+          animation: shadowReactionLoveIdle 1.15s ease-in-out infinite;
+        }
+
+        .shadow-reaction-haha-idle {
+          animation: shadowReactionHahaIdle .92s ease-in-out infinite;
+        }
+
+        .shadow-reaction-wow-idle {
+          animation: shadowReactionWowIdle 1.22s ease-in-out infinite;
+        }
+
+        .shadow-reaction-sad-idle {
+          animation: shadowReactionSadIdle 1.45s ease-in-out infinite;
+        }
+
+        .shadow-reaction-angry-idle {
+          animation: shadowReactionAngryIdle .82s ease-in-out infinite;
+        }
+
+        .shadow-reaction-support-idle {
+          animation: shadowReactionSupportIdle 1.3s ease-in-out infinite;
+        }
+
+        .shadow-reaction-touched-idle {
+          animation: shadowReactionTouchedIdle 1.18s ease-in-out infinite;
         }
 
         .shadow-reaction-love-focus {
-          animation:
-            shadowReactionLoveFocus
-            .9s
-            ease-in-out
-            infinite;
+          animation: shadowReactionLoveFocus .72s ease-in-out infinite;
         }
 
         .shadow-reaction-haha-focus {
-          animation:
-            shadowReactionHahaFocus
-            .62s
-            ease-in-out
-            infinite;
+          animation: shadowReactionHahaFocus .48s ease-in-out infinite;
         }
 
         .shadow-reaction-wow-focus {
-          animation:
-            shadowReactionWowFocus
-            1s
-            ease-in-out
-            infinite;
+          animation: shadowReactionWowFocus .8s ease-in-out infinite;
         }
 
         .shadow-reaction-sad-focus {
-          animation:
-            shadowReactionSadFocus
-            1.2s
-            ease-in-out
-            infinite;
+          animation: shadowReactionSadFocus 1s ease-in-out infinite;
         }
 
         .shadow-reaction-angry-focus {
-          animation:
-            shadowReactionAngryFocus
-            .78s
-            ease-in-out
-            infinite;
+          animation: shadowReactionAngryFocus .42s ease-in-out infinite;
         }
 
         .shadow-reaction-support-focus {
-          animation:
-            shadowReactionSupportFocus
-            1.05s
-            ease-in-out
-            infinite;
+          animation: shadowReactionSupportFocus .9s ease-in-out infinite;
         }
 
         .shadow-reaction-touched-focus {
-          animation:
-            shadowReactionTouchedFocus
-            1.05s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-focused[data-reaction-type="love"]::after {
-          content: "♥";
-          position: absolute;
-          right: 1px;
-          top: 0;
-          color: #ff2f5f;
-          font-size: 12px;
-          line-height: 1;
-          pointer-events: none;
-          animation:
-            shadowLoveHeart
-            .72s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-focused[data-reaction-type="sad"]::after {
-          content: "";
-          position: absolute;
-          right: 7px;
-          bottom: 6px;
-          width: 5px;
-          height: 7px;
-          border-radius: 60% 60% 70% 70%;
-          background: #60a5fa;
-          pointer-events: none;
-          animation:
-            shadowSadTear
-            .85s
-            ease-in-out
-            infinite;
+          animation: shadowReactionTouchedFocus .85s ease-in-out infinite;
         }
       `}</style>
 
@@ -320,174 +230,104 @@ export default function ReactionPicker({
       <div
         role="menu"
         aria-label="Choose reaction"
-        className={`shadow-reaction-picker-in absolute bottom-9 ${alignClass} z-[80] flex min-h-[72px] max-w-[calc(100vw-16px)] touch-none items-center justify-between gap-1 overflow-visible rounded-full bg-white px-2 py-1 shadow-2xl ring-1 ring-black/10 ${className}`}
-        style={{
-          width:
-            'min(94vw, 380px)',
-        }}
-        onPointerDown={(event) =>
-          event.stopPropagation()
-        }
+        className={`shadow-reaction-picker-in absolute bottom-10 ${alignClass} z-[80] flex min-h-[50px] w-max max-w-[calc(100vw-16px)] touch-none items-center gap-[1px] overflow-visible rounded-full bg-white px-[6px] py-[5px] shadow-xl ring-1 ring-black/10 ${className}`}
+        onPointerDown={(event) => event.stopPropagation()}
       >
-        {REACTIONS.map(
-          (reaction, index) => {
-            const active =
-              reaction.type ===
-              activeType
-            const emphasized =
-              reaction.type ===
-              emphasizedType
-            const focusClass =
-              FOCUS_CLASS[
-                reaction.type
-              ] || ''
+        {REACTIONS.map((reaction) => {
+          const active = reaction.type === activeType
+          const emphasized = reaction.type === emphasizedType
+          const idleClass = IDLE_CLASS[reaction.type] || ''
+          const focusClass = FOCUS_CLASS[reaction.type] || ''
 
-            const sizeClass =
-              emphasized
-                ? 'h-16 w-16'
-                : hasEmphasis
-                  ? 'h-8 w-8'
-                  : 'h-9 w-9'
+          return (
+            <button
+              key={reaction.type}
+              type="button"
+              role="menuitem"
+              data-shadow-reaction-type={reaction.type}
+              aria-pressed={active}
+              disabled={busy || disabled}
+              onPointerEnter={(event) => {
+                if (busy || disabled) return
 
-            const imageSizeClass =
-              emphasized
-                ? 'h-14 w-14'
-                : hasEmphasis
-                  ? 'h-6 w-6'
-                  : 'h-7 w-7'
-
-            return (
-              <button
-                key={reaction.type}
-                type="button"
-                role="menuitem"
-                data-shadow-reaction-type={
-                  reaction.type
+                if (event.pointerType === 'mouse') {
+                  setHoverType(reaction.type)
                 }
-                aria-pressed={active}
-                disabled={
-                  busy || disabled
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === 'mouse') {
+                  setHoverType('')
+                  setPressedType('')
                 }
-                onPointerEnter={(
-                  event
-                ) => {
-                  if (
-                    event.pointerType !==
-                      'mouse' ||
-                    isSliding ||
-                    busy ||
-                    disabled
-                  ) {
-                    return
-                  }
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation()
+                if (busy || disabled) return
+                setPressedType(reaction.type)
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation()
+                if (busy || disabled) return
 
-                  setHoverType(
-                    reaction.type
-                  )
-                }}
-                onPointerLeave={(
-                  event
-                ) => {
-                  if (
-                    event.pointerType !==
-                      'mouse' ||
-                    isSliding
-                  ) {
-                    return
-                  }
+                const shouldSelect = !isSliding
 
-                  setHoverType('')
-                  setPressedType('')
-                }}
-                onPointerDown={(
-                  event
-                ) => {
-                  event.stopPropagation()
+                setPressedType('')
+                setHoverType('')
 
-                  if (isSliding) {
-                    return
-                  }
+                if (shouldSelect) {
+                  onSelect?.(reaction.type)
+                }
+              }}
+              onPointerCancel={() => {
+                setPressedType('')
+                setHoverType('')
+              }}
+              onClick={(event) => {
+                event.stopPropagation()
 
-                  setPressedType(
-                    reaction.type
-                  )
-                }}
-                onPointerUp={(
-                  event
-                ) => {
-                  event.stopPropagation()
+                if (
+                  event.detail === 0 &&
+                  !busy &&
+                  !disabled
+                ) {
+                  onSelect?.(reaction.type)
+                }
+              }}
+              className="relative flex h-10 w-10 shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-60"
+              aria-label={reaction.label}
+              title={reaction.label}
+            >
+              {emphasized ? (
+                <span className="pointer-events-none absolute bottom-[58px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-md">
+                  {reaction.label}
+                </span>
+              ) : null}
 
-                  if (isSliding) {
-                    return
-                  }
-
-                  setPressedType('')
-                }}
-                onPointerCancel={() => {
-                  if (isSliding) {
-                    return
-                  }
-
-                  setPressedType('')
-                  setHoverType('')
-                }}
-                onClick={(event) => {
-                  event.stopPropagation()
-
-                  if (isSliding) {
-                    return
-                  }
-
-                  setPressedType('')
-                  setHoverType('')
-                  onSelect?.(
-                    reaction.type
-                  )
-                }}
-                className={`shadow-reaction-item relative flex shrink-0 touch-none items-center justify-center overflow-visible rounded-full ${
-                  sizeClass
-                } ${
-                  active
-                    ? 'bg-[#f8f8fb] ring-1 ring-black/5'
-                    : ''
-                } ${
+              <span
+                className={`shadow-reaction-icon-wrap pointer-events-none flex h-[38px] w-[38px] items-center justify-center ${
                   emphasized
-                    ? 'shadow-reaction-focused z-[100]'
-                    : 'z-0'
+                    ? 'z-[100] -translate-y-[22px] scale-[1.95]'
+                    : 'z-0 translate-y-0 scale-100'
                 }`}
-                aria-label={
-                  reaction.label
-                }
-                title={
-                  reaction.label
-                }
               >
                 <img
                   src={reaction.src}
                   alt=""
                   aria-hidden="true"
                   draggable="false"
-                  className={`pointer-events-none select-none object-contain transition-[width,height] duration-150 ${
-                    imageSizeClass
-                  } ${
+                  className={`shadow-reaction-icon h-[38px] w-[38px] select-none object-contain ${
                     emphasized
                       ? focusClass
-                      : 'shadow-reaction-idle'
+                      : idleClass
                   }`}
-                  style={{
-                    animationDelay:
-                      emphasized
-                        ? '0ms'
-                        : `${index * 80}ms`,
-                  }}
                 />
-              </button>
-            )
-          }
-        )}
+              </span>
+            </button>
+          )
+        })}
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium text-white shadow-sm"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+7px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium text-white shadow-sm"
           aria-hidden="true"
         >
           {isSliding
