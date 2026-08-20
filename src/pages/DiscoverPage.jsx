@@ -600,33 +600,41 @@ function RealPostImageGrid({
 
 function RealReactionSummary({ summary, likeCount }) {
   const icons = {
-    love: '❤️',
-    haha: '😂',
-    wow: '😮',
-    sad: '😢',
-    angry: '😡',
-    support: '👏',
-    touched: '🥹',
+    love: '/assets/React/Love.svg',
+    haha: '/assets/React/Haha.svg',
+    wow: '/assets/React/Wow.svg',
+    sad: '/assets/React/Sad.svg',
+    angry: '/assets/React/Angry.svg',
+    support: '/assets/React/Support.svg',
+    touched: '/assets/React/Touched.svg',
   }
 
-  const items = Array.isArray(summary) ? summary.slice(0, 3) : []
+  const count = Number(likeCount || 0)
+  const items =
+    Array.isArray(summary) && summary.length
+      ? summary.slice(0, 3)
+      : count > 0
+        ? [{ type: 'love' }]
+        : []
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center">
       {items.length ? (
-        <div className="flex -space-x-1">
-          {items.map((item) => (
-            <span
-              key={item.type}
-              className="flex h-5 w-5 items-center justify-center rounded-full border border-white bg-[#f5f3fa] text-[11px]"
-            >
-              {icons[item.type] || '❤️'}
-            </span>
+        <div className="flex items-center -space-x-1">
+          {items.map((item, index) => (
+            <img
+              key={`${item.type}-${index}`}
+              src={icons[item.type] || icons.love}
+              alt=""
+              className="h-[17px] w-[17px] rounded-full bg-white ring-1 ring-white"
+            />
           ))}
         </div>
       ) : null}
 
-      <span>{Number(likeCount || 0)}</span>
+      <span className={items.length ? 'ml-1.5' : ''}>
+        {count}
+      </span>
     </div>
   )
 }
@@ -874,43 +882,90 @@ const isOwner = Boolean(
   onImageClick={openPhotoPost}
 />
 
-      <div className="flex items-center gap-6 border-t border-gray-100 px-4 py-2 text-[13px] font-normal text-gray-500">
-        <ReactionAction
-  reactionType={post.my_reaction}
-  count={post.like_count}
-  busy={reactionBusy}
-  showBusySpinner
-  onReact={chooseReaction}
-  onCountClick={() =>
-    navigate(
-      `/interactions/author_post/${post.id}/likes`,
-      {
-        state: {
-          sourceName: authorName,
-        },
+      <div className="border-t border-gray-100 bg-white px-4 pb-1">
+  <div className="flex items-center justify-between py-2 text-[12px] text-[#65676b]">
+    <button
+      type="button"
+      onClick={() =>
+        navigate(
+          `/interactions/author_post/${post.id}/likes`,
+          {
+            state: {
+              sourceName: authorName,
+            },
+          }
+        )
       }
-    )
-  }
-  formatCount={(value) =>
-    String(Number(value || 0))
-  }
-/>
+      className="active:opacity-60"
+    >
+      <RealReactionSummary
+        summary={post.reaction_summary}
+        likeCount={post.like_count}
+      />
+    </button>
+
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={() => onComment?.(post)}
+        className="active:opacity-60"
+      >
+        {Number(post.comment_count || 0)} comments
+      </button>
+
+      <span>
+        {Number(post.echo_count || 0)} echoes
+      </span>
+    </div>
+  </div>
+
+  <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b]">
+    <div className="flex items-center justify-center py-2">
+      <div className="inline-flex items-center gap-2">
+        <ReactionAction
+          reactionType={post.my_reaction}
+          count={post.like_count}
+          busy={reactionBusy}
+          showBusySpinner
+          showCount={false}
+          onReact={chooseReaction}
+          idleLabel="Like"
+          buttonClassName="text-[#65676b]"
+        />
 
         <button
           type="button"
-          onClick={() => onComment?.(post)}
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Comments"
+          onClick={() =>
+            chooseReaction(
+              post.my_reaction || 'love'
+            )
+          }
+          disabled={reactionBusy}
+          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
         >
-          <i className="fa-regular fa-comment text-[15px]" />
-          <span>{Number(post.comment_count || 0)}</span>
+          Like
         </button>
-
-        <AuthorPostEchoAction
-  post={post}
-  author={author}
-/>
       </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => onComment?.(post)}
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+    >
+      <i className="fa-regular fa-comment text-[18px]" />
+      <span>Comment</span>
+    </button>
+
+    <div className="flex items-center justify-center py-2">
+      <AuthorPostEchoAction
+        post={post}
+        author={author}
+        className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+      />
+    </div>
+  </div>
+</div>
 
       {followError || reactionError ? (
   <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-center text-[11px] font-bold text-red-600">
