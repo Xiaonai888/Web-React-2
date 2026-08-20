@@ -132,13 +132,17 @@ export default function ReactionPicker({
           will-change: transform;
         }
 
-        .shadow-reaction-idle {
+     .shadow-reaction-idle-a,
+.shadow-reaction-idle-b {
   animation:
     shadowReactionIdle
-    2.1s
-    ease-in-out
+    1.35s
+    cubic-bezier(.22, .61, .36, 1)
     infinite;
-  transform-origin: center;
+}
+
+.shadow-reaction-idle-b {
+  animation-delay: -.675s;
 }
       `}</style>
 
@@ -163,6 +167,10 @@ export default function ReactionPicker({
           const emphasized = reaction.type === emphasizedType
 
           const focusClass = FOCUS_CLASS[reaction.type] || ''
+        const idleClass =
+  index % 2 === 0
+    ? 'shadow-reaction-idle-a'
+    : 'shadow-reaction-idle-b'
 
           return (
             <button
@@ -277,13 +285,8 @@ export default function ReactionPicker({
                   className={`shadow-reaction-icon h-[46px] w-[46px] select-none object-contain ${
   emphasized
     ? focusClass
-    : 'shadow-reaction-idle'
+    : idleClass
 }`}
-style={{
-  animationDelay: emphasized
-    ? '0ms'
-    : `${index * 80}ms`,
-}}
                 />
               </span>
             </button>
