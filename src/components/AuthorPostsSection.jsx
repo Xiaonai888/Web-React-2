@@ -424,6 +424,11 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   const isPinned = Boolean(post.is_pinned || post.pinned)
   const postImages = Array.isArray(post.image_urls) ? post.image_urls : []
   const reactionBusy = reactionBusyId === post.id
+  const [echoCount, setEchoCount] = useState(Number(post.echo_count || 0))
+
+useEffect(() => {
+  setEchoCount(Number(post.echo_count || 0))
+}, [post.echo_count, post.id])
   const postText = String(
     post?.content || ''
   )
@@ -507,40 +512,76 @@ function AuthorPostCard({ post, author, isOwner, reactionBusyId, onOpenMenu, onR
   </button>
 ) : null}
 
-<div className="flex items-center gap-6 border-b border-[#eef0f4] px-4 py-2 text-[13px] font-normal text-[#6b7280]">
-  <ReactionAction
-    reactionType={post.my_reaction}
-    count={post.like_count}
-    busy={reactionBusy}
-    onReact={(reactionType) =>
-      onReact(post, reactionType)
-    }
-    onCountClick={() =>
-      navigate(
-        `/interactions/author_post/${post.id}/likes`,
-        {
-          state: {
-            sourceName: 'Author Post',
-          },
-        }
-      )
-    }
-    formatCount={formatCompactNumber}
-  />
+<div className="border-b border-[#eef0f4]">
+  <div className="flex h-9 items-center gap-5 px-4 text-[12px] font-normal text-[#65676b]">
+    <button
+      type="button"
+      onClick={() =>
+        navigate(`/interactions/author_post/${post.id}/likes`, {
+          state: { sourceName: 'Author Post' },
+        })
+      }
+      className="inline-flex items-center gap-1.5"
+    >
+      <img
+        src="/assets/React/Love.svg"
+        alt=""
+        className="h-[16px] w-[16px] object-contain"
+      />
+      {formatCompactNumber(post.like_count)}
+    </button>
 
-  <button
-  type="button"
-  onClick={() => onComment(post)}
-  className="inline-flex items-center gap-1.5 active:scale-95"
->
-  <i className="fa-regular fa-comment text-[15px]" />
-  {formatCompactNumber(post.comment_count)}
-</button>
+    <button
+      type="button"
+      onClick={() => onComment(post)}
+      className="inline-flex items-center gap-1.5"
+    >
+      <i className="fa-regular fa-comment text-[15px]" />
+      {formatCompactNumber(post.comment_count)}
+    </button>
 
- <AuthorPostEchoAction
-  post={post}
-  author={author}
-/>
+    <span className="inline-flex items-center gap-1.5">
+      <img
+        src="/assets/Icons/echo.svg"
+        alt=""
+        className="h-[15px] w-[15px] opacity-70"
+      />
+      {formatCompactNumber(echoCount)}
+    </span>
+  </div>
+
+  <div className="grid h-11 grid-cols-3 border-t border-[#eef0f4] px-2">
+    <ReactionAction
+      reactionType={post.my_reaction}
+      count={post.like_count}
+      busy={reactionBusy}
+      onReact={(reactionType) =>
+        onReact(post, reactionType)
+      }
+      showCount={false}
+      idleLabel="Like"
+      className="w-full justify-center"
+      buttonClassName="h-full w-full justify-center gap-2 text-[14px] font-medium text-[#65676b] after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+    />
+
+    <button
+      type="button"
+      onClick={() => onComment(post)}
+      className="flex h-full items-center justify-center gap-2 text-[14px] font-medium text-[#65676b] active:bg-black/[0.03]"
+    >
+      <i className="fa-regular fa-comment text-[18px]" />
+      <span>Comment</span>
+    </button>
+
+    <AuthorPostEchoAction
+      post={post}
+      author={author}
+      onCountChange={(_, total) =>
+        setEchoCount(Number(total || 0))
+      }
+      className="h-full w-full justify-center gap-2 text-[14px] font-medium text-[#65676b] [&>span]:hidden after:content-['Echo'] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+    />
+  </div>
 </div>
     </article>
   )
