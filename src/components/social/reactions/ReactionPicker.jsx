@@ -65,7 +65,7 @@ export default function ReactionPicker({
 
         const pickerTop = Math.max(
   8,
-  anchorRect.top - 64
+  anchorRect.top - 70
 )
 
 setPickerPosition({
@@ -73,7 +73,7 @@ setPickerPosition({
   left: isDesktop
     ? postLeft + 12
     : postCenter,
-  footerTop: pickerTop + 62,
+  footerTop: pickerTop + 68,
   footerLeft: postLeft,
   footerWidth: Math.min(
     postWidth,
