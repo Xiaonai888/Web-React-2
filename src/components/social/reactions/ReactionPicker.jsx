@@ -1,5 +1,7 @@
 import {
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
 } from 'react'
 import {
@@ -19,25 +21,116 @@ export default function ReactionPicker({
 }) {
   const [pressedType, setPressedType] = useState('')
   const [hoverType, setHoverType] = useState('')
+  const [pickerPosition, setPickerPosition] = useState(null)
+  const pickerRef = useRef(null)
 
   useEffect(() => {
     if (!open) {
       setPressedType('')
       setHoverType('')
+      setPickerPosition(null)
+    }
+  }, [open])
+
+  useLayoutEffect(() => {
+    if (!open) return undefined
+
+    let frame = 0
+
+    const updatePickerPosition = () => {
+      cancelAnimationFrame(frame)
+
+      frame = requestAnimationFrame(() => {
+        const picker = pickerRef.current
+        const parent = picker?.parentElement
+
+        if (!picker || !parent) return
+
+        const anchor = Array.from(parent.children).find(
+          (element) =>
+            element.tagName === 'BUTTON' &&
+            element.getAttribute('aria-label') !== 'Close reactions'
+        )
+
+        if (!anchor) return
+
+        const anchorRect = anchor.getBoundingClientRect()
+        const post = parent.closest('article')
+        const postRect = post?.getBoundingClientRect()
+        const isDesktop = window.innerWidth >= 768
+
+        const postLeft = postRect?.left ?? 0
+        const postWidth = postRect?.width ?? window.innerWidth
+        const postCenter = postLeft + postWidth / 2
+
+        setPickerPosition({
+          top: Math.max(8, anchorRect.top - 64),
+          left: isDesktop
+            ? postLeft + 12
+            : postCenter,
+          footerWidth: Math.min(
+            postWidth,
+            window.innerWidth
+          ),
+          isDesktop,
+        })
+      })
+    }
+
+    updatePickerPosition()
+
+    window.addEventListener(
+      'resize',
+      updatePickerPosition
+    )
+    window.addEventListener(
+      'scroll',
+      updatePickerPosition,
+      true
+    )
+
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener(
+        'resize',
+        updatePickerPosition
+      )
+      window.removeEventListener(
+        'scroll',
+        updatePickerPosition,
+        true
+      )
     }
   }, [open])
 
   if (!open) return null
 
-  const emphasizedType = pressedType || previewType || hoverType
+  const emphasizedType =
+    pressedType || previewType || hoverType
   const hasEmphasis = Boolean(emphasizedType)
 
-  function getReactionTypeAtPoint(clientX, clientY) {
-    const element = document.elementFromPoint(clientX, clientY)
-    const reactionElement = element?.closest?.('[data-shadow-reaction-type]')
-    const type = reactionElement?.getAttribute?.('data-shadow-reaction-type') || ''
+  function getReactionTypeAtPoint(
+    clientX,
+    clientY
+  ) {
+    const element =
+      document.elementFromPoint(
+        clientX,
+        clientY
+      )
+    const reactionElement =
+      element?.closest?.(
+        '[data-shadow-reaction-type]'
+      )
+    const type =
+      reactionElement?.getAttribute?.(
+        'data-shadow-reaction-type'
+      ) || ''
 
-    return REACTIONS.some((reaction) => reaction.type === type)
+    return REACTIONS.some(
+      (reaction) =>
+        reaction.type === type
+    )
       ? type
       : ''
   }
@@ -48,11 +141,11 @@ export default function ReactionPicker({
         @keyframes shadowReactionPickerIn {
           0% {
             opacity: 0;
-            transform: translateY(8px);
+            translate: 0 8px;
           }
           100% {
             opacity: 1;
-            transform: translateY(0);
+            translate: 0 0;
           }
         }
 
@@ -125,32 +218,62 @@ export default function ReactionPicker({
       />
 
       <div
+        ref={pickerRef}
         role="menu"
         aria-label="Choose reaction"
-        className={`shadow-reaction-picker-in absolute bottom-10 left-1/2 z-[80] flex min-h-[56px] w-[360px] max-w-[calc(100vw-16px)] -translate-x-1/2 touch-none items-end justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
-        onPointerDown={(event) => event.stopPropagation()}
+        style={
+          pickerPosition === null
+            ? {
+                visibility: 'hidden',
+              }
+            : {
+                top: `${pickerPosition.top}px`,
+                left: `${pickerPosition.left}px`,
+              }
+        }
+        className={`shadow-reaction-picker-in fixed z-[80] flex h-[56px] w-[360px] max-w-[calc(100vw-16px)] touch-none items-end justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] ${
+          pickerPosition?.isDesktop
+            ? 'translate-x-0'
+            : '-translate-x-1/2'
+        } ${className}`}
+        onPointerDown={(event) =>
+          event.stopPropagation()
+        }
       >
         {REACTIONS.map((reaction) => {
-          const active = reaction.type === activeType
-          const emphasized = reaction.type === emphasizedType
+          const active =
+            reaction.type === activeType
+          const emphasized =
+            reaction.type ===
+            emphasizedType
 
           return (
             <button
               key={reaction.type}
               type="button"
               role="menuitem"
-              data-shadow-reaction-type={reaction.type}
+              data-shadow-reaction-type={
+                reaction.type
+              }
               aria-pressed={active}
               disabled={busy || disabled}
               onPointerEnter={(event) => {
                 if (busy || disabled) return
 
-                if (event.pointerType === 'mouse') {
-                  setHoverType(reaction.type)
+                if (
+                  event.pointerType ===
+                  'mouse'
+                ) {
+                  setHoverType(
+                    reaction.type
+                  )
                 }
               }}
               onPointerLeave={(event) => {
-                if (event.pointerType === 'mouse') {
+                if (
+                  event.pointerType ===
+                  'mouse'
+                ) {
                   setHoverType('')
                   setPressedType('')
                 }
@@ -159,39 +282,55 @@ export default function ReactionPicker({
                 event.stopPropagation()
                 if (busy || disabled) return
 
-                event.currentTarget.setPointerCapture?.(event.pointerId)
-                setPressedType(reaction.type)
+                event.currentTarget
+                  .setPointerCapture?.(
+                    event.pointerId
+                  )
+                setPressedType(
+                  reaction.type
+                )
               }}
               onPointerMove={(event) => {
                 if (busy || disabled) return
 
                 if (
-                  event.pointerType === 'mouse' &&
+                  event.pointerType ===
+                    'mouse' &&
                   event.buttons === 0
                 ) {
                   return
                 }
 
-                const pointedType = getReactionTypeAtPoint(
-                  event.clientX,
-                  event.clientY
-                )
+                const pointedType =
+                  getReactionTypeAtPoint(
+                    event.clientX,
+                    event.clientY
+                  )
 
-                setPressedType(pointedType)
+                setPressedType(
+                  pointedType
+                )
               }}
               onPointerUp={(event) => {
                 event.stopPropagation()
                 if (busy || disabled) return
 
-                const pointedType = getReactionTypeAtPoint(
-                  event.clientX,
-                  event.clientY
-                )
+                const pointedType =
+                  getReactionTypeAtPoint(
+                    event.clientX,
+                    event.clientY
+                  )
 
                 if (
-                  event.currentTarget.hasPointerCapture?.(event.pointerId)
+                  event.currentTarget
+                    .hasPointerCapture?.(
+                      event.pointerId
+                    )
                 ) {
-                  event.currentTarget.releasePointerCapture?.(event.pointerId)
+                  event.currentTarget
+                    .releasePointerCapture?.(
+                      event.pointerId
+                    )
                 }
 
                 setPressedType('')
@@ -201,11 +340,19 @@ export default function ReactionPicker({
                   onSelect?.(pointedType)
                 }
               }}
-              onPointerCancel={(event) => {
+              onPointerCancel={(
+                event
+              ) => {
                 if (
-                  event.currentTarget.hasPointerCapture?.(event.pointerId)
+                  event.currentTarget
+                    .hasPointerCapture?.(
+                      event.pointerId
+                    )
                 ) {
-                  event.currentTarget.releasePointerCapture?.(event.pointerId)
+                  event.currentTarget
+                    .releasePointerCapture?.(
+                      event.pointerId
+                    )
                 }
 
                 setPressedType('')
@@ -219,32 +366,36 @@ export default function ReactionPicker({
                   !busy &&
                   !disabled
                 ) {
-                  onSelect?.(reaction.type)
+                  onSelect?.(
+                    reaction.type
+                  )
                 }
               }}
-              className={`shadow-reaction-slot relative flex h-[48px] shrink-0 touch-none items-end justify-center overflow-visible rounded-full disabled:opacity-60 ${
+              className={`shadow-reaction-slot relative flex h-[56px] shrink-0 touch-none items-end justify-center overflow-visible rounded-full disabled:opacity-60 ${
                 emphasized
-  ? 'w-[80px]'
-  : hasEmphasis
-    ? 'w-[40px]'
-    : 'w-[48px]'
+                  ? 'w-[110px]'
+                  : hasEmphasis
+                    ? 'w-[37px]'
+                    : 'w-[48px]'
               }`}
-              aria-label={reaction.label}
+              aria-label={
+                reaction.label
+              }
               title={reaction.label}
             >
               {emphasized ? (
-                <span className="pointer-events-none absolute bottom-[86px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-sm backdrop-blur-[2px]">
+                <span className="pointer-events-none absolute bottom-[114px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-sm backdrop-blur-[2px]">
                   {reaction.label}
                 </span>
               ) : null}
 
               <span
-                className={`shadow-reaction-icon-wrap pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center justify-center ${
+                className={`shadow-reaction-icon-wrap pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-end justify-center ${
                   emphasized
-  ? 'z-[100] h-[120px] w-[120px]'
-  : hasEmphasis
-    ? 'z-0 h-[40px] w-[40px]'
-    : 'z-0 h-[50px] w-[50px]'
+                    ? 'z-[100] bottom-[-10px] h-[120px] w-[120px]'
+                    : hasEmphasis
+                      ? 'z-0 bottom-[3px] h-[40px] w-[40px]'
+                      : 'z-0 bottom-[3px] h-[50px] w-[50px]'
                 }`}
               >
                 <img
@@ -266,7 +417,18 @@ export default function ReactionPicker({
         })}
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[calc(100%+4px)] flex h-[38px] w-screen max-w-[100vw] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-none bg-white px-4 text-[12px] font-semibold text-[#667085]"
+          style={{
+            width: `${
+              pickerPosition
+                ?.footerWidth ||
+              window.innerWidth
+            }px`,
+          }}
+          className={`pointer-events-none absolute top-[calc(100%-2px)] flex h-[48px] items-center justify-center whitespace-nowrap bg-white px-4 text-[11px] font-semibold text-[#667085] ${
+            pickerPosition?.isDesktop
+              ? 'left-[-12px] translate-x-0'
+              : 'left-1/2 -translate-x-1/2'
+          }`}
           aria-hidden="true"
         >
           {isSliding
