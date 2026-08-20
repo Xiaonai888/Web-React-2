@@ -6,24 +6,6 @@ import {
   REACTIONS,
 } from './reactionConfig'
 
-const ALIGN_CLASS = {
-  left: 'left-0',
-  center: 'left-1/2 -translate-x-1/2',
-  right: 'right-0',
-}
-
-
-
-const FOCUS_CLASS = {
-  love: 'shadow-reaction-love-focus',
-  haha: 'shadow-reaction-haha-focus',
-  wow: 'shadow-reaction-wow-focus',
-  sad: 'shadow-reaction-sad-focus',
-  angry: 'shadow-reaction-angry-focus',
-  support: 'shadow-reaction-support-focus',
-  touched: 'shadow-reaction-touched-focus',
-}
-
 export default function ReactionPicker({
   open,
   activeType = '',
@@ -33,7 +15,6 @@ export default function ReactionPicker({
   disabled = false,
   onSelect,
   onClose,
-  align = 'left',
   className = '',
 }) {
   const [pressedType, setPressedType] = useState('')
@@ -48,8 +29,8 @@ export default function ReactionPicker({
 
   if (!open) return null
 
-  const alignClass = ALIGN_CLASS[align] || ALIGN_CLASS.left
   const emphasizedType = pressedType || previewType || hoverType
+  const hasEmphasis = Boolean(emphasizedType)
 
   function getReactionTypeAtPoint(clientX, clientY) {
     const element = document.elementFromPoint(clientX, clientY)
@@ -65,76 +46,92 @@ export default function ReactionPicker({
     <>
       <style>{`
         @keyframes shadowReactionPickerIn {
-          0% { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
+          0% {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
-       @keyframes shadowReactionShake {
-  0%, 60%, 100% { transform: rotate(0deg); }
-  10% { transform: rotate(-3deg); }
-  20% { transform: rotate(3deg); }
-  30% { transform: rotate(-2deg); }
-  40% { transform: rotate(2deg); }
-  50% { transform: rotate(0deg); }
-}
-        @keyframes shadowReactionLoveFocus {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
+        @keyframes shadowReactionShake {
+          0%, 60%, 100% {
+            transform: rotate(0deg);
+          }
+          10% {
+            transform: rotate(-3deg);
+          }
+          20% {
+            transform: rotate(3deg);
+          }
+          30% {
+            transform: rotate(-2deg);
+          }
+          40% {
+            transform: rotate(2deg);
+          }
+          50% {
+            transform: rotate(0deg);
+          }
         }
 
-        @keyframes shadowReactionHahaFocus {
-          0%, 100% { transform: rotate(-5deg); }
-          25% { transform: rotate(6deg); }
-          50% { transform: rotate(-4deg); }
-          75% { transform: rotate(5deg); }
-        }
-
-        @keyframes shadowReactionWowFocus {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-2px) scale(1.08); }
-        }
-
-        @keyframes shadowReactionSadFocus {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-4deg); }
-        }
-
-        @keyframes shadowReactionAngryFocus {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-2px); }
-          50% { transform: translateX(2px); }
-          75% { transform: translateX(-1px); }
-        }
-
-        @keyframes shadowReactionSupportFocus {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-2px) scale(1.05); }
-        }
-
-        @keyframes shadowReactionTouchedFocus {
-          0%, 100% { transform: rotate(-3deg); }
-          50% { transform: rotate(3deg); }
+        @keyframes shadowReactionSelectedShake {
+          0%, 100% {
+            transform: rotate(0deg);
+          }
+          20% {
+            transform: rotate(-4deg);
+          }
+          40% {
+            transform: rotate(4deg);
+          }
+          60% {
+            transform: rotate(-3deg);
+          }
+          80% {
+            transform: rotate(3deg);
+          }
         }
 
         .shadow-reaction-picker-in {
-          animation: shadowReactionPickerIn 160ms cubic-bezier(.22, 1, .36, 1) both;
+          animation:
+            shadowReactionPickerIn
+            160ms
+            cubic-bezier(.22, 1, .36, 1)
+            both;
         }
 
         .shadow-reaction-icon-wrap {
-          transition: transform 135ms cubic-bezier(.2, .9, .25, 1.2);
-          transform-origin: center bottom;
+          transition:
+            transform
+            150ms
+            cubic-bezier(.2, .9, .25, 1.15);
+          transform-origin: center center;
           will-change: transform;
         }
 
         .shadow-reaction-icon {
-          transform-origin: center;
+          transform-origin: center bottom;
           will-change: transform;
         }
 
-     .shadow-reaction-shake {
-  animation: shadowReactionShake 1.8s ease-in-out infinite;
-  transform-origin: center bottom;
-}
+        .shadow-reaction-shake {
+          animation:
+            shadowReactionShake
+            1.8s
+            ease-in-out
+            infinite;
+        }
+
+        .shadow-reaction-selected-shake {
+          animation:
+            shadowReactionSelectedShake
+            .55s
+            ease-in-out
+            infinite;
+        }
       `}</style>
 
       <button
@@ -153,12 +150,9 @@ export default function ReactionPicker({
         className={`shadow-reaction-picker-in absolute bottom-10 left-1/2 z-[80] flex min-h-[56px] w-[360px] max-w-[calc(100vw-16px)] -translate-x-1/2 touch-none items-center justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        {REACTIONS.map((reaction, index) => {
+        {REACTIONS.map((reaction) => {
           const active = reaction.type === activeType
           const emphasized = reaction.type === emphasizedType
-
-          const focusClass = FOCUS_CLASS[reaction.type] || ''
-        
 
           return (
             <button
@@ -261,8 +255,10 @@ export default function ReactionPicker({
               <span
                 className={`shadow-reaction-icon-wrap pointer-events-none flex h-[46px] w-[46px] items-center justify-center ${
                   emphasized
-                    ? 'z-[100] -translate-y-[22px] scale-[1.95]'
-                    : 'z-0 translate-y-0 scale-100'
+                    ? 'z-[100] scale-[2.15]'
+                    : hasEmphasis
+                      ? 'z-0 scale-[0.78]'
+                      : 'z-0 scale-100'
                 }`}
               >
                 <img
@@ -271,10 +267,12 @@ export default function ReactionPicker({
                   aria-hidden="true"
                   draggable="false"
                   className={`shadow-reaction-icon h-[50px] w-[50px] select-none object-contain ${
- emphasized
-  ? focusClass
-  : 'shadow-reaction-shake'
-}`}
+                    emphasized
+                      ? 'shadow-reaction-selected-shake'
+                      : hasEmphasis
+                        ? ''
+                        : 'shadow-reaction-shake'
+                  }`}
                 />
               </span>
             </button>
