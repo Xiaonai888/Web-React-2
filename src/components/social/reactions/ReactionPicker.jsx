@@ -77,24 +77,6 @@ export default function ReactionPicker({
           }
         }
 
-        @keyframes shadowReactionSelectedShake {
-          0%, 100% {
-            transform: rotate(0deg);
-          }
-          20% {
-            transform: rotate(-4deg);
-          }
-          40% {
-            transform: rotate(4deg);
-          }
-          60% {
-            transform: rotate(-3deg);
-          }
-          80% {
-            transform: rotate(3deg);
-          }
-        }
-
         .shadow-reaction-picker-in {
           animation:
             shadowReactionPickerIn
@@ -103,13 +85,19 @@ export default function ReactionPicker({
             both;
         }
 
-        .shadow-reaction-icon-wrap {
+        .shadow-reaction-slot {
           transition:
-            transform
+            width
             150ms
             cubic-bezier(.2, .9, .25, 1.15);
-          transform-origin: center center;
-          will-change: transform;
+        }
+
+        .shadow-reaction-icon-wrap {
+          transition:
+            width 150ms cubic-bezier(.2, .9, .25, 1.15),
+            height 150ms cubic-bezier(.2, .9, .25, 1.15);
+          transform-origin: center bottom;
+          will-change: width, height;
         }
 
         .shadow-reaction-icon {
@@ -121,14 +109,6 @@ export default function ReactionPicker({
           animation:
             shadowReactionShake
             1.8s
-            ease-in-out
-            infinite;
-        }
-
-        .shadow-reaction-selected-shake {
-          animation:
-            shadowReactionSelectedShake
-            .55s
             ease-in-out
             infinite;
         }
@@ -147,7 +127,7 @@ export default function ReactionPicker({
       <div
         role="menu"
         aria-label="Choose reaction"
-        className={`shadow-reaction-picker-in absolute bottom-10 left-1/2 z-[80] flex min-h-[56px] w-[360px] max-w-[calc(100vw-16px)] -translate-x-1/2 touch-none items-center justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
+        className={`shadow-reaction-picker-in absolute bottom-10 left-1/2 z-[80] flex min-h-[56px] w-[360px] max-w-[calc(100vw-16px)] -translate-x-1/2 touch-none items-end justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
         onPointerDown={(event) => event.stopPropagation()}
       >
         {REACTIONS.map((reaction) => {
@@ -242,23 +222,29 @@ export default function ReactionPicker({
                   onSelect?.(reaction.type)
                 }
               }}
-              className="relative flex h-[48px] w-[48px] shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-60"
+              className={`shadow-reaction-slot relative flex h-[48px] shrink-0 touch-none items-end justify-center overflow-visible rounded-full disabled:opacity-60 ${
+                emphasized
+  ? 'w-[82px]'
+  : hasEmphasis
+    ? 'w-[41px]'
+    : 'w-[48px]'
+              }`}
               aria-label={reaction.label}
               title={reaction.label}
             >
               {emphasized ? (
-                <span className="pointer-events-none absolute bottom-[58px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-md">
+                <span className="pointer-events-none absolute bottom-[86px] left-1/2 z-[110] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold leading-none text-white shadow-sm backdrop-blur-[2px]">
                   {reaction.label}
                 </span>
               ) : null}
 
               <span
-                className={`shadow-reaction-icon-wrap pointer-events-none flex h-[46px] w-[46px] items-center justify-center ${
+                className={`shadow-reaction-icon-wrap pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center justify-center ${
                   emphasized
-                    ? 'z-[100] scale-[2.15]'
-                    : hasEmphasis
-                      ? 'z-0 scale-[0.78]'
-                      : 'z-0 scale-100'
+  ? 'z-[100] h-[86px] w-[86px]'
+  : hasEmphasis
+    ? 'z-0 h-[40px] w-[40px]'
+    : 'z-0 h-[50px] w-[50px]'
                 }`}
               >
                 <img
@@ -266,9 +252,9 @@ export default function ReactionPicker({
                   alt=""
                   aria-hidden="true"
                   draggable="false"
-                  className={`shadow-reaction-icon h-[50px] w-[50px] select-none object-contain ${
+                  className={`shadow-reaction-icon h-full w-full select-none object-contain ${
                     emphasized
-                      ? 'shadow-reaction-selected-shake'
+                      ? 'shadow-reaction-shake'
                       : hasEmphasis
                         ? ''
                         : 'shadow-reaction-shake'
