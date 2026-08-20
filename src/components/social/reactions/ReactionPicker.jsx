@@ -155,7 +155,7 @@ export default function ReactionPicker({
       <div
         role="menu"
         aria-label="Choose reaction"
-        className={`shadow-reaction-picker-in absolute bottom-10 ${alignClass} z-[80] flex min-h-[50px] w-max max-w-[calc(100vw-16px)] touch-none items-center gap-[1px] overflow-visible rounded-full bg-white px-[6px] py-[5px] shadow-xl ring-1 ring-black/10 ${className}`}
+        className={`shadow-reaction-picker-in absolute bottom-10 ${alignClass} z-[80] flex min-h-[60px] w-[min(94vw,400px)] max-w-[calc(100vw-16px)] touch-none items-center justify-center gap-[2px] overflow-visible rounded-full bg-white px-[7px] py-[6px] shadow-xl ring-1 ring-black/10 ${className}`}
         onPointerDown={(event) => event.stopPropagation()}
       >
         {REACTIONS.map((reaction, index) => {
@@ -252,7 +252,7 @@ export default function ReactionPicker({
                   onSelect?.(reaction.type)
                 }
               }}
-              className="relative flex h-10 w-10 shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-60"
+              className="relative flex h-[50px] w-[46px] shrink-0 touch-none items-center justify-center overflow-visible rounded-full disabled:opacity-60"
               aria-label={reaction.label}
               title={reaction.label}
             >
@@ -263,7 +263,7 @@ export default function ReactionPicker({
               ) : null}
 
               <span
-                className={`shadow-reaction-icon-wrap pointer-events-none flex h-[38px] w-[38px] items-center justify-center ${
+                className={`shadow-reaction-icon-wrap pointer-events-none flex h-[44px] w-[44px] items-center justify-center ${
                   emphasized
                     ? 'z-[100] -translate-y-[22px] scale-[1.95]'
                     : 'z-0 translate-y-0 scale-100'
@@ -274,7 +274,7 @@ export default function ReactionPicker({
                   alt=""
                   aria-hidden="true"
                   draggable="false"
-                  className={`shadow-reaction-icon h-[38px] w-[38px] select-none object-contain ${
+                  className={`shadow-reaction-icon h-[44px] w-[44px] select-none object-contain ${
   emphasized
     ? focusClass
     : 'shadow-reaction-idle'
@@ -291,7 +291,7 @@ style={{
         })}
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[calc(100%+7px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium text-white shadow-sm"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+5px)] flex h-[38px] w-[min(94vw,400px)] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[14px] bg-white px-4 text-[12px] font-semibold text-[#667085] shadow-md ring-1 ring-black/5"
           aria-hidden="true"
         >
           {isSliding
