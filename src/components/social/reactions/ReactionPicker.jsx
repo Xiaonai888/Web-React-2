@@ -59,6 +59,16 @@ export default function ReactionPicker({
   const alignClass = ALIGN_CLASS[align] || ALIGN_CLASS.left
   const emphasizedType = pressedType || previewType || hoverType
 
+  function getReactionTypeAtPoint(clientX, clientY) {
+    const element = document.elementFromPoint(clientX, clientY)
+    const reactionElement = element?.closest?.('[data-shadow-reaction-type]')
+    const type = reactionElement?.getAttribute?.('data-shadow-reaction-type') || ''
+
+    return REACTIONS.some((reaction) => reaction.type === type)
+      ? type
+      : ''
+  }
+
   return (
     <>
       <style>{`
@@ -263,22 +273,56 @@ export default function ReactionPicker({
               onPointerDown={(event) => {
                 event.stopPropagation()
                 if (busy || disabled) return
+
+                event.currentTarget.setPointerCapture?.(event.pointerId)
                 setPressedType(reaction.type)
+              }}
+              onPointerMove={(event) => {
+                if (busy || disabled) return
+
+                if (
+                  event.pointerType === 'mouse' &&
+                  event.buttons === 0
+                ) {
+                  return
+                }
+
+                const pointedType = getReactionTypeAtPoint(
+                  event.clientX,
+                  event.clientY
+                )
+
+                setPressedType(pointedType)
               }}
               onPointerUp={(event) => {
                 event.stopPropagation()
                 if (busy || disabled) return
 
-                const shouldSelect = !isSliding
+                const pointedType = getReactionTypeAtPoint(
+                  event.clientX,
+                  event.clientY
+                )
+
+                if (
+                  event.currentTarget.hasPointerCapture?.(event.pointerId)
+                ) {
+                  event.currentTarget.releasePointerCapture?.(event.pointerId)
+                }
 
                 setPressedType('')
                 setHoverType('')
 
-                if (shouldSelect) {
-                  onSelect?.(reaction.type)
+                if (pointedType) {
+                  onSelect?.(pointedType)
                 }
               }}
-              onPointerCancel={() => {
+              onPointerCancel={(event) => {
+                if (
+                  event.currentTarget.hasPointerCapture?.(event.pointerId)
+                ) {
+                  event.currentTarget.releasePointerCapture?.(event.pointerId)
+                }
+
                 setPressedType('')
                 setHoverType('')
               }}
