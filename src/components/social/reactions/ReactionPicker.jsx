@@ -224,9 +224,9 @@ export default function ReactionPicker({
               }}
               className={`shadow-reaction-slot relative flex h-[48px] shrink-0 touch-none items-end justify-center overflow-visible rounded-full disabled:opacity-60 ${
                 emphasized
-  ? 'w-[82px]'
+  ? 'w-[80px]'
   : hasEmphasis
-    ? 'w-[41px]'
+    ? 'w-[40px]'
     : 'w-[48px]'
               }`}
               aria-label={reaction.label}
@@ -241,7 +241,7 @@ export default function ReactionPicker({
               <span
                 className={`shadow-reaction-icon-wrap pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center justify-center ${
                   emphasized
-  ? 'z-[100] h-[86px] w-[86px]'
+  ? 'z-[100] h-[120px] w-[120px]'
   : hasEmphasis
     ? 'z-0 h-[40px] w-[40px]'
     : 'z-0 h-[50px] w-[50px]'
