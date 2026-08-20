@@ -69,15 +69,14 @@ export default function ReactionPicker({
           100% { opacity: 1; transform: translateY(0); }
         }
 
-       @keyframes shadowReactionIdle {
-  0%, 100% {
-    transform: translateY(0) scale(.985) rotate(-1deg);
-  }
-  50% {
-    transform: translateY(-2px) scale(1.03) rotate(1deg);
-  }
+       @keyframes shadowReactionShake {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-3deg); }
+  20% { transform: rotate(3deg); }
+  30% { transform: rotate(-2deg); }
+  40% { transform: rotate(2deg); }
+  50% { transform: rotate(0deg); }
 }
-
         @keyframes shadowReactionLoveFocus {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.08); }
@@ -132,17 +131,9 @@ export default function ReactionPicker({
           will-change: transform;
         }
 
-     .shadow-reaction-idle-a,
-.shadow-reaction-idle-b {
-  animation:
-    shadowReactionIdle
-    1.35s
-    cubic-bezier(.22, .61, .36, 1)
-    infinite;
-}
-
-.shadow-reaction-idle-b {
-  animation-delay: -.675s;
+     .shadow-reaction-shake {
+  animation: shadowReactionShake 1.8s ease-in-out infinite;
+  transform-origin: center bottom;
 }
       `}</style>
 
@@ -159,7 +150,7 @@ export default function ReactionPicker({
       <div
         role="menu"
         aria-label="Choose reaction"
-        className={`shadow-reaction-picker-in absolute bottom-10 ${alignClass} z-[80] flex min-h-[56px] w-[min(94vw,400px)] max-w-[calc(100vw-16px)] touch-none items-center justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
+        className={`shadow-reaction-picker-in absolute bottom-10 left-1/2 z-[80] flex min-h-[56px] w-[360px] max-w-[calc(100vw-16px)] -translate-x-1/2 touch-none items-center justify-center gap-[1px] overflow-visible rounded-full bg-white px-[7px] py-[4px] shadow-xl ring-1 ring-black/10 ${className}`}
         onPointerDown={(event) => event.stopPropagation()}
       >
         {REACTIONS.map((reaction, index) => {
@@ -167,10 +158,7 @@ export default function ReactionPicker({
           const emphasized = reaction.type === emphasizedType
 
           const focusClass = FOCUS_CLASS[reaction.type] || ''
-        const idleClass =
-  index % 2 === 0
-    ? 'shadow-reaction-idle-a'
-    : 'shadow-reaction-idle-b'
+        
 
           return (
             <button
@@ -282,10 +270,10 @@ export default function ReactionPicker({
                   alt=""
                   aria-hidden="true"
                   draggable="false"
-                  className={`shadow-reaction-icon h-[46px] w-[46px] select-none object-contain ${
-  emphasized
-    ? focusClass
-    : idleClass
+                  className={`shadow-reaction-icon h-[50px] w-[50px] select-none object-contain ${
+ emphasized
+  ? focusClass
+  : 'shadow-reaction-shake'
 }`}
                 />
               </span>
