@@ -471,11 +471,14 @@ export default function useReactionInteraction({
       setSliding(false)
 
       if (reactionType) {
-  void selectReaction(reactionType)
-  return
-}
+        void selectReaction(
+          reactionType
+        )
+        return
+      }
 
-closeReactionPicker()
+      closeReactionPicker()
+    }
 
     function handlePointerCancel(event) {
       const pointerId =
