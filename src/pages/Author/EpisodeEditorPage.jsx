@@ -2773,6 +2773,7 @@ export default function EpisodeEditorPage() {
   const [draftCoverChanged, setDraftCoverChanged] = useState(false)
 
   const isManga = storyType === 'manga'
+  const hasServerEpisode = Boolean(currentEpisodeId || editEpisodeId)
   const plainContent = useMemo(() => episodeHtmlToPlainText(content), [content])
   const characterCount = plainContent.length
   const completedMangaPages = mangaPages.filter((page) => page.status === 'done')
@@ -3071,8 +3072,8 @@ export default function EpisodeEditorPage() {
         const hasDifference =
           draftType !== currentType ||
           String(draft.title || '') !== String(episodeTitle || '') ||
-String(draft.episodeCover || '') !== String(episodeCover || '') ||
-(draftType === 'novel' &&
+          String(draft.episodeCover || '') !== String(episodeCover || '') ||
+          (draftType === 'novel' &&
             sanitizeEpisodeHtml(draft.content || '') !==
               sanitizeEpisodeHtml(content || '')) ||
           String(draftYoutube.title || '') !== String(youtubeVideo.title || '') ||
@@ -3110,9 +3111,9 @@ String(draft.episodeCover || '') !== String(episodeCover || '') ||
     const restoredYoutube = draft.youtubeVideo || {}
 
     setStoryType(restoredType)
-setEpisodeTitle(String(draft.title || ''))
-setEpisodeCover(String(draft.episodeCover || ''))
-setContent(
+    setEpisodeTitle(String(draft.title || ''))
+    setEpisodeCover(String(draft.episodeCover || ''))
+    setContent(
       restoredType === 'manga'
         ? ''
         : normalizeEpisodeHtml(draft.content || '')
@@ -3776,6 +3777,12 @@ const removeYouTubeVideo = () => {
         })
       : null
 
+    if (episodeCoverUrl && episodeCoverUrl !== episodeCover) {
+      setEpisodeCover(episodeCoverUrl)
+      setOriginalCover(episodeCoverUrl)
+      setCoverChanged(false)
+    }
+
     const pagesPayload = completedMangaPages.map((page) => ({
       image_url: page.imageUrl,
       storage_path: page.storagePath,
@@ -3871,9 +3878,9 @@ const removeYouTubeVideo = () => {
           storyId,
           episodeId: currentEpisodeId || editEpisodeId || '',
           storyType,
-title: episodeTitle,
-episodeCover,
-content:
+          title: episodeTitle,
+          episodeCover,
+          content:
             storyType === 'manga'
               ? ''
               : sanitizeEpisodeHtml(editorRef.current?.innerHTML || content),
@@ -3960,6 +3967,7 @@ content:
 
   useEffect(() => {
     if (
+      !hasServerEpisode ||
       !hasUnsavedChanges ||
       serverCheckpointSaving ||
       loading ||
@@ -3974,6 +3982,7 @@ content:
 
     return () => window.clearInterval(timer)
   }, [
+    hasServerEpisode,
     hasUnsavedChanges,
     loading,
     pageLoading,
@@ -3982,6 +3991,7 @@ content:
 
   useEffect(() => {
     if (
+      !hasServerEpisode ||
       serverCheckpointMinutes !== 0 ||
       !hasUnsavedChanges ||
       serverCheckpointSaving ||
@@ -3993,6 +4003,7 @@ content:
 
     handleServerCheckpoint()
   }, [
+    hasServerEpisode,
     serverCheckpointMinutes,
     hasUnsavedChanges,
     serverCheckpointSaving,
@@ -4446,11 +4457,15 @@ releaseOption={releaseOption}
                 : hasUnsavedChanges
                   ? saveStatus === 'Local save failed'
                     ? 'Local save failed'
-                    : `${
-                        saveStatus === 'Saved locally'
-                          ? 'Saved locally'
-                          : 'Saving locally...'
-                      } · Server backup in ${serverCheckpointMinutes}m`
+                    : hasServerEpisode
+                      ? `${
+                          saveStatus === 'Saved locally'
+                            ? 'Saved locally'
+                            : 'Saving locally...'
+                        } · Server backup in ${serverCheckpointMinutes}m`
+                      : saveStatus === 'Saved locally'
+                        ? 'Saved locally'
+                        : 'Saving locally...'
                   : saveStatus}
             </div>
           </div>
