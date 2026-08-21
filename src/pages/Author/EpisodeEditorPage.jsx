@@ -3071,7 +3071,8 @@ export default function EpisodeEditorPage() {
         const hasDifference =
           draftType !== currentType ||
           String(draft.title || '') !== String(episodeTitle || '') ||
-          (draftType === 'novel' &&
+String(draft.episodeCover || '') !== String(episodeCover || '') ||
+(draftType === 'novel' &&
             sanitizeEpisodeHtml(draft.content || '') !==
               sanitizeEpisodeHtml(content || '')) ||
           String(draftYoutube.title || '') !== String(youtubeVideo.title || '') ||
@@ -3109,8 +3110,9 @@ export default function EpisodeEditorPage() {
     const restoredYoutube = draft.youtubeVideo || {}
 
     setStoryType(restoredType)
-    setEpisodeTitle(String(draft.title || ''))
-    setContent(
+setEpisodeTitle(String(draft.title || ''))
+setEpisodeCover(String(draft.episodeCover || ''))
+setContent(
       restoredType === 'manga'
         ? ''
         : normalizeEpisodeHtml(draft.content || '')
@@ -3869,8 +3871,9 @@ const removeYouTubeVideo = () => {
           storyId,
           episodeId: currentEpisodeId || editEpisodeId || '',
           storyType,
-          title: episodeTitle,
-          content:
+title: episodeTitle,
+episodeCover,
+content:
             storyType === 'manga'
               ? ''
               : sanitizeEpisodeHtml(editorRef.current?.innerHTML || content),
@@ -3912,6 +3915,7 @@ const removeYouTubeVideo = () => {
     episodeAdult,
     episodeFree,
     episodeTitle,
+    episodeCover,
     hasUnsavedChanges,
     mangaPages,
     pageLoading,
