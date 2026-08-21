@@ -929,7 +929,7 @@ const isOwner = Boolean(
       onReact={chooseReaction}
       idleLabel="Like"
       className="h-full w-full"
-      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] after:content-['Like']"
+      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] active:bg-[#f2f2f2] after:content-['Like']"
     />
 
     <button
@@ -944,7 +944,7 @@ const isOwner = Boolean(
     <AuthorPostEchoAction
       post={post}
       author={author}
-      className="h-full w-full justify-center gap-2 [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+      className="h-full w-full justify-center gap-2 active:bg-[#f2f2f2] [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
     />
   </div>
 </div>
