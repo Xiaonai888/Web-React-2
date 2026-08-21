@@ -713,7 +713,10 @@ const [soundSettings, setSoundSettings] =
   }, [])
 
   const loadConversations = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({
+      silent = false,
+      includeArchived = true,
+    } = {}) => {
       if (!silent) {
         setLoading(true)
       }
@@ -722,37 +725,48 @@ const [soundSettings, setSoundSettings] =
         const [data, archivedData] =
           await Promise.all([
             getChatConversations('all'),
-            getManagedChatConversations({
-              view: 'archived',
-            }),
+            includeArchived
+              ? getManagedChatConversations({
+                  view: 'archived',
+                })
+              : Promise.resolve(null),
           ])
 
-        setConversations(
-  Array.isArray(data.conversations)
-    ? data.conversations.filter(
-        (item) =>
-          item.viewer_role !== 'author'
-      )
-    : []
-)
-setArchivedCount(
-  Array.isArray(archivedData.conversations)
-    ? archivedData.conversations.filter(
-        (item) =>
-          item.viewer_role !== 'author'
-      ).length
-    : 0
-)
+        const readerConversations =
+          Array.isArray(data.conversations)
+            ? data.conversations.filter(
+                (item) =>
+                  item.viewer_role !== 'author'
+              )
+            : []
+
+        setConversations(readerConversations)
+
+        if (includeArchived) {
+          setArchivedCount(
+            Array.isArray(
+              archivedData?.conversations
+            )
+              ? archivedData.conversations.filter(
+                  (item) =>
+                    item.viewer_role !== 'author'
+                ).length
+              : 0
+          )
+        }
+
         setError('')
+        return readerConversations.length
       } catch (loadError) {
         if (loadError.status === 401) {
           navigate('/login', { replace: true })
-          return
+          return null
         }
 
         setError(
           loadError.message || 'Failed to load messages'
         )
+        return null
       } finally {
         if (!silent) {
           setLoading(false)
@@ -768,22 +782,76 @@ setArchivedCount(
       return undefined
     }
 
-    loadConversations()
-    loadQuickContacts()
+    let active = true
 
-    const conversationIntervalId = window.setInterval(() => {
-      loadConversations({ silent: true })
-    }, 6000)
-    const contactsIntervalId = window.setInterval(
-      loadQuickContacts,
-      20000
+    const refreshInbox = async ({
+      initial = false,
+    } = {}) => {
+      const conversationCount =
+        await loadConversations({
+          silent: !initial,
+          includeArchived: true,
+        })
+
+      if (
+        active &&
+        Number(conversationCount) > 0
+      ) {
+        await loadQuickContacts()
+      }
+    }
+
+    refreshInbox({ initial: true })
+
+    const handleFocus = () => {
+      if (!document.hidden) {
+        refreshInbox()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshInbox()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
     )
 
     return () => {
-      window.clearInterval(conversationIntervalId)
-      window.clearInterval(contactsIntervalId)
+      active = false
+      window.removeEventListener(
+        'focus',
+        handleFocus
+      )
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
     }
   }, [loadConversations, loadQuickContacts, navigate])
+
+  useEffect(() => {
+    if (!conversations.length) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        loadConversations({
+          silent: true,
+          includeArchived: false,
+        })
+      }
+    }, 30000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [conversations.length, loadConversations])
 
   const normalizedQuery = useMemo(
     () => normalizeSearchValue(query),
