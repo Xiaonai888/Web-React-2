@@ -59,10 +59,30 @@ function formatTime(value) {
   }).format(date)
 }
 
+function mergeMessages(current, incoming) {
+  const merged = new Map(
+    current.map((message) => [
+      String(message.id),
+      message,
+    ])
+  )
+
+  for (const message of incoming) {
+    merged.set(String(message.id), message)
+  }
+
+  return [...merged.values()].sort(
+    (first, second) =>
+      new Date(first.created_at).getTime() -
+      new Date(second.created_at).getTime()
+  )
+}
+
 export default function AuthorChatRoomPage() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const bottomRef = useRef(null)
+  const knownMessageIdsRef = useRef(new Set())
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
@@ -79,20 +99,58 @@ export default function AuthorChatRoomPage() {
       try {
         const data = await getAuthorChatMessages(
           conversationId,
-          { limit: 100 }
+          { limit: silent ? 20 : 50 }
         )
 
-        setConversation(data.conversation || null)
-        setMessages(
+        const incomingMessages =
           Array.isArray(data.messages)
             ? data.messages
             : []
-        )
+
+        const hasNewIncoming =
+          silent &&
+          incomingMessages.some(
+            (message) =>
+              !message.is_mine &&
+              !knownMessageIdsRef.current.has(
+                String(message.id)
+              )
+          )
+
+        for (const message of incomingMessages) {
+          knownMessageIdsRef.current.add(
+            String(message.id)
+          )
+        }
+
+        setConversation(data.conversation || null)
+
+        if (silent) {
+          setMessages((current) =>
+            mergeMessages(
+              current,
+              incomingMessages
+            )
+          )
+        } else {
+          setMessages(incomingMessages)
+        }
+
         setError('')
 
-        markAuthorChatRead(conversationId).catch(
-          () => null
+        const unreadCount = Number(
+          data.conversation?.unread_count || 0
         )
+
+        if (
+          unreadCount > 0 &&
+          (!silent || hasNewIncoming) &&
+          document.visibilityState === 'visible'
+        ) {
+          markAuthorChatRead(
+            conversationId
+          ).catch(() => null)
+        }
       } catch (loadError) {
         if (
           loadError.status === 401 ||
@@ -105,10 +163,12 @@ export default function AuthorChatRoomPage() {
           return
         }
 
-        setError(
-          loadError.message ||
-            'Failed to load Page conversation'
-        )
+        if (!silent) {
+          setError(
+            loadError.message ||
+              'Failed to load Page conversation'
+          )
+        }
       } finally {
         if (!silent) setLoading(false)
       }
@@ -122,15 +182,56 @@ export default function AuthorChatRoomPage() {
       return undefined
     }
 
+    knownMessageIdsRef.current = new Set()
     loadRoom()
 
+    return undefined
+  }, [loadRoom, navigate])
+
+  useEffect(() => {
+    if (
+      !conversationId ||
+      conversation?.request_status !== 'accepted'
+    ) {
+      return undefined
+    }
+
+    const refreshRoom = () => {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+
+      loadRoom({ silent: true })
+    }
+
     const intervalId = window.setInterval(
-      () => loadRoom({ silent: true }),
-      4000
+      refreshRoom,
+      15000
     )
 
-    return () => window.clearInterval(intervalId)
-  }, [loadRoom, navigate])
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshRoom()
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
+
+    return () => {
+      window.clearInterval(intervalId)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
+    }
+  }, [
+    conversation?.request_status,
+    conversationId,
+    loadRoom,
+  ])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -175,13 +276,17 @@ export default function AuthorChatRoomPage() {
       )
 
       if (data.message) {
-        setMessages((current) => [
-          ...current,
-          data.message,
-        ])
-      }
+        knownMessageIdsRef.current.add(
+          String(data.message.id)
+        )
 
-      await loadRoom({ silent: true })
+        setMessages((current) =>
+          mergeMessages(
+            current,
+            [data.message]
+          )
+        )
+      }
     } catch (sendError) {
       setDraft(message)
       setError(
