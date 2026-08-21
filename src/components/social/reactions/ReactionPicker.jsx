@@ -142,6 +142,86 @@ setPickerPosition({
       : ''
   }
 
+  function renderReactionEffect(type) {
+    if (type === 'love') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-love-heart">♥</span>
+          <span className="shadow-love-heart">♥</span>
+          <span className="shadow-love-heart">♥</span>
+          <span className="shadow-love-heart">♥</span>
+        </span>
+      )
+    }
+
+    if (type === 'haha') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-haha-tear" />
+          <span className="shadow-haha-tear" />
+          <span className="shadow-haha-tear" />
+        </span>
+      )
+    }
+
+    if (type === 'wow') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-wow-ring" />
+          <span className="shadow-wow-spark">✦</span>
+          <span className="shadow-wow-spark">✦</span>
+          <span className="shadow-wow-spark">✦</span>
+        </span>
+      )
+    }
+
+    if (type === 'sad') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-sad-drop" />
+          <span className="shadow-sad-drop" />
+          <span className="shadow-sad-drop" />
+        </span>
+      )
+    }
+
+    if (type === 'angry') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-angry-spark" />
+          <span className="shadow-angry-spark" />
+          <span className="shadow-angry-spark" />
+          <span className="shadow-angry-spark" />
+        </span>
+      )
+    }
+
+    if (type === 'support') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-support-ring" />
+          <span className="shadow-support-star">✦</span>
+          <span className="shadow-support-star">✦</span>
+          <span className="shadow-support-star">✦</span>
+        </span>
+      )
+    }
+
+    if (type === 'touched') {
+      return (
+        <span className="shadow-reaction-fx-layer" aria-hidden="true">
+          <span className="shadow-touched-glow" />
+          <span className="shadow-touched-spark">✦</span>
+          <span className="shadow-touched-spark">✦</span>
+          <span className="shadow-touched-spark">✦</span>
+          <span className="shadow-touched-spark">✦</span>
+        </span>
+      )
+    }
+
+    return null
+  }
+
   return (
     <>
       <style>{`
@@ -211,6 +291,423 @@ setPickerPosition({
             1.8s
             ease-in-out
             infinite;
+        }
+
+        @keyframes shadowLoveHeartFloat {
+          0% {
+            opacity: 0;
+            transform: translate(0, 10px) scale(.55) rotate(0deg);
+          }
+          20% {
+            opacity: .95;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), -52px) scale(1.05) rotate(var(--fx-r));
+          }
+        }
+
+        @keyframes shadowHahaTearFly {
+          0% {
+            opacity: 0;
+            transform: translate(0, 0) rotate(var(--fx-r)) scale(.6);
+          }
+          18% {
+            opacity: .95;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), var(--fx-y)) rotate(var(--fx-r)) scale(1);
+          }
+        }
+
+        @keyframes shadowWowRingPulse {
+          0% {
+            opacity: .65;
+            transform: translate(-50%, -50%) scale(.45);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.55);
+          }
+        }
+
+        @keyframes shadowWowSparkPop {
+          0% {
+            opacity: 0;
+            transform: translate(0, 8px) scale(.45) rotate(0deg);
+          }
+          28% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), var(--fx-y)) scale(1.15) rotate(90deg);
+          }
+        }
+
+        @keyframes shadowSadDropFall {
+          0% {
+            opacity: 0;
+            transform: translate(0, -8px) scale(.65);
+          }
+          25% {
+            opacity: .95;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), 42px) scale(1);
+          }
+        }
+
+        @keyframes shadowAngrySparkRise {
+          0% {
+            opacity: 0;
+            transform: translate(0, 10px) scale(.5);
+          }
+          22% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), -48px) scale(.9);
+          }
+        }
+
+        @keyframes shadowSupportRingPulse {
+          0% {
+            opacity: .55;
+            transform: translate(-50%, -50%) scale(.55);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.35);
+          }
+        }
+
+        @keyframes shadowSupportStarFloat {
+          0% {
+            opacity: 0;
+            transform: translate(0, 8px) scale(.4) rotate(0deg);
+          }
+          25% {
+            opacity: .9;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), var(--fx-y)) scale(1.05) rotate(105deg);
+          }
+        }
+
+        @keyframes shadowTouchedGlowPulse {
+          0% {
+            opacity: .5;
+            transform: translate(-50%, -50%) scale(.65);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.35);
+          }
+        }
+
+        @keyframes shadowTouchedSparkFloat {
+          0% {
+            opacity: 0;
+            transform: translate(0, 8px) scale(.45) rotate(0deg);
+          }
+          30% {
+            opacity: .85;
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--fx-x), var(--fx-y)) scale(1) rotate(80deg);
+          }
+        }
+
+        .shadow-reaction-fx-layer {
+          position: absolute;
+          inset: 0;
+          z-index: 8;
+          pointer-events: none;
+          overflow: visible;
+        }
+
+        .shadow-love-heart {
+          position: absolute;
+          bottom: 42%;
+          left: 50%;
+          color: #ff4f87;
+          font-size: 15px;
+          line-height: 1;
+          opacity: 0;
+          animation: shadowLoveHeartFloat 1.65s ease-in-out infinite;
+        }
+
+        .shadow-love-heart:nth-child(1) {
+          --fx-x: -36px;
+          --fx-r: -18deg;
+        }
+
+        .shadow-love-heart:nth-child(2) {
+          --fx-x: -12px;
+          --fx-r: 10deg;
+          animation-delay: 70ms;
+          font-size: 11px;
+        }
+
+        .shadow-love-heart:nth-child(3) {
+          --fx-x: 18px;
+          --fx-r: 18deg;
+          animation-delay: 120ms;
+          font-size: 13px;
+        }
+
+        .shadow-love-heart:nth-child(4) {
+          --fx-x: 36px;
+          --fx-r: 24deg;
+          animation-delay: 40ms;
+          font-size: 10px;
+        }
+
+        .shadow-haha-tear {
+          position: absolute;
+          left: 50%;
+          top: 42%;
+          width: 9px;
+          height: 14px;
+          border-radius: 70% 45% 70% 45%;
+          background: linear-gradient(180deg, #a9ddff, #43aef5);
+          opacity: 0;
+          animation: shadowHahaTearFly 1.6s ease-in-out infinite;
+        }
+
+        .shadow-haha-tear:nth-child(1) {
+          --fx-x: -46px;
+          --fx-y: 18px;
+          --fx-r: 28deg;
+        }
+
+        .shadow-haha-tear:nth-child(2) {
+          --fx-x: 42px;
+          --fx-y: 20px;
+          --fx-r: -30deg;
+          animation-delay: 55ms;
+        }
+
+        .shadow-haha-tear:nth-child(3) {
+          --fx-x: 28px;
+          --fx-y: -18px;
+          --fx-r: -15deg;
+          width: 7px;
+          height: 11px;
+          animation-delay: 110ms;
+        }
+
+        .shadow-wow-ring {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 86px;
+          height: 86px;
+          border: 3px solid rgba(250, 180, 36, .52);
+          border-radius: 9999px;
+          animation: shadowWowRingPulse 1.65s ease-in-out infinite;
+        }
+
+        .shadow-wow-spark {
+          position: absolute;
+          left: 50%;
+          top: 45%;
+          color: #ffb525;
+          font-size: 14px;
+          line-height: 1;
+          opacity: 0;
+          animation: shadowWowSparkPop 1.65s ease-in-out infinite;
+        }
+
+        .shadow-wow-spark:nth-child(2) {
+          --fx-x: -42px;
+          --fx-y: -35px;
+        }
+
+        .shadow-wow-spark:nth-child(3) {
+          --fx-x: 40px;
+          --fx-y: -30px;
+          animation-delay: 75ms;
+          font-size: 11px;
+        }
+
+        .shadow-wow-spark:nth-child(4) {
+          --fx-x: 32px;
+          --fx-y: 12px;
+          animation-delay: 130ms;
+          font-size: 9px;
+        }
+
+        .shadow-sad-drop {
+          position: absolute;
+          left: 50%;
+          top: 68%;
+          width: 8px;
+          height: 13px;
+          border-radius: 70% 45% 70% 45%;
+          background: linear-gradient(180deg, #b7e6ff, #4aaef4);
+          opacity: 0;
+          animation: shadowSadDropFall 1.75s ease-in-out infinite;
+        }
+
+        .shadow-sad-drop:nth-child(1) {
+          --fx-x: -28px;
+        }
+
+        .shadow-sad-drop:nth-child(2) {
+          --fx-x: 3px;
+          animation-delay: 90ms;
+          width: 6px;
+          height: 10px;
+        }
+
+        .shadow-sad-drop:nth-child(3) {
+          --fx-x: 29px;
+          animation-delay: 160ms;
+          width: 7px;
+          height: 11px;
+        }
+
+        .shadow-angry-spark {
+          position: absolute;
+          left: 50%;
+          bottom: 36%;
+          width: 8px;
+          height: 8px;
+          border-radius: 9999px;
+          background: #ff5a36;
+          box-shadow: 0 0 8px rgba(255, 88, 48, .65);
+          opacity: 0;
+          animation: shadowAngrySparkRise 1.6s ease-in-out infinite;
+        }
+
+        .shadow-angry-spark:nth-child(1) {
+          --fx-x: -34px;
+        }
+
+        .shadow-angry-spark:nth-child(2) {
+          --fx-x: -10px;
+          animation-delay: 70ms;
+          width: 6px;
+          height: 6px;
+          background: #ffb020;
+        }
+
+        .shadow-angry-spark:nth-child(3) {
+          --fx-x: 20px;
+          animation-delay: 120ms;
+          width: 7px;
+          height: 7px;
+        }
+
+        .shadow-angry-spark:nth-child(4) {
+          --fx-x: 38px;
+          animation-delay: 35ms;
+          width: 5px;
+          height: 5px;
+          background: #ffc14b;
+        }
+
+        .shadow-support-ring {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 92px;
+          height: 92px;
+          border: 3px solid rgba(105, 191, 120, .42);
+          border-radius: 9999px;
+          animation: shadowSupportRingPulse 1.7s ease-in-out infinite;
+        }
+
+        .shadow-support-star {
+          position: absolute;
+          left: 50%;
+          top: 45%;
+          color: #74bf7a;
+          font-size: 13px;
+          line-height: 1;
+          opacity: 0;
+          animation: shadowSupportStarFloat 1.7s ease-in-out infinite;
+        }
+
+        .shadow-support-star:nth-child(2) {
+          --fx-x: -38px;
+          --fx-y: -34px;
+        }
+
+        .shadow-support-star:nth-child(3) {
+          --fx-x: 38px;
+          --fx-y: -28px;
+          animation-delay: 90ms;
+          font-size: 10px;
+        }
+
+        .shadow-support-star:nth-child(4) {
+          --fx-x: 28px;
+          --fx-y: 16px;
+          animation-delay: 150ms;
+          font-size: 9px;
+        }
+
+        .shadow-touched-glow {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 92px;
+          height: 92px;
+          border-radius: 9999px;
+          background: radial-gradient(
+            circle,
+            rgba(255, 185, 213, .3) 0%,
+            rgba(190, 154, 255, .18) 46%,
+            rgba(255, 255, 255, 0) 72%
+          );
+          animation: shadowTouchedGlowPulse 1.8s ease-in-out infinite;
+        }
+
+        .shadow-touched-spark {
+          position: absolute;
+          left: 50%;
+          top: 46%;
+          color: #d58cff;
+          font-size: 12px;
+          line-height: 1;
+          opacity: 0;
+          animation: shadowTouchedSparkFloat 1.8s ease-in-out infinite;
+        }
+
+        .shadow-touched-spark:nth-child(2) {
+          --fx-x: -38px;
+          --fx-y: -38px;
+        }
+
+        .shadow-touched-spark:nth-child(3) {
+          --fx-x: 36px;
+          --fx-y: -34px;
+          animation-delay: 80ms;
+          color: #ff8fb6;
+          font-size: 10px;
+        }
+
+        .shadow-touched-spark:nth-child(4) {
+          --fx-x: -26px;
+          --fx-y: 8px;
+          animation-delay: 135ms;
+          font-size: 9px;
+        }
+
+        .shadow-touched-spark:nth-child(5) {
+          --fx-x: 30px;
+          --fx-y: 12px;
+          animation-delay: 180ms;
+          color: #ff9fbd;
+          font-size: 8px;
         }
       `}</style>
 
@@ -405,6 +902,12 @@ setPickerPosition({
                       : 'z-0 bottom-[3px] h-[50px] w-[50px]'
                 }`}
               >
+                {emphasized
+                  ? renderReactionEffect(
+                      reaction.type
+                    )
+                  : null}
+
                 <img
                   src={reaction.src}
                   alt=""
