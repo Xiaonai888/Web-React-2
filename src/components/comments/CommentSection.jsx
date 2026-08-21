@@ -1728,7 +1728,7 @@ const [repliesShown, setRepliesShown] =
           </div>
 
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[#98a2b3]">
-            <            <ReactionAction
+            <ReactionAction
               reactionType={
                 comment.reaction_type ||
                 (comment.liked
