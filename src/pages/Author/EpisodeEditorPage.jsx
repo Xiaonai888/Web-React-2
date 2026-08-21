@@ -37,6 +37,8 @@ const API_BASE_URL =
 
 const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 30000
+const MAX_EDITOR_HISTORY = 100
+const EDITOR_HISTORY_GROUP_MS = 1000
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
 const STORY_TAG_GROUPS = [
@@ -2656,6 +2658,10 @@ export default function EpisodeEditorPage() {
   const editorRef = useRef(null)
   const imageInputRef = useRef(null)
   const savedSelectionRef = useRef(null)
+  const undoHistoryRef = useRef([])
+  const redoHistoryRef = useRef([])
+  const lastHistoryInputRef = useRef({ type: '', at: 0 })
+  const applyingHistoryRef = useRef(false)
   const [findReplaceOpen, setFindReplaceOpen] = useState(false)
   const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
@@ -2941,8 +2947,67 @@ export default function EpisodeEditorPage() {
     }
   }, [editEpisodeId, isEditMode, navigate, storyId])
 
-  const syncEditorContent = useCallback((nextHtml, markChanged = true) => {
+    const trimEditorHistory = (stack) => {
+    if (stack.length > MAX_EDITOR_HISTORY) {
+      stack.splice(0, stack.length - MAX_EDITOR_HISTORY)
+    }
+  }
+
+  const resetEditorHistoryGrouping = () => {
+    lastHistoryInputRef.current = { type: '', at: 0 }
+  }
+
+  const recordEditorSnapshot = (html = editorRef.current?.innerHTML || content) => {
+    if (applyingHistoryRef.current) return
+
+    const safeHtml = sanitizeEpisodeHtml(html)
+    const stack = undoHistoryRef.current
+
+    if (stack[stack.length - 1] !== safeHtml) {
+      stack.push(safeHtml)
+      trimEditorHistory(stack)
+    }
+
+    redoHistoryRef.current = []
+  }
+
+  const applyEditorHistory = (html) => {
+    const safeHtml = sanitizeEpisodeHtml(html)
+    applyingHistoryRef.current = true
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = safeHtml
+      editorRef.current.focus()
+
+      const range = document.createRange()
+      range.selectNodeContents(editorRef.current)
+      range.collapse(false)
+
+      const selection = window.getSelection()
+      selection.removeAllRanges()
+      selection.addRange(range)
+      savedSelectionRef.current = range.cloneRange()
+    }
+
+    setContent(safeHtml)
+    markUnsaved()
+    applyingHistoryRef.current = false
+  }
+
+  useEffect(() => {
+    undoHistoryRef.current = []
+    redoHistoryRef.current = []
+    resetEditorHistoryGrouping()
+  }, [storyId, editEpisodeId])
+
+  const syncEditorContent = (nextHtml, markChanged = true) => {
     const safeHtml = sanitizeEpisodeHtml(nextHtml)
+
+    if (markChanged) {
+      recordEditorSnapshot(editorRef.current?.innerHTML || content)
+      resetEditorHistoryGrouping()
+    }
+
     setContent(safeHtml)
 
     if (editorRef.current && editorRef.current.innerHTML !== safeHtml) {
@@ -2950,7 +3015,7 @@ export default function EpisodeEditorPage() {
     }
 
     if (markChanged) markUnsaved()
-  }, [])
+  }
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -2999,6 +3064,39 @@ export default function EpisodeEditorPage() {
     selection.addRange(range)
   }, [])
 
+  const handleEditorBeforeInput = (event) => {
+    if (applyingHistoryRef.current) return
+
+    const inputType = event.nativeEvent?.inputType || ''
+    const now = Date.now()
+    const groupable = [
+      'insertText',
+      'insertCompositionText',
+      'deleteContentBackward',
+      'deleteContentForward',
+    ].includes(inputType)
+
+    const last = lastHistoryInputRef.current
+    const sameGroup =
+      groupable &&
+      last.type === inputType &&
+      now - last.at <= EDITOR_HISTORY_GROUP_MS
+
+    if (!sameGroup) {
+      recordEditorSnapshot(event.currentTarget.innerHTML)
+    }
+
+    lastHistoryInputRef.current = { type: inputType, at: now }
+  }
+
+  const handleEditorPaste = (event) => {
+    recordEditorSnapshot(event.currentTarget.innerHTML)
+    lastHistoryInputRef.current = {
+      type: 'insertFromPaste',
+      at: Date.now(),
+    }
+  }
+
   const handleEditorInput = (event) => {
     setContent(event.currentTarget.innerHTML)
     markUnsaved()
@@ -3006,6 +3104,8 @@ export default function EpisodeEditorPage() {
   }
 
   const runEditorCommand = (command, value = null) => {
+    recordEditorSnapshot()
+    resetEditorHistoryGrouping()
     restoreEditorSelection()
     document.execCommand(command, false, value)
     setContent(editorRef.current?.innerHTML || '')
@@ -3028,6 +3128,8 @@ export default function EpisodeEditorPage() {
   }
 
   const insertHtmlAtSelection = (html) => {
+    recordEditorSnapshot()
+    resetEditorHistoryGrouping()
     restoreEditorSelection()
 
     if (document.queryCommandSupported?.('insertHTML')) {
@@ -3164,8 +3266,66 @@ const removeYouTubeVideo = () => {
   }
 
   const handleUndo = () => {
-    runEditorCommand('undo')
+    resetEditorHistoryGrouping()
+
+    const previousHtml = undoHistoryRef.current.pop()
+    if (previousHtml === undefined) return
+
+    const currentHtml = sanitizeEpisodeHtml(
+      editorRef.current?.innerHTML || content
+    )
+
+    if (
+      redoHistoryRef.current[redoHistoryRef.current.length - 1] !== currentHtml
+    ) {
+      redoHistoryRef.current.push(currentHtml)
+      trimEditorHistory(redoHistoryRef.current)
+    }
+
+    applyEditorHistory(previousHtml)
   }
+
+  const handleRedo = () => {
+    resetEditorHistoryGrouping()
+
+    const nextHtml = redoHistoryRef.current.pop()
+    if (nextHtml === undefined) return
+
+    const currentHtml = sanitizeEpisodeHtml(
+      editorRef.current?.innerHTML || content
+    )
+
+    if (
+      undoHistoryRef.current[undoHistoryRef.current.length - 1] !== currentHtml
+    ) {
+      undoHistoryRef.current.push(currentHtml)
+      trimEditorHistory(undoHistoryRef.current)
+    }
+
+    applyEditorHistory(nextHtml)
+  }
+
+  const handleEditorKeyDown = (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+
+    const key = event.key.toLowerCase()
+
+    if (key === 'z') {
+      event.preventDefault()
+      if (event.shiftKey) {
+        handleRedo()
+      } else {
+        handleUndo()
+      }
+      return
+    }
+
+    if (key === 'y') {
+      event.preventDefault()
+      handleRedo()
+    }
+  }
+
 
   const handleRedo = () => {
     runEditorCommand('redo')
@@ -4172,6 +4332,9 @@ releaseOption={releaseOption}
                   aria-multiline="true"
                   data-placeholder="Start writing your episode..."
                   onInput={handleEditorInput}
+                  onBeforeInput={handleEditorBeforeInput}
+                  onPaste={handleEditorPaste}
+                  onKeyDown={handleEditorKeyDown}
                   onFocus={() => {
                     setEditorFocused(true)
                     saveEditorSelection()
