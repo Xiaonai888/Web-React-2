@@ -1317,8 +1317,11 @@ export default function ChatRoomPage() {
     )
   }, [])
 
-  const loadRoom = useCallback(
-    async ({ silent = false } = {}) => {
+    const loadRoom = useCallback(
+    async ({
+      silent = false,
+      includeMeta = true,
+    } = {}) => {
       if (!conversationId) return
 
       if (!silent) setLoading(true)
@@ -1327,60 +1330,63 @@ export default function ChatRoomPage() {
         const data = await getChatMessages(
           conversationId,
           {
-            limit: 50,
+            limit: silent ? 20 : 50,
           }
         )
 
         const roomConversation =
           data.conversation || null
-
-        const [blockData, pinData] =
-          await Promise.all([
-            roomConversation?.is_group === true
-              ? Promise.resolve({
-                  block_status: {
-                    is_blocked: false,
-                    viewer_has_blocked: false,
-                    viewer_is_blocked: false,
-                  },
-                })
-              : getChatBlockStatus(
-                  conversationId
-                ),
-            getPinnedChatMessages(
-              conversationId
-            ),
-          ])
-
         const incomingMessages =
           Array.isArray(data.messages)
             ? data.messages
             : []
 
-        setBlockStatus({
-          is_blocked: Boolean(
-            blockData.block_status?.is_blocked
-          ),
-          viewer_has_blocked: Boolean(
-            blockData.block_status
-              ?.viewer_has_blocked
-          ),
-          viewer_is_blocked: Boolean(
-            blockData.block_status
-              ?.viewer_is_blocked
-          ),
-        })
+        if (includeMeta) {
+          const [blockData, pinData] =
+            await Promise.all([
+              roomConversation?.is_group === true
+                ? Promise.resolve({
+                    block_status: {
+                      is_blocked: false,
+                      viewer_has_blocked: false,
+                      viewer_is_blocked: false,
+                    },
+                  })
+                : getChatBlockStatus(
+                    conversationId
+                  ),
+              getPinnedChatMessages(
+                conversationId
+              ),
+            ])
+
+          setBlockStatus({
+            is_blocked: Boolean(
+              blockData.block_status?.is_blocked
+            ),
+            viewer_has_blocked: Boolean(
+              blockData.block_status
+                ?.viewer_has_blocked
+            ),
+            viewer_is_blocked: Boolean(
+              blockData.block_status
+                ?.viewer_is_blocked
+            ),
+          })
+
+          setPins(
+            Array.isArray(pinData.pins)
+              ? pinData.pins
+              : []
+          )
+        }
 
         setConversation(roomConversation)
-        setPins(
-          Array.isArray(pinData.pins)
-            ? pinData.pins
-            : []
-        )
 
         if (silent) {
           shouldScrollBottomRef.current =
             isNearPageBottom()
+
           setMessages((current) =>
             mergeMessages(
               current,
@@ -1398,6 +1404,7 @@ export default function ChatRoomPage() {
         setError('')
 
         if (
+          document.visibilityState === 'visible' &&
           Number(
             data.conversation?.unread_count || 0
           ) > 0
@@ -1434,7 +1441,7 @@ export default function ChatRoomPage() {
           )
         }
       } finally {
-        setLoading(false)
+        if (!silent) setLoading(false)
       }
     },
     [
@@ -1451,18 +1458,71 @@ export default function ChatRoomPage() {
     }
 
     loadRoom()
+    return undefined
+  }, [loadRoom, navigate])
 
-    const intervalId = window.setInterval(() => {
-      if (!document.hidden) {
-        loadRoom({ silent: true })
+  useEffect(() => {
+    if (!hasReaderSession()) {
+      return undefined
+    }
+
+    const status =
+      conversation?.request_status
+
+    if (
+      status !== 'accepted' &&
+      status !== 'pending'
+    ) {
+      return undefined
+    }
+
+    const refreshMessages = () => {
+      if (
+        document.visibilityState !== 'visible'
+      ) {
+        return
       }
-    }, 3000)
+
+      loadRoom({
+        silent: true,
+        includeMeta: false,
+      })
+    }
+
+    const intervalId = window.setInterval(
+      refreshMessages,
+      status === 'accepted' ? 15000 : 30000
+    )
+
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible'
+      ) {
+        loadRoom({
+          silent: true,
+          includeMeta: true,
+        })
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
 
     return () => {
       window.clearInterval(intervalId)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
     }
-  }, [loadRoom, navigate])
+  }, [
+    conversation?.request_status,
+    loadRoom,
+  ])
 
+  
   useEffect(() => {
     if (scrollRestoreRef.current) {
       const { previousHeight, previousY } =
