@@ -1898,55 +1898,71 @@ export default function ShadowMallPromotionSocial({
 
   return (
     <>
-      <div className="flex items-center gap-6 px-4 py-2 text-[13px] font-normal text-gray-500">
-        <ReactionAction
-          reactionType={reactionType}
-          count={reactionCount}
-          busy={reactionBusy}
-          onReact={updateReaction}
-          countInAction
-          formatCount={formatCompactNumber}
-          idleLabel="React"
-        />
+      <div className="mt-2 border-b border-[#eef0f4] px-4 pb-1 dark:border-white/10">
+  <div className="flex items-center justify-between pb-2 text-[12px] text-[#65676b] dark:text-[#b0b3b8]">
+    <div className="flex items-center">
+      <img
+        src="/assets/React/Love.svg"
+        alt=""
+        className="h-[17px] w-[17px]"
+      />
+      <span className="ml-1.5">
+        {formatCompactNumber(reactionCount)}
+      </span>
+    </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            setCommentOpen(true)
-          }
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Comment on promotion"
-        >
-          <i className="fa-regular fa-comment text-[15px]" />
-          <span>
-            {formatCompactNumber(
-              commentCount
-            )}
-          </span>
-        </button>
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        onClick={() => setCommentOpen(true)}
+        className="active:opacity-60"
+      >
+        {formatCompactNumber(commentCount)} comments
+      </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            setEchoOpen(true)
-          }
-          className="inline-flex items-center gap-1.5 active:scale-95"
-          aria-label="Echo promotion"
-        >
-          <img
-            src="/assets/Icons/echo.svg"
-            alt=""
-            aria-hidden="true"
-            className="h-[15px] w-[15px] object-contain opacity-70"
-          />
-          <span>
-            {formatCompactNumber(
-              echoCount
-            )}
-          </span>
-        </button>
-      </div>
+      <span>
+        {formatCompactNumber(echoCount)} echoes
+      </span>
+    </div>
+  </div>
 
+  <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b] dark:border-white/10 dark:text-[#b0b3b8]">
+    <div className="flex items-center justify-center py-2">
+      <ReactionAction
+        reactionType={reactionType}
+        count={reactionCount}
+        busy={reactionBusy}
+        onReact={updateReaction}
+        showCount={false}
+        idleLabel="Like"
+        buttonClassName="gap-2 after:content-['Like'] [&>i]:!text-[18px] [&>img]:!h-[18px] [&>img]:!w-[18px]"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={() => setCommentOpen(true)}
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-white/10"
+    >
+      <i className="fa-regular fa-comment text-[18px]" />
+      <span>Comment</span>
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setEchoOpen(true)}
+      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2] dark:active:bg-white/10"
+    >
+      <img
+        src="/assets/Icons/echo.svg"
+        alt=""
+        aria-hidden="true"
+        className="h-[18px] w-[18px] object-contain opacity-75"
+      />
+      <span>Echo</span>
+    </button>
+  </div>
+</div>
       {message ? (
         <div className="fixed left-1/2 top-20 z-[200080] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2 text-[12px] font-normal text-white shadow-2xl">
           {message}
