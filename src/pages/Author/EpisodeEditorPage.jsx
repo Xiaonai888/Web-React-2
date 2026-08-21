@@ -21,6 +21,7 @@ import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker
 import {
   deleteEpisodeLocalDraft,
   getEpisodeLocalDraftKey,
+  loadEpisodeLocalDraft,
   saveEpisodeLocalDraft,
 } from '../../utils/episodeLocalDraft'
 import {
@@ -771,6 +772,53 @@ function UnsavedChangesModal({ open, onKeepEditing, onDiscard, onSaveDraft }) {
             className="rounded-full bg-[#111827] px-3 py-2.5 text-[12px] font-normal text-white active:scale-95"
           >
             Save Draft
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LocalDraftRecoveryModal({
+  open,
+  busy,
+  onDiscard,
+  onRestore,
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-[420px] rounded-[24px] bg-white p-5 text-center shadow-2xl">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827]">
+          <i className="fa-solid fa-clock-rotate-left text-[21px]" />
+        </div>
+
+        <h2 className="mt-4 text-[18px] font-bold text-[#111827]">
+          Local Draft Found
+        </h2>
+
+        <p className="mt-3 text-[13px] leading-6 text-[#555b66]">
+          This device has newer unsaved work for this episode. Restore it before continuing or discard the local copy.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={busy}
+            className="h-11 rounded-full border border-[#e4e7ec] bg-white px-3 text-[12px] font-normal text-[#555b66] active:scale-95 disabled:opacity-50"
+          >
+            Discard Local
+          </button>
+
+          <button
+            type="button"
+            onClick={onRestore}
+            disabled={busy}
+            className="h-11 rounded-full bg-[#111827] px-3 text-[12px] font-bold text-white active:scale-95 disabled:opacity-50"
+          >
+            {busy ? 'Please wait...' : 'Restore Draft'}
           </button>
         </div>
       </div>
@@ -2681,6 +2729,10 @@ export default function EpisodeEditorPage() {
     SERVER_CHECKPOINT_MINUTES
   )
   const [serverCheckpointSaving, setServerCheckpointSaving] = useState(false)
+  const localRecoveryCheckedRef = useRef('')
+  const [localRecoveryDraft, setLocalRecoveryDraft] = useState(null)
+  const [localRecoveryOpen, setLocalRecoveryOpen] = useState(false)
+  const [localRecoveryBusy, setLocalRecoveryBusy] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
   const [youtubeSheetOpen, setYoutubeSheetOpen] = useState(false)
@@ -2968,6 +3020,179 @@ export default function EpisodeEditorPage() {
       cancelled = true
     }
   }, [editEpisodeId, isEditMode, navigate, storyId])
+
+  useEffect(() => {
+    if (pageLoading) return undefined
+
+    const key = getEpisodeLocalDraftKey(storyId, editEpisodeId || '')
+
+    if (localRecoveryCheckedRef.current === key) {
+      return undefined
+    }
+
+    localRecoveryCheckedRef.current = key
+    let cancelled = false
+
+    const checkLocalDraft = async () => {
+      try {
+        const draft = await loadEpisodeLocalDraft(key)
+        if (cancelled || !draft) return
+
+        const draftType = draft.storyType === 'manga' ? 'manga' : 'novel'
+        const currentType = storyType === 'manga' ? 'manga' : 'novel'
+        const draftYoutube = draft.youtubeVideo || {}
+
+        const currentPageData =
+          currentType === 'manga'
+            ? mangaPages
+                .filter((page) => page.status === 'done' && page.imageUrl)
+                .map((page) => ({
+                  imageUrl: page.imageUrl,
+                  storagePath: page.storagePath || null,
+                  width: page.width || null,
+                  height: page.height || null,
+                  fileSize: page.fileSize || null,
+                  mimeType: page.mimeType || 'image/webp',
+                }))
+            : []
+
+        const draftPageData =
+          draftType === 'manga'
+            ? (draft.mangaPages || []).map((page) => ({
+                imageUrl: page.imageUrl,
+                storagePath: page.storagePath || null,
+                width: page.width || null,
+                height: page.height || null,
+                fileSize: page.fileSize || null,
+                mimeType: page.mimeType || 'image/webp',
+              }))
+            : []
+
+        const hasDifference =
+          draftType !== currentType ||
+          String(draft.title || '') !== String(episodeTitle || '') ||
+          (draftType === 'novel' &&
+            sanitizeEpisodeHtml(draft.content || '') !==
+              sanitizeEpisodeHtml(content || '')) ||
+          String(draftYoutube.title || '') !== String(youtubeVideo.title || '') ||
+          String(draftYoutube.url || '') !== String(youtubeVideo.url || '') ||
+          Boolean(draft.episodeAdult) !== Boolean(episodeAdult) ||
+          Boolean(draft.episodeFree) !== Boolean(episodeFree) ||
+          JSON.stringify(draftPageData) !== JSON.stringify(currentPageData)
+
+        if (!hasDifference) {
+          await deleteEpisodeLocalDraft(key)
+          return
+        }
+
+        if (cancelled) return
+        setLocalRecoveryDraft(draft)
+        setLocalRecoveryOpen(true)
+      } catch {
+      }
+    }
+
+    checkLocalDraft()
+
+    return () => {
+      cancelled = true
+    }
+  }, [pageLoading, storyId, editEpisodeId])
+
+  const handleRestoreLocalDraft = () => {
+    const draft = localRecoveryDraft
+    if (!draft || localRecoveryBusy) return
+
+    setLocalRecoveryBusy(true)
+
+    const restoredType = draft.storyType === 'manga' ? 'manga' : 'novel'
+    const restoredYoutube = draft.youtubeVideo || {}
+
+    setStoryType(restoredType)
+    setEpisodeTitle(String(draft.title || ''))
+    setContent(
+      restoredType === 'manga'
+        ? ''
+        : normalizeEpisodeHtml(draft.content || '')
+    )
+    setYoutubeVideo(
+      restoredType === 'manga'
+        ? { title: '', url: '' }
+        : {
+            title: String(restoredYoutube.title || ''),
+            url: String(restoredYoutube.url || ''),
+          }
+    )
+    setEpisodeAdult(Boolean(draft.episodeAdult))
+    setEpisodeFree(Boolean(draft.episodeFree))
+
+    if (draft.episodeId) {
+      setCurrentEpisodeId(String(draft.episodeId))
+    }
+
+    if (restoredType === 'manga') {
+      setMangaPages(
+        (draft.mangaPages || [])
+          .filter((page) => page.imageUrl)
+          .map((page, index) => ({
+            id: page.id || `local-${index}`,
+            previewUrl: page.imageUrl,
+            imageUrl: page.imageUrl,
+            storagePath: page.storagePath || null,
+            width: page.width || null,
+            height: page.height || null,
+            fileSize: page.fileSize || null,
+            mimeType: page.mimeType || 'image/webp',
+            sourceFile: null,
+            status: 'done',
+            progress: 100,
+            error: '',
+          }))
+      )
+    } else {
+      setMangaPages([])
+    }
+
+    undoHistoryRef.current = []
+    redoHistoryRef.current = []
+    lastHistoryInputRef.current = { type: '', at: 0 }
+    setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
+    setHasUnsavedChanges(true)
+    setSaveStatus('Saved locally')
+    setLocalRecoveryOpen(false)
+    setLocalRecoveryDraft(null)
+    setLocalRecoveryBusy(false)
+    showToast('Local draft restored.')
+  }
+
+  const handleDiscardLocalDraft = async () => {
+    const draft = localRecoveryDraft
+    if (!draft || localRecoveryBusy) return
+
+    try {
+      setLocalRecoveryBusy(true)
+      await deleteEpisodeLocalDraft(localDraftKeyRef.current)
+      setLocalRecoveryOpen(false)
+      setLocalRecoveryDraft(null)
+
+      if (!editEpisodeId && draft.episodeId) {
+        const nextParams = new URLSearchParams(searchParams)
+        nextParams.set('editEpisodeId', String(draft.episodeId))
+        nextParams.set('first', '0')
+        nextParams.set(
+          'type',
+          draft.storyType === 'manga' ? 'manga' : 'novel'
+        )
+
+        navigate(
+          `${window.location.pathname}?${nextParams.toString()}`,
+          { replace: true }
+        )
+      }
+    } finally {
+      setLocalRecoveryBusy(false)
+    }
+  }
 
     const trimEditorHistory = (stack) => {
     if (stack.length > MAX_EDITOR_HISTORY) {
@@ -4131,6 +4356,13 @@ releaseOption={releaseOption}
         onKeepEditing={() => setShowExitModal(false)}
         onDiscard={handleDiscard}
         onSaveDraft={handleSaveDraftAndLeave}
+      />
+
+      <LocalDraftRecoveryModal
+        open={localRecoveryOpen}
+        busy={localRecoveryBusy}
+        onDiscard={handleDiscardLocalDraft}
+        onRestore={handleRestoreLocalDraft}
       />
 
       {!isManga ? (
