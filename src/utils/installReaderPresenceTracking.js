@@ -5,7 +5,8 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const HEARTBEAT_INTERVAL_MS = 30000
+const HEARTBEAT_INTERVAL_MS = 60000
+const MIN_HEARTBEAT_GAP_MS = 10000
 const IDLE_AFTER_MS = 2 * 60 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
 
@@ -45,6 +46,7 @@ export function installReaderPresenceTracking() {
 
   let lastActivityAt = Date.now()
   let lastPath = window.location.pathname || '/'
+  let lastHeartbeatAt = 0
   let sending = false
 
   const markActive = () => {
@@ -56,6 +58,13 @@ export function installReaderPresenceTracking() {
     if (!getReaderToken()) return
     if (!navigator.onLine) return
 
+    const now = Date.now()
+
+    if (!forceInactive && now - lastHeartbeatAt < MIN_HEARTBEAT_GAP_MS) {
+      return
+    }
+
+    lastHeartbeatAt = now
     sending = true
 
     try {
