@@ -442,6 +442,11 @@ function CommentItem({
     ? comment.replies
     : []
 
+  const openReplyComposer = () => {
+    setReplyOpen(true)
+    setRepliesShown(true)
+  }
+
   const sendReply = async () => {
     if (!replyText.trim()) return
 
@@ -516,9 +521,7 @@ function CommentItem({
 
             <button
               type="button"
-              onClick={() =>
-                setReplyOpen(true)
-              }
+              onClick={openReplyComposer}
             >
               Reply
             </button>
@@ -545,6 +548,18 @@ function CommentItem({
             ) : null}
           </div>
 
+          {repliesShown && replies.length ? (
+            <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
+              {replies.map((reply) => (
+                <ReplyItem
+                  key={reply.id}
+                  reply={reply}
+                  onLike={onLike}
+                />
+              ))}
+            </div>
+          ) : null}
+
           {replyOpen ? (
             <ReplyComposer
               value={replyText}
@@ -557,18 +572,6 @@ function CommentItem({
               sending={sendingReply}
             />
           ) : null}
-
-          {repliesShown && replies.length ? (
-            <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
-              {replies.map((reply) => (
-                <ReplyItem
-                  key={reply.id}
-                  reply={reply}
-                  onLike={onLike}
-                />
-              ))}
-            </div>
-          ) : null}
         </div>
       </div>
 
@@ -576,7 +579,7 @@ function CommentItem({
         comment={menuOpen ? comment : null}
         currentUserId={currentUserId}
         onClose={() => setMenuOpen(false)}
-        onReply={() => setReplyOpen(true)}
+        onReply={openReplyComposer}
         onCopy={() => onCopy(comment)}
         onEdit={() => onEdit(comment)}
         onDelete={() => onDelete(comment)}
