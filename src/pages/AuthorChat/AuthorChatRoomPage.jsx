@@ -78,11 +78,39 @@ function mergeMessages(current, incoming) {
   )
 }
 
+function getLatestMessageCursor(
+  messages,
+  fallback = ''
+) {
+  let latestTime = Number.NEGATIVE_INFINITY
+  let latestValue = ''
+
+  for (const message of messages || []) {
+    const value = String(
+      message?.created_at || ''
+    ).trim()
+    const time = new Date(value).getTime()
+
+    if (
+      value &&
+      Number.isFinite(time) &&
+      time > latestTime
+    ) {
+      latestTime = time
+      latestValue = value
+    }
+  }
+
+  return latestValue || String(fallback || '')
+}
+
 export default function AuthorChatRoomPage() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const bottomRef = useRef(null)
   const knownMessageIdsRef = useRef(new Set())
+  const pollCursorRef = useRef('')
+  const incrementalLoadingRef = useRef(false)
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
@@ -106,6 +134,16 @@ export default function AuthorChatRoomPage() {
           Array.isArray(data.messages)
             ? data.messages
             : []
+        const roomConversation =
+          data.conversation || null
+
+        pollCursorRef.current =
+          getLatestMessageCursor(
+            incomingMessages,
+            roomConversation?.last_message_at ||
+              roomConversation?.created_at ||
+              pollCursorRef.current
+          )
 
         const hasNewIncoming =
           silent &&
@@ -123,7 +161,7 @@ export default function AuthorChatRoomPage() {
           )
         }
 
-        setConversation(data.conversation || null)
+        setConversation(roomConversation)
 
         if (silent) {
           setMessages((current) =>
@@ -176,6 +214,95 @@ export default function AuthorChatRoomPage() {
     [conversationId, navigate]
   )
 
+  const loadIncrementalMessages = useCallback(
+    async () => {
+      if (
+        !conversationId ||
+        incrementalLoadingRef.current
+      ) {
+        return
+      }
+
+      const after = pollCursorRef.current
+
+      if (!after) {
+        await loadRoom({ silent: true })
+        return
+      }
+
+      incrementalLoadingRef.current = true
+
+      try {
+        const data = await getAuthorChatMessages(
+          conversationId,
+          {
+            after,
+            limit: 20,
+          }
+        )
+
+        const incomingMessages =
+          Array.isArray(data.messages)
+            ? data.messages
+            : []
+
+        if (!incomingMessages.length) {
+          return
+        }
+
+        const hasNewIncoming =
+          incomingMessages.some(
+            (message) => !message.is_mine
+          )
+
+        for (const message of incomingMessages) {
+          knownMessageIdsRef.current.add(
+            String(message.id)
+          )
+        }
+
+        setMessages((current) =>
+          mergeMessages(
+            current,
+            incomingMessages
+          )
+        )
+
+        pollCursorRef.current =
+          getLatestMessageCursor(
+            incomingMessages,
+            after
+          )
+
+        if (
+          hasNewIncoming &&
+          document.visibilityState === 'visible'
+        ) {
+          markAuthorChatRead(
+            conversationId
+          ).catch(() => null)
+        }
+      } catch (loadError) {
+        if (
+          loadError.status === 401 ||
+          loadError.code ===
+            'AUTHOR_CHAT_ACCESS_DENIED'
+        ) {
+          navigate('/author/page/chat', {
+            replace: true,
+          })
+        }
+      } finally {
+        incrementalLoadingRef.current = false
+      }
+    },
+    [
+      conversationId,
+      loadRoom,
+      navigate,
+    ]
+  )
+
   useEffect(() => {
     if (!hasAuthorChatSession()) {
       navigate('/login', { replace: true })
@@ -183,6 +310,8 @@ export default function AuthorChatRoomPage() {
     }
 
     knownMessageIdsRef.current = new Set()
+    pollCursorRef.current = ''
+    incrementalLoadingRef.current = false
     loadRoom()
 
     return undefined
@@ -197,11 +326,13 @@ export default function AuthorChatRoomPage() {
     }
 
     const refreshRoom = () => {
-      if (document.visibilityState !== 'visible') {
+      if (
+        document.visibilityState !== 'visible'
+      ) {
         return
       }
 
-      loadRoom({ silent: true })
+      loadIncrementalMessages()
     }
 
     const intervalId = window.setInterval(
@@ -210,8 +341,10 @@ export default function AuthorChatRoomPage() {
     )
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshRoom()
+      if (
+        document.visibilityState === 'visible'
+      ) {
+        loadRoom({ silent: true })
       }
     }
 
@@ -230,6 +363,7 @@ export default function AuthorChatRoomPage() {
   }, [
     conversation?.request_status,
     conversationId,
+    loadIncrementalMessages,
     loadRoom,
   ])
 
