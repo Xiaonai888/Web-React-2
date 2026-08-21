@@ -536,18 +536,49 @@ export default function AuthorChatInboxPage() {
   }, [loadInbox, navigate])
 
   useEffect(() => {
-    if (!hasAuthorChatSession()) {
-      return undefined
+    if (!hasAuthorChatSession()) return undefined
+
+    const hasData =
+      tab === 'comments'
+        ? comments.length > 0
+        : conversations.length > 0
+
+    const handleVisible = () => {
+      if (
+        document.visibilityState === 'visible'
+      ) {
+        refreshCurrentTab()
+      }
     }
 
-    const intervalId = window.setInterval(
-      refreshCurrentTab,
-      15000
+    document.addEventListener(
+      'visibilitychange',
+      handleVisible
     )
 
-    return () =>
-      window.clearInterval(intervalId)
-  }, [refreshCurrentTab])
+    const intervalId = hasData
+      ? window.setInterval(
+          refreshCurrentTab,
+          30000
+        )
+      : null
+
+    return () => {
+      if (intervalId) {
+        window.clearInterval(intervalId)
+      }
+
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisible
+      )
+    }
+  }, [
+    comments.length,
+    conversations.length,
+    refreshCurrentTab,
+    tab,
+  ])
 
   const normalizedQuery = useMemo(
     () => normalizeSearch(query),
