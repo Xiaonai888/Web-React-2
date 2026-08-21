@@ -4022,8 +4022,15 @@ const removeYouTubeVideo = () => {
     navigate(returnTo, { replace: true })
   }
 
-  const handleDiscard = () => {
+  const handleDiscard = async () => {
     setShowExitModal(false)
+
+    if (localSaveTimerRef.current) {
+      window.clearTimeout(localSaveTimerRef.current)
+      localSaveTimerRef.current = null
+    }
+
+    await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
       navigate('/author/dashboard', { replace: true })
