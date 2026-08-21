@@ -19,6 +19,11 @@ import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import {
+  deleteEpisodeLocalDraft,
+  getEpisodeLocalDraftKey,
+  saveEpisodeLocalDraft,
+} from '../../utils/episodeLocalDraft'
+import {
   MANGA_MAX_FILES_PER_PICK,
   MANGA_MAX_PAGES,
   MANGA_MIN_PUBLISH_PAGES,
@@ -39,6 +44,8 @@ const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 30000
 const MAX_EDITOR_HISTORY = 100
 const EDITOR_HISTORY_GROUP_MS = 1000
+const LOCAL_AUTOSAVE_DELAY_MS = 3000
+const SERVER_CHECKPOINT_MINUTES = 10
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
 const STORY_TAG_GROUPS = [
@@ -2666,8 +2673,14 @@ export default function EpisodeEditorPage() {
   const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [autoSaveSeconds, setAutoSaveSeconds] = useState(60)
-  const [autoSaving, setAutoSaving] = useState(false)
+  const localDraftKeyRef = useRef(
+    getEpisodeLocalDraftKey(storyId, editEpisodeId || '')
+  )
+  const localSaveTimerRef = useRef(null)
+  const [serverCheckpointMinutes, setServerCheckpointMinutes] = useState(
+    SERVER_CHECKPOINT_MINUTES
+  )
+  const [serverCheckpointSaving, setServerCheckpointSaving] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [cleanModalOpen, setCleanModalOpen] = useState(false)
   const [youtubeSheetOpen, setYoutubeSheetOpen] = useState(false)
@@ -2756,10 +2769,19 @@ export default function EpisodeEditorPage() {
   const markUnsaved = () => {
   setSaveStatus('Unsaved')
   setHasUnsavedChanges((current) => {
-    if (!current) setAutoSaveSeconds(60)
+    if (!current) {
+      setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
+    }
     return true
   })
 }
+
+  useEffect(() => {
+    localDraftKeyRef.current = getEpisodeLocalDraftKey(
+      storyId,
+      editEpisodeId || ''
+    )
+  }, [storyId, editEpisodeId])
 
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
@@ -3578,6 +3600,7 @@ const removeYouTubeVideo = () => {
     setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
+    await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (!goToPublish && !stayOnPage) {
   navigate(`/author/story/${storyId}/manage`)
@@ -3589,73 +3612,161 @@ const removeYouTubeVideo = () => {
     }
   }
 
-  const handleAutoSave = async () => {
-  if (
-    !hasUnsavedChanges ||
-    autoSaving ||
-    loading ||
-    pageLoading ||
-    !episodeTitle.trim() ||
-    mangaUploadPending
-  ) {
-    setAutoSaveSeconds(60)
-    return
+  useEffect(() => {
+    if (!hasUnsavedChanges || pageLoading) {
+      return undefined
+    }
+
+    if (localSaveTimerRef.current) {
+      window.clearTimeout(localSaveTimerRef.current)
+    }
+
+    const timer = window.setTimeout(async () => {
+      const localMangaPages =
+        storyType === 'manga'
+          ? mangaPages
+              .filter((page) => page.status === 'done' && page.imageUrl)
+              .map((page) => ({
+                id: page.id,
+                imageUrl: page.imageUrl,
+                storagePath: page.storagePath || null,
+                width: page.width || null,
+                height: page.height || null,
+                fileSize: page.fileSize || null,
+                mimeType: page.mimeType || 'image/webp',
+              }))
+          : []
+
+      try {
+        setSaveStatus('Saving locally...')
+
+        await saveEpisodeLocalDraft(localDraftKeyRef.current, {
+          storyId,
+          episodeId: currentEpisodeId || editEpisodeId || '',
+          storyType,
+          title: episodeTitle,
+          content:
+            storyType === 'manga'
+              ? ''
+              : sanitizeEpisodeHtml(editorRef.current?.innerHTML || content),
+          youtubeVideo:
+            storyType === 'manga'
+              ? { title: '', url: '' }
+              : {
+                  title: String(youtubeVideo.title || ''),
+                  url: String(youtubeVideo.url || ''),
+                },
+          episodeAdult,
+          episodeFree,
+          mangaPages: localMangaPages,
+        })
+
+        setSaveStatus('Saved locally')
+      } catch {
+        setSaveStatus('Local save failed')
+      } finally {
+        if (localSaveTimerRef.current === timer) {
+          localSaveTimerRef.current = null
+        }
+      }
+    }, LOCAL_AUTOSAVE_DELAY_MS)
+
+    localSaveTimerRef.current = timer
+
+    return () => {
+      window.clearTimeout(timer)
+
+      if (localSaveTimerRef.current === timer) {
+        localSaveTimerRef.current = null
+      }
+    }
+  }, [
+    content,
+    currentEpisodeId,
+    editEpisodeId,
+    episodeAdult,
+    episodeFree,
+    episodeTitle,
+    hasUnsavedChanges,
+    mangaPages,
+    pageLoading,
+    storyId,
+    storyType,
+    youtubeVideo,
+  ])
+
+  const handleServerCheckpoint = async () => {
+    if (
+      !hasUnsavedChanges ||
+      serverCheckpointSaving ||
+      loading ||
+      pageLoading ||
+      !episodeTitle.trim() ||
+      mangaUploadPending
+    ) {
+      setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
+      return
+    }
+
+    try {
+      setServerCheckpointSaving(true)
+      setSaveStatus('Backing up to server...')
+
+      await handleSaveEpisode({
+        forceDraft: true,
+        stayOnPage: true,
+      })
+
+      setSaveStatus('Saved')
+    } catch {
+      setSaveStatus('Saved locally')
+    } finally {
+      setServerCheckpointSaving(false)
+      setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
+    }
   }
 
-  try {
-    setAutoSaving(true)
-    setSaveStatus('Saving...')
+  useEffect(() => {
+    if (
+      !hasUnsavedChanges ||
+      serverCheckpointSaving ||
+      loading ||
+      pageLoading
+    ) {
+      return undefined
+    }
 
-    await handleSaveEpisode({
-      forceDraft: true,
-      stayOnPage: true,
-    })
+    const timer = window.setInterval(() => {
+      setServerCheckpointMinutes((current) => Math.max(0, current - 1))
+    }, 60 * 1000)
 
-    setSaveStatus('Saved')
-  } catch {
-    setSaveStatus('Save failed')
-  } finally {
-    setAutoSaving(false)
-    setAutoSaveSeconds(60)
-  }
-}
+    return () => window.clearInterval(timer)
+  }, [
+    hasUnsavedChanges,
+    loading,
+    pageLoading,
+    serverCheckpointSaving,
+  ])
 
-useEffect(() => {
-  if (
-    !hasUnsavedChanges ||
-    autoSaving ||
-    loading ||
-    pageLoading
-  ) {
-    return undefined
-  }
+  useEffect(() => {
+    if (
+      serverCheckpointMinutes !== 0 ||
+      !hasUnsavedChanges ||
+      serverCheckpointSaving ||
+      loading ||
+      pageLoading
+    ) {
+      return
+    }
 
-  const timer = window.setInterval(() => {
-    setAutoSaveSeconds((current) => Math.max(0, current - 1))
-  }, 1000)
-
-  return () => window.clearInterval(timer)
-}, [hasUnsavedChanges, autoSaving, loading, pageLoading])
-
-useEffect(() => {
-  if (
-    autoSaveSeconds !== 0 ||
-    !hasUnsavedChanges ||
-    autoSaving ||
-    loading ||
-    pageLoading
-  ) {
-    return
-  }
-
-  handleAutoSave()
-}, [
-  autoSaveSeconds,
-  hasUnsavedChanges,
-  autoSaving,
-  loading,
-  pageLoading,
-])
+    handleServerCheckpoint()
+  }, [
+    serverCheckpointMinutes,
+    hasUnsavedChanges,
+    serverCheckpointSaving,
+    loading,
+    pageLoading,
+  ])
   
   const handleSaveDraft = async () => {
     try {
@@ -4084,10 +4195,16 @@ releaseOption={releaseOption}
                 : `${characterCount.toLocaleString()} / ${MIN_CHARACTERS.toLocaleString()} characters`}
             </div>
             <div className="mt-0.5 text-[10px] text-[#8d94a1]">
-              {autoSaving
-                ? 'Saving...'
+              {serverCheckpointSaving
+                ? 'Backing up to server...'
                 : hasUnsavedChanges
-                  ? `Saved in ${autoSaveSeconds}s`
+                  ? saveStatus === 'Local save failed'
+                    ? 'Local save failed'
+                    : `${
+                        saveStatus === 'Saved locally'
+                          ? 'Saved locally'
+                          : 'Saving locally...'
+                      } · Server backup in ${serverCheckpointMinutes}m`
                   : saveStatus}
             </div>
           </div>
