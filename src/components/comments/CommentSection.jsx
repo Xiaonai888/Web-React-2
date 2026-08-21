@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ReportModal from '../ReportModal'
+import ReactionAction from '../social/reactions/ReactionAction'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -253,8 +254,10 @@ function normalizeApiComment(comment) {
       comment?.is_deleted
     ),
     type: comment?.type || 'text',
-    likes: Number(comment?.likes || 0),
+       likes: Number(comment?.likes || 0),
     liked: Boolean(comment?.liked),
+    reaction_type:
+      comment?.reaction_type || null,
     is_pinned: Boolean(
       comment?.is_pinned
     ),
@@ -548,6 +551,7 @@ function applyDeletedCommentTree(
           is_spoiler: false,
           likes: 0,
           liked: false,
+          reaction_type: null,
           name: 'Reader',
           avatar_url: '',
           replies,
@@ -1182,24 +1186,28 @@ function ReplyItem({
         </button>
 
         <div className="mt-1 flex items-center gap-4 pl-3 text-[11.5px] font-normal text-[#98a2b3]">
-          <button
-            type="button"
-            onClick={() =>
-              onLike(reply.id)
+                    <ReactionAction
+            reactionType={
+              reply.reaction_type ||
+              (reply.liked
+                ? 'love'
+                : '')
             }
-            className={
-              reply.liked
-                ? 'text-[#e5484d]'
-                : ''
+            count={reply.likes}
+            showCount={
+              Number(reply.likes || 0) > 0
             }
-          >
-            {reply.liked
-              ? 'Liked'
-              : 'Like'}
-            {reply.likes
-              ? ` · ${reply.likes}`
-              : ''}
-          </button>
+            onReact={(reactionType) =>
+              onLike(
+                reply.id,
+                reactionType
+              )
+            }
+            idleLabel="Like"
+            buttonClassName="text-[11.5px] font-normal after:ml-1 after:content-['Like']"
+            countClassName="text-[11.5px] font-normal"
+            pickerAlign="left"
+          />
 
           <button
             type="button"
@@ -1720,24 +1728,30 @@ const [repliesShown, setRepliesShown] =
           </div>
 
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-normal text-[#98a2b3]">
-            <button
-              type="button"
-              onClick={() =>
-                onLike(comment.id)
+            <            <ReactionAction
+              reactionType={
+                comment.reaction_type ||
+                (comment.liked
+                  ? 'love'
+                  : '')
               }
-              className={
-                comment.liked
-                  ? 'text-[#e5484d]'
-                  : ''
+              count={comment.likes}
+              showCount={
+                Number(
+                  comment.likes || 0
+                ) > 0
               }
-            >
-              {comment.liked
-                ? 'Liked'
-                : 'Like'}
-              {comment.likes
-                ? ` · ${comment.likes}`
-                : ''}
-            </button>
+              onReact={(reactionType) =>
+                onLike(
+                  comment.id,
+                  reactionType
+                )
+              }
+              idleLabel="Like"
+              buttonClassName="text-[12px] font-normal after:ml-1 after:content-['Like']"
+              countClassName="text-[12px] font-normal"
+              pickerAlign="left"
+            />
 
             <button
               type="button"
@@ -2604,11 +2618,12 @@ const nextComments =
   }
 
   const handleLike = async (
-    commentId
+    commentId,
+    reactionType = 'love'
   ) => {
     if (!token) {
       showToast(
-        'Please login to like.'
+        'Please login to react.'
       )
       return
     }
@@ -2619,6 +2634,7 @@ const nextComments =
         ...(comment.replies || []),
       ]
     )
+
     const targetComment =
       flattened.find(
         (comment) =>
@@ -2628,30 +2644,59 @@ const nextComments =
 
     if (!targetComment) return
 
+    const nextReactionType = String(
+      reactionType || 'love'
+    )
+      .trim()
+      .toLowerCase()
+
+    const currentReactionType =
+      targetComment.reaction_type ||
+      (targetComment.liked
+        ? 'love'
+        : null)
+
+    const removing =
+      currentReactionType ===
+      nextReactionType
+
+    const optimisticReactionType =
+      removing
+        ? null
+        : nextReactionType
+
+    const currentLikes = Number(
+      targetComment.likes || 0
+    )
+
+    const optimisticLikes =
+      !currentReactionType
+        ? currentLikes + 1
+        : removing
+          ? Math.max(
+              0,
+              currentLikes - 1
+            )
+          : currentLikes
+
     const previous = {
       liked: targetComment.liked,
       likes: targetComment.likes,
+      reaction_type:
+        targetComment.reaction_type ||
+        null,
     }
-    const optimisticLiked =
-      !targetComment.liked
-    const optimisticLikes =
-      optimisticLiked
-        ? Number(
-            targetComment.likes || 0
-          ) + 1
-        : Math.max(
-            0,
-            Number(
-              targetComment.likes || 0
-            ) - 1
-          )
 
     updateComments(
       updateCommentTree(
         comments,
         commentId,
         {
-          liked: optimisticLiked,
+          liked: Boolean(
+            optimisticReactionType
+          ),
+          reaction_type:
+            optimisticReactionType,
           likes: optimisticLikes,
         }
       )
@@ -2672,9 +2717,15 @@ const nextComments =
         {
           method: 'POST',
           headers: {
+            'Content-Type':
+              'application/json',
             Authorization:
               `Bearer ${token}`,
           },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
         }
       )
 
@@ -2688,7 +2739,7 @@ const nextComments =
       ) {
         throw new Error(
           data.message ||
-            'Failed to update like'
+            'Failed to update reaction'
         )
       }
 
@@ -2700,6 +2751,9 @@ const nextComments =
             liked: Boolean(
               data.liked
             ),
+            reaction_type:
+              data.reaction_type ||
+              null,
             likes: Number(
               data.likes || 0
             ),
@@ -2714,9 +2768,10 @@ const nextComments =
           previous
         )
       )
+
       showToast(
         error.message ||
-          'Failed to update like.'
+          'Failed to update reaction.'
       )
     }
   }
