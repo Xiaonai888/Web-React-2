@@ -3326,11 +3326,6 @@ const removeYouTubeVideo = () => {
     }
   }
 
-
-  const handleRedo = () => {
-    runEditorCommand('redo')
-  }
-
   const onCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
   }, [])
