@@ -2541,31 +2541,27 @@ setArchivedCount(
         ) : null}
 
         {!selectionMode &&
-        !hasSearch &&
-        activeFilter === 'all' &&
-        archivedCount > 0 ? (
-          <button
-            type="button"
-            onClick={() => navigate('/chat/archived')}
-            className="mx-2 mt-2 flex w-[calc(100%_-_1rem)] items-center gap-3 rounded-[18px] px-2 py-3 text-left transition hover:bg-[#faf9fc] active:bg-[#f4f2f8]"
-          >
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f1f1f4] text-[#7c3aed]">
-              <Archive size={24} />
-            </span>
+!hasSearch &&
+activeFilter === 'all' ? (
+  <button
+    type="button"
+    onClick={() => navigate('/chat/archived')}
+    className="flex w-full items-center gap-3 border-b border-[#f0f0f2] px-5 py-3 text-left active:bg-[#f4f4f5]"
+  >
+    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e5e5e7] text-[#666970]">
+      <Archive size={20} />
+    </span>
 
-            <span className="min-w-0 flex-1">
-              <strong className="block text-[15px] font-bold text-[#111827]">
-                Archived chats
-              </strong>
-              <span className="mt-1 block text-[12px] font-normal text-[#87838f]">
-                {archivedCount}{' '}
-                {archivedCount === 1
-                  ? 'conversation'
-                  : 'conversations'}
-              </span>
-            </span>
-          </button>
-        ) : null}
+    <span className="min-w-0 flex-1">
+      <strong className="block text-[14px] font-semibold text-[#111827]">
+        Archived chats
+      </strong>
+      <span className="mt-0.5 block text-[11px] text-[#85888e]">
+        {archivedCount} archived
+      </span>
+    </span>
+  </button>
+) : null}
 
         {!selectionMode &&
         !hasSearch &&
