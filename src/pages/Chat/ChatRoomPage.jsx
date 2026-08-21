@@ -119,6 +119,32 @@ function mergeMessages(current, incoming) {
   )
 }
 
+function getLatestMessageCursor(
+  messages,
+  fallback = ''
+) {
+  let latestTime = Number.NEGATIVE_INFINITY
+  let latestValue = ''
+
+  for (const message of messages || []) {
+    const value = String(
+      message?.created_at || ''
+    ).trim()
+    const time = new Date(value).getTime()
+
+    if (
+      value &&
+      Number.isFinite(time) &&
+      time > latestTime
+    ) {
+      latestTime = time
+      latestValue = value
+    }
+  }
+
+  return latestValue || String(fallback || '')
+}
+
 function isNearPageBottom() {
   const pageHeight =
     document.documentElement.scrollHeight
@@ -1282,6 +1308,8 @@ export default function ChatRoomPage() {
   const scrollRestoreRef = useRef(null)
   const messageRefs = useRef(new Map())
   const jumpHandledRef = useRef('')
+  const pollCursorRef = useRef('')
+  const incrementalLoadingRef = useRef(false)
   const [conversation, setConversation] = useState(null)
   const [blockStatus, setBlockStatus] = useState({
     is_blocked: false,
@@ -1317,7 +1345,7 @@ export default function ChatRoomPage() {
     )
   }, [])
 
-    const loadRoom = useCallback(
+  const loadRoom = useCallback(
     async ({
       silent = false,
       includeMeta = true,
@@ -1340,6 +1368,14 @@ export default function ChatRoomPage() {
           Array.isArray(data.messages)
             ? data.messages
             : []
+
+        pollCursorRef.current =
+          getLatestMessageCursor(
+            incomingMessages,
+            roomConversation?.last_message_at ||
+              roomConversation?.created_at ||
+              pollCursorRef.current
+          )
 
         if (includeMeta) {
           const [blockData, pinData] =
@@ -1451,13 +1487,111 @@ export default function ChatRoomPage() {
     ]
   )
 
+  const loadIncrementalMessages = useCallback(
+    async () => {
+      if (
+        !conversationId ||
+        incrementalLoadingRef.current
+      ) {
+        return
+      }
+
+      const after = pollCursorRef.current
+
+      if (!after) {
+        await loadRoom({
+          silent: true,
+          includeMeta: false,
+        })
+        return
+      }
+
+      incrementalLoadingRef.current = true
+
+      try {
+        const data = await getChatMessages(
+          conversationId,
+          {
+            after,
+            limit: 20,
+          }
+        )
+
+        const incomingMessages =
+          Array.isArray(data.messages)
+            ? data.messages
+            : []
+
+        if (!incomingMessages.length) {
+          return
+        }
+
+        shouldScrollBottomRef.current =
+          isNearPageBottom()
+
+        setMessages((current) =>
+          mergeMessages(
+            current,
+            incomingMessages
+          )
+        )
+
+        pollCursorRef.current =
+          getLatestMessageCursor(
+            incomingMessages,
+            after
+          )
+
+        const hasNewIncoming =
+          incomingMessages.some(
+            (message) => !message.is_mine
+          )
+
+        if (
+          hasNewIncoming &&
+          document.visibilityState === 'visible'
+        ) {
+          await markChatRead(conversationId)
+          notifyChatUpdated()
+        }
+      } catch (loadError) {
+        if (loadError.status === 401) {
+          navigate('/login', {
+            replace: true,
+          })
+          return
+        }
+
+        if (
+          loadError.status === 403 ||
+          loadError.status === 404
+        ) {
+          navigate('/chat', {
+            replace: true,
+          })
+        }
+      } finally {
+        incrementalLoadingRef.current = false
+      }
+    },
+    [
+      conversationId,
+      loadRoom,
+      navigate,
+      notifyChatUpdated,
+    ]
+  )
+
   useEffect(() => {
     if (!hasReaderSession()) {
       navigate('/login', { replace: true })
       return undefined
     }
 
+    pollCursorRef.current = ''
+    incrementalLoadingRef.current = false
     loadRoom()
+
     return undefined
   }, [loadRoom, navigate])
 
@@ -1480,6 +1614,11 @@ export default function ChatRoomPage() {
       if (
         document.visibilityState !== 'visible'
       ) {
+        return
+      }
+
+      if (status === 'accepted') {
+        loadIncrementalMessages()
         return
       }
 
@@ -1519,6 +1658,7 @@ export default function ChatRoomPage() {
     }
   }, [
     conversation?.request_status,
+    loadIncrementalMessages,
     loadRoom,
   ])
 
