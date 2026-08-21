@@ -1,6 +1,5 @@
 import {
   Archive,
-  BookOpen,
   ChevronLeft,
   LoaderCircle,
   RotateCcw,
@@ -14,7 +13,6 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ReaderProfileFooter from '../../components/reader-profile/ReaderProfileFooter'
 import {
   deleteChatConversation,
   getManagedChatConversations,
@@ -22,31 +20,12 @@ import {
   unarchiveChatConversation,
 } from '../../services/chatApi'
 
-function formatConversationTime(value) {
-  if (!value) return ''
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-  }).format(date)
-}
-
-function PersonAvatar({ person }) {
-  const [failed, setFailed] =
-    useState(false)
+function Avatar({ person }) {
+  const [failed, setFailed] = useState(false)
   const name = String(
-    person?.name ||
-      person?.username ||
-      'Shadow'
+    person?.name || person?.username || 'Shadow User'
   ).trim()
-  const letter =
-    name.charAt(0).toUpperCase() || 'S'
+  const letter = name.charAt(0).toUpperCase() || 'S'
 
   return (
     <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[16px] font-bold text-white">
@@ -64,151 +43,36 @@ function PersonAvatar({ person }) {
   )
 }
 
-function EmptyArchived() {
-  return (
-    <div className="px-5 py-20 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
-        <Archive
-          size={30}
-          strokeWidth={1.9}
-        />
-      </div>
-      <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
-        No archived messages
-      </h2>
-      <p className="mx-auto mt-2 max-w-[290px] text-[13px] font-bold leading-6 text-[#8a8a95]">
-        Conversations you archive will appear here.
-      </p>
-    </div>
-  )
-}
-
-function ArchivedRow({
-  conversation,
-  busyAction,
-  onOpen,
-  onRestore,
-  onDelete,
-}) {
-  const person =
-    conversation.counterpart || {}
-  const latest =
-    conversation.latest_message
-
-  return (
-    <section className="rounded-[20px] border border-[#ece9f1] bg-white p-3 shadow-[0_8px_24px_rgba(17,24,39,0.05)]">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex w-full items-center gap-3 text-left"
-      >
-        <div className="relative">
-          <PersonAvatar person={person} />
-
-          {person.type === 'author' ? (
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#7c3aed] text-white">
-              <BookOpen
-                size={10}
-                strokeWidth={2.4}
-              />
-            </span>
-          ) : null}
-        </div>
-
-        <span className="min-w-0 flex-1">
-          <strong className="block truncate text-[15px] font-bold text-[#111827]">
-            {person.name || 'Shadow User'}
-          </strong>
-          <span className="mt-1 block truncate text-[13px] font-bold text-[#87838f]">
-            {latest?.body ||
-              'Open this conversation'}
-          </span>
-        </span>
-
-        <span className="shrink-0 text-[10px] font-bold text-[#8f8b96]">
-          {formatConversationTime(
-            conversation.last_message_at ||
-              latest?.created_at
-          )}
-        </span>
-      </button>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0eef3] pt-3">
-        <button
-          type="button"
-          onClick={onRestore}
-          disabled={Boolean(busyAction)}
-          className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#f2edff] text-[11px] font-extrabold text-[#6f52b5] transition active:scale-[0.98] disabled:opacity-50"
-        >
-          {busyAction === 'restore' ? (
-            <LoaderCircle
-              size={16}
-              className="animate-spin"
-            />
-          ) : (
-            <RotateCcw size={16} />
-          )}
-          Restore
-        </button>
-
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={Boolean(busyAction)}
-          className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#fff0f1] text-[11px] font-extrabold text-[#c7353d] transition active:scale-[0.98] disabled:opacity-50"
-        >
-          {busyAction === 'delete' ? (
-            <LoaderCircle
-              size={16}
-              className="animate-spin"
-            />
-          ) : (
-            <Trash2 size={16} />
-          )}
-          Delete
-        </button>
-      </div>
-    </section>
-  )
-}
-
 export default function ArchivedChatPage() {
   const navigate = useNavigate()
-  const [conversations, setConversations] =
-    useState([])
+  const [conversations, setConversations] = useState([])
   const [query, setQuery] = useState('')
-  const [loading, setLoading] =
-    useState(true)
-  const [busyItem, setBusyItem] =
-    useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
 
   const loadArchived = useCallback(
     async ({ silent = false } = {}) => {
-      if (!silent) {
-        setLoading(true)
-      }
+      if (!silent) setLoading(true)
 
       try {
-        const data =
-          await getManagedChatConversations({
-            view: 'archived',
-          })
+        const data = await getManagedChatConversations({
+          view: 'archived',
+        })
 
         setConversations(
-  Array.isArray(data.conversations)
-    ? data.conversations.filter(
-        (item) =>
-          item.viewer_role !== 'author'
-      )
-    : []
-)
+          Array.isArray(data.conversations)
+            ? data.conversations.filter(
+                (conversation) =>
+                  conversation.viewer_role === 'reader'
+              )
+            : []
+        )
         setError('')
       } catch (loadError) {
         if (loadError.status === 401) {
-          navigate('/login', {
-            replace: true,
-          })
+          navigate('/login', { replace: true })
           return
         }
 
@@ -217,9 +81,7 @@ export default function ArchivedChatPage() {
             'Failed to load archived messages'
         )
       } finally {
-        if (!silent) {
-          setLoading(false)
-        }
+        if (!silent) setLoading(false)
       }
     },
     [navigate]
@@ -227,245 +89,244 @@ export default function ArchivedChatPage() {
 
   useEffect(() => {
     if (!hasReaderSession()) {
-      navigate('/login', {
-        replace: true,
-      })
+      navigate('/login', { replace: true })
       return undefined
     }
 
     loadArchived()
 
-    const intervalId =
-      window.setInterval(() => {
-        loadArchived({ silent: true })
-      }, 8000)
+    const intervalId = window.setInterval(
+      () => loadArchived({ silent: true }),
+      8000
+    )
 
-    return () => {
-      window.clearInterval(intervalId)
-    }
+    return () => window.clearInterval(intervalId)
   }, [loadArchived, navigate])
 
-  const visibleConversations = useMemo(() => {
-    const normalized =
-      query.trim().toLowerCase()
+  const visible = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
 
-    if (!normalized) {
-      return conversations
-    }
+    if (!normalized) return conversations
 
-    return conversations.filter(
-      (conversation) => {
-        const person =
-          conversation.counterpart || {}
-        const searchable = [
-          person.name,
-          person.username,
-          conversation.latest_message
-            ?.body,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
+    return conversations.filter((conversation) => {
+      const person = conversation.counterpart || {}
 
-        return searchable.includes(normalized)
-      }
-    )
+      return [
+        person.name,
+        person.username,
+        conversation.latest_message?.body,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(normalized)
+    })
   }, [conversations, query])
 
-  const handleRestore = async (
-    conversationId
-  ) => {
-    if (busyItem) return
-
-    setBusyItem({
-      id: conversationId,
-      action: 'restore',
-    })
+  async function restore(conversationId) {
+    if (busyId) return
 
     try {
-      await unarchiveChatConversation(
-        conversationId
-      )
-      await loadArchived({
-        silent: true,
-      })
+      setBusyId(conversationId)
+      await unarchiveChatConversation(conversationId)
+      await loadArchived({ silent: true })
       window.dispatchEvent(
-        new CustomEvent(
-          'shadow-chat-updated'
-        )
+        new CustomEvent('shadow-chat-updated')
       )
-      setError('')
     } catch (restoreError) {
       setError(
         restoreError.message ||
           'Failed to restore conversation'
       )
     } finally {
-      setBusyItem(null)
+      setBusyId('')
     }
   }
 
-  const handleDelete = async (
-    conversationId
-  ) => {
-    if (busyItem) return
+  async function remove(conversationId) {
+    if (busyId) return
 
     if (
       !window.confirm(
-        'Delete this conversation from your inbox? New messages can restore it.'
+        'Delete this conversation from your inbox?'
       )
     ) {
       return
     }
 
-    setBusyItem({
-      id: conversationId,
-      action: 'delete',
-    })
-
     try {
-      await deleteChatConversation(
-        conversationId
-      )
-      await loadArchived({
-        silent: true,
-      })
+      setBusyId(conversationId)
+      await deleteChatConversation(conversationId)
+      await loadArchived({ silent: true })
       window.dispatchEvent(
-        new CustomEvent(
-          'shadow-chat-updated'
-        )
+        new CustomEvent('shadow-chat-updated')
       )
-      setError('')
     } catch (deleteError) {
       setError(
         deleteError.message ||
           'Failed to delete conversation'
       )
     } finally {
-      setBusyItem(null)
+      setBusyId('')
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f9] pb-[96px]">
-      <header className="sticky top-0 z-[70] border-b border-[#eceaf0] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto max-w-[620px] px-4 pb-4 pt-3">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#f7f7f9]">
+      <header className="sticky top-0 z-40 border-b border-[#eceaf0] bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto max-w-[620px] px-4 pt-[max(10px,env(safe-area-inset-top))]">
+          <div className="flex h-[52px] items-center gap-3">
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
+                if (searchOpen) {
+                  setSearchOpen(false)
+                  setQuery('')
+                  return
+                }
                 navigate('/chat')
-              }
-              aria-label="Back to messages"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#111827] transition active:scale-90"
+              }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6]"
             >
               <ChevronLeft size={27} />
             </button>
 
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[22px] font-extrabold text-[#111827]">
-                Archived
-              </h1>
-              <p className="text-[11px] font-bold text-[#8a8792]">
-                {conversations.length}{' '}
-                conversations
-              </p>
-            </div>
-          </div>
+            {searchOpen ? (
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  size={18}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777a80]"
+                />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(event) =>
+                    setQuery(
+                      event.target.value.slice(0, 60)
+                    )
+                  }
+                  placeholder="Search archived chats"
+                  className="h-10 w-full rounded-full bg-[#f1f2f4] pl-11 pr-4 text-[14px] outline-none"
+                />
+              </div>
+            ) : (
+              <>
+                <h1 className="min-w-0 flex-1 text-[20px] font-bold leading-none text-[#111827]">
+                  Archived chats
+                </h1>
 
-          <div className="relative mt-3">
-            <Search
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#777480]"
-            />
-            <input
-              value={query}
-              onChange={(event) =>
-                setQuery(
-                  event.target.value.slice(
-                    0,
-                    50
-                  )
-                )
-              }
-              placeholder="Search archived messages"
-              className="h-[44px] w-full rounded-full border border-transparent bg-[#f4f4f7] pl-11 pr-4 text-[13px] text-[#111827] outline-none transition placeholder:text-[#8e8b96] focus:border-[#d9cdf8] focus:bg-white"
-            />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[#f2f2f3]"
+                  aria-label="Search archived chats"
+                >
+                  <Search size={24} strokeWidth={2.2} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[620px]">
+      <main className="mx-auto max-w-[620px] px-3 pb-[max(28px,env(safe-area-inset-bottom))] pt-3">
         {error ? (
           <button
             type="button"
             onClick={() => setError('')}
-            className="mx-4 mt-4 block w-[calc(100%_-_2rem)] rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[11px] font-bold text-[#c7353d]"
+            className="mb-3 w-full rounded-[14px] bg-[#fff0f1] px-4 py-3 text-left text-[12px] font-semibold text-[#c7353d]"
           >
             {error}
           </button>
         ) : null}
 
         {loading ? (
-          <div className="flex min-h-[360px] items-center justify-center text-[#7c3aed]">
-            <LoaderCircle
-              size={28}
-              className="animate-spin"
-            />
+          <div className="flex min-h-[260px] items-center justify-center text-[#7c3aed]">
+            <LoaderCircle size={28} className="animate-spin" />
           </div>
-        ) : visibleConversations.length ? (
-          <div className="space-y-3 px-4 py-4">
-            {visibleConversations.map(
-              (conversation) => {
-                const action =
-                  busyItem?.id ===
-                  conversation.id
-                    ? busyItem.action
-                    : ''
+        ) : visible.length ? (
+          <div className="space-y-3">
+            {visible.map((conversation) => {
+              const person =
+                conversation.counterpart || {}
+              const busy =
+                busyId === conversation.id
 
-                return (
-                  <ArchivedRow
-                    key={conversation.id}
-                    conversation={
-                      conversation
-                    }
-                    busyAction={action}
-                    onOpen={() =>
+              return (
+                <section
+                  key={conversation.id}
+                  className="rounded-[20px] bg-white p-3 shadow-sm ring-1 ring-black/5"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
                       navigate(
                         `/chat/${conversation.id}`
                       )
                     }
-                    onRestore={() =>
-                      handleRestore(
-                        conversation.id
-                      )
-                    }
-                    onDelete={() =>
-                      handleDelete(
-                        conversation.id
-                      )
-                    }
-                  />
-                )
-              }
-            )}
-          </div>
-        ) : query.trim() ? (
-          <div className="px-5 py-20 text-center">
-            <Search
-              size={32}
-              className="mx-auto text-[#9a96a2]"
-            />
-            <h2 className="mt-4 text-[17px] font-bold text-[#111827]">
-              No results found
-            </h2>
+                    className="flex w-full items-center gap-3 text-left"
+                  >
+                    <Avatar person={person} />
+
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-[15px] font-bold text-[#111827]">
+                        {person.name || 'Shadow User'}
+                      </strong>
+                      <span className="mt-1 block truncate text-[12px] text-[#85818c]">
+                        {conversation.latest_message
+                          ?.body ||
+                          'Open this conversation'}
+                      </span>
+                    </span>
+                  </button>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#f0eef3] pt-3">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        restore(conversation.id)
+                      }
+                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#f2edff] text-[11px] font-bold text-[#6f52b5] disabled:opacity-50"
+                    >
+                      {busy ? (
+                        <LoaderCircle
+                          size={16}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <RotateCcw size={16} />
+                      )}
+                      Restore
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        remove(conversation.id)
+                      }
+                      className="flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#fff0f1] text-[11px] font-bold text-[#c7353d] disabled:opacity-50"
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
+                  </div>
+                </section>
+              )
+            })}
           </div>
         ) : (
-          <EmptyArchived />
+          <div className="py-20 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f2edff] text-[#7c3aed]">
+              <Archive size={30} />
+            </div>
+            <h2 className="mt-5 text-[18px] font-bold text-[#111827]">
+              No archived messages
+            </h2>
+          </div>
         )}
       </main>
-
-      <ReaderProfileFooter />
     </div>
   )
 }
