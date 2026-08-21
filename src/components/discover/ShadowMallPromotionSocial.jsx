@@ -129,6 +129,8 @@ function normalizeComment(comment) {
     text: comment?.text || '',
     likes: Number(comment?.likes || 0),
     liked: Boolean(comment?.liked),
+    reaction_type:
+      comment?.reaction_type || null,
     created_at: comment?.created_at,
     updated_at: comment?.updated_at,
     user: {
@@ -396,20 +398,30 @@ function ReplyItem({ reply, onLike }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onLike(reply.id)}
-          className={`ml-3 mt-1 text-[11px] font-semibold ${
-            reply.liked
-              ? 'text-[#e5484d]'
-              : 'text-[#98a2b3]'
-          }`}
-        >
-          {reply.liked ? 'Liked' : 'Like'}
-          {reply.likes
-            ? ` · ${reply.likes}`
-            : ''}
-        </button>
+                <ReactionAction
+          reactionType={
+            reply.reaction_type ||
+            (reply.liked
+              ? 'love'
+              : '')
+          }
+          count={reply.likes}
+          showCount={
+            Number(reply.likes || 0) > 0
+          }
+          formatCount={formatCompactNumber}
+          onReact={(reactionType) =>
+            onLike(
+              reply.id,
+              reactionType
+            )
+          }
+          idleLabel="Like"
+          className="ml-3 mt-1"
+          buttonClassName="text-[11px] font-semibold after:ml-1 after:content-['Like']"
+          countClassName="text-[11px] font-semibold"
+          pickerAlign="left"
+        />
       </div>
     </div>
   )
@@ -502,22 +514,33 @@ function CommentItem({
           </div>
 
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[#98a2b3]">
-            <button
-              type="button"
-              onClick={() => onLike(comment.id)}
-              className={
-                comment.liked
-                  ? 'text-[#e5484d]'
-                  : ''
+                        <ReactionAction
+              reactionType={
+                comment.reaction_type ||
+                (comment.liked
+                  ? 'love'
+                  : '')
               }
-            >
-              {comment.liked
-                ? 'Liked'
-                : 'Like'}
-              {comment.likes
-                ? ` · ${comment.likes}`
-                : ''}
-            </button>
+              count={comment.likes}
+              showCount={
+                Number(
+                  comment.likes || 0
+                ) > 0
+              }
+              formatCount={
+                formatCompactNumber
+              }
+              onReact={(reactionType) =>
+                onLike(
+                  comment.id,
+                  reactionType
+                )
+              }
+              idleLabel="Like"
+              buttonClassName="text-[12px] font-semibold after:ml-1 after:content-['Like']"
+              countClassName="text-[12px] font-semibold"
+              pickerAlign="left"
+            />
 
             <button
               type="button"
@@ -1029,13 +1052,24 @@ function CommentsModal({
     }
   }
 
-  async function toggleLike(commentId) {
+  async function toggleLike(
+    commentId,
+    reactionType = 'love'
+  ) {
     const token = getAuthToken()
 
     if (!token) {
-      showToast('Please login to like.')
+      showToast(
+        'Please login to react.'
+      )
       return
     }
+
+    const nextReactionType = String(
+      reactionType || 'love'
+    )
+      .trim()
+      .toLowerCase()
 
     try {
       const response = await fetch(
@@ -1043,9 +1077,15 @@ function CommentsModal({
         {
           method: 'POST',
           headers: {
+            'Content-Type':
+              'application/json',
             Authorization:
               `Bearer ${token}`,
           },
+          body: JSON.stringify({
+            reaction_type:
+              nextReactionType,
+          }),
         }
       )
 
@@ -1059,18 +1099,20 @@ function CommentsModal({
       ) {
         throw new Error(
           data.message ||
-            'Failed to update like'
+            'Failed to update reaction'
         )
       }
 
       updateCommentLocal(commentId, {
         liked: Boolean(data.liked),
+        reaction_type:
+          data.reaction_type || null,
         likes: Number(data.likes || 0),
       })
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update like.'
+          'Failed to update reaction.'
       )
     }
   }
