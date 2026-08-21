@@ -3921,7 +3921,10 @@ const removeYouTubeVideo = () => {
   ])
 
   const handleServerCheckpoint = async () => {
+    const targetEpisodeId = currentEpisodeId || editEpisodeId
+
     if (
+      !targetEpisodeId ||
       !hasUnsavedChanges ||
       serverCheckpointSaving ||
       loading ||
@@ -3938,7 +3941,7 @@ const removeYouTubeVideo = () => {
       setSaveStatus('Backing up to server...')
 
       await handleSaveEpisode({
-        forceDraft: !(currentEpisodeId || editEpisodeId),
+        forceDraft: false,
         stayOnPage: true,
       })
 
