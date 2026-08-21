@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react'
 import ReportModal from '../ReportModal'
+import ReactionAction from '../social/reactions/ReactionAction'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -93,6 +94,8 @@ function normalizeComment(comment) {
     text: comment?.text || '',
     likes: Number(comment?.likes || 0),
     liked: Boolean(comment?.liked),
+    reaction_type:
+      comment?.reaction_type || null,
     created_at: comment?.created_at,
     updated_at: comment?.updated_at,
     user: {
@@ -391,24 +394,29 @@ function ReplyItem({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            onLike(reply.id)
+                <ReactionAction
+          reactionType={
+            reply.reaction_type ||
+            (reply.liked
+              ? 'love'
+              : '')
           }
-          className={`ml-3 mt-1 text-[11px] font-semibold ${
-            reply.liked
-              ? 'text-[#e5484d]'
-              : 'text-[#98a2b3]'
-          }`}
-        >
-          {reply.liked
-            ? 'Liked'
-            : 'Like'}
-          {reply.likes
-            ? ` · ${reply.likes}`
-            : ''}
-        </button>
+          count={reply.likes}
+          showCount={
+            Number(reply.likes || 0) > 0
+          }
+          onReact={(reactionType) =>
+            onLike(
+              reply.id,
+              reactionType
+            )
+          }
+          idleLabel="Like"
+          className="ml-3 mt-1"
+          buttonClassName="text-[11px] font-semibold after:ml-1 after:content-['Like']"
+          countClassName="text-[11px] font-semibold"
+          pickerAlign="left"
+        />
       </div>
     </div>
   )
@@ -508,24 +516,30 @@ function CommentItem({
           </div>
 
           <div className="mt-1 flex items-center gap-4 pl-3 text-[12px] font-semibold text-[#98a2b3]">
-            <button
-              type="button"
-              onClick={() =>
-                onLike(comment.id)
+                        <ReactionAction
+              reactionType={
+                comment.reaction_type ||
+                (comment.liked
+                  ? 'love'
+                  : '')
               }
-              className={
-                comment.liked
-                  ? 'text-[#e5484d]'
-                  : ''
+              count={comment.likes}
+              showCount={
+                Number(
+                  comment.likes || 0
+                ) > 0
               }
-            >
-              {comment.liked
-                ? 'Liked'
-                : 'Like'}
-              {comment.likes
-                ? ` · ${comment.likes}`
-                : ''}
-            </button>
+              onReact={(reactionType) =>
+                onLike(
+                  comment.id,
+                  reactionType
+                )
+              }
+              idleLabel="Like"
+              buttonClassName="text-[12px] font-semibold after:ml-1 after:content-['Like']"
+              countClassName="text-[12px] font-semibold"
+              pickerAlign="left"
+            />
 
             <button
               type="button"
@@ -1200,17 +1214,24 @@ export default function ReaderPostCommentsSection({
   }
 
   async function toggleLike(
-    commentId
+    commentId,
+    reactionType = 'love'
   ) {
     const token =
       getAuthToken()
 
     if (!token) {
       showToast(
-        'Please login to like.'
+        'Please login to react.'
       )
       return
     }
+
+    const nextReactionType = String(
+      reactionType || 'love'
+    )
+      .trim()
+      .toLowerCase()
 
     try {
       const response =
@@ -1221,9 +1242,15 @@ export default function ReaderPostCommentsSection({
           {
             method: 'POST',
             headers: {
+              'Content-Type':
+                'application/json',
               Authorization:
                 `Bearer ${token}`,
             },
+            body: JSON.stringify({
+              reaction_type:
+                nextReactionType,
+            }),
           }
         )
 
@@ -1238,7 +1265,7 @@ export default function ReaderPostCommentsSection({
       ) {
         throw new Error(
           data.message ||
-            'Failed to update like'
+            'Failed to update reaction'
         )
       }
 
@@ -1248,6 +1275,8 @@ export default function ReaderPostCommentsSection({
           liked: Boolean(
             data.liked
           ),
+          reaction_type:
+            data.reaction_type || null,
           likes: Number(
             data.likes || 0
           ),
@@ -1256,7 +1285,7 @@ export default function ReaderPostCommentsSection({
     } catch (error) {
       showToast(
         error.message ||
-          'Failed to update like.'
+          'Failed to update reaction.'
       )
     }
   }
