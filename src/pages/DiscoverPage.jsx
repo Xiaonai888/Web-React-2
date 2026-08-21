@@ -919,51 +919,33 @@ const isOwner = Boolean(
     </div>
   </div>
 
-  <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b]">
-    <div className="flex items-center justify-center py-2">
-      <div className="inline-flex items-center gap-2">
-        <ReactionAction
-          reactionType={post.my_reaction}
-          count={post.like_count}
-          busy={reactionBusy}
-          showBusySpinner
-          showCount={false}
-          onReact={chooseReaction}
-          idleLabel="Like"
-          buttonClassName="text-[#65676b]"
-        />
-
-        <button
-          type="button"
-          onClick={() =>
-            chooseReaction(
-              post.my_reaction || 'love'
-            )
-          }
-          disabled={reactionBusy}
-          className="text-[14px] font-normal text-[#65676b] disabled:opacity-60"
-        >
-          Like
-        </button>
-      </div>
-    </div>
+  <div className="grid h-11 grid-cols-3 items-stretch text-[14px] font-normal text-[#65676b]">
+    <ReactionAction
+      reactionType={post.my_reaction}
+      count={post.like_count}
+      busy={reactionBusy}
+      showBusySpinner
+      showCount={false}
+      onReact={chooseReaction}
+      idleLabel="Like"
+      className="h-full w-full"
+      buttonClassName="h-full w-full justify-center gap-2 text-[#65676b] after:content-['Like']"
+    />
 
     <button
       type="button"
       onClick={() => onComment?.(post)}
-      className="flex items-center justify-center gap-2 py-2 active:bg-[#f2f2f2]"
+      className="flex h-full w-full items-center justify-center gap-2 active:bg-[#f2f2f2]"
     >
       <i className="fa-regular fa-comment text-[18px]" />
       <span>Comment</span>
     </button>
 
-    <div className="flex items-center justify-center py-2">
-      <AuthorPostEchoAction
-        post={post}
-        author={author}
-        className="[&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
-      />
-    </div>
+    <AuthorPostEchoAction
+      post={post}
+      author={author}
+      className="h-full w-full justify-center gap-2 [&>span]:hidden after:content-['Echo'] after:text-[14px] after:font-normal after:text-[#65676b]"
+    />
   </div>
 </div>
 
