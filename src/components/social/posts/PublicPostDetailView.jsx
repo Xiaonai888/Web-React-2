@@ -470,7 +470,7 @@ export default function PublicPostDetailView({
               {media}
 
               <div className="mt-3 px-4 pb-1">
-                <div className="grid grid-cols-3 items-center border-t border-[#eef0f4] py-1.5 text-[14px] font-normal text-[#65676b]">
+                <div className="grid grid-cols-3 items-center py-1.5 text-[14px] font-normal text-[#65676b]">
                   {reactionControl ? (
                     <div className="flex items-center justify-center py-2">
                       {
