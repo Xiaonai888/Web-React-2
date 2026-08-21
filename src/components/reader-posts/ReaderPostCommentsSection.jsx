@@ -443,6 +443,11 @@ function CommentItem({
     ? comment.replies
     : []
 
+  const openReplyComposer = () => {
+    setReplyOpen(true)
+    setRepliesShown(true)
+  }
+
   const sendReply = async () => {
     if (!replyText.trim()) return
 
@@ -524,9 +529,7 @@ function CommentItem({
 
             <button
               type="button"
-              onClick={() =>
-                setReplyOpen(true)
-              }
+              onClick={openReplyComposer}
             >
               Reply
             </button>
@@ -553,19 +556,6 @@ function CommentItem({
             ) : null}
           </div>
 
-          {replyOpen ? (
-            <ReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onCancel={() => {
-                setReplyOpen(false)
-                setReplyText('')
-              }}
-              onSend={sendReply}
-              sending={sendingReply}
-            />
-          ) : null}
-
           {repliesShown &&
           replies.length ? (
             <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
@@ -582,6 +572,19 @@ function CommentItem({
               )}
             </div>
           ) : null}
+
+          {replyOpen ? (
+            <ReplyComposer
+              value={replyText}
+              onChange={setReplyText}
+              onCancel={() => {
+                setReplyOpen(false)
+                setReplyText('')
+              }}
+              onSend={sendReply}
+              sending={sendingReply}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -597,9 +600,7 @@ function CommentItem({
         onClose={() =>
           setMenuOpen(false)
         }
-        onReply={() =>
-          setReplyOpen(true)
-        }
+        onReply={openReplyComposer}
         onCopy={() =>
           onCopy(comment)
         }
