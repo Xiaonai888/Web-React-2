@@ -448,20 +448,32 @@ export default function AuthorChatInboxPage() {
   const [error, setError] = useState('')
 
   const loadInbox = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!silent) setLoading(true)
+    async () => {
+      setLoading(true)
 
       try {
-        const [chatData, archivedData, profileData, commentData] =
-  await Promise.all([
-    getAuthorChatConversations({ view: 'active' }),
-    getAuthorChatConversations({ view: 'archived' }),
-    getAuthorInboxProfile(),
-    getAuthorInboxComments(50),
-  ])
+        const [
+          chatData,
+          archivedData,
+          profileData,
+          commentData,
+        ] = await Promise.all([
+          getAuthorChatConversations({
+            view: 'active',
+          }),
+          getAuthorChatConversations({
+            view: 'archived',
+          }),
+          getAuthorInboxProfile(),
+          getAuthorInboxComments(50),
+        ])
 
-        setConversations(chatData.conversations || [])
-        setArchivedCount((archivedData.conversations || []).length)
+        setConversations(
+          chatData.conversations || []
+        )
+        setArchivedCount(
+          (archivedData.conversations || []).length
+        )
         setProfile(profileData || null)
         setComments(commentData || [])
         setError('')
@@ -472,13 +484,45 @@ export default function AuthorChatInboxPage() {
         }
 
         setError(
-          loadError.message || 'Failed to load Page Inbox'
+          loadError.message ||
+            'Failed to load Page Inbox'
         )
       } finally {
-        if (!silent) setLoading(false)
+        setLoading(false)
       }
     },
     [navigate]
+  )
+
+  const refreshCurrentTab = useCallback(
+    async () => {
+      if (document.hidden) return
+
+      try {
+        if (tab === 'comments') {
+          const commentData =
+            await getAuthorInboxComments(50)
+
+          setComments(commentData || [])
+        } else {
+          const chatData =
+            await getAuthorChatConversations({
+              view: 'active',
+            })
+
+          setConversations(
+            chatData.conversations || []
+          )
+        }
+
+        setError('')
+      } catch (loadError) {
+        if (loadError.status === 401) {
+          navigate('/login', { replace: true })
+        }
+      }
+    },
+    [navigate, tab]
   )
 
   useEffect(() => {
@@ -488,14 +532,22 @@ export default function AuthorChatInboxPage() {
     }
 
     loadInbox()
+    return undefined
+  }, [loadInbox, navigate])
+
+  useEffect(() => {
+    if (!hasAuthorChatSession()) {
+      return undefined
+    }
 
     const intervalId = window.setInterval(
-      () => loadInbox({ silent: true }),
-      7000
+      refreshCurrentTab,
+      15000
     )
 
-    return () => window.clearInterval(intervalId)
-  }, [loadInbox, navigate])
+    return () =>
+      window.clearInterval(intervalId)
+  }, [refreshCurrentTab])
 
   const normalizedQuery = useMemo(
     () => normalizeSearch(query),
