@@ -46,6 +46,7 @@ const MAX_CHARACTERS = 30000
 const MAX_EDITOR_HISTORY = 100
 const EDITOR_HISTORY_GROUP_MS = 1000
 const LOCAL_AUTOSAVE_DELAY_MS = 3000
+const LOCAL_AUTOSAVE_MAX_INTERVAL_MS = 10000
 const SERVER_CHECKPOINT_MINUTES = 10
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
@@ -2725,6 +2726,11 @@ export default function EpisodeEditorPage() {
     getEpisodeLocalDraftKey(storyId, editEpisodeId || '')
   )
   const localSaveTimerRef = useRef(null)
+  const localDraftRevisionRef = useRef(0)
+  const localSavedRevisionRef = useRef(0)
+  const localSaveInFlightRef = useRef(false)
+  const localSavePromiseRef = useRef(null)
+  const localDraftSnapshotRef = useRef(null)
   const [serverCheckpointMinutes, setServerCheckpointMinutes] = useState(
     SERVER_CHECKPOINT_MINUTES
   )
@@ -2782,6 +2788,18 @@ export default function EpisodeEditorPage() {
   const pageTitle = isEditMode ? 'Edit Episode' : isFirstEpisode ? 'First Episode' : 'Episode'
   const stepTitle = isFirstEpisode ? 'First Episode' : 'Episode'
 
+  localDraftSnapshotRef.current = {
+    storyId,
+    episodeId: currentEpisodeId || editEpisodeId || '',
+    storyType,
+    title: episodeTitle,
+    episodeCover,
+    content,
+    youtubeVideo,
+    episodeAdult,
+    episodeFree,
+    mangaPages,
+  }
 
   const warningText = useMemo(() => {
     if (isManga) {
@@ -2820,6 +2838,7 @@ export default function EpisodeEditorPage() {
   }
 
   const markUnsaved = () => {
+  localDraftRevisionRef.current += 1
   setSaveStatus('Unsaved')
   setHasUnsavedChanges((current) => {
     if (!current) {
@@ -2834,7 +2853,82 @@ export default function EpisodeEditorPage() {
       storyId,
       editEpisodeId || ''
     )
+    localDraftRevisionRef.current = 0
+    localSavedRevisionRef.current = 0
   }, [storyId, editEpisodeId])
+
+  const saveCurrentLocalDraft = useCallback(async () => {
+    if (
+      localSaveInFlightRef.current ||
+      localDraftRevisionRef.current === localSavedRevisionRef.current
+    ) {
+      return false
+    }
+
+    const draft = localDraftSnapshotRef.current
+    if (!draft) return false
+
+    const revision = localDraftRevisionRef.current
+    const localMangaPages =
+      draft.storyType === 'manga'
+        ? draft.mangaPages
+            .filter((page) => page.status === 'done' && page.imageUrl)
+            .map((page) => ({
+              id: page.id,
+              imageUrl: page.imageUrl,
+              storagePath: page.storagePath || null,
+              width: page.width || null,
+              height: page.height || null,
+              fileSize: page.fileSize || null,
+              mimeType: page.mimeType || 'image/webp',
+            }))
+        : []
+
+    localSaveInFlightRef.current = true
+    setSaveStatus('Saving locally...')
+
+    const savePromise = saveEpisodeLocalDraft(localDraftKeyRef.current, {
+      storyId: draft.storyId,
+      episodeId: draft.episodeId,
+      storyType: draft.storyType,
+      title: draft.title,
+      episodeCover: draft.episodeCover,
+      content:
+        draft.storyType === 'manga'
+          ? ''
+          : sanitizeEpisodeHtml(editorRef.current?.innerHTML || draft.content),
+      youtubeVideo:
+        draft.storyType === 'manga'
+          ? { title: '', url: '' }
+          : {
+              title: String(draft.youtubeVideo?.title || ''),
+              url: String(draft.youtubeVideo?.url || ''),
+            },
+      episodeAdult: draft.episodeAdult,
+      episodeFree: draft.episodeFree,
+      mangaPages: localMangaPages,
+    })
+
+    localSavePromiseRef.current = savePromise
+
+    try {
+      await savePromise
+      localSavedRevisionRef.current = Math.max(
+        localSavedRevisionRef.current,
+        revision
+      )
+      setSaveStatus('Saved locally')
+      return true
+    } catch {
+      setSaveStatus('Local save failed')
+      return false
+    } finally {
+      localSaveInFlightRef.current = false
+      if (localSavePromiseRef.current === savePromise) {
+        localSavePromiseRef.current = null
+      }
+    }
+  }, [])
 
   const updateMangaPage = (pageId, patch) => {
     setMangaPages((current) =>
@@ -3174,6 +3268,10 @@ export default function EpisodeEditorPage() {
 
     try {
       setLocalRecoveryBusy(true)
+      if (localSavePromiseRef.current) {
+        await localSavePromiseRef.current.catch(() => {})
+      }
+      localSavedRevisionRef.current = localDraftRevisionRef.current
       await deleteEpisodeLocalDraft(localDraftKeyRef.current)
       setLocalRecoveryOpen(false)
       setLocalRecoveryDraft(null)
@@ -3724,6 +3822,10 @@ const removeYouTubeVideo = () => {
 } = {}) => {
     setMessage('')
 
+    if (localSavePromiseRef.current) {
+      await localSavePromiseRef.current.catch(() => {})
+    }
+
     if (!episodeTitle.trim()) {
       setMessage('Please enter an episode title.')
       return null
@@ -3834,6 +3936,7 @@ const removeYouTubeVideo = () => {
     setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
+    localSavedRevisionRef.current = localDraftRevisionRef.current
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (!goToPublish && !stayOnPage) {
@@ -3855,55 +3958,8 @@ const removeYouTubeVideo = () => {
       window.clearTimeout(localSaveTimerRef.current)
     }
 
-    const timer = window.setTimeout(async () => {
-      const localMangaPages =
-        storyType === 'manga'
-          ? mangaPages
-              .filter((page) => page.status === 'done' && page.imageUrl)
-              .map((page) => ({
-                id: page.id,
-                imageUrl: page.imageUrl,
-                storagePath: page.storagePath || null,
-                width: page.width || null,
-                height: page.height || null,
-                fileSize: page.fileSize || null,
-                mimeType: page.mimeType || 'image/webp',
-              }))
-          : []
-
-      try {
-        setSaveStatus('Saving locally...')
-
-        await saveEpisodeLocalDraft(localDraftKeyRef.current, {
-          storyId,
-          episodeId: currentEpisodeId || editEpisodeId || '',
-          storyType,
-          title: episodeTitle,
-          episodeCover,
-          content:
-            storyType === 'manga'
-              ? ''
-              : sanitizeEpisodeHtml(editorRef.current?.innerHTML || content),
-          youtubeVideo:
-            storyType === 'manga'
-              ? { title: '', url: '' }
-              : {
-                  title: String(youtubeVideo.title || ''),
-                  url: String(youtubeVideo.url || ''),
-                },
-          episodeAdult,
-          episodeFree,
-          mangaPages: localMangaPages,
-        })
-
-        setSaveStatus('Saved locally')
-      } catch {
-        setSaveStatus('Local save failed')
-      } finally {
-        if (localSaveTimerRef.current === timer) {
-          localSaveTimerRef.current = null
-        }
-      }
+    const timer = window.setTimeout(() => {
+      saveCurrentLocalDraft()
     }, LOCAL_AUTOSAVE_DELAY_MS)
 
     localSaveTimerRef.current = timer
@@ -3926,10 +3982,19 @@ const removeYouTubeVideo = () => {
     hasUnsavedChanges,
     mangaPages,
     pageLoading,
+    saveCurrentLocalDraft,
     storyId,
     storyType,
     youtubeVideo,
   ])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      saveCurrentLocalDraft()
+    }, LOCAL_AUTOSAVE_MAX_INTERVAL_MS)
+
+    return () => window.clearInterval(timer)
+  }, [saveCurrentLocalDraft])
 
   const handleServerCheckpoint = async () => {
     const targetEpisodeId = currentEpisodeId || editEpisodeId
@@ -4048,6 +4113,11 @@ const removeYouTubeVideo = () => {
       localSaveTimerRef.current = null
     }
 
+    if (localSavePromiseRef.current) {
+      await localSavePromiseRef.current.catch(() => {})
+    }
+
+    localSavedRevisionRef.current = localDraftRevisionRef.current
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
 
     if (searchParams.get('fromPublishSuccess') === '1' || searchParams.get('fromPublishWarning') === '1') {
