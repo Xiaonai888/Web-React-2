@@ -1478,24 +1478,6 @@ const [repliesShown, setRepliesShown] =
               </button>
             ) : null}
 
-            {replyOpen ? (
-              <ReplyComposer
-                value={replyText}
-                onChange={setReplyText}
-                onCancel={
-                  closeReplyComposer
-                }
-                onSend={
-                  handleSendReply
-                }
-                sending={replySending}
-                story={story}
-                mentionName={
-                  replyTargetName
-                }
-              />
-            ) : null}
-
             {repliesShown &&
             replies.length ? (
               <div className="mt-3 space-y-3 border-l-2 border-[#eef1f5] pl-3">
@@ -1551,6 +1533,24 @@ const [repliesShown, setRepliesShown] =
                   </button>
                 ) : null}
               </div>
+            ) : null}
+
+            {replyOpen ? (
+              <ReplyComposer
+                value={replyText}
+                onChange={setReplyText}
+                onCancel={
+                  closeReplyComposer
+                }
+                onSend={
+                  handleSendReply
+                }
+                sending={replySending}
+                story={story}
+                mentionName={
+                  replyTargetName
+                }
+              />
             ) : null}
           </div>
         </div>
