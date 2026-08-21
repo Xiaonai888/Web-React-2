@@ -263,17 +263,28 @@ export default function useReactionInteraction({
         return
       }
 
-      if (
-        longPressOpenedRef.current
-      ) {
-        longPressOpenedRef.current =
-          false
+      if (longPressOpenedRef.current) {
+        const selectedType =
+          previewReactionTypeRef.current
+
+        longPressOpenedRef.current = false
+
+        if (selectedType) {
+          void selectReaction(
+            selectedType
+          )
+          return
+        }
+
+        closeReactionPicker()
       }
     }, [
       blocked,
       clearPressTimer,
+      closeReactionPicker,
       quickReact,
       resetPointerTracking,
+      selectReaction,
     ])
 
   const cancelReactionPress =
