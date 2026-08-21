@@ -3938,7 +3938,7 @@ const removeYouTubeVideo = () => {
       setSaveStatus('Backing up to server...')
 
       await handleSaveEpisode({
-        forceDraft: true,
+        forceDraft: !(currentEpisodeId || editEpisodeId),
         stayOnPage: true,
       })
 
