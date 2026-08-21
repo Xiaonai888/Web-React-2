@@ -136,14 +136,26 @@ export function searchChatUsers(search, limit = 12) {
 
 export function getChatMessages(
   conversationId,
-  { before = '', limit = 50 } = {}
+  { before = '', after = '', limit = 50 } = {}
 ) {
+  if (before && after) {
+    throw new ChatApiError(
+      400,
+      'INVALID_CURSOR_MODE',
+      'Use either before or after, not both'
+    )
+  }
+
   const query = new URLSearchParams()
 
   query.set('limit', String(limit))
 
   if (before) {
     query.set('before', before)
+  }
+
+  if (after) {
+    query.set('after', after)
   }
 
   return chatRequest(
