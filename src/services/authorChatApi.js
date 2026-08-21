@@ -134,13 +134,25 @@ export async function getAuthorChatConversations({
 
 export async function getAuthorChatMessages(
   conversationId,
-  { before = '', limit = 50 } = {}
+  { before = '', after = '', limit = 50 } = {}
 ) {
+  if (before && after) {
+    throw new AuthorChatApiError(
+      400,
+      'INVALID_CURSOR_MODE',
+      'Use either before or after, not both'
+    )
+  }
+
   const query = new URLSearchParams()
   query.set('limit', String(limit))
 
   if (before) {
     query.set('before', before)
+  }
+
+  if (after) {
+    query.set('after', after)
   }
 
   const data = await authorChatRequest(
@@ -149,7 +161,12 @@ export async function getAuthorChatMessages(
     )}/messages?${query.toString()}`
   )
 
-  ensureAuthorConversation(data.conversation)
+  if (data.conversation) {
+    ensureAuthorConversation(data.conversation)
+  } else if (!after) {
+    ensureAuthorConversation(data.conversation)
+  }
+
   return data
 }
 
