@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { clearHomeCache } from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -43,7 +44,12 @@ function getRouteRefreshKeys(pathname) {
 
 function loadStoredVersions() {
   try {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}')
+    const stored =
+      localStorage.getItem(STORAGE_KEY) ||
+      sessionStorage.getItem(STORAGE_KEY) ||
+      '{}'
+
+    return JSON.parse(stored)
   } catch {
     return {}
   }
@@ -51,7 +57,10 @@ function loadStoredVersions() {
 
 function saveStoredVersions(versions) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(versions || {}))
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(versions || {})
+    )
   } catch {
     return
   }
@@ -122,8 +131,14 @@ export function SmartRefreshProvider({ children }) {
       saveStoredVersions(nextVersions)
 
       if (hasChanged) {
-        window.location.reload()
-      }
+  const homeKeys = ['home', 'slides', 'banners', 'genres', 'stories']
+
+  if (keys.some((key) => homeKeys.includes(key))) {
+    await clearHomeCache()
+  }
+
+  window.location.reload()
+}
     } catch {
       return
     } finally {
