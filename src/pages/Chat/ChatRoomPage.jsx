@@ -2805,7 +2805,7 @@ export default function ChatRoomPage() {
         : 'Messages are unavailable'
   }
   style={{ fontFamily: "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif" }}
-  className="max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+  className="block max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
 />
 
               <button
