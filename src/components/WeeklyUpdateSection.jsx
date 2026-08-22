@@ -129,9 +129,8 @@ export default function WeeklyUpdateSection() {
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=6&sort=weekly_updates`
-          ),
-          { cache: 'no-store' }
+            `${API_BASE_URL}/api/public/stories?limit=24&sort=episode_updated`
+          )
         )
         const data = await response.json().catch(() => ({}))
 
@@ -143,6 +142,20 @@ export default function WeeklyUpdateSection() {
           setBooks(
             (data.stories || [])
               .filter((story) => Number(story.weekly_update_count || 0) > 0)
+              .sort((first, second) => {
+                const updateDifference =
+                  Number(second.weekly_update_count || 0) -
+                  Number(first.weekly_update_count || 0)
+
+                if (updateDifference) {
+                  return updateDifference
+                }
+
+                return (
+                  new Date(second.last_episode_published_at || 0).getTime() -
+                  new Date(first.last_episode_published_at || 0).getTime()
+                )
+              })
               .slice(0, 6)
               .map(normalizeStory)
           )
@@ -156,14 +169,31 @@ export default function WeeklyUpdateSection() {
     }
 
     fetchWeeklyUpdates(true)
-    const intervalId = window.setInterval(
-      () => fetchWeeklyUpdates(false),
-      REFRESH_MS
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchWeeklyUpdates(false)
+      }
+    }, REFRESH_MS)
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchWeeklyUpdates(false)
+      }
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
     )
 
     return () => {
       ignore = true
       window.clearInterval(intervalId)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
     }
   }, [])
 
@@ -176,7 +206,6 @@ export default function WeeklyUpdateSection() {
     dragRef.current.startX = event.clientX
     dragRef.current.scrollLeft = element.scrollLeft
     dragRef.current.moved = false
-    
   }
 
   function handlePointerMove(event) {
@@ -186,9 +215,9 @@ export default function WeeklyUpdateSection() {
 
     const deltaX = event.clientX - dragRef.current.startX
     if (Math.abs(deltaX) > 4) {
-  dragRef.current.moved = true
-  element.setPointerCapture?.(event.pointerId)
-}
+      dragRef.current.moved = true
+      element.setPointerCapture?.(event.pointerId)
+    }
     element.scrollLeft = dragRef.current.scrollLeft - deltaX
   }
 
