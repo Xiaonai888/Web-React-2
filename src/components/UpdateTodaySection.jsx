@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
+  const UPDATE_TODAY_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -23,6 +32,15 @@ const badgeConfig = {
   },
 }
 
+function getTodayCacheKey() {
+  const now = new Date()
+
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-')
+}
 
 function isToday(value) {
   if (!value) return false
@@ -154,76 +172,115 @@ export default function UpdateTodaySection({
     .toLowerCase()
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchPublishedStories() {
-      try {
+  async function loadPublishedStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'update-today',
+        date: getTodayCacheKey(),
+        sort: 'episode_updated',
+        limit: 7,
+        story_type: normalizedStoryType || 'all',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: UPDATE_TODAY_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories && !ignore) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories && !ignore) {
         setLoading(true)
+      }
 
-        const storyTypeQuery = normalizedStoryType
-          ? `&story_type=${encodeURIComponent(
-              normalizedStoryType
-            )}`
-          : ''
+      const storyTypeQuery = normalizedStoryType
+        ? `&story_type=${encodeURIComponent(
+            normalizedStoryType
+          )}`
+        : ''
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=7&sort=episode_updated${storyTypeQuery}`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=7&sort=episode_updated${storyTypeQuery}`
         )
+      )
 
-        const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message ||
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
             'Failed to load published stories'
-          )
-        }
-
-        if (ignore) return
-
-        const visibleStories = (data.stories || [])
-  .filter(
-    (story) =>
-      !normalizedStoryType ||
-      String(story?.story_type || '')
-        .trim()
-        .toLowerCase() === normalizedStoryType
-  )
-  .filter((story) =>
-    isToday(story.last_episode_published_at)
-  )
-  .sort(
-    (a, b) =>
-      new Date(b.last_episode_published_at).getTime() -
-      new Date(a.last_episode_published_at).getTime()
-  )
-
-setStories(visibleStories.map(normalizeStory))
-      } catch (error) {
-        console.error(
-          'UpdateTodaySection fetch error:',
-          error
         )
+      }
 
-        if (!ignore) {
-          setStories([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+      const nextStories = (data.stories || [])
+        .filter(
+          (story) =>
+            !normalizedStoryType ||
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() === normalizedStoryType
+        )
+        .filter((story) =>
+          isToday(story.last_episode_published_at)
+        )
+        .sort(
+          (a, b) =>
+            new Date(
+              b.last_episode_published_at
+            ).getTime() -
+            new Date(
+              a.last_episode_published_at
+            ).getTime()
+        )
+        .map(normalizeStory)
+
+      if (ignore) return
+
+      setStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: UPDATE_TODAY_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'UpdateTodaySection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedStories) {
+        setStories([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchPublishedStories()
+  loadPublishedStories()
 
-    return () => {
-      ignore = true
-    }
-  }, [normalizedStoryType])
-
+  return () => {
+    ignore = true
+  }
+}, [normalizedStoryType])
   const updateBooks = useMemo(
     () => stories.slice(0, 6),
     [stories]
