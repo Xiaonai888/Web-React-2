@@ -12,10 +12,12 @@ import {
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
-  const UPDATE_TODAY_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const UPDATE_TODAY_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const badgeConfig = {
   new: {
