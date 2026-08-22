@@ -3654,25 +3654,41 @@ const removeYouTubeVideo = () => {
   }
 
   const handleEditorKeyDown = (event) => {
-    if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+  if (event.isComposing) return
 
-    const key = event.key.toLowerCase()
+  const key = event.key.toLowerCase()
+  const isDesktopKeyboard =
+    window.matchMedia?.('(hover: hover) and (pointer: fine)').matches === true
 
-    if (key === 'z') {
-      event.preventDefault()
-      if (event.shiftKey) {
-        handleRedo()
-      } else {
-        handleUndo()
-      }
+  if (key === 'enter' && isDesktopKeyboard && !event.altKey) {
+    event.preventDefault()
+
+    if (event.ctrlKey || event.metaKey) {
+      if (isValidForNext) handleNext()
       return
     }
 
-    if (key === 'y') {
-      event.preventDefault()
-      handleRedo()
-    }
+    insertHtmlAtSelection('<br>')
+    return
   }
+
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+
+  if (key === 'z') {
+    event.preventDefault()
+    if (event.shiftKey) {
+      handleRedo()
+    } else {
+      handleUndo()
+    }
+    return
+  }
+
+  if (key === 'y') {
+    event.preventDefault()
+    handleRedo()
+  }
+}
 
   const onCropComplete = useCallback((_, croppedPixels) => {
     setCroppedAreaPixels(croppedPixels)
