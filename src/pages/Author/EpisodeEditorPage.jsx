@@ -4770,8 +4770,9 @@ releaseOption={releaseOption}
                 <div
                   ref={editorRef}
                   contentEditable
-                  spellCheck={false}
-                  autoCorrect="off"
+                  spellCheck={storyLanguage === 'English'}
+                  autoCorrect={storyLanguage === 'English' ? 'on' : 'off'}
+                  lang={storyLanguage === 'English' ? 'en' : undefined}
                   suppressContentEditableWarning
                   role="textbox"
                   aria-multiline="true"
