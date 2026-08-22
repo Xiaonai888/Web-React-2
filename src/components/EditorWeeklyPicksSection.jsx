@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  const EDITOR_PICKS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -83,39 +89,86 @@ export default function EditorWeeklyPicksSection() {
   const dragMovedRef = useRef(false)
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchWeeklyPicks() {
-      try {
+  async function loadWeeklyPicks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'slides',
+      params: {
+        home_section: 'editor-weekly-picks',
+        section_key: 'editor_weekly_picks',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: EDITOR_PICKS_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedItems = Array.isArray(cached?.data)
+
+    if (hasCachedItems && !ignore) {
+      setItems(cached.data)
+      setActiveIndex(0)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedItems) {
+      return
+    }
+
+    try {
+      if (!hasCachedItems && !ignore) {
         setLoading(true)
+      }
 
-        const response = await fetch(`${API_BASE_URL}/api/slides?section_key=editor_weekly_picks`)
-        const data = await response.json().catch(() => ({}))
+      const response = await fetch(
+        `${API_BASE_URL}/api/slides?section_key=editor_weekly_picks`
+      )
+      const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to fetch editor weekly picks')
-        }
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            'Failed to fetch editor weekly picks'
+        )
+      }
 
-        if (ignore) return
+      const nextItems = Array.isArray(data.slides)
+        ? data.slides.map(normalizeSlide)
+        : []
 
-        setItems((data.slides || []).map(normalizeSlide))
-      } catch (error) {
-        console.error('EditorWeeklyPicksSection fetch error:', error)
+      if (ignore) return
 
-        if (!ignore) {
-          setItems([])
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      setItems(nextItems)
+      setActiveIndex(0)
+
+      await saveHomeCache(cacheKey, nextItems, {
+        maxAgeMs: EDITOR_PICKS_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'EditorWeeklyPicksSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedItems) {
+        setItems([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchWeeklyPicks()
+  loadWeeklyPicks()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  return () => {
+    ignore = true
+  }
+}, [])
 
   const displayItems = items
 
