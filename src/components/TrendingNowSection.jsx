@@ -11,12 +11,13 @@ import {
 } from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const fallbackTrendingStories = Array.from({ length: 9 }).map((_, index) => ({
   id: 201 + index,
