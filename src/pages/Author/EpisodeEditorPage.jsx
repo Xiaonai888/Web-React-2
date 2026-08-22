@@ -4770,6 +4770,8 @@ releaseOption={releaseOption}
                 <div
                   ref={editorRef}
                   contentEditable
+                  spellCheck={false}
+                  autoCorrect="off"
                   suppressContentEditableWarning
                   role="textbox"
                   aria-multiline="true"
