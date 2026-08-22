@@ -3,10 +3,10 @@ import {
   getStoryLanguageId,
 } from '../utils/storyLanguage'
 import {
-  createPublicCacheKey,
-  readPublicContentCache,
-  writePublicContentCache,
-} from './publicContentCache'
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000
 const VERSION_MEMORY_TTL_MS = 60 * 1000
@@ -139,14 +139,18 @@ export async function loadHomeDailyPicksSource({
   onCachedStories,
 }) {
   const normalizedStoryType = normalizeStoryType(storyType)
-  const cacheKey = createPublicCacheKey(
-    'home',
-    'daily-picks',
-    getStoryLanguageId(),
-    normalizedStoryType || 'all'
-  )
+  const cacheKey = getHomeCacheKey({
+    section: 'daily-picks',
+    language: getStoryLanguageId(),
+    params: {
+      story_type: normalizedStoryType || 'all',
+    },
+  })
 
-  const cached = await readPublicContentCache(cacheKey)
+  const cached = await loadHomeCache(cacheKey, {
+    maxAgeMs: CACHE_TTL_MS,
+    allowExpired: true,
+  })
   const cachedStories = Array.isArray(cached?.data)
     ? cached.data
     : []
@@ -160,7 +164,7 @@ export async function loadHomeDailyPicksSource({
   try {
     currentVersion = await getStoriesVersion(apiBaseUrl)
   } catch {
-    if (cachedStories.length && !cached?.is_expired) {
+    if (cachedStories.length && !cached?.isExpired) {
       return cachedStories
     }
   }
@@ -173,7 +177,7 @@ export async function loadHomeDailyPicksSource({
 
   if (
     cachedStories.length &&
-    !cached?.is_expired &&
+    !cached?.isExpired &&
     sameVersion
   ) {
     return cachedStories
@@ -181,7 +185,7 @@ export async function loadHomeDailyPicksSource({
 
   if (
     cachedStories.length &&
-    !cached?.is_expired &&
+    !cached?.isExpired &&
     currentVersion === null
   ) {
     return cachedStories
@@ -193,11 +197,9 @@ export async function loadHomeDailyPicksSource({
       storyType: normalizedStoryType,
     })
 
-    await writePublicContentCache({
-      key: cacheKey,
-      data: freshStories,
-      version: currentVersion,
-      ttlMs: CACHE_TTL_MS,
+    await saveHomeCache(cacheKey, freshStories, {
+      version: currentVersion ?? 0,
+      maxAgeMs: CACHE_TTL_MS,
     })
 
     return freshStories
