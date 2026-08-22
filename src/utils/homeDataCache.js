@@ -2,7 +2,34 @@ const DB_NAME = 'shadow_home_cache'
 const DB_VERSION = 1
 const STORE_NAME = 'home_data'
 const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1000
+const CONTENT_VERSION_TTL_MS = 60 * 1000
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+
+const CONTENT_VERSION_KEYS = [
+  'home',
+  'slides',
+  'stories',
+  'genres',
+]
+
+const VERSION_KEY_BY_SECTION = {
+  home: 'home',
+  slides: 'slides',
+  stories: 'stories',
+  'daily-picks': 'stories',
+  genres: 'genres',
+}
+
 const memoryFallback = new Map()
+let contentVersions = null
+let contentVersionsCheckedAt = 0
+let contentVersionsRequest = null
 
 function openHomeCacheDatabase() {
   return new Promise((resolve, reject) => {
@@ -122,6 +149,88 @@ function stableParams(params = {}) {
     .join('&')
 }
 
+function getSectionFromCacheKey(key) {
+  return String(key || '').split(':')[2] || ''
+}
+
+function getVersionKeyForCacheKey(key) {
+  const section = getSectionFromCacheKey(key)
+  return VERSION_KEY_BY_SECTION[section] || null
+}
+
+async function fetchContentVersions() {
+  const now = Date.now()
+
+  if (
+    contentVersions &&
+    now - contentVersionsCheckedAt < CONTENT_VERSION_TTL_MS
+  ) {
+    return contentVersions
+  }
+
+  if (contentVersionsRequest) {
+    return contentVersionsRequest
+  }
+
+  contentVersionsRequest = (async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/public/content-versions?keys=${CONTENT_VERSION_KEYS.join(',')}`,
+        { cache: 'no-store' }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load content versions'
+        )
+      }
+
+      const nextVersions = {}
+
+      for (const key of CONTENT_VERSION_KEYS) {
+        const version = Number(
+          data?.versions?.[key]?.version
+        )
+
+        if (Number.isFinite(version)) {
+          nextVersions[key] = version
+        }
+      }
+
+      contentVersions = nextVersions
+      contentVersionsCheckedAt = Date.now()
+
+      return nextVersions
+    } catch {
+      return contentVersions
+    } finally {
+      contentVersionsRequest = null
+    }
+  })()
+
+  return contentVersionsRequest
+}
+
+async function resolveExpectedVersion(key, explicitVersion) {
+  if (
+    explicitVersion !== undefined &&
+    explicitVersion !== null
+  ) {
+    const number = Number(explicitVersion)
+    return Number.isFinite(number) ? number : null
+  }
+
+  const versionKey = getVersionKeyForCacheKey(key)
+  if (!versionKey) return null
+
+  const versions = await fetchContentVersions()
+  const version = Number(versions?.[versionKey])
+
+  return Number.isFinite(version) ? version : null
+}
+
 export function getHomeCacheKey({
   section,
   language = 'all',
@@ -150,16 +259,19 @@ export async function saveHomeCache(
   key,
   data,
   {
-    version = 0,
+    version,
     maxAgeMs = DEFAULT_MAX_AGE_MS,
   } = {}
 ) {
   if (!key) return null
 
+  const resolvedVersion =
+    await resolveExpectedVersion(key, version)
+
   const value = {
     key: String(key),
     data,
-    version: Number(version || 0),
+    version: Number(resolvedVersion || 0),
     updatedAt: Date.now(),
     maxAgeMs: Math.max(
       0,
@@ -224,10 +336,7 @@ export async function loadHomeCache(
     ageMs > effectiveMaxAge
 
   const expectedVersion =
-    version === undefined ||
-    version === null
-      ? null
-      : Number(version || 0)
+    await resolveExpectedVersion(key, version)
 
   const versionMatches =
     expectedVersion === null ||
@@ -265,36 +374,6 @@ export async function deleteHomeCache(key) {
   } catch {
     return
   }
-}
-
-export async function clearHomeCacheSection(section) {
-  const targetSection = normalizeText(section)
-
-  if (!targetSection) return
-
-  let rows = []
-
-  try {
-    rows =
-      (await runHomeCacheTransaction(
-        'readonly',
-        (store) => store.getAll()
-      )) || []
-  } catch {
-    rows = [...memoryFallback.values()]
-  }
-
-  const keys = rows
-    .map((item) => String(item?.key || ''))
-    .filter(Boolean)
-    .filter(
-      (key) =>
-        key.split(':')[2] === targetSection
-    )
-
-  await Promise.all(
-    keys.map((key) => deleteHomeCache(key))
-  )
 }
 
 export async function clearHomeCache() {
