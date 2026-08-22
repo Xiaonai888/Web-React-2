@@ -5,10 +5,12 @@ import App from './App.jsx'
 import AppErrorBoundary from './components/AppErrorBoundary.jsx'
 import { installApiAuthFetch } from './utils/installApiAuthFetch'
 import { installPaidContentRequirementFetch } from './utils/installPaidContentRequirementFetch'
+import { installHomePublicCacheFetch } from './utils/installHomePublicCacheFetch'
 import { installReaderPresenceTracking } from './utils/installReaderPresenceTracking'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
+installHomePublicCacheFetch()
 installReaderPresenceTracking()
 
 window.addEventListener('beforeinstallprompt', (event) => {
