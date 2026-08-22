@@ -31,7 +31,7 @@ const rankingTabs = [
   },
   {
     label: 'Completed',
-    endpoint: '/api/public/stories?limit=48&sort=popular',
+    endpoint: '/api/public/stories?limit=6&sort=popular&story_status=Completed',
     filter: isCompletedStory,
   },
 ]
@@ -255,52 +255,73 @@ export default function TopNovelSection({
     .trim()
     .toLowerCase()
 
+  const activeDataKey = `${normalizedStoryType || 'all'}::${activeCategory}`
+
   useEffect(() => {
     let ignore = false
 
-    async function loadRankingTabs() {
-      setLoading(true)
-      setRealDataByCategory({})
-
-      const entries = await Promise.all(
-        rankingTabs.map(async (tab) => {
-          try {
-            const items = await fetchRankingItems(
-              tab,
-              tab.label,
-              normalizedStoryType
-            )
-
-            return [tab.label, items]
-          } catch (error) {
-            console.error(
-              `Ranking preload error: ${tab.label}`,
-              error
-            )
-
-            return [tab.label, []]
-          }
-        })
-      )
-
-      if (!ignore) {
-        setRealDataByCategory(
-          Object.fromEntries(entries)
+    async function loadActiveRankingTab() {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          realDataByCategory,
+          activeDataKey
         )
+      ) {
         setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      const tab = getActiveTabConfig(activeCategory)
+
+      try {
+        const items = await fetchRankingItems(
+          tab,
+          tab.label,
+          normalizedStoryType
+        )
+
+        if (!ignore) {
+          setRealDataByCategory((current) => ({
+            ...current,
+            [activeDataKey]: items,
+          }))
+        }
+      } catch (error) {
+        console.error(
+          `Ranking load error: ${activeCategory}`,
+          error
+        )
+
+        if (!ignore) {
+          setRealDataByCategory((current) => ({
+            ...current,
+            [activeDataKey]: [],
+          }))
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
-    loadRankingTabs()
+    loadActiveRankingTab()
 
     return () => {
       ignore = true
     }
-  }, [normalizedStoryType])
+  }, [
+    activeCategory,
+    activeDataKey,
+    normalizedStoryType,
+    realDataByCategory,
+  ])
 
   const filteredData = useMemo(() => {
-    return realDataByCategory[activeCategory] || []
-  }, [activeCategory, realDataByCategory])
+    return realDataByCategory[activeDataKey] || []
+  }, [activeDataKey, realDataByCategory])
 
   const rankingGroups = useMemo(() => {
     const items = filteredData.slice(0, 6)
