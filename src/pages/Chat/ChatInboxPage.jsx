@@ -1985,7 +1985,7 @@ const [soundSettings, setSoundSettings] =
     <div className="min-h-screen bg-white pb-[92px]">
       <style>{`.shadow-chat-scroll::-webkit-scrollbar{display:none}.shadow-chat-scroll{-ms-overflow-style:none;scrollbar-width:none}`}</style>
 
-      <header className="sticky top-0 z-[70] border-b border-[#f0f0f3] bg-white/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-[70] bg-white/95 backdrop-blur-xl">
         <div
           className={`relative mx-auto max-w-[620px] px-4 ${
             selectionMode ? 'py-2' : 'pb-4 pt-4'
@@ -2614,7 +2614,7 @@ activeFilter === 'all' ? (
   <button
     type="button"
     onClick={() => navigate('/chat/archived')}
-    className="flex w-full items-center gap-3 border-b border-[#f0f0f2] px-5 py-3 text-left active:bg-[#f4f4f5]"
+    className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-[#f4f4f5]"
   >
     <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e5e5e7] text-[#666970]">
       <Archive size={20} />
