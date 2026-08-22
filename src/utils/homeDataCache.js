@@ -432,3 +432,47 @@ export async function pruneHomeCache({
     }
   }
 }
+
+export async function clearHomeCacheSection(section) {
+  const normalizedSection = normalizeText(section)
+
+  if (!normalizedSection) return
+
+  const sectionsToClear = new Set([normalizedSection])
+
+  if (normalizedSection === 'stories') {
+    sectionsToClear.add('daily-picks')
+  }
+
+  if (normalizedSection === 'banners') {
+    sectionsToClear.add('slides')
+  }
+
+  let storedKeys = []
+
+  try {
+    storedKeys =
+      (await runHomeCacheTransaction(
+        'readonly',
+        (store) => store.getAllKeys()
+      )) || []
+  } catch {
+    storedKeys = []
+  }
+
+  const keys = new Set([
+    ...memoryFallback.keys(),
+    ...storedKeys.map((key) => String(key)),
+  ])
+
+  await Promise.all(
+    [...keys]
+      .filter((key) =>
+        sectionsToClear.has(
+          normalizeText(getSectionFromCacheKey(key))
+        )
+      )
+      .map((key) => deleteHomeCache(key))
+  )
+}
+
