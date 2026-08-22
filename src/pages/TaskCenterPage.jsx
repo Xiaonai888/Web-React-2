@@ -931,33 +931,6 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
 function startSmartRefreshCycle() {
   return
 }
-  if (!isLoggedIn) return
-  if (document.visibilityState !== 'visible') return
-
-  const now = Date.now()
-
-  if (now < smartRefreshCooldownUntilRef.current) return
-  if (smartRefreshTimerRef.current) return
-
-  smartRefreshChecksRef.current = 0
-
-  smartRefreshTimerRef.current = window.setInterval(async () => {
-    if (document.visibilityState !== 'visible') {
-      clearSmartRefreshTimer()
-      return
-    }
-
-    smartRefreshChecksRef.current += 1
-
-    const changed = await checkTaskCenterVersion({ refreshOnChange: true })
-
-    if (changed || smartRefreshChecksRef.current >= SMART_REFRESH_MAX_CHECKS) {
-      clearSmartRefreshTimer()
-      smartRefreshCooldownUntilRef.current = Date.now() + SMART_REFRESH_COOLDOWN_MS
-    }
-  }, SMART_REFRESH_CHECK_INTERVAL_MS)
-}
-
 
   async function loadReminderSetting() {
     if (!isLoggedIn) {
