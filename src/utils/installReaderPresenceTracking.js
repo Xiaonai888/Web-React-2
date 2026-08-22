@@ -5,9 +5,9 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const HEARTBEAT_INTERVAL_MS = 60000
-const MIN_HEARTBEAT_GAP_MS = 10000
+const HEARTBEAT_INTERVAL_MS = 60 * 1000
 const IDLE_AFTER_MS = 2 * 60 * 1000
+const MIN_SEND_GAP_MS = 15 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
 
 function getReaderToken() {
@@ -46,44 +46,73 @@ export function installReaderPresenceTracking() {
 
   let lastActivityAt = Date.now()
   let lastPath = window.location.pathname || '/'
-  let lastHeartbeatAt = 0
+  let lastSentAt = 0
+  let lastPayloadKey = ''
   let sending = false
 
   const markActive = () => {
     lastActivityAt = Date.now()
   }
 
-  const sendHeartbeat = async ({ forceInactive = false } = {}) => {
+  const sendHeartbeat = async ({
+    forceInactive = false,
+    force = false,
+  } = {}) => {
     if (sending) return
     if (!getReaderToken()) return
     if (!navigator.onLine) return
 
-    const now = Date.now()
+    const payload = {
+      session_id: getSessionId(),
+      current_path: window.location.pathname || '/',
+      visibility_state: document.visibilityState,
+      is_active:
+        !forceInactive &&
+        document.visibilityState === 'visible' &&
+        Date.now() - lastActivityAt < IDLE_AFTER_MS,
+    }
 
-    if (!forceInactive && now - lastHeartbeatAt < MIN_HEARTBEAT_GAP_MS) {
+    const now = Date.now()
+    const payloadKey = JSON.stringify({
+      current_path: payload.current_path,
+      visibility_state: payload.visibility_state,
+      is_active: payload.is_active,
+    })
+
+    if (
+      !force &&
+      now - lastSentAt < MIN_SEND_GAP_MS
+    ) {
       return
     }
 
-    lastHeartbeatAt = now
+    if (
+      !force &&
+      payloadKey === lastPayloadKey &&
+      now - lastSentAt < HEARTBEAT_INTERVAL_MS
+    ) {
+      return
+    }
+
     sending = true
 
     try {
-      await fetch(`${API_BASE_URL}/api/reader-presence/heartbeat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          session_id: getSessionId(),
-          current_path: window.location.pathname || '/',
-          visibility_state: document.visibilityState,
-          is_active:
-            !forceInactive &&
-            document.visibilityState === 'visible' &&
-            Date.now() - lastActivityAt < IDLE_AFTER_MS,
-        }),
-        keepalive: true,
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader-presence/heartbeat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }
+      )
+
+      if (response.ok) {
+        lastSentAt = Date.now()
+        lastPayloadKey = payloadKey
+      }
     } catch {
     } finally {
       sending = false
@@ -97,7 +126,7 @@ export function installReaderPresenceTracking() {
 
     lastPath = currentPath
     markActive()
-    sendHeartbeat()
+    sendHeartbeat({ force: true })
   }
 
   const originalPushState = window.history.pushState.bind(window.history)
@@ -138,20 +167,26 @@ export function installReaderPresenceTracking() {
 
   window.addEventListener('online', () => {
     markActive()
-    sendHeartbeat()
+    sendHeartbeat({ force: true })
   })
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       markActive()
-      sendHeartbeat()
+      sendHeartbeat({ force: true })
     } else {
-      sendHeartbeat({ forceInactive: true })
+      sendHeartbeat({
+        forceInactive: true,
+        force: true,
+      })
     }
   })
 
   window.addEventListener('pagehide', () => {
-    sendHeartbeat({ forceInactive: true })
+    sendHeartbeat({
+      forceInactive: true,
+      force: true,
+    })
   })
 
   window.setInterval(() => {
@@ -163,6 +198,6 @@ export function installReaderPresenceTracking() {
   }, HEARTBEAT_INTERVAL_MS)
 
   window.setTimeout(() => {
-    sendHeartbeat()
+    sendHeartbeat({ force: true })
   }, 1500)
 }
