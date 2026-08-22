@@ -929,6 +929,8 @@ async function checkTaskCenterVersion({ refreshOnChange = false } = {}) {
 }
 
 function startSmartRefreshCycle() {
+  return
+}
   if (!isLoggedIn) return
   if (document.visibilityState !== 'visible') return
 
