@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
 const REFRESH_MS = 60 * 60 * 1000
+const CACHE_MAX_AGE_MS = 30 * 60 * 1000
 
 const updateMarkerUI = {
   width: 42,
@@ -20,6 +30,24 @@ const updateMarkerUI = {
   numberSize: 12,
 }
 
+function getReaderCacheScope() {
+  const token =
+    sessionStorage.getItem('shadow_reader_token') ||
+    localStorage.getItem('shadow_reader_token') ||
+    ''
+
+  if (!token) return 'anon'
+
+  let hash = 2166136261
+
+  for (let index = 0; index < token.length; index += 1) {
+    hash ^= token.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return `reader-${(hash >>> 0).toString(36)}`
+}
+
 function normalizeStory(story) {
   return {
     id: story.id,
@@ -28,16 +56,27 @@ function normalizeStory(story) {
       story.landscape_thumbnail_url ||
       story.cover_url ||
       '/assets/New Arrival/New Arrival 1.jpg',
-    updateCount: Math.max(0, Number(story.weekly_update_count || 0)),
+    updateCount: Math.max(
+      0,
+      Number(story.weekly_update_count || 0)
+    ),
   }
 }
 
 function WeeklyCard({ book, onOpen }) {
-  const updateCount = Math.max(0, Number(book.updateCount || 0))
-  const updateCountText = updateCount >= 10 ? '9+' : `+${updateCount}`
+  const updateCount = Math.max(
+    0,
+    Number(book.updateCount || 0)
+  )
+  const updateCountText =
+    updateCount >= 10 ? '9+' : `+${updateCount}`
 
   return (
-    <button type="button" onClick={onOpen} className="block w-full select-none text-left">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="block w-full select-none text-left"
+    >
       <div className="relative aspect-[16/9] overflow-hidden rounded-[8px] bg-[#202124] shadow-sm">
         <img
           src={book.cover}
@@ -47,7 +86,8 @@ function WeeklyCard({ book, onOpen }) {
           decoding="async"
           draggable={false}
           onError={(event) => {
-            event.currentTarget.src = '/assets/New Arrival/New Arrival 1.jpg'
+            event.currentTarget.src =
+              '/assets/New Arrival/New Arrival 1.jpg'
           }}
         />
 
@@ -123,48 +163,96 @@ export default function WeeklyUpdateSection() {
   useEffect(() => {
     let ignore = false
 
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      scope: getReaderCacheScope(),
+      params: {
+        surface: 'weekly-updates',
+      },
+    })
+
+    function applyStories(stories) {
+      if (ignore) return
+
+      setBooks(
+        (Array.isArray(stories) ? stories : [])
+          .filter(
+            (story) =>
+              Number(story.weekly_update_count || 0) > 0
+          )
+          .slice(0, 6)
+          .map(normalizeStory)
+      )
+    }
+
     async function fetchWeeklyUpdates(firstLoad = false) {
       if (firstLoad) setLoading(true)
+
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
+
+      const cachedStories = Array.isArray(cached?.data)
+        ? cached.data
+        : []
+
+      if (cachedStories.length) {
+        applyStories(cachedStories)
+
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+
+      if (cached?.isFresh && cachedStories.length) {
+        return
+      }
 
       try {
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=24&sort=episode_updated`
+            `${API_BASE_URL}/api/public/weekly-updates?limit=6`
           )
         )
-        const data = await response.json().catch(() => ({}))
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load weekly updates')
-        }
-
-        if (!ignore) {
-          setBooks(
-            (data.stories || [])
-              .filter((story) => Number(story.weekly_update_count || 0) > 0)
-              .sort((first, second) => {
-                const updateDifference =
-                  Number(second.weekly_update_count || 0) -
-                  Number(first.weekly_update_count || 0)
-
-                if (updateDifference) {
-                  return updateDifference
-                }
-
-                return (
-                  new Date(second.last_episode_published_at || 0).getTime() -
-                  new Date(first.last_episode_published_at || 0).getTime()
-                )
-              })
-              .slice(0, 6)
-              .map(normalizeStory)
+          throw new Error(
+            data.message ||
+              'Failed to load weekly updates'
           )
         }
+
+        const stories = Array.isArray(data.stories)
+          ? data.stories
+          : []
+
+        applyStories(stories)
+
+        await saveHomeCache(cacheKey, stories, {
+          maxAgeMs: CACHE_MAX_AGE_MS,
+        })
       } catch (error) {
-        console.error('WeeklyUpdateSection fetch error:', error)
-        if (!ignore && firstLoad) setBooks([])
+        console.error(
+          'WeeklyUpdateSection fetch error:',
+          error
+        )
+
+        if (
+          !ignore &&
+          firstLoad &&
+          !cachedStories.length
+        ) {
+          setBooks([])
+        }
       } finally {
-        if (!ignore && firstLoad) setLoading(false)
+        if (!ignore && firstLoad) {
+          setLoading(false)
+        }
       }
     }
 
@@ -198,7 +286,13 @@ export default function WeeklyUpdateSection() {
   }, [])
 
   function handlePointerDown(event) {
-    if (event.pointerType !== 'mouse' || event.button !== 0) return
+    if (
+      event.pointerType !== 'mouse' ||
+      event.button !== 0
+    ) {
+      return
+    }
+
     const element = scrollerRef.current
     if (!element) return
 
@@ -209,22 +303,36 @@ export default function WeeklyUpdateSection() {
   }
 
   function handlePointerMove(event) {
-    if (!dragRef.current.active || event.pointerType !== 'mouse') return
+    if (
+      !dragRef.current.active ||
+      event.pointerType !== 'mouse'
+    ) {
+      return
+    }
+
     const element = scrollerRef.current
     if (!element) return
 
-    const deltaX = event.clientX - dragRef.current.startX
+    const deltaX =
+      event.clientX - dragRef.current.startX
+
     if (Math.abs(deltaX) > 4) {
       dragRef.current.moved = true
       element.setPointerCapture?.(event.pointerId)
     }
-    element.scrollLeft = dragRef.current.scrollLeft - deltaX
+
+    element.scrollLeft =
+      dragRef.current.scrollLeft - deltaX
   }
 
   function handlePointerEnd(event) {
     if (event.pointerType !== 'mouse') return
+
     dragRef.current.active = false
-    scrollerRef.current?.releasePointerCapture?.(event.pointerId)
+    scrollerRef.current?.releasePointerCapture?.(
+      event.pointerId
+    )
+
     window.setTimeout(() => {
       dragRef.current.moved = false
     }, 0)
