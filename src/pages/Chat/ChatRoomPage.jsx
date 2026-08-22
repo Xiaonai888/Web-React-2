@@ -2783,30 +2783,29 @@ export default function ChatRoomPage() {
 
             <div className="relative">
               <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={(event) =>
-                  setText(
-                    event.target.value.slice(0, 2000)
-                  )
-                }
-                onKeyDown={handleKeyDown}
-                disabled={!canSend || sending}
-                rows={1}
-                placeholder={
-                  canSend
-                    ? editTarget
-                      ? 'Edit message...'
-                      : replyTarget
-                        ? 'Write a reply...'
-                        : 'Write a message...'
-                    : conversation?.request_status ===
-                        'pending'
-                      ? 'Waiting for request approval'
-                      : 'Messages are unavailable'
-                }
-                className="max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-3 pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-              />
+  ref={textareaRef}
+  value={text}
+  onChange={(event) =>
+    setText(
+      event.target.value.slice(0, 2000)
+    )
+  }
+  onKeyDown={handleKeyDown}
+  disabled={!canSend || sending}
+  rows={1}
+  placeholder={
+    canSend
+      ? editTarget
+        ? 'Edit message...'
+        : replyTarget
+          ? 'Write a reply...'
+          : 'Write a message...'
+      : conversation?.request_status === 'pending'
+        ? 'Waiting for request approval'
+        : 'Messages are unavailable'
+  }
+  className="max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] pt-[10px] pb-[14px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+/>
 
               <button
                 type="button"
