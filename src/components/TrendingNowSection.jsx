@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
@@ -114,73 +123,103 @@ export default function TrendingNowSection({
     .toLowerCase()
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchTrendingStories() {
-      try {
+  async function loadTrendingStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'trending',
+        sort: 'popular',
+        limit: 9,
+        story_type: normalizedStoryType || 'all',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories && !ignore) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories && !ignore) {
         setLoading(true)
+      }
 
-        const storyTypeQuery = normalizedStoryType
-          ? `&story_type=${encodeURIComponent(
-              normalizedStoryType
-            )}`
-          : ''
+      const storyTypeQuery = normalizedStoryType
+        ? `&story_type=${encodeURIComponent(
+            normalizedStoryType
+          )}`
+        : ''
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=9&sort=popular${storyTypeQuery}`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=9&sort=popular${storyTypeQuery}`
         )
+      )
 
-        const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message ||
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
             'Failed to load trending stories'
-          )
-        }
-
-        if (!ignore) {
-          const visibleStories = (
-            data.stories || []
-          ).filter(
-            (story) =>
-              !normalizedStoryType ||
-              String(story?.story_type || '')
-                .trim()
-                .toLowerCase() ===
-                normalizedStoryType
-          )
-
-          setStories(
-            visibleStories
-              .map(normalizeStory)
-              .slice(0, 9)
-          )
-        }
-      } catch (error) {
-        console.error(
-          'TrendingNowSection fetch error:',
-          error
         )
+      }
 
-        if (!ignore) {
-          setStories([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+      const nextStories = (data.stories || [])
+        .filter(
+          (story) =>
+            !normalizedStoryType ||
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() === normalizedStoryType
+        )
+        .map(normalizeStory)
+        .slice(0, 9)
+
+      if (ignore) return
+
+      setStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'TrendingNowSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedStories) {
+        setStories([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchTrendingStories()
+  loadTrendingStories()
 
-    return () => {
-      ignore = true
-    }
-  }, [normalizedStoryType])
+  return () => {
+    ignore = true
+  }
+}, [normalizedStoryType])
 
   const handleMouseDown = (event) => {
     const container = scrollRef.current
