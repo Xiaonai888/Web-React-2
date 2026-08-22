@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageLabel } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+  getStoryLanguageLabel,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 import { getStoryBadge } from '../utils/storyBadge'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const badgeStyles = {
   new: 'bg-[#FF4D6D] text-white',
@@ -132,79 +142,117 @@ export default function NewArrivalsSection({
     .toLowerCase()
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchNewArrivals() {
-      try {
+  async function loadNewArrivals() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'new-arrivals',
+        sort: 'latest',
+        limit: 24,
+        story_type: normalizedStoryType || 'all',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks && !ignore) {
+      setBooks(cached.data)
+      setLoadFailed(false)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks && !ignore) {
         setLoading(true)
+      }
+
+      if (!ignore) {
         setLoadFailed(false)
+      }
 
-        const storyTypeQuery = normalizedStoryType
-          ? `&story_type=${encodeURIComponent(
-              normalizedStoryType
-            )}`
-          : ''
+      const storyTypeQuery = normalizedStoryType
+        ? `&story_type=${encodeURIComponent(
+            normalizedStoryType
+          )}`
+        : ''
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=24&sort=latest${storyTypeQuery}`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=24&sort=latest${storyTypeQuery}`
         )
+      )
 
-        const data = await response.json().catch(() => ({}))
+      const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message ||
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
             'Failed to load new arrivals'
-          )
-        }
-
-        if (ignore) return
-
-        const newestBooks = (data.stories || [])
-          .filter(
-            (story) =>
-              !normalizedStoryType ||
-              String(story?.story_type || '')
-                .trim()
-                .toLowerCase() ===
-                normalizedStoryType
-          )
-          .filter(
-            (story) =>
-              Number(story.total_episodes || 0) >= 1
-          )
-          .filter(
-            (story) => getStoryBadge(story) !== 'end'
-          )
-          .map(normalizeStory)
-          .slice(0, 12)
-
-        setBooks(newestBooks)
-      } catch (error) {
-        console.error(
-          'NewArrivalsSection fetch error:',
-          error
         )
+      }
 
-        if (!ignore) {
-          setLoadFailed(true)
-          setBooks([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+      const newestBooks = (data.stories || [])
+        .filter(
+          (story) =>
+            !normalizedStoryType ||
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() === normalizedStoryType
+        )
+        .filter(
+          (story) =>
+            Number(story.total_episodes || 0) >= 1
+        )
+        .filter(
+          (story) => getStoryBadge(story) !== 'end'
+        )
+        .map(normalizeStory)
+        .slice(0, 12)
+
+      if (ignore) return
+
+      setBooks(newestBooks)
+      setLoadFailed(false)
+
+      await saveHomeCache(cacheKey, newestBooks, {
+        maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'NewArrivalsSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedBooks) {
+        setLoadFailed(true)
+        setBooks([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchNewArrivals()
+  loadNewArrivals()
 
-    return () => {
-      ignore = true
-    }
-  }, [normalizedStoryType])
+  return () => {
+    ignore = true
+  }
+}, [normalizedStoryType])
 
   if (loading) {
     return <LoadingGrid />
