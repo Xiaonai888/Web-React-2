@@ -1,6 +1,6 @@
 import { createContext, useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
-import { clearHomeCache } from '../utils/homeDataCache'
+import { clearHomeCacheSection } from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -119,23 +119,47 @@ export function SmartRefreshProvider({ children }) {
         ...data.versions,
       }
 
-      const hasKnownOldVersion = keys.some((key) => oldVersions[key])
-      const hasChanged = hasKnownOldVersion && keys.some((key) => {
-      const oldVersion = Number(oldVersions[key]?.version || 0)
-      const nextVersion = Number(data.versions[key]?.version || 0)
+      const hasKnownOldVersion = keys.some(
+  (key) => oldVersions[key]
+)
 
-  return oldVersion > 0 && nextVersion > 0 && oldVersion !== nextVersion
-})
+const changedKeys = hasKnownOldVersion
+  ? keys.filter((key) => {
+      const oldVersion = Number(
+        oldVersions[key]?.version || 0
+      )
+      const nextVersion = Number(
+        data.versions[key]?.version || 0
+      )
+
+      return (
+        oldVersion > 0 &&
+        nextVersion > 0 &&
+        oldVersion !== nextVersion
+      )
+    })
+  : []
+
+const hasChanged = changedKeys.length > 0
 
       versionsRef.current = nextVersions
       saveStoredVersions(nextVersions)
 
       if (hasChanged) {
-  const homeKeys = ['home', 'slides', 'banners', 'genres', 'stories']
+  const cacheSections = new Set([
+    'slides',
+    'banners',
+    'genres',
+    'stories',
+  ])
 
-  if (keys.some((key) => homeKeys.includes(key))) {
-    await clearHomeCache()
-  }
+  await Promise.all(
+    changedKeys
+      .filter((key) => cacheSections.has(key))
+      .map((key) =>
+        clearHomeCacheSection(key)
+      )
+  )
 
   window.location.reload()
 }
