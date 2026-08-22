@@ -267,6 +267,36 @@ export async function deleteHomeCache(key) {
   }
 }
 
+export async function clearHomeCacheSection(section) {
+  const targetSection = normalizeText(section)
+
+  if (!targetSection) return
+
+  let rows = []
+
+  try {
+    rows =
+      (await runHomeCacheTransaction(
+        'readonly',
+        (store) => store.getAll()
+      )) || []
+  } catch {
+    rows = [...memoryFallback.values()]
+  }
+
+  const keys = rows
+    .map((item) => String(item?.key || ''))
+    .filter(Boolean)
+    .filter(
+      (key) =>
+        key.split(':')[2] === targetSection
+    )
+
+  await Promise.all(
+    keys.map((key) => deleteHomeCache(key))
+  )
+}
+
 export async function clearHomeCache() {
   memoryFallback.clear()
 
