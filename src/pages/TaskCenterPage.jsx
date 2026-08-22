@@ -700,7 +700,7 @@ function RewardChestPopup({ reward, onClaim }) {
           <span className="absolute h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(255,230,115,0.35)_0%,rgba(255,184,0,0.12)_42%,rgba(255,184,0,0)_70%)]" />
 
           <img
-            src="/assets/Task%20Center/Chest/chest-open.png?v=2"
+            src="/assets/Task%20Center/Chest/chest-open.png?v=3"
             alt="Opened Reward Chest"
             className="shadowChestOpen relative z-10 h-[220px] w-[300px] object-contain drop-shadow-[0_20px_28px_rgba(0,0,0,0.38)]"
           />
