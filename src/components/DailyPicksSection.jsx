@@ -437,12 +437,12 @@ export default function DailyPicksSection({
           await Promise.all([
             fetch(
               addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=48&sort=discover_more${storyTypeQuery}`
+                `${API_BASE_URL}/api/public/stories?limit=24&sort=discover_more${storyTypeQuery}`
               )
             ),
             fetch(
               addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=100&sort=episode_updated${storyTypeQuery}`
+                `${API_BASE_URL}/api/public/stories?limit=24&sort=episode_updated${storyTypeQuery}`
               )
             ),
           ])
