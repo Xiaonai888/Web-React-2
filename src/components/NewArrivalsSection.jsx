@@ -27,7 +27,6 @@ function formatCompactNumber(value) {
   return String(number)
 }
 
-
 function normalizeStory(story, index = 0) {
   const badge = getStoryBadge(story)
 
@@ -148,7 +147,7 @@ export default function NewArrivalsSection({
 
         const response = await fetch(
           addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=48&sort=latest${storyTypeQuery}`
+            `${API_BASE_URL}/api/public/stories?limit=24&sort=latest${storyTypeQuery}`
           )
         )
 
@@ -177,8 +176,8 @@ export default function NewArrivalsSection({
               Number(story.total_episodes || 0) >= 1
           )
           .filter(
-  (story) => getStoryBadge(story) !== 'end'
-)
+            (story) => getStoryBadge(story) !== 'end'
+          )
           .map(normalizeStory)
           .slice(0, 12)
 
