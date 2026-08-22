@@ -10,16 +10,21 @@ import { installReaderPresenceTracking } from './utils/installReaderPresenceTrac
 installApiAuthFetch()
 installPaidContentRequirementFetch()
 installReaderPresenceTracking()
+
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
   window.__shadowInstallPrompt = event
   window.dispatchEvent(new Event('shadow-install-ready'))
 })
+
 window.addEventListener('appinstalled', () => {
   window.__shadowInstallPrompt = null
   window.dispatchEvent(new Event('shadow-app-installed'))
 })
-const APP_UPDATE_CHECK_INTERVAL_MS = 60000
+
+const APP_UPDATE_MIN_CHECK_GAP_MS = 60 * 1000
+const APP_UPDATE_POLL_INTERVAL_MS = 5 * 60 * 1000
+
 let appUpdateCheckRunning = false
 let lastAppUpdateCheckAt = 0
 
@@ -28,7 +33,10 @@ async function checkForAppUpdate({ force = false } = {}) {
 
   const now = Date.now()
 
-  if (!force && now - lastAppUpdateCheckAt < APP_UPDATE_CHECK_INTERVAL_MS) {
+  if (
+    !force &&
+    now - lastAppUpdateCheckAt < APP_UPDATE_MIN_CHECK_GAP_MS
+  ) {
     return
   }
 
@@ -46,7 +54,11 @@ async function checkForAppUpdate({ force = false } = {}) {
     const remoteVersion = String(data?.version || '')
     const currentVersion = String(__APP_BUILD_VERSION__ || '')
 
-    if (remoteVersion && currentVersion && remoteVersion !== currentVersion) {
+    if (
+      remoteVersion &&
+      currentVersion &&
+      remoteVersion !== currentVersion
+    ) {
       window.location.reload()
     }
   } catch {
@@ -59,7 +71,8 @@ async function checkForAppUpdate({ force = false } = {}) {
 const LEGACY_SW_RESET_VERSION = '20260818-1'
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations()
+  navigator.serviceWorker
+    .getRegistrations()
     .then(async (registrations) => {
       if (!registrations.length) return
 
@@ -75,8 +88,12 @@ if ('serviceWorker' in navigator) {
     })
     .catch(() => {})
 }
+
 window.addEventListener('load', () => {
-  window.setTimeout(() => checkForAppUpdate({ force: true }), 1200)
+  window.setTimeout(
+    () => checkForAppUpdate({ force: true }),
+    1200
+  )
 })
 
 window.addEventListener('focus', () => {
@@ -97,7 +114,7 @@ window.setInterval(() => {
   if (document.visibilityState === 'visible') {
     checkForAppUpdate({ force: true })
   }
-}, APP_UPDATE_CHECK_INTERVAL_MS)
+}, APP_UPDATE_POLL_INTERVAL_MS)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
