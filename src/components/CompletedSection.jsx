@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  const COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
+  
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -87,56 +97,108 @@ export default function CompletedSection() {
   const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchCompletedStories() {
-      try {
+  async function loadCompletedStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'completed',
+        sort: 'latest',
+        limit: 12,
+        story_status: 'completed',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: COMPLETED_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks && !ignore) {
+      setBooks(cached.data)
+      setLoadFailed(false)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks && !ignore) {
         setLoading(true)
+      }
+
+      if (!ignore) {
         setLoadFailed(false)
+      }
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=12&sort=latest&story_status=Completed`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=12&sort=latest&story_status=Completed`
         )
-        const data = await response.json().catch(() => ({}))
+      )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load completed stories')
-        }
+      const data = await response.json().catch(() => ({}))
 
-        if (ignore) return
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            'Failed to load completed stories'
+        )
+      }
 
-        const completedBooks = (data.stories || [])
-          .filter((story) => Number(story.total_episodes || 0) >= 1)
-          .filter(
-            (story) =>
-              Boolean(story.is_completed) ||
-              String(story.story_status || '').trim().toLowerCase() === 'completed'
-          )
-          .map(normalizeStory)
-          .slice(0, 12)
+      const completedBooks = (data.stories || [])
+        .filter(
+          (story) =>
+            Number(story.total_episodes || 0) >= 1
+        )
+        .filter(
+          (story) =>
+            Boolean(story.is_completed) ||
+            String(story.story_status || '')
+              .trim()
+              .toLowerCase() === 'completed'
+        )
+        .map(normalizeStory)
+        .slice(0, 12)
 
-        setBooks(completedBooks)
-      } catch (error) {
-        console.error('CompletedSection fetch error:', error)
+      if (ignore) return
 
-        if (!ignore) {
-          setLoadFailed(true)
-          setBooks([])
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      setBooks(completedBooks)
+      setLoadFailed(false)
+
+      await saveHomeCache(cacheKey, completedBooks, {
+        maxAgeMs: COMPLETED_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'CompletedSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedBooks) {
+        setLoadFailed(true)
+        setBooks([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchCompletedStories()
+  loadCompletedStories()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
-
+  return () => {
+    ignore = true
+  }
+}, [])
   const handleMouseDown = (event) => {
     const container = scrollRef.current
     if (!container) return
