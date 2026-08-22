@@ -3668,8 +3668,27 @@ const removeYouTubeVideo = () => {
       return
     }
 
-    insertHtmlAtSelection('<br>')
-    return
+    const selection = window.getSelection()
+const range = selection?.rangeCount ? selection.getRangeAt(0) : null
+
+if (!range || !event.currentTarget.contains(range.commonAncestorContainer)) return
+
+recordEditorSnapshot(event.currentTarget.innerHTML)
+resetEditorHistoryGrouping()
+
+const breakNode = document.createElement('br')
+range.deleteContents()
+range.insertNode(breakNode)
+range.setStartAfter(breakNode)
+range.collapse(true)
+
+selection.removeAllRanges()
+selection.addRange(range)
+savedSelectionRef.current = range.cloneRange()
+
+setContent(event.currentTarget.innerHTML)
+markUnsaved()
+return
   }
 
   if (!(event.ctrlKey || event.metaKey) || event.altKey) return
