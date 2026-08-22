@@ -821,125 +821,61 @@ export default function TaskCenterPage() {
   }
 
   async function loadTaskCenter(options = {}) {
-    const silent = Boolean(options.silent)
+  const silent = Boolean(options.silent)
 
-    if (!token) {
-      if (!silent) setLoading(false)
-      setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
-      setCheckIn(null)
-      setRewardChest(null)
-      setReadingReward(null)
-      setReadingMissions([])
-      setDailyVoteReward(null)
+  if (!token) {
+    if (!silent) setLoading(false)
+    setWallet({ coins: 0, diamonds: 0, vouchers: 0 })
+    setCheckIn(null)
+    setRewardChest(null)
+    setReadingReward(null)
+    setReadingMissions([])
+    setDailyVoteReward(null)
+    return
+  }
+
+  try {
+    if (!silent) setLoading(true)
+    setMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/api/tasks/overview`, {
+      headers: getHeaders(),
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (response.status === 401 || response.status === 403) {
+      clearReaderSession()
+      setToast('Please log in again')
+      navigate('/login')
       return
     }
 
-    try {
-      if (!silent) setLoading(true)
-      setMessage('')
-
-      const [walletResponse, checkInResponse, chestResponse, readingResponse, missionResponse] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/api/purchase/wallet`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/tasks/check-in`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/tasks/reward-chest`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/tasks/reading-reward`, { headers: getHeaders() }),
-        fetch(`${API_BASE_URL}/api/tasks/reading-missions`, { headers: getHeaders() }),
-      ])
-
-      if (walletResponse.status === 'fulfilled') {
-        const walletData = await walletResponse.value.json().catch(() => ({}))
-
-        if (walletResponse.value.status === 401 || walletResponse.value.status === 403) {
-          clearReaderSession()
-          setToast('Please log in again')
-          navigate('/login')
-          return
-        }
-
-        if (walletResponse.value.ok && walletData.ok && walletData.wallet) {
-          setWallet({
-            coins: Number(walletData.wallet.coin_balance ?? walletData.wallet.gem_balance ?? 0),
-            diamonds: Number(walletData.wallet.diamond_balance ?? 0),
-            vouchers: Number(walletData.wallet.voucher_balance ?? 0),
-          })
-        }
-      }
-
-      if (checkInResponse.status === 'fulfilled') {
-        const checkInData = await checkInResponse.value.json().catch(() => ({}))
-
-        if (checkInResponse.value.status === 401 || checkInResponse.value.status === 403) {
-          clearReaderSession()
-          setToast('Please log in again')
-          navigate('/login')
-          return
-        }
-
-        if (checkInResponse.value.ok && checkInData.ok) {
-          setCheckIn(checkInData.check_in || null)
-
-          if (checkInData.wallet) {
-            setWallet({
-              coins: Number(checkInData.wallet.coin_balance ?? checkInData.wallet.gem_balance ?? 0),
-              diamonds: Number(checkInData.wallet.diamond_balance ?? 0),
-              vouchers: Number(checkInData.wallet.voucher_balance ?? 0),
-            })
-          }
-        }
-      }
-
-      if (chestResponse.status === 'fulfilled') {
-        const chestData = await chestResponse.value.json().catch(() => ({}))
-
-        if (chestResponse.value.status === 401 || chestResponse.value.status === 403) {
-          clearReaderSession()
-          setToast('Please log in again')
-          navigate('/login')
-          return
-        }
-
-        if (chestResponse.value.ok && chestData.ok && chestData.chest) {
-          setRewardChest(chestData.chest)
-        }
-      }
-
-      if (readingResponse.status === 'fulfilled') {
-        const readingData = await readingResponse.value.json().catch(() => ({}))
-
-        if (readingResponse.value.status === 401 || readingResponse.value.status === 403) {
-          clearReaderSession()
-          setToast('Please log in again')
-          navigate('/login')
-          return
-        }
-
-        if (readingResponse.value.ok && readingData.ok && readingData.reading_reward) {
-          setReadingReward(readingData.reading_reward)
-        }
-      }
-
-      if (missionResponse.status === 'fulfilled') {
-        const missionData = await missionResponse.value.json().catch(() => ({}))
-
-        if (missionResponse.value.status === 401 || missionResponse.value.status === 403) {
-          clearReaderSession()
-          setToast('Please log in again')
-          navigate('/login')
-          return
-        }
-
-        if (missionResponse.value.ok && missionData.ok) {
-          setReadingMissions(normalizeReadingMissionList(missionData.missions))
-        }
-      }
-
-      await refreshDailyVoteReward()
-    } catch {
-      setToast('Could not load rewards')
-    } finally {
-      if (!silent) setLoading(false)
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.message || 'Failed to load Task Center')
     }
+
+    if (data.wallet) {
+      setWallet({
+        coins: Number(data.wallet.coin_balance ?? data.wallet.gem_balance ?? 0),
+        diamonds: Number(data.wallet.diamond_balance ?? 0),
+        vouchers: Number(data.wallet.voucher_balance ?? 0),
+      })
+    }
+
+    setCheckIn(data.check_in || null)
+    setRewardChest(data.chest || null)
+    setReadingReward(data.reading_reward || null)
+    setReadingMissions(normalizeReadingMissionList(data.missions))
+    setDailyVoteReward(data.daily_vote_reward || null)
+  } catch (error) {
+    console.error('LOAD TASK CENTER OVERVIEW ERROR:', error)
+    setToast('Could not load rewards')
+  } finally {
+    if (!silent) setLoading(false)
   }
+}
+
 
   async function fetchTaskCenterVersion() {
   const response = await fetch(`${API_BASE_URL}/api/task-center/public/version`, {
