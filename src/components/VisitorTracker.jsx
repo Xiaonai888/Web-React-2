@@ -162,12 +162,25 @@ async function readResponse(response) {
 export default function VisitorTracker() {
   const location = useLocation()
   const [debugState, setDebugState] = useState(null)
-    useEffect(() => {
+  useEffect(() => {
     if (!hasReaderAccount()) {
       return undefined
     }
 
+    let lastPresenceAt = 0
+
     const updatePresence = async () => {
+      const now = Date.now()
+
+      if (
+        document.visibilityState !== 'visible' ||
+        now - lastPresenceAt < 30_000
+      ) {
+        return
+      }
+
+      lastPresenceAt = now
+
       try {
         await touchChatPresence()
       } catch {
@@ -179,7 +192,7 @@ export default function VisitorTracker() {
 
     const intervalId = window.setInterval(
       updatePresence,
-      45000
+      90000
     )
 
     const handleVisibilityChange = () => {
@@ -210,7 +223,7 @@ export default function VisitorTracker() {
         handleVisibilityChange
       )
     }
-  }, [location.pathname])
+  }, [])
 
 
   useEffect(() => {
