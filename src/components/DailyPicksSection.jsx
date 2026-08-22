@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { loadHomeDailyPicksSource } from '../services/homeDailyPicksData'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -423,79 +423,41 @@ export default function DailyPicksSection({
   useEffect(() => {
     let ignore = false
 
+      useEffect(() => {
+    let ignore = false
+
+    function applySourceStories(sourceStories) {
+      if (ignore) return
+
+      const dailyStories = selectDailyStories(
+        sourceStories,
+        6,
+        rotationSeed
+      )
+
+      setStories(
+        dailyStories.map(normalizeStory)
+      )
+    }
+
     async function fetchDailyPicks() {
       try {
         setLoading(true)
 
-        const storyTypeQuery = normalizedStoryType
-          ? `&story_type=${encodeURIComponent(
-              normalizedStoryType
-            )}`
-          : ''
+        const sourceStories =
+          await loadHomeDailyPicksSource({
+            apiBaseUrl: API_BASE_URL,
+            storyType: normalizedStoryType,
+            onCachedStories: (cachedStories) => {
+              applySourceStories(cachedStories)
 
-        const [discoverResponse, updatedResponse] =
-          await Promise.all([
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=24&sort=discover_more${storyTypeQuery}`
-              )
-            ),
-            fetch(
-              addStoryLanguageParam(
-                `${API_BASE_URL}/api/public/stories?limit=24&sort=episode_updated${storyTypeQuery}`
-              )
-            ),
-          ])
+              if (!ignore) {
+                setLoading(false)
+              }
+            },
+          })
 
-        const [discoverData, updatedData] =
-          await Promise.all([
-            discoverResponse.json().catch(() => ({})),
-            updatedResponse.json().catch(() => ({})),
-          ])
-
-        if (
-          !discoverResponse.ok ||
-          discoverData.ok === false
-        ) {
-          throw new Error(
-            discoverData.message ||
-            'Failed to load discover daily picks'
-          )
-        }
-
-        if (
-          !updatedResponse.ok ||
-          updatedData.ok === false
-        ) {
-          throw new Error(
-            updatedData.message ||
-            'Failed to load updated daily picks'
-          )
-        }
-
-        if (!ignore) {
-          const sourceStories = [
-            ...(discoverData.stories || []),
-            ...(updatedData.stories || []),
-          ].filter(
-            (story) =>
-              !normalizedStoryType ||
-              String(story?.story_type || '')
-                .trim()
-                .toLowerCase() ===
-                normalizedStoryType
-          )
-
-          const dailyStories = selectDailyStories(
-            sourceStories,
-            6,
-            rotationSeed
-          )
-
-          setStories(
-            dailyStories.map(normalizeStory)
-          )
-        }
+        applySourceStories(sourceStories)
       } catch (error) {
         console.error(
           'DailyPicksSection fetch error:',
@@ -518,6 +480,7 @@ export default function DailyPicksSection({
       ignore = true
     }
   }, [normalizedStoryType, rotationSeed])
+
 
   if (loading) {
     return <LoadingGrid />
