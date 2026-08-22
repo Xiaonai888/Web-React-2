@@ -421,10 +421,7 @@ export default function DailyPicksSection({
   }, [])
 
   useEffect(() => {
-    let ignore = false
-
-      useEffect(() => {
-    let ignore = false
+  let ignore = false
 
     function applySourceStories(sourceStories) {
       if (ignore) return
