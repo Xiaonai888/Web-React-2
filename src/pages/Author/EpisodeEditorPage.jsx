@@ -4670,7 +4670,7 @@ releaseOption={releaseOption}
                   <div>
                     <h2 className="text-[15px] font-extrabold text-[#111827]">Manga Pages</h2>
                     <p className="mt-1 text-[11px] leading-5 text-[#8d94a1]">
-                      Choose up to 10 images each time. Maximum 2 MB per image and 100 pages per episode.
+                      Choose up to 30 images each time. Maximum 2 MB per image and 100 pages per episode.
                     </p>
                   </div>
                   <div className="shrink-0 rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
@@ -4698,7 +4698,7 @@ releaseOption={releaseOption}
                     <div className="mt-3 text-[13px] font-extrabold text-[#111827]">
                       {mangaUploadPending ? 'Uploading pages...' : 'Drop or Add Manga Pages'}
                     </div>
-                    <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, WebP, HEIC or HEIF · Up to 10 each time</div>
+                    <div className="mt-1 text-[11px] text-[#8d94a1]">JPG, PNG, WebP, HEIC or HEIF · Up to 30 each time</div>
                     <input
                       type="file"
                       accept="image/*,.heic,.heif"
