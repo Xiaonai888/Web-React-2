@@ -17,6 +17,11 @@ import FanPicksSection from '../components/FanPicksSection'
 import NotificationPage from './NotificationPage'
 import EmbeddedGenreRouter from './Genre/EmbeddedGenreRouter'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const SHOW_SHADOW_EXCLUSIVE = false
 const STORY_SECTION_TITLES = ['Shadow Spotlight', 'Continue Reading', 'Daily Picks', 'Trending Now', 'Update Today', "Editor's Weekly Picks", 'New Arrivals', 'Top Novel', 'Event & Perks Hub', 'You Might Like']
@@ -26,6 +31,7 @@ const API_URL =
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+const HOME_SLIDES_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const fallbackGenreTabs = [
   { label: 'Today', slug: 'today', is_locked: true },
@@ -384,27 +390,68 @@ useEffect(() => {
     fetchGenreTabs()
   }, [])
 
-  useEffect(() => {
-    async function fetchSlides() {
-      try {
-        const res = await fetch(`${API_URL}/api/slides?section_key=${slideSectionKey}`)
-        const data = await res.json()
+ useEffect(() => {
+  let alive = true
 
-        if (!res.ok || !data.ok) {
-          throw new Error(data.message || 'Failed to fetch slides')
-        }
+  async function loadSlides() {
+    const cacheKey = getHomeCacheKey({
+      section: 'slides',
+      params: { section_key: slideSectionKey },
+    })
 
-        setSlides(data.slides || [])
-      } catch (error) {
-        console.error('Fetch home slides error:', error)
-        setSlides([])
-      } finally {
-        setSlidesLoading(false)
-      }
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: HOME_SLIDES_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedSlides = Array.isArray(cached?.data)
+
+    if (hasCachedSlides && alive) {
+      setSlides(cached.data)
+      setSlidesLoading(false)
     }
 
-        fetchSlides()
-  }, [slideSectionKey])
+    if (cached?.isFresh && hasCachedSlides) return
+
+    try {
+      const res = await fetch(
+        `${API_URL}/api/slides?section_key=${slideSectionKey}`
+      )
+      const data = await res.json()
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || 'Failed to fetch slides')
+      }
+
+      const nextSlides = Array.isArray(data.slides)
+        ? data.slides
+        : []
+
+      if (!alive) return
+
+      setSlides(nextSlides)
+
+      await saveHomeCache(cacheKey, nextSlides, {
+        maxAgeMs: HOME_SLIDES_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error('Fetch home slides error:', error)
+
+      if (alive && !hasCachedSlides) {
+        setSlides([])
+      }
+    } finally {
+      if (alive) setSlidesLoading(false)
+    }
+  }
+
+  setSlidesLoading(true)
+  loadSlides()
+
+  return () => {
+    alive = false
+  }
+}, [slideSectionKey])
 
   useEffect(() => {
   if (typeof onReady !== 'function') return undefined
