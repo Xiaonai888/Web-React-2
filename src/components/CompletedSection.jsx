@@ -11,11 +11,12 @@ import {
 } from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  const COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
-  
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 function normalizeStory(story, index = 0) {
   return {
