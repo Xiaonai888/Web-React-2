@@ -3286,51 +3286,43 @@ return true
   }
 
   useEffect(() => {
-    if (!hasUnsavedChanges || pageLoading) {
+    if (
+      !hasUnsavedChanges ||
+      pageLoading ||
+      localSaveInFlightRef.current ||
+      localDraftRevisionRef.current === localSavedRevisionRef.current ||
+      localSaveSeconds <= 0
+    ) {
       return undefined
     }
 
-    if (localSaveTimerRef.current) {
-      window.clearTimeout(localSaveTimerRef.current)
-    }
-
     const timer = window.setTimeout(() => {
-      saveCurrentLocalDraft()
-    }, LOCAL_AUTOSAVE_DELAY_MS)
+      setLocalSaveSeconds((current) => Math.max(0, current - 1))
+    }, 1000)
 
-    localSaveTimerRef.current = timer
-
-    return () => {
-      window.clearTimeout(timer)
-
-      if (localSaveTimerRef.current === timer) {
-        localSaveTimerRef.current = null
-      }
-    }
-  }, [
-    content,
-    currentEpisodeId,
-    editEpisodeId,
-    episodeAdult,
-    episodeFree,
-    episodeTitle,
-    episodeCover,
-    hasUnsavedChanges,
-    mangaPages,
-    pageLoading,
-    saveCurrentLocalDraft,
-    storyId,
-    storyType,
-    youtubeVideo,
-  ])
+    return () => window.clearTimeout(timer)
+  }, [hasUnsavedChanges, localSaveSeconds, pageLoading, saveStatus])
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      saveCurrentLocalDraft()
-    }, LOCAL_AUTOSAVE_MAX_INTERVAL_MS)
+    if (
+      !hasUnsavedChanges ||
+      pageLoading ||
+      localSaveSeconds !== 0 ||
+      localSaveInFlightRef.current ||
+      localDraftRevisionRef.current === localSavedRevisionRef.current
+    ) {
+      return
+    }
 
-    return () => window.clearInterval(timer)
-  }, [saveCurrentLocalDraft])
+    saveCurrentLocalDraft().finally(() => {
+      setLocalSaveSeconds(LOCAL_AUTOSAVE_INTERVAL_SECONDS)
+    })
+  }, [
+    hasUnsavedChanges,
+    localSaveSeconds,
+    pageLoading,
+    saveCurrentLocalDraft,
+  ])
 
   const handleServerCheckpoint = async () => {
     const targetEpisodeId = currentEpisodeId || editEpisodeId
@@ -3443,11 +3435,6 @@ return true
 
   const handleDiscard = async () => {
     setShowExitModal(false)
-
-    if (localSaveTimerRef.current) {
-      window.clearTimeout(localSaveTimerRef.current)
-      localSaveTimerRef.current = null
-    }
 
     if (localSavePromiseRef.current) {
       await localSavePromiseRef.current.catch(() => {})
@@ -3865,21 +3852,10 @@ releaseOption={releaseOption}
                 : `${characterCount.toLocaleString()} / ${MIN_CHARACTERS.toLocaleString()} characters`}
             </div>
             <div className="mt-0.5 text-[10px] text-[#8d94a1]">
-              {serverCheckpointSaving
-                ? 'Backing up to server...'
-                : hasUnsavedChanges
-                  ? saveStatus === 'Local save failed'
-                    ? 'Local save failed'
-                    : hasServerEpisode
-                      ? `${
-                          saveStatus === 'Saved locally'
-                            ? 'Saved locally'
-                            : 'Saving locally...'
-                        } · Server backup in ${serverCheckpointMinutes}m`
-                      : saveStatus === 'Saved locally'
-                        ? 'Saved locally'
-                        : 'Saving locally...'
-                  : saveStatus}
+              {hasUnsavedChanges &&
+              localDraftRevisionRef.current !== localSavedRevisionRef.current
+                ? `Save ${localSaveSeconds}s`
+                : 'Saved'}
             </div>
           </div>
 
