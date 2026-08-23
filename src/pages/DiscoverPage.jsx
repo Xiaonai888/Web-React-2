@@ -406,6 +406,50 @@ async function fetchShadowMallStorySaleStatuses(
   return data.statuses || {}
 }
 
+async function fetchShadowMallPromotionSocialStatuses(
+  token,
+  promotions
+) {
+  const ids = [
+    ...new Set(
+      (promotions || [])
+        .map((item) => item?.id)
+        .filter(Boolean)
+        .map(String)
+    ),
+  ].slice(0, 100)
+
+  if (!token || !ids.length) {
+    return null
+  }
+
+  const params = new URLSearchParams({
+    ids: ids.join(','),
+  })
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/shadow-mall/promotions/social-statuses?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    }
+  )
+
+  const data = await response
+    .json()
+    .catch(() => ({}))
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(
+      data.message ||
+        'Failed to load promotion social statuses'
+    )
+  }
+
+  return data.statuses || {}
+}
 
 async function setFollowedPostReaction(
   token,
@@ -1958,18 +2002,33 @@ export default function DiscoverPage() {
       )
 
     let statuses = null
+let socialStatuses = null
 
-    if (token) {
-      try {
-        statuses =
-          await fetchShadowMallStorySaleStatuses(
-            token,
-            visiblePromotions
-          )
-      } catch {
-        statuses = null
-      }
-    }
+if (token) {
+  const [
+    storyResult,
+    socialResult,
+  ] = await Promise.allSettled([
+    fetchShadowMallStorySaleStatuses(
+      token,
+      visiblePromotions
+    ),
+    fetchShadowMallPromotionSocialStatuses(
+      token,
+      visiblePromotions
+    ),
+  ])
+
+  statuses =
+    storyResult.status === 'fulfilled'
+      ? storyResult.value
+      : null
+
+  socialStatuses =
+    socialResult.status === 'fulfilled'
+      ? socialResult.value
+      : null
+}
 
     if (!alive) return
 
@@ -1981,21 +2040,33 @@ export default function DiscoverPage() {
           )
 
           const hasStatus =
-            statuses &&
-            Object.prototype.hasOwnProperty.call(
-              statuses,
-              key
-            )
+  statuses &&
+  Object.prototype.hasOwnProperty.call(
+    statuses,
+    key
+  )
 
-          return hasStatus
-            ? {
-                ...promotion,
-                story_sale_status:
-                  statuses[key],
-                story_sale_status_loaded:
-                  true,
-              }
-            : promotion
+const hasSocialStatus =
+  socialStatuses &&
+  Object.prototype.hasOwnProperty.call(
+    socialStatuses,
+    key
+  )
+
+return {
+  ...promotion,
+  ...(hasStatus
+    ? {
+        story_sale_status:
+          statuses[key],
+        story_sale_status_loaded:
+          true,
+      }
+    : {}),
+  ...(hasSocialStatus
+    ? socialStatuses[key]
+    : {}),
+}
         }
       )
     )
