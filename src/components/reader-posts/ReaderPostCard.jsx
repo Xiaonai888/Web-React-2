@@ -1375,7 +1375,7 @@ function StandardReaderPostCard({
   const [echoCount, setEchoCount] =
     useState(Number(post?.echo_count || 0))
   const [isSaved, setIsSaved] =
-    useState(false)
+  useState(Boolean(post?.is_saved))
   const [saveBusy, setSaveBusy] =
     useState(false)
   const [followBusy, setFollowBusy] =
@@ -1452,6 +1452,12 @@ function StandardReaderPostCard({
   const isLegacyEcho =
     isEchoPost &&
     !post?.reader_post_id
+  const reactionStateLoaded =
+  Boolean(post?.reaction_state_loaded)
+const savedStateLoaded =
+  Boolean(post?.saved_state_loaded)
+const echoStateLoaded =
+  Boolean(post?.echo_state_loaded)
 
   const postText = String(
     post?.content || ''
@@ -1557,22 +1563,22 @@ const safeSelectedPhotoIndex =
     )
   }, [post?.comment_count])
 
-  useEffect(() => {
-    if (
-      echoShareSource.type &&
-      echoShareSource.id
-    ) {
-      return
-    }
-
+ useEffect(() => {
+  if (
+    echoStateLoaded ||
+    !echoShareSource.type ||
+    !echoShareSource.id
+  ) {
     setEchoCount(
       Number(post?.echo_count || 0)
     )
-  }, [
-    echoShareSource.id,
-    echoShareSource.type,
-    post?.echo_count,
-  ])
+  }
+}, [
+  echoShareSource.id,
+  echoShareSource.type,
+  echoStateLoaded,
+  post?.echo_count,
+])
 
   useEffect(() => {
     const sourceType = String(
@@ -1673,7 +1679,16 @@ const safeSelectedPhotoIndex =
       handleEchoV2Updated
     )
 
-    loadSourceEchoCount()
+    if (!echoStateLoaded) {
+      }, [
+  echoShareSource.id,
+  echoShareSource.type,
+  echoStateLoaded,
+])
+  loadSourceEchoCount()
+}
+
+    
 
     return () => {
       ignore = true
@@ -1687,6 +1702,11 @@ const safeSelectedPhotoIndex =
     echoShareSource.id,
     echoShareSource.type,
   ])
+
+if (savedStateLoaded) {
+  setIsSaved(Boolean(post?.is_saved))
+  return undefined
+}
 
   useEffect(() => {
     const token = getAuthToken()
@@ -1721,7 +1741,11 @@ const safeSelectedPhotoIndex =
       ignore = true
       controller.abort()
     }
-  }, [post?.id])
+  }, [
+  post?.id,
+  post?.is_saved,
+  savedStateLoaded,
+])
 
   useEffect(() => {
     let ignore = false
