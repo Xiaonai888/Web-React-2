@@ -404,48 +404,10 @@ function StoryDetailPanel({ story, onEdit, onAddEpisode }) {
   )
 }
 
-function AuthorInboxButton({ navigate }) {
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  useEffect(() => {
-    let active = true
-
-    async function loadUnreadCount() {
-      const token = getAuthToken()
-
-      if (!token) {
-        if (active) setUnreadCount(0)
-        return
-      }
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/mails/unread-count`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        const data = await response.json().catch(() => ({}))
-
-        if (active && response.ok && data.ok) {
-          setUnreadCount(Number(data.unread_count || 0))
-        }
-      } catch {
-        if (active) setUnreadCount(0)
-      }
-    }
-
-    loadUnreadCount()
-
-    const intervalId = window.setInterval(loadUnreadCount, 30000)
-    window.addEventListener('focus', loadUnreadCount)
-
-    return () => {
-      active = false
-      window.clearInterval(intervalId)
-      window.removeEventListener('focus', loadUnreadCount)
-    }
-  }, [])
-
+function AuthorInboxButton({
+  navigate,
+  unreadCount = 0,
+}) {
   return (
     <button
       type="button"
@@ -463,13 +425,21 @@ function AuthorInboxButton({ navigate }) {
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+        <rect
+          x="3.5"
+          y="5.5"
+          width="17"
+          height="13"
+          rx="1.5"
+        />
         <path d="m4.5 7 7.5 6 7.5-6" />
       </svg>
 
       {unreadCount > 0 ? (
         <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] font-extrabold leading-none text-white ring-2 ring-[#8251e9]">
-          {unreadCount > 99 ? '99+' : unreadCount}
+          {unreadCount > 99
+            ? '99+'
+            : unreadCount}
         </span>
       ) : null}
     </button>
@@ -487,8 +457,11 @@ export default function AuthorDashboardPage() {
   const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [message, setMessage] = useState('')
   const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const [unreadMails, setUnreadMails] = useState(0)
+  const badgeRequestInFlightRef = useRef(false)
+  const lastBadgeRequestAtRef = useRef(0)
   const storiesScrollRef = useRef(null)
-const storiesDragRef = useRef({
+  const storiesDragRef = useRef({
   active: false,
   startX: 0,
   scrollLeft: 0,
@@ -577,31 +550,68 @@ const stopStoriesDrag = () => {
     }
   }
 
-    async function fetchUnreadNotifications() {
-    if (AUTHOR_PREVIEW_ENABLED) return
+    async function fetchDashboardBadges({
+  force = false,
+} = {}) {
+  if (AUTHOR_PREVIEW_ENABLED) return
 
-    const token = getAuthToken()
-    if (!token) return
+  const token = getAuthToken()
+  if (!token) return
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/authors/me/story-notifications?limit=1`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+  const now = Date.now()
 
-      const data = await response.json().catch(() => ({}))
-
-      if (response.ok && data.ok !== false) {
-        setUnreadNotifications(Number(data.unread_count || 0))
-      }
-    } catch {
-      setUnreadNotifications(0)
-    }
+  if (badgeRequestInFlightRef.current) {
+    return
   }
+
+  if (
+    !force &&
+    now - lastBadgeRequestAtRef.current <
+      15000
+  ) {
+    return
+  }
+
+  badgeRequestInFlightRef.current = true
+  lastBadgeRequestAtRef.current = now
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/authors/me/dashboard-badges`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: 'no-store',
+      }
+    )
+
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (
+      !response.ok ||
+      data.ok === false
+    ) {
+      return
+    }
+
+    setUnreadNotifications(
+      Number(
+        data.story_unread_count || 0
+      )
+    )
+
+    setUnreadMails(
+      Number(
+        data.mail_unread_count || 0
+      )
+    )
+  } finally {
+    badgeRequestInFlightRef.current = false
+  }
+}
 
   async function fetchMyStories() {
     if (AUTHOR_PREVIEW_ENABLED) {
@@ -647,20 +657,32 @@ const stopStoriesDrag = () => {
     }
   }
 
-  useEffect(() => {
-    fetchMyAuthorPage()
-    fetchMyStories()
-    fetchUnreadNotifications()
+ useEffect(() => {
+  fetchMyAuthorPage()
+  fetchMyStories()
+  fetchDashboardBadges({
+    force: true,
+  })
 
-    const intervalId = window.setInterval(fetchUnreadNotifications, 30000)
-    window.addEventListener('focus', fetchUnreadNotifications)
+  const intervalId = window.setInterval(
+    fetchDashboardBadges,
+    60000
+  )
 
-    return () => {
-      window.clearInterval(intervalId)
-      window.removeEventListener('focus', fetchUnreadNotifications)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  window.addEventListener(
+    'focus',
+    fetchDashboardBadges
+  )
+
+  return () => {
+    window.clearInterval(intervalId)
+    window.removeEventListener(
+      'focus',
+      fetchDashboardBadges
+    )
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
 
   const stats = useMemo(() => {
     const published = stories.filter((story) => story.rawStatus === 'published').length
@@ -773,7 +795,10 @@ return {
               ) : null}
             </button>
 
-            <AuthorInboxButton navigate={navigate} />
+            <AuthorInboxButton
+  navigate={navigate}
+  unreadCount={unreadMails}
+/>
           </div>
         </div>
 
