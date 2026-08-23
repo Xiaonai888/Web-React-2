@@ -1563,22 +1563,23 @@ const safeSelectedPhotoIndex =
     )
   }, [post?.comment_count])
 
- useEffect(() => {
-  if (
-    echoStateLoaded ||
-    !echoShareSource.type ||
-    !echoShareSource.id
-  ) {
-    setEchoCount(
-      Number(post?.echo_count || 0)
-    )
-  }
-}, [
-  echoShareSource.id,
-  echoShareSource.type,
-  echoStateLoaded,
-  post?.echo_count,
-])
+
+  useEffect(() => {
+    if (
+      echoStateLoaded ||
+      !echoShareSource.type ||
+      !echoShareSource.id
+    ) {
+      setEchoCount(
+        Number(post?.echo_count || 0)
+      )
+    }
+  }, [
+    echoShareSource.id,
+    echoShareSource.type,
+    echoStateLoaded,
+    post?.echo_count,
+  ])
 
   useEffect(() => {
     const sourceType = String(
@@ -1680,15 +1681,8 @@ const safeSelectedPhotoIndex =
     )
 
     if (!echoStateLoaded) {
-      }, [
-  echoShareSource.id,
-  echoShareSource.type,
-  echoStateLoaded,
-])
-  loadSourceEchoCount()
-}
-
-    
+      loadSourceEchoCount()
+    }
 
     return () => {
       ignore = true
@@ -1701,14 +1695,15 @@ const safeSelectedPhotoIndex =
   }, [
     echoShareSource.id,
     echoShareSource.type,
+    echoStateLoaded,
   ])
 
-if (savedStateLoaded) {
-  setIsSaved(Boolean(post?.is_saved))
-  return undefined
-}
-
   useEffect(() => {
+    if (savedStateLoaded) {
+      setIsSaved(Boolean(post?.is_saved))
+      return undefined
+    }
+
     const token = getAuthToken()
     const controller = new AbortController()
     let ignore = false
@@ -1742,12 +1737,16 @@ if (savedStateLoaded) {
       controller.abort()
     }
   }, [
-  post?.id,
-  post?.is_saved,
-  savedStateLoaded,
-])
+    post?.id,
+    post?.is_saved,
+    savedStateLoaded,
+  ])
 
   useEffect(() => {
+    if (reactionStateLoaded) {
+      return undefined
+    }
+
     let ignore = false
     const token = getAuthToken()
 
@@ -1796,7 +1795,10 @@ if (savedStateLoaded) {
     return () => {
       ignore = true
     }
-  }, [post?.id])
+  }, [
+    post?.id,
+    reactionStateLoaded,
+  ])
 
   useEffect(() => {
     return () => {
