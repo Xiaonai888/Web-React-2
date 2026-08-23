@@ -4,7 +4,12 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguag
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  const COMPLETED_PAGE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
+
+const COMPLETED_PAGE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const COMPLETED_TAB_CONFIG = {
   Hot: { sort: 'popular' },
@@ -12,9 +17,6 @@ const COMPLETED_TAB_CONFIG = {
   Fantasy: { sort: 'updated', genre: 'Fantasy' },
   Latest: { sort: 'latest' },
 }
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
 
 const completedTabs = ['Hot', 'Romance', 'Fantasy', 'Latest']
 
