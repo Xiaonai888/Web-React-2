@@ -14,12 +14,14 @@ import EventPerksHubSection from '../components/EventPerksHubSection'
 import YouMightLikeSection from '../components/YouMightLikeSection'
 import StoriesDailyCheckIn from '../components/StoriesDailyCheckIn'
 import NotificationPage from './NotificationPage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+const MANGA_PUBLIC_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const fallbackGenreTabs = [
   { label: 'Today', slug: 'today' },
@@ -87,43 +89,109 @@ export default function MangaPage() {
   }
 
   useEffect(() => {
-    let cancelled = false
+  const controller = new AbortController()
+  let cancelled = false
 
-    async function loadGenres() {
-      try {
-        const response = await fetch(`${API_URL}/api/genres/featured-tabs`)
-        const data = await response.json().catch(() => ({}))
+  function normalizeTabs(rawTabs) {
+    return (Array.isArray(rawTabs) ? rawTabs : [])
+      .map((tab) => ({
+        label: tab.label || tab.genre?.name || 'Genre',
+        slug:
+          tab.slug ||
+          tab.genre?.slug ||
+          String(tab.label || '').toLowerCase(),
+      }))
+      .filter((tab) => tab.label && tab.slug)
+      .slice(0, 12)
+  }
 
-        if (!response.ok || data.ok === false) throw new Error('Failed to load genres')
+  function applyTabs(tabs) {
+    if (cancelled || controller.signal.aborted) return
 
-        const tabs = (data.tabs || [])
-          .map((tab) => ({
-            label: tab.label || tab.genre?.name || 'Genre',
-            slug: tab.slug || tab.genre?.slug || String(tab.label || '').toLowerCase(),
-          }))
-          .filter((tab) => tab.label && tab.slug)
-          .slice(0, 12)
+    if (!tabs.length) {
+      setGenreTabs(fallbackGenreTabs)
+      return
+    }
 
-        if (!cancelled && tabs.length) {
-          const today = tabs.find((tab) => tab.slug === 'today')
-          const otherTabs = tabs.filter((tab) => tab.slug !== 'today')
-          setGenreTabs(
-            today
-              ? [today, ...otherTabs]
-              : [{ label: 'Today', slug: 'today' }, ...otherTabs].slice(0, 12)
-          )
-        }
-      } catch {
-        if (!cancelled) setGenreTabs(fallbackGenreTabs)
+    const today = tabs.find((tab) => tab.slug === 'today')
+    const otherTabs = tabs.filter((tab) => tab.slug !== 'today')
+
+    setGenreTabs(
+      today
+        ? [today, ...otherTabs]
+        : [{ label: 'Today', slug: 'today' }, ...otherTabs].slice(0, 12)
+    )
+  }
+
+  async function loadGenres() {
+    const cacheKey = getHomeCacheKey({
+      section: 'genres',
+      language: 'all',
+      params: {
+        page: 'manga',
+        list: 'featured-tabs',
+        schema: 1,
+      },
+    })
+
+    let hasCachedTabs = false
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (cancelled || controller.signal.aborted) return
+
+    hasCachedTabs = Array.isArray(cached?.data)
+
+    if (hasCachedTabs) {
+      applyTabs(cached.data)
+    }
+
+    if (cached?.isFresh && hasCachedTabs) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/genres/featured-tabs`,
+        { signal: controller.signal }
+      )
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error('Failed to load genres')
+      }
+
+      const tabs = normalizeTabs(data.tabs)
+
+      if (cancelled || controller.signal.aborted) return
+
+      applyTabs(tabs)
+
+      await saveHomeCache(cacheKey, tabs, {
+        maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (
+        error?.name !== 'AbortError' &&
+        !cancelled &&
+        !hasCachedTabs
+      ) {
+        setGenreTabs(fallbackGenreTabs)
       }
     }
+  }
 
-    loadGenres()
+  loadGenres()
 
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  return () => {
+    cancelled = true
+    controller.abort()
+  }
+}, [])
+
 
   useEffect(() => {
     const requestedGenre = String(searchParams.get('genre') || '').trim().toLowerCase()
