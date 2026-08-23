@@ -576,17 +576,17 @@ export default function Me() {
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
   const [storedUser, setStoredUser] = useState(() => getStoredReaderUser())
   const [checkingUser, setCheckingUser] = useState(Boolean(getReaderToken() && !getStoredReaderUser()))
+  const [meSummaryLoaded, setMeSummaryLoaded] = useState(!getReaderToken())
   const [walletBalance, setWalletBalance] = useState({
-  diamonds: 0,
-  gems: 0,
-  vouchers: 0,
-})
+    diamonds: 0,
+    gems: 0,
+    vouchers: 0,
+  })
 
   const token = getReaderToken()
   const isLoggedIn = Boolean(token)
   const isPremium = false
   const tx = (key) => getDisplayText(key)
-
 
   const displayName = storedUser?.name || (isLoggedIn ? 'Reader' : tx('clickToLogin'))
   const avatarUrl = storedUser?.avatar_url || storedUser?.avatarUrl || ''
@@ -597,198 +597,140 @@ export default function Me() {
   const authorPageNotificationCount = Number(authorPage?.notification_count || authorPage?.unread_count || 0)
 
   useEffect(() => {
-  document.body.classList.toggle('settings-popup-open', settingsOpen || profileSwitcherOpen || switchingProfile)
+    document.body.classList.toggle(
+      'settings-popup-open',
+      settingsOpen || profileSwitcherOpen || switchingProfile
+    )
 
-  return () => {
-    document.body.classList.remove('settings-popup-open')
-  }
-}, [settingsOpen, profileSwitcherOpen, switchingProfile])
-
-useEffect(() => {
-  applyTheme(getStoredTheme())
-}, [])
+    return () => {
+      document.body.classList.remove('settings-popup-open')
+    }
+  }, [settingsOpen, profileSwitcherOpen, switchingProfile])
 
   useEffect(() => {
-  let ignore = false
+    applyTheme(getStoredTheme())
+  }, [])
 
-  async function loadInboxUnreadCount() {
-    const currentToken = getReaderToken()
-
-    if (!currentToken) {
-      setInboxUnreadCount(0)
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/mails/unread-count`, {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!ignore && response.ok && data.ok) {
-        setInboxUnreadCount(Number(data.unread_count || 0))
-      }
-    } catch {
-      if (!ignore) setInboxUnreadCount(0)
-    }
-  }
-
-  loadInboxUnreadCount()
-
-  return () => {
-    ignore = true
-  }
-}, [])
-
-  
-useEffect(() => {
-  let ignore = false
-
-  async function loadWalletBalance() {
-    const currentToken = getReaderToken()
-
-    if (!currentToken) {
-      setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/purchase/wallet`, {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!ignore && response.ok && data.ok && data.wallet) {
-        setWalletBalance({
-          diamonds: Number(data.wallet.diamond_balance || 0),
-          gems: Number(data.wallet.gem_balance || 0),
-          vouchers: Number(data.wallet.voucher_balance || 0),
-        })
-      }
-    } catch {
-      if (!ignore) {
-        setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
-      }
-    }
-  }
-
-  loadWalletBalance()
-
-  return () => {
-    ignore = true
-  }
-}, [])
-
-
-useEffect(() => {
-  let ignore = false
-
-  async function loadAuthorPage() {
-    const currentToken = getReaderToken()
-
-    if (!currentToken) {
-      setAuthorPage(null)
-      setCheckingAuthorPage(false)
-      return
-    }
-
-    try {
-      setCheckingAuthorPage(true)
-
-      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      })
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!ignore && response.ok && data.has_author_page && data.author_page) {
-        setAuthorPage(data.author_page)
-      } else if (!ignore) {
-        setAuthorPage(null)
-      }
-    } catch {
-      if (!ignore) setAuthorPage(null)
-    } finally {
-      if (!ignore) setCheckingAuthorPage(false)
-    }
-  }
-
-  loadAuthorPage()
-
-  return () => {
-    ignore = true
-  }
-}, [])
-  
   useEffect(() => {
     let ignore = false
 
-    async function restoreUser() {
+    async function loadMeSummary() {
       const currentToken = syncReaderToken()
       const currentUser = getStoredReaderUser()
 
       if (!currentToken) {
         if (!ignore) {
           setStoredUser(null)
+          setAuthorPage(null)
+          setInboxUnreadCount(0)
+          setWalletBalance({
+            diamonds: 0,
+            gems: 0,
+            vouchers: 0,
+          })
           setCheckingUser(false)
+          setCheckingAuthorPage(false)
+          setMeSummaryLoaded(true)
         }
         return
       }
 
-      if (currentUser) {
-        if (!ignore) {
-          setStoredUser(currentUser)
-          setCheckingUser(false)
-        }
-        return
+      if (!currentUser) {
+        setCheckingUser(true)
       }
+
+      setCheckingAuthorPage(true)
+      setMeSummaryLoaded(false)
 
       try {
-        setCheckingUser(true)
+        const response = await fetch(
+          `${API_BASE_URL}/api/users/me/summary`,
+          {
+            headers: {
+              Authorization: `Bearer ${currentToken}`,
+            },
+            cache: 'no-store',
+          }
+        )
 
-        const response = await fetch(`${API_BASE_URL}/api/users/me`, {
-          headers: {
-            Authorization: `Bearer ${currentToken}`,
-          },
-        })
+        const data = await response
+          .json()
+          .catch(() => ({}))
 
-        const data = await response.json().catch(() => ({}))
-
-        if (response.status === 401 || response.status === 403) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
           clearReaderSession()
+
           if (!ignore) {
             setStoredUser(null)
+            setAuthorPage(null)
+            setInboxUnreadCount(0)
+            setWalletBalance({
+              diamonds: 0,
+              gems: 0,
+              vouchers: 0,
+            })
+            setMeSummaryLoaded(true)
           }
           return
         }
 
-        if (!response.ok || data.ok === false || !data.user) {
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
           return
         }
 
-        saveReaderUser(data.user)
+        if (data.user) {
+          saveReaderUser(data.user)
+        }
 
         if (!ignore) {
-          setStoredUser(data.user)
+          setStoredUser(
+            data.user || currentUser || null
+          )
+          setAuthorPage(
+            data.has_author_page &&
+              data.author_page
+              ? data.author_page
+              : null
+          )
+          setInboxUnreadCount(
+            Number(
+              data.inbox_unread_count || 0
+            )
+          )
+          setWalletBalance({
+            diamonds: Number(
+              data.wallet?.diamond_balance || 0
+            ),
+            gems: Number(
+              data.wallet?.gem_balance ||
+                data.wallet?.coin_balance ||
+                0
+            ),
+            vouchers: Number(
+              data.wallet?.voucher_balance || 0
+            ),
+          })
+          setMeSummaryLoaded(true)
         }
       } catch {
-        if (!ignore) {
-          setStoredUser(currentUser || null)
+        if (!ignore && !currentUser) {
+          setStoredUser(null)
         }
       } finally {
-        if (!ignore) setCheckingUser(false)
+        if (!ignore) {
+          setCheckingUser(false)
+          setCheckingAuthorPage(false)
+        }
       }
     }
 
-    restoreUser()
+    loadMeSummary()
 
     return () => {
       ignore = true
@@ -803,7 +745,6 @@ useEffect(() => {
   const handleAuthorDashboard = async () => {
     if (authorLoading) return
 
-
     const currentToken = getReaderToken()
 
     if (!currentToken) {
@@ -811,25 +752,49 @@ useEffect(() => {
       return
     }
 
+    if (checkingAuthorPage) return
+
+    if (meSummaryLoaded) {
+      navigate(
+        hasAuthorPage
+          ? '/author/dashboard'
+          : '/event'
+      )
+      return
+    }
+
     try {
       setAuthorLoading(true)
 
-      const response = await fetch(`${API_BASE_URL}/api/authors/me`, {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        }
+      )
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-      if (response.status === 401 || response.status === 403) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
         clearReaderSession()
         navigate('/login', { replace: true })
         return
       }
 
-      if (response.ok && data.has_author_page) {
-        setAuthorPage(data.author_page || null)
+      if (
+        response.ok &&
+        data.has_author_page
+      ) {
+        setAuthorPage(
+          data.author_page || null
+        )
         navigate('/author/dashboard')
         return
       }
@@ -841,6 +806,7 @@ useEffect(() => {
       setAuthorLoading(false)
     }
   }
+
 
   const handleOpenProfileArea = () => {
   if (!isLoggedIn) {
