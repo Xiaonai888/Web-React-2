@@ -2940,809 +2940,91 @@ export default function EpisodeEditorPage() {
   }
 
   const processMangaPages = async (entries) => {
-    const token = getAuthToken()
+  const token = getAuthToken()
 
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    await runWithConcurrency(entries, 2, async (entry) => {
-      try {
-        updateMangaPage(entry.id, { status: 'processing', progress: 15, error: '' })
-        const optimized = await optimizeMangaImage(entry.sourceFile)
-        updateMangaPage(entry.id, {
-          status: 'uploading',
-          progress: 60,
-          width: optimized.width,
-          height: optimized.height,
-          fileSize: optimized.fileSize,
-          mimeType: optimized.mimeType,
-        })
-
-        const uploaded = await uploadMangaPageFile({
-          token,
-          file: optimized.file,
-          storyId,
-          pageId: entry.id,
-        })
-
-        updateMangaPage(entry.id, {
-          status: 'done',
-          progress: 100,
-          imageUrl: uploaded.imageUrl,
-          storagePath: uploaded.storagePath,
-          width: optimized.width,
-          height: optimized.height,
-          fileSize: optimized.fileSize,
-          mimeType: optimized.mimeType,
-          error: '',
-        })
-      } catch (error) {
-        updateMangaPage(entry.id, {
-          status: 'error',
-          progress: 0,
-          error: error.message || 'Upload failed',
-        })
-      }
-    })
-  }
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadGenres() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/genres`)
-        const data = await response.json().catch(() => ({}))
-        const names = (data.genres || []).map((item) => item.name).filter(Boolean)
-
-        if (!cancelled && response.ok && names.length) {
-          setGenreOptions(names)
-          setMainGenre((current) => (names.includes(current) ? current : names[0]))
-        }
-      } catch {
-        if (!cancelled) setGenreOptions(FALLBACK_GENRES)
-      }
-    }
-
-    loadGenres()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadPageData() {
-      const token = getAuthToken()
-
-      if (!token) {
-        navigate('/login')
-        return
-      }
-
-      try {
-        setPageLoading(true)
-        setMessage('')
-
-        const storyResponse = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const storyData = await storyResponse.json().catch(() => ({}))
-
-        if (!storyResponse.ok || storyData.ok === false) {
-          throw new Error(storyData.message || 'Failed to load story')
-        }
-
-        const loadedStory = storyData.story || {}
-        const resolvedType = loadedStory.story_type === 'manga' ? 'manga' : 'novel'
-
-        if (!cancelled) {
-          setStoryRecord(loadedStory)
-          setStoryType(resolvedType)
-          setStoryLanguage(loadedStory.story_language || 'Khmer')
-          setMainGenre(loadedStory.main_genre || 'Romance')
-          setStoryTags(Array.isArray(loadedStory.tags) ? loadedStory.tags.slice(0, 6) : [])
-          setStoryUpdateDays(
-            Array.isArray(loadedStory.update_days) ? loadedStory.update_days : []
-          )
-          setStoryStatus(loadedStory.story_status || 'New')
-          setStoryAdult(Boolean(loadedStory.is_adult))
-        }
-
-        if (!isEditMode) return
-
-        const episodeResponse = await fetch(
-          `${API_BASE_URL}/api/stories/${storyId}/episodes/${editEpisodeId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        const episodeData = await episodeResponse.json().catch(() => ({}))
-
-        if (!episodeResponse.ok || episodeData.ok === false) {
-          throw new Error(episodeData.message || 'Failed to load episode')
-        }
-
-        if (cancelled) return
-
-        const episode = episodeData.episode || {}
-        const episodeType = episode.story_type === 'manga' || episodeData.story_type === 'manga' ? 'manga' : resolvedType
-
-        setStoryType(episodeType)
-        setEpisodeTitle(episode.title || '')
-        setEpisodeCover(episode.cover_url || '')
-        setOriginalCover(episode.cover_url || '')
-        setContent(normalizeEpisodeHtml(episode.content || ''))
-        setYoutubeVideo({
-  title: episode.youtube_title || '',
-  url: episode.youtube_video_id
-    ? `https://www.youtube.com/watch?v=${episode.youtube_video_id}`
-    : '',
-})
-        setOldEpisodeStatus(episode.status || 'draft')
-        setEpisodeAdult(Boolean(episode.is_adult))
-        setEpisodeFree(
-          Boolean(episode.is_author_free ?? episode.is_free_published)
-        )
-        setCurrentEpisodeNumber(Number(episode.episode_number || 1))
-        setCoverChanged(false)
-        setMangaPages(
-          (episode.pages || []).map((page, index) => ({
-            id: page.id || `existing-${index}`,
-            previewUrl: page.image_url,
-            imageUrl: page.image_url,
-            storagePath: page.storage_path || null,
-            width: page.width || null,
-            height: page.height || null,
-            fileSize: page.file_size || null,
-            mimeType: page.mime_type || 'image/webp',
-            sourceFile: null,
-            status: 'done',
-            progress: 100,
-            error: '',
-          }))
-        )
-        setSaveStatus('Saved')
-        setHasUnsavedChanges(false)
-      } catch (error) {
-        if (!cancelled) setMessage(error.message || 'Failed to load episode')
-      } finally {
-        if (!cancelled) setPageLoading(false)
-      }
-    }
-
-    loadPageData()
-    return () => {
-      cancelled = true
-    }
-  }, [editEpisodeId, isEditMode, navigate, storyId])
-
-  useEffect(() => {
-    if (pageLoading) return undefined
-
-    const key = getEpisodeLocalDraftKey(storyId, editEpisodeId || '')
-
-    if (localRecoveryCheckedRef.current === key) {
-      return undefined
-    }
-
-    localRecoveryCheckedRef.current = key
-    let cancelled = false
-
-    const checkLocalDraft = async () => {
-      try {
-        const draft = await loadEpisodeLocalDraft(key)
-        if (cancelled || !draft) return
-
-        const draftType = draft.storyType === 'manga' ? 'manga' : 'novel'
-        const currentType = storyType === 'manga' ? 'manga' : 'novel'
-        const draftYoutube = draft.youtubeVideo || {}
-
-        const currentPageData =
-          currentType === 'manga'
-            ? mangaPages
-                .filter((page) => page.status === 'done' && page.imageUrl)
-                .map((page) => ({
-                  imageUrl: page.imageUrl,
-                  storagePath: page.storagePath || null,
-                  width: page.width || null,
-                  height: page.height || null,
-                  fileSize: page.fileSize || null,
-                  mimeType: page.mimeType || 'image/webp',
-                }))
-            : []
-
-        const draftPageData =
-          draftType === 'manga'
-            ? (draft.mangaPages || []).map((page) => ({
-                imageUrl: page.imageUrl,
-                storagePath: page.storagePath || null,
-                width: page.width || null,
-                height: page.height || null,
-                fileSize: page.fileSize || null,
-                mimeType: page.mimeType || 'image/webp',
-              }))
-            : []
-
-        const hasDifference =
-          draftType !== currentType ||
-          String(draft.title || '') !== String(episodeTitle || '') ||
-          String(draft.episodeCover || '') !== String(episodeCover || '') ||
-          (draftType === 'novel' &&
-            sanitizeEpisodeHtml(draft.content || '') !==
-              sanitizeEpisodeHtml(content || '')) ||
-          String(draftYoutube.title || '') !== String(youtubeVideo.title || '') ||
-          String(draftYoutube.url || '') !== String(youtubeVideo.url || '') ||
-          Boolean(draft.episodeAdult) !== Boolean(episodeAdult) ||
-          Boolean(draft.episodeFree) !== Boolean(episodeFree) ||
-          JSON.stringify(draftPageData) !== JSON.stringify(currentPageData)
-
-        if (!hasDifference) {
-          await deleteEpisodeLocalDraft(key)
-          return
-        }
-
-        if (cancelled) return
-        setLocalRecoveryDraft(draft)
-        setLocalRecoveryOpen(true)
-      } catch {
-      }
-    }
-
-    checkLocalDraft()
-
-    return () => {
-      cancelled = true
-    }
-  }, [pageLoading, storyId, editEpisodeId])
-
-  const handleRestoreLocalDraft = () => {
-    const draft = localRecoveryDraft
-    if (!draft || localRecoveryBusy) return
-
-    setLocalRecoveryBusy(true)
-
-    const restoredType = draft.storyType === 'manga' ? 'manga' : 'novel'
-    const restoredYoutube = draft.youtubeVideo || {}
-
-    setStoryType(restoredType)
-    setEpisodeTitle(String(draft.title || ''))
-    setEpisodeCover(String(draft.episodeCover || ''))
-    setContent(
-      restoredType === 'manga'
-        ? ''
-        : normalizeEpisodeHtml(draft.content || '')
-    )
-    setYoutubeVideo(
-      restoredType === 'manga'
-        ? { title: '', url: '' }
-        : {
-            title: String(restoredYoutube.title || ''),
-            url: String(restoredYoutube.url || ''),
-          }
-    )
-    setEpisodeAdult(Boolean(draft.episodeAdult))
-    setEpisodeFree(Boolean(draft.episodeFree))
-
-    if (draft.episodeId) {
-      setCurrentEpisodeId(String(draft.episodeId))
-    }
-
-    if (restoredType === 'manga') {
-      setMangaPages(
-        (draft.mangaPages || [])
-          .filter((page) => page.imageUrl)
-          .map((page, index) => ({
-            id: page.id || `local-${index}`,
-            previewUrl: page.imageUrl,
-            imageUrl: page.imageUrl,
-            storagePath: page.storagePath || null,
-            width: page.width || null,
-            height: page.height || null,
-            fileSize: page.fileSize || null,
-            mimeType: page.mimeType || 'image/webp',
-            sourceFile: null,
-            status: 'done',
-            progress: 100,
-            error: '',
-          }))
-      )
-    } else {
-      setMangaPages([])
-    }
-
-    undoHistoryRef.current = []
-    redoHistoryRef.current = []
-    lastHistoryInputRef.current = { type: '', at: 0 }
-    setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
-    setHasUnsavedChanges(true)
-    setSaveStatus('Saved locally')
-    setLocalRecoveryOpen(false)
-    setLocalRecoveryDraft(null)
-    setLocalRecoveryBusy(false)
-    showToast('Local draft restored.')
-  }
-
-  const handleDiscardLocalDraft = async () => {
-    const draft = localRecoveryDraft
-    if (!draft || localRecoveryBusy) return
-
-    try {
-      setLocalRecoveryBusy(true)
-      if (localSavePromiseRef.current) {
-        await localSavePromiseRef.current.catch(() => {})
-      }
-      localSavedRevisionRef.current = localDraftRevisionRef.current
-      await deleteEpisodeLocalDraft(localDraftKeyRef.current)
-      setLocalRecoveryOpen(false)
-      setLocalRecoveryDraft(null)
-
-      if (!editEpisodeId && draft.episodeId) {
-        const nextParams = new URLSearchParams(searchParams)
-        nextParams.set('editEpisodeId', String(draft.episodeId))
-        nextParams.set('first', '0')
-        nextParams.set(
-          'type',
-          draft.storyType === 'manga' ? 'manga' : 'novel'
-        )
-
-        navigate(
-          `${window.location.pathname}?${nextParams.toString()}`,
-          { replace: true }
-        )
-      }
-    } finally {
-      setLocalRecoveryBusy(false)
-    }
-  }
-
-    const trimEditorHistory = (stack) => {
-    if (stack.length > MAX_EDITOR_HISTORY) {
-      stack.splice(0, stack.length - MAX_EDITOR_HISTORY)
-    }
-  }
-
-  const resetEditorHistoryGrouping = () => {
-    lastHistoryInputRef.current = { type: '', at: 0 }
-  }
-
-  const recordEditorSnapshot = (html = editorRef.current?.innerHTML || content) => {
-    if (applyingHistoryRef.current) return
-
-    const safeHtml = sanitizeEpisodeHtml(html)
-    const stack = undoHistoryRef.current
-
-    if (stack[stack.length - 1] !== safeHtml) {
-      stack.push(safeHtml)
-      trimEditorHistory(stack)
-    }
-
-    redoHistoryRef.current = []
-  }
-
-  const applyEditorHistory = (html) => {
-    const safeHtml = sanitizeEpisodeHtml(html)
-    applyingHistoryRef.current = true
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = safeHtml
-      editorRef.current.focus()
-
-      const range = document.createRange()
-      range.selectNodeContents(editorRef.current)
-      range.collapse(false)
-
-      const selection = window.getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
-      savedSelectionRef.current = range.cloneRange()
-    }
-
-    setContent(safeHtml)
-    markUnsaved()
-    applyingHistoryRef.current = false
-  }
-
-  useEffect(() => {
-    undoHistoryRef.current = []
-    redoHistoryRef.current = []
-    resetEditorHistoryGrouping()
-  }, [storyId, editEpisodeId])
-
-  const syncEditorContent = (nextHtml, markChanged = true) => {
-    const safeHtml = sanitizeEpisodeHtml(nextHtml)
-
-    if (markChanged) {
-      recordEditorSnapshot(editorRef.current?.innerHTML || content)
-      resetEditorHistoryGrouping()
-    }
-
-    setContent(safeHtml)
-
-    if (editorRef.current && editorRef.current.innerHTML !== safeHtml) {
-      editorRef.current.innerHTML = safeHtml
-    }
-
-    if (markChanged) markUnsaved()
-  }
-
-  useEffect(() => {
-    if (!editorRef.current) return
-    const safeHtml = normalizeEpisodeHtml(content)
-    if (editorRef.current.innerHTML !== safeHtml) {
-      editorRef.current.innerHTML = safeHtml
-    }
-  }, [content, pageLoading])
-
-  const updateFormattingState = useCallback(() => {
-    if (!editorRef.current || !editorRef.current.contains(document.activeElement)) return
-
-    setBoldActive(Boolean(document.queryCommandState('bold')))
-    setItalicActive(Boolean(document.queryCommandState('italic')))
-
-    if (document.queryCommandState('justifyCenter')) {
-      setAlignmentMode('center')
-    } else if (document.queryCommandState('justifyRight')) {
-      setAlignmentMode('right')
-    } else {
-      setAlignmentMode('left')
-    }
-  }, [])
-
-  const saveEditorSelection = useCallback(() => {
-    const editor = editorRef.current
-    const selection = window.getSelection()
-    if (!editor || !selection?.rangeCount) return
-
-    const range = selection.getRangeAt(0)
-    if (!editor.contains(range.commonAncestorContainer)) return
-    savedSelectionRef.current = range.cloneRange()
-    updateFormattingState()
-  }, [updateFormattingState])
-
-  const restoreEditorSelection = useCallback(() => {
-    const editor = editorRef.current
-    const range = savedSelectionRef.current
-    if (!editor) return
-
-    editor.focus()
-    if (!range) return
-
-    const selection = window.getSelection()
-    selection.removeAllRanges()
-    selection.addRange(range)
-  }, [])
-
-  const handleEditorBeforeInput = (event) => {
-    if (applyingHistoryRef.current) return
-
-    const inputType = event.nativeEvent?.inputType || ''
-    const now = Date.now()
-    const groupable = [
-      'insertText',
-      'insertCompositionText',
-      'deleteContentBackward',
-      'deleteContentForward',
-    ].includes(inputType)
-
-    const last = lastHistoryInputRef.current
-    const sameGroup =
-      groupable &&
-      last.type === inputType &&
-      now - last.at <= EDITOR_HISTORY_GROUP_MS
-
-    if (!sameGroup) {
-      recordEditorSnapshot(event.currentTarget.innerHTML)
-    }
-
-    lastHistoryInputRef.current = { type: inputType, at: now }
-  }
-
-  const handleEditorPaste = (event) => {
-    recordEditorSnapshot(event.currentTarget.innerHTML)
-    lastHistoryInputRef.current = {
-      type: 'insertFromPaste',
-      at: Date.now(),
-    }
-  }
-
-  const handleEditorInput = (event) => {
-    setContent(event.currentTarget.innerHTML)
-    markUnsaved()
-    saveEditorSelection()
-  }
-
-  const runEditorCommand = (command, value = null) => {
-    recordEditorSnapshot()
-    resetEditorHistoryGrouping()
-    restoreEditorSelection()
-    document.execCommand(command, false, value)
-    setContent(editorRef.current?.innerHTML || '')
-    markUnsaved()
-    saveEditorSelection()
-  }
-
-  const handleAlignmentChange = () => {
-    const nextAlignment =
-      alignmentMode === 'left' ? 'center' : alignmentMode === 'center' ? 'right' : 'left'
-    const command =
-      nextAlignment === 'center'
-        ? 'justifyCenter'
-        : nextAlignment === 'right'
-          ? 'justifyRight'
-          : 'justifyLeft'
-
-    runEditorCommand(command)
-    setAlignmentMode(nextAlignment)
-  }
-
-  const insertHtmlAtSelection = (html) => {
-    recordEditorSnapshot()
-    resetEditorHistoryGrouping()
-    restoreEditorSelection()
-
-    if (document.queryCommandSupported?.('insertHTML')) {
-      document.execCommand('insertHTML', false, html)
-    } else {
-      const selection = window.getSelection()
-      const range = selection?.rangeCount ? selection.getRangeAt(0) : null
-      if (!range) return
-      const fragment = range.createContextualFragment(html)
-      range.deleteContents()
-      range.insertNode(fragment)
-    }
-
-    setContent(editorRef.current?.innerHTML || '')
-    markUnsaved()
-    saveEditorSelection()
-  }
-
-  const handleInlineImagePick = async (file) => {
-  if (!file) return
-
-  try {
-    const currentHtml = editorRef.current?.innerHTML || content
-
-    if (countEpisodeImages(currentHtml) >= NOVEL_IMAGE_MAX_COUNT) {
-      throw new Error('Only 2 images are allowed in one episode.')
-    }
-
-    const token = getAuthToken()
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    setInlineImageUploading(true)
-const uploadFile = isNovelHeicFile(file)
-  ? await convertNovelHeicForUpload(file)
-  : file
-
-const imageUrl = await uploadEpisodeInlineImage({
-  token,
-  file: uploadFile,
-})
-
-    if (!imageUrl) throw new Error('Image URL was missing.')
-
-    insertHtmlAtSelection(
-      `<p><img src="${escapeEpisodeHtml(imageUrl)}" alt="Episode image"></p><p><br></p>`
-    )
-    showToast('Image added.')
-  } catch (error) {
-    showToast(error.message || 'Could not add image.')
-  } finally {
-    setInlineImageUploading(false)
-    if (imageInputRef.current) imageInputRef.current.value = ''
-  }
-}
-
-
-  const handleConfirmCleanParagraphs = () => {
-    const cleanedContent = cleanEpisodeHtmlSpacing(content)
-    setCleanModalOpen(false)
-
-    if (cleanedContent === sanitizeEpisodeHtml(content)) {
-      showToast('No broken paragraph spacing found.')
-      return
-    }
-
-    syncEditorContent(cleanedContent)
-    showToast('Paragraphs cleaned. Please review before saving.')
-  }
-
-  const openYouTubeSheet = () => {
-  setYoutubeDraft(youtubeVideo)
-  setYoutubeSheetOpen(true)
-}
-
-const saveYouTubeVideo = () => {
-  const nextVideo = {
-    title: String(youtubeDraft.title || '').trim(),
-    url: String(youtubeDraft.url || '').trim(),
-  }
-
-  if (
-    nextVideo.title !== youtubeVideo.title ||
-    nextVideo.url !== youtubeVideo.url
-  ) {
-    setYoutubeVideo(nextVideo)
-    markUnsaved()
-  }
-
-  setYoutubeSheetOpen(false)
-}
-
-const removeYouTubeVideo = () => {
-  if (youtubeVideo.title || youtubeVideo.url) {
-    markUnsaved()
-  }
-
-  setYoutubeVideo({ title: '', url: '' })
-  setYoutubeDraft({ title: '', url: '' })
-  setYoutubeSheetOpen(false)
-}
-
-  const openEpisodeDetails = () => {
-    setDraftEpisodeTitle(episodeTitle)
-    setDraftEpisodeCover(episodeCover)
-    setDraftCoverChanged(coverChanged)
-    setEpisodeDetailsOpen(true)
-  }
-
-  const closeEpisodeDetails = () => {
-    setDraftEpisodeTitle(episodeTitle)
-    setDraftEpisodeCover(episodeCover)
-    setDraftCoverChanged(coverChanged)
-    setEpisodeDetailsOpen(false)
-  }
-
-  const saveEpisodeDetails = () => {
-    const nextTitle = draftEpisodeTitle.trim()
-    if (!nextTitle) return
-
-    const detailsChanged =
-      nextTitle !== episodeTitle ||
-      draftEpisodeCover !== episodeCover ||
-      draftCoverChanged !== coverChanged
-
-    setEpisodeTitle(nextTitle)
-    setEpisodeCover(draftEpisodeCover)
-    setCoverChanged(draftCoverChanged)
-    setEpisodeDetailsOpen(false)
-
-    if (detailsChanged) markUnsaved()
-  }
-
-  const handleUndo = () => {
-    resetEditorHistoryGrouping()
-
-    const previousHtml = undoHistoryRef.current.pop()
-    if (previousHtml === undefined) return
-
-    const currentHtml = sanitizeEpisodeHtml(
-      editorRef.current?.innerHTML || content
-    )
-
-    if (
-      redoHistoryRef.current[redoHistoryRef.current.length - 1] !== currentHtml
-    ) {
-      redoHistoryRef.current.push(currentHtml)
-      trimEditorHistory(redoHistoryRef.current)
-    }
-
-    applyEditorHistory(previousHtml)
-  }
-
-  const handleRedo = () => {
-    resetEditorHistoryGrouping()
-
-    const nextHtml = redoHistoryRef.current.pop()
-    if (nextHtml === undefined) return
-
-    const currentHtml = sanitizeEpisodeHtml(
-      editorRef.current?.innerHTML || content
-    )
-
-    if (
-      undoHistoryRef.current[undoHistoryRef.current.length - 1] !== currentHtml
-    ) {
-      undoHistoryRef.current.push(currentHtml)
-      trimEditorHistory(undoHistoryRef.current)
-    }
-
-    applyEditorHistory(nextHtml)
-  }
-
-  const handleEditorKeyDown = (event) => {
-  if (event.isComposing) return
-
-  const key = event.key.toLowerCase()
-  const isDesktopKeyboard =
-    window.matchMedia?.('(hover: hover) and (pointer: fine)').matches === true
-
-  if (key === 'enter' && isDesktopKeyboard && !event.altKey) {
-    event.preventDefault()
-
-    if (event.ctrlKey || event.metaKey) {
-      if (isValidForNext) handleNext()
-      return
-    }
-
-    const selection = window.getSelection()
-const range = selection?.rangeCount ? selection.getRangeAt(0) : null
-
-if (!range || !event.currentTarget.contains(range.commonAncestorContainer)) return
-
-recordEditorSnapshot(event.currentTarget.innerHTML)
-resetEditorHistoryGrouping()
-
-const breakNode = document.createElement('br')
-range.deleteContents()
-range.insertNode(breakNode)
-range.setStartAfter(breakNode)
-range.collapse(true)
-
-selection.removeAllRanges()
-selection.addRange(range)
-savedSelectionRef.current = range.cloneRange()
-
-setContent(event.currentTarget.innerHTML)
-markUnsaved()
-return
-  }
-
-  if (!(event.ctrlKey || event.metaKey) || event.altKey) return
-
-  if (key === 'z') {
-    event.preventDefault()
-    if (event.shiftKey) {
-      handleRedo()
-    } else {
-      handleUndo()
-    }
+  if (!token) {
+    navigate('/login')
     return
   }
 
-  if (key === 'y') {
-    event.preventDefault()
-    handleRedo()
+  mangaUploadAbortRef.current?.abort()
+  const controller = new AbortController()
+  mangaUploadAbortRef.current = controller
+  setMangaUploadBatchIds(entries.map((entry) => entry.id))
+
+  await runWithConcurrency(entries, 2, async (entry) => {
+    try {
+      if (controller.signal.aborted) throw new Error('Upload canceled.')
+
+      updateMangaPage(entry.id, {
+        status: 'processing',
+        progress: 15,
+        uploadedBytes: 0,
+        uploadSpeed: 0,
+        error: '',
+      })
+
+      const optimized = await optimizeMangaImage(entry.sourceFile)
+
+      if (controller.signal.aborted) throw new Error('Upload canceled.')
+
+      updateMangaPage(entry.id, {
+        status: 'uploading',
+        progress: 0,
+        width: optimized.width,
+        height: optimized.height,
+        fileSize: optimized.fileSize,
+        mimeType: optimized.mimeType,
+        uploadedBytes: 0,
+        uploadTotalBytes: optimized.fileSize,
+        uploadSpeed: 0,
+      })
+
+      const uploaded = await uploadMangaPageFile({
+        token,
+        file: optimized.file,
+        storyId,
+        pageId: entry.id,
+        signal: controller.signal,
+        onProgress: ({ loaded, total, percent, speedBytesPerSecond }) => {
+          updateMangaPage(entry.id, {
+            progress: percent,
+            uploadedBytes: loaded,
+            uploadTotalBytes: total,
+            uploadSpeed: speedBytesPerSecond,
+          })
+        },
+      })
+
+      updateMangaPage(entry.id, {
+        status: 'done',
+        progress: 100,
+        imageUrl: uploaded.imageUrl,
+        storagePath: uploaded.storagePath,
+        width: optimized.width,
+        height: optimized.height,
+        fileSize: optimized.fileSize,
+        mimeType: optimized.mimeType,
+        uploadedBytes: optimized.fileSize,
+        uploadTotalBytes: optimized.fileSize,
+        uploadSpeed: 0,
+        error: '',
+      })
+    } catch (error) {
+      updateMangaPage(entry.id, {
+        status: 'error',
+        progress: 0,
+        uploadedBytes: 0,
+        uploadSpeed: 0,
+        error: error.message || 'Upload failed',
+      })
+    }
+  })
+
+  if (mangaUploadAbortRef.current === controller) {
+    mangaUploadAbortRef.current = null
   }
 }
-
-  const onCropComplete = useCallback((_, croppedPixels) => {
-    setCroppedAreaPixels(croppedPixels)
-  }, [])
-
-  const handleCoverChange = (file) => {
-    if (!file) return
-    const imageUrl = URL.createObjectURL(file)
-    setOriginalCover(imageUrl)
-    setTempCover(imageUrl)
-    setCrop({ x: 0, y: 0 })
-    setZoom(1)
-    setCroppedAreaPixels(null)
-    setDraftCoverChanged(true)
-    setCropOpen(true)
-  }
-
-  const handleSaveCoverCrop = async () => {
-    if (!tempCover || !croppedAreaPixels) {
-      showToast('Please adjust the cover first.')
-      return
-    }
-
-    try {
-      const croppedImage = await getCroppedImage(tempCover, croppedAreaPixels)
-      setDraftEpisodeCover(croppedImage)
-      setDraftCoverChanged(true)
-      setCropOpen(false)
-    } catch {
-      showToast('Could not save crop. Please try another image.')
-    }
-  }
 
   const handlePickMangaPages = async (fileList) => {
     const files = Array.from(fileList || [])
