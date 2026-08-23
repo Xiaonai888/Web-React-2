@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const YOU_MIGHT_LIKE_PAGE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -84,30 +87,107 @@ export default function YouMightLikePage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  async function fetchBooks() {
-    try {
-      setLoading(true)
-      setMessage('')
-      const response = await fetch(
-        addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=48&sort=popular`)
-      )
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load recommendations')
-      }
-      setBooks((data.stories || []).map(normalizeStory))
-    } catch (error) {
-      console.error('YouMightLikePage fetch error:', error)
-      setBooks([])
-      setMessage(error.message || 'Failed to load recommendations')
-    } finally {
+  async function fetchBooks({
+  force = false,
+  signal,
+} = {}) {
+  const cacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      page: 'you-might-like',
+      sort: 'popular',
+      limit: 48,
+      schema: 1,
+    },
+  })
+
+  let hasCachedBooks = false
+
+  if (!force) {
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: YOU_MIGHT_LIKE_PAGE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (signal?.aborted) return
+
+    hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks) {
+      setBooks(cached.data)
       setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
     }
   }
 
-  useEffect(() => {
-    fetchBooks()
-  }, [])
+  try {
+    if (!hasCachedBooks) {
+      setLoading(true)
+    }
+
+    setMessage('')
+
+    const response = await fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?limit=48&sort=popular`
+      ),
+      { signal }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || 'Failed to load recommendations'
+      )
+    }
+
+    const nextBooks = (
+      Array.isArray(data.stories) ? data.stories : []
+    ).map(normalizeStory)
+
+    if (signal?.aborted) return
+
+    setBooks(nextBooks)
+
+    await saveHomeCache(cacheKey, nextBooks, {
+      maxAgeMs: YOU_MIGHT_LIKE_PAGE_CACHE_MAX_AGE_MS,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+
+    console.error('YouMightLikePage fetch error:', error)
+
+    if (!hasCachedBooks) {
+      setBooks([])
+    }
+
+    setMessage(
+      error.message || 'Failed to load recommendations'
+    )
+  } finally {
+    if (!signal?.aborted) {
+      setLoading(false)
+    }
+  }
+}
+
+useEffect(() => {
+  const controller = new AbortController()
+
+  fetchBooks({
+    signal: controller.signal,
+  })
+
+  return () => {
+    controller.abort()
+  }
+}, [])
+
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -131,7 +211,7 @@ export default function YouMightLikePage() {
 
           <button
             type="button"
-            onClick={fetchBooks}
+            onClick={() => fetchBooks({ force: true })}
             className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100"
             aria-label="Refresh"
           >
@@ -162,7 +242,7 @@ export default function YouMightLikePage() {
             </div>
             <button
               type="button"
-              onClick={fetchBooks}
+              onClick={() => fetchBooks({ force: true })}
               className="mt-4 rounded-full bg-neutral-950 px-5 py-2.5 text-[13px] font-bold text-white"
             >
               Refresh
