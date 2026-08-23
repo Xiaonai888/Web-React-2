@@ -18,6 +18,7 @@ import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel
 import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
+import MangaUploadProgressModal from '../../components/author/MangaUploadProgressModal'
 import {
   deleteEpisodeLocalDraft,
   getEpisodeLocalDraftKey,
