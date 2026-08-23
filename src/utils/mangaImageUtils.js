@@ -257,7 +257,7 @@ export async function optimizeMangaImage(file) {
   }
 }
 
-export async function uploadMangaPageFile({ token, file }) {
+export async function uploadMangaPageFile({ token, file, onProgress, signal }) {
   if (!file) {
     throw new Error('Choose a manga page first.')
   }
@@ -277,63 +277,115 @@ export async function uploadMangaPageFile({ token, file }) {
         : 'https://shadow-backend-kucw.onrender.com'
     )
 
-  let response
-let bytes
+  let bytes
 
-try {
-  bytes = await file.arrayBuffer()
-} catch {
-  throw new Error('This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]')
-}
-
-if (!bytes.byteLength) {
-  throw new Error('The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]')
-}
-
-try {
-  response = await fetch(
-      `${apiBaseUrl}/api/story-media/upload-manga-page`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type':
-            file.type || 'application/octet-stream',
-        },
-        body: bytes,
-      }
-    )
+  try {
+    bytes = await file.arrayBuffer()
   } catch {
-    throw new Error(
-      'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
-    )
+    throw new Error('This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]')
   }
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok || data.ok === false) {
-    const stage = String(data.stage || 'upload')
-    const code = String(
-      data.code || `HTTP_${response.status}`
-    )
-    const message =
-      data.message || 'Manga page upload failed.'
-
-    throw new Error(`${message} [${stage}: ${code}]`)
+  if (!bytes.byteLength) {
+    throw new Error('The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]')
   }
 
-  const imageUrl = data.image_url || data.imageUrl
-
-  if (!imageUrl) {
-    throw new Error(
-      'The upload finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
-    )
+  if (signal?.aborted) {
+    throw new Error('Upload canceled.')
   }
 
-  return {
-    imageUrl,
-    storagePath: data.path || null,
-  }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const startedAt = performance.now()
+
+    const cleanup = () => {
+      if (signal) signal.removeEventListener('abort', handleAbortSignal)
+    }
+
+    const fail = (error) => {
+      cleanup()
+      reject(error)
+    }
+
+    const handleAbortSignal = () => {
+      xhr.abort()
+    }
+
+    xhr.open('POST', `${apiBaseUrl}/api/story-media/upload-manga-page`, true)
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+
+    xhr.upload.onprogress = (event) => {
+      const total = event.lengthComputable ? event.total : bytes.byteLength
+      const loaded = Math.min(event.loaded, total)
+      const elapsedSeconds = Math.max((performance.now() - startedAt) / 1000, 0.001)
+      const percent = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0
+
+      onProgress?.({
+        loaded,
+        total,
+        percent,
+        speedBytesPerSecond: loaded / elapsedSeconds,
+      })
+    }
+
+    xhr.onerror = () => {
+      fail(
+        new Error(
+          'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
+        )
+      )
+    }
+
+    xhr.onabort = () => {
+      fail(new Error('Upload canceled.'))
+    }
+
+    xhr.onload = () => {
+      let data = {}
+
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : {}
+      } catch {
+        data = {}
+      }
+
+      if (xhr.status < 200 || xhr.status >= 300 || data.ok === false) {
+        const stage = String(data.stage || 'upload')
+        const code = String(data.code || `HTTP_${xhr.status}`)
+        const message = data.message || 'Manga page upload failed.'
+        fail(new Error(`${message} [${stage}: ${code}]`))
+        return
+      }
+
+      const imageUrl = data.image_url || data.imageUrl
+
+      if (!imageUrl) {
+        fail(
+          new Error(
+            'The upload finished but the server did not return an image URL. [complete: IMAGE_URL_MISSING]'
+          )
+        )
+        return
+      }
+
+      cleanup()
+      resolve({
+        imageUrl,
+        storagePath: data.path || null,
+      })
+    }
+
+    if (signal) signal.addEventListener('abort', handleAbortSignal, { once: true })
+
+    onProgress?.({
+      loaded: 0,
+      total: bytes.byteLength,
+      percent: 0,
+      speedBytesPerSecond: 0,
+    })
+
+    xhr.send(bytes)
+  })
 }
 
 export async function runWithConcurrency(
