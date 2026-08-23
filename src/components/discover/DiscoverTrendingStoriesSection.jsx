@@ -4,9 +4,10 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLang
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 
 const API_BASE_URL =
-  const DISCOVER_TRENDING_CACHE_MAX_AGE_MS = 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
+
+const DISCOVER_TRENDING_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 
 function formatReads(value) {
   const number = Number(value || 0)
