@@ -63,13 +63,13 @@ export default function LatestCommentSection({ story, refreshKey = 0, onOpenComm
       if (!story?.id) return
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/comments/story/${story.id}?page=1&limit=1&sort=newest`)
+        const response = await fetch(`${API_BASE_URL}/api/comments/story/${story.id}/latest`)
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) return
 
         if (!ignore) {
-          setLatestComment((data.comments || [])[0] || null)
+          setLatestComment(data.comment || null)
         }
       } catch {
         if (!ignore) setLatestComment(null)
