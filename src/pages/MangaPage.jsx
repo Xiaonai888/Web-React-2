@@ -202,20 +202,78 @@ export default function MangaPage() {
   }, [genreTabs, searchParams])
 
   useEffect(() => {
+    const controller = new AbortController()
     let cancelled = false
 
     async function loadSlides() {
+      const cacheKey = getHomeCacheKey({
+        section: 'slides',
+        language: 'all',
+        params: {
+          page: 'manga',
+          section_key: 'manga_top_slider',
+          schema: 1,
+        },
+      })
+
+      let hasCachedSlides = false
+
+      const cached = await loadHomeCache(cacheKey, {
+        maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+        allowExpired: true,
+      })
+
+      if (cancelled || controller.signal.aborted) return
+
+      hasCachedSlides = Array.isArray(cached?.data)
+
+      if (hasCachedSlides) {
+        setSlides(cached.data)
+        setSlidesLoading(false)
+      }
+
+      if (cached?.isFresh && hasCachedSlides) {
+        return
+      }
+
       try {
-        setSlidesLoading(true)
-        const response = await fetch(`${API_URL}/api/slides?section_key=manga_top_slider`)
+        if (!hasCachedSlides) {
+          setSlidesLoading(true)
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/slides?section_key=manga_top_slider`,
+          { signal: controller.signal }
+        )
         const data = await response.json().catch(() => ({}))
 
-        if (!response.ok || data.ok === false) throw new Error('Failed to load slides')
-        if (!cancelled) setSlides(data.slides || [])
-      } catch {
-        if (!cancelled) setSlides([])
+        if (!response.ok || data.ok === false) {
+          throw new Error('Failed to load slides')
+        }
+
+        const nextSlides = Array.isArray(data.slides)
+          ? data.slides
+          : []
+
+        if (cancelled || controller.signal.aborted) return
+
+        setSlides(nextSlides)
+
+        await saveHomeCache(cacheKey, nextSlides, {
+          maxAgeMs: MANGA_PUBLIC_CACHE_MAX_AGE_MS,
+        })
+      } catch (error) {
+        if (
+          error?.name !== 'AbortError' &&
+          !cancelled &&
+          !hasCachedSlides
+        ) {
+          setSlides([])
+        }
       } finally {
-        if (!cancelled) setSlidesLoading(false)
+        if (!cancelled && !controller.signal.aborted) {
+          setSlidesLoading(false)
+        }
       }
     }
 
@@ -223,6 +281,7 @@ export default function MangaPage() {
 
     return () => {
       cancelled = true
+      controller.abort()
     }
   }, [])
 
