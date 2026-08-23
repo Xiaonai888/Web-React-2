@@ -503,33 +503,46 @@ export default function SharedGenrePage({
         : Promise.resolve(cachedGenres || [])
 
       const storiesRequest = needsStoriesRefresh
-        ? fetch(
-            addStoryLanguageParam(
-              `${API_URL}/api/public/stories?genre=${encodeURIComponent(
-                fallbackGenreName
-              )}&limit=100&sort=latest`
-            ),
-            { signal: controller.signal }
+  ? genreRequest.then((nextGenres) => {
+      const resolvedGenreInfo =
+        nextGenres.find(
+          (genre) =>
+            toSlug(genre.slug) === normalizedGenreSlug ||
+            toSlug(genre.name) === normalizedGenreSlug
+        ) ||
+        cachedGenreInfo ||
+        null
+
+      const resolvedGenreName =
+        resolvedGenreInfo?.name || fallbackGenreName
+
+      return fetch(
+        addStoryLanguageParam(
+          `${API_URL}/api/public/stories?genre=${encodeURIComponent(
+            resolvedGenreName
+          )}&limit=100&sort=latest`
+        ),
+        { signal: controller.signal }
+      ).then(async (response) => {
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(
+            data.message || 'Failed to load stories'
           )
-            .then(async (response) => {
-              const data = await response
-                .json()
-                .catch(() => ({}))
+        }
 
-              if (!response.ok || data.ok === false) {
-                throw new Error(
-                  data.message ||
-                    'Failed to load stories'
-                )
-              }
+        return deduplicateStories(
+          Array.isArray(data.stories)
+            ? data.stories
+            : []
+        ).map(normalizeStory)
+      })
+    })
+  : Promise.resolve(cachedStories.data)
 
-              return deduplicateStories(
-                Array.isArray(data.stories)
-                  ? data.stories
-                  : []
-              ).map(normalizeStory)
-            })
-        : Promise.resolve(cachedStories.data)
 
       const [genreResult, storiesResult] =
         await Promise.allSettled([
