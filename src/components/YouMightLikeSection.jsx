@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  const YOU_MIGHT_LIKE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -117,81 +126,111 @@ export default function YouMightLikeSection({
     .toLowerCase()
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchYouMightLike() {
-      try {
+  async function loadYouMightLike() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'you-might-like',
+        sort: 'popular',
+        limit: 12,
+        story_type: normalizedStoryType || 'all',
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: YOU_MIGHT_LIKE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks && !ignore) {
+      setRealBooks(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks && !ignore) {
         setLoading(true)
+      }
 
-        const storyTypeQuery = normalizedStoryType
-          ? `&story_type=${encodeURIComponent(
-              normalizedStoryType
-            )}`
-          : ''
+      const storyTypeQuery = normalizedStoryType
+        ? `&story_type=${encodeURIComponent(
+            normalizedStoryType
+          )}`
+        : ''
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=12&sort=popular${storyTypeQuery}`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=12&sort=popular${storyTypeQuery}`
         )
+      )
 
-        const data = await response
-          .json()
-          .catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message ||
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
             'Failed to load You Might Like'
-          )
-        }
-
-        if (ignore) return
-
-        const visibleStories = (
-          data.stories || []
         )
-          .filter(
-            (story) =>
-              !normalizedStoryType ||
-              String(story?.story_type || '')
-                .trim()
-                .toLowerCase() ===
-                normalizedStoryType
-          )
-          .filter(
-            (story) =>
-              !normalizedStoryType ||
-              Boolean(
-                String(story?.cover_url || '').trim()
-              )
-          )
+      }
 
-        setRealBooks(
-          visibleStories.map(normalizeStory)
+      const nextBooks = (data.stories || [])
+        .filter(
+          (story) =>
+            !normalizedStoryType ||
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() === normalizedStoryType
         )
-      } catch (error) {
-        console.error(
-          'YouMightLikeSection fetch error:',
-          error
+        .filter(
+          (story) =>
+            !normalizedStoryType ||
+            Boolean(
+              String(story?.cover_url || '').trim()
+            )
         )
+        .map(normalizeStory)
 
-        if (!ignore) {
-          setRealBooks([])
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
+      if (ignore) return
+
+      setRealBooks(nextBooks)
+
+      await saveHomeCache(cacheKey, nextBooks, {
+        maxAgeMs: YOU_MIGHT_LIKE_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'YouMightLikeSection fetch error:',
+        error
+      )
+
+      if (!ignore && !hasCachedBooks) {
+        setRealBooks([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchYouMightLike()
+  loadYouMightLike()
 
-    return () => {
-      ignore = true
-    }
-  }, [normalizedStoryType])
+  return () => {
+    ignore = true
+  }
+}, [normalizedStoryType])
 
   const books = useMemo(() => {
     if (realBooks.length) {
