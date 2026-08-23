@@ -3042,6 +3042,103 @@ return true
   }
 }
 
+    useEffect(() => {
+    let cancelled = false
+
+    async function loadPageData() {
+      const token = getAuthToken()
+
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      try {
+        setPageLoading(true)
+        setMessage('')
+
+        const storyResponse = await fetch(`${API_BASE_URL}/api/stories/${storyId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const storyData = await storyResponse.json().catch(() => ({}))
+
+        if (!storyResponse.ok || storyData.ok === false) {
+          throw new Error(storyData.message || 'Failed to load story')
+        }
+
+        const loadedStory = storyData.story || {}
+        const resolvedType = loadedStory.story_type || 'novel'
+
+        if (!cancelled) {
+          setStoryRecord(loadedStory)
+          setStoryType(resolvedType)
+          setStoryLanguage(loadedStory.story_language || 'Khmer')
+          setMainGenre(loadedStory.main_genre || 'Romance')
+          setStoryTags(Array.isArray(loadedStory.tags) ? loadedStory.tags.slice(0, 6) : [])
+          setStoryUpdateDays(Array.isArray(loadedStory.update_days) ? loadedStory.update_days : [])
+          setStoryStatus(loadedStory.story_status || 'New')
+          setStoryAdult(Boolean(loadedStory.is_adult))
+        }
+
+        if (!isEditMode) return
+
+        const episodeResponse = await fetch(
+          `${API_BASE_URL}/api/stories/${storyId}/episodes/${editEpisodeId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const episodeData = await episodeResponse.json().catch(() => ({}))
+
+        if (!episodeResponse.ok || episodeData.ok === false) {
+          throw new Error(episodeData.message || 'Failed to load episode')
+        }
+
+        if (cancelled) return
+
+        const episode = episodeData.episode || {}
+
+        setEpisodeTitle(episode.title || '')
+        setEpisodeCover(episode.cover_url || '')
+        setOriginalCover(episode.cover_url || '')
+        setContent(normalizeEpisodeHtml(episode.content || ''))
+        setOldEpisodeStatus(episode.status || 'draft')
+        setEpisodeAdult(Boolean(episode.is_adult))
+        setEpisodeFree(Boolean(episode.is_author_free ?? episode.is_free_published))
+        setCurrentEpisodeNumber(Number(episode.episode_number || 1))
+        setCoverChanged(false)
+
+        setMangaPages(
+          (episode.pages || []).map((page, index) => ({
+            id: page.id || `existing-${index}`,
+            previewUrl: page.image_url,
+            imageUrl: page.image_url,
+            storagePath: page.storage_path || null,
+            width: page.width || null,
+            height: page.height || null,
+            fileSize: page.file_size || null,
+            mimeType: page.mime_type || 'image/webp',
+            sourceFile: null,
+            status: 'done',
+            progress: 100,
+            error: '',
+          }))
+        )
+
+        setSaveStatus('Saved')
+        setHasUnsavedChanges(false)
+      } catch (error) {
+        if (!cancelled) setMessage(error.message || 'Failed to load episode')
+      } finally {
+        if (!cancelled) setPageLoading(false)
+      }
+    }
+
+    loadPageData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [editEpisodeId, isEditMode, navigate, storyId])
+
   const handlePickMangaPages = async (fileList) => {
     const files = Array.from(fileList || [])
     if (!files.length) return
