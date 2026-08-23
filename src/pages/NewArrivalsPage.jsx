@@ -1,8 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getStoryBadge } from '../utils/storyBadge'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
+
+  const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
+
+const NEW_ARRIVALS_TAB_CONFIG = {
+  Fresh: { sort: 'latest' },
+  Popular: { sort: 'popular' },
+  'Recent Complete': { sort: 'updated', storyStatus: 'Completed' },
+  Romance: { sort: 'latest', genre: 'Romance' },
+  Fantasy: { sort: 'latest', genre: 'Fantasy' },
+}
+  
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -162,64 +175,148 @@ export default function NewArrivalsPage() {
     Fantasy: [],
   })
 
-  async function fetchNewArrivalsPageData() {
-    try {
-      setLoading(true)
-      setMessage('')
+  async function fetchNewArrivalsPageData(
+  tab = activeTab,
+  { force = false, signal } = {}
+) {
+  const config = NEW_ARRIVALS_TAB_CONFIG[tab]
 
-      const [freshResponse, popularResponse, recentResponse, romanceResponse, fantasyResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=popular`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=updated&story_status=Completed`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest&genre=Romance`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=48&sort=latest&genre=Fantasy`),
-      ])
+  if (!config) return
 
-      const freshData = await freshResponse.json().catch(() => ({}))
-      const popularData = await popularResponse.json().catch(() => ({}))
-      const recentData = await recentResponse.json().catch(() => ({}))
-      const romanceData = await romanceResponse.json().catch(() => ({}))
-      const fantasyData = await fantasyResponse.json().catch(() => ({}))
+  const cacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      page: 'new-arrivals',
+      tab,
+      limit: 48,
+      sort: config.sort,
+      genre: config.genre || '',
+      story_status: config.storyStatus || '',
+      schema: 1,
+    },
+  })
 
-      if (!freshResponse.ok || freshData.ok === false) throw new Error(freshData.message || 'Failed to load fresh stories')
-      if (!popularResponse.ok || popularData.ok === false) throw new Error(popularData.message || 'Failed to load popular stories')
-      if (!recentResponse.ok || recentData.ok === false) throw new Error(recentData.message || 'Failed to load recent stories')
-      if (!romanceResponse.ok || romanceData.ok === false) throw new Error(romanceData.message || 'Failed to load romance stories')
-      if (!fantasyResponse.ok || fantasyData.ok === false) throw new Error(fantasyData.message || 'Failed to load fantasy stories')
+  let hasCachedBooks = false
 
-      setRealBooks({
-        Fresh: (freshData.stories || []).map((story, index) => normalizeStory(story, index)),
-        Popular: (popularData.stories || []).map((story, index) => normalizeStory(story, index)),
-        'Recent Complete': (recentData.stories || [])
-        .filter((story) => getStoryBadge(story) === 'end')
-        .map((story, index) => normalizeStory(story, index)),
-        Romance: (romanceData.stories || []).map((story, index) => normalizeStory(story, index)),
-        Fantasy: (fantasyData.stories || []).map((story, index) => normalizeStory(story, index)),
-      })
-    } catch (error) {
-      console.error('NewArrivalsPage fetch error:', error)
+  if (!force) {
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
 
-      setRealBooks({
-        Fresh: [],
-        Popular: [],
-        'Recent Complete': [],
-        Romance: [],
-        Fantasy: [],
-      })
+    if (signal?.aborted) return
 
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to server. Please try again later.'
-          : error.message || 'Failed to load new arrivals'
-      )
-    } finally {
+    hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks) {
+      setRealBooks((current) => ({
+        ...current,
+        [tab]: cached.data,
+      }))
       setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
     }
   }
 
-  useEffect(() => {
-    fetchNewArrivalsPageData()
-  }, [])
+  try {
+    if (!hasCachedBooks) {
+      setLoading(true)
+    }
+
+    setMessage('')
+
+    const params = new URLSearchParams({
+      limit: '48',
+      sort: config.sort,
+    })
+
+    if (config.genre) {
+      params.set('genre', config.genre)
+    }
+
+    if (config.storyStatus) {
+      params.set('story_status', config.storyStatus)
+    }
+
+    const response = await fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?${params.toString()}`
+      ),
+      { signal }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || 'Failed to load new arrivals'
+      )
+    }
+
+    let nextBooks = (
+      Array.isArray(data.stories) ? data.stories : []
+    )
+
+    if (tab === 'Recent Complete') {
+      nextBooks = nextBooks.filter(
+        (story) => getStoryBadge(story) === 'end'
+      )
+    }
+
+    nextBooks = nextBooks.map((story, index) =>
+      normalizeStory(story, index)
+    )
+
+    if (signal?.aborted) return
+
+    setRealBooks((current) => ({
+      ...current,
+      [tab]: nextBooks,
+    }))
+
+    await saveHomeCache(cacheKey, nextBooks, {
+      maxAgeMs: NEW_ARRIVALS_CACHE_MAX_AGE_MS,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+
+    console.error('NewArrivalsPage fetch error:', error)
+
+    if (!hasCachedBooks) {
+      setRealBooks((current) => ({
+        ...current,
+        [tab]: [],
+      }))
+    }
+
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to server. Please try again later.'
+        : error.message || 'Failed to load new arrivals'
+    )
+  } finally {
+    if (!signal?.aborted) {
+      setLoading(false)
+    }
+  }
+}
+
+useEffect(() => {
+  const controller = new AbortController()
+
+  fetchNewArrivalsPageData(activeTab, {
+    signal: controller.signal,
+  })
+
+  return () => {
+    controller.abort()
+  }
+}, [activeTab])
+
 
   const books = useMemo(
   () => realBooks[activeTab] || [],
@@ -288,7 +385,7 @@ export default function NewArrivalsPage() {
             ))}
           </div>
         ) : (
-          <EmptyState onRefresh={fetchNewArrivalsPageData} />
+          <EmptyState onRefresh={() => fetchNewArrivalsPageData(activeTab, { force: true })} />
         )}
       </main>
     </div>
