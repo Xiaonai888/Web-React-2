@@ -25,6 +25,11 @@ function getRouteRefreshKeys(pathname) {
   if (pathname === '/comments') return ['comments']
   if (pathname === '/tasks' || pathname.startsWith('/tasks/')) return []
   if (pathname === '/ranking' || pathname === '/top-novel') return ['ranking', 'stories']
+  if (
+  pathname === '/manga' ||
+  pathname === '/chat-story' ||
+  pathname === '/shadow-exclusive'
+) return ['stories']
   if (pathname === '/me' || pathname.startsWith('/profile')) return ['me']
 
   if (
