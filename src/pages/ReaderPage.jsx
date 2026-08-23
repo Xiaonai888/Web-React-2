@@ -934,7 +934,14 @@ function GiftLineIcon({ className = '' }) {
   )
 }
 
-function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
+function ReaderEndPanel({
+  story,
+  episode,
+  onOpenComments,
+  onOpenGift,
+  active = true,
+  commentSummary = null,
+}) {
   const navigate = useNavigate()
   const episodeId = episode?.id || episode?.episode_id || ''
 
@@ -951,10 +958,6 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     useState(initialLikeCount)
   const [likeBusy, setLikeBusy] =
     useState(false)
-  const [hotComment, setHotComment] =
-    useState(null)
-  const [hotCommentTotal, setHotCommentTotal] =
-    useState(0)
 
   const giftCount = Number(
     story?.total_gifts ||
@@ -980,7 +983,7 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     setLikeCount(initialLikeCount)
 
     async function loadReactionStatus() {
-      if (!episodeId) return
+      if (!active || !episodeId) return
 
       try {
         const response = await fetch(
@@ -1020,7 +1023,7 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     return () => {
       ignore = true
     }
-  }, [episodeId, initialLikeCount])
+  }, [active, episodeId, initialLikeCount])
 
   async function handleEpisodeReaction(
     nextReactionType
@@ -1111,49 +1114,22 @@ function ReaderEndPanel({ story, episode, onOpenComments, onOpenGift }) {
     }
   }
 
-  useEffect(() => {
-    let ignore = false
+  const commentSummaryMatchesEpisode =
+    active &&
+    String(commentSummary?.episodeId || '') ===
+      String(episodeId)
 
-    async function loadHotComment() {
-      if (!episodeId) return
+  const hotComment = commentSummaryMatchesEpisode
+    ? commentSummary?.hotComment || null
+    : null
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/comments/episode/${episodeId}?page=1&limit=20&sort=top`, {
-          headers: readerAuthHeaders(),
-        })
+  const hotCommentTotal = commentSummaryMatchesEpisode
+    ? Math.max(0, Number(commentSummary?.total || 0))
+    : fallbackCommentCount
 
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false || ignore) return
-
-        const comments = Array.isArray(data.comments) ? data.comments : []
-        const sorted = [...comments].sort((first, second) => {
-          const firstReplies = Array.isArray(first.replies) ? first.replies.length : 0
-          const secondReplies = Array.isArray(second.replies) ? second.replies.length : 0
-          const firstLikes = Number(first.likes || first.like_count || 0)
-          const secondLikes = Number(second.likes || second.like_count || 0)
-
-          return secondReplies - firstReplies || secondLikes - firstLikes
-        })
-
-        setHotComment(sorted[0] || null)
-        setHotCommentTotal(Number(data.total || comments.length || 0))
-      } catch {
-        if (!ignore) {
-          setHotComment(null)
-          setHotCommentTotal(fallbackCommentCount)
-        }
-      }
-    }
-
-    loadHotComment()
-
-    return () => {
-      ignore = true
-    }
-  }, [episodeId, fallbackCommentCount])
-
-  const commentCount = hotCommentTotal || fallbackCommentCount
+  const commentCount = commentSummaryMatchesEpisode
+    ? hotCommentTotal
+    : fallbackCommentCount
   const replies = Array.isArray(hotComment?.replies) ? hotComment.replies : []
   const replyCount = replies.length
   const hotLikes = Number(hotComment?.likes || hotComment?.like_count || 0)
@@ -2352,7 +2328,7 @@ function ReaderBottomActionBar({
   onSubscribe,
   story,
   episode,
-  commentRefreshKey,
+  commentTotal: commentTotalOverride,
   readingProgress,
   previousEpisode,
   nextEpisode,
@@ -2368,7 +2344,6 @@ function ReaderBottomActionBar({
   const sideSubscribeTimerRef = useRef(null)
   const safeProgress = Math.max(0, Math.min(100, Math.round(Number(readingProgress || 0))))
   const storyId = story?.id || story?.story_id || episode?.story_id || ''
-  const episodeId = episode?.id || episode?.episode_id || ''
 
   const fallbackCommentTotal = Number(
   episode?.total_comments ||
@@ -2377,7 +2352,14 @@ function ReaderBottomActionBar({
   0
 )
 
-  const [commentTotal, setCommentTotal] = useState(fallbackCommentTotal)
+  const commentTotal =
+    commentTotalOverride === null ||
+    commentTotalOverride === undefined
+      ? fallbackCommentTotal
+      : Math.max(
+          0,
+          Number(commentTotalOverride || 0)
+        )
 
   useEffect(() => {
     if (sideSubscribeTimerRef.current) {
@@ -2406,52 +2388,6 @@ function ReaderBottomActionBar({
       }
     }
   }, [])
-
-  useEffect(() => {
-    setCommentTotal(fallbackCommentTotal)
-  }, [fallbackCommentTotal])
-
-  useEffect(() => {
-    let ignore = false
-
-    async function loadCommentTotal() {
-      if (!episodeId) return
-
-      try {
-        const token = getReaderToken()
-        const response = await fetch(`${API_BASE_URL}/api/comments/episode/${episodeId}?page=1&limit=1&sort=newest`, {
-          headers: token
-            ? {
-                Authorization: `Bearer ${token}`,
-              }
-            : {},
-        })
-
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false || ignore) return
-
-        const nextTotal = Number(
-          data.total ??
-          data.total_comments ??
-          data.count ??
-          (Array.isArray(data.comments) ? data.comments.length : 0)
-        )
-
-        setCommentTotal(Number.isFinite(nextTotal) ? nextTotal : 0)
-      } catch {
-        if (!ignore) {
-          setCommentTotal(fallbackCommentTotal)
-        }
-      }
-    }
-
-    loadCommentTotal()
-
-    return () => {
-      ignore = true
-    }
-  }, [episodeId, commentRefreshKey, fallbackCommentTotal])
 
   useEffect(() => {
     setProgressOpen(false)
@@ -3988,6 +3924,7 @@ function ContinuousEpisodeBlock({
   active,
   theme,
   story,
+  commentSummary,
   fontSizePx,
   fontFamily,
   lineSpacing,
@@ -4139,6 +4076,8 @@ function ContinuousEpisodeBlock({
           <ReaderEndPanel
             story={story}
             episode={episode}
+            active={active}
+            commentSummary={commentSummary}
             onOpenComments={() => onOpenComments(episode)}
             onOpenGift={onOpenGift}
           />
@@ -4289,6 +4228,11 @@ useEffect(() => {
 }, [episodeId])
   
   const [commentRefreshKey, setCommentRefreshKey] = useState(0)
+  const [activeCommentSummary, setActiveCommentSummary] = useState({
+    episodeId: '',
+    hotComment: null,
+    total: null,
+  })
   const [bottomActionsVisible, setBottomActionsVisible] = useState(false)
   const [readerHeaderVisible, setReaderHeaderVisible] = useState(false)
   const [readerDoubleTapVisible, setReaderDoubleTapVisible] = useState(false)
@@ -4383,6 +4327,119 @@ const pagingPages = useMemo(() => {
     readingPercent: readingProgress,
     enabled: Boolean(episode) && !loading && !lockedEpisode && adultAccepted,
   })
+
+  useEffect(() => {
+    let ignore = false
+
+    const targetEpisodeId = String(
+      episodeId || ''
+    ).trim()
+
+    const fallbackTotal = Number(
+      episode?.total_comments ||
+      episode?.comment_count ||
+      episode?.comments_count ||
+      0
+    )
+
+    if (
+      !targetEpisodeId ||
+      loading ||
+      lockedEpisode ||
+      !adultAccepted
+    ) {
+      setActiveCommentSummary({
+        episodeId: targetEpisodeId,
+        hotComment: null,
+        total: fallbackTotal,
+      })
+      return undefined
+    }
+
+    async function loadActiveCommentSummary() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}?page=1&limit=20&sort=top`,
+          {
+            headers: readerAuthHeaders(),
+          }
+        )
+
+        const data = await response
+          .json()
+          .catch(() => ({}))
+
+        if (
+          !response.ok ||
+          data.ok === false ||
+          ignore
+        ) {
+          return
+        }
+
+        const comments = Array.isArray(data.comments)
+          ? data.comments
+          : []
+
+        const sorted = [...comments].sort(
+          (first, second) => {
+            const firstReplies = Array.isArray(first.replies)
+              ? first.replies.length
+              : 0
+            const secondReplies = Array.isArray(second.replies)
+              ? second.replies.length
+              : 0
+            const firstLikes = Number(
+              first.likes || first.like_count || 0
+            )
+            const secondLikes = Number(
+              second.likes || second.like_count || 0
+            )
+
+            return (
+              secondReplies - firstReplies ||
+              secondLikes - firstLikes
+            )
+          }
+        )
+
+        const total = Number(
+          data.total ??
+          data.total_comments ??
+          data.count ??
+          comments.length
+        )
+
+        setActiveCommentSummary({
+          episodeId: targetEpisodeId,
+          hotComment: sorted[0] || null,
+          total: Number.isFinite(total)
+            ? Math.max(0, total)
+            : fallbackTotal,
+        })
+      } catch {
+        if (!ignore) {
+          setActiveCommentSummary({
+            episodeId: targetEpisodeId,
+            hotComment: null,
+            total: fallbackTotal,
+          })
+        }
+      }
+    }
+
+    loadActiveCommentSummary()
+
+    return () => {
+      ignore = true
+    }
+  }, [
+    adultAccepted,
+    commentRefreshKey,
+    episodeId,
+    loading,
+    lockedEpisode,
+  ])
 
 
 useEffect(() => {
@@ -5132,7 +5189,7 @@ useEffect(() => {
     let cancelled = false
 
     async function loadReadingTarget() {
-      if (!storyId || !episodeId || loading || lockedEpisode || !adultAccepted) {
+      if (!storyId || lockedEpisode || !adultAccepted) {
         return
       }
 
@@ -5180,8 +5237,6 @@ useEffect(() => {
     }
   }, [
     adultAccepted,
-    episodeId,
-    loading,
     lockedEpisode,
     readingRewardReloadKey,
     storyId,
@@ -5234,9 +5289,13 @@ useEffect(() => {
     readingActivityReadyAtRef.current = Date.now() + 1000
     previousReadingPageRef.current = null
     readingHeartbeatBusyRef.current = false
-    setActiveReadingTarget(null)
     setReadingRewardAnimation(null)
   }, [episodeId, storyId])
+
+  useEffect(() => {
+    activeReadingTargetRef.current = null
+    setActiveReadingTarget(null)
+  }, [storyId])
 
   useEffect(() => {
     if (previousReadingPageRef.current === null) {
@@ -6231,7 +6290,12 @@ autoScrollEnabled ? (
   onSubscribe={handleSubscribe}
   story={story}
   episode={episode}
-  commentRefreshKey={commentRefreshKey}
+  commentTotal={
+    String(activeCommentSummary?.episodeId || '') ===
+    String(episodeId)
+      ? activeCommentSummary?.total
+      : null
+  }
   readingProgress={readingProgress}
   previousEpisode={previousEpisode}
   nextEpisode={nextEpisode}
@@ -6486,6 +6550,7 @@ adultAccepted &&
         <ReaderEndPanel
           story={story}
           episode={episode}
+          commentSummary={activeCommentSummary}
           onOpenComments={() => {
             setCommentEpisode(episode)
             setCommentsOpen(true)
@@ -6511,6 +6576,11 @@ effectiveReadingMode === 'scroll' ? (
                 active={String(entry.id) === String(episodeId)}
                 theme={theme}
                 story={story}
+                commentSummary={
+                  String(entry.id) === String(episodeId)
+                    ? activeCommentSummary
+                    : null
+                }
                 isFirstEpisode={
   Boolean(firstReaderEpisodeId) &&
   String(entry.id) === String(firstReaderEpisodeId)
@@ -6673,6 +6743,7 @@ adultAccepted &&
                 <ReaderEndPanel
                   story={story}
                   episode={episode}
+                  commentSummary={activeCommentSummary}
                   onOpenComments={() => {
                     setCommentEpisode(episode)
                     setCommentsOpen(true)
