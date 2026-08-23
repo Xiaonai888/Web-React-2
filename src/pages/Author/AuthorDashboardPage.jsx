@@ -556,9 +556,10 @@ const stopStoriesDrag = () => {
   if (AUTHOR_PREVIEW_ENABLED) return
 
   const token = getAuthToken()
-  if (!token) return
+if (!token) return
+if (!force && document.visibilityState !== 'visible') return
 
-  const now = Date.now()
+const now = Date.now()
 
   if (badgeRequestInFlightRef.current) {
     return
@@ -665,9 +666,9 @@ const stopStoriesDrag = () => {
   })
 
   const intervalId = window.setInterval(
-    fetchDashboardBadges,
-    60000
-  )
+  fetchDashboardBadges,
+  300000
+)
 
   window.addEventListener(
     'focus',
