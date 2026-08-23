@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 import { getStoryBadge } from '../../utils/storyBadge'
 
 const API_BASE_URL =
+  const DISCOVER_NEW_UPDATED_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
@@ -80,57 +82,97 @@ export default function DiscoverNewUpdatedStoriesSection() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let alive = true
-    const controller = new AbortController()
+  let alive = true
+  const controller = new AbortController()
 
-    async function loadStories() {
-      try {
+  async function loadStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        discover_section: 'new-updated',
+        sort: 'updated',
+        limit: 10,
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: DISCOVER_NEW_UPDATED_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories && alive) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories && alive) {
         setLoading(true)
+      }
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=12&sort=updated`
-          ),
-          {
-            signal: controller.signal,
-            cache: 'no-store',
-          }
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=10&sort=updated`
+        ),
+        {
+          signal: controller.signal,
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+            'Failed to load new and updated stories'
         )
-        const data = await response.json().catch(() => ({}))
+      }
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message ||
-              'Failed to load new and updated stories'
-          )
-        }
+      const nextStories = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .map(normalizeStory)
+        .filter((story) => story.id)
+        .slice(0, 10)
 
-        if (alive) {
-          setStories(
-            (Array.isArray(data.stories) ? data.stories : [])
-              .map(normalizeStory)
-              .filter((story) => story.id)
-              .slice(0, 10)
-          )
-        }
-      } catch (error) {
-        if (alive && error.name !== 'AbortError') {
-          setStories([])
-        }
-      } finally {
-        if (alive) {
-          setLoading(false)
-        }
+      if (!alive) return
+
+      setStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: DISCOVER_NEW_UPDATED_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (
+        alive &&
+        error.name !== 'AbortError' &&
+        !hasCachedStories
+      ) {
+        setStories([])
+      }
+    } finally {
+      if (alive) {
+        setLoading(false)
       }
     }
+  }
 
-    loadStories()
+  loadStories()
 
-    return () => {
-      alive = false
-      controller.abort()
-    }
-  }, [])
+  return () => {
+    alive = false
+    controller.abort()
+  }
+}, [])
+
 
   function startDrag(event) {
   if (
