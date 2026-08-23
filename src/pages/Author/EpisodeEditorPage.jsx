@@ -2711,6 +2711,8 @@ export default function EpisodeEditorPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [content, setContent] = useState('')
   const [mangaPages, setMangaPages] = useState([])
+  const [mangaUploadBatchIds, setMangaUploadBatchIds] = useState([])
+  const mangaUploadAbortRef = useRef(null)
   const editorRef = useRef(null)
   const imageInputRef = useRef(null)
   const savedSelectionRef = useRef(null)
