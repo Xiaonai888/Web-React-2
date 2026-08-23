@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
+const SHARED_GENRE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const FALLBACK_GENRE_NAMES = {
   bl: 'BL',
@@ -386,98 +389,227 @@ export default function SharedGenrePage({
   })
 
   useEffect(() => {
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function loadGenrePage() {
-      setLoading(true)
+  async function loadGenrePage() {
+    setMessage('')
+
+    const genreCacheKey = getHomeCacheKey({
+      section: 'genres',
+      language: 'all',
+      params: {
+        list: 'all',
+        include_inactive: true,
+        schema: 1,
+      },
+    })
+
+    const storiesCacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'shared-genre',
+        genre: normalizedGenreSlug,
+        sort: 'latest',
+        limit: 100,
+        schema: 1,
+      },
+    })
+
+    const [cachedGenreList, cachedStories] =
+      await Promise.all([
+        loadHomeCache(genreCacheKey, {
+          maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        }),
+        loadHomeCache(storiesCacheKey, {
+          maxAgeMs: SHARED_GENRE_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        }),
+      ])
+
+    if (ignore || controller.signal.aborted) return
+
+    const cachedGenres = Array.isArray(
+      cachedGenreList?.data
+    )
+      ? cachedGenreList.data
+      : null
+
+    const hasCachedStories = Array.isArray(
+      cachedStories?.data
+    )
+
+    const cachedGenreInfo = cachedGenres?.find(
+      (genre) =>
+        toSlug(genre.slug) === normalizedGenreSlug ||
+        toSlug(genre.name) === normalizedGenreSlug
+    ) || null
+
+    if (cachedGenreInfo) {
+      setGenreInfo(cachedGenreInfo)
+      setGenreName(
+        cachedGenreInfo.name || fallbackGenreName
+      )
+    } else {
+      setGenreInfo(null)
+      setGenreName(fallbackGenreName)
+    }
+
+    if (hasCachedStories) {
+      setStories(cachedStories.data)
+      setLoading(false)
+    }
+
+    const needsGenreRefresh =
+      !cachedGenreList?.isFresh || !cachedGenres
+
+    const needsStoriesRefresh =
+      !cachedStories?.isFresh || !hasCachedStories
+
+    if (!needsGenreRefresh && !needsStoriesRefresh) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories) {
+        setLoading(true)
+      }
+
       setMessage('')
 
-      try {
-        let resolvedGenreName = fallbackGenreName
-        let resolvedGenreInfo = null
-
-        try {
-          const genresResponse = await fetch(
-            `${API_URL}/api/genres?include_inactive=true`
+      const genreRequest = needsGenreRefresh
+        ? fetch(
+            `${API_URL}/api/genres?include_inactive=true`,
+            { signal: controller.signal }
           )
-          const genresData = await genresResponse.json().catch(() => ({}))
+            .then(async (response) => {
+              const data = await response
+                .json()
+                .catch(() => ({}))
 
-          resolvedGenreInfo =
-            (genresData.genres || []).find(
-              (genre) =>
-                toSlug(genre.slug) === normalizedGenreSlug ||
-                toSlug(genre.name) === normalizedGenreSlug
-            ) || null
+              if (!response.ok || data.ok === false) {
+                throw new Error(
+                  data.message ||
+                    'Failed to load genres'
+                )
+              }
 
-          if (resolvedGenreInfo?.name) {
-            resolvedGenreName = resolvedGenreInfo.name
-          }
-        } catch {
-          resolvedGenreInfo = null
-        }
+              return Array.isArray(data.genres)
+                ? data.genres
+                : []
+            })
+        : Promise.resolve(cachedGenres || [])
 
-        const aliases = new Set(
-          [
-            normalizedGenreSlug,
-            toSlug(resolvedGenreName),
-            toSlug(resolvedGenreInfo?.name),
-            toSlug(resolvedGenreInfo?.slug),
-          ].filter(Boolean)
+      const storiesRequest = needsStoriesRefresh
+        ? fetch(
+            addStoryLanguageParam(
+              `${API_URL}/api/public/stories?genre=${encodeURIComponent(
+                fallbackGenreName
+              )}&limit=100&sort=latest`
+            ),
+            { signal: controller.signal }
+          )
+            .then(async (response) => {
+              const data = await response
+                .json()
+                .catch(() => ({}))
+
+              if (!response.ok || data.ok === false) {
+                throw new Error(
+                  data.message ||
+                    'Failed to load stories'
+                )
+              }
+
+              return deduplicateStories(
+                Array.isArray(data.stories)
+                  ? data.stories
+                  : []
+              ).map(normalizeStory)
+            })
+        : Promise.resolve(cachedStories.data)
+
+      const [genreResult, storiesResult] =
+        await Promise.allSettled([
+          genreRequest,
+          storiesRequest,
+        ])
+
+      if (ignore || controller.signal.aborted) return
+
+      if (genreResult.status === 'fulfilled') {
+        const nextGenres = genreResult.value
+        const nextGenreInfo =
+          nextGenres.find(
+            (genre) =>
+              toSlug(genre.slug) ===
+                normalizedGenreSlug ||
+              toSlug(genre.name) ===
+                normalizedGenreSlug
+          ) || null
+
+        setGenreInfo(nextGenreInfo)
+        setGenreName(
+          nextGenreInfo?.name || fallbackGenreName
         )
 
-        let rawStories = []
-
-        try {
-          rawStories = await requestStories(
-            `${API_URL}/api/public/stories?genre=${encodeURIComponent(
-              resolvedGenreName
-            )}&limit=100`
+        if (needsGenreRefresh) {
+          await saveHomeCache(
+            genreCacheKey,
+            nextGenres,
+            {
+              maxAgeMs:
+                SHARED_GENRE_CACHE_MAX_AGE_MS,
+            }
           )
-        } catch {
-          rawStories = []
         }
+      }
 
-        let filteredStories = rawStories.filter((story) =>
-          matchesGenre(story, aliases)
+      if (storiesResult.status === 'fulfilled') {
+        setStories(storiesResult.value)
+
+        if (needsStoriesRefresh) {
+          await saveHomeCache(
+            storiesCacheKey,
+            storiesResult.value,
+            {
+              maxAgeMs:
+                SHARED_GENRE_CACHE_MAX_AGE_MS,
+            }
+          )
+        }
+      } else if (!hasCachedStories) {
+        throw storiesResult.reason
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!ignore && !hasCachedStories) {
+        setStories([])
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? 'Cannot connect to server.'
+            : error.message ||
+                'Failed to load stories'
         )
-
-        if (!filteredStories.length) {
-          const allStories = await requestStories(
-            `${API_URL}/api/public/stories?limit=100&sort=latest`
-          )
-
-          filteredStories = allStories.filter((story) =>
-            matchesGenre(story, aliases)
-          )
-        }
-
-        if (!ignore) {
-          setGenreName(resolvedGenreName)
-          setGenreInfo(resolvedGenreInfo)
-          setStories(
-            deduplicateStories(filteredStories).map(normalizeStory)
-          )
-        }
-      } catch (error) {
-        if (!ignore) {
-          setStories([])
-          setMessage(
-            error.message === 'Failed to fetch'
-              ? 'Cannot connect to server.'
-              : error.message || 'Failed to load stories'
-          )
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    loadGenrePage()
+  loadGenrePage()
 
-    return () => {
-      ignore = true
-    }
-  }, [fallbackGenreName, normalizedGenreSlug])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [fallbackGenreName, normalizedGenreSlug])
+
 
   const quickButtons = useMemo(
     () => [
