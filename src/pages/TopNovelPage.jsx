@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 
 const topNovelCategories = [
   'Romance',
@@ -165,42 +175,125 @@ export default function TopNovelPage() {
   const [message, setMessage] = useState('')
   const [dataByCategory, setDataByCategory] = useState({})
 
-  async function fetchTopNovelPageData() {
-    try {
-      setLoading(true)
+  async function fetchTopNovelPageData({
+  category = activeCategory,
+  force = false,
+  signal,
+} = {}) {
+  const endpoint =
+    queryByCategory[category] ||
+    '/api/public/stories?limit=30&sort=popular'
+
+  const cacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      page: 'top-novel',
+      category,
+      endpoint,
+      schema: 1,
+    },
+  })
+
+  let hasCachedData = false
+
+  if (!force) {
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (signal?.aborted) return
+
+    hasCachedData = Array.isArray(cached?.data)
+
+    if (hasCachedData) {
+      setDataByCategory((current) => ({
+        ...current,
+        [category]: cached.data,
+      }))
+      setLoading(false)
       setMessage('')
+    }
 
-      const results = await Promise.all(
-        topNovelCategories.map(async (category) => {
-          const endpoint = queryByCategory[category] || '/api/public/stories?limit=30&sort=popular'
-          const response = await fetch(`${API_BASE_URL}${endpoint}`)
-          const data = await response.json().catch(() => ({}))
+    if (cached?.isFresh && hasCachedData) {
+      return
+    }
+  }
 
-          if (!response.ok || data.ok === false) {
-            throw new Error(data.message || `Failed to load ${category}`)
-          }
+  try {
+    if (!hasCachedData) {
+      setLoading(true)
+    }
 
-          return [category, (data.stories || []).map((story, index) => normalizeStory(story, index, category))]
-        })
+    setMessage('')
+
+    const response = await fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}${endpoint}`
+      ),
+      { signal }
+    )
+    const data = await response
+      .json()
+      .catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || `Failed to load ${category}`
       )
+    }
 
-      setDataByCategory(Object.fromEntries(results))
-    } catch (error) {
-      console.error('TopNovelPage fetch error:', error)
-      setDataByCategory({})
+    const items = (
+      Array.isArray(data.stories) ? data.stories : []
+    ).map((story, index) =>
+      normalizeStory(story, index, category)
+    )
+
+    if (signal?.aborted) return
+
+    setDataByCategory((current) => ({
+      ...current,
+      [category]: items,
+    }))
+
+    await saveHomeCache(cacheKey, items, {
+      maxAgeMs: TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+
+    if (!hasCachedData) {
+      setDataByCategory((current) => ({
+        ...current,
+        [category]: [],
+      }))
       setMessage(
         error.message === 'Failed to fetch'
           ? 'Cannot connect to server. Please try again later.'
           : error.message || 'Failed to load top novels'
       )
-    } finally {
+    }
+  } finally {
+    if (!signal?.aborted) {
       setLoading(false)
     }
   }
+}
 
-  useEffect(() => {
-    fetchTopNovelPageData()
-  }, [])
+useEffect(() => {
+  const controller = new AbortController()
+
+  fetchTopNovelPageData({
+    category: activeCategory,
+    signal: controller.signal,
+  })
+
+  return () => {
+    controller.abort()
+  }
+}, [activeCategory])
+
 
   const filteredData = useMemo(() => {
     const realList = dataByCategory[activeCategory]
@@ -242,7 +335,7 @@ export default function TopNovelPage() {
 
           <button
             type="button"
-            onClick={fetchTopNovelPageData}
+            onClick={() => fetchTopNovelPageData({ force: true })}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800"
             aria-label="Refresh"
           >
@@ -351,7 +444,9 @@ export default function TopNovelPage() {
             ))}
           </div>
         ) : (
-          <EmptyState onRefresh={fetchTopNovelPageData} />
+          <EmptyState
+  onRefresh={() => fetchTopNovelPageData({ force: true })}
+/>
         )}
       </section>
     </main>
