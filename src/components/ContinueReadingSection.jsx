@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const API_BASE_URL =
@@ -56,17 +56,41 @@ export default function ContinueReadingSection({
     .trim()
     .toLowerCase()
 
-  const loadProgress = useCallback(async () => {
+  useEffect(() => {
+  let ignore = false
+  let requestInFlight = false
+  let lastRequestStartedAt = 0
+
+  async function loadProgress({
+    force = false,
+  } = {}) {
     const token = getReaderToken()
 
     if (!token) {
-      setItems([])
-      setLoading(false)
+      if (!ignore) {
+        setItems([])
+        setLoading(false)
+      }
       return
     }
 
+    const now = Date.now()
+
+    if (requestInFlight) return
+
+    if (
+      !force &&
+      now - lastRequestStartedAt < 5000
+    ) {
+      return
+    }
+
+    requestInFlight = true
+    lastRequestStartedAt = now
+
     try {
-      const limit = normalizedStoryType ? 30 : 6
+      const limit =
+        normalizedStoryType ? 30 : 6
 
       const response = await fetch(
         `${API_BASE_URL}/api/reading-progress?limit=${limit}`,
@@ -78,69 +102,97 @@ export default function ContinueReadingSection({
         }
       )
 
-      const data = await response.json().catch(() => ({}))
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
         throw new Error(
           data.message ||
-          'Failed to load reading progress'
+            'Failed to load reading progress'
         )
       }
 
-      const sourceItems = Array.isArray(data.items)
-        ? data.items
-        : []
+      const sourceItems =
+        Array.isArray(data.items)
+          ? data.items
+          : []
 
-      const visibleItems = normalizedStoryType
-        ? sourceItems.filter(
-            (item) =>
-              String(
-                item?.story?.story_type ||
-                item?.story_type ||
-                ''
-              )
-                .trim()
-                .toLowerCase() ===
-              normalizedStoryType
-          )
-        : sourceItems
+      const visibleItems =
+        normalizedStoryType
+          ? sourceItems.filter(
+              (item) =>
+                String(
+                  item?.story?.story_type ||
+                    item?.story_type ||
+                    ''
+                )
+                  .trim()
+                  .toLowerCase() ===
+                normalizedStoryType
+            )
+          : sourceItems
 
-      setItems(visibleItems.slice(0, 6))
+      if (!ignore) {
+        setItems(
+          visibleItems.slice(0, 6)
+        )
+      }
     } catch {
-      setItems([])
+      if (!ignore) {
+        setItems([])
+      }
     } finally {
-      setLoading(false)
-    }
-  }, [normalizedStoryType])
+      requestInFlight = false
 
-  useEffect(() => {
-    loadProgress()
-
-    function refreshWhenVisible() {
-      if (document.visibilityState === 'visible') {
-        loadProgress()
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    window.addEventListener('focus', loadProgress)
+  loadProgress({ force: true })
 
-    document.addEventListener(
+  function refreshWhenVisible() {
+    if (
+      document.visibilityState ===
+      'visible'
+    ) {
+      loadProgress()
+    }
+  }
+
+  function refreshOnFocus() {
+    loadProgress()
+  }
+
+  window.addEventListener(
+    'focus',
+    refreshOnFocus
+  )
+
+  document.addEventListener(
+    'visibilitychange',
+    refreshWhenVisible
+  )
+
+  return () => {
+    ignore = true
+
+    window.removeEventListener(
+      'focus',
+      refreshOnFocus
+    )
+
+    document.removeEventListener(
       'visibilitychange',
       refreshWhenVisible
     )
-
-    return () => {
-      window.removeEventListener(
-        'focus',
-        loadProgress
-      )
-
-      document.removeEventListener(
-        'visibilitychange',
-        refreshWhenVisible
-      )
-    }
-  }, [loadProgress])
+  }
+}, [normalizedStoryType])
 
   if (loading || !items.length) return null
 
