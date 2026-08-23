@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+
+const TOP_NOVEL_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const rankingTabs = [
   {
@@ -93,82 +104,92 @@ function normalizeStory(story, index = 0) {
 async function fetchRankingItems(
   tab,
   categoryLabel,
-  storyType = ''
+  storyType = '',
+  onCachedItems = null
 ) {
   const normalizedStoryType = String(storyType || '')
     .trim()
     .toLowerCase()
 
-  const separator = tab.endpoint.includes('?') ? '&' : '?'
-  const endpoint = normalizedStoryType
-    ? `${tab.endpoint}${separator}story_type=${encodeURIComponent(
-        normalizedStoryType
-      )}`
-    : tab.endpoint
+  const cacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      home_section: 'ranking',
+      category: categoryLabel,
+      story_type: normalizedStoryType || 'all',
+      schema: 1,
+    },
+  })
 
-  const response = await fetch(
-    addStoryLanguageParam(`${API_BASE_URL}${endpoint}`)
-  )
-  const data = await response.json().catch(() => ({}))
+  const cached = await loadHomeCache(cacheKey, {
+    maxAgeMs: TOP_NOVEL_CACHE_MAX_AGE_MS,
+    allowExpired: true,
+  })
 
-  if (!response.ok || data.ok === false) {
-    throw new Error(
-      data.message || `Failed to load ${categoryLabel}`
-    )
+  const hasCachedItems = Array.isArray(cached?.data)
+
+  if (hasCachedItems && onCachedItems) {
+    onCachedItems(cached.data)
   }
 
-  const rows = Array.isArray(data.stories)
-    ? data.stories
-    : []
+  if (cached?.isFresh && hasCachedItems) {
+    return cached.data
+  }
 
-  const storyTypeRows = normalizedStoryType
-    ? rows.filter(
-        (story) =>
-          String(story?.story_type || '')
-            .trim()
-            .toLowerCase() === normalizedStoryType
+  try {
+    const separator = tab.endpoint.includes('?') ? '&' : '?'
+    const endpoint = normalizedStoryType
+      ? `${tab.endpoint}${separator}story_type=${encodeURIComponent(
+          normalizedStoryType
+        )}`
+      : tab.endpoint
+
+    const response = await fetch(
+      addStoryLanguageParam(`${API_BASE_URL}${endpoint}`)
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || `Failed to load ${categoryLabel}`
       )
-    : rows
+    }
 
-  const filteredRows = tab.filter
-    ? storyTypeRows.filter(tab.filter)
-    : storyTypeRows
+    const rows = Array.isArray(data.stories)
+      ? data.stories
+      : []
 
-  return filteredRows.slice(0, 6).map(normalizeStory)
-}
+    const storyTypeRows = normalizedStoryType
+      ? rows.filter(
+          (story) =>
+            String(story?.story_type || '')
+              .trim()
+              .toLowerCase() === normalizedStoryType
+        )
+      : rows
 
-function RankBadge({ rank }) {
-  return (
-    <div
-      className={`absolute -left-px -top-px z-10 flex h-[24px] min-w-[28px] items-center justify-center rounded-tl-[8px] rounded-br-[9px] px-1.5 text-[10px] font-extrabold leading-none shadow-sm ${getRankBadgeClass(rank)}`}
-    >
-      {getRankLabel(rank)}
-    </div>
-  )
-}
+    const filteredRows = tab.filter
+      ? storyTypeRows.filter(tab.filter)
+      : storyTypeRows
 
-function SafeBookCover({ src, title, rank }) {
-  const [imageFailed, setImageFailed] = useState(false)
-  const hasImage = typeof src === 'string' && src.trim() !== '' && !imageFailed
+    const items = filteredRows
+      .slice(0, 6)
+      .map(normalizeStory)
 
-  if (hasImage) {
-    return (
-      <img
-        src={src}
-        alt={title}
-        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-        loading="lazy"
-        decoding="async"
-        onError={() => setImageFailed(true)}
-      />
-    )
+    await saveHomeCache(cacheKey, items, {
+      maxAgeMs: TOP_NOVEL_CACHE_MAX_AGE_MS,
+    })
+
+    return items
+  } catch (error) {
+    if (hasCachedItems) {
+      return cached.data
+    }
+
+    throw error
   }
-
-  return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f3f4f6] to-[#d1d5db] text-[11px] font-extrabold text-gray-500">
-      #{rank}
-    </div>
-  )
 }
 
 function RankingBookCard({ item, onOpen }) {
@@ -260,65 +281,76 @@ export default function TopNovelSection({
   useEffect(() => {
     let ignore = false
 
-    async function loadActiveRankingTab() {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          realDataByCategory,
-          activeDataKey
-        )
-      ) {
-        setLoading(false)
-        return
-      }
+    useEffect(() => {
+  let ignore = false
 
-      setLoading(true)
+  async function loadActiveRankingTab() {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        realDataByCategory,
+        activeDataKey
+      )
+    ) {
+      setLoading(false)
+      return
+    }
 
-      const tab = getActiveTabConfig(activeCategory)
+    setLoading(true)
 
-      try {
-        const items = await fetchRankingItems(
-          tab,
-          tab.label,
-          normalizedStoryType
-        )
+    const tab = getActiveTabConfig(activeCategory)
 
-        if (!ignore) {
+    try {
+      const items = await fetchRankingItems(
+        tab,
+        tab.label,
+        normalizedStoryType,
+        (cachedItems) => {
+          if (ignore) return
+
           setRealDataByCategory((current) => ({
             ...current,
-            [activeDataKey]: items,
+            [activeDataKey]: cachedItems,
           }))
-        }
-      } catch (error) {
-        console.error(
-          `Ranking load error: ${activeCategory}`,
-          error
-        )
 
-        if (!ignore) {
-          setRealDataByCategory((current) => ({
-            ...current,
-            [activeDataKey]: [],
-          }))
-        }
-      } finally {
-        if (!ignore) {
           setLoading(false)
         }
+      )
+
+      if (!ignore) {
+        setRealDataByCategory((current) => ({
+          ...current,
+          [activeDataKey]: items,
+        }))
+      }
+    } catch (error) {
+      console.error(
+        `Ranking load error: ${activeCategory}`,
+        error
+      )
+
+      if (!ignore) {
+        setRealDataByCategory((current) => ({
+          ...current,
+          [activeDataKey]: [],
+        }))
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    loadActiveRankingTab()
+  loadActiveRankingTab()
 
-    return () => {
-      ignore = true
-    }
-  }, [
-    activeCategory,
-    activeDataKey,
-    normalizedStoryType,
-    realDataByCategory,
-  ])
-
+  return () => {
+    ignore = true
+  }
+}, [
+  activeCategory,
+  activeDataKey,
+  normalizedStoryType,
+])
   const filteredData = useMemo(() => {
     return realDataByCategory[activeDataKey] || []
   }, [activeDataKey, realDataByCategory])
