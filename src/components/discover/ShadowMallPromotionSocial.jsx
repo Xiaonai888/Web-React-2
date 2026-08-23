@@ -1676,6 +1676,23 @@ export default function ShadowMallPromotionSocial({
     useState(false)
   const [message, setMessage] =
     useState('')
+  const reactionStateLoaded = Boolean(
+  promotion?.reaction_state_loaded
+)
+
+const echoStateLoaded = Boolean(
+  promotion?.echo_state_loaded
+)
+  useEffect(() => {
+  if (!reactionStateLoaded) return
+
+  setReactionType(
+    promotion?.my_reaction || null
+  )
+}, [
+  promotion?.my_reaction,
+  reactionStateLoaded,
+])
 
   useEffect(() => {
     setReactionCount(
@@ -1789,7 +1806,9 @@ export default function ShadowMallPromotionSocial({
       handleEchoUpdated
     )
 
-    loadEchoCount()
+    if (!echoStateLoaded) {
+  loadEchoCount()
+}
 
     return () => {
       ignore = true
@@ -1800,18 +1819,22 @@ export default function ShadowMallPromotionSocial({
       )
     }
   }, [
-    promotion?.echo_count,
-    promotion?.id,
-  ])
-
+  echoStateLoaded,
+  promotion?.echo_count,
+  promotion?.id,
+])
 
   useEffect(() => {
     let ignore = false
     const token = getAuthToken()
 
-    if (!promotion?.id || !token) {
-      return undefined
-    }
+    if (
+  reactionStateLoaded ||
+  !promotion?.id ||
+  !token
+) {
+  return undefined
+}
 
     async function loadReactionStatus() {
       try {
@@ -1856,7 +1879,10 @@ export default function ShadowMallPromotionSocial({
     return () => {
       ignore = true
     }
-  }, [promotion?.id])
+  }, [
+  promotion?.id,
+  reactionStateLoaded,
+])
 
   const showMessage = (value) => {
     setMessage(value)
