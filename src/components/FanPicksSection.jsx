@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import {
+  addStoryLanguageParam,
+  getStoryLanguageId,
+} from '../utils/storyLanguage'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 
+const FAN_PICKS_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 const fallbackBooks = Array.from({ length: 6 }).map((_, index) => ({
   id: 601 + index,
   title: 'Name Book',
@@ -82,41 +92,85 @@ export default function FanPicksSection() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function fetchFanPicks() {
-      try {
+  async function loadFanPicks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        home_section: 'hidden-gems',
+        sort: 'discover_more',
+        limit: 6,
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: FAN_PICKS_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks && !ignore) {
+      setRealBooks(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks && !ignore) {
         setLoading(true)
+      }
 
-        const response = await fetch(
-          addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=6&sort=discover_more`)
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=6&sort=discover_more`
         )
-        const data = await response.json().catch(() => ({}))
+      )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load Discover More')
-        }
+      const data = await response.json().catch(() => ({}))
 
-        if (ignore) return
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load Discover More'
+        )
+      }
 
-        setRealBooks((data.stories || []).map(normalizeStory))
-      } catch (error) {
-        console.error('Discover More fetch error:', error)
+      const nextBooks = (data.stories || [])
+        .map(normalizeStory)
+        .slice(0, 6)
 
-        if (!ignore) {
-          setRealBooks([])
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      if (ignore) return
+
+      setRealBooks(nextBooks)
+
+      await saveHomeCache(cacheKey, nextBooks, {
+        maxAgeMs: FAN_PICKS_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error('Discover More fetch error:', error)
+
+      if (!ignore && !hasCachedBooks) {
+        setRealBooks([])
+      }
+    } finally {
+      if (!ignore) {
+        setLoading(false)
       }
     }
+  }
 
-    fetchFanPicks()
+  loadFanPicks()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  return () => {
+    ignore = true
+  }
+}, [])
 
   const books = useMemo(() => {
     return realBooks.length ? realBooks : fallbackBooks
