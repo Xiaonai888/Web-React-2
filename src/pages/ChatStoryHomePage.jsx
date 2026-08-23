@@ -4,6 +4,8 @@ import {
   useState,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 const API_BASE_URL =
   window.location.hostname ===
     'localhost' ||
@@ -11,6 +13,7 @@ const API_BASE_URL =
     '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const CHAT_STORY_HOME_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const SHOW_DEMO_STORIES = false
 
