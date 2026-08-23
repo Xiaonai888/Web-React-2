@@ -138,69 +138,61 @@ export async function loadHomeDailyPicksSource({
   storyType = '',
   onCachedStories,
 }) {
-  const normalizedStoryType = normalizeStoryType(storyType)
+  const normalizedStoryType =
+    normalizeStoryType(storyType)
+
   const cacheKey = getHomeCacheKey({
     section: 'daily-picks',
     language: getStoryLanguageId(),
     params: {
-      story_type: normalizedStoryType || 'all',
+      story_type:
+        normalizedStoryType || 'all',
     },
   })
 
-  const cached = await loadHomeCache(cacheKey, {
-    maxAgeMs: CACHE_TTL_MS,
-    allowExpired: true,
-  })
-  const cachedStories = Array.isArray(cached?.data)
+  const cached = await loadHomeCache(
+    cacheKey,
+    {
+      maxAgeMs: CACHE_TTL_MS,
+      allowExpired: true,
+    }
+  )
+
+  const cachedStories = Array.isArray(
+    cached?.data
+  )
     ? cached.data
     : []
 
-  if (cachedStories.length && onCachedStories) {
+  if (
+    cachedStories.length &&
+    onCachedStories
+  ) {
     onCachedStories(cachedStories)
   }
 
-  let currentVersion = null
-
-  try {
-    currentVersion = await getStoriesVersion(apiBaseUrl)
-  } catch {
-    if (cachedStories.length && !cached?.isExpired) {
-      return cachedStories
-    }
-  }
-
-  const cacheVersion = Number(cached?.version)
-  const sameVersion =
-    Number.isFinite(currentVersion) &&
-    Number.isFinite(cacheVersion) &&
-    currentVersion === cacheVersion
-
   if (
     cachedStories.length &&
-    !cached?.isExpired &&
-    sameVersion
-  ) {
-    return cachedStories
-  }
-
-  if (
-    cachedStories.length &&
-    !cached?.isExpired &&
-    currentVersion === null
+    cached?.isFresh
   ) {
     return cachedStories
   }
 
   try {
-    const freshStories = await fetchFreshSource({
-      apiBaseUrl,
-      storyType: normalizedStoryType,
-    })
+    const freshStories =
+      await fetchFreshSource({
+        apiBaseUrl,
+        storyType:
+          normalizedStoryType,
+      })
 
-    await saveHomeCache(cacheKey, freshStories, {
-      version: currentVersion ?? 0,
-      maxAgeMs: CACHE_TTL_MS,
-    })
+    await saveHomeCache(
+      cacheKey,
+      freshStories,
+      {
+        maxAgeMs: CACHE_TTL_MS,
+      }
+    )
 
     return freshStories
   } catch (error) {
