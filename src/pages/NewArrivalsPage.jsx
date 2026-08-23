@@ -5,8 +5,12 @@ import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguag
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com'
 
-  const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
+const NEW_ARRIVALS_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
 
 const NEW_ARRIVALS_TAB_CONFIG = {
   Fresh: { sort: 'latest' },
@@ -15,10 +19,6 @@ const NEW_ARRIVALS_TAB_CONFIG = {
   Romance: { sort: 'latest', genre: 'Romance' },
   Fantasy: { sort: 'latest', genre: 'Fantasy' },
 }
-  
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
 
 const badgeStyles = {
   red: 'bg-red-500 text-white',
