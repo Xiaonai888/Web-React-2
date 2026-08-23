@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
+const GENRES_PAGE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 const genres = [
   { label: 'All', slug: '' },
@@ -308,39 +310,100 @@ export default function GenresPage() {
   }, [filtersOpen])
 
   useEffect(() => {
-    let ignore = false
+  const controller = new AbortController()
+  let ignore = false
 
-    async function loadBooks() {
-      try {
+  async function loadBooks() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        page: 'genres',
+        sort: 'updated',
+        limit: 120,
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    if (ignore || controller.signal.aborted) return
+
+    const hasCachedBooks = Array.isArray(cached?.data)
+
+    if (hasCachedBooks) {
+      setBooks(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
+    }
+
+    try {
+      if (!hasCachedBooks) {
         setLoading(true)
-        setMessage('')
+      }
 
-        const response = await fetch(addStoryLanguageParam(`${API_BASE_URL}/api/public/stories?limit=120&sort=updated`))
-        const data = await response.json().catch(() => ({}))
+      setMessage('')
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load stories')
-        }
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=120&sort=updated`
+        ),
+        { signal: controller.signal }
+      )
 
-        if (!ignore) {
-          setBooks((data.stories || []).map(normalizeBook).filter((book) => book.id))
-        }
-      } catch (error) {
-        if (!ignore) {
-          setBooks([])
-          setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to server.' : error.message || 'Failed to load stories')
-        }
-      } finally {
-        if (!ignore) setLoading(false)
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load stories'
+        )
+      }
+
+      const nextBooks = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .map(normalizeBook)
+        .filter((book) => book.id)
+
+      if (ignore || controller.signal.aborted) return
+
+      setBooks(nextBooks)
+
+      await saveHomeCache(cacheKey, nextBooks, {
+        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      if (!ignore && !hasCachedBooks) {
+        setBooks([])
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? 'Cannot connect to server.'
+            : error.message || 'Failed to load stories'
+        )
+      }
+    } finally {
+      if (!ignore && !controller.signal.aborted) {
+        setLoading(false)
       }
     }
+  }
 
-    loadBooks()
+  loadBooks()
 
-    return () => {
-      ignore = true
-    }
-  }, [])
+  return () => {
+    ignore = true
+    controller.abort()
+  }
+}, [])
+
 
   const filteredGenres = useMemo(() => {
     const keyword = query.trim().toLowerCase()
