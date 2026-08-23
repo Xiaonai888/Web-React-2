@@ -302,17 +302,29 @@ useEffect(() => {
   }
 
   useEffect(() => {
-  refreshNotificationUnreadCount()
+  let lastRefreshAt = 0
+
+  function refreshIfNeeded() {
+    const now = Date.now()
+
+    if (now - lastRefreshAt < 30_000) {
+      return
+    }
+
+    lastRefreshAt = now
+    refreshNotificationUnreadCount()
+  }
+
+  refreshIfNeeded()
 
   function handleVisibilityChange() {
     if (document.visibilityState === 'visible') {
-      refreshNotificationUnreadCount()
+      refreshIfNeeded()
     }
   }
 
-
   function handleFocus() {
-    refreshNotificationUnreadCount()
+    refreshIfNeeded()
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -323,154 +335,7 @@ useEffect(() => {
     window.removeEventListener('focus', handleFocus)
   }
 }, [])
-  
-  useEffect(() => {
-    function handleScroll() {
-      const currentScrollY = window.scrollY
-      const previousScrollY = lastScrollYRef.current
-      const difference = currentScrollY - previousScrollY
 
-      if (currentScrollY < 20) {
-        setBarsHidden(false)
-        document.body.classList.remove('for-you-bars-hidden')
-      } else if (difference > 8) {
-        setBarsHidden(true)
-        document.body.classList.add('for-you-bars-hidden')
-      } else if (difference < -8) {
-        setBarsHidden(false)
-        document.body.classList.remove('for-you-bars-hidden')
-      }
-
-      lastScrollYRef.current = currentScrollY
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      document.body.classList.remove('for-you-bars-hidden')
-    }
-  }, [])
-
-  useEffect(() => {
-  let alive = true
-
-  const cacheKey = getHomeCacheKey({
-    section: 'genres',
-    params: { source: 'featured-tabs' },
-  })
-
-  function applyGenreTabs(finalTabs) {
-    if (!alive || !finalTabs.length) return
-
-    setGenreTabs(finalTabs)
-
-    setActiveGenre((current) =>
-      finalTabs.some((tab) => tab.slug === current)
-        ? current
-        : 'today'
-    )
-
-    setContentGenre((current) =>
-      finalTabs.some((tab) => tab.slug === current)
-        ? current
-        : 'today'
-    )
-  }
-
-  async function loadGenreTabs() {
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: HOME_GENRES_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
-
-    const cachedTabs = Array.isArray(cached?.data)
-      ? cached.data
-      : []
-
-    if (cachedTabs.length) {
-      applyGenreTabs(cachedTabs)
-    }
-
-    if (cached?.isFresh && cachedTabs.length) {
-      return
-    }
-
-    try {
-      const res = await fetch(
-        `${API_URL}/api/genres/featured-tabs`
-      )
-      const data = await res.json()
-
-      if (!res.ok || data.ok === false) {
-        throw new Error(
-          data.message || 'Failed to fetch genre tabs'
-        )
-      }
-
-      const tabs = (data.tabs || [])
-        .map((tab) => ({
-          label:
-            tab.label ||
-            tab.genre?.name ||
-            'Genre',
-          slug:
-            tab.slug ||
-            tab.genre?.slug ||
-            String(tab.label || '').toLowerCase(),
-          is_locked: Boolean(tab.is_locked),
-        }))
-        .filter((tab) => tab.label && tab.slug)
-        .slice(0, 12)
-
-      if (!tabs.length || !alive) return
-
-      const today = tabs.find(
-        (tab) => tab.slug === 'today'
-      )
-      const others = tabs.filter(
-        (tab) => tab.slug !== 'today'
-      )
-
-      const finalTabs = today
-        ? [today, ...others]
-        : [
-            {
-              label: 'Today',
-              slug: 'today',
-              is_locked: true,
-            },
-            ...others,
-          ].slice(0, 12)
-
-      applyGenreTabs(finalTabs)
-
-      await saveHomeCache(
-        cacheKey,
-        finalTabs,
-        {
-          maxAgeMs:
-            HOME_GENRES_CACHE_MAX_AGE_MS,
-        }
-      )
-    } catch (error) {
-      console.error(
-        'Fetch genre tabs error:',
-        error
-      )
-
-      if (!cachedTabs.length && alive) {
-        setGenreTabs(fallbackGenreTabs)
-      }
-    }
-  }
-
-  loadGenreTabs()
-
-  return () => {
-    alive = false
-  }
-}, [])
 
  useEffect(() => {
   let alive = true
