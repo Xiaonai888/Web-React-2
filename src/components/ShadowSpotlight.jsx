@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../utils/homeDataCache'
 
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  (window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
+
+const SHADOW_SPOTLIGHT_CACHE_MAX_AGE_MS =
+  6 * 60 * 60 * 1000
 
 const badgeColors = {
   NEW: 'bg-[#ff2f55] text-white',
@@ -40,26 +49,84 @@ export default function ShadowSpotlight() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchSpotlights() {
-      try {
-        const response = await fetch(`${API_URL}/api/slides?section_key=shadow_spotlight`)
-        const data = await response.json().catch(() => ({}))
+  let ignore = false
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to fetch spotlight')
-        }
+  async function loadSpotlights() {
+    const cacheKey = getHomeCacheKey({
+      section: 'slides',
+      params: {
+        home_section: 'shadow-spotlight',
+        section_key: 'shadow_spotlight',
+        schema: 1,
+      },
+    })
 
-        setSpotlights(data.slides || [])
-      } catch (error) {
-        console.error('Fetch Shadow Spotlight error:', error)
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: SHADOW_SPOTLIGHT_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedSpotlights = Array.isArray(cached?.data)
+
+    if (hasCachedSpotlights && !ignore) {
+      setSpotlights(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedSpotlights) {
+      return
+    }
+
+    try {
+      if (!hasCachedSpotlights && !ignore) {
+        setLoading(true)
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/slides?section_key=shadow_spotlight`
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to fetch spotlight'
+        )
+      }
+
+      const nextSpotlights = Array.isArray(data.slides)
+        ? data.slides
+        : []
+
+      if (ignore) return
+
+      setSpotlights(nextSpotlights)
+
+      await saveHomeCache(cacheKey, nextSpotlights, {
+        maxAgeMs: SHADOW_SPOTLIGHT_CACHE_MAX_AGE_MS,
+      })
+    } catch (error) {
+      console.error(
+        'Fetch Shadow Spotlight error:',
+        error
+      )
+
+      if (!ignore && !hasCachedSpotlights) {
         setSpotlights([])
-      } finally {
+      }
+    } finally {
+      if (!ignore) {
         setLoading(false)
       }
     }
+  }
 
-    fetchSpotlights()
-  }, [])
+  loadSpotlights()
+
+  return () => {
+    ignore = true
+  }
+}, [])
 
   useEffect(() => {
     if (!window.Swiper || spotlights.length === 0) return
