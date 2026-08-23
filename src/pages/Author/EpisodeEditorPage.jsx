@@ -46,8 +46,7 @@ const MIN_CHARACTERS = 1500
 const MAX_CHARACTERS = 30000
 const MAX_EDITOR_HISTORY = 100
 const EDITOR_HISTORY_GROUP_MS = 1000
-const LOCAL_AUTOSAVE_DELAY_MS = 3000
-const LOCAL_AUTOSAVE_MAX_INTERVAL_MS = 10000
+const LOCAL_AUTOSAVE_INTERVAL_SECONDS = 10
 const SERVER_CHECKPOINT_MINUTES = 10
 const STORY_LANGUAGES = ['Khmer', 'English', 'Chinese', 'Japanese', 'Korean']
 const FALLBACK_GENRES = ['Romance', 'Fantasy', 'Action', 'Adventure', 'Comedy', 'Drama']
@@ -2725,10 +2724,13 @@ export default function EpisodeEditorPage() {
   const [smartFindReplaceOpen, setSmartFindReplaceOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Saved')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [localSaveSeconds, setLocalSaveSeconds] = useState(
+    LOCAL_AUTOSAVE_INTERVAL_SECONDS
+  )
   const localDraftKeyRef = useRef(
     getEpisodeLocalDraftKey(storyId, editEpisodeId || '')
   )
-  const localSaveTimerRef = useRef(null)
+
   const localDraftRevisionRef = useRef(0)
   const localSavedRevisionRef = useRef(0)
   const localSaveInFlightRef = useRef(false)
@@ -2841,7 +2843,15 @@ export default function EpisodeEditorPage() {
   }
 
   const markUnsaved = () => {
+  const wasLocallySaved =
+    localDraftRevisionRef.current === localSavedRevisionRef.current
+
   localDraftRevisionRef.current += 1
+
+  if (wasLocallySaved) {
+    setLocalSaveSeconds(LOCAL_AUTOSAVE_INTERVAL_SECONDS)
+  }
+
   setSaveStatus('Unsaved')
   setHasUnsavedChanges((current) => {
     if (!current) {
@@ -2917,11 +2927,17 @@ export default function EpisodeEditorPage() {
     try {
       await savePromise
       localSavedRevisionRef.current = Math.max(
-        localSavedRevisionRef.current,
-        revision
-      )
-      setSaveStatus('Saved locally')
-      return true
+  localSavedRevisionRef.current,
+  revision
+)
+
+setSaveStatus(
+  localDraftRevisionRef.current === localSavedRevisionRef.current
+    ? 'Saved locally'
+    : 'Unsaved'
+)
+
+return true
     } catch {
       setSaveStatus('Local save failed')
       return false
