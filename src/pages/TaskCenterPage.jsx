@@ -1387,8 +1387,10 @@ navigate(targetPath, {
   }, [toast])
 
   useEffect(() => {
-  setChestTick(Date.now())
-}, [rewardChest])
+  const timer = window.setInterval(() => setChestTick(Date.now()), 1000)
+
+  return () => window.clearInterval(timer)
+}, [])
 
   useEffect(() => {
     function handleScroll() {
