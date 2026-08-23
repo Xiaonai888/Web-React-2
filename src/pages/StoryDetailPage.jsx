@@ -330,7 +330,7 @@ export default function StoryDetailPage() {
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [realStoryId, story?.id])
+  }, [realStoryId])
 
   useLayoutEffect(() => {
     if (!episodeListOpen) return undefined
@@ -382,7 +382,7 @@ export default function StoryDetailPage() {
     return () => {
       ignore = true
     }
-  }, [realStoryId, story?.id])
+  }, [realStoryId])
 
   useLayoutEffect(() => {
     if (!location.state?.reopenEpisodeList) return
@@ -485,7 +485,7 @@ export default function StoryDetailPage() {
     return () => {
       ignore = true
     }
-  }, [realStoryId, story?.id])
+  }, [realStoryId])
 
   useEffect(() => {
   let ignore = false
