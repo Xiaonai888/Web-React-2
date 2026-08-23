@@ -11,9 +11,10 @@ import {
 } from '../../utils/homeDataCache'
 
 const API_BASE_URL =
-  const DISCOVER_COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
+
+const DISCOVER_COMPLETED_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
