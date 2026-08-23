@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam } from '../../utils/storyLanguage'
+import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 
 const API_BASE_URL =
+  const DISCOVER_TRENDING_CACHE_MAX_AGE_MS = 60 * 60 * 1000
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
@@ -67,51 +69,88 @@ export default function DiscoverTrendingStoriesSection() {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let alive = true
+ useEffect(() => {
+  let alive = true
 
-    async function loadTrendingStories() {
-      try {
+  async function loadTrendingStories() {
+    const cacheKey = getHomeCacheKey({
+      section: 'stories',
+      language: getStoryLanguageId(),
+      params: {
+        discover_section: 'trending',
+        sort: 'trending',
+        limit: 10,
+        schema: 1,
+      },
+    })
+
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: DISCOVER_TRENDING_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
+
+    const hasCachedStories = Array.isArray(cached?.data)
+
+    if (hasCachedStories && alive) {
+      setStories(cached.data)
+      setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedStories) {
+      return
+    }
+
+    try {
+      if (!hasCachedStories && alive) {
         setLoading(true)
+      }
 
-        const response = await fetch(
-          addStoryLanguageParam(
-            `${API_BASE_URL}/api/public/stories?limit=10&sort=trending`
-          )
+      const response = await fetch(
+        addStoryLanguageParam(
+          `${API_BASE_URL}/api/public/stories?limit=10&sort=trending`
         )
-        const data = await response.json().catch(() => ({}))
+      )
 
-        if (!response.ok || data.ok === false) {
-          throw new Error(
-            data.message || 'Failed to load trending stories'
-          )
-        }
+      const data = await response.json().catch(() => ({}))
 
-        if (alive) {
-          setStories(
-            (Array.isArray(data.stories) ? data.stories : [])
-              .map(normalizeStory)
-              .filter((story) => story.id)
-              .slice(0, 10)
-          )
-        }
-      } catch {
-        if (alive) {
-          setStories([])
-        }
-      } finally {
-        if (alive) {
-          setLoading(false)
-        }
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message || 'Failed to load trending stories'
+        )
+      }
+
+      const nextStories = (
+        Array.isArray(data.stories) ? data.stories : []
+      )
+        .map(normalizeStory)
+        .filter((story) => story.id)
+        .slice(0, 10)
+
+      if (!alive) return
+
+      setStories(nextStories)
+
+      await saveHomeCache(cacheKey, nextStories, {
+        maxAgeMs: DISCOVER_TRENDING_CACHE_MAX_AGE_MS,
+      })
+    } catch {
+      if (alive && !hasCachedStories) {
+        setStories([])
+      }
+    } finally {
+      if (alive) {
+        setLoading(false)
       }
     }
+  }
 
-    loadTrendingStories()
+  loadTrendingStories()
 
-    return () => {
-      alive = false
-    }
-  }, [])
+  return () => {
+    alive = false
+  }
+}, [])
+
 
   if (!loading && !stories.length) return null
 
