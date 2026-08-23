@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { addStoryLanguageParam, getStoryLanguageId } from '../utils/storyLanguage'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 const API_BASE_URL =
+  const COMPLETED_PAGE_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000
+
+const COMPLETED_TAB_CONFIG = {
+  Hot: { sort: 'popular' },
+  Romance: { sort: 'updated', genre: 'Romance' },
+  Fantasy: { sort: 'updated', genre: 'Fantasy' },
+  Latest: { sort: 'latest' },
+}
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
@@ -244,68 +254,140 @@ export default function CompletedPage() {
   const startXRef = useRef(0)
   const scrollLeftRef = useRef(0)
 
-  async function fetchCompletedPageData() {
-    try {
-      setLoading(true)
-      setMessage('')
+  async function fetchCompletedPageData(
+  tab = activeTab,
+  { force = false, signal } = {}
+) {
+  const config = COMPLETED_TAB_CONFIG[tab]
 
-      const [hotResponse, romanceResponse, fantasyResponse, latestResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=popular`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=updated&genre=Romance`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=updated&genre=Fantasy`),
-        fetch(`${API_BASE_URL}/api/public/stories?limit=27&sort=latest`),
-      ])
+  if (!config) return
 
-      const hotData = await hotResponse.json().catch(() => ({}))
-      const romanceData = await romanceResponse.json().catch(() => ({}))
-      const fantasyData = await fantasyResponse.json().catch(() => ({}))
-      const latestData = await latestResponse.json().catch(() => ({}))
+  const cacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      page: 'completed',
+      tab,
+      limit: 27,
+      sort: config.sort,
+      genre: config.genre || '',
+      story_status: 'Completed',
+      schema: 1,
+    },
+  })
 
-      if (!hotResponse.ok || hotData.ok === false) {
-        throw new Error(hotData.message || 'Failed to load hot stories')
-      }
+  let hasCachedBooks = false
+  const hasCurrentBooks =
+    Array.isArray(realBooks[tab]) &&
+    realBooks[tab].length > 0
 
-      if (!romanceResponse.ok || romanceData.ok === false) {
-        throw new Error(romanceData.message || 'Failed to load romance stories')
-      }
+  if (!force) {
+    const cached = await loadHomeCache(cacheKey, {
+      maxAgeMs: COMPLETED_PAGE_CACHE_MAX_AGE_MS,
+      allowExpired: true,
+    })
 
-      if (!fantasyResponse.ok || fantasyData.ok === false) {
-        throw new Error(fantasyData.message || 'Failed to load fantasy stories')
-      }
+    if (signal?.aborted) return
 
-      if (!latestResponse.ok || latestData.ok === false) {
-        throw new Error(latestData.message || 'Failed to load latest stories')
-      }
+    hasCachedBooks = Array.isArray(cached?.data)
 
-      setRealBooks({
-        Hot: (hotData.stories || []).map(normalizeStory),
-        Romance: (romanceData.stories || []).map(normalizeStory),
-        Fantasy: (fantasyData.stories || []).map(normalizeStory),
-        Latest: (latestData.stories || []).map(normalizeStory),
-      })
-    } catch (error) {
-      console.error('CompletedPage fetch error:', error)
-
-      setRealBooks({
-        Hot: [],
-        Romance: [],
-        Fantasy: [],
-        Latest: [],
-      })
-
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? 'Cannot connect to server. Please try again later.'
-          : error.message || 'Failed to load completed stories'
-      )
-    } finally {
+    if (hasCachedBooks) {
+      setRealBooks((current) => ({
+        ...current,
+        [tab]: cached.data,
+      }))
       setLoading(false)
+    }
+
+    if (cached?.isFresh && hasCachedBooks) {
+      return
     }
   }
 
-  useEffect(() => {
-    fetchCompletedPageData()
-  }, [])
+  try {
+    if (!hasCachedBooks && !hasCurrentBooks) {
+      setLoading(true)
+    }
+
+    setMessage('')
+
+    const params = new URLSearchParams({
+      limit: '27',
+      sort: config.sort,
+      story_status: 'Completed',
+    })
+
+    if (config.genre) {
+      params.set('genre', config.genre)
+    }
+
+    const response = await fetch(
+      addStoryLanguageParam(
+        `${API_BASE_URL}/api/public/stories?${params.toString()}`
+      ),
+      { signal }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok || data.ok === false) {
+      throw new Error(
+        data.message || 'Failed to load completed stories'
+      )
+    }
+
+    const nextBooks = (
+      Array.isArray(data.stories) ? data.stories : []
+    ).map((story, index) =>
+      normalizeStory(story, index)
+    )
+
+    if (signal?.aborted) return
+
+    setRealBooks((current) => ({
+      ...current,
+      [tab]: nextBooks,
+    }))
+
+    await saveHomeCache(cacheKey, nextBooks, {
+      maxAgeMs: COMPLETED_PAGE_CACHE_MAX_AGE_MS,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+
+    console.error('CompletedPage fetch error:', error)
+
+    if (!hasCachedBooks && !hasCurrentBooks) {
+      setRealBooks((current) => ({
+        ...current,
+        [tab]: [],
+      }))
+    }
+
+    setMessage(
+      error.message === 'Failed to fetch'
+        ? 'Cannot connect to server. Please try again later.'
+        : error.message || 'Failed to load completed stories'
+    )
+  } finally {
+    if (!signal?.aborted) {
+      setLoading(false)
+    }
+  }
+}
+
+useEffect(() => {
+  const controller = new AbortController()
+
+  fetchCompletedPageData(activeTab, {
+    signal: controller.signal,
+  })
+
+  return () => {
+    controller.abort()
+  }
+}, [activeTab])
+
 
   const books = useMemo(() => {
     const realList = realBooks[activeTab]
@@ -398,7 +480,7 @@ export default function CompletedPage() {
 
           <button
             type="button"
-            onClick={fetchCompletedPageData}
+            onClick={() => fetchCompletedPageData(activeTab, { force: true })}
             className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
             aria-label="Refresh"
           >
@@ -464,7 +546,7 @@ export default function CompletedPage() {
             <Dots count={slides.length} activeIndex={activeSlide} onDotClick={scrollToIndex} />
           </>
         ) : (
-          <EmptyState onRefresh={fetchCompletedPageData} />
+          <EmptyState onRefresh={() => fetchCompletedPageData(activeTab, { force: true })} />
         )}
       </main>
     </div>
