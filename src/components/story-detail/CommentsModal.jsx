@@ -37,6 +37,7 @@ export default function CommentsModal({
   const [episodeLikeTotal, setEpisodeLikeTotal] = useState(0)
   const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
   const [episodeCommentTotals, setEpisodeCommentTotals] = useState({})
+  const [storyCommentTotal, setStoryCommentTotal] = useState(0)
 
   const episodeList = useMemo(() => {
     const sourceEpisodes = Array.isArray(episodes)
@@ -322,12 +323,7 @@ export default function CommentsModal({
               0
           )
         )
-      : Number(
-          story?.total_comments ||
-            story?.comment_count ||
-            story?.comments_count ||
-            0
-        )
+      : storyCommentTotal
 
   const totalEcho =
     targetType === 'episode'
@@ -390,17 +386,22 @@ export default function CommentsModal({
   }
 }
 
-  const handleEpisodeCommentTotalChange = (total) => {
-    if (targetType !== 'episode' || !activeEpisodeId) return
+  const handleCommentTotalChange = (total) => {
+  const nextTotal = Math.max(0, Number(total || 0))
 
-    const nextTotal = Math.max(0, Number(total || 0))
-
-    setEpisodeCommentTotals((current) =>
-      current[String(activeEpisodeId)] === nextTotal
-        ? current
-        : { ...current, [String(activeEpisodeId)]: nextTotal }
-    )
+  if (targetType === 'story') {
+    setStoryCommentTotal(nextTotal)
+    return
   }
+
+  if (targetType !== 'episode' || !activeEpisodeId) return
+
+  setEpisodeCommentTotals((current) =>
+    current[String(activeEpisodeId)] === nextTotal
+      ? current
+      : { ...current, [String(activeEpisodeId)]: nextTotal }
+  )
+}
 
   const handleDragStart = (event) => {
     if (!event.isPrimary) return
@@ -535,7 +536,7 @@ export default function CommentsModal({
             episodeOptions={commentEpisodeOptions}
             selectedEpisodeId={activeEpisodeId}
             onEpisodeChange={setSelectedEpisodeId}
-            onCommentTotalChange={handleEpisodeCommentTotalChange}
+            onCommentTotalChange={handleCommentTotalChange}
           />
         </div>
       </section>
