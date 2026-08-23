@@ -330,7 +330,7 @@ export default function StoryDetailPage() {
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [realStoryId])
+  }, [realStoryId, story?.id])
 
   useLayoutEffect(() => {
     if (!episodeListOpen) return undefined
@@ -382,7 +382,7 @@ export default function StoryDetailPage() {
     return () => {
       ignore = true
     }
-  }, [realStoryId])
+  }, [realStoryId, story?.id])
 
   useLayoutEffect(() => {
     if (!location.state?.reopenEpisodeList) return
@@ -485,7 +485,7 @@ export default function StoryDetailPage() {
     return () => {
       ignore = true
     }
-  }, [realStoryId])
+  }, [realStoryId, story?.id])
 
   useEffect(() => {
   let ignore = false
@@ -493,7 +493,11 @@ export default function StoryDetailPage() {
   async function loadReaderStatus() {
     const token = getReaderToken()
 
-    if (!token || !realStoryId) {
+    if (
+  !token ||
+  !realStoryId ||
+  String(story?.id || '') !== String(realStoryId)
+) {
       setBookmarked(false)
       setSubscribed(false)
       return
@@ -557,7 +561,7 @@ export default function StoryDetailPage() {
   return () => {
     ignore = true
   }
-}, [realStoryId])
+}, [realStoryId, story?.id])
 
   const newestEpisodes = useMemo(() => {
     return [...episodes]
