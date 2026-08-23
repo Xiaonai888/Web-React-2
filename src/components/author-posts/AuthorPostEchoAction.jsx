@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import EchoShareSheetV2Connected from '../social/EchoShareSheetV2Connected'
@@ -51,6 +52,14 @@ export default function AuthorPostEchoAction({
   const [open, setOpen] = useState(false)
   const [echoCount, setEchoCount] =
     useState(Number(post?.echo_count || 0))
+  const onCountChangeRef =
+    useRef(onCountChange)
+
+  onCountChangeRef.current =
+    onCountChange
+
+  const echoStateLoaded =
+    Boolean(post?.echo_state_loaded)
 
   useEffect(() => {
     setEchoCount(Number(post?.echo_count || 0))
@@ -98,7 +107,7 @@ export default function AuthorPostEchoAction({
         )
 
         setEchoCount(total)
-        onCountChange?.(
+        onCountChangeRef.current?.(
           post?.id,
           total,
           null
@@ -127,7 +136,7 @@ export default function AuthorPostEchoAction({
       )
 
       setEchoCount(total)
-      onCountChange?.(
+      onCountChangeRef.current?.(
         post?.id,
         total,
         null
@@ -139,7 +148,9 @@ export default function AuthorPostEchoAction({
       handleEchoUpdated
     )
 
-    loadEchoCount()
+    if (!echoStateLoaded) {
+      loadEchoCount()
+    }
 
     return () => {
       ignore = true
@@ -149,7 +160,10 @@ export default function AuthorPostEchoAction({
         handleEchoUpdated
       )
     }
-  }, [onCountChange, post?.id])
+  }, [
+    echoStateLoaded,
+    post?.id,
+  ])
 
   const shareUrl = useMemo(() => {
     const username = String(
