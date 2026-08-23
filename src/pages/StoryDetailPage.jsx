@@ -466,39 +466,7 @@ export default function StoryDetailPage() {
 
         setEpisodesLoading(false)
 
-        const token = getReaderToken()
-
-        if (loadedAuthorPage?.page_username && token) {
-          try {
-            const authorResponse = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(loadedAuthorPage.page_username)}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            })
-            const authorData = await authorResponse.json().catch(() => ({}))
-
-            if (!ignore && authorResponse.ok && authorData.ok !== false) {
-              setAuthorFollowing(Boolean(authorData.is_following))
-              setAuthorFollowerCount(Number(authorData.total_followers ?? authorData.author_page?.total_followers ?? loadedAuthorPage.total_followers ?? 0))
-
-              const detailAuthorPage = authorData.author_page || {}
-              const detailOwnerId =
-                detailAuthorPage.user_id ||
-                detailAuthorPage.owner_id ||
-                detailAuthorPage.created_by ||
-                authorData.user_id ||
-                null
-
-              setAuthorIsOwnerPage(Boolean(
-                authorData.is_owner ||
-                detailAuthorPage.is_owner ||
-                detailAuthorPage.is_owner_page ||
-                (currentReaderId && detailOwnerId && String(currentReaderId) === String(detailOwnerId))
-              ))
-            }
-          } catch {
-          }
-        }
+        
       } catch (error) {
         if (ignore) return
 
@@ -520,47 +488,76 @@ export default function StoryDetailPage() {
   }, [realStoryId])
 
   useEffect(() => {
-    let ignore = false
+  let ignore = false
 
-    async function loadCollectionStatus() {
-      const token = getReaderToken()
+  async function loadReaderStatus() {
+    const token = getReaderToken()
 
-      if (!token || !realStoryId) {
-        setBookmarked(false)
-        setSubscribed(false)
-        return
-      }
+    if (!token || !realStoryId) {
+      setBookmarked(false)
+      setSubscribed(false)
+      return
+    }
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/reader/status/${realStoryId}`, {
-  headers: authHeaders(),
-  cache: 'no-store',
-})
-
-        const data = await response.json().catch(() => ({}))
-
-        if (!response.ok || data.ok === false) {
-          throw new Error(data.message || 'Failed to load collection status')
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/reader/story-detail-status/${realStoryId}`,
+        {
+          headers: authHeaders(),
+          cache: 'no-store',
         }
+      )
 
-        if (ignore) return
+      const data = await response
+        .json()
+        .catch(() => ({}))
 
-        setBookmarked(Boolean(data.bookmarked))
-        const isSubscribed = data.subscribed === true || data.subscribed === 1 || data.subscribed === 'true'
-setSubscribed(isSubscribed)
-      } catch {
-        if (ignore) return
-        setBookmarked(false)
-        setSubscribed(false)
+      if (
+        !response.ok ||
+        data.ok === false
+      ) {
+        throw new Error(
+          data.message ||
+            'Failed to load story status'
+        )
       }
-    }
 
-    loadCollectionStatus()
+      if (ignore) return
 
-    return () => {
-      ignore = true
+      setBookmarked(
+        Boolean(data.bookmarked)
+      )
+      setSubscribed(
+        Boolean(data.subscribed)
+      )
+
+      if (data.author_state_loaded) {
+        setAuthorFollowing(
+          Boolean(data.author_following)
+        )
+        setAuthorFollowerCount(
+          Number(
+            data.author_follower_count || 0
+          )
+        )
+        setAuthorIsOwnerPage(
+          Boolean(data.author_is_owner)
+        )
+      }
+    } catch {
+      if (ignore) return
+
+      setBookmarked(false)
+      setSubscribed(false)
     }
-  }, [realStoryId])
+  }
+
+  loadReaderStatus()
+
+  return () => {
+    ignore = true
+  }
+}, [realStoryId])
 
   const newestEpisodes = useMemo(() => {
     return [...episodes]
